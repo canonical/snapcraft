@@ -239,4 +239,4 @@ architectures supported by Launchpad.
 The second cause is the same :ref:`as above<build-plan-error>` - not enclosing
 a list of multiple architectures with brackets.
 
-.. _`issue 4340`: https://github.com/snapcore/snapcraft/issues/4340
+.. _`issue 4340`: https://github.com/canonical/snapcraft/issues/4340

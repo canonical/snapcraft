@@ -151,7 +151,7 @@ It's possible to select only one of the suites using `--test-name`, for example:
 
 ## Spread tests for the snapcraft snap
 
-[Spread](https://github.com/snapcore/spread) is a system to distribute tests and execute them in different backends, in parallel. We are currently using spread only to run the integration suite using the installed snapcraft snap from the edge channel.
+[Spread](https://github.com/canonical/spread) is a system to distribute tests and execute them in different backends, in parallel. We are currently using spread only to run the integration suite using the installed snapcraft snap from the edge channel.
 
 To run them, first, download the spread binary:
 

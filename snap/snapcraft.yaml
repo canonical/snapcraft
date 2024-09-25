@@ -12,7 +12,7 @@ license: GPL-3.0
 assumes:
   - snapd2.43
 
-# https://github.com/snapcore/snapcraft/issues/4187
+# https://github.com/canonical/snapcraft/issues/4187
 environment:
   PATH: "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   LD_LIBRARY_PATH: "$SNAP/none"
@@ -56,7 +56,7 @@ parts:
 
   patchelf:
     plugin: autotools
-    source: https://github.com/snapcore/patchelf
+    source: https://github.com/canonical/patchelf
     source-type: git
     source-branch: '0.9+snapcraft'
     autotools-configure-parameters:

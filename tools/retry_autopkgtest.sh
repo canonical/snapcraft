@@ -53,5 +53,5 @@ for testrun in "${tests[@]}"; do
     [ -z "$architecture" ] && architecture='amd64'
     [ -n "$testsuite" ] && testname="&testname=${testsuite}"
     echo "Launching tests for the ${release} release in the ${architecture} architecture..."
-    "${temp_dir}/retry-github-test" "https://api.github.com/repos/snapcore/snapcraft/pulls/${pr}" "https://autopkgtest.ubuntu.com/request.cgi?release=${release}&arch=${architecture}&package=snapcraft${testname}&ppa=snappy-dev%2Fsnapcraft-daily" "${temp_dir}/sec.txt"
+    "${temp_dir}/retry-github-test" "https://api.github.com/repos/canonical/snapcraft/pulls/${pr}" "https://autopkgtest.ubuntu.com/request.cgi?release=${release}&arch=${architecture}&package=snapcraft${testname}&ppa=snappy-dev%2Fsnapcraft-daily" "${temp_dir}/sec.txt"
 done

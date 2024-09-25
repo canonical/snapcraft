@@ -47,7 +47,7 @@ jobs:
       name: store
       workspaces:
         use: snaps
-      if: head_repo = "snapcore/snapcraft"
+      if: head_repo = "canonical/snapcraft"
       script:
         - ./runtests.sh spread "google:ubuntu-18.04-64:tests/spread/general/store"
 
@@ -56,23 +56,23 @@ jobs:
         RISK: "stable"
       script:
         - cd docker
-        - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
-        - docker run snapcore/snapcraft:${RISK} snapcraft --version
+        - docker build --no-cache -f ${RISK}.Dockerfile --tag canonical/snapcraft:${RISK} .
+        - docker run canonical/snapcraft:${RISK} snapcraft --version
     - env:
         RISK: "edge"
       script:
         - cd docker
-        - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
-        - docker run snapcore/snapcraft:${RISK} snapcraft --version
+        - docker build --no-cache -f ${RISK}.Dockerfile --tag canonical/snapcraft:${RISK} .
+        - docker run canonical/snapcraft:${RISK} snapcraft --version
     - env:
         RISK: "beta"
       script:
         - cd docker
-        - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
-        - docker run snapcore/snapcraft:${RISK} snapcraft --version
+        - docker build --no-cache -f ${RISK}.Dockerfile --tag canonical/snapcraft:${RISK} .
+        - docker run canonical/snapcraft:${RISK} snapcraft --version
     - env:
         RISK: "candidate"
       script:
         - cd docker
-        - docker build --no-cache -f ${RISK}.Dockerfile --tag snapcore/snapcraft:${RISK} .
-        - docker run snapcore/snapcraft:${RISK} snapcraft --version
+        - docker build --no-cache -f ${RISK}.Dockerfile --tag canonical/snapcraft:${RISK} .
+        - docker run canonical/snapcraft:${RISK} snapcraft --version

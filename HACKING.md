@@ -7,7 +7,7 @@ We want to make sure everyone develops using a consistent base, to ensure that t
 Clone the snapcraft repository and its submodules and make it your working directory:
 
 ```shell
-git clone https://github.com/snapcore/snapcraft.git --recurse-submodules
+git clone https://github.com/canonical/snapcraft.git --recurse-submodules
 cd snapcraft
 ```
 
@@ -105,7 +105,7 @@ To download the snap, find the relevant CI job run for the PR under review and l
 
 We'd love the help!
 
-- Submit pull requests against [snapcraft](https://github.com/snapcore/snapcraft/pulls)
+- Submit pull requests against [snapcraft](https://github.com/canonical/snapcraft/pulls)
 - Make sure to read the [contribution guide](CONTRIBUTING.md)
 - Find us under the snapcraft category of the forum https://forum.snapcraft.io
 - Discuss with us using IRC in #snapcraft on Freenode.

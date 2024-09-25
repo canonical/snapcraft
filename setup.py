@@ -35,7 +35,7 @@ def recursive_data_files(directory, install_directory):
 name = "snapcraft"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
-url = "https://github.com/snapcore/snapcraft"
+url = "https://github.com/canonical/snapcraft"
 license_ = "GPL v3"
 classifiers = [
     "Development Status :: 4 - Beta",
