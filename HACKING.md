@@ -98,8 +98,9 @@ tox run -e lint-codespell
 
 ## Evaluating pull requests
 
-Oftentimes all you want to do is see if a given pull request solves the issue you were having. To make this easier, the Travis CI setup for snapcraft _publishes_ the resulting snap that was built for x86-64 using `transfer.sh`.
-To download the snap, find the relevant CI job run for the PR under review and locate the "snap" stage, the URL to download from will be located at the end of logs for that job.
+Oftentimes all you want to do is see if a given pull request solves the issue you were having. To make this easier, a snap is published for ``amd64`` on a channel named ``latest/edge/pr-<PR number>`` where ``PR number`` is the number of the pull request.
+
+For feature branches, a snap is published for ``amd64`` on a channel named `latest/feature/<branch name>`.
 
 ## Reaching out
 
