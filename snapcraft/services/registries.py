@@ -31,7 +31,6 @@ _REGISTRY_SETS_TEMPLATE = textwrap.dedent(
     """\
     account-id: {account_id}
     name: {set_name}
-    # summary: {summary}
     # The revision for this registries set
     # revision: {revision}
     {views}
@@ -86,6 +85,14 @@ class Registries(Assertion):
         return self._store_client.list_registries(name=name)
 
     @override
+    def _build_assertion(self, assertion: models.EditableAssertion) -> models.Assertion:
+        return self._store_client.build_registries(registries=assertion)
+
+    @override
+    def _post_assertion(self, assertion_data: bytes) -> models.Assertion:
+        return self._store_client.post_registries(registries_data=assertion_data)
+
+    @override
     def _normalize_assertions(
         self, assertions: list[models.Assertion]
     ) -> tuple[list[str], list[list[Any]]]:
@@ -110,7 +117,6 @@ class Registries(Assertion):
                 {"views": assertion.marshal().get("views")}, default_flow_style=False
             ),
             body=dump_yaml({"body": assertion.body}, default_flow_style=False),
-            summary=assertion.summary,
             set_name=assertion.name,
             revision=assertion.revision,
         )
@@ -121,7 +127,6 @@ class Registries(Assertion):
             account_id=account_id,
             views=_REGISTRY_SETS_VIEWS_TEMPLATE,
             body=_REGISTRY_SETS_BODY_TEMPLATE,
-            summary="A brief summary of the registries set",
             set_name=name,
             revision=1,
         )

@@ -33,6 +33,7 @@ import yaml
 from craft_application.errors import CraftValidationError
 from craft_application.services import base
 from craft_application.util import safe_yaml_load
+from craft_store.errors import StoreServerError
 from typing_extensions import override
 
 from snapcraft import const, errors, models, store, utils
@@ -66,6 +67,24 @@ class Assertion(base.AppService):
           assertions are retrieved.
 
         :returns: A list of assertions.
+        """
+
+    @abc.abstractmethod
+    def _build_assertion(self, assertion: models.EditableAssertion) -> models.Assertion:
+        """Build an assertion from an editable assertion.
+
+        :param assertion: The editable assertion to build.
+
+        :returns: The built assertion.
+        """
+
+    @abc.abstractmethod
+    def _post_assertion(self, assertion_data: bytes) -> models.Assertion:
+        """Post an assertion to the store.
+
+        :param assertion_data: A signed assertion represented as bytes.
+
+        :returns: The published assertion.
         """
 
     @abc.abstractmethod
@@ -150,6 +169,7 @@ class Assertion(base.AppService):
 
         :returns: The edited assertion.
         """
+        craft_cli.emit.progress(f"Editing {self._assertion_name}.")
         while True:
             craft_cli.emit.debug(f"Using {self._editor_cmd} to edit file.")
             with craft_cli.emit.pause():
@@ -161,7 +181,10 @@ class Assertion(base.AppService):
                     data=data,
                     # filepath is only shown for pydantic errors and snapcraft should
                     # not expose the temp file name
-                    filepath=pathlib.Path(self._assertion_name.replace(" ", "-")),
+                    filepath=pathlib.Path(self._assertion_name),
+                )
+                craft_cli.emit.progress(
+                    f"Edited {self._assertion_name}.", permanent=True
                 )
                 return edited_assertion
             except (yaml.YAMLError, CraftValidationError) as err:
@@ -178,11 +201,13 @@ class Assertion(base.AppService):
 
         if assertions := self._get_assertions(name=name):
             yaml_data = self._generate_yaml_from_model(assertions[0])
+            craft_cli.emit.progress(
+                f"Retrieved {self._assertion_name} '{name}' from the store.",
+                permanent=True,
+            )
         else:
             craft_cli.emit.progress(
-                f"Creating a new {self._assertion_name} because no existing "
-                f"{self._assertion_name} named '{name}' was found for the "
-                "authenticated account.",
+                f"Could not find an existing {self._assertion_name} named '{name}'.",
                 permanent=True,
             )
             yaml_data = self._generate_yaml_from_template(
@@ -204,30 +229,85 @@ class Assertion(base.AppService):
         craft_cli.emit.trace(f"Removing temporary file '{filepath}'.")
         filepath.unlink()
 
-    def edit_assertion(self, *, name: str, account_id: str) -> None:
+    @staticmethod
+    def _sign_assertion(assertion: models.Assertion, key_name: str | None) -> bytes:
+        """Sign an assertion with `snap sign`.
+
+        :param assertion: The assertion to sign.
+        :param key_name: Name of the key to sign the assertion.
+
+        :returns: A signed assertion represented as bytes.
+        """
+        craft_cli.emit.progress("Signing assertion.")
+        cmdline = ["snap", "sign"]
+        if key_name:
+            cmdline += ["-k", key_name]
+
+        # snapd expects a json string where all scalars are strings
+        unsigned_assertion = json.dumps(assertion.marshal_scalars_as_strings())
+
+        with craft_cli.emit.pause():
+            snap_sign = subprocess.Popen(
+                cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE
+            )
+            signed_assertion, _ = snap_sign.communicate(
+                input=unsigned_assertion.encode()
+            )
+
+        if snap_sign.returncode != 0:
+            raise errors.SnapcraftAssertionError("failed to sign assertion")
+
+        craft_cli.emit.progress("Signed assertion.", permanent=True)
+        craft_cli.emit.trace(f"Signed assertion: {signed_assertion.decode()}")
+        return signed_assertion
+
+    def edit_assertion(
+        self, *, name: str, account_id: str, key_name: str | None = None
+    ) -> None:
         """Edit, sign and upload an assertion.
 
          If the assertion does not exist, a new assertion is created from a template.
 
         :param name: The name of the assertion to edit.
         :param account_id: The account ID associated with the registries set.
+        :param key_name: Name of the key to sign the assertion.
         """
         yaml_data = self._get_yaml_data(name=name, account_id=account_id)
         yaml_file = self._write_to_file(yaml_data)
         original_assertion = self._editable_assertion_class.unmarshal(
             safe_yaml_load(io.StringIO(yaml_data))
         )
-        edited_assertion = self._edit_yaml_file(yaml_file)
 
-        if edited_assertion == original_assertion:
-            craft_cli.emit.message("No changes made.")
+        try:
+            while True:
+                try:
+                    edited_assertion = self._edit_yaml_file(yaml_file)
+                    if edited_assertion == original_assertion:
+                        craft_cli.emit.message("No changes made.")
+                        break
+
+                    craft_cli.emit.progress(f"Building {self._assertion_name}")
+                    built_assertion = self._build_assertion(edited_assertion)
+                    craft_cli.emit.progress(
+                        f"Built {self._assertion_name}", permanent=True
+                    )
+
+                    signed_assertion = self._sign_assertion(built_assertion, key_name)
+                    self._post_assertion(signed_assertion)
+                    craft_cli.emit.message(
+                        f"Successfully edited {self._assertion_name} {name!r}."
+                    )
+                    break
+                except (
+                    StoreServerError,
+                    errors.SnapcraftAssertionError,
+                ) as assertion_error:
+                    craft_cli.emit.message(str(assertion_error))
+                    if not utils.confirm_with_user(
+                        f"Do you wish to amend the {self._assertion_name}?"
+                    ):
+                        raise errors.SnapcraftError(
+                            "operation aborted"
+                        ) from assertion_error
+        finally:
             self._remove_temp_file(yaml_file)
-            return
-
-        # TODO: build, sign, and push assertion (#5018)
-
-        self._remove_temp_file(yaml_file)
-        craft_cli.emit.message(f"Successfully edited {self._assertion_name} {name!r}.")
-        raise errors.FeatureNotImplemented(
-            f"Building, signing and uploading {self._assertion_name} is not implemented.",
-        )
