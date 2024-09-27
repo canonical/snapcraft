@@ -4,11 +4,14 @@ validation_set_file="$1"
 
 cat "$validation_set_file"
 
-# flip-flop between two valid revisions of `test-snapcraft-assertions` in the staging store: 1 and 2
-if grep -q "^  revision:.*1" "$validation_set_file"; then
-  (( revision=2 ))
-else
-  (( revision=1 ))
-fi
-
-sed -i "s/  revision:.*/  revision: $revision/g" "$validation_set_file"
+cat << EOF > $validation_set_file
+account-id: pv8nW1ZaULF7xXAkE3tiU3TdlOnYlGUr
+name: testset
+sequence: 1
+# The revision for this validation set
+# revision: 61
+snaps:
+- id: JtwEnisYi8Mmk51vNLZPSOwSOFLwGdhs
+  name: hello-world
+  presence: required
+EOF
