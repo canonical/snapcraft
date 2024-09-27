@@ -1,6 +1,6 @@
 # Docker images for `snapcraft`
 
-OCI-compliant container images and their sources are officially supported by
+OCI-compliant container images and their sources are officially supported by the
 https://github.com/canonical/snapcraft-rocks/ project.
 
 To build a snap with the docker container, you need to choose an image that
