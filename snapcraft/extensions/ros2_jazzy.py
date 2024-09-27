@@ -85,7 +85,7 @@ class ROS2JazzyExtension(Extension):
         }
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
         python_paths = [
             f"$SNAP/opt/ros/{self.ROS_DISTRO}/lib/python3.12/site-packages",
             "$SNAP/usr/lib/python3/dist-packages",
