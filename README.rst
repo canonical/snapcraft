@@ -1,3 +1,12 @@
+|Release| |Documentation| |test|
+
+.. |Release| image:: https://github.com/canonical/starbase/actions/workflows/release-publish.yaml/badge.svg?branch=main&event=push
+   :target: https://github.com/canonical/starbase/actions/workflows/release-publish.yaml
+.. |Documentation| image:: https://github.com/canonical/starbase/actions/workflows/docs.yaml/badge.svg?branch=main&event=push
+   :target: https://github.com/canonical/starbase/actions/workflows/docs.yaml
+.. |test| image:: https://github.com/canonical/starbase/actions/workflows/tests.yaml/badge.svg?branch=main&event=push
+   :target: https://github.com/canonical/starbase/actions/workflows/tests.yaml
+
 ********
 starbase
 ********
