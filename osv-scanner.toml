@@ -1,0 +1,4 @@
+[[IgnoredVulns]]
+id = "CVE-2024-35195"
+ignoreUntil = "2025-01-01T00:00:00Z"
+reason = "Needed for requests-unixsocket, which we're replacing with requests-unixsocket2"
