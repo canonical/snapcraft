@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - "feature/**"
+  # allow manual re-publishing as branches expire after 30 days
+  workflow_dispatch:
 
 jobs:
   publish:
