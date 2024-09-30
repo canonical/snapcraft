@@ -17,6 +17,7 @@
 """Assertion models."""
 
 import numbers
+from collections import abc
 from typing import Any, Literal
 
 import pydantic
@@ -41,10 +42,10 @@ def _to_string(data: Any) -> Any:
     if isinstance(data, str):
         return data
 
-    if isinstance(data, dict):
+    if isinstance(data, abc.Mapping):
         return {_to_string(key): _to_string(value) for key, value in data.items()}
 
-    if isinstance(data, list):
+    if isinstance(data, abc.Collection):
         return [_to_string(i) for i in data]
 
     if isinstance(data, (numbers.Number, bool)):
