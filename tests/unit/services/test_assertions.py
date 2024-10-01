@@ -71,19 +71,12 @@ def write_text(mocker, tmp_path, request):
 
 @pytest.fixture
 def fake_sign_assertion(mocker):
-    def _fake_sign(input: bytes):  # noqa: A002 (shadowing a python builtin)
-        return (
-            input + b"-signed",
-            None,
-        )
+    def _fake_sign(cmdline, input):
+        return input + b"-signed"
 
-    def _fake_subprocess_popen(*args, **kwargs):
-        mock_snap_sign = mock.Mock()
-        mock_snap_sign.communicate.side_effect = _fake_sign
-        mock_snap_sign.returncode = 0
-        return mock_snap_sign
-
-    return mocker.patch("subprocess.Popen", return_value=_fake_subprocess_popen())
+    mock_subprocess = mocker.patch("subprocess.check_output")
+    mock_subprocess.side_effect = _fake_sign
+    return mock_subprocess
 
 
 @pytest.fixture(autouse=True)

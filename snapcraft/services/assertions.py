@@ -246,16 +246,16 @@ class Assertion(base.AppService):
         # snapd expects a json string where all scalars are strings
         unsigned_assertion = json.dumps(assertion.marshal_scalars_as_strings())
 
-        with craft_cli.emit.pause():
-            snap_sign = subprocess.Popen(
-                cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE
-            )
-            signed_assertion, _ = snap_sign.communicate(
-                input=unsigned_assertion.encode()
-            )
-
-        if snap_sign.returncode != 0:
-            raise errors.SnapcraftAssertionError("failed to sign assertion")
+        try:
+            # pause the emitter for passphrase prompts
+            with craft_cli.emit.pause():
+                signed_assertion = subprocess.check_output(
+                    cmdline, input=unsigned_assertion.encode()
+                )
+        except subprocess.CalledProcessError as sign_error:
+            raise errors.SnapcraftAssertionError(
+                "Failed to sign assertion"
+            ) from sign_error
 
         craft_cli.emit.progress("Signed assertion.", permanent=True)
         craft_cli.emit.trace(f"Signed assertion: {signed_assertion.decode()}")
