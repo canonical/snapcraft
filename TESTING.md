@@ -40,14 +40,6 @@ These tests are in the `tests/integration` directory, with the `snapcraft.yamls`
 At any time, an integration test may fail and given the use of temporary directories it can be hard to inspect what went on. When working on a specific test case you can set the environment variable `SNAPCRAFT_TEST_KEEP_DATA_PATH` to a directory path for the sepecic test.
 This mechanism will only work when working with individual tests and will fail to run with a batch of them.
 
-### Slow tests
-
-Some tests take too long. This affects the pull requests because we have to wait for a long time, and they will make Travis CI timeout because we have only 50 minutes per suite in there. The solution is to tag these tests as slow, and don't run them in all pull requests. These tests will only be run in autopkgtests.
-
-To mark a test case as slow, set the class attribute `slow_test = True`.
-
-To run all the tests, including the slow ones, set the environment variable `SNAPCRAFT_SLOW_TESTS=1`.
-
 ### Snaps tests
 
 The snaps tests is a suite of high-level tests that try to simulate real-world scenarios of a user interacting with snapcraft. They cover the call to snapcraft to generate a snap file from the source files of a fully functional project, the installation of the resulting snap, and the execution of the binaries and services of this snap.
@@ -119,35 +111,6 @@ have to be executed on production, notify the store team before.
 We can currently run a minimal subset of snapcraft integration tests on macOS. They are run by travis, using a brew formula that builds the installer from the branch. Once the virtualization tool for Ubuntu on mac is finalized, the full suite can be executed.
 
 For manual exploratory testing, the team has one mac machine available.
-
-## Autopkgtests for the snapcraft deb
-
-Autopkgtests are tests for the project packaged as a deb. The unit tests are run during autopkgtests while the snapcraft deb is being built. Then the resulting deb is installed, and the integration and snaps suites are executed using the installed snapcraft.
-
-
-### How to run on Xenial
-
-The easiest way is to use a LXC container. From the root of the project, run:
-
-    sudo apt install autopkgtest
-    adt-run --unbuilt-tree . --apt-upgrade --- lxd ubuntu:xenial
-
-It's possible to select only one of the suites using `--testname`, for example:
-
-    adt-run --unbuilt-tree . --apt-upgrade --testname=integrationtests --- lxd ubuntu:xenial
-
-
-### How to run on Bionic
-
-The easiest way is to use a LXC container. From the root of the project, run:
-
-    sudo apt install autopkgtest
-    autopkgtest . -U -- lxd ubuntu:xenial
-
-It's possible to select only one of the suites using `--test-name`, for example:
-
-    autopkgtest . -U --test-name=integrationtests-spread -- lxd ubuntu:xenial
-
 
 ## Spread tests for the snapcraft snap
 

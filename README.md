@@ -1,5 +1,4 @@
 [![snapcraft](https://snapcraft.io/snapcraft/badge.svg)](https://snapcraft.io/snapcraft)
-[![Build Status][travis-image]][travis-url]
 [![Documentation Status](https://readthedocs.com/projects/canonical-snapcraft/badge/?version=latest)](https://canonical-snapcraft.readthedocs-hosted.com/en/latest/?badge=latest)
 [![Scheduled spread tests](https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml/badge.svg?branch=main)](https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml)
 [![Coverage Status][codecov-image]][codecov-url]
@@ -28,9 +27,6 @@ Learn about the latest features by following Snapcraft on
 
 We love contributors. Read the [hacking guide](HACKING.md) if you're interested in helping out.
 
-
-[travis-image]: https://travis-ci.org/canonical/snapcraft.svg?branch=master
-[travis-url]: https://travis-ci.org/canonical/snapcraft
 
 [codecov-image]: https://codecov.io/github/canonical/snapcraft/coverage.svg?branch=master
 [codecov-url]: https://codecov.io/github/canonical/snapcraft?branch=master
