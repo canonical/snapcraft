@@ -34,8 +34,6 @@ from . import channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
 from .onprem_client import ON_PREM_ENDPOINTS, OnPremClient
 
-_TESTING_ENV_PREFIXES = ["TRAVIS", "AUTOPKGTEST_TMP"]
-
 _POLL_DELAY = 1
 _HUMAN_STATUS = {
     "being_processed": "processing",
@@ -51,13 +49,7 @@ def build_user_agent(
     os_platform: utils.OSPlatform = utils.get_os_platform(),  # noqa: B008
 ):
     """Build Snapcraft's user agent."""
-    if any(
-        key.startswith(prefix) for prefix in _TESTING_ENV_PREFIXES for key in os.environ
-    ):
-        testing = " (testing) "
-    else:
-        testing = " "
-    return f"snapcraft/{version}{testing}{os_platform!s}"
+    return f"snapcraft/{version} {os_platform!s}"
 
 
 def use_candid() -> bool:
