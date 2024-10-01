@@ -2,11 +2,11 @@
 
 validation_set_file="$1"
 
-# flip-flop between two valid revisions of `test-snapcraft-assertions` in the staging store: 1 and 2
-if grep -q "^  revision:.*1" "$validation_set_file"; then
-  (( revision=2 ))
+# flip-flop between 'hello-world' being optional or required
+if grep -q "^  presence:.*optional" "$validation_set_file"; then
+  presence="required"
 else
-  (( revision=1 ))
+  presence="optional"
 fi
 
-sed -i "s/  revision:.*/  revision: $revision/g" "$validation_set_file"
+sed -i "s/  presence:.*/  presence: $presence/g" "$validation_set_file"
