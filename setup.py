@@ -121,7 +121,7 @@ install_requires = [
     "pyyaml",
     "raven",
     "requests-toolbelt",
-    "requests-unixsocket",
+    "requests-unixsocket2",
     "requests",
     # pin setuptools<66 (CRAFT-1598)
     "setuptools<66",
@@ -131,7 +131,6 @@ install_requires = [
     "toml",
     "tinydb",
     "typing-extensions",
-    "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
 ]
 
 try:
