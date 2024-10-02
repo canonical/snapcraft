@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from unittest.mock import ANY, Mock
+from unittest.mock import ANY, Mock, call
 
 import pytest
 from craft_application import launchpad
@@ -1019,9 +1019,13 @@ def test_monitor_build_error(mocker, emitter, snapcraft_yaml, base, fake_service
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_confirm")
-def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_services):
+@pytest.mark.parametrize("cleanup", [True, False])
+def test_monitor_build_interrupt(
+    cleanup, mock_confirm, mocker, emitter, snapcraft_yaml, base, fake_services
+):
     """Test the monitor_build cleanup when a keyboard interrupt occurs."""
+    # first prompt is for public upload, second is to cancel builds
+    mock_confirm.side_effect = [True, cleanup]
     mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -1043,6 +1047,10 @@ def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_ser
         "craft_application.services.remotebuild.RemoteBuildService.cleanup"
     )
 
+    mock_cancel_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.cancel_builds"
+    )
+
     app = application.create_app()
     app.services.remote_build._name = get_build_id(
         app.services.app.name, app.project.name, app.project_dir
@@ -1050,15 +1058,24 @@ def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_ser
     app.services.remote_build._is_setup = True
     app.services.remote_build.request.download_files_with_progress = Mock()
 
-    assert app.run() == 0
+    assert app.run() == os.EX_OK
 
     mock_start_builds.assert_called_once()
     mock_monitor_builds.assert_called_once()
     mock_fetch_logs.assert_not_called()
-    mock_cleanup.assert_called_once()
 
-    emitter.assert_progress("Cancelling builds.")
-    emitter.assert_progress("Cleaning up")
+    cancel_emitted = call("progress", "Cancelling builds.") in emitter.interactions
+    clean_emitted = call("progress", "Cleaning up.") in emitter.interactions
+    if cleanup:
+        mock_cancel_builds.assert_called_once()
+        assert cancel_emitted
+        mock_cleanup.assert_called_once()
+        assert clean_emitted
+    else:
+        mock_cancel_builds.assert_not_called()
+        assert not cancel_emitted
+        mock_cleanup.assert_not_called()
+        assert not clean_emitted
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
@@ -1091,7 +1108,7 @@ def test_monitor_build_timeout(mocker, emitter, snapcraft_yaml, base, fake_servi
         app.services.app.name, app.project.name, app.project_dir
     )
 
-    assert app.run() == 75
+    assert app.run() == os.EX_TEMPFAIL
 
     mock_start_builds.assert_called_once()
     mock_monitor_builds.assert_called_once()
