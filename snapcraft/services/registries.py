@@ -130,3 +130,7 @@ class Registries(Assertion):
             set_name=name,
             revision=1,
         )
+
+    @override
+    def _get_success_message(self, assertion: models.Assertion) -> str:
+        return f"Successfully created revision {assertion.revision!r} for {assertion.name!r}."

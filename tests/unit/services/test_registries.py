@@ -146,3 +146,11 @@ def test_generate_yaml_from_model(fake_registry_assertion, registries_service):
 
           """
     )
+
+
+def test_get_success_message(fake_registry_assertion, registries_service):
+    message = registries_service._get_success_message(
+        fake_registry_assertion(revision=10)
+    )
+
+    assert message == "Successfully created revision 10 for 'test-registry'."

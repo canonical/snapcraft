@@ -71,7 +71,7 @@ def write_text(mocker, tmp_path, request):
 
 @pytest.fixture
 def fake_sign_assertion(mocker):
-    def _fake_sign(cmdline, input):
+    def _fake_sign(cmdline, input):  # noqa: A002 (builtin-argument-shadowing)
         return input + b"-signed"
 
     mock_subprocess = mocker.patch("subprocess.check_output")
@@ -189,6 +189,12 @@ def fake_assertion_service(default_factory):
                 """
             )
 
+        @override
+        def _get_success_message(  # type: ignore[override]
+            self, assertion: FakeAssertion
+        ) -> str:
+            return "Success."
+
     return FakeAssertionService(app=APP_METADATA, services=default_factory)
 
 
@@ -269,7 +275,7 @@ def test_edit_assertions_changes_made(
 
     mock_post_assertion.assert_called_once_with(expected_assertion)
     emitter.assert_trace(f"Signed assertion: {expected_assertion.decode()}")
-    emitter.assert_message("Successfully edited fake assertion 'test-registry'.")
+    emitter.assert_message("Success.")
 
 
 @pytest.mark.parametrize(
@@ -338,7 +344,7 @@ def test_edit_assertions_build_assertion_error(
     ]
     assert mock_post_assertion.mock_calls == [mock.call(expected_assertion)]
     emitter.assert_trace(f"Signed assertion: {expected_assertion.decode()}")
-    emitter.assert_message("Successfully edited fake assertion 'test-registry'.")
+    emitter.assert_message("Success.")
     assert not (tmp_path / "assertion-file").exists()
 
 
@@ -383,7 +389,7 @@ def test_edit_assertions_sign_assertion_error(
         mock.call("Do you wish to amend the fake assertion?")
     ]
     assert mock_post_assertion.mock_calls == [mock.call(expected_assertion)]
-    emitter.assert_message("Successfully edited fake assertion 'test-registry'.")
+    emitter.assert_message("Success.")
     assert not (tmp_path / "assertion-file").exists()
 
 
@@ -433,7 +439,7 @@ def test_edit_assertions_post_assertion_error(
         mock.call(expected_second_assertion),
     ]
     emitter.assert_trace(f"Signed assertion: {expected_second_assertion.decode()}")
-    emitter.assert_message("Successfully edited fake assertion 'test-registry'.")
+    emitter.assert_message("Success.")
     assert not (tmp_path / "assertion-file").exists()
 
 

@@ -121,6 +121,15 @@ class Assertion(base.AppService):
         :returns: A multi-line yaml string.
         """
 
+    @abc.abstractmethod
+    def _get_success_message(self, assertion: models.Assertion) -> str:
+        """Create a message after an assertion has been successfully posted.
+
+        :param assertion: The published assertion.
+
+        :returns: The success message to log.
+        """
+
     def list_assertions(self, *, output_format: str, name: str | None = None) -> None:
         """List assertions from the store.
 
@@ -183,9 +192,7 @@ class Assertion(base.AppService):
                     # not expose the temp file name
                     filepath=pathlib.Path(self._assertion_name),
                 )
-                craft_cli.emit.progress(
-                    f"Edited {self._assertion_name}.", permanent=True
-                )
+                craft_cli.emit.progress(f"Edited {self._assertion_name}.")
                 return edited_assertion
             except (yaml.YAMLError, CraftValidationError) as err:
                 craft_cli.emit.message(f"{err!s}")
@@ -203,12 +210,10 @@ class Assertion(base.AppService):
             yaml_data = self._generate_yaml_from_model(assertions[0])
             craft_cli.emit.progress(
                 f"Retrieved {self._assertion_name} '{name}' from the store.",
-                permanent=True,
             )
         else:
             craft_cli.emit.progress(
                 f"Could not find an existing {self._assertion_name} named '{name}'.",
-                permanent=True,
             )
             yaml_data = self._generate_yaml_from_template(
                 name=name, account_id=account_id
@@ -257,7 +262,7 @@ class Assertion(base.AppService):
                 "Failed to sign assertion"
             ) from sign_error
 
-        craft_cli.emit.progress("Signed assertion.", permanent=True)
+        craft_cli.emit.progress("Signed assertion.")
         craft_cli.emit.trace(f"Signed assertion: {signed_assertion.decode()}")
         return signed_assertion
 
@@ -286,16 +291,14 @@ class Assertion(base.AppService):
                         craft_cli.emit.message("No changes made.")
                         break
 
-                    craft_cli.emit.progress(f"Building {self._assertion_name}")
+                    craft_cli.emit.progress(f"Building {self._assertion_name}.")
                     built_assertion = self._build_assertion(edited_assertion)
-                    craft_cli.emit.progress(
-                        f"Built {self._assertion_name}", permanent=True
-                    )
+                    craft_cli.emit.progress(f"Built {self._assertion_name}.")
 
                     signed_assertion = self._sign_assertion(built_assertion, key_name)
-                    self._post_assertion(signed_assertion)
+                    published_assertion = self._post_assertion(signed_assertion)
                     craft_cli.emit.message(
-                        f"Successfully edited {self._assertion_name} {name!r}."
+                        self._get_success_message(published_assertion)
                     )
                     break
                 except (
