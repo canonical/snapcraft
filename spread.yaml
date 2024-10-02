@@ -121,51 +121,6 @@ backends:
           username: root
           password: ubuntu
 
-  autopkgtest:
-    type: adhoc
-    allocate: |
-      echo "Allocating ad-hoc $SPREAD_SYSTEM"
-      if [ -z "${ADT_ARTIFACTS:-}" ]; then
-        FATAL "adhoc only works inside autopkgtest"
-        exit 1
-      fi
-      echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/99-spread-users
-      ADDRESS localhost:22
-    discard: echo "Discarding ad-hoc $SPREAD_SYSTEM"
-    systems:
-      # Focal
-      - ubuntu-20.04-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-20.04-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-20.04-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-20.04-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-20.04-arm64:
-          username: ubuntu
-          password: ubuntu
-      # Jammy
-      - ubuntu-22.04-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-22.04-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-22.04-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-22.04-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-22.04-arm64:
-          username: ubuntu
-          password: ubuntu
-
 exclude: [snaps-cache/]
 
 prepare: |
@@ -342,14 +297,12 @@ suites:
    - ubuntu-20.04-64
    - ubuntu-22.04-64
    kill-timeout: 180m
-   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 90  # Run this test relatively early since fetching images can take time
  tests/spread/providers/legacy/:
    summary: tests of snapcraft using build providers
    systems:
    - ubuntu-20.04-64
    kill-timeout: 180m
-   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 90  # Run this test relatively early since fetching images can take time
 
  # Plugin-specific suites
