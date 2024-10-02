@@ -53,7 +53,7 @@ pytz==2023.3
 pyxdg==0.28
 PyYAML==6.0.2
 raven==6.10.0
-requests==2.30.0
+requests==2.32.3
 requests-toolbelt==1.0.0
 requests-unixsocket2==0.4.2
 SecretStorage==3.3.3
