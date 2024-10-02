@@ -53,7 +53,6 @@ def test_list_registries(mocker, mock_list_assertions, output_format, name):
 @pytest.mark.parametrize("name", [None, "test"])
 def test_list_registries_default_format(mocker, mock_list_assertions, name):
     """Default format is 'table'."""
-    """Test `snapcraft list-registries`."""
     cmd = ["snapcraft", "list-registries"]
     if name:
         cmd.extend(["--name", name])
@@ -65,15 +64,18 @@ def test_list_registries_default_format(mocker, mock_list_assertions, name):
     mock_list_assertions.assert_called_once_with(name=name, output_format="table")
 
 
+@pytest.mark.parametrize("key_name", [None, "test-key"])
 @pytest.mark.usefixtures("memory_keyring")
-def test_edit_registries(mocker, mock_edit_assertion):
+def test_edit_registries(key_name, mocker, mock_edit_assertion):
     """Test `snapcraft edit-registries`."""
     cmd = ["snapcraft", "edit-registries", "test-account-id", "test-name"]
+    if key_name:
+        cmd.extend(["--key-name", key_name])
     mocker.patch.object(sys, "argv", cmd)
 
     app = application.create_app()
     app.run()
 
     mock_edit_assertion.assert_called_once_with(
-        name="test-name", account_id="test-account-id"
+        name="test-name", account_id="test-account-id", key_name=key_name
     )

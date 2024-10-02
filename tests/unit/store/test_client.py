@@ -17,7 +17,7 @@
 import json
 import textwrap
 import time
-from unittest.mock import ANY, call
+from unittest.mock import ANY, Mock, call
 
 import craft_store
 import pytest
@@ -180,7 +180,7 @@ def list_registries_payload():
                     "account-id": "test-account-id",
                     "authority-id": "test-authority-id",
                     "body-length": "92",
-                    "name": "test-registry",
+                    "name": "test-registries",
                     "revision": "9",
                     "sign-key-sha3-384": "test-sign-key",
                     "timestamp": "2024-01-01T10:20:30Z",
@@ -200,6 +200,62 @@ def list_registries_payload():
                 "body": '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        "values": "any"\n      }\n    }\n  }\n}',
             },
         ],
+    }
+
+
+@pytest.fixture
+def build_registries_payload():
+    return {
+        "account_id": "test-account-id",
+        "authority_id": "test-authority-id",
+        "name": "test-registries",
+        "revision": "10",
+        "views": {
+            "wifi-setup": {
+                "rules": [
+                    {
+                        "request": "ssids",
+                        "storage": "wifi.ssids",
+                        "access": "read-write",
+                    }
+                ]
+            }
+        },
+        "body": '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        "values": "any"\n      }\n    }\n  }\n}',
+        "type": "registry",
+        "timestamp": "2024-01-01T10:20:30Z",
+    }
+
+
+@pytest.fixture
+def post_registries_payload():
+    return {
+        "assertions": [
+            {
+                "headers": {
+                    "account-id": "test-account-id",
+                    "authority-id": "test-authority-id",
+                    "body-length": "92",
+                    "name": "test-registries",
+                    "revision": "10",
+                    "sign-key-sha3-384": "test-key",
+                    "timestamp": "2024-01-01T10:20:30Z",
+                    "type": "registry",
+                    "views": {
+                        "wifi-setup": {
+                            "rules": [
+                                {
+                                    "access": "read",
+                                    "request": "ssids",
+                                    "storage": "wifi.ssids",
+                                }
+                            ]
+                        }
+                    },
+                },
+                "body": '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        "values": "any"\n      }\n    }\n  }\n}',
+            }
+        ]
     }
 
 
@@ -1067,7 +1123,7 @@ def test_list_revisions(fake_client, list_revisions_payload):
 
 @pytest.mark.parametrize("name", [None, "test-registry"])
 def test_list_registries(name, fake_client, list_registries_payload, check):
-    """Test the registries endpoint."""
+    """Test the list registries endpoint."""
     fake_client.request.return_value = FakeResponse(
         status_code=200, content=json.dumps(list_registries_payload).encode()
     )
@@ -1098,7 +1154,7 @@ def test_list_registries(name, fake_client, list_registries_payload, check):
 
 
 def test_list_registries_empty(fake_client, check):
-    """Test the registries endpoint with no registries returned."""
+    """Test the list registries endpoint with no registries returned."""
     fake_client.request.return_value = FakeResponse(
         status_code=200, content=json.dumps({"assertions": []}).encode()
     )
@@ -1118,6 +1174,140 @@ def test_list_registries_empty(fake_client, check):
                 },
             )
         ],
+    )
+
+
+def test_list_registries_unmarshal_error(fake_client, list_registries_payload):
+    """Raise an error if the response cannot be unmarshalled."""
+    list_registries_payload["assertions"][0]["headers"].pop("name")
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(list_registries_payload).encode()
+    )
+
+    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+        client.StoreClientCLI().list_registries()
+
+    assert str(raised.value) == "Received invalid registries set from the store"
+    assert raised.value.details == (
+        "Bad registries set content:\n"
+        "- field 'name' required in top-level configuration"
+    )
+
+
+####################
+# Build Registries #
+####################
+
+
+def test_build_registries(fake_client, build_registries_payload):
+    """Test the build registries endpoint."""
+    mock_registries = Mock(spec=models.RegistryAssertion)
+    expected_registries = models.RegistryAssertion(**build_registries_payload)
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(build_registries_payload).encode()
+    )
+
+    registries_set = client.StoreClientCLI().build_registries(
+        registries=mock_registries
+    )
+
+    assert registries_set == expected_registries
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/api/v2/registries/build-assertion",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=mock_registries.marshal(),
+        )
+    ]
+
+
+def test_build_registries_unmarshal_error(fake_client, build_registries_payload):
+    """Raise an error if the response cannot be unmarshalled."""
+    mock_registries = Mock(spec=models.RegistryAssertion)
+    build_registries_payload.pop("name")
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(build_registries_payload).encode()
+    )
+
+    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+        client.StoreClientCLI().build_registries(registries=mock_registries)
+
+    assert str(raised.value) == "Received invalid registries set from the store"
+    assert raised.value.details == (
+        "Bad registries set content:\n"
+        "- field 'name' required in top-level configuration"
+    )
+
+
+###################
+# Post Registries #
+###################
+
+
+def test_post_registries(fake_client, post_registries_payload):
+    """Test the post registries endpoint."""
+    expected_registries = models.RegistryAssertion(
+        **post_registries_payload["assertions"][0]["headers"],
+        body=post_registries_payload["assertions"][0]["body"],
+    )
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(post_registries_payload).encode()
+    )
+
+    registries_set = client.StoreClientCLI().post_registries(
+        registries_data=b"test-data"
+    )
+
+    assert registries_set == expected_registries
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/api/v2/registries",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/x.ubuntu.assertion",
+            },
+            data=b"test-data",
+        )
+    ]
+
+
+@pytest.mark.parametrize("num_assertions", [0, 2])
+def test_post_registries_wrong_payload_error(
+    num_assertions, fake_client, post_registries_payload
+):
+    """Error if the wrong number of assertions are returned."""
+    post_registries_payload["assertions"] = (
+        post_registries_payload["assertions"] * num_assertions
+    )
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(post_registries_payload).encode()
+    )
+
+    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+        client.StoreClientCLI().post_registries(registries_data=b"test-data")
+
+    assert str(raised.value) == "Received invalid registries set from the store"
+
+
+def test_post_registries_unmarshal_error(fake_client, post_registries_payload):
+    """Raise an error if the response cannot be unmarshalled."""
+    post_registries_payload["assertions"][0]["headers"].pop("name")
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(post_registries_payload).encode()
+    )
+
+    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+        client.StoreClientCLI().post_registries(registries_data=b"test-data")
+
+    assert str(raised.value) == "Received invalid registries set from the store"
+    assert raised.value.details == (
+        "Bad registries set content:\n"
+        "- field 'name' required in top-level configuration"
     )
 
 

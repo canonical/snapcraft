@@ -17,7 +17,42 @@
 
 """Tests for Assertion models."""
 
+import pytest
+
 from snapcraft.models import EditableRegistryAssertion, Registry, RegistryAssertion
+from snapcraft.models.assertions import cast_dict_scalars_to_strings
+
+
+@pytest.mark.parametrize(
+    ("input_dict", "expected_dict"),
+    [
+        pytest.param({}, {}, id="empty"),
+        pytest.param(
+            {False: False, True: True},
+            {"False": "False", "True": "True"},
+            id="boolean values",
+        ),
+        pytest.param(
+            {0: 0, None: None, "dict": {}, "list": [], "str": ""},
+            ({"0": "0", None: None, "dict": {}, "list": [], "str": ""}),
+            id="none-like values",
+        ),
+        pytest.param(
+            {10: 10, 20.0: 20.0, "30": "30", True: True},
+            {"10": "10", "20.0": "20.0", "30": "30", "True": "True"},
+            id="scalar values",
+        ),
+        pytest.param(
+            {"foo": {"bar": [1, 2.0], "baz": {"qux": True}}},
+            {"foo": {"bar": ["1", "2.0"], "baz": {"qux": "True"}}},
+            id="nested data structures",
+        ),
+    ],
+)
+def test_cast_dict_scalars_to_strings(input_dict, expected_dict):
+    actual = cast_dict_scalars_to_strings(input_dict)
+
+    assert actual == expected_dict
 
 
 def test_registry_defaults(check):
@@ -73,9 +108,32 @@ def test_editable_registry_assertion_defaults(check):
         }
     )
 
-    check.is_none(assertion.summary)
     check.equal(assertion.revision, 0)
     check.is_none(assertion.body)
+
+
+def test_editable_registry_assertion_marshal_as_str():
+    """Cast all scalars to string when marshalling."""
+    assertion = EditableRegistryAssertion.unmarshal(
+        {
+            "account_id": "test-account-id",
+            "name": "test-registry",
+            "revision": 10,
+            "views": {
+                "wifi-setup": {
+                    "rules": [
+                        {
+                            "storage": "wifi.ssids",
+                        }
+                    ]
+                }
+            },
+        }
+    )
+
+    assertion_dict = assertion.marshal_scalars_as_strings()
+
+    assert assertion_dict["revision"] == "10"
 
 
 def test_registry_assertion_defaults(check):
@@ -104,5 +162,31 @@ def test_registry_assertion_defaults(check):
     check.is_none(assertion.body)
     check.is_none(assertion.body_length)
     check.is_none(assertion.sign_key_sha3_384)
-    check.is_none(assertion.summary)
     check.equal(assertion.revision, 0)
+
+
+def test_registry_assertion_marshal_as_str():
+    """Cast all scalars to strings when marshalling."""
+    assertion = RegistryAssertion.unmarshal(
+        {
+            "account_id": "test-account-id",
+            "authority_id": "test-authority-id",
+            "name": "test-registry",
+            "revision": 10,
+            "timestamp": "2024-01-01T10:20:30Z",
+            "type": "registry",
+            "views": {
+                "wifi-setup": {
+                    "rules": [
+                        {
+                            "storage": "wifi.ssids",
+                        }
+                    ]
+                }
+            },
+        }
+    )
+
+    assertion_dict = assertion.marshal_scalars_as_strings()
+
+    assert assertion_dict["revision"] == "10"
