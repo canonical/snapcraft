@@ -162,6 +162,124 @@ class SnapInjectionTest(unit.TestCase):
             ),
         )
 
+    def test_snapcraft_installed_on_host_aliased_from_store(self):
+        self.fake_snapd.snaps_result = [
+            {
+                "name": "snapd",
+                "confinement": "strict",
+                "id": "2kkitQ",
+                "channel": "edge",
+                "revision": "1",
+                "tracking-channel": "latest/edge",
+            },
+            {
+                "name": "core18",
+                "confinement": "strict",
+                "id": "2kkibb",
+                "channel": "stable",
+                "revision": "123",
+                "tracking-channel": "latest/beta",
+            },
+            {
+                "name": "snapcraft_alias",
+                "confinement": "classic",
+                "id": "3lljuR",
+                "channel": "edge",
+                "revision": "345",
+                "tracking-channel": "latest/candidate",
+            },
+        ]
+        self.get_assertion_mock.side_effect = [
+            b"fake-assertion-account-store",
+            b"fake-assertion-declaration-snapd",
+            b"fake-assertion-revision-snapd-1",
+            b"fake-assertion-account-store",
+            b"fake-assertion-declaration-core18",
+            b"fake-assertion-revision-core18-123",
+            b"fake-assertion-account-store",
+            b"fake-assertion-declaration-snapcraft",
+            b"fake-assertion-revision-snapcraft-345",
+        ]
+
+        snap_injector = SnapInjector(
+            registry_filepath=self.registry_filepath,
+            runner=self.provider._run,
+            file_pusher=self.provider._push_file,
+        )
+        snap_injector.add("snapd")
+        snap_injector.add("core18")
+        snap_injector.add("snapcraft_alias")
+        snap_injector.apply()
+
+        get_assertion_calls = [
+            call(
+                [
+                    "account-key",
+                    "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
+                ]
+            ),
+            call(["snap-declaration", "snap-name=snapd"]),
+            call(["snap-revision", "snap-revision=1", "snap-id=2kkitQ"]),
+            call(
+                [
+                    "account-key",
+                    "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
+                ]
+            ),
+            call(["snap-declaration", "snap-name=core18"]),
+            call(["snap-revision", "snap-revision=123", "snap-id=2kkibb"]),
+            call(
+                [
+                    "account-key",
+                    "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
+                ]
+            ),
+            call(["snap-declaration", "snap-name=snapcraft"]),
+            call(["snap-revision", "snap-revision=345", "snap-id=3lljuR"]),
+        ]
+        self.get_assertion_mock.assert_has_calls(get_assertion_calls)
+        self.provider.run_mock.assert_has_calls(
+            [
+                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
+                call(["snap", "set", "system", ANY]),
+                call(["snap", "watch", "--last=auto-refresh?"]),
+                call(["snap", "ack", "/var/tmp/snapd.assert"]),
+                call(["snap", "install", "/var/tmp/snapd.snap"]),
+                call(["snap", "switch", "snapd", "--channel", "latest/edge"]),
+                call(["snap", "ack", "/var/tmp/core18.assert"]),
+                call(["snap", "install", "/var/tmp/core18.snap"]),
+                call(["snap", "switch", "core18", "--channel", "latest/beta"]),
+                call(["snap", "ack", "/var/tmp/snapcraft_alias.assert"]),
+                call(["snap", "install", "--classic", "/var/tmp/snapcraft_alias.snap"]),
+                call(["snap", "switch", "snapcraft", "--channel", "latest/candidate"]),
+            ]
+        )
+        self.provider.push_file_mock.assert_has_calls(
+            [
+                call(source=ANY, destination="/var/tmp/snapd.snap"),
+                call(source=ANY, destination="/var/tmp/snapd.assert"),
+                call(source=ANY, destination="/var/tmp/core18.snap"),
+                call(source=ANY, destination="/var/tmp/core18.assert"),
+                call(source=ANY, destination="/var/tmp/snapcraft_alias.snap"),
+                call(source=ANY, destination="/var/tmp/snapcraft_alias.assert"),
+            ]
+        )
+        self.assertThat(
+            self.registry_filepath,
+            FileContains(
+                dedent(
+                    """\
+                    core18:
+                    - revision: '123'
+                    snapcraft:
+                    - revision: '345'
+                    snapd:
+                    - revision: '1'
+                    """
+                )
+            ),
+        )
+
     def test_snapcraft_installed_on_host_from_store_but_injection_disabled(self):
         self.useFixture(fixture_setup.FakeStore())
 

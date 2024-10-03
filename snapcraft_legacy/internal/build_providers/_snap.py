@@ -170,11 +170,7 @@ class _SnapManager:
 
             if not snap_revision.startswith("x") and snap_channel:
                 switch_cmd = [
-                    "snap",
-                    "switch",
-                    self.snap_instance_name,
-                    "--channel",
-                    snap_channel,
+                    "snap", "switch", self.snap_name, "--channel", snap_channel
                 ]
 
             if snap_revision.startswith("x"):
