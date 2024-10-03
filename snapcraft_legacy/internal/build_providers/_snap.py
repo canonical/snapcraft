@@ -58,9 +58,10 @@ class _SnapManager:
         latest_revision: Optional[str],
         inject_from_host: bool = True
     ) -> None:
-        self.snap_name = snap_name
-        # the local snap name may have a suffix if it was installed with `--name`
-        self.snap_store_name = snap_name.split("_")[0]
+        # name of the snap instance, which may have an alias
+        self.snap_instance_name = snap_name
+        # name of the snap (no alias)
+        self.snap_name = snap_name.split("_")[0]
         self._remote_snap_dir = remote_snap_dir
         self._inject_from_host = inject_from_host
 
@@ -74,7 +75,7 @@ class _SnapManager:
 
     def _get_snap_repo(self):
         if self.__repo is None:
-            self.__repo = repo.snaps.SnapPackage(self.snap_name)
+            self.__repo = repo.snaps.SnapPackage(self.snap_instance_name)
         return self.__repo
 
     def get_op(self) -> _SnapOp:
@@ -125,7 +126,7 @@ class _SnapManager:
             # This is a programmatic error
             raise RuntimeError(
                 "Unhandled scenario for {!r} (host installed: {}, latest_revision {})".format(
-                    self.snap_name, is_installed, self._latest_revision
+                    self.snap_instance_name, is_installed, self._latest_revision
                 )
             )
 
@@ -136,9 +137,9 @@ class _SnapManager:
         # TODO not being able to lock down on a snap revision can lead to races.
         host_snap_repo = self._get_snap_repo()
         with tempfile.TemporaryDirectory() as temp_dir:
-            snap_file_path = os.path.join(temp_dir, "{}.snap".format(self.snap_name))
+            snap_file_path = os.path.join(temp_dir, "{}.snap".format(self.snap_instance_name))
             assertion_file_path = os.path.join(
-                temp_dir, "{}.assert".format(self.snap_name)
+                temp_dir, "{}.assert".format(self.snap_instance_name)
             )
             host_snap_repo.local_download(
                 snap_path=snap_file_path, assertion_path=assertion_file_path
@@ -171,7 +172,7 @@ class _SnapManager:
                 switch_cmd = [
                     "snap",
                     "switch",
-                    self.snap_name,
+                    self.snap_instance_name,
                     "--channel",
                     snap_channel,
                 ]
@@ -198,9 +199,9 @@ class _SnapManager:
 
         elif op == _SnapOp.INSTALL or op == _SnapOp.REFRESH:
             install_cmd = ["snap", op.name.lower()]
-            snap_channel = _get_snap_channel(self.snap_store_name)
+            snap_channel = _get_snap_channel(self.snap_name)
 
-            store_snap_info = storeapi.SnapAPI().get_info(self.snap_store_name)
+            store_snap_info = storeapi.SnapAPI().get_info(self.snap_name)
             snap_channel_map = store_snap_info.get_channel_mapping(
                 risk=snap_channel.risk, track=snap_channel.track
             )
@@ -208,7 +209,7 @@ class _SnapManager:
             if snap_channel_map.confinement == "classic":
                 install_cmd.append("--classic")
             install_cmd.extend(["--channel", snap_channel_map.channel_details.name])
-            install_cmd.append(self.snap_store_name)
+            install_cmd.append(self.snap_name)
 
         self.__install_cmd = install_cmd
         self.__switch_cmd = switch_cmd
@@ -224,7 +225,7 @@ class _SnapManager:
             # Shouldn't happen.
             raise RuntimeError(
                 "Unhandled scenario for {!r} (revision {})".format(
-                    self.snap_name, self.__revision
+                    self.snap_instance_name, self.__revision
                 )
             )
 
@@ -238,7 +239,7 @@ class _SnapManager:
         if self.__install_cmd is None:
             raise RuntimeError(
                 "Unhandled scenario for {!r} (install_cmd {})".format(
-                    self.snap_name, self.__install_cmd
+                    self.snap_instance_name, self.__install_cmd
                 )
             )
 
@@ -259,7 +260,7 @@ class _SnapManager:
         if self.__assertion_ack_cmd is None:
             raise RuntimeError(
                 "Unhandled scenario for {!r} (assertion_ack_cmd {})".format(
-                    self.snap_name, self.__assertion_ack_cmd
+                    self.snap_instance_name, self.__assertion_ack_cmd
                 )
             )
 
@@ -379,7 +380,7 @@ class SnapInjector:
             return
 
         # Allow using snapd from the snapd snap to leverage newer snapd features.
-        if any(s.snap_name == "snapd" for s in self._snaps):
+        if any(s.snap_instance_name == "snapd" for s in self._snaps):
             self._enable_snapd_snap()
 
         # Disable refreshes so they do not interfere with installation ops.
@@ -396,6 +397,6 @@ class SnapInjector:
             self._runner(snap.get_snap_install_cmd())
             if snap.get_channel_switch_cmd() is not None:
                 self._runner(snap.get_channel_switch_cmd())
-            self._record_revision(snap.snap_store_name, snap.get_revision())
+            self._record_revision(snap.snap_name, snap.get_revision())
 
         _save_registry(self._registry_data, self._registry_filepath)
