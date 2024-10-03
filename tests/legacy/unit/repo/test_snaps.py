@@ -348,6 +348,48 @@ class SnapPackageLifecycleTest(unit.TestCase):
             ]
         )
 
+    def test_download_from_host_alias(self):
+        """Download an aliased snap from the host."""
+        fake_get_assertion = fixtures.MockPatch(
+            "snapcraft_legacy.internal.repo.snaps.get_assertion",
+            return_value=b"foo-assert",
+        )
+        self.useFixture(fake_get_assertion)
+
+        self.fake_snapd.snaps_result = [
+            {
+                "id": "fake-snap-id",
+                "name": "fake-snap_alias",
+                "channel": "stable",
+                "revision": "10",
+            }
+        ]
+
+        snap_pkg = snaps.SnapPackage("fake-snap_alias/strict/stable")
+        snap_pkg.local_download(
+            snap_path="fake-snap.snap", assertion_path="fake-snap.assert"
+        )
+
+        self.assertThat("fake-snap.snap", FileExists())
+        self.assertThat(
+            "fake-snap.assert", FileContains("foo-assert\nfoo-assert\nfoo-assert\n")
+        )
+        fake_get_assertion.mock.assert_has_calls(
+            [
+                mock.call(
+                    [
+                        "account-key",
+                        "public-key-sha3-384=BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul",
+                    ]
+                ),
+                # uses the non-aliased name
+                mock.call(["snap-declaration", "snap-name=fake-snap"]),
+                mock.call(
+                    ["snap-revision", "snap-revision=10", "snap-id=fake-snap-id"]
+                ),
+            ]
+        )
+
     def test_download_from_host_dangerous(self):
         fake_get_assertion = fixtures.MockPatch(
             "snapcraft_legacy.internal.repo.snaps.get_assertion",
