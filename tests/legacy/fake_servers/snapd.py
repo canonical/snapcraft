@@ -53,7 +53,6 @@ class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
 
     def _handle_snap_file(self, parsed_url):
         self.send_response(200)
-        self.send_header("Content-Length", len(parsed_url))
         self.send_header("Content-type", "text/plain")
         self.end_headers()
         self.wfile.write(parsed_url.encode())
