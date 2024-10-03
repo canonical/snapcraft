@@ -22,6 +22,7 @@ from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
 from .matter_sdk_plugin import MatterSdkPlugin
+from .poetry_plugin import PoetryPlugin
 from .python_plugin import PythonPlugin
 from .register import get_plugins, register
 
@@ -31,6 +32,7 @@ __all__ = [
     "FlutterPlugin",
     "MatterSdkPlugin",
     "KernelPlugin",
+    "PoetryPlugin",
     "PythonPlugin",
     "get_plugins",
     "register",
