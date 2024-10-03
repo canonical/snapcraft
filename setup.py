@@ -104,7 +104,7 @@ install_requires = [
     "craft-grammar>=2.0.1,<3.0.0",
     "craft-parts~=2.1",
     "craft-platforms~=0.1",
-    "craft-providers~=2.0",
+    "craft-providers>=2.0.3,<3.0.0",
     "craft-store>=3.0.2,<4.0.0",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "gnupg",
