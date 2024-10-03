@@ -26,8 +26,14 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_QT6_SDK_SNAP = {"core22": "kde-qt6-core22-sdk"}
-_KF6_SDK_SNAP = {"core22": "kf6-core22-sdk"}
+_QT6_SDK_SNAP = {
+    "core22": "kde-qt6-core22-sdk",
+    "core24": "kde-qt6-core24-sdk"
+    }
+_KF6_SDK_SNAP = {
+    "core22": "kf6-core22-sdk",
+    "core24": "kf6-core24-sdk"
+    }
 
 
 @dataclasses.dataclass
@@ -75,7 +81,7 @@ class KDENeon6(Extension):
     @staticmethod
     @overrides
     def get_supported_bases() -> Tuple[str, ...]:
-        return ("core22",)
+        return ("core22", "core24")
 
     @staticmethod
     @overrides
@@ -89,8 +95,11 @@ class KDENeon6(Extension):
 
     @overrides
     def get_app_snippet(self) -> Dict[str, Any]:
+        command_chain = ["snap/command-chain/desktop-launch"]
+        if self.yaml_data["base"] == "core24":
+            command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
         return {
-            "command-chain": ["snap/command-chain/desktop-launch6"],
+            "command-chain": commandchain,
             "plugs": [
                 "desktop",
                 "desktop-legacy",
@@ -110,6 +119,32 @@ class KDENeon6(Extension):
         base = self.yaml_data["base"]
         qt6_sdk_snap = _QT6_SDK_SNAP[base]
         kf6_sdk_snap = _KF6_SDK_SNAP[base]
+
+        match base:
+            case "core22":
+                gpu_plugs = {}
+                gpu_layouts = {
+                    "/usr/share/libdrm": {
+                        "bind": "$SNAP/kf6-core22/usr/share/libdrm"
+                    },
+                }
+            case "core24":
+                gpu_plugs = {
+                    "gpu-2404": {
+                        "interface": "content",
+                        "target": "$SNAP/gpu-2404",
+                        "default-provider": "mesa-2404",
+                    },
+                }
+                gpu_layouts = {
+                    "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
+                    "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+                    "/usr/share/X11/XErrorDB": {
+                        "symlink": "$SNAP/gpu-2404/X11/XErrorDB"
+                    },
+                }
+            case _:
+                raise AssertionError(f"Unsupported base: {base}")
 
         build_snaps: List[str] = []
         for part in self.yaml_data["parts"].values():
@@ -158,25 +193,20 @@ class KDENeon6(Extension):
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-common-themes",
                 },
-                "kde-gtk2-themes": {
+                "gtk-theme-breeze": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
-                    "default-provider": "qt-common-themes",
-                },
-                "kde-gtk3-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "qt-common-themes",
+                    "default-provider": "gtk-theme-breeze",
                 },
                 "gtk-3-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-common-themes",
                 },
-                "qt-icon-themes": {
+                "icon-theme-breeze": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
-                    "default-provider": "qt-common-themes",
+                    "default-provider": "icon-theme-breeze",
                 },
                 "icon-themes": {
                     "interface": "content",
@@ -204,6 +234,7 @@ class KDENeon6(Extension):
                     "default-provider": platform_kf6_snap,
                     "target": "$SNAP/kf6",
                 },
+                **gpu_plugs,
             },
             "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6"},
             "hooks": {
@@ -215,6 +246,7 @@ class KDENeon6(Extension):
             "layout": {
                 "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
                 "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+                **gpu_layouts,
             },
         }
 
@@ -317,6 +349,11 @@ class KDENeon6(Extension):
         # https://github.com/snapcore/snapcraft-desktop-integration
         source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
 
+        gpu_opts = {}
+        if self.yaml_data["base"] == "core24":
+            gpu_opts["make-parameters"] = ["GPU_WRAPPER=gpu-2404-wrapper"]
+
+
         if self.kde_snaps.kf6_builtin:
             return {
                 "kde-neon-6/sdk": {
@@ -338,6 +375,7 @@ class KDENeon6(Extension):
                         "libgl-dev",
                         "libglvnd-dev",
                     ],
+                    **gpu_opts,
                 },
             }
 
@@ -346,5 +384,6 @@ class KDENeon6(Extension):
                 "source": str(source),
                 "plugin": "make",
                 "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content_kf6}"],
+                **gpu_opts,
             },
         }
