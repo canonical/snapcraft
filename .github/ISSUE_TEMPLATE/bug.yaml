@@ -45,7 +45,7 @@ body:
         If possible, please paste your snapcraft.yaml contents. This
         will be automatically formatted into code, so no need for
         backticks.
-      render: shell
+      render: yaml
     validations:
       required: true
   - type: textarea

@@ -20,19 +20,16 @@ import os
 from craft_application import ProviderService
 from overrides import overrides
 
+from snapcraft.const import SNAPCRAFT_ENVIRONMENT_VARIABLES
+
 
 class Provider(ProviderService):
     """Snapcraft specialization of the Lifecycle Service."""
 
     @overrides
     def setup(self) -> None:
-        if build_info := os.getenv("SNAPCRAFT_BUILD_INFO"):
-            self.environment["SNAPCRAFT_BUILD_INFO"] = build_info
-        if image_info := os.getenv("SNAPCRAFT_IMAGE_INFO"):
-            self.environment["SNAPCRAFT_IMAGE_INFO"] = image_info
-        if experimental_extensions := os.getenv(
-            "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"
-        ):
-            self.environment["SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"] = (
-                experimental_extensions
-            )
+        """Add snapcraft environment variables to the build environment."""
+        super().setup()
+        for variable in SNAPCRAFT_ENVIRONMENT_VARIABLES:
+            if variable in os.environ:
+                self.environment[variable] = os.environ[variable]

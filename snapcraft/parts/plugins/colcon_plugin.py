@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -55,7 +55,7 @@ specific to the ROS distro. If not using the extension, set these in your
       - ROS_DISTRO: "humble"
 """
 
-from typing import Any, Dict, List, Set, cast
+from typing import Literal, cast
 
 from craft_parts import plugins
 from craft_parts.packages.snaps import _get_parsed_snap
@@ -64,38 +64,20 @@ from overrides import overrides
 from . import _ros
 
 
-class ColconPluginProperties(plugins.PluginProperties, plugins.PluginModel):
+class ColconPluginProperties(plugins.PluginProperties, frozen=True):
     """The part properties used by the Colcon plugin."""
 
-    colcon_ament_cmake_args: List[str] = []
-    colcon_catkin_cmake_args: List[str] = []
-    colcon_cmake_args: List[str] = []
-    colcon_packages: List[str] = []
-    colcon_packages_ignore: List[str] = []
-    colcon_ros_build_snaps: List[str] = []
+    plugin: Literal["colcon"] = "colcon"
+
+    colcon_ament_cmake_args: list[str] = []
+    colcon_catkin_cmake_args: list[str] = []
+    colcon_cmake_args: list[str] = []
+    colcon_packages: list[str] = []
+    colcon_packages_ignore: list[str] = []
+    colcon_ros_build_snaps: list[str] = []
 
     # part properties required by the plugin
-    source: str
-
-    @classmethod
-    @overrides
-    def unmarshal(cls, data: Dict[str, Any]) -> "ColconPluginProperties":
-        """Populate make properties from the part specification.
-
-        :param data: A dictionary containing part properties.
-
-        :return: The populated plugin properties data object.
-
-        :raise pydantic.ValidationError: If validation fails.
-        """
-
-        # plugin specific parameters have to be prefixed with the plugin name.
-        # However we'd like to avoid that for 'ros-build-snaps'.
-        # Marking it required allows us to circumvent the prefix requirement.
-        plugin_data = plugins.extract_plugin_properties(
-            data, plugin_name="colcon", required=["source"]
-        )
-        return cls(**plugin_data)
+    source: str  # type: ignore[reportGeneralTypeIssues]
 
 
 class ColconPlugin(_ros.RosPlugin):
@@ -104,7 +86,7 @@ class ColconPlugin(_ros.RosPlugin):
     properties_class = ColconPluginProperties
 
     @overrides
-    def get_build_packages(self) -> Set[str]:
+    def get_build_packages(self) -> set[str]:
         base = self._part_info.base
         build_packages = {"python3-colcon-common-extensions"}
         if base == "core22":
@@ -112,7 +94,7 @@ class ColconPlugin(_ros.RosPlugin):
         return super().get_build_packages() | build_packages
 
     @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    def get_build_environment(self) -> dict[str, str]:
         env = super().get_build_environment()
         env.update(
             {
@@ -123,7 +105,7 @@ class ColconPlugin(_ros.RosPlugin):
 
         return env
 
-    def _get_source_command(self, path: str) -> List[str]:
+    def _get_source_command(self, path: str) -> list[str]:
         return [
             f'if [ -f "{path}/opt/ros/${{ROS_DISTRO}}/local_setup.sh" ]; then',
             'AMENT_CURRENT_PREFIX="{wspath}" . "{wspath}/local_setup.sh"'.format(
@@ -138,7 +120,7 @@ class ColconPlugin(_ros.RosPlugin):
         ]
 
     @overrides
-    def _get_workspace_activation_commands(self) -> List[str]:
+    def _get_workspace_activation_commands(self) -> list[str]:
         """Return a list of commands source a ROS 2 workspace.
 
         The commands returned will be run before doing anything else.
@@ -176,7 +158,7 @@ class ColconPlugin(_ros.RosPlugin):
         return activation_commands
 
     @overrides
-    def _get_build_commands(self) -> List[str]:
+    def _get_build_commands(self) -> list[str]:
         options = cast(ColconPluginProperties, self._options)
 
         build_command = [

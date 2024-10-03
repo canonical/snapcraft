@@ -1,7 +1,7 @@
 alabaster==0.7.16
 Babel==2.11.0
 beautifulsoup4==4.11.1
-certifi==2023.7.22
+certifi==2024.7.4
 charset-normalizer==2.1.1
 colorama==0.4.6
 docutils==0.19
@@ -28,7 +28,7 @@ sphinxcontrib-applehelp==1.0.8
 sphinxcontrib-devhelp==1.0.6
 sphinxcontrib-htmlhelp==2.0.5
 sphinxcontrib-jsmath==1.0.1
-sphinxcontrib-qthelp==1.0.7
+sphinxcontrib-qthelp==1.0.8
 sphinxcontrib-serializinghtml==1.1.10
 tornado==6.4.1
-urllib3==1.26.19
+urllib3==1.26.20

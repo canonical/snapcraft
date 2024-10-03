@@ -393,22 +393,22 @@ def extra_project_params():
 
 @pytest.fixture()
 def default_project(extra_project_params):
-    from craft_application.models import SummaryStr, VersionStr
-
     from snapcraft.models.project import Project
 
     parts = extra_project_params.pop("parts", {})
 
-    return Project(
-        name="default",
-        version=VersionStr("1.0"),
-        summary=SummaryStr("default project"),
-        description="default project",
-        base="core24",
-        grade="devel",
-        parts=parts,
-        license="MIT",
-        **extra_project_params,
+    return Project.unmarshal(
+        {
+            "name": "default",
+            "version": "1.0",
+            "summary": "default project",
+            "description": "default project",
+            "base": "core24",
+            "grade": "devel",
+            "parts": parts,
+            "license": "MIT",
+            **extra_project_params,
+        }
     )
 
 
@@ -528,6 +528,50 @@ def remote_build_service(default_factory, mocker):
     service.lp = fake_lp
 
     return service
+
+
+@pytest.fixture()
+def registries_service(default_factory, mocker):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Registries
+
+    service = Registries(app=APP_METADATA, services=default_factory)
+    service._store_client = mocker.patch(
+        "snapcraft.store.StoreClientCLI", autospec=True
+    )
+
+    return service
+
+
+@pytest.fixture()
+def fake_registry_assertion():
+    """Returns a fake registry assertion with required fields."""
+    from snapcraft.models import RegistryAssertion
+
+    def _fake_registry_assertion(**kwargs) -> RegistryAssertion:
+        return RegistryAssertion.unmarshal(
+            {
+                "account_id": "test-account-id",
+                "authority_id": "test-authority-id",
+                "name": "test-registry",
+                "timestamp": "2024-01-01T10:20:30Z",
+                "type": "registry",
+                "views": {
+                    "wifi-setup": {
+                        "rules": [
+                            {
+                                "access": "read-write",
+                                "request": "ssids",
+                                "storage": "wifi.ssids",
+                            }
+                        ]
+                    }
+                },
+                **kwargs,
+            }
+        )
+
+    return _fake_registry_assertion
 
 
 @pytest.fixture()

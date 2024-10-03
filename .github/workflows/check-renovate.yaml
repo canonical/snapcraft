@@ -1,0 +1,40 @@
+name: Renovate check
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/check-renovate.yaml"
+      - ".github/renovate.json5"
+
+  # Allows triggering the workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      enable_ssh_access:
+        type: boolean
+        description: 'Enable ssh access'
+        required: false
+        default: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install renovate
+        run: npm install --global renovate
+      - name: Enable ssh access
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ inputs.enable_ssh_access }}
+        with:
+          limit-access-to-actor: true
+      - name: Check renovate config
+        run: renovate-config-validator .github/renovate.json5
+      - name: Renovate dry-run
+        run: renovate --dry-run --autodiscover
+        env:
+          RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RENOVATE_USE_BASE_BRANCH_CONFIG: ${{ github.ref }}

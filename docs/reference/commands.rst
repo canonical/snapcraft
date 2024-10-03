@@ -5,6 +5,8 @@ Snapcraft commands
 
 .. include:: commands/toc.rst
 
+.. _reference-lifecycle-commands:
+
 Lifecycle
 ---------
 Lifecycle commands can take an optional parameter ``<part-name>``. When a part
@@ -57,3 +59,8 @@ Store validation sets
 ---------------------
 
 .. include:: commands/store-validation-sets-commands.rst
+
+Store registries
+----------------
+
+.. include:: commands/store-registries-commands.rst

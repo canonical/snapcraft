@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import shutil
 import textwrap
 from pathlib import Path
@@ -397,18 +396,19 @@ class TestSetupAssets:
         )
 
         # icon file exists
-        Path("prime/snap/gui/icon.svg").is_file()
+        assert Path("prime/snap/gui/icon.svg").is_file()
 
-    def test_setup_assets_no_apps(self, desktop_file, yaml_data, new_dir):
+    def test_setup_assets_configure_icon_no_apps(
+        self, desktop_file, yaml_data, new_dir
+    ):
+        """Configure icon when no `apps` are defined."""
         desktop_file("prime/test.desktop")
-        Path("prime/usr/share/icons").mkdir(parents=True)
-        Path("prime/usr/share/icons/icon.svg").touch()
-        Path("snap/gui").mkdir()
+        Path("snap/gui").mkdir(parents=True)
+        Path("snap/gui/icon.svg").touch()
 
         # define project
         project = models.Project.unmarshal(yaml_data({"adopt-info": "part"}))
 
-        # setting up assets does not crash
         setup_assets(
             project,
             assets_dir=Path("snap"),
@@ -416,7 +416,8 @@ class TestSetupAssets:
             prime_dirs={None: Path("prime")},
         )
 
-        assert os.listdir("prime/meta/gui") == []
+        # icon file exists
+        assert Path("prime/snap/gui/icon.svg").is_file()
 
     def test_setup_assets_remote_icon(self, desktop_file, yaml_data, new_dir):
         # create primed tree (no icon)

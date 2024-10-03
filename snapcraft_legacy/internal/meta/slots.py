@@ -170,7 +170,7 @@ class ContentSlot(Slot):
 
         # Content directories may be nested under "source",
         # but they cannot be in both places according to snapd:
-        # https://github.com/snapcore/snapd/blob/master/interfaces/builtin/content.go#L81
+        # https://github.com/canonical/snapd/blob/6341e63d82dabb39a0a834fb956fa26dc06a2788/interfaces/builtin/content.go#L81
         if "source" in slot_dict:
             source_data = slot_dict["source"]
             slot.use_source_key = True

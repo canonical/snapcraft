@@ -34,11 +34,7 @@ from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import component_yaml, manifest, snap_yaml
-from snapcraft.utils import (
-    convert_architecture_deb_to_platform,
-    get_host_architecture,
-    process_version,
-)
+from snapcraft.utils import get_host_architecture, process_version
 
 from . import yaml_utils
 from .parts import PartsLifecycle, launch_shell
@@ -753,7 +749,7 @@ def _expand_environment(
         application_name="snapcraft",  # not used in environment expansion
         base=yaml_utils.get_base_from_yaml(snapcraft_yaml) or "",
         cache_dir=Path(),  # not used in environment expansion
-        arch=convert_architecture_deb_to_platform(target_arch),
+        arch=target_arch,
         parallel_build_count=parallel_build_count,
         project_name=snapcraft_yaml.get("name", ""),
         project_dirs=dirs,

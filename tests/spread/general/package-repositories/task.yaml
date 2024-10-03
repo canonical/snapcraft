@@ -30,12 +30,7 @@ execute: |
   cd "$SNAP"
 
   # Build what we have.
-  # We cannot use --use-lxd for autopkgtest so we resort to --destructive-mode there.
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-      snapcraft --use-lxd
-  else
-      snapcraft --destructive-mode
-  fi
+    snapcraft --use-lxd
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous

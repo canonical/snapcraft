@@ -121,51 +121,6 @@ backends:
           username: root
           password: ubuntu
 
-  autopkgtest:
-    type: adhoc
-    allocate: |
-      echo "Allocating ad-hoc $SPREAD_SYSTEM"
-      if [ -z "${ADT_ARTIFACTS:-}" ]; then
-        FATAL "adhoc only works inside autopkgtest"
-        exit 1
-      fi
-      echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/99-spread-users
-      ADDRESS localhost:22
-    discard: echo "Discarding ad-hoc $SPREAD_SYSTEM"
-    systems:
-      # Focal
-      - ubuntu-20.04-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-20.04-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-20.04-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-20.04-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-20.04-arm64:
-          username: ubuntu
-          password: ubuntu
-      # Jammy
-      - ubuntu-22.04-amd64:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-22.04-ppc64el:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-22.04-armhf:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-22.04-s390x:
-          username: ubuntu
-          password: ubuntu
-      - ubuntu-22.04-arm64:
-          username: ubuntu
-          password: ubuntu
-
 exclude: [snaps-cache/]
 
 prepare: |
@@ -321,10 +276,11 @@ suites:
      - ubuntu-20.04*
      - ubuntu-22.04*
 
- tests/spread/core-devel/:
-   summary: tests of devel base snaps
-   environment:
-     SNAPCRAFT_BUILD_ENVIRONMENT: ""
+# 'build-base: devel' fails due to an issue with the 24.10 buildd image (#4921)
+# tests/spread/core-devel/:
+#   summary: tests of devel base snaps
+#   environment:
+#     SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
  # General, core suite
  tests/spread/cross-compile/:
@@ -341,14 +297,12 @@ suites:
    - ubuntu-20.04-64
    - ubuntu-22.04-64
    kill-timeout: 180m
-   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 90  # Run this test relatively early since fetching images can take time
  tests/spread/providers/legacy/:
    summary: tests of snapcraft using build providers
    systems:
    - ubuntu-20.04-64
    kill-timeout: 180m
-   warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
    priority: 90  # Run this test relatively early since fetching images can take time
 
  # Plugin-specific suites
@@ -376,8 +330,24 @@ suites:
      sudo apt-get install git
      sudo apt-mark auto git
 
+ tests/spread/store/:
+   summary: tests of store-related snapcraft commands
+   manual: true
+   environment:
+     STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io
+     STORE_API_URL: https://api.staging.snapcraft.io
+     STORE_UPLOAD_URL: https://storage.staging.snapcraftcontent.com
+     UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com
+
+ docs/howto/code/:
+   summary: tests how-to guides from the docs
+   systems:
+   - ubuntu-24.04-64
+
+
 path: /snapcraft/
 include:
+  - docs/
   - tests/
   - requirements.txt
   - requirements-devel.txt

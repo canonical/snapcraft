@@ -20,6 +20,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+from craft_platforms import DebianArchitecture
 
 from snapcraft import commands, const
 
@@ -33,7 +34,7 @@ class CoreData:
     grade: str
 
 
-@pytest.fixture(params=const.CURRENT_BASES)
+@pytest.fixture(params=const.CURRENT_BASES - {"core22"})
 def valid_core_data(request) -> CoreData:
     """Fixture that provides valid base, build-base and grade values for each base."""
     # special handling for devel base
@@ -41,6 +42,71 @@ def valid_core_data(request) -> CoreData:
         return CoreData(base="core24", build_base="devel", grade="devel")
 
     return CoreData(base=request.param, build_base=request.param, grade="stable")
+
+
+@pytest.mark.usefixtures("fake_extension")
+def test_expand_extensions_simple_core22(new_dir, emitter):
+    """Expand an extension for a simple snapcraft.yaml file."""
+    with Path("snapcraft.yaml").open("w") as yaml_file:
+        print(
+            dedent(
+                """\
+            name: test-name
+            version: "0.1"
+            summary: testing extensions
+            description: expand a fake extension
+            base: core22
+            confinement: strict
+            grade: stable
+
+            apps:
+                app1:
+                    command: app1
+                    command-chain: [fake-command]
+                    extensions: [fake-extension]
+
+            parts:
+                part1:
+                    plugin: nil
+            """
+            ),
+            file=yaml_file,
+        )
+
+    cmd = commands.ExpandExtensionsCommand(None)
+    cmd.run(Namespace())
+    emitter.assert_message(
+        dedent(
+            f"""\
+        name: test-name
+        version: '0.1'
+        summary: testing extensions
+        description: expand a fake extension
+        base: core22
+        parts:
+          part1:
+            plugin: nil
+            after:
+            - fake-extension/fake-part
+          fake-extension/fake-part:
+            plugin: nil
+        confinement: strict
+        grade: stable
+        architectures:
+        - build-on:
+          - {DebianArchitecture.from_host()}
+          build-for:
+          - {DebianArchitecture.from_host()}
+        apps:
+          app1:
+            command: app1
+            plugs:
+            - fake-plug
+            command-chain:
+            - fake-command
+        """
+        )
+    )
 
 
 @pytest.mark.usefixtures("fake_extension")
@@ -84,22 +150,107 @@ def test_expand_extensions_simple(new_dir, emitter, valid_core_data):
         description: expand a fake extension
         base: {valid_core_data.base}
         build-base: {valid_core_data.build_base}
+        parts:
+          part1:
+            plugin: nil
+            after:
+            - fake-extension/fake-part
+          fake-extension/fake-part:
+            plugin: nil
         confinement: strict
         grade: {valid_core_data.grade}
         apps:
-            app1:
-                command: app1
-                command-chain:
-                - fake-command
-                plugs:
-                - fake-plug
-        parts:
-            part1:
+          app1:
+            command: app1
+            plugs:
+            - fake-plug
+            command-chain:
+            - fake-command
+        """
+        )
+    )
+
+
+@pytest.mark.usefixtures("fake_extension")
+def test_expand_extensions_complex_core22(new_dir, emitter, mocker):
+    """Expand an extension for a complex snapcraft.yaml file.
+
+    This includes parse-info, architectures, and advanced grammar.
+    """
+    # mock for advanced grammar parsing (i.e. `on amd64:`)
+    mocker.patch(
+        "snapcraft.commands.extensions.get_host_architecture",
+        return_value="amd64",
+    )
+    with Path("snapcraft.yaml").open("w") as yaml_file:
+        print(
+            dedent(
+                """\
+                name: test-name
+                version: "0.1"
+                summary: testing extensions
+                description: expand a fake extension
+                base: core22
+                confinement: strict
+                grade: stable
+                architectures: [amd64, arm64, armhf]
+
+                apps:
+                  app1:
+                    command: app1
+                    command-chain: [fake-command]
+                    extensions: [fake-extension]
+
+                parts:
+                  nil:
+                    plugin: nil
+                    parse-info:
+                      - usr/share/metainfo/app1.appdata.xml
+                    stage-packages:
+                      - mesa-opencl-icd
+                      - ocl-icd-libopencl1
+                      - on amd64:
+                        - intel-opencl-icd
+            """
+            ),
+            file=yaml_file,
+        )
+
+    cmd = commands.ExpandExtensionsCommand(None)
+    cmd.run(Namespace())
+    emitter.assert_message(
+        dedent(
+            f"""\
+            name: test-name
+            version: '0.1'
+            summary: testing extensions
+            description: expand a fake extension
+            base: core22
+            parts:
+              nil:
                 plugin: nil
+                stage-packages:
+                - mesa-opencl-icd
+                - ocl-icd-libopencl1
+                - intel-opencl-icd
                 after:
                 - fake-extension/fake-part
-            fake-extension/fake-part:
+              fake-extension/fake-part:
                 plugin: nil
+            confinement: strict
+            grade: stable
+            architectures:
+            - build-on:
+              - {DebianArchitecture.from_host()}
+              build-for:
+              - {DebianArchitecture.from_host()}
+            apps:
+              app1:
+                command: app1
+                plugs:
+                - fake-plug
+                command-chain:
+                - fake-command
         """
         )
     )
@@ -128,7 +279,7 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
                 build-base: {valid_core_data.build_base}
                 confinement: strict
                 grade: {valid_core_data.grade}
-                architectures: [amd64, arm64, armhf]
+                platforms: [amd64, arm64, armhf]
 
                 apps:
                   app1:
@@ -162,26 +313,26 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
             description: expand a fake extension
             base: {valid_core_data.base}
             build-base: {valid_core_data.build_base}
+            parts:
+              nil:
+                plugin: nil
+                stage-packages:
+                - mesa-opencl-icd
+                - ocl-icd-libopencl1
+                - intel-opencl-icd
+                after:
+                - fake-extension/fake-part
+              fake-extension/fake-part:
+                plugin: nil
             confinement: strict
             grade: {valid_core_data.grade}
             apps:
-                app1:
-                    command: app1
-                    command-chain:
-                    - fake-command
-                    plugs:
-                    - fake-plug
-            parts:
-                nil:
-                    plugin: nil
-                    stage-packages:
-                    - mesa-opencl-icd
-                    - ocl-icd-libopencl1
-                    - intel-opencl-icd
-                    after:
-                    - fake-extension/fake-part
-                fake-extension/fake-part:
-                    plugin: nil
+              app1:
+                command: app1
+                plugs:
+                - fake-plug
+                command-chain:
+                - fake-command
         """
         )
     )

@@ -135,7 +135,8 @@ def list_validation_sets(name, sequence):
     else:
         headers = ["Account-ID", "Name", "Sequence", "Revision", "When"]
         assertions = list()
-        for assertion in asserted_validation_sets.assertions:
+        for assertion_header in asserted_validation_sets.assertions:
+            assertion = assertion_header.headers
             assertions.append(
                 [
                     assertion.account_id,

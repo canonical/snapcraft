@@ -17,7 +17,7 @@
 from textwrap import dedent
 
 import pytest
-from craft_parts import Part, PartInfo, ProjectInfo, errors
+from craft_parts import Part, PartInfo, ProjectInfo, Step, StepInfo, errors
 
 from snapcraft.parts.plugins import PythonPlugin
 
@@ -107,7 +107,7 @@ def test_get_build_commands(plugin, new_dir):
             eval "${{opts_state}}"
             """
         ),
-        'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"\n',
+        'ln -sf "${symlink_target}" "${PARTS_PYTHON_VENV_INTERP_PATH}"',
     ]
 
 
@@ -190,3 +190,41 @@ def test_get_system_python_interpreter_unknown_base(confinement, new_dir):
     expected_error = "Don't know which interpreter to use for base core10"
     with pytest.raises(errors.PartsError, match=expected_error):
         plugin._get_system_python_interpreter()
+
+
+@pytest.mark.parametrize("home_attr", ["part_install_dir", "stage_dir"])
+def test_fix_pyvenv(new_dir, home_attr):
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base="core24",
+            confinement="classic",
+            project_base="core24",
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {"plugin": "python"}),
+    )
+
+    prime_dir = part_info.prime_dir
+    prime_dir.mkdir()
+
+    pyvenv = prime_dir / "pyvenv.cfg"
+    pyvenv.write_text(
+        dedent(
+            f"""\
+        home = {getattr(part_info, home_attr)}/usr/bin
+        include-system-site-packages = false
+        version = 3.12.3
+        executable = /root/parts/my-part/install/usr/bin/python3.12
+        command = /root/parts/my-part/install/usr/bin/python3 -m venv /root/parts/my-part/install
+        """
+        )
+    )
+
+    step_info = StepInfo(part_info, Step.PRIME)
+
+    PythonPlugin.post_prime(step_info)
+
+    new_contents = pyvenv.read_text()
+    assert "home = /snap/test-snap/current/usr/bin" in new_contents

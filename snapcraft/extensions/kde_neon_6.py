@@ -346,7 +346,7 @@ class KDENeon6(Extension):
     def get_parts_snippet(self) -> Dict[str, Any]:
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
-        # https://github.com/snapcore/snapcraft-desktop-integration
+        # https://github.com/canonical/snapcraft-desktop-integration
         source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
 
         gpu_opts = {}

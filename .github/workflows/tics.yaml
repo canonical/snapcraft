@@ -4,20 +4,17 @@ on:
   push:
     branches:
     - main
+    # to easy test changes to the workflow
+    - tiobe
 
 jobs:
   CI:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -25,20 +22,22 @@ jobs:
           sudo apt-get update
           echo "::endgroup::"
           echo "::group::apt-get install..."
-          sudo apt-get install -y libapt-pkg-dev libyaml-dev xdelta3 patchelf
+          sudo apt-get install -y python3 python3-dev libapt-pkg-dev libyaml-dev xdelta3 patchelf
           echo "::endgroup::"
           echo "::group::pip install"
           python -m pip install 'tox<5.0' tox-gh
           echo "::endgroup::"
 
       - name: Setup Tox environment
-        run: tox run-parallel --parallel auto --parallel-no-spinner --parallel-live --colored yes -e test-all-py310 --notest
+        run: tox --workdir /tmp/tox run-parallel --parallel auto --parallel-no-spinner --parallel-live --colored yes -e test-all-py310 --notest
 
       - name: Test with tox
-        run: tox run --skip-pkg-install --result-json results/tox-py310.json --colored yes -e test-all-py310
+        run: tox --workdir /tmp/tox run --skip-pkg-install --result-json results/tox-py310.json --colored yes -e test-all-py310
 
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
+        env:
+          PATH: "/tmp/tox/test-all-py310/bin:/snap/bin:/home/runner/.local/bin:/home/runner/.cargo/bin:/bin:/usr/bin:/usr/local/bin:"
         with:
           mode: qserver
           project: snapcraft

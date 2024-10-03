@@ -21,16 +21,18 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import ANY, Mock, PropertyMock, call
 
+import pydantic
 import pytest
 from craft_cli import EmitterMode, emit
 from craft_parts import Action, Features, ProjectInfo, Step, callbacks
+from craft_platforms import DebianArchitecture
 from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
 from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
-from snapcraft.parts import set_global_environment
+from snapcraft.parts import set_global_environment, yaml_utils
 from snapcraft.parts.plugins import KernelPlugin, MatterSdkPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
 from snapcraft.utils import get_host_architecture
@@ -145,7 +147,9 @@ def test_snapcraft_yaml_load(new_dir, snapcraft_yaml, filename, mocker):
         ),
     )
 
-    project = Project.unmarshal(yaml_data)
+    arch = DebianArchitecture.from_host().value
+    applied_yaml = yaml_utils.apply_yaml(yaml_data, arch, arch)
+    project = Project.unmarshal(applied_yaml)
 
     if filename == "build-aux/snap/snapcraft.yaml":
         assets_dir = Path("build-aux/snap")
@@ -197,7 +201,9 @@ def test_lifecycle_run_with_components(
         ),
     )
 
-    project = Project.unmarshal(yaml_data)
+    arch = DebianArchitecture.from_host().value
+    applied_yaml = yaml_utils.apply_yaml(yaml_data, arch, arch)
+    project = Project.unmarshal(applied_yaml)
 
     assert mock_run_command.mock_calls == [
         call(
@@ -246,7 +252,9 @@ def test_lifecycle_run_no_components(new_dir, snapcraft_yaml, mocker):
         ),
     )
 
-    project = Project.unmarshal(yaml_data)
+    arch = DebianArchitecture.from_host().value
+    applied_yaml = yaml_utils.apply_yaml(yaml_data, arch, arch)
+    project = Project.unmarshal(applied_yaml)
 
     assert mock_run_command.mock_calls == [
         call(
@@ -804,7 +812,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
         )
 
     assert str(raised.value) == (
-        "error setting grade: unexpected value; permitted: 'stable', 'devel'"
+        "error setting grade: Input should be 'stable' or 'devel'"
     )
     assert run_mock.mock_calls == [
         call("prime", shell=False, shell_after=False, rerun_step=False)
@@ -1197,13 +1205,11 @@ def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
 
 
 def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
-    with pytest.raises(errors.ProjectValidationError) as raised:
-        Project.unmarshal(snapcraft_yaml(base=None))
-
-    assert str(raised.value) == (
-        "Bad snapcraft.yaml content:\n"
-        "- Snap base must be declared when type is not base, kernel or snapd"
+    error = (
+        "Value error, Snap base must be declared when type is not base, kernel or snapd"
     )
+    with pytest.raises(pydantic.ValidationError, match=error):
+        Project.unmarshal(snapcraft_yaml(base=None))
 
 
 @pytest.mark.parametrize("base", ["core22", "core24"])
@@ -1234,7 +1240,7 @@ def test_set_global_environment(base, mocker, new_dir):
             "version": "test-version",
             "grade": "test-grade",
         },
-        arch="aarch64",
+        arch="arm64",
         cache_dir=new_dir,
     )
     set_global_environment(info)

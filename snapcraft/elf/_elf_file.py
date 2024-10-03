@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2023 Canonical Ltd.
+# Copyright 2016-2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -261,12 +261,12 @@ class ElfFile:
                 for tag in section.iter_tags():
                     if tag.entry.d_tag == "DT_NEEDED":
                         needed = (
-                            tag.needed  # pyright: ignore[reportAttributeAccessIssue]
+                            tag.needed  # pyright: ignore[reportGeneralTypeIssues,reportAttributeAccessIssue]
                         )
                         self.needed[needed] = _NeededLibrary(name=needed)
                     elif tag.entry.d_tag == "DT_SONAME":
                         self.soname = (
-                            tag.soname  # pyright: ignore[reportAttributeAccessIssue]
+                            tag.soname  # pyright: ignore[reportGeneralTypeIssues,reportAttributeAccessIssue]
                         )
 
             for segment in elf_file.iter_segments():

@@ -12,3 +12,5 @@ parts:
   hello:
     plugin: python
     source: src
+    python-packages:
+      - black

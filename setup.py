@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2015-2022 Canonical Ltd.
+# Copyright 2015-2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -35,7 +35,7 @@ def recursive_data_files(directory, install_directory):
 name = "snapcraft"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
-url = "https://github.com/snapcore/snapcraft"
+url = "https://github.com/canonical/snapcraft"
 license_ = "GPL v3"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -64,6 +64,8 @@ dev_requires = [
     "coverage[toml]",
     "pyflakes",
     "fixtures",
+    # For Tiobe TiCS
+    "flake8",
     "mccabe",
     "mypy",
     "testscenarios",
@@ -73,9 +75,12 @@ dev_requires = [
     "pydocstyle",
     "pyftpdlib",
     "pyinstaller; sys_platform == 'win32'",
+    # For Tiobe TiCS
+    "pylint",
     "pyramid",
     "pytest",
     "pytest-cov",
+    "pytest-check",
     "pytest-mock",
     "pytest-subprocess",
     "tox>=4.5",
@@ -93,13 +98,14 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application>=3.1.0",
-    "craft-archives",
-    "craft-cli>=2.6.0",
-    "craft-grammar",
-    "craft-parts>=1.33.0",
-    "craft-providers",
-    "craft-store",
+    "craft-application>=4.2.4,<5.0.0",
+    "craft-archives~=2.0",
+    "craft-cli~=2.6",
+    "craft-grammar>=2.0.1,<3.0.0",
+    "craft-parts~=2.1",
+    "craft-platforms~=0.1",
+    "craft-providers~=2.0",
+    "craft-store>=3.0.1,<4.0.0",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "gnupg",
     "jsonschema==2.5.1",
@@ -111,6 +117,7 @@ install_requires = [
     "overrides",
     "packaging",
     "progressbar",
+    "pydantic~=2.8",
     "pyelftools",
     # Pygit2 and libgit2 need to match versions.
     # Further info: https://www.pygit2.org/install.html#version-numbers
@@ -137,10 +144,12 @@ install_requires = [
 
 docs_requires = {
     "canonical-sphinx",
-    "pyspelling",
-    "sphinxcontrib-details-directive",
     "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+    "sphinxcontrib-details-directive",
     "sphinx-lint",
+    "sphinx-toolbox",
+    "pyspelling",
 }
 
 extras_requires = {"dev": dev_requires, "docs": docs_requires}

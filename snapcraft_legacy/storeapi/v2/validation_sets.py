@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2021 Canonical Ltd
+# Copyright (C) 2021,2024 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,161 +14,133 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Literal
+import numbers
+import pydantic
 
-import jsonschema
+from craft_application import models
+from typing_extensions import Annotated
 
-from ._api_schema import BUILD_ASSERTION_JSONSCHEMA
+
+SnapName = Annotated[str, pydantic.StringConstraints(max_length=40)]
+SnapId = Annotated[str, pydantic.StringConstraints(max_length=40)]
 
 
-class Snap:
+def cast_dict_scalars_to_strings(data: dict) -> dict[str, Any]:
+    """Cast all scalars in a dictionary to strings.
+
+    Supported scalar types are str, bool, and numbers.
+    """
+    return {_to_string(key): _to_string(value) for key, value in data.items()}
+
+
+def _to_string(
+    data: dict | list | str | int | float | str | bool | None
+) -> dict[str, Any] | list | str | None:
+    """Recurse through nested dicts and lists and cast scalar values to strings.
+
+    Supported scalar types are str, bool, and numbers.
+    """
+    # start with a string as it is the most common scenario
+    if isinstance(data, str):
+        return data
+
+    if isinstance(data, dict):
+        return {_to_string(key): _to_string(value) for key, value in data.items()}
+
+    if isinstance(data, list):
+        return [_to_string(i) for i in data]
+
+    if isinstance(data, (numbers.Number, bool)):
+        return str(data)
+
+    return data
+
+
+class Snap(models.CraftBaseModel):
     """Represent a Snap in a Validation Set."""
 
+    name: SnapName
+    """Snap name"""
+
+    id: SnapId | None = None
+    """Snap ID"""
+
+    presence: Literal["required", "optional", "invalid"] | None = None
+    """Snap presence"""
+
+    revision: int | None = None
+    """Snap revision"""
+
+
+class EditableBuildAssertion(models.CraftBaseModel):
+    """Subset of a build assertion that can be edited by the user.
+
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#request-json-schema
+    """
+    account_id: str
+    """The "account-id" assertion header"""
+
+    name: str
+    """The "name" assertion header"""
+
+    revision: str | None = None
+    """The "revision" assertion header"""
+
+    sequence: int
+    """The "sequence" assertion header"""
+
+    snaps: Annotated[list[Snap], pydantic.Field(min_length=1)]
+    """List of snaps in a Validation Set assertion"""
+
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
+        """Marshal the object where all scalars are represented as strings."""
+        data = self.marshal()
+        return cast_dict_scalars_to_strings(data)
+
+
+class BuildAssertion(EditableBuildAssertion):
+    """Full build assertion header for a Validation Set.
+
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#response-json-schema
+    """
+    authority_id: str
+    """The "authority-id" assertion header"""
+
+    series: str
+    """The "series" assertion header"""
+
+    sign_key_sha3_384: None = None
+    """Signing key ID."""
+
+    timestamp: str
+    """The "timestamp" assertion header"""
+
+    type: Literal["validation-set"]
+    """The "type" assertion header"""
+
+    @pydantic.model_validator(mode="before")
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "Snap":
-        jsonschema.validate(
-            payload, BUILD_ASSERTION_JSONSCHEMA["properties"]["snaps"]["items"]
-        )
+    def remove_sign_key(cls, values):
+        """Accept but always ignore the sign key.
 
-        return cls(
-            name=payload["name"],
-            snap_id=payload.get("id"),
-            presence=payload.get("presence"),
-            revision=payload.get("revision"),
-        )
-
-    def marshal(self) -> Dict[str, Any]:
-        payload = {"name": self.name}
-
-        if self.snap_id is not None:
-            payload["id"] = self.snap_id
-
-        if self.presence is not None:
-            payload["presence"] = self.presence
-
-        if self.revision is not None:
-            payload["revision"] = self.revision
-
-        return payload
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, Snap):
-            return False
-
-        return (
-            self.name == other.name
-            and self.snap_id == other.snap_id
-            and self.presence == other.presence
-            and self.revision == other.revision
-        )
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self.name!r}>"
-
-    def __init__(
-        self,
-        name: str,
-        snap_id: Optional[str] = None,
-        presence: Optional[str] = None,
-        revision: Optional[str] = None,
-    ):
-        self.name = name
-        self.snap_id = snap_id
-        self.presence = presence
-        self.revision = revision
+        The API can return and accept the sign key but the previous implementation
+        ignored it.
+        """
+        values.pop("sign-key-sha3-384", None)
+        return values
 
 
-class BuildAssertion:
-    """Represent Validation Set assertion headers ready local signing."""
-
-    @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "BuildAssertion":
-        jsonschema.validate(payload, BUILD_ASSERTION_JSONSCHEMA)
-
-        return cls(
-            account_id=payload["account-id"],
-            authority_id=payload["authority-id"],
-            name=payload["name"],
-            revision=payload.get("revision", "0"),
-            sequence=payload["sequence"],
-            series=payload["series"],
-            snaps=[Snap.unmarshal(s) for s in payload["snaps"]],
-            timestamp=payload["timestamp"],
-            assertion_type=payload["type"],
-        )
-
-    def marshal(self) -> Dict[str, Any]:
-        return {
-            "account-id": self.account_id,
-            "authority-id": self.authority_id,
-            "name": self.name,
-            "revision": self.revision,
-            "sequence": self.sequence,
-            "snaps": [s.marshal() for s in self.snaps],
-            "timestamp": self.timestamp,
-            "type": self.assertion_type,
-            "series": self.series,
-        }
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, BuildAssertion):
-            return False
-
-        return (
-            self.name == other.name
-            and self.account_id == other.account_id
-            and self.authority_id == other.authority_id
-            and self.revision == other.revision
-            and self.sequence == other.sequence
-            and self.snaps == other.snaps
-            and self.timestamp == other.timestamp
-            and self.assertion_type == other.assertion_type
-            and self.series == other.series
-        )
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self.name!r}>"
-
-    def __init__(
-        self,
-        *,
-        account_id: str,
-        authority_id: str,
-        name: str,
-        revision: str,
-        sequence: str,
-        snaps: List[Snap],
-        timestamp: str,
-        assertion_type: str,
-        series: str = "16",
-    ):
-        self.account_id = account_id
-        self.authority_id = authority_id
-        self.name = name
-        self.revision = revision
-        self.sequence = sequence
-        self.snaps = snaps
-        self.series = series
-        self.timestamp = timestamp
-        self.assertion_type = assertion_type
+class Headers(models.CraftBaseModel):
+    """Assertion headers for a validation set."""
+    headers: BuildAssertion
+    """Assertion headers"""
 
 
-class ValidationSets:
-    @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "ValidationSets":
-        return cls(
-            assertions=[
-                BuildAssertion.unmarshal(a["headers"])
-                for a in payload.get("assertions", list())
-            ]
-        )
+class ValidationSets(models.CraftBaseModel):
+    """Validation sets.
 
-    def marshal(self) -> Dict[str, Any]:
-        return {"assertions": [{"headers": a.marshal()} for a in self.assertions]}
-
-    def __repr__(self) -> str:
-        assertion_count = len(self.assertions)
-        return f"<{self.__class__.__name__}: assertions {assertion_count!r}>"
-
-    def __init__(self, assertions: List[BuildAssertion]) -> None:
-        self.assertions = assertions
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#id4
+    """
+    assertions: list[Headers]
+    """List of validation-set assertions"""

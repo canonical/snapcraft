@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022,2024 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -548,23 +548,11 @@ def test_get_provider_snap_config(mocker, provider, expected_provider):
     # set snap config
     mocker.patch(
         "snapcraft.providers.get_snap_config",
-        return_value=SnapConfig(provider=provider),
+        return_value=SnapConfig.unmarshal({"provider": provider}),
     )
     actual_provider = providers.get_provider()
 
     assert isinstance(actual_provider, expected_provider)
-
-
-def test_get_provider_snap_config_invalid(mocker):
-    """Verify an invalid environmental variable raises an error."""
-    snap_config = SnapConfig()
-    snap_config.provider = "invalid-provider"  # type: ignore
-    mocker.patch("snapcraft.providers.get_snap_config", return_value=snap_config)
-
-    with pytest.raises(ValueError) as raised:
-        providers.get_provider()
-
-    assert str(raised.value) == "unsupported provider specified: 'invalid-provider'"
 
 
 def test_get_provider_snap_config_priority(mocker):

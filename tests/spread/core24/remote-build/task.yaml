@@ -8,10 +8,11 @@ systems:
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
   SNAP: no-platforms
-  # launchpad can't parse `platforms` (https://github.com/canonical/snapcraft/issues/4858)
-  #SNAP/all: all
-  #SNAP/platforms: platforms
+  SNAP/all: all
+  SNAP/platforms: platforms
   SNAP/no_platforms: no-platforms
+  SNAP/platform_arg: platform-arg
+  SNAP/build_for_arg: build-for-arg
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/old_credentials: "$HOME/.local/share/snapcraft/provider/launchpad/credentials"
@@ -43,7 +44,13 @@ restore: |
 execute: |
   cd "./snaps/$SNAP"
 
-  snapcraft remote-build --launchpad-accept-public-upload
+  call_args=""
+  if [[ -e "arguments.txt" ]]; then
+    call_args=$(cat "arguments.txt")
+  fi
+  
+  # shellcheck disable=SC2086
+  snapcraft remote-build --launchpad-accept-public-upload $call_args
 
   find . -maxdepth 1 -name "*.snap" | MATCH ".snap"
 
