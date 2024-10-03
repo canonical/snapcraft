@@ -17,9 +17,12 @@
   ],
   "author": "GitHub",
   "license": "CC0-1.0",
+  "resolutions": {
+    "minimatch": "9.0.5"
+  },
   "devDependencies": {
-    "electron": "latest",
-    "electron-builder": "latest",
-    "electron-installer-snap": "latest"
+    "electron": "31.3.1",
+    "electron-builder": "25.0.1",
+    "electron-installer-snap": "5.2.0"
   }
 }
