@@ -86,7 +86,7 @@ class Lifecycle(LifecycleService):
     @overrides
     def post_prime(self, step_info: StepInfo) -> bool:
         """Run post-prime parts steps for Snapcraft."""
-        from snapcraft.parts import plugins
+        from snapcraft.parts.plugins import python_common
 
         project = cast(models.Project, self._project)
 
@@ -94,8 +94,8 @@ class Lifecycle(LifecycleService):
         plugin_name = project.parts[part_name]["plugin"]
 
         # Handle plugin-specific prime fixes
-        if plugin_name == "python":
-            plugins.PythonPlugin.post_prime(step_info)
+        if plugin_name in ("python", "poetry"):
+            python_common.post_prime(step_info)
 
         # Handle patch-elf
 
