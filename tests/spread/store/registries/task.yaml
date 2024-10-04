@@ -18,9 +18,7 @@ prepare: |
   chmod 700 "$HOME/.snap/gnupg"
 
   # import a registered key
-  echo "$SNAPCRAFT_ASSERTION_KEY" | base64 --decode > store-key.txt
-  gpg --homedir "$HOME/.snap/gnupg" --import store-key.txt
-  rm -f store-key.txt
+  gpg --homedir "$HOME/.snap/gnupg" --import <(echo "$SNAPCRAFT_ASSERTION_KEY" | base64 --decode)
 
   snap install yq
   # registries only available in edge
