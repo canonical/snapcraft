@@ -32,7 +32,7 @@ def kde_neon_6_extension():
     )
 
 
-@pytest.fixtureS
+@pytest.fixture
 def kde_neon_6_extension_core24():
     return kde_neon_6.KDENeon6(
         yaml_data={"base": "core24", "parts": {}}, arch="amd64", target_arch="amd64"
@@ -96,6 +96,25 @@ def kde_neon_6_extension_with_default_build_snap_from_latest_edge():
     )
 
 
+@pytest.fixture
+def kde_neon_6_extension_with_default_build_snap_from_latest_edge_core24():
+    return kde_neon_6.KDENeon6(
+        yaml_data={
+            "base": "core24",
+            "parts": {
+                "part1": {
+                    "build-snaps": [
+                        "kde-qt6-core24-sdk/latest/edge",
+                        "kf6-core24-sdk/latest/edge",
+                    ]
+                }
+            },
+        },
+        arch="amd64",
+        target_arch="amd64",
+    )
+
+
 ###################
 # KDENeon6 Extension #
 ###################
@@ -130,6 +149,7 @@ def test_get_app_snippet(kde_neon_6_extension):
     }
 
 
+def test_get_app_snippet_core24(kde_neon_6_extension_core24):
     assert kde_neon_6_extension_core24.get_app_snippet() == {
         "command-chain": [
             "snap/command-chain/gpu-2404-wrapper",
@@ -163,6 +183,7 @@ def test_get_root_snippet(kde_neon_6_extension):
         "layout": {
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+            "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -171,7 +192,7 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
-            "gtk-theme-breeze": {
+            "gtk-2-theme-breeze": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-theme-breeze",
@@ -181,10 +202,16 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
+            "gtk-3-theme-breeze": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-theme-breeze",
+            },
             "icon-theme-breeze": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "icon-theme-breeze",
+            },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
@@ -212,6 +239,10 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "target": "$SNAP/kf6",
             },
         },
+    }
+
+
+def test_get_root_snippet_core24(kde_neon_6_extension_core24):
     assert kde_neon_6_extension_core24.get_root_snippet() == {
         "assumes": ["snapd2.58.3"],
         "compression": "lzo",
@@ -219,12 +250,15 @@ def test_get_root_snippet(kde_neon_6_extension):
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["snap/command-chain/hooks-configure-fonts"],
+                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
             }
         },
         "layout": {
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+            "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
+            "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+            "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -233,7 +267,7 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
-            "gtk-theme-breeze": {
+            "gtk-2-theme-breeze": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-theme-breeze",
@@ -243,10 +277,16 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
+            "gtk-3-theme-breeze": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-theme-breeze",
+            },
             "icon-theme-breeze": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "icon-theme-breeze",
+            },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
@@ -273,8 +313,14 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "default-provider": "kf6-core24",
                 "target": "$SNAP/kf6",
             },
+            "gpu-2404": {
+                "default-provider": "mesa-2404",
+                "interface": "content",
+                "target": "$SNAP/gpu-2404",
+            },
         },
     }
+
 
 def test_get_root_snippet_with_gpu(kde_neon_6_extension_core24):
     snippet = kde_neon_6_extension_core24.get_root_snippet()
@@ -302,12 +348,13 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["snap/command-chain/hooks-configure-fonts"],
+                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
             }
         },
         "layout": {
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+            "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -316,7 +363,7 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
-            "gtk-theme-breeze": {
+            "gtk-2-theme-breeze": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-theme-breeze",
@@ -326,10 +373,16 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
+            "gtk-3-theme-breeze": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-theme-breeze",
+            },
             "icon-theme-breeze": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "icon-theme-breeze",
+            },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
@@ -355,6 +408,88 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "interface": "content",
                 "default-provider": "kf6-core22",
                 "target": "$SNAP/kf6",
+            },
+        },
+    }
+
+
+def test_get_root_snippet_with_external_sdk_core24(
+    kde_neon_6_extension_with_build_snap_core24,
+):
+    assert kde_neon_6_extension_with_build_snap_core24.get_root_snippet() == {
+        "assumes": ["snapd2.58.3"],
+        "compression": "lzo",
+        "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6"},
+        "hooks": {
+            "configure": {
+                "plugs": ["desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+            }
+        },
+        "layout": {
+            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+            "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
+            "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+            "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
+        },
+        "plugs": {
+            "desktop": {"mount-host-font-cache": False},
+            "gtk-2-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes",
+            },
+            "gtk-2-theme-breeze": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-theme-breeze",
+            },
+            "gtk-3-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes",
+            },
+            "gtk-3-theme-breeze": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-theme-breeze",
+            },
+            "icon-theme-breeze": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/icons",
+                "default-provider": "icon-theme-breeze",
+            },
+            "icon-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/icons",
+                "default-provider": "gtk-common-themes",
+            },
+            "qt-sound-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/sounds",
+                "default-provider": "qt-common-themes",
+            },
+            "sound-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/sounds",
+                "default-provider": "gtk-common-themes",
+            },
+            "qt-6-themes": {
+                "interface": "content",
+                "target": "$SNAP/kf6",
+                "default-provider": "qt-common-themes",
+            },
+            "kf6-core24": {
+                "content": "kf6-core24-all",
+                "interface": "content",
+                "default-provider": "kf6-core24",
+                "target": "$SNAP/kf6",
+            },
+            "gpu-2404": {
+                "default-provider": "mesa-2404",
+                "interface": "content",
+                "target": "$SNAP/gpu-2404",
             },
         },
     }
@@ -501,11 +636,13 @@ def test_get_part_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
         ]
     }
 
+    def test_get_part_snippet_core24(self, kde_neon_6_extension_core24):
+        self.assert_get_part_snippet(kde_neon_6_extension_core24)
 
-def test_get_part_snippet_with_external_sdk_core24(kde_neon_6_extension_with_build_snap_core24):
-    assert kde_neon_6_extension_with_build_snap.get_part_snippet(
-        plugin_name="cmake"
-    ) == {
+
+@staticmethod
+def assert_get_part_snippet(kde_neon_6_instance):
+    assert kde_neon_6_instance.get_part_snippet(plugin_name="cmake") == {
         "build-environment": [
             {
                 "PATH": (
@@ -535,14 +672,16 @@ def test_get_part_snippet_with_external_sdk_core24(kde_neon_6_extension_with_bui
                     "/snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "/snap/kde-qt6-core24-sdk/current/usr/lib:"
                     "/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
-                    "/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas:"
-                    "/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack:"
+                    "/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                    "/blas:"
+                    "/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                    "/lapack:"
                     "/snap/kf6-core24-sdk/current/usr/lib:"
                     "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "$CRAFT_STAGE/usr/lib:"
                     "$CRAFT_STAGE/lib/"
                     "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-                ),
+                )
             },
             {
                 "CMAKE_PREFIX_PATH": (
@@ -590,14 +729,16 @@ def test_get_parts_snippet(kde_neon_6_extension):
     }
 
 
-def test_get_parts_snippet(kde_neon_6_extension_core24):
+def test_get_parts_snippet_core24(kde_neon_6_extension_core24):
     source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
 
-    assert kde_neon_6_extension.get_parts_snippet() == {
+    assert kde_neon_6_extension_core24.get_parts_snippet() == {
         "kde-neon-6/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kf6-core24"],
+            "make-parameters": [
+                "GPU_WRAPPER=gpu-2404-wrapper",
+            ],
             "build-snaps": ["kde-qt6-core24-sdk", "kf6-core24-sdk"],
             "build-packages": [
                 "gettext",
@@ -627,13 +768,15 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_6_extension_with_build_sna
 
 
 def test_get_parts_snippet_with_external_sdk_different_channel(
-    kde_neon_6_extension_with_default_build_snap_from_latest_edge,
+    kde_neon_6_extension_with_default_build_snap_from_latest_edge_core24,
 ):
     source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
-    assert kde_neon_6_extension_with_default_build_snap_from_latest_edge.get_parts_snippet() == {
+    assert kde_neon_6_extension_with_default_build_snap_from_latest_edge_core24.get_parts_snippet() == {
         "kde-neon-6/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kf6-core22"],
+            "make-parameters": [
+                "GPU_WRAPPER=gpu-2404-wrapper",
+            ],
         }
     }

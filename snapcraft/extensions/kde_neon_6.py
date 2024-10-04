@@ -26,14 +26,8 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_QT6_SDK_SNAP = {
-    "core22": "kde-qt6-core22-sdk",
-    "core24": "kde-qt6-core24-sdk"
-    }
-_KF6_SDK_SNAP = {
-    "core22": "kf6-core22-sdk",
-    "core24": "kf6-core24-sdk"
-    }
+_QT6_SDK_SNAP = {"core22": "kde-qt6-core22-sdk", "core24": "kde-qt6-core24-sdk"}
+_KF6_SDK_SNAP = {"core22": "kf6-core22-sdk", "core24": "kf6-core24-sdk"}
 
 
 @dataclasses.dataclass
@@ -44,6 +38,8 @@ class KDESnaps6:
     kf6_sdk_snap: str
     content_qt6: str
     content_kf6: str
+    gpu_plugs: Dict[str, Any]
+    gpu_layouts: Dict[str, Any]
     qt6_builtin: bool = True
     kf6_builtin: bool = True
 
@@ -58,8 +54,10 @@ class KDENeon6(Extension):
 
     \b
     - Common GTK themes.
+    - breeze GTK theme.
     - Common Qt themes.
     - Common Icon Themes.
+    - Breeze Icon theme.
     - Common Sound Themes.
     - The Qt6 and KDE Frameworks 6 runtime libraries and utilities.
 
@@ -95,11 +93,11 @@ class KDENeon6(Extension):
 
     @overrides
     def get_app_snippet(self) -> Dict[str, Any]:
-        command_chain = ["snap/command-chain/desktop-launch"]
+        command_chain = ["snap/command-chain/desktop-launch6"]
         if self.yaml_data["base"] == "core24":
             command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
         return {
-            "command-chain": commandchain,
+            "command-chain": command_chain,
             "plugs": [
                 "desktop",
                 "desktop-legacy",
@@ -124,9 +122,7 @@ class KDENeon6(Extension):
             case "core22":
                 gpu_plugs = {}
                 gpu_layouts = {
-                    "/usr/share/libdrm": {
-                        "bind": "$SNAP/kf6-core22/usr/share/libdrm"
-                    },
+                    "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
                 }
             case "core24":
                 gpu_plugs = {
@@ -176,12 +172,16 @@ class KDENeon6(Extension):
             kf6_sdk_snap=kf6_sdk_snap,
             content_kf6=content_kf6_snap,
             kf6_builtin=kf6_builtin,
+            gpu_layouts=gpu_layouts,
+            gpu_plugs=gpu_plugs,
         )
 
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
         platform_kf6_snap = self.kde_snaps.content_kf6
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
+        gpu_plugs = self.kde_snaps.gpu_plugs
+        gpu_layouts = self.kde_snaps.gpu_layouts
 
         return {
             "assumes": ["snapd2.58.3"],  # for 'snapctl is-connected'
@@ -193,7 +193,7 @@ class KDENeon6(Extension):
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-common-themes",
                 },
-                "gtk-theme-breeze": {
+                "gtk-2-theme-breeze": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-theme-breeze",
@@ -202,6 +202,11 @@ class KDENeon6(Extension):
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-common-themes",
+                },
+                "gtk-3-theme-breeze": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/themes",
+                    "default-provider": "gtk-theme-breeze",
                 },
                 "icon-theme-breeze": {
                     "interface": "content",
@@ -352,7 +357,6 @@ class KDENeon6(Extension):
         gpu_opts = {}
         if self.yaml_data["base"] == "core24":
             gpu_opts["make-parameters"] = ["GPU_WRAPPER=gpu-2404-wrapper"]
-
 
         if self.kde_snaps.kf6_builtin:
             return {
