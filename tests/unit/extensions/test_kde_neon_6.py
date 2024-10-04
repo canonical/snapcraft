@@ -640,7 +640,6 @@ def test_get_part_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
         self.assert_get_part_snippet(kde_neon_6_extension_core24)
 
 
-@staticmethod
 def assert_get_part_snippet(kde_neon_6_instance):
     assert kde_neon_6_instance.get_part_snippet(plugin_name="cmake") == {
         "build-environment": [
