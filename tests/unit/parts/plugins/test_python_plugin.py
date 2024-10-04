@@ -19,7 +19,7 @@ from textwrap import dedent
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo, Step, StepInfo, errors
 
-from snapcraft.parts.plugins import PythonPlugin
+from snapcraft.parts.plugins import PythonPlugin, python_common
 
 
 @pytest.fixture
@@ -224,7 +224,7 @@ def test_fix_pyvenv(new_dir, home_attr):
 
     step_info = StepInfo(part_info, Step.PRIME)
 
-    PythonPlugin.post_prime(step_info)
+    python_common.post_prime(step_info)
 
     new_contents = pyvenv.read_text()
     assert "home = /snap/test-snap/current/usr/bin" in new_contents
