@@ -106,7 +106,7 @@ install_requires = [
     "craft-platforms~=0.1",
     "craft-providers~=2.0",
     "craft-store>=3.0.1,<4.0.0",
-    "docutils<0.20",  # Frozen until we can update sphinx dependencies.
+    "docutils<0.22",  # Frozen until we can update sphinx dependencies.
     "gnupg",
     "jsonschema==2.5.1",
     "launchpadlib",
