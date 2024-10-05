@@ -53,7 +53,7 @@ httplib2==0.22.0
 hupper==1.12.1
 idna==3.7
 imagesize==1.4.1
-importlib_metadata==8.2.0
+importlib_metadata==8.5.0
 iniconfig==2.0.0
 isort==5.13.2
 jaraco.classes==3.4.0
