@@ -39,7 +39,7 @@ overrides==7.7.0
 packaging==24.1
 platformdirs==4.2.2
 progressbar==2.5
-protobuf==5.27.3
+protobuf==5.28.2
 psutil==6.0.0
 pycparser==2.22
 pydantic==2.8.2
