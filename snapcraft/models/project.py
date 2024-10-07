@@ -572,7 +572,7 @@ class Component(models.CraftBaseModel):
 
     summary: SummaryStr
     description: str
-    type: Literal["test"]
+    type: Literal["test", "kernel-modules", "standard"]
     version: VersionStr | None = None
     hooks: dict[str, Hook] | None = None
 
