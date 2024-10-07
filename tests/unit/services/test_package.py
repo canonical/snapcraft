@@ -76,7 +76,7 @@ def test_metadata(
 ):
     project_path = new_dir / "snapcraft.yaml"
     snapcraft_yaml(filename=project_path)
-    default_factory.set_kwargs(
+    default_factory.update_kwargs(
         "lifecycle",
         work_dir=Path("work"),
         cache_dir=new_dir,
@@ -122,7 +122,7 @@ def test_write_metadata(
     default_build_plan,
     new_dir,
 ):
-    default_factory.set_kwargs(
+    default_factory.update_kwargs(
         "lifecycle",
         work_dir=Path("work"),
         cache_dir=new_dir,
@@ -163,7 +163,7 @@ def test_write_metadata_with_manifest(
     new_dir,
 ):
     monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
-    default_factory.set_kwargs(
+    default_factory.update_kwargs(
         "lifecycle",
         work_dir=Path("work"),
         cache_dir=new_dir,
@@ -180,7 +180,7 @@ def test_write_metadata_with_manifest(
     # This will be different every time due to started_at differing, we can check
     # that it's a valid manifest and compare some fields to snap.yaml.
     manifest_dict = yaml.safe_load((prime_dir / "snap" / "manifest.yaml").read_text())
-    manifest = models.Manifest.parse_obj(manifest_dict)
+    manifest = models.Manifest.model_validate(manifest_dict)
 
     assert manifest.snapcraft_version == __version__
     assert (
@@ -208,7 +208,7 @@ def test_write_metadata_with_project_hooks(
         shutil.move(new_dir / "snap" / "snapcraft.yaml", new_dir)
         shutil.rmtree(new_dir / "snap")
 
-    default_factory.set_kwargs(
+    default_factory.update_kwargs(
         "lifecycle",
         work_dir=work_dir,
         cache_dir=new_dir,
@@ -257,7 +257,7 @@ def test_write_metadata_with_built_hooks(
     new_dir,
 ):
     work_dir = new_dir / "work"
-    default_factory.set_kwargs(
+    default_factory.update_kwargs(
         "lifecycle",
         work_dir=work_dir,
         cache_dir=new_dir,
@@ -307,7 +307,7 @@ def test_write_metadata_with_project_gui(
     new_dir,
 ):
     work_dir = new_dir / "work"
-    default_factory.set_kwargs(
+    default_factory.update_kwargs(
         "lifecycle",
         work_dir=work_dir,
         cache_dir=new_dir,
@@ -367,7 +367,7 @@ def test_update_project_parse_info(
 ):
     work_dir = Path("work").resolve()
 
-    default_factory.set_kwargs(
+    default_factory.update_kwargs(
         "lifecycle",
         work_dir=work_dir,
         cache_dir=new_dir,

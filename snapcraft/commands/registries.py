@@ -82,6 +82,8 @@ class StoreEditRegistriesCommand(craft_application.commands.AppCommand):
 
         If the registries set does not exist, then a new registries set will be created.
 
+        If a key name is not provided, the default key is used.
+
         The account ID of the authenticated account can be determined with the
         ``snapcraft whoami`` command.
 
@@ -100,10 +102,14 @@ class StoreEditRegistriesCommand(craft_application.commands.AppCommand):
         parser.add_argument(
             "name", metavar="name", help="Name of the registries set to edit"
         )
+        parser.add_argument(
+            "--key-name", metavar="key-name", help="Key used to sign the registries set"
+        )
 
     @override
     def run(self, parsed_args: "argparse.Namespace"):
         self._services.registries.edit_assertion(
             name=parsed_args.name,
             account_id=parsed_args.account_id,
+            key_name=parsed_args.key_name,
         )

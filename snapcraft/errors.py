@@ -173,3 +173,10 @@ class StoreCredentialsUnauthorizedError(SnapcraftError):
             resolution=resolution,
             docs_url="https://snapcraft.io/docs/snapcraft-authentication",
         )
+
+
+class SnapcraftAssertionError(SnapcraftError):
+    """Error raised when an assertion (validation or registries set) is invalid.
+
+    Not to be confused with Python's built-in AssertionError.
+    """

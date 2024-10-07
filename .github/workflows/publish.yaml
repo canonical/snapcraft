@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - "feature/**"
+  # allow manual re-publishing as branches expire after 30 days
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -29,7 +31,7 @@ jobs:
           fetch-depth: 0
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
-        uses: snapcore/action-build@v1
+        uses: canonical/action-build@v1
         name: Build Snapcraft Snap
         id: build
         with:
@@ -54,7 +56,7 @@ jobs:
 
       - name: Publish feature branch to edge/${{ steps.vars.outputs.branch }}
         if: steps.decisions.outputs.PUBLISH == 'true'
-        uses: snapcore/action-publish@v1
+        uses: canonical/action-publish@v1
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:

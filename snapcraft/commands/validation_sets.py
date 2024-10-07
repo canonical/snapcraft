@@ -136,7 +136,9 @@ def _submit_validation_set(
     key_name: Optional[str],
     store_client: StoreClientCLI,
 ) -> None:
-    emit.debug(f"Posting assertion to build: {edited_validation_sets.json()}")
+    emit.debug(
+        f"Posting assertion to build: {edited_validation_sets.model_dump_json()}"
+    )
     build_assertion = store_client.post_validation_sets_build_assertion(
         validation_sets=edited_validation_sets.marshal()
     )
@@ -148,7 +150,7 @@ def _submit_validation_set(
     response = store_client.post_validation_sets(
         signed_validation_sets=signed_validation_sets
     )
-    emit.debug(f"Response: {response.json()}")
+    emit.debug(f"Response: {response.model_dump_json()}")
 
 
 def _generate_template(

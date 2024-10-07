@@ -16,11 +16,42 @@
 
 """Assertion models."""
 
-from typing import Literal
+import numbers
+from collections import abc
+from typing import Any, Literal
 
 import pydantic
 from craft_application import models
 from typing_extensions import Self
+
+
+def cast_dict_scalars_to_strings(data: dict) -> dict:
+    """Cast all scalars in a dictionary to strings.
+
+    Supported scalar types are str, bool, and numbers.
+    """
+    return {_to_string(key): _to_string(value) for key, value in data.items()}
+
+
+def _to_string(data: Any) -> Any:
+    """Recurse through nested dicts and lists and cast scalar values to strings.
+
+    Supported scalar types are str, bool, and numbers.
+    """
+    # check for a string first, as it is the most common scenario
+    if isinstance(data, str):
+        return data
+
+    if isinstance(data, abc.Mapping):
+        return {_to_string(key): _to_string(value) for key, value in data.items()}
+
+    if isinstance(data, abc.Collection):
+        return [_to_string(i) for i in data]
+
+    if isinstance(data, (numbers.Number, bool)):
+        return str(data)
+
+    return data
 
 
 class Registry(models.CraftBaseModel):
@@ -52,7 +83,6 @@ class EditableRegistryAssertion(models.CraftBaseModel):
     """Issuer of the registry assertion and owner of the signing key."""
 
     name: str
-    summary: str | None = None
     revision: int | None = 0
 
     views: dict[str, Rules]
@@ -60,6 +90,10 @@ class EditableRegistryAssertion(models.CraftBaseModel):
 
     body: str | None = None
     """A JSON schema that defines the storage structure."""
+
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
+        """Marshal the model where all scalars are represented as strings."""
+        return cast_dict_scalars_to_strings(self.marshal())
 
 
 class RegistryAssertion(EditableRegistryAssertion):

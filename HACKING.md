@@ -7,7 +7,7 @@ We want to make sure everyone develops using a consistent base, to ensure that t
 Clone the snapcraft repository and its submodules and make it your working directory:
 
 ```shell
-git clone https://github.com/snapcore/snapcraft.git --recurse-submodules
+git clone https://github.com/canonical/snapcraft.git --recurse-submodules
 cd snapcraft
 ```
 
@@ -98,14 +98,15 @@ tox run -e lint-codespell
 
 ## Evaluating pull requests
 
-Oftentimes all you want to do is see if a given pull request solves the issue you were having. To make this easier, the Travis CI setup for snapcraft _publishes_ the resulting snap that was built for x86-64 using `transfer.sh`.
-To download the snap, find the relevant CI job run for the PR under review and locate the "snap" stage, the URL to download from will be located at the end of logs for that job.
+Oftentimes all you want to do is see if a given pull request solves the issue you were having. To make this easier, a snap is published for `amd64` on a channel named `latest/edge/pr-<PR number>` where `PR number` is the number of the pull request.
+
+For feature branches, a snap is published for `amd64` on a channel named `latest/edge/<branch name>`. For example, a branch named `feature/offline-mode` would be available on the channel `latest/edge/offline-mode`.
 
 ## Reaching out
 
 We'd love the help!
 
-- Submit pull requests against [snapcraft](https://github.com/snapcore/snapcraft/pulls)
+- Submit pull requests against [snapcraft](https://github.com/canonical/snapcraft/pulls)
 - Make sure to read the [contribution guide](CONTRIBUTING.md)
 - Find us under the snapcraft category of the forum https://forum.snapcraft.io
 - Discuss with us using IRC in #snapcraft on Freenode.

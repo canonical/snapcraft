@@ -1,5 +1,4 @@
 summary: Build and run a basic daemon colcon snap
-warn-timeout: 9m  # Keep less than 10 minutes so Travis can't timeout
 priority: 100  # Run this test early so we're not waiting for it
 
 environment:

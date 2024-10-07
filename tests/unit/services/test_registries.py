@@ -17,8 +17,9 @@
 """Tests for the registries service."""
 
 import textwrap
+from unittest import mock
 
-from snapcraft.models import EditableRegistryAssertion
+from snapcraft.models import EditableRegistryAssertion, RegistryAssertion
 
 
 def test_registries_service_type(registries_service):
@@ -34,6 +35,24 @@ def test_get_assertions(registries_service):
 
     registries_service._store_client.list_registries.assert_called_once_with(
         name="test-registry"
+    )
+
+
+def test_build_assertion(registries_service):
+    mock_assertion = mock.Mock(spec=RegistryAssertion)
+
+    registries_service._build_assertion(mock_assertion)
+
+    registries_service._store_client.build_registries.assert_called_once_with(
+        registries=mock_assertion
+    )
+
+
+def test_post_assertions(registries_service):
+    registries_service._post_assertion(b"test-assertion-data")
+
+    registries_service._store_client.post_registries.assert_called_once_with(
+        registries_data=b"test-assertion-data"
     )
 
 
@@ -71,7 +90,6 @@ def test_normalize_assertions(fake_registry_assertion, registries_service, check
 
 def test_generate_yaml_from_model(fake_registry_assertion, registries_service):
     assertion = fake_registry_assertion(
-        summary="test-summary",
         revision="10",
         views={
             "wifi-setup": {
@@ -102,7 +120,6 @@ def test_generate_yaml_from_model(fake_registry_assertion, registries_service):
         """\
         account-id: test-account-id
         name: test-registry
-        # summary: test-summary
         # The revision for this registries set
         # revision: 10
         views:
@@ -129,3 +146,11 @@ def test_generate_yaml_from_model(fake_registry_assertion, registries_service):
 
           """
     )
+
+
+def test_get_success_message(fake_registry_assertion, registries_service):
+    message = registries_service._get_success_message(
+        fake_registry_assertion(revision=10)
+    )
+
+    assert message == "Successfully created revision 10 for 'test-registry'."
