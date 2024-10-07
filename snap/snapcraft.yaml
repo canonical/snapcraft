@@ -49,7 +49,7 @@ build-packages:
 
 parts:
   bash-completion:
-    source: debian
+    source: snap/local
     plugin: dump
     stage:
       - snapcraft-completion
