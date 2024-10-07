@@ -308,7 +308,7 @@ class RemoteBuildCommand(ExtensibleCommand):
                 emit.progress("Remote repository already exists.", permanent=True)
                 emit.progress("Cleaning up")
                 builder.cleanup()
-                return 75
+                return os.EX_TEMPFAIL
 
         try:
             returncode = self._monitor_and_complete(build_id, builds)
@@ -316,10 +316,13 @@ class RemoteBuildCommand(ExtensibleCommand):
             if confirm_with_user("Cancel builds?", default=True):
                 emit.progress("Cancelling builds.")
                 builder.cancel_builds()
-            returncode = 0
+                emit.progress("Cleaning up.")
+                builder.cleanup()
+            return os.EX_OK
         except Exception:  # noqa: BLE001 [blind-except]
             returncode = 1  # General error on any other exception
-        if returncode != 75:  # TimeoutError
+
+        if returncode != os.EX_TEMPFAIL:
             emit.progress("Cleaning up")
             builder.cleanup()
         return returncode
