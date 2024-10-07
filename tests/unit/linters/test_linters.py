@@ -256,8 +256,8 @@ def test_base_linter_is_file_ignored():
 
     # The "test-path" Path must be ignored by the "main" filter and all categories.
     assert linter.is_file_ignored(Path("test-path"))
-    assert linter.is_file_ignored(Path("test-path", category="test-1"))
-    assert linter.is_file_ignored(Path("test-path", category="test-2"))
+    assert linter.is_file_ignored(Path("test-path"), category="test-1")
+    assert linter.is_file_ignored(Path("test-path"), category="test-2")
 
     # "test-1-path" is ignored by the "test-1" only
     assert not linter.is_file_ignored(Path("test-1-path"))

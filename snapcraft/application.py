@@ -141,7 +141,7 @@ class Snapcraft(Application):
 
     @override
     def _configure_services(self, provider_name: str | None) -> None:
-        self.services.set_kwargs(
+        self.services.update_kwargs(
             "package",
             build_plan=self._build_plan,
             snapcraft_yaml_path=self._snapcraft_yaml_path,

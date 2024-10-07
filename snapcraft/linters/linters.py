@@ -87,7 +87,7 @@ def report(
             issues_by_result.setdefault(issue.result, []).append(issue)
 
     if json_output:
-        display(json.dumps([x.dict(exclude_none=True) for x in issues]))
+        display(json.dumps([x.model_dump(exclude_none=True) for x in issues]))
     else:
         # show issues by result
         for result, header in _lint_reports.items():
