@@ -56,6 +56,16 @@ def _to_string(
 
     return data
 
+Presence = Literal["required", "optional", "invalid"]
+
+class Component(models.CraftBaseModel):
+    """Represent a Component in a Validation Set."""
+
+    presence: Presence
+    """Component presence"""
+
+    revision: int | None = None
+    """Component revision"""
 
 class Snap(models.CraftBaseModel):
     """Represent a Snap in a Validation Set."""
@@ -66,12 +76,14 @@ class Snap(models.CraftBaseModel):
     id: SnapId | None = None
     """Snap ID"""
 
-    presence: Literal["required", "optional", "invalid"] | None = None
+    presence: Presence | None = None
     """Snap presence"""
 
     revision: int | None = None
     """Snap revision"""
 
+    components: dict[str, Presence | Component] | None = None
+    """Snap components"""
 
 class EditableBuildAssertion(models.CraftBaseModel):
     """Subset of a build assertion that can be edited by the user.

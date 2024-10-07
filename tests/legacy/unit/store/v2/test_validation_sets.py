@@ -26,6 +26,13 @@ def fake_snap_data():
         "id": "snap-id",
         "presence": "required",
         "revision": 42,
+        "components": {
+            "component-with-revision": {
+                "presence": "required",
+                "revision": 10,
+            },
+            "component-without-revision": "invalid",
+        },
     }
 
 
@@ -125,6 +132,13 @@ def test_editable_build_assertion_marshal_as_str(fake_editable_build_assertion):
                 "name": "snap-name",
                 "presence": "required",
                 "revision": "42",
+                "components": {
+                    "component-with-revision": {
+                        "presence": "required",
+                        "revision": "10",
+                    },
+                    "component-without-revision": "invalid",
+                },
             },
         ],
     }
@@ -147,6 +161,13 @@ def test_build_assertion_marshal_as_str(fake_build_assertion):
                 "name": "snap-name",
                 "presence": "required",
                 "revision": "42",
+                "components": {
+                    "component-with-revision": {
+                        "presence": "required",
+                        "revision": "10",
+                    },
+                    "component-without-revision": "invalid",
+                },
             },
         ],
         "timestamp": "2020-10-29T16:36:56Z",
