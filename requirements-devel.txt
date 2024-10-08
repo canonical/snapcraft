@@ -98,8 +98,8 @@ psutil==6.0.0
 ptyprocess==0.7.0
 pycodestyle==2.12.1
 pycparser==2.22
-pydantic==2.8.2
-pydantic_core==2.20.1
+pydantic==2.9.2
+pydantic_core==2.24.0
 pydantic_yaml==1.3.0
 pydocstyle==6.3.0
 pyelftools==0.31
