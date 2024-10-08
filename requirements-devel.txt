@@ -8,7 +8,7 @@ attrs==24.2.0
 autodocsumm==0.2.13
 babel==2.16.0
 beautifulsoup4==4.12.3
-black==24.8.0
+black==24.10.0
 boolean.py==4.0
 bracex==2.5
 CacheControl==0.14.0
