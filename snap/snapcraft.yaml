@@ -140,11 +140,12 @@ parts:
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
 
   libgit2:
-    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.1.tar.gz
-    source-checksum: sha256/17d2b292f21be3892b704dddff29327b3564f96099a1c53b00edc23160c71327
+    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.2.tar.gz
+    source-checksum: sha256/de384e29d7efc9330c6cdb126ebf88342b5025d920dcb7c645defad85195ea7f
     plugin: cmake
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
     build-attributes:
       - enable-patchelf
     prime:
@@ -171,7 +172,7 @@ parts:
     build-environment:
         # Build PyNaCl from source since the wheel files interact
         # strangely with classic snaps. Well, build it all from source.
-        - "PIP_NO_BINARY": ":all"
+        - "PIP_NO_BINARY": ":all:"
         # Use base image's libsodium for PyNaCl.
         - "SODIUM_INSTALL": "system"
         - "CFLAGS": "$(pkg-config python-3.10 yaml-0.1 --cflags)"

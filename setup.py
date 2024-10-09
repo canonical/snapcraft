@@ -98,14 +98,14 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application>=4.2.4,<5.0.0",
+    "craft-application>=4.2.6,<5.0.0",
     "craft-archives~=2.0",
     "craft-cli~=2.6",
     "craft-grammar>=2.0.1,<3.0.0",
-    "craft-parts~=2.1",
+    "craft-parts>=2.1.2,<3.0.0",
     "craft-platforms~=0.1",
-    "craft-providers~=2.0",
-    "craft-store>=3.0.1,<4.0.0",
+    "craft-providers>=2.0.4,<3.0.0",
+    "craft-store>=3.0.2,<4.0.0",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "gnupg",
     "jsonschema==2.5.1",
@@ -130,7 +130,7 @@ install_requires = [
     "pyyaml",
     "raven",
     "requests-toolbelt",
-    "requests-unixsocket",
+    "requests-unixsocket2",
     "requests",
     "simplejson",
     "snap-helpers",
@@ -138,7 +138,6 @@ install_requires = [
     "toml",
     "tinydb",
     "typing-extensions",
-    "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
     "validators>=0.28.3",
 ]
 
