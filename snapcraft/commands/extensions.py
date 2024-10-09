@@ -17,7 +17,7 @@
 """Snapcraft extension commands."""
 
 import textwrap
-from typing import Dict, List
+from typing import Dict, List, cast
 
 import tabulate
 from craft_application.commands import AppCommand
@@ -26,13 +26,6 @@ from overrides import overrides
 from pydantic import BaseModel
 
 from snapcraft import extensions, models
-from snapcraft.parts.yaml_utils import (
-    apply_yaml,
-    extract_parse_info,
-    get_snap_project,
-    process_yaml,
-)
-from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
     supported_extension_names,
@@ -114,25 +107,9 @@ class ExpandExtensionsCommand(AppCommand):
         """
     )
 
+    always_load_project = True
+
     @overrides
     def run(self, parsed_args):
-        snap_project = get_snap_project()
-
-        # load yaml file and trigger legacy behavior if base is core, core18, or core20
-        yaml_data = process_yaml(snap_project.project_file)
-
-        # process yaml before unmarshalling the data
-        arch = get_host_architecture()
-        yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
-
-        # `apply_yaml()` adds or replaces the architectures keyword with an Architecture
-        # object, which does not easily dump to a yaml file
-        yaml_data_for_arch.pop("architectures", None)
-        yaml_data_for_arch.pop("platforms", None)
-
-        # `parse-info` keywords must be removed before unmarshalling, because they are
-        # not part of the Project model
-        extract_parse_info(yaml_data_for_arch)
-
-        project_data = models.Project.unmarshal(yaml_data_for_arch)
-        emit.message(project_data.to_yaml_string())
+        project = cast(models.Project, self._services.project)
+        emit.message(project.to_yaml_string())
