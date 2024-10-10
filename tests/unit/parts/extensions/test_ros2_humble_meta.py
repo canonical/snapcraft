@@ -142,7 +142,7 @@ class TestExtensionROS2HumbleMetaExtensions:
             "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
         extension = setup_method_fixture(extension_class)
-        assert extension.get_app_snippet() == {
+        assert extension.get_app_snippet(app_name="test-app") == {
             "command-chain": ["snap/command-chain/ros2-launch"],
             "environment": {
                 "ROS_VERSION": "2",

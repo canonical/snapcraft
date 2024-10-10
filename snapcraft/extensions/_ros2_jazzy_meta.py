@@ -64,8 +64,8 @@ class ROS2JazzyMetaBase(ROS2JazzyExtension):
         return root_snippet
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
-        app_snippet = super().get_app_snippet()
+    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        app_snippet = super().get_app_snippet(app_name=app_name)
         python_paths = app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
             f"$SNAP/opt/ros/underlay_ws/opt/ros/{self.ROS_DISTRO}/lib/python3.12/site-packages",
