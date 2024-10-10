@@ -93,7 +93,7 @@ class KDENeon6(Extension):
 
     @overrides
     def get_app_snippet(self) -> Dict[str, Any]:
-        command_chain = ["$SNAP/kf6/snap/command-chain/desktop-launch6"]
+        command_chain = ["snap/command-chain/desktop-launch6"]
         if self.yaml_data["base"] == "core24":
             command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
         return {
@@ -245,7 +245,7 @@ class KDENeon6(Extension):
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
-                    "command-chain": ["$SNAP/kf6/snap/command-chain/hooks-configure-desktop"],
+                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
                 }
             },
             "layout": {
