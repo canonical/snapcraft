@@ -2600,16 +2600,17 @@ class TestComponents:
 
         assert test_project.components == components
 
+    @pytest.mark.parametrize("component_type", ["test", "kernel-modules", "standard"])
     def test_component_type_valid(
-        self, project, project_yaml_data, stub_component_data
+        self, component_type, project, project_yaml_data, stub_component_data
     ):
         component = {"foo": stub_component_data}
-        component["foo"]["type"] = "test"
+        component["foo"]["type"] = component_type
 
         test_project = project.unmarshal(project_yaml_data(components=component))
 
         assert test_project.components
-        assert test_project.components["foo"].type == "test"
+        assert test_project.components["foo"].type == component_type
 
     def test_component_type_invalid(
         self, project, project_yaml_data, stub_component_data
