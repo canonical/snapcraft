@@ -68,6 +68,19 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.4.3 (2024-Oct-10)
+-------------------
+
+Core
+====
+
+Components
+##########
+
+* Add support for component types ``kernel-modules`` and ``standard``
+  (`#5089`_).
+
+For a complete list of commits, check out the `8.4.3`_ release on GitHub.
 
 8.4.2 (2024-Oct-07)
 -------------------
@@ -1285,6 +1298,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#5048: https://github.com/canonical/snapcraft/issues/5048
 .. _#5077: https://github.com/canonical/snapcraft/issues/5077
 .. _#5079: https://github.com/canonical/snapcraft/issues/5079
+.. _#5089: https://github.com/canonical/snapcraft/issues/5089
 
 .. _7.5.6: https://github.com/canonical/snapcraft/releases/tag/7.5.6
 .. _7.5.7: https://github.com/canonical/snapcraft/releases/tag/7.5.7
@@ -1316,3 +1330,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.4.0: https://github.com/canonical/snapcraft/releases/tag/8.4.0
 .. _8.4.1: https://github.com/canonical/snapcraft/releases/tag/8.4.1
 .. _8.4.2: https://github.com/canonical/snapcraft/releases/tag/8.4.2
+.. _8.4.3: https://github.com/canonical/snapcraft/releases/tag/8.4.3
