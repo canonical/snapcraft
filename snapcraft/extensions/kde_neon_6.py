@@ -245,7 +245,9 @@ class KDENeon6(Extension):
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
-                    "command-chain": ["$SNAP/kf6/snap/command-chain/hooks-configure-desktop"],
+                    "command-chain": [
+                        "$SNAP/kf6/snap/command-chain/hooks-configure-desktop"
+                    ],
                 }
             },
             "layout": {

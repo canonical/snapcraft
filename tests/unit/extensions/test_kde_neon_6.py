@@ -177,7 +177,9 @@ def test_get_root_snippet(kde_neon_6_extension):
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["$SNAP/kf6/snap/command-chain/hooks-configure-desktop"],
+                "command-chain": [
+                    "$SNAP/kf6/snap/command-chain/hooks-configure-desktop"
+                ],
             }
         },
         "layout": {
@@ -250,7 +252,9 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["$SNAP/kf6/snap/command-chain/hooks-configure-desktop"],
+                "command-chain": [
+                    "$SNAP/kf6/snap/command-chain/hooks-configure-desktop"
+                ],
             }
         },
         "layout": {
@@ -348,7 +352,9 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["$SNAP/kf6/snap/command-chain/hooks-configure-desktop"],
+                "command-chain": [
+                    "$SNAP/kf6/snap/command-chain/hooks-configure-desktop"
+                ],
             }
         },
         "layout": {
@@ -423,7 +429,9 @@ def test_get_root_snippet_with_external_sdk_core24(
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["$SNAP/kf6/snap/command-chain/hooks-configure-desktop"],
+                "command-chain": [
+                    "$SNAP/kf6/snap/command-chain/hooks-configure-desktop"
+                ],
             }
         },
         "layout": {
