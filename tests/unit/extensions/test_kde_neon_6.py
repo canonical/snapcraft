@@ -134,7 +134,7 @@ def test_is_experimental():
 
 def test_get_app_snippet(kde_neon_6_extension):
     assert kde_neon_6_extension.get_app_snippet() == {
-        "command-chain": ["snap/command-chain/desktop-launch6"],
+        "command-chain": ["snap/command-chain/desktop-launch"],
         "plugs": [
             "desktop",
             "desktop-legacy",
@@ -153,7 +153,7 @@ def test_get_app_snippet_core24(kde_neon_6_extension_core24):
     assert kde_neon_6_extension_core24.get_app_snippet() == {
         "command-chain": [
             "snap/command-chain/gpu-2404-wrapper",
-            "snap/command-chain/desktop-launch6",
+            "snap/command-chain/desktop-launch",
         ],
         "plugs": [
             "desktop",
@@ -705,7 +705,7 @@ def assert_get_part_snippet(kde_neon_6_instance):
 
 
 def test_get_parts_snippet(kde_neon_6_extension):
-    source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
+    source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
     assert kde_neon_6_extension.get_parts_snippet() == {
         "kde-neon-6/sdk": {
@@ -729,7 +729,7 @@ def test_get_parts_snippet(kde_neon_6_extension):
 
 
 def test_get_parts_snippet_core24(kde_neon_6_extension_core24):
-    source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
+    source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
     assert kde_neon_6_extension_core24.get_parts_snippet() == {
         "kde-neon-6/sdk": {
@@ -755,7 +755,7 @@ def test_get_parts_snippet_core24(kde_neon_6_extension_core24):
 
 
 def test_get_parts_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap):
-    source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
+    source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
     assert kde_neon_6_extension_with_build_snap.get_parts_snippet() == {
         "kde-neon-6/sdk": {
@@ -769,7 +769,7 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_6_extension_with_build_sna
 def test_get_parts_snippet_with_external_sdk_different_channel(
     kde_neon_6_extension_with_default_build_snap_from_latest_edge_core24,
 ):
-    source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
+    source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
     assert kde_neon_6_extension_with_default_build_snap_from_latest_edge_core24.get_parts_snippet() == {
         "kde-neon-6/sdk": {
             "source": str(source),

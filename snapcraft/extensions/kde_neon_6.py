@@ -93,7 +93,7 @@ class KDENeon6(Extension):
 
     @overrides
     def get_app_snippet(self) -> Dict[str, Any]:
-        command_chain = ["snap/command-chain/desktop-launch6"]
+        command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
             command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
         return {
@@ -352,7 +352,7 @@ class KDENeon6(Extension):
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
         # https://github.com/canonical/snapcraft-desktop-integration
-        source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
+        source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
         gpu_opts = {}
         if self.yaml_data["base"] == "core24":
