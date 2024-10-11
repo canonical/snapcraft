@@ -193,7 +193,7 @@ class KDENeon6(Extension):
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-common-themes",
                 },
-                "gtk-2-theme-breeze": {
+                "gtk-theme-breeze": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-theme-breeze",
@@ -202,11 +202,6 @@ class KDENeon6(Extension):
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-common-themes",
-                },
-                "gtk-3-theme-breeze": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-theme-breeze",
                 },
                 "icon-theme-breeze": {
                     "interface": "content",

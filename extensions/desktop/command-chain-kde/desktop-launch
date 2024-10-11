@@ -1,5 +1,5 @@
 #!/bin/bash
 
-set -- "${SNAP}/kf6/command-chain/desktop-launch6" "$@"
+set -- "${SNAP}/kf6/snap/command-chain/desktop-launch6" "$@"
 # shellcheck source=/dev/null
 source "${SNAP}/snap/command-chain/run"
