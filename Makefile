@@ -38,11 +38,11 @@ help: ## Show this help.
 setup: ## Set up a development environment
 ifeq ($(OS),Linux)
 	changes="`sudo snap install --no-wait codespell`"
-	changes="${changes} `sudo snap install --no-wait ruff`"
-	changes="${changes} `sudo snap install --no-wait shellcheck`"
-	changes="${changes} `sudo snap install --classic --no-wait astral-uv`"
-	for change in ${changes}; do
-		snap watch ${change}
+	changes="$$changes `sudo snap install --no-wait ruff`"
+	changes="$$changes `sudo snap install --no-wait shellcheck`"
+	changes="$$changes `sudo snap install --classic --no-wait astral-uv`"
+	for change in $$changes; do
+		snap watch $$change
 	done
 else ifeq ($(OS),Windows_NT)
 	pipx install uv
@@ -66,8 +66,8 @@ endif
 
 ---------------- : ## ----------------
 
-.PHONY: autoformat
-autoformat: format-ruff format-codespell  ## Run all automatic formatters
+.PHONY: format
+format: format-ruff format-codespell  ## Run all automatic formatters
 
 .PHONY: format-ruff
 format-ruff:  ##- Automatically format with ruff
@@ -75,11 +75,14 @@ format-ruff:  ##- Automatically format with ruff
 	success=true
 	ruff check --fix $(SOURCES) || success=false
 	ruff format $(SOURCES)
-	$success || exit 1
+	$$success || exit 1
 
 .PHONY: format-codespell
 format-codespell:  ##- Fix spelling issues with codespell
 	uv run codespell --toml pyproject.toml --write-changes $(SOURCES)
+
+.PHONY: autoformat
+autoformat: format  # Alias for 'format'
 
 ---------------- : ## ----------------
 
