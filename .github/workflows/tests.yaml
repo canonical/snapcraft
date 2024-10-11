@@ -9,11 +9,16 @@ on:
       - "renovate/*"
   pull_request:
 
+# Cancel currently-running builds when pushing new commits to a PR or branch
+# https://stackoverflow.com/a/72408109
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Check out code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -42,7 +47,7 @@ jobs:
           echo "::group::Wait for snap to complete"
           snap watch --last=install
           echo "::endgroup::"
-      - name: Run Linters
+      - name: Run linters
         run: tox run --skip-pkg-install --no-list-dependencies --colored yes -m lint
   unit:
     strategy:
@@ -50,7 +55,8 @@ jobs:
         platform: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, windows-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python
@@ -90,6 +96,7 @@ jobs:
         platform: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, windows-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
+      - name: Check out code
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0

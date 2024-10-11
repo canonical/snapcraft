@@ -1,5 +1,6 @@
 [project]
 name = "starcraft"
+description = "The basis for Starcraft team packages"
 dynamic = ["version", "readme"]
 dependencies = [
 
@@ -157,10 +158,7 @@ strict = false
 line-length = 88
 target-version = "py310"
 src = ["starcraft", "tests"]
-extend-exclude = [
-    "docs",
-    "__pycache__",
-]
+extend-exclude = ["docs"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -169,6 +167,7 @@ quote-style = "double"
 
 [tool.ruff.lint]
 # Follow ST063 - Maintaining and updating linting specifications for updating these.
+# Handy link: https://docs.astral.sh/ruff/rules/
 select = [  # Base linting rule selections.
     # See the internal document for discussion:
     # https://docs.google.com/document/d/1i1n8pDmFmWi4wTDpk-JfnWCVUThPJiggyPi2DYwBBu4/edit
@@ -285,7 +284,7 @@ max-args = 8
 classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**.py" = [  # Some things we want for the moin project are unnecessary in tests.
+"tests/**.py" = [  # Some things we want for the main project are unnecessary in tests.
     "D",  # Ignore docstring rules in tests
     "ANN",  # Ignore type annotations in tests
     "ARG",  # Allow unused arguments in tests (e.g. for fake functions/methods/classes)

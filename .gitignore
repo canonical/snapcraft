@@ -25,6 +25,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.snap
 MANIFEST
 
 # PyInstaller
@@ -71,6 +72,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/spelling/
 
 # PyBuilder
 target/
@@ -103,6 +105,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.direnv
 .env
 .venv
 env/
