@@ -329,7 +329,8 @@ def test_get_root_snippet_with_gpu(kde_neon_6_extension_core24):
         "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
     }
 
-def test_get_root_snippet_with_gpu(kde_neon_6_extension):
+
+def test_get_root_snippet_without_gpu(kde_neon_6_extension):
     snippet = kde_neon_6_extension.get_root_snippet()
     assert snippet["layout"]["/usr/share/libdrm"] == {
         "bind": "$SNAP/kf6-core22/usr/share/libdrm",
