@@ -43,7 +43,7 @@ html5lib==1.1
 httplib2==0.22.0
 idna==3.7
 imagesize==1.4.1
-importlib_metadata==8.2.0
+importlib_metadata==8.5.0
 jaraco.classes==3.4.0
 jeepney==0.8.0
 Jinja2==3.1.4
