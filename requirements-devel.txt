@@ -93,7 +93,7 @@ platformdirs==4.2.2
 pluggy==1.5.0
 polib==1.2.0
 progressbar==2.5
-protobuf==5.27.3
+protobuf==5.28.2
 psutil==6.0.0
 ptyprocess==0.7.0
 pycodestyle==2.12.1
