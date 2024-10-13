@@ -121,7 +121,7 @@ install_requires = [
     "pyelftools",
     # Pygit2 and libgit2 need to match versions.
     # Further info: https://www.pygit2.org/install.html#version-numbers
-    "pygit2~=1.13.0",
+    "pygit2~=1.16.0",
     "pylxd; sys_platform == 'linux'",
     "pymacaroons",
     "python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz ; sys_platform == 'linux'",
