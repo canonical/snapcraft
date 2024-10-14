@@ -241,7 +241,10 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
     assert kde_neon_6_extension_core24.get_root_snippet() == {
         "assumes": ["snapd2.58.3"],
         "compression": "lzo",
-        "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6"},
+        "environment": {
+            "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+            "GTK_USE_PORTAL": "1",
+        },
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
@@ -698,7 +701,6 @@ def test_get_parts_snippet(kde_neon_6_extension):
         "kde-neon-6/sdk": {
             "source": str(source),
             "plugin": "make",
-            "make-parameters": ["PLATFORM_PLUG=kf6-core22"],
             "build-snaps": ["kde-qt6-core22-sdk", "kf6-core22-sdk"],
             "build-packages": [
                 "gettext",

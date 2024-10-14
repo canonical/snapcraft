@@ -236,7 +236,10 @@ class KDENeon6(Extension):
                 },
                 **gpu_plugs,
             },
-            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf6"},
+            "environment": {
+                "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
+                "GTK_USE_PORTAL": "1",
+            },
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
@@ -358,7 +361,6 @@ class KDENeon6(Extension):
                 "kde-neon-6/sdk": {
                     "source": str(source),
                     "plugin": "make",
-                    "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content_kf6}"],
                     "build-snaps": [
                         self.kde_snaps.qt6_sdk_snap,
                         self.kde_snaps.kf6_sdk_snap,
@@ -382,7 +384,6 @@ class KDENeon6(Extension):
             "kde-neon-6/sdk": {
                 "source": str(source),
                 "plugin": "make",
-                "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content_kf6}"],
-                **gpu_opts,
+               **gpu_opts,
             },
         }
