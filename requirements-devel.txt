@@ -76,7 +76,7 @@ mdit-py-plugins==0.4.2
 mdurl==0.1.2
 more-itertools==10.4.0
 msgpack==1.0.8
-mypy==1.11.2
+mypy==1.12.0
 mypy-extensions==1.0.0
 myst-parser==4.0.0
 natsort==8.4.0
