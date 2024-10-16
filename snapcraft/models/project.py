@@ -1194,9 +1194,9 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
     def get_build_plan(self) -> list[BuildInfo]:
         """Get the build plan for this project."""
-        snap_type = self.type
-        if snap_type not in ("base", "kernel"):
-            snap_type = None
+        snap_type = None
+        if self.type in ("base", "kernel"):
+            snap_type = self.type
 
         platforms = None
         if self.platforms:
