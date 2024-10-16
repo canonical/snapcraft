@@ -1198,10 +1198,12 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         if snap_type not in ("base", "kernel"):
             snap_type = None
 
-        platforms = cast(
-            Platforms,
-            {name: platform.marshal() for name, platform in self.platforms.items()},
-        )
+        platforms = None
+        if self.platforms:
+            platforms = cast(
+                Platforms,
+                {name: platform.marshal() for name, platform in self.platforms.items()},
+            )
 
         return [
             BuildInfo(
