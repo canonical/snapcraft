@@ -32,7 +32,7 @@ from craft_application.models.constraints import (
 )
 from craft_cli import emit
 from craft_grammar.models import Grammar  # type: ignore[import-untyped]
-from craft_platforms import snap
+from craft_platforms import snap, Platforms
 from craft_providers import bases
 from pydantic import ConfigDict, PrivateAttr, StringConstraints
 from typing_extensions import Annotated, Self, override
@@ -1199,7 +1199,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             snap_type = None
 
         platforms = cast(
-            craft_platforms.Platforms,
+            Platforms,
             {name: platform.marshal() for name, platform in self.platforms.items()},
         )
 
