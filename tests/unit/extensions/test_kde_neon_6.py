@@ -195,40 +195,20 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
-            "gtk-theme-breeze": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-theme-breeze",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
-            },
-            "icon-theme-breeze": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/icons",
-                "default-provider": "icon-theme-breeze",
             },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "gtk-common-themes",
             },
-            "qt-sound-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/sounds",
-                "default-provider": "qt-common-themes",
-            },
             "sound-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
-            },
-            "qt-6-themes": {
-                "interface": "content",
-                "target": "$SNAP/kf6",
-                "default-provider": "qt-common-themes",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",
@@ -268,40 +248,20 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
-            "gtk-theme-breeze": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-theme-breeze",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
-            },
-            "icon-theme-breeze": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/icons",
-                "default-provider": "icon-theme-breeze",
             },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "gtk-common-themes",
             },
-            "qt-sound-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/sounds",
-                "default-provider": "qt-common-themes",
-            },
             "sound-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
-            },
-            "qt-6-themes": {
-                "interface": "content",
-                "target": "$SNAP/kf6",
-                "default-provider": "qt-common-themes",
             },
             "kf6-core24": {
                 "content": "kf6-core24-all",
@@ -369,40 +329,20 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
-            "gtk-theme-breeze": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-theme-breeze",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
-            },
-            "icon-theme-breeze": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/icons",
-                "default-provider": "icon-theme-breeze",
             },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "gtk-common-themes",
             },
-            "qt-sound-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/sounds",
-                "default-provider": "qt-common-themes",
-            },
             "sound-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
-            },
-            "qt-6-themes": {
-                "interface": "content",
-                "target": "$SNAP/kf6",
-                "default-provider": "qt-common-themes",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",
@@ -444,40 +384,20 @@ def test_get_root_snippet_with_external_sdk_core24(
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
             },
-            "gtk-theme-breeze": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-theme-breeze",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
                 "default-provider": "gtk-common-themes",
-            },
-            "icon-theme-breeze": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/icons",
-                "default-provider": "icon-theme-breeze",
             },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "gtk-common-themes",
             },
-            "qt-sound-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/sounds",
-                "default-provider": "qt-common-themes",
-            },
             "sound-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
-            },
-            "qt-6-themes": {
-                "interface": "content",
-                "target": "$SNAP/kf6",
-                "default-provider": "qt-common-themes",
             },
             "kf6-core24": {
                 "content": "kf6-core24-all",

@@ -193,40 +193,20 @@ class KDENeon6(Extension):
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-common-themes",
                 },
-                "gtk-theme-breeze": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-theme-breeze",
-                },
                 "gtk-3-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/themes",
                     "default-provider": "gtk-common-themes",
-                },
-                "icon-theme-breeze": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/icons",
-                    "default-provider": "icon-theme-breeze",
                 },
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
                     "default-provider": "gtk-common-themes",
                 },
-                "qt-sound-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "qt-common-themes",
-                },
                 "sound-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/sounds",
                     "default-provider": "gtk-common-themes",
-                },
-                "qt-6-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/kf6",
-                    "default-provider": "qt-common-themes",
                 },
                 platform_kf6_snap: {
                     "content": content_kf6_snap,
