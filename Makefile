@@ -43,7 +43,7 @@ test-legacy-units:
 
 .PHONY: test-units
 test-units: test-legacy-units
-	tox run -e test-py310 --workdir /tmp/t -k test_lxd
+	tox run -e test-py310
 
 .PHONY: tests
 tests: tests-static test-units
