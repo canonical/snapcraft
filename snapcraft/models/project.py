@@ -32,6 +32,7 @@ from craft_application.models.constraints import (
 )
 from craft_cli import emit
 from craft_grammar.models import Grammar  # type: ignore[import-untyped]
+from craft_platforms import snap
 from craft_providers import bases
 from pydantic import ConfigDict, PrivateAttr, StringConstraints
 from typing_extensions import Annotated, Self, override
@@ -1138,6 +1139,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
     base: str | None = None
     build_base: str | None = None
     name: str
+    type: Literal["app", "base", "gadget", "kernel", "snapd"] | None = None
     platforms: dict[str, Platform] | None = None  # type: ignore[assignment]
     architectures: list[str | Architecture] | None = None
     project_type: str | None = pydantic.Field(default=None, alias="type")
@@ -1192,45 +1194,9 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
     def get_build_plan(self) -> list[BuildInfo]:
         """Get the build plan for this project."""
-        build_infos: list[BuildInfo] = []
-        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
-            str(
-                get_effective_base(
-                    base=self.base,
-                    build_base=self.build_base,
-                    project_type=self.project_type,
-                    name=self.name,
-                    translate_devel=False,  # We want actual "devel" if set.
-                )
-            )
-        ].value
-
-        base = bases.BaseName("ubuntu", effective_base)
-
-        # set default value
-        if self.platforms is None:
-            self.platforms = {
-                get_host_architecture(): Platform(
-                    build_on=[SnapArch(get_host_architecture()).value],
-                    build_for=[SnapArch(get_host_architecture()).value],
-                )
-            }
-            # For backwards compatibility with core22, convert the platforms.
-            if effective_base == "22.04" and self.architectures:
-                self.platforms = (  # type: ignore[reportIncompatibleVariableOverride]
-                    Platform.from_architectures(self.architectures)
-                )
-
-        for platform_entry, platform in self.platforms.items():
-            for build_for in platform.build_for or [SnapArch(platform_entry).value]:
-                for build_on in platform.build_on or [SnapArch(platform_entry).value]:
-                    build_infos.append(
-                        BuildInfo(
-                            platform=platform_entry,
-                            build_on=build_on,
-                            build_for=build_for,
-                            base=base,
-                        )
-                    )
-
-        return build_infos
+        return snap.get_platforms_snap_build_plan(
+            base=self.base,
+            build_base=self.build_base,
+            snap_type=self.type,
+            platforms=self.platforms,
+        )
