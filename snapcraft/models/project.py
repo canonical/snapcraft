@@ -1194,6 +1194,15 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
     def get_build_plan(self) -> list[BuildInfo]:
         """Get the build plan for this project."""
+        snap_type = self.type
+        if snap_type not in ("base", "kernel"):
+            snap_type = None
+
+        platforms = cast(
+            craft_platforms.Platforms,
+            {name: platform.marshal() for name, platform in self.platforms.items()},
+        )
+
         return [
             BuildInfo(
                 platform=buildinfo.platform,
@@ -1207,7 +1216,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             for buildinfo in snap.get_platforms_snap_build_plan(
                 base=self.base,
                 build_base=self.build_base,
-                snap_type=self.type,
-                platforms=self.platforms,
+                snap_type=snap_type,
+                platforms=platforms,
             )
         ]
