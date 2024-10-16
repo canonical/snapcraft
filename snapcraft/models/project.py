@@ -38,7 +38,7 @@ from pydantic import ConfigDict, PrivateAttr, StringConstraints
 from typing_extensions import Annotated, Self, override
 
 from snapcraft import utils
-from snapcraft.const import SUPPORTED_ARCHS, SnapArch
+from snapcraft.const import SUPPORTED_ARCHS
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
@@ -1194,9 +1194,21 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
     def get_build_plan(self) -> list[BuildInfo]:
         """Get the build plan for this project."""
-        return snap.get_platforms_snap_build_plan(
-            base=self.base,
-            build_base=self.build_base,
-            snap_type=self.type,
-            platforms=self.platforms,
-        )
+        return [
+            BuildInfo(
+                platform=buildinfo.platform,
+                build_on=buildinfo.build_on,
+                build_for=buildinfo.build_for,
+                base=bases.BaseName(
+                    name=buildinfo.build_base.distribution,
+                    version=buildinfo.build_base.series,
+                )
+            )
+            for buildinfo in
+            snap.get_platforms_snap_build_plan(
+                base=self.base,
+                build_base=self.build_base,
+                snap_type=self.type,
+                platforms=self.platforms,
+            )
+        ]
