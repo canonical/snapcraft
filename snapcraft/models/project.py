@@ -1202,10 +1202,9 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                 base=bases.BaseName(
                     name=buildinfo.build_base.distribution,
                     version=buildinfo.build_base.series,
-                )
+                ),
             )
-            for buildinfo in
-            snap.get_platforms_snap_build_plan(
+            for buildinfo in snap.get_platforms_snap_build_plan(
                 base=self.base,
                 build_base=self.build_base,
                 snap_type=self.type,
