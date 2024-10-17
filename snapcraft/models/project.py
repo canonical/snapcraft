@@ -1235,7 +1235,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         # ignores.
         # Also note that you have to put mypy's "type" ignore before the
         # pyright ignore when they're on the same line, because only pyright is
-        # smart enough to register the ignore when it isn't the first commment
+        # smart enough to register the ignore when it isn't the first comment
         # on the line.
         _validate_mandatory_base(self.base, self.type)
         return [
