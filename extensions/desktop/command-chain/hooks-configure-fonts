@@ -1,5 +1,5 @@
 #!/bin/bash
 
-set -- "${SNAP}/gnome-platform/command-chain/hooks-configure-fonts" "$@"
+set -- "${SNAP_DESKTOP_RUNTIME}/command-chain/hooks-configure-desktop" "$@"
 # shellcheck source=/dev/null
 source "${SNAP}/snap/command-chain/run"
