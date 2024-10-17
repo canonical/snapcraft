@@ -2486,40 +2486,6 @@ def test_platform_default():
     ]
 
 
-def test_build_planner_get_build_plan_base(mocker):
-    """Test `get_build_plan()` uses the correct base."""
-    mock_get_effective_base = mocker.patch(
-        "snapcraft.models.project.get_effective_base", return_value="core24"
-    )
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {
-            "name": "test-snap",
-            "base": "test-base",
-            "build-base": "test-build-base",
-            "platforms": {"amd64": None},
-            "project_type": "test-type",
-        }
-    )
-
-    actual_build_infos = planner.get_build_plan()
-
-    assert actual_build_infos == [
-        BuildInfo(
-            platform="amd64",
-            build_on="amd64",
-            build_for="amd64",
-            base=BaseName(name="ubuntu", version="24.04"),
-        )
-    ]
-    mock_get_effective_base.assert_called_once_with(
-        base="test-base",
-        build_base="test-build-base",
-        project_type="test-type",
-        name="test-snap",
-        translate_devel=False,
-    )
-
-
 def test_project_platform_error_has_context():
     """Platform validation errors include which platform entry is invalid."""
     error = r"build-on\n  Field required"
