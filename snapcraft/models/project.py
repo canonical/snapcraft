@@ -278,6 +278,14 @@ def _get_partitions_from_components(
     return None
 
 
+def _validate_mandatory_base(base: str | None, snap_type: str | None) -> None:
+    """Validate that the base is specified, if required by the snap_type."""
+    if (base is not None) ^ (snap_type not in ["base", "kernel", "snapd"]):
+        raise ValueError(
+            "Snap base must be declared when type is not base, kernel or snapd"
+        )
+
+
 class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
@@ -715,12 +723,7 @@ class Project(models.Project):
 
     @pydantic.model_validator(mode="after")
     def _validate_mandatory_base(self):
-        snap_type = self.type
-        base = self.base
-        if (base is not None) ^ (snap_type not in ["base", "kernel", "snapd"]):
-            raise ValueError(
-                "Snap base must be declared when type is not base, kernel or snapd"
-            )
+        _validate_mandatory_base(self.base, self.type)
         return self
 
     @pydantic.field_validator("name")
@@ -1197,10 +1200,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         snap_type: str | None = None
         if self.type in ("base", "kernel", "snapd"):
             snap_type = self.type
-        elif self.base is None:
-            raise ValueError(
-                "Snap base must be declared when type is not base, kernel or snapd"
-            )
+        _validate_mandatory_base(self.base, self.type)
 
         effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
             str(
@@ -1212,7 +1212,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                     translate_devel=False,  # We want actual "devel" if set.
                 )
             )
-        ]
+        ].value
 
         # set default value
         if self.platforms is None:
