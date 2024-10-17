@@ -29,7 +29,7 @@ craft-archives==2.0.0
 craft-cli==2.7.0
 craft-grammar==2.0.1
 craft-parts==2.1.2
-craft-platforms @ git+https://github.com/canonical/craft-platforms@f055619f473a5f86b5e111d77dd90c2340c9bbb3 # 0.3.1
+/home/mrc/dev/main/craft-platforms
 craft-providers==2.0.4
 craft-store==3.0.2
 cryptography==43.0.1
