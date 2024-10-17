@@ -93,16 +93,12 @@ class TestGetPartSnippet:
                 "source-tag": "v1.0.0-beta",
                 "plugin": "nil",
                 "build-snaps": ["rustup"],
-                "build-packages": ["upx-ucl"],  # for binary compression
                 "override-build": f"""
                 rustup default stable
                 rustup target add {toolchain}
 
                 cargo build --target {toolchain} --release
                 mkdir -p $SNAPCRAFT_PART_INSTALL/bin/command-chain
-
-                # compress the binary
-                upx --best --lzma target/{toolchain}/release/env-exporter
                 
                 cp target/{toolchain}/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/command-chain
                 """,
