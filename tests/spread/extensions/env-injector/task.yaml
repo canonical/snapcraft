@@ -1,0 +1,127 @@
+summary: Build and run a basic hello-world snap using extensions
+
+systems:
+  - ubuntu-24.04*
+
+environment:
+
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+  SNAP_DIR: ../snaps/env-injector-hello
+  SNAP: env-injector-hello
+
+prepare: |
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+restore: |
+
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f /var/snap/"${SNAP}"/common/*.env
+  rm -f ./*.snap
+  rm -rf ./squashfs-root
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+
+  assert_env() {
+    local snap_app="$1"
+    local env_name="$2"
+    local exp_value="$3"
+
+    local actual_value
+
+    if ! eval "$snap_app" | grep -q "^${env_name}="; then
+      echo "Environment variable '$env_name' is not set."
+      return 1
+    fi
+
+    if [ -z "$env_name" ]; then
+      empty=$( "$snap_app" | grep "=${exp_value}")
+      [ -z "$empty" ] || return 1
+    fi
+
+    actual_value=$( "$snap_app" | grep "^${env_name}=" | cut -d'=' -f2-)
+
+    if [ "$actual_value" != "$exp_value" ]; then
+      echo "Environment variable '$env_name' does not match the expected value."
+      echo "Expected: '$env_name=$exp_value', but got: '$env_name=$actual_value'"
+      return 1
+    fi
+
+    return 0
+  }
+
+  cd "$SNAP_DIR"
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft
+
+  unsquashfs "${SNAP}"_1.0_*.snap
+
+  # Check that the env-exporter program is present
+  [ -f squashfs-root/bin/command-chain/env-exporter ]
+
+  # Check that the exec-env script is present
+  [ -f squashfs-root/usr/bin/exec-env ]
+
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  echo "[env-injector] Creating global envfile"
+  echo 'HELLO_WORLD="Hello World"' >> /var/snap/"${SNAP}"/common/global.env
+
+  # Load global envfile
+  snap set env-injector-hello envfile=/var/snap/"${SNAP}"/common/global.env
+  echo "[TEST] - Check if the global envfile is loaded for all apps"
+  assert_env "env-injector-hello.hello1" "HELLO_WORLD" "Hello World" || exit 1
+  assert_env "env-injector-hello.hello2" "HELLO_WORLD" "Hello World" || exit 1
+  assert_env "env-injector-hello.hello-demo" "HELLO_WORLD" "Hello World" || exit 1
+
+  echo "[env-injector] Creating app-specific envfile"
+  echo 'SCOPED=Scoped' >> /var/snap/"${SNAP}"/common/appenv.env
+
+  # Load app-specific envfile
+  snap set env-injector-hello apps.hello1.envfile=/var/snap/"${SNAP}"/common/appenv.env
+  echo "[TEST] - Check if the app-specific envfile is loaded for the app"
+  assert_env "env-injector-hello.hello1" "SCOPED" "Scoped" || exit 1
+
+  echo "[env-injector] Setting global env variable"
+  # Set env vars: Global
+  snap set env-injector-hello env.global="World"
+  echo "[TEST] - Check if the global env var is set for all apps"
+  assert_env "env-injector-hello.hello1" "GLOBAL" "World" || exit 1
+  assert_env "env-injector-hello.hello2" "GLOBAL" "World" || exit 1
+  assert_env "env-injector-hello.hello-demo" "GLOBAL" "World" || exit 1
+
+  echo "[env-injector] Setting app-specific env variable"
+  # Set env vars: specific to each app
+  snap set env-injector-hello apps.hello1.env.hello="Hello"
+  snap set env-injector-hello apps.hello2.env.specific="City"
+
+  echo "[TEST] - Check if the app-specific env var IS SET for the app hello1"
+  assert_env "env-injector-hello.hello1" "HELLO" "Hello" || exit 1
+  echo "[TEST] - Check if the app-specific env var IS NOT SET for the app hello2"
+  ! assert_env "env-injector-hello.hello2" "HELLO" "Hello" || exit 1
+
+  echo "[TEST] - Check if the app-specific env var IS SET for the app hello2"
+  assert_env "env-injector-hello.hello2" "SPECIFIC" "City" || exit 1
+  echo "[TEST] - Check if the app-specific env var IS NOT SET for the app hello1"
+  ! assert_env "env-injector-hello.hello1" "SPECIFIC" "City" || exit 1
+
+  snap set env-injector-hello env.word.dot="wrong"
+  echo "[TEST] - Check if the key with dot was ignored"
+  ! assert_env "env-injector-hello.hello1" "" "wrong" || exit 1
+
+  echo "[env-injector] Testing order of env vars"
+  echo 'ORDER="From envfile"' >> /var/snap/"${SNAP}"/common/local.env
+  snap set env-injector-hello apps.hello1.env.order="from app-specific"
+  snap set env-injector-hello apps.hello1.envfile=/var/snap/"${SNAP}"/common/local.env
+  echo "[TEST] - Check if local overrites global"
+  assert_env "env-injector-hello.hello1" "ORDER" "from app-specific" || exit 1
+
+  echo "[env-injector] Run hello-demo app"
+  snap set env-injector-hello apps.myapp.env.specific="City"
+  echo "[TEST] Make sure that alias is NOT rewritten"
+  assert_env "env-injector-hello.hello-demo" "SPECIFIC" "City" || exit 1
