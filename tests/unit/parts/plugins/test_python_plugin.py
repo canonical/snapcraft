@@ -19,7 +19,7 @@ from textwrap import dedent
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo, Step, StepInfo, errors
 
-from snapcraft.parts.plugins import PythonPlugin
+from snapcraft.parts.plugins import PythonPlugin, python_common
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ def test_get_build_commands(plugin, new_dir):
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
         f"{new_dir}/parts/my-part/install/bin/pip install  -U pip setuptools wheel",
         f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/my-part/install/bin/pip install  -U .",
-        f'find "{new_dir}/parts/my-part/install" -type f -executable -print0 | xargs -0 \\\n'
+        f'find "{new_dir}/parts/my-part/install" -type f -executable -print0 | xargs --no-run-if-empty -0 \\\n'
         '    sed -i "1 s|^#\\!${PARTS_PYTHON_VENV_INTERP_PATH}.*$|#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}|"\n',
         dedent(
             f"""\
@@ -224,7 +224,7 @@ def test_fix_pyvenv(new_dir, home_attr):
 
     step_info = StepInfo(part_info, Step.PRIME)
 
-    PythonPlugin.post_prime(step_info)
+    python_common.post_prime(step_info)
 
     new_contents = pyvenv.read_text()
     assert "home = /snap/test-snap/current/usr/bin" in new_contents

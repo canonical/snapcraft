@@ -1,16 +1,26 @@
-# Creating docker containers for snapcraft
+# Docker images for `snapcraft`
 
-By default the `Dockerfile` builds Ubuntu 16.04 (Xenial) image with `snapcraft` from the `edge` channel.
+OCI-compliant container images and their sources are officially supported by the
+https://github.com/canonical/snapcraft-rocks/ project.
 
-    docker build . --no-cache
+To build a snap with the docker container, you need to choose an image that
+matches snap `base`. For example, to build `base: core24` snap:
 
-It is however possible to choose the base Ubuntu version and the Snapcraft channel (risk levels):
+    docker run -it -v `pwd`:/project ghcr.io/canonical/snapcraft:8_core24
 
-- `edge`
-- `beta`
-- `candidate`
-- `stable`
+ * `8` in `8_core24` is the version of snapcraft.
+ * `\; -v` construction at the end is required to see `snapcraft` output.
 
-To do that, use `--build-arg RISK=<risk>` and `--build-arg UBUNTU=<name>` arguments:
+For more details, see official `snapcraft-rocks` repo from Canonical.
 
-    docker build . --no-cache --build-arg RISK=beta --build-arg UBUNTU=bionic
+### Building snaps with `podman`
+
+`podman` was born as a rootless alternative to Docker. It is default on Fedora
+to have `podman` instead of Docker, but SELinux there doesn't allow containers
+to write to volumes, so we just turn this "feature" off with
+ `--security-opt label=disable`.
+
+```sh
+podman run -it --rm --security-opt label=disable \
+    -v `pwd`:/project ghcr.io/canonical/snapcraft:8_core24 \; -v
+```

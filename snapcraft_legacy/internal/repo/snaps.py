@@ -179,7 +179,13 @@ class SnapPackage:
         # We write an empty assertions file for dangerous installs to
         # have a consistent interface.
         if self.has_assertions():
-            assertions.append(["snap-declaration", "snap-name={}".format(self.name)])
+            assertions.append(
+                [
+                    "snap-declaration",
+                    # use the snap name without any alias
+                    f"snap-name={self.name.partition('_')[0]}"
+                ]
+            )
             assertions.append(
                 [
                     "snap-revision",
