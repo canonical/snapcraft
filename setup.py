@@ -103,7 +103,7 @@ install_requires = [
     "craft-cli~=2.6",
     "craft-grammar>=2.0.1,<3.0.0",
     "craft-parts>=2.1.2,<3.0.0",
-    "craft-platforms @ file://localhost/home/mrc/dev/main/craft-platforms#egg=craft_platforms",
+    "craft-platforms @ git+https://github.com/canonical/craft-platforms@f055619f473a5f86b5e111d77dd90c2340c9bbb3", # ~=0.3.1",
     "craft-providers>=2.0.4,<3.0.0",
     "craft-store>=3.0.2,<4.0.0",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
