@@ -1197,11 +1197,6 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
     def get_build_plan(self) -> list[BuildInfo]:
         """Get the build plan for this project."""
-        snap_type: str | None = None
-        if self.type in ("base", "kernel", "snapd"):
-            snap_type = self.type
-        _validate_mandatory_base(self.base, self.type)
-
         effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
             str(
                 get_effective_base(
@@ -1233,6 +1228,16 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
             {name: platform.marshal() for name, platform in self.platforms.items()},
         )
 
+        # In _validate_mandatory_base, we ensure that the possible values of
+        # 'base' and 'snap_type' are narrowed so they'll always match one of
+        # the two overloads of get_platforms_snap_build_plan.  But, pyright and
+        # mypy aren't smart enough to realize this, so we need the type checker
+        # ignores.
+        # Also note that you have to put mypy's "type" ignore before the
+        # pyright ignore when they're on the same line, because only pyright is
+        # smart enough to register the ignore when it isn't the first commment
+        # on the line.
+        _validate_mandatory_base(self.base, self.type)
         return [
             BuildInfo(
                 platform=buildinfo.platform,
@@ -1243,10 +1248,10 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                     version=buildinfo.build_base.series,
                 ),
             )
-            for buildinfo in snap.get_platforms_snap_build_plan(
-                base=self.base,
+            for buildinfo in snap.get_platforms_snap_build_plan(  # pyright: ignore[reportCallIssue]
+                base=self.base,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
                 build_base=self.build_base,
-                snap_type=snap_type,
+                snap_type=self.type,  # type: ignore[arg-type]
                 platforms=platforms,
             )
         ]
