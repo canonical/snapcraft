@@ -38,7 +38,7 @@ from pydantic import ConfigDict, PrivateAttr, StringConstraints
 from typing_extensions import Annotated, Self, override
 
 from snapcraft import utils
-from snapcraft.const import SUPPORTED_ARCHS
+from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
@@ -1197,17 +1197,41 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         snap_type: str | None = None
         if self.type in ("base", "kernel", "snapd"):
             snap_type = self.type
-        elif not self.base:
+        elif self.base is None:
             raise ValueError(
                 "Snap base must be declared when type is not base, kernel or snapd"
             )
 
-        platforms = None
-        if self.platforms:
-            platforms = cast(
-                Platforms,
-                {name: platform.marshal() for name, platform in self.platforms.items()},
+        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+            str(
+                get_effective_base(
+                    base=self.base,
+                    build_base=self.build_base,
+                    project_type=self.project_type,
+                    name=self.name,
+                    translate_devel=False,  # We want actual "devel" if set.
+                )
             )
+        ]
+
+        # set default value
+        if self.platforms is None:
+            self.platforms = {
+                get_host_architecture(): Platform(
+                    build_on=[SnapArch(get_host_architecture()).value],
+                    build_for=[SnapArch(get_host_architecture()).value],
+                )
+            }
+            # For backwards compatibility with core22, convert the platforms.
+            if effective_base == "22.04" and self.architectures:
+                self.platforms = (  # type: ignore[reportIncompatibleVariableOverride]
+                    Platform.from_architectures(self.architectures)
+                )
+
+        platforms = cast(
+            Platforms,
+            {name: platform.marshal() for name, platform in self.platforms.items()},
+        )
 
         return [
             BuildInfo(
