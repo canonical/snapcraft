@@ -1236,8 +1236,8 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         return [
             BuildInfo(
                 platform=buildinfo.platform,
-                build_on=buildinfo.build_on,
-                build_for=buildinfo.build_for,
+                build_on=str(buildinfo.build_on),
+                build_for=str(buildinfo.build_for),
                 base=bases.BaseName(
                     name=buildinfo.build_base.distribution,
                     version=buildinfo.build_base.series,
