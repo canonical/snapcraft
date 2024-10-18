@@ -164,7 +164,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
 sphinxext-opengraph==0.9.1
-starlette==0.38.5
+starlette==0.40.0
 tabulate==0.9.0
 testscenarios==0.5.0
 testtools==2.7.2
