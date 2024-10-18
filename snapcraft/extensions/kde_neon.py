@@ -89,7 +89,7 @@ class KDENeon(Extension):
         return False
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
         return {
             "command-chain": ["snap/command-chain/desktop-launch"],
             "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],

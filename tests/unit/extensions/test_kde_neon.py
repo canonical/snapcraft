@@ -81,7 +81,7 @@ def test_is_experimental():
 
 
 def test_get_app_snippet(kde_neon_extension):
-    assert kde_neon_extension.get_app_snippet() == {
+    assert kde_neon_extension.get_app_snippet(app_name="test-app") == {
         "command-chain": ["snap/command-chain/desktop-launch"],
         "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],
     }
