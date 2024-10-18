@@ -1233,10 +1233,6 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
         # the two overloads of get_platforms_snap_build_plan.  But, pyright and
         # mypy aren't smart enough to realize this, so we need the type checker
         # ignores.
-        # Also note that you have to put mypy's "type" ignore before the
-        # pyright ignore when they're on the same line, because only pyright is
-        # smart enough to register the ignore when it isn't the first comment
-        # on the line.
         _validate_mandatory_base(self.base, self.type)
         return [
             BuildInfo(
@@ -1249,7 +1245,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                 ),
             )
             for buildinfo in snap.get_platforms_snap_build_plan(  # pyright: ignore[reportCallIssue]
-                base=self.base,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+                base=self.base,  # type: ignore[arg-type]
                 build_base=self.build_base,
                 snap_type=self.type,  # type: ignore[arg-type]
                 platforms=platforms,
