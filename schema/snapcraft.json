@@ -906,6 +906,7 @@
                             "uniqueItems": true,
                             "items": {
                                 "enum": [
+                                    "env-injector",
                                     "flutter-stable",
                                     "flutter-beta",
                                     "flutter-dev",
