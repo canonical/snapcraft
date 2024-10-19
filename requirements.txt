@@ -50,7 +50,7 @@ pygit2==1.13.3
 pylxd==2.3.5
 pymacaroons==0.13.0
 PyNaCl==1.5.0
-pyparsing==3.1.4
+pyparsing==3.2.0
 pyRFC3339==1.1
 python-dateutil==2.9.0.post0
 python-debian==0.1.49
