@@ -85,7 +85,7 @@ overrides==7.7.0
 packaging==24.1
 PasteDeploy==3.1.0
 pathspec==0.12.1
-pbr==6.0.0
+pbr==6.1.0
 pexpect==4.9.0
 plaster==1.1.2
 plaster-pastedeploy==1.0.1
