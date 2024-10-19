@@ -17,7 +17,7 @@ craft-providers==2.0.4
 craft-store==3.0.2
 cryptography==43.0.1
 distro==1.9.0
-docutils==0.19
+docutils==0.21.2
 gnupg==2.3.1
 httplib2==0.22.0
 idna==3.7

@@ -38,7 +38,7 @@ dict2css==0.3.0.post1
 dill==0.3.8
 distlib==0.3.8
 distro==1.9.0
-docutils==0.19
+docutils==0.21.2
 domdf-python-tools==3.9.0
 filelock==3.15.4
 fixtures==4.1.0

@@ -31,7 +31,7 @@ cryptography==43.0.1
 cssutils==2.11.1
 dict2css==0.3.0.post1
 distro==1.9.0
-docutils==0.19
+docutils==0.21.2
 domdf-python-tools==3.9.0
 filelock==3.15.4
 furo==2024.8.6
