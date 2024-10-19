@@ -105,7 +105,7 @@ pydocstyle==6.3.0
 pyelftools==0.31
 pyflakes==3.2.0
 pyftpdlib==1.5.10
-pygit2==1.13.3
+pygit2==1.16.0
 Pygments==2.18.0
 pylint==3.2.7
 pylxd==2.3.5
