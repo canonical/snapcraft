@@ -3,7 +3,7 @@ annotated-types==0.7.0
 anyio==4.4.0
 apeye==1.4.1
 apeye-core==1.1.5
-astroid==3.2.4
+astroid==3.3.5
 attrs==24.2.0
 autodocsumm==0.2.13
 babel==2.16.0
