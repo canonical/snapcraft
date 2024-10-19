@@ -108,7 +108,7 @@ install_requires = [
     "craft-store>=3.0.2,<4.0.0",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "gnupg",
-    "jsonschema==2.5.1",
+    "jsonschema==2.6.0",
     "launchpadlib",
     "lazr.restfulclient",
     "lxml",
