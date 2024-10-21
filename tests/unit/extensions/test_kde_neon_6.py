@@ -150,7 +150,7 @@ def test_get_app_snippet(kde_neon_6_extension):
 
 
 def test_get_app_snippet_core24(kde_neon_6_extension_core24):
-    assert kde_neon_6_extension.get_app_snippet(app_name="test-app") == {
+    assert kde_neon_6_extension_core24.get_app_snippet(app_name="test-app") == {
         "command-chain": [
             "snap/command-chain/gpu-2404-wrapper",
             "snap/command-chain/desktop-launch",
