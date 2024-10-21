@@ -92,7 +92,7 @@ class KDENeon6(Extension):
         return False
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
         command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
             command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
