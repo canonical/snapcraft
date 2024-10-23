@@ -174,6 +174,10 @@ setup(
         + recursive_data_files("keyrings", "share/snapcraft")
         + recursive_data_files("extensions", "share/snapcraft")
     ),
+    include_package_data=True,
+    package_data={
+        "snapcraft": ["templates/*"],
+    },
     python_requires=">=3.10",
     install_requires=install_requires,
     extras_require=extras_requires,

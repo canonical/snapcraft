@@ -1,14 +1,40 @@
 summary: Run snapcraft init
 
+environment:
+  PROFILE/default_profile: null
+  PROFILE/simple_profile: simple
+  PROFILE: null
+  PROJECT_DIR/default_dir: null
+  PROJECT_DIR/project_dir: test-project-dir
+  PROJECT_DIR: null
+
 restore: |
+  if [[ -n "$PROJECT_DIR" ]]; then
+    cd "$PROJECT_DIR"
+  fi
+
   rm -f ./*.snap
+  rm -rf ./snap
 
 execute: |
   # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
-  # initialize a new snapcraft project
-  snapcraft init
+  args=("init")
+
+  if [[ -n "$PROFILE" ]]; then
+    args+=("--profile" "$PROFILE")
+  fi
+
+  if [[ -n "$PROJECT_DIR" ]]; then
+    args+=("$PROJECT_DIR")
+  fi
+
+  snapcraft "${args[@]}"
+
+  if [[ -n "$PROJECT_DIR" ]]; then
+    cd "$PROJECT_DIR"
+  fi
 
   # the base should be core24
   grep "^base: core24" snap/snapcraft.yaml
