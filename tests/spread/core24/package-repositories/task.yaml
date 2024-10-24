@@ -9,6 +9,7 @@ environment:
   SNAP/test_multi_keys: test-multi-keys
   SNAP/test_foreign_armhf: test-foreign-armhf
   SNAP/test_foreign_i386: test-foreign-i386
+  SNAP/test_key_conflict: test-key-conflict
 
 prepare: |
   # Remove the currently installed "gpg" and "dirmngr" packages to ensure that

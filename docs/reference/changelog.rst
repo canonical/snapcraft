@@ -70,6 +70,53 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.4.4 (2024-Oct-24)
+-------------------
+
+Core
+====
+
+Bases
+#####
+
+core24
+""""""
+
+* Fix a bug where ``CRAFT_PARALLEL_BUILD_COUNT`` was not evaluated in
+  ``snapcraft.yaml`` files (`#4785`_).
+
+* Fix a bug where ``package-repositories`` declarations could conflict with
+  default sources present in Noble (`LP#2083013`_).
+
+For a complete list of commits, check out the `8.4.4`_ release on GitHub.
+
+
+7.5.8 (2024-Oct-24)
+-------------------
+
+Core
+====
+
+* Fix a regression where Snapcraft would fail to run on some architectures due
+  to a ``cryptography`` dependency that attempted to load legacy algorithms
+  (`#5077`_).
+
+For a complete list of commits, check out the `7.5.8`_ release on GitHub.
+
+
+8.4.3 (2024-Oct-10)
+-------------------
+
+Core
+====
+
+Components
+##########
+
+* Add support for component types ``kernel-modules`` and ``standard``
+  (`#5089`_).
+
+For a complete list of commits, check out the `8.4.3`_ release on GitHub.
 
 8.4.2 (2024-Oct-07)
 -------------------
@@ -1230,6 +1277,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _LP#2061603: https://bugs.launchpad.net/snapcraft/+bug/2061603
 .. _LP#2064639: https://bugs.launchpad.net/snapcraft/+bug/2064639
 .. _LP#2069783: https://bugs.launchpad.net/snapcraft/+bug/2069783
+.. _LP#2083013: https://bugs.launchpad.net/snapcraft/+bug/2083013
 
 .. _#4142: https://github.com/canonical/snapcraft/issues/4142
 .. _#4356: https://github.com/canonical/snapcraft/issues/4356
@@ -1255,6 +1303,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#4780: https://github.com/canonical/snapcraft/issues/4780
 .. _#4781: https://github.com/canonical/snapcraft/issues/4781
 .. _#4783: https://github.com/canonical/snapcraft/issues/4783
+.. _#4785: https://github.com/canonical/snapcraft/issues/4785
 .. _#4791: https://github.com/canonical/snapcraft/issues/4791
 .. _#4798: https://github.com/canonical/snapcraft/issues/4798
 .. _#4804: https://github.com/canonical/snapcraft/issues/4804
@@ -1287,9 +1336,11 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#5048: https://github.com/canonical/snapcraft/issues/5048
 .. _#5077: https://github.com/canonical/snapcraft/issues/5077
 .. _#5079: https://github.com/canonical/snapcraft/issues/5079
+.. _#5089: https://github.com/canonical/snapcraft/issues/5089
 
 .. _7.5.6: https://github.com/canonical/snapcraft/releases/tag/7.5.6
 .. _7.5.7: https://github.com/canonical/snapcraft/releases/tag/7.5.7
+.. _7.5.8: https://github.com/canonical/snapcraft/releases/tag/7.5.8
 .. _8.0.0: https://github.com/canonical/snapcraft/releases/tag/8.0.0
 .. _8.0.1: https://github.com/canonical/snapcraft/releases/tag/8.0.1
 .. _8.0.2: https://github.com/canonical/snapcraft/releases/tag/8.0.2
@@ -1318,3 +1369,5 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.4.0: https://github.com/canonical/snapcraft/releases/tag/8.4.0
 .. _8.4.1: https://github.com/canonical/snapcraft/releases/tag/8.4.1
 .. _8.4.2: https://github.com/canonical/snapcraft/releases/tag/8.4.2
+.. _8.4.3: https://github.com/canonical/snapcraft/releases/tag/8.4.3
+.. _8.4.4: https://github.com/canonical/snapcraft/releases/tag/8.4.4
