@@ -106,7 +106,7 @@ class EnvInjector(Extension):
 
                 cargo build --target {toolchain} --release
                 mkdir -p $SNAPCRAFT_PART_INSTALL/bin/command-chain
-                
+
                 cp target/{toolchain}/release/env-exporter $SNAPCRAFT_PART_INSTALL/bin/command-chain
                 """,
             }

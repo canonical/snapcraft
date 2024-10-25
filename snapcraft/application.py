@@ -150,16 +150,6 @@ class Snapcraft(Application):
 
         super()._configure_services(provider_name)
 
-    @property
-    def command_groups(self):
-        """Replace craft-application's LifecycleCommand group."""
-        _command_groups = super().command_groups
-        for index, command_group in enumerate(_command_groups):
-            if command_group.name == "Lifecycle":
-                _command_groups[index] = cli.CORE24_LIFECYCLE_COMMAND_GROUP
-
-        return _command_groups
-
     @override
     def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
         """Overridden to handle the two possible locations for snapcraft.yaml."""
@@ -467,7 +457,7 @@ def create_app() -> Snapcraft:
         services=snapcraft_services,
     )
 
-    for group in cli.COMMAND_GROUPS:
+    for group in [cli.CORE24_LIFECYCLE_COMMAND_GROUP, *cli.COMMAND_GROUPS]:
         app.add_command_group(group.name, group.commands)
 
     return app

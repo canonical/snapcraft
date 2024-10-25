@@ -19,9 +19,9 @@ chardet==5.2.0
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
-craft-application==4.2.6
+git+https://github.com/canonical/craft-application@work/CRAFT-3543-use-app-commands#egg=craft-application
 craft-archives==2.0.0
-craft-cli==2.7.0
+craft-cli==2.9.0
 craft-grammar==2.0.1
 craft-parts==2.1.2
 craft-platforms==0.4.0
@@ -69,7 +69,7 @@ natsort==8.4.0
 oauthlib==3.2.2
 overrides==7.7.0
 packaging==24.1
-platformdirs==4.2.2
+platformdirs==4.3.6
 polib==1.2.0
 progressbar==2.5
 protobuf==5.27.3

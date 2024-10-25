@@ -16,6 +16,7 @@
 
 
 import io
+import pathlib
 from textwrap import dedent
 
 import pytest
@@ -248,3 +249,15 @@ def test_get_base_from_yaml(mocker):
         project_type="test-type",
     )
     assert effective_base == "test-effective-base"
+
+
+@pytest.mark.parametrize("project", yaml_utils._SNAP_PROJECT_FILES)
+@pytest.mark.parametrize("project_dir", [None, "test-project-dir"])
+def test_get_snap_project(project, project_dir, new_dir):
+    project_dir = pathlib.Path(project_dir) if project_dir else new_dir
+    (project_dir / project.project_file).parent.mkdir(parents=True, exist_ok=True)
+    (project_dir / project.project_file).touch()
+
+    actual_project = yaml_utils.get_snap_project(project_dir)
+
+    assert actual_project == project
