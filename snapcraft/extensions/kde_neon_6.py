@@ -28,6 +28,7 @@ from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
 _QT6_SDK_SNAP = {"core22": "kde-qt6-core22-sdk", "core24": "kde-qt6-core24-sdk"}
 _KF6_SDK_SNAP = {"core22": "kf6-core22-sdk", "core24": "kf6-core24-sdk"}
+_QT_VERSION = "6"
 
 
 @dataclasses.dataclass
@@ -38,6 +39,7 @@ class KDESnaps6:
     kf6_sdk_snap: str
     content_qt6: str
     content_kf6: str
+    qt_version: str
     gpu_plugs: Dict[str, Any]
     gpu_layouts: Dict[str, Any]
     qt6_builtin: bool = True
@@ -117,6 +119,7 @@ class KDENeon6(Extension):
         base = self.yaml_data["base"]
         qt6_sdk_snap = _QT6_SDK_SNAP[base]
         kf6_sdk_snap = _KF6_SDK_SNAP[base]
+        qt_version = _QT_VERSION
 
         match base:
             case "core22":
@@ -174,6 +177,7 @@ class KDENeon6(Extension):
             kf6_builtin=kf6_builtin,
             gpu_layouts=gpu_layouts,
             gpu_plugs=gpu_plugs,
+            qt_version=qt_version,
         )
 
     @overrides
@@ -182,6 +186,7 @@ class KDENeon6(Extension):
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
         gpu_plugs = self.kde_snaps.gpu_plugs
         gpu_layouts = self.kde_snaps.gpu_layouts
+        qt_version = self.kde_snaps.qt_version
 
         return {
             "assumes": ["snapd2.58.3"],  # for 'snapctl is-connected'
@@ -219,6 +224,7 @@ class KDENeon6(Extension):
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
                 "GTK_USE_PORTAL": "1",
+                "QT_VERSION": qt_version,
             },
             "hooks": {
                 "configure": {
@@ -330,6 +336,7 @@ class KDENeon6(Extension):
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
         # https://github.com/canonical/snapcraft-desktop-integration
+
         source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
         gpu_opts = {}
