@@ -37,7 +37,7 @@ def test_command(emitter, command):
         dedent(
             """\
         Extension name          Supported bases
-        ----------------------  ----------------------
+        ----------------------  ------------------------------
         env-injector            core24
         fake-extension          core22, core24
         flutter-beta            core18
@@ -87,7 +87,7 @@ def test_command_extension_dups(emitter, command):
         dedent(
             """\
         Extension name          Supported bases
-        ----------------------  ----------------------
+        ----------------------  ------------------------------
         env-injector            core24
         flutter-beta            core18
         flutter-dev             core18
