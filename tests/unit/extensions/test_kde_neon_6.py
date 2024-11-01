@@ -304,11 +304,10 @@ def test_get_root_snippet_without_gpu(kde_neon_6_extension):
         "bind": "$SNAP/kf6-core22/usr/share/libdrm",
     }
 
+
 def test_get_root_snippet_no_exceptions(kde_neon_6_extension):
-    try:
-        kde_neon_6_extension.get_root_snippet()
-    except AssertionError(f"Unsupported base: core22") as exc:
-        assert False, f"'Unsupported base: core22' raised an exception {exc}"
+    with pytest.raises(AssertionError):
+        assert not kde_neon_6_extension.get_root_snippet()
 
 
 def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap):
