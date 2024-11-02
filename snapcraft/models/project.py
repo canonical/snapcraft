@@ -449,7 +449,7 @@ class App(models.CraftBaseModel):
     )
     @classmethod
     def _validate_time(cls, timeval):
-        if not re.match(r"^[0-9]+(ns|us|ms|s|m)*$", timeval):
+        if not re.match(r"^[0-9]+(ns|us|s|m)*$", timeval):
             raise ValueError(f"{timeval!r} is not a valid time value")
 
         return timeval
