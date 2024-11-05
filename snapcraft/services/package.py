@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import pathlib
 import shutil
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from craft_application import AppMetadata, PackageService
 from craft_application.models import BuildInfo
@@ -55,8 +55,11 @@ class Package(PackageService):
         snapcraft_yaml_path: pathlib.Path,
         build_plan: list[BuildInfo],
         parse_info: dict[str, list[str]],
+        project_vars_new: dict[str, str] | None = None,
     ) -> None:
-        super().__init__(app, services, project=project)
+        super().__init__(
+            app, services, project=project, project_vars_new=project_vars_new
+        )
         self._snapcraft_yaml_path = snapcraft_yaml_path
         self._build_plan = build_plan
         self._platform = build_plan[0].platform

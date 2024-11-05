@@ -24,6 +24,7 @@ import pathlib
 import sys
 from typing import Any
 
+import craft_application
 import craft_cli
 import craft_parts
 import craft_store
@@ -52,6 +53,7 @@ APP_METADATA = AppMetadata(
     ProjectClass=models.Project,
     BuildPlannerClass=SnapcraftBuildPlanner,
     source_ignore_patterns=["*.snap"],
+    # XXX: set to an empty list
     project_variables=["version", "grade"],
     mandatory_adoptable_fields=["version", "summary", "description"],
     docs_url="https://canonical-snapcraft.readthedocs-hosted.com/en/{version}",
@@ -249,6 +251,21 @@ class Snapcraft(Application):
             return None
 
         return components.get_partitions()
+
+    @override
+    def _set_project_vars(self, yaml_data: dict[str, Any]) -> dict[str, Any]:
+        project_vars = {
+            "version": "",
+            "grade": "",
+        }
+
+        components = models.ComponentProject.unmarshal(yaml_data)
+        if component_names := components.get_component_names():
+            project_vars["component"] = {}
+            for component_name in component_names:
+                project_vars["component"][component_name] = {"version": ""}
+
+        return project_vars
 
     @override
     def _extra_yaml_transform(

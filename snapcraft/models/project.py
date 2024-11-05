@@ -584,6 +584,7 @@ class Component(models.CraftBaseModel):
     type: Literal["test", "kernel-modules", "standard"]
     version: VersionStr | None = None
     hooks: dict[str, Hook] | None = None
+    adopt_info: str | None = None
 
 
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
