@@ -62,7 +62,8 @@ class StoreLegacyUploadMetadataCommand(LegacyAppCommand):
         If --force is used, it will force the local metadata into the Store,
         ignoring any possible conflict.
 
-        Examples:
+        Examples::
+
             snapcraft upload-metadata my-snap_0.1_amd64.snap
             snapcraft upload-metadata my-snap_0.1_amd64.snap --force
         """

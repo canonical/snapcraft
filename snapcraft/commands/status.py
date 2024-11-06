@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snapcraft Store Account management commands."""
+
 import itertools
 import operator
 import textwrap
@@ -431,7 +432,8 @@ class StoreListRevisionsCommand(AppCommand):
     help_msg = "List published revisions for <snap-name>"
     overview = textwrap.dedent(
         """
-        Examples:
+        Examples::
+
             snapcraft list-revisions my-snap
             snapcraft list-revisions my-snap --arch armhf
             snapcraft revisions my-snap
