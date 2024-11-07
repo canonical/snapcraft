@@ -97,7 +97,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Check out code
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python
