@@ -19,9 +19,9 @@ chardet==5.2.0
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
-git+https://github.com/canonical/craft-application@work/CRAFT-3543-use-app-commands#egg=craft-application
-craft-archives==2.0.0
-craft-cli==2.9.0
+git+https://github.com/canonical/craft-application@main#egg=craft-application
+craft-archives==2.0.1
+craft-cli==2.10.0
 craft-grammar==2.0.1
 craft-parts==2.1.2
 craft-platforms==0.4.0

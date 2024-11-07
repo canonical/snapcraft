@@ -98,7 +98,7 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application @ git+https://github.com/canonical/craft-application@work/CRAFT-3543-use-app-commands#egg=craft-application",
+    "craft-application @ git+https://github.com/canonical/craft-application@main#egg=craft-application",
     "craft-archives~=2.0",
     "craft-cli~=2.9",
     "craft-grammar>=2.0.1,<3.0.0",
