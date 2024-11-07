@@ -224,7 +224,7 @@ def _validate_version_name(version: str, model_name: str) -> None:
         )
 
 
-def _validate_name(*, name: str, field_name: str) -> str:
+def validate_name(*, name: str, field_name: str) -> str:
     """Validate a name.
 
     :param name: The name to validate.
@@ -261,7 +261,7 @@ def _validate_component(name: str) -> str:
         raise ValueError(
             "component names cannot start with the reserved prefix 'snap-'"
         )
-    return _validate_name(name=name, field_name="component")
+    return validate_name(name=name, field_name="component")
 
 
 def _get_partitions_from_components(
@@ -729,7 +729,7 @@ class Project(models.Project):
     @pydantic.field_validator("name")
     @classmethod
     def _validate_snap_name(cls, name):
-        return _validate_name(name=name, field_name="snap")
+        return validate_name(name=name, field_name="snap")
 
     @pydantic.field_validator("components")
     @classmethod

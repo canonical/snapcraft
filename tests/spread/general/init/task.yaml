@@ -1,29 +1,41 @@
 summary: Run snapcraft init
 
+systems: [ubuntu-22*]
+
 environment:
+  PROFILE: null
+  PROJECT_DIR: null
+  NAME: null
   PROFILE/default_profile: null
   PROFILE/simple_profile: simple
-  PROFILE: null
-  PROJECT_DIR/default_dir: null
-  PROJECT_DIR/project_dir: test-project-dir
-  PROJECT_DIR: null
+  NAME/with_name: test-snap-name
+  PROJECT_DIR/with_project_dir: test-project-dir
+  NAME/with_project_dir_and_name: test-snap-name
+  PROJECT_DIR/with_project_dir_and_name: test-project-dir
 
 restore: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   if [[ -n "$PROJECT_DIR" ]]; then
     cd "$PROJECT_DIR"
   fi
+
+  snapcraft clean
 
   rm -f ./*.snap
   rm -rf ./snap
 
 execute: |
-  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   args=("init")
 
   if [[ -n "$PROFILE" ]]; then
     args+=("--profile" "$PROFILE")
+  fi
+
+  if [[ -n "$NAME" ]]; then
+    args+=("--name" "$NAME")
   fi
 
   if [[ -n "$PROJECT_DIR" ]]; then
@@ -36,7 +48,13 @@ execute: |
     cd "$PROJECT_DIR"
   fi
 
-  # the base should be core24
+  if [[ -n "$NAME" ]]; then
+    expected_name="$NAME"
+  else
+    expected_name="$(basename "$PWD")"
+  fi
+
+  grep "^name: ${expected_name}" snap/snapcraft.yaml
   grep "^base: core24" snap/snapcraft.yaml
 
   # 'snapcraft init' should create a usable snapcraft.yaml file
