@@ -68,13 +68,14 @@ class Init(services.InitService):
         try:
             craft_cli.emit.progress("Checking for an existing 'snapcraft.yaml'.")
             project = get_snap_project(project_dir)
+        # the `ProjectMissing` error means a new project can be initialised
+        except errors.ProjectMissing:
+            craft_cli.emit.debug("Could not find an existing 'snapcraft.yaml'.")
+        else:
             raise errors.SnapcraftError(
                 "Could not initialise a new snapcraft project because "
                 f"{str(project.project_file)!r} already exists"
             )
-        # the `ProjectMissing` error means a new project can be initialised
-        except errors.ProjectMissing:
-            craft_cli.emit.progress("Could not find an existing 'snapcraft.yaml'.")
 
         super().check_for_existing_files(
             project_dir=project_dir,

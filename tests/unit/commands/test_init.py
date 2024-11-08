@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import pathlib
 import sys
 from textwrap import dedent
@@ -27,16 +26,12 @@ from snapcraft.parts.yaml_utils import apply_yaml, process_yaml
 
 
 @pytest.fixture
-def valid_new_dir(tmp_path):
+def valid_new_dir(tmp_path, monkeypatch):
     """Change to a new temporary directory whose name is a valid snap name."""
-    cwd = os.getcwd()
     new_dir = tmp_path / "test-snap-name-dir"
     new_dir.mkdir()
-    os.chdir(new_dir)
-
-    yield new_dir
-
-    os.chdir(cwd)
+    monkeypatch.chdir(new_dir)
+    return new_dir
 
 
 def _create_command(
@@ -99,7 +94,7 @@ def test_init_default(profile, name, project_dir, emitter, valid_new_dir, mocker
         }
     )
     emitter.assert_progress("Checking for an existing 'snapcraft.yaml'.")
-    emitter.assert_progress("Could not find an existing 'snapcraft.yaml'.")
+    emitter.assert_debug("Could not find an existing 'snapcraft.yaml'.")
     emitter.assert_message(
         "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
         "information about the snapcraft.yaml format."
