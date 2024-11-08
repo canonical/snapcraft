@@ -7,9 +7,9 @@ cffi==1.17.1
 chardet==5.2.0
 charset-normalizer==3.3.2
 click==8.1.7
-craft-application==4.2.7
+craft-application==4.4.0
 craft-archives==2.0.1
-craft-cli==2.7.0
+craft-cli==2.10.0
 craft-grammar==2.0.1
 craft-parts==2.1.2
 craft-platforms==0.4.0
@@ -37,7 +37,7 @@ mypy-extensions==1.0.0
 oauthlib==3.2.2
 overrides==7.7.0
 packaging==24.1
-platformdirs==4.2.2
+platformdirs==4.3.6
 progressbar==2.5
 protobuf==5.27.3
 psutil==6.0.0
