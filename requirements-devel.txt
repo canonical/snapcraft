@@ -24,7 +24,7 @@ click==8.1.7
 codespell==2.3.0
 colorama==0.4.6
 coverage==7.6.1
-git+https://github.com/canonical/craft-application@main#egg=craft-application
+craft-application==4.4.0
 craft-archives==2.0.1
 craft-cli==2.10.0
 craft-grammar==2.0.1
