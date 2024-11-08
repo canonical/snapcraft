@@ -29,6 +29,7 @@ execute: |
   cd "$SNAP_DIR"
   output="$(snapcraft)"
   snap install neon-hello_*.snap --dangerous
+  snap connect neon-hello:kf5-core22 kf5-core22:kf5-core22
 
   [ "$(neon-hello)" = "hello world" ]
 
