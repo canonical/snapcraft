@@ -24,9 +24,9 @@ click==8.1.7
 codespell==2.3.0
 colorama==0.4.6
 coverage==7.6.1
-craft-application==4.2.7
+craft-application==4.4.0
 craft-archives==2.0.1
-craft-cli==2.7.0
+craft-cli==2.10.0
 craft-grammar==2.0.1
 craft-parts==2.1.2
 craft-platforms==0.4.0
@@ -89,7 +89,7 @@ pbr==6.0.0
 pexpect==4.9.0
 plaster==1.1.2
 plaster-pastedeploy==1.0.1
-platformdirs==4.2.2
+platformdirs==4.3.6
 pluggy==1.5.0
 polib==1.2.0
 progressbar==2.5

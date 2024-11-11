@@ -98,9 +98,9 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application>=4.2.7,<5.0.0",
+    "craft-application~=4.4",
     "craft-archives~=2.0",
-    "craft-cli~=2.6",
+    "craft-cli~=2.9",
     "craft-grammar>=2.0.1,<3.0.0",
     "craft-parts>=2.1.2,<3.0.0",
     "craft-platforms~=0.4",
@@ -174,6 +174,10 @@ setup(
         + recursive_data_files("keyrings", "share/snapcraft")
         + recursive_data_files("extensions", "share/snapcraft")
     ),
+    include_package_data=True,
+    package_data={
+        "snapcraft": ["templates/*"],
+    },
     python_requires=">=3.10",
     install_requires=install_requires,
     extras_require=extras_requires,
