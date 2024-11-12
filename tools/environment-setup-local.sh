@@ -17,7 +17,6 @@ sudo apt install --yes \
     libxslt1-dev \
     libyaml-dev \
     make \
-    patchelf \
     python3-dev \
     python3-pip \
     python3-venv \
