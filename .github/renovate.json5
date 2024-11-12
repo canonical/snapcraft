@@ -1,159 +1,224 @@
 {
-  // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
-  extends: ["config:recommended", ":semanticCommitTypeAll(build)"],
-  labels: ["dependencies"],  // For convenient searching in GitHub
-  baseBranches: ["$default", "/^hotfix\\/.*/"],
+  extends: [
+    'config:recommended',
+    ':semanticCommitTypeAll(build)',
+  ],
+  labels: [
+    'dependencies',
+  ],
+  baseBranches: [
+    '$default',
+    '/^hotfix\\/.*/',
+  ],
   pip_requirements: {
-    fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$", "^.pre-commit-config.yaml$"]
+    fileMatch: [
+      '^tox.ini$',
+      '(^|/)requirements([\\w-]*)\\.txt$',
+      '^.pre-commit-config.yaml$',
+    ],
   },
-   packageRules: [
+  packageRules: [
     {
-      // Internal package minor patch updates get top priority, with auto-merging
-      groupName: "internal package minor releases",
-      matchPackagePatterns: ["^craft-.*"],
-      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
+      groupName: 'internal package minor releases',
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+        'pin',
+        'digest',
+      ],
       prPriority: 10,
       automerge: true,
-      minimumReleaseAge: "0 seconds",
-      schedule: ["at any time"],
-      matchBaseBranches: ["$default"],  // Only do minor releases on main
+      minimumReleaseAge: '0 seconds',
+      schedule: [
+        'at any time',
+      ],
+      matchBaseBranches: [
+        '$default',
+      ],
+      matchPackageNames: [
+        '/^craft-.*/',
+      ],
     },
     {
-      // Same as above, but for hotfix branches, only for patch, and without auto-merging.
-      groupName: "internal package patch releases (hotfix)",
-      matchPackagePatterns: ["^craft-.*"],
-      matchUpdateTypes: ["patch", "pin", "digest"],
+      groupName: 'internal package patch releases (hotfix)',
+      matchUpdateTypes: [
+        'patch',
+        'pin',
+        'digest',
+      ],
       prPriority: 10,
-      minimumReleaseAge: "0 seconds",
-      schedule: ["at any time"],
-      matchBaseBranches: ["/^hotfix\\/.*/"],  // All hotfix branches
+      minimumReleaseAge: '0 seconds',
+      schedule: [
+        'at any time',
+      ],
+      matchBaseBranches: [
+        '/^hotfix\\/.*/',
+      ],
+      matchPackageNames: [
+        '/^craft-.*/',
+      ],
     },
     {
-      // Automerge patches, pin changes and digest changes.
-      // Also groups these changes together.
-      groupName: "bugfixes",
-      excludeDepPatterns: ["lint/.*", "types/.*"],
-      matchUpdateTypes: ["patch", "pin", "digest"],
-      prPriority: 3, // Patches should go first!
-      automerge: true
+      groupName: 'bugfixes',
+      matchUpdateTypes: [
+        'patch',
+        'pin',
+        'digest',
+      ],
+      prPriority: 3,
+      automerge: true,
+      matchDepNames: [
+        '!/lint/.*/',
+        '!/types/.*/',
+      ],
     },
     {
-      // Update all internal packages in one higher-priority PR
-      groupName: "internal packages",
-      matchDepPatterns: ["craft-.*", "snap-.*"],
-      matchCategories: ["python"],
+      groupName: 'internal packages',
+      matchCategories: [
+        'python',
+      ],
       prPriority: 2,
-      matchBaseBranches: ["$default"],  // Not for hotfix branches
+      matchBaseBranches: [
+        '$default',
+      ],
+      matchDepNames: [
+        '/craft-.*/',
+        '/snap-.*/',
+      ],
     },
     {
-      // GitHub Actions are higher priority to update than most dependencies since they don't tend to break things.
-      groupName: "GitHub Actions",
-      matchManagers: ["github-actions"],
+      groupName: 'GitHub Actions',
+      matchManagers: [
+        'github-actions',
+      ],
       prPriority: 1,
       automerge: true,
     },
-    // Everything not in one of these rules gets priority 0 and falls here.
     {
-      //Do all pydantic-related updates together
-      groupName: "pydantic etc.",
-      matchPackagePatterns: ["^pydantic"],
+      groupName: 'pydantic etc.',
+      matchPackageNames: [
+        '/^pydantic/',
+      ],
     },
     {
-      // Minor changes can be grouped and automerged for dev dependencies, but are also deprioritised.
-      groupName: "development dependencies (non-major)",
-      groupSlug: "dev-dependencies",
-      matchDepPatterns: [
-        "dev/.*",
-        "lint/.*",
-        "types/.*"
+      groupName: 'development dependencies (non-major)',
+      groupSlug: 'dev-dependencies',
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+        'pin',
+        'digest',
       ],
-      matchPackagePatterns: [
-        // Brought from charmcraft. May not be complete.
-        // This helps group dependencies in requirements-dev.txt files.
-        "^(.*/)?autoflake$",
-        "^(.*/)?black$",
-        "^(.*/)?codespell$",
-        "^(.*/)?coverage$",
-        "^(.*/)?flake8$",
-        "^(.*/)?hypothesis$",
-        "^(.*/)?mypy$",
-        "^(.*/)?pycodestyle$",
-        "^(.*/)?docstyle$",
-        "^(.*/)?pyfakefs$",
-        "^(.*/)?pyflakes$",
-        "^(.*/)?pylint$",
-        "^(.*/)?pytest",
-        "^(.*/)?responses$",
-        "^(.*/)?ruff$",
-        "^(.*/)?twine$",
-        "^(.*/)?tox$",
-        "^(.*/)?types-",
-      ],
-      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: -1,
-      automerge: true
+      automerge: true,
+      matchDepNames: [
+        '/dev/.*/',
+        '/lint/.*/',
+        '/types/.*/',
+      ],
+      matchPackageNames: [
+        '/^(.*/)?autoflake$/',
+        '/^(.*/)?black$/',
+        '/^(.*/)?codespell$/',
+        '/^(.*/)?coverage$/',
+        '/^(.*/)?flake8$/',
+        '/^(.*/)?hypothesis$/',
+        '/^(.*/)?mypy$/',
+        '/^(.*/)?pycodestyle$/',
+        '/^(.*/)?docstyle$/',
+        '/^(.*/)?pyfakefs$/',
+        '/^(.*/)?pyflakes$/',
+        '/^(.*/)?pylint$/',
+        '/^(.*/)?pytest/',
+        '/^(.*/)?responses$/',
+        '/^(.*/)?ruff$/',
+        '/^(.*/)?twine$/',
+        '/^(.*/)?tox$/',
+        '/^(.*/)?types-/',
+      ],
     },
     {
-      // Documentation related updates
-      groupName: "documentation dependencies",
-      groupSlug: "doc-dependencies",
-      matchPackageNames: ["Sphinx", "furo"],
-      matchPackagePatterns: ["[Ss]phinx.*$"],
-      matchDepPatterns: ["docs/.*"],
-      matchBaseBranches: ["$default"],  // Not for hotfix branches
+      groupName: 'documentation dependencies',
+      groupSlug: 'doc-dependencies',
+      matchPackageNames: [
+        'Sphinx',
+        'furo',
+        '/[Ss]phinx.*$/',
+      ],
+      matchBaseBranches: [
+        '$default',
+      ],
+      matchDepNames: [
+        '/docs/.*/',
+      ],
     },
     {
-      // Other major dependencies get deprioritised below minor dev dependencies.
-      matchUpdateTypes: ["major"],
+      matchUpdateTypes: [
+        'major',
+      ],
       prPriority: -2,
-      matchBaseBranches: ["$default"],  // Not for hotfix branches
+      matchBaseBranches: [
+        '$default',
+      ],
     },
     {
-      // Major dev dependencies are stone last, but grouped.
-      groupName: "development dependencies (major versions)",
-      groupSlug: "dev-dependencies",
-      matchDepTypes: ["devDependencies"],
-      matchUpdateTypes: ["major"],
+      groupName: 'development dependencies (major versions)',
+      groupSlug: 'dev-dependencies',
+      matchDepTypes: [
+        'devDependencies',
+      ],
+      matchUpdateTypes: [
+        'major',
+      ],
       prPriority: -3,
-      matchBaseBranches: ["$default"],  // Not for hotfix branches
+      matchBaseBranches: [
+        '$default',
+      ],
     },
     {
-      // Pyright makes regular breaking changes in patch releases, so we separate these
-      // and do them independently.
-      matchPackageNames: ["pyright", "types/pyright"],
+      matchPackageNames: [
+        'pyright',
+        'types/pyright',
+      ],
       prPriority: -4,
-      matchBaseBranches: ["$default"],  // Not for hotfix branches
-    }
+      matchBaseBranches: [
+        '$default',
+      ],
+    },
   ],
   customManagers: [
     {
-      // tox.ini can get updates too if we specify for each package.
-      fileMatch: ["tox.ini"],
-      customType: "regex",
-      depTypeTemplate: "devDependencies",
+      fileMatch: [
+        'tox.ini',
+      ],
+      customType: 'regex',
+      depTypeTemplate: 'devDependencies',
       matchStrings: [
-        "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n"
-      ]
+        '# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n',
+      ],
     },
     {
-      // .pre-commit-config.yaml version updates
-      fileMatch: [".pre-commit-config.yaml"],
-      customType: "regex",
-      datasourceTemplate: "pypi",
-      depTypeTemplate: "lint",
+      fileMatch: [
+        '.pre-commit-config.yaml',
+      ],
+      customType: 'regex',
+      datasourceTemplate: 'pypi',
+      depTypeTemplate: 'lint',
       matchStrings: [
-        "- repo: .*/<(?<depName>\\S+)\\s*\\n\\s*rev:\s+\"?v?(?<currentValue>\\S*)\"?",
-      ]
-    }
+        '- repo: .*/<(?<depName>\\S+)\\s*\\n\\s*rev:s+"?v?(?<currentValue>\\S*)"?',
+      ],
+    },
   ],
-  timezone: "Etc/UTC",
-  schedule: ["every weekend"],
-  prConcurrentLimit: 2, // No more than 2 open PRs at a time.
-  branchConcurrentLimit: 20, // No more than 20 open branches at a time.
-  prCreation: "not-pending", // Wait until status checks have completed before raising the PR
-  prNotPendingHours: 4, // ...unless the status checks have been running for 4+ hours.
-  prHourlyLimit: 1, // No more than 1 PR per hour.
-  minimumReleaseAge: "2 days",
-  automergeStrategy: "squash", // Squash & rebase when auto-merging.
-  semanticCommitType: "build"  // use `build` as commit header type (i.e. `build(deps): <description>`)
+  timezone: 'Etc/UTC',
+  schedule: [
+    'every weekend',
+  ],
+  prConcurrentLimit: 2,
+  branchConcurrentLimit: 20,
+  prCreation: 'not-pending',
+  prNotPendingHours: 4,
+  prHourlyLimit: 1,
+  minimumReleaseAge: '2 days',
+  automergeStrategy: 'squash',
+  semanticCommitType: 'build',
 }
