@@ -142,7 +142,7 @@ install_requires = [
 ]
 
 docs_requires = {
-    "canonical-sphinx",
+    "canonical-sphinx[full]>=0.2.0",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
     "sphinxcontrib-details-directive",

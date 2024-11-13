@@ -38,6 +38,7 @@ ogp_site_name = project
 html_context = {
     "product_page": "github.com/canonical/snapcraft",
     "github_url": "https://github.com/canonical/snapcraft",
+    "display_contributors": False,
 }
 
 extensions = [
