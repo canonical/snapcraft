@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-  echo "run <command>"
+  echo "Usage: run <command>"
   exit 1
 fi
 
