@@ -138,8 +138,6 @@ class KDENeon6(Extension):
                 gpu_layouts = {
                     "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
                     "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-                    "/usr/share/X11/XErrorDB": {
-                        "symlink": "$SNAP/gpu-2404/X11/XErrorDB"
                     },
                 }
             case _:

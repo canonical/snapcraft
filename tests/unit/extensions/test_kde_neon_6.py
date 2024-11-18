@@ -241,7 +241,6 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-            "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -292,9 +291,6 @@ def test_get_root_snippet_with_gpu(kde_neon_6_extension_core24):
     }
     assert snippet["layout"]["/usr/share/drirc.d"] == {
         "symlink": "$SNAP/gpu-2404/drirc.d",
-    }
-    assert snippet["layout"]["/usr/share/X11/XErrorDB"] == {
-        "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
     }
 
 
@@ -384,7 +380,6 @@ def test_get_root_snippet_with_external_sdk_core24(
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-            "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
