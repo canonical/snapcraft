@@ -26,13 +26,16 @@ TODO
 Migrate existing projects
 --------------------------------
 #. Update this guide as you go along, if something is unclear or missing.
+
 #. Use ruff.
    #. Pull in the bare minimum ``pyproject.toml`` needed to use ruff.
    #. Make your codebase pass with ruff.  Commit after each step:
+
       #. ``ruff check --fix``
       #. ``ruff check --fix --unsafe-fixes``
       #. ``ruff check --add-noqa``
       #. ``ruff format``
+
    #. Replace use of black, flake8, pydocstyle, isort, and pylint in Makefile/CI
       with:
       - ``ruff check --fix``
@@ -40,12 +43,14 @@ Migrate existing projects
 #. Modify top-level files in your project to match what's in Starbase as closely
    as possible.
    #. ``Makefile`` - Ensure you use ``uv`` and at least have the same targets:
+
       - ``setup``
       - ``lint``
       - ``test-unit``
       - ``test-integration`` (If this applies to your repo, i.e. the repo is a library
         rather than an application)
       - ``coverage``
+
    #. ``pyproject.toml`` - Expand from just the ruff things: move things into
       here from your ``setup.py``, ``setup.cfg``, and ``requirements.*.txt``.
    #. ``README`` - If your readme is .md, convert to .rst with pandoc:
@@ -53,26 +58,33 @@ Migrate existing projects
       Don't worry about making the contents match, Starbase's is very specific.
 #. Run all the linters: ``make lint``
    #. ``mypy``:
+
       - Mypy checks the same things as ``ruff``'s ``ANNXXX`` checks, but
         ``ruff``'s ``noqa`` directives mean nothing to mypy.  You'll need to fix
         these by hand, mostly by adding type annotations to function definitions.
+
    #. ``pyright``:
+
       - For errors along the lines of "Stub file not found for $library", check
         for the existence of pip package ``typing-$library`` and add it as a
         dependency.
       - If you have lots of errors you may need to remove the ``strict``
         directive from ``pyproject.toml``.
+
 #. Do a side-by-side diff of the ``.gitignore`` files in your project and
    Starbase, making them as close as possible and adding anything that makes
    sense upstream.
+
 #. Bring in remaining top-level files:
    - .editorconfig
    - .pre-commit-config.yaml
    - .shellcheckrc
    - tox.ini
    - .yamllint.yaml
+
 #. If you're rebasing a library, add the integrations tests structure.
    Applications should use spread for integration tests.
+
 # Finally, once all files are manually synced, actually sync the git history:
    - ``git remote add starbase git@github.com:canonical/starbase.git``
    - ``git merge --allow-unrelated-histories starbase/main``
@@ -83,10 +95,8 @@ Migrate existing projects
      preserved.
 
 
-
 Create a new project
----------------------------
-[TODO: Make this a template repository.]
+--------------------
 
 #. `Use this template`_ to create your repository.
 #. Ensure the ``LICENSE`` file represents the current best practices from the

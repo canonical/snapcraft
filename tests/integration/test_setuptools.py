@@ -19,6 +19,10 @@ import sys
 from pathlib import Path
 from zipfile import ZipFile
 
+import pytest
+
+pytestmark = [pytest.mark.slow]
+
 
 def test_packages(project_main_module, tmp_path, request):
     """Check wheel generation from our pyproject.toml"""

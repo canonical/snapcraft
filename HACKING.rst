@@ -13,79 +13,33 @@ repository. Once you've done that, clone the project to your computer using git
 clone's ``--recurse-submodules`` parameter. (See more on the `git submodules`_
 documentation.)
 
-Tooling
+To set up a development environment, run::
+
+    make setup
+
+To test that the environment works, run::
+
+    make lint
+    make test
+
+Code conventions
+================
+
+Several targets exist in the Makefile to help with code conventions. They are all
+merged into the ``format`` target for automatic formatting and the ``lint`` target
+for running all linters. These conventions apply to all files in the repository,
+including documentation and metadata files. ``pre-commit`` is used for running many
+hooks before committing. Run::
+
+    make setup-precommit
+
+to configure it for this repository.
+
+Testing
 =======
-We use a large number of tools for our project. Most of these are installed for
-you with tox, but you'll need to install:
 
-- Python 3.8 (default on Ubuntu 20.04, available on Ubuntu 22.04 through the
-  deadsnakes_ PPA) with setuptools.
-- tox_ version 3.8 or later
-- ShellCheck_  (also available via snap: ``snap install shellcheck``)
-- Codespell_ (also available via snap: ``snap install codespell``)
-- ruff_ (also available via snap: ``snap install ruff``)
-
-Once you have all of those installed, you can install the necessary virtual
-environments for this repository using tox.
-
-Other tools
-###########
-Some other tools we use for code quality include:
-
-- Black_ for code formatting
-- pytest_ for testing
-
-A complete list is kept in our pyproject.toml_ file in dev dependencies.
-
-Initial Setup
-#############
-
-After cloning the repository but before making any changes, it's worth ensuring
-that the tests, linting and tools all run on your machine. Running ``tox`` with
-no parameters will create the necessary virtual environments for linting and
-testing and run those::
-
-    tox
-
-If you want to install the environments but not run the tests, you can run::
-
-    tox --notest
-
-If you'd like to run the tests with a newer version of Python, you can pass a
-specific environment. You must have an appropriately versioned Python
-interpreter installed. For example, to run with Python 3.10, run::
-
-    tox -e test-py3.10
-
-While the use of pre-commit_ is optional, it is highly encouraged, as it runs
-automatic fixes for files when ``git commit`` is called, including code
-formatting with ``black`` and ``ruff``.  The versions available in ``apt`` from
-Debian 11 (bullseye), Ubuntu 22.04 (jammy) and newer are sufficient, but you can
-also install the latest with ``pip install pre-commit``. Once you've installed
-it, run ``pre-commit install`` in this git repository to install the pre-commit
-hooks.
-
-Tox environments and labels
-###########################
-
-We group tox environments with the following labels:
-
-* ``format``: Runs all code formatters with auto-fixing
-* ``type``: Runs all type checkers
-* ``lint``: Runs all linters (including type checkers)
-* ``unit-tests``: Runs unit tests in several supported Python versions
-* ``integration-tests``: Run integration tests in several Python versions
-* ``tests``: The union of ``unit-tests`` and ``integration-tests``
-
-For each of these, you can see which environments will be run with ``tox list``.
-For example::
-
-    tox list -m lint
-
-You can also see all the environments by simply running ``tox list``
-
-Running ``tox run -m format`` and ``tox run -m lint`` before committing code is
-recommended.
+Tests can be run using ``make test``, which will run all test forms. Specific types
+of tests can be run with other testing targets shown in ``make help``.
 
 Branches
 --------
@@ -393,11 +347,9 @@ it includes the changes from 2.9.1.
    3.0.1 includes changes from the 2.9.1 release.
 
 
-.. _Black: https://black.readthedocs.io
 .. _`Canonical contributor licence agreement`: http://www.ubuntu.com/legal/contributors/
 .. _Codespell: https://github.com/codespell-project/codespell
 .. _`conventional commit`: https://www.conventionalcommits.org/en/v1.0.0/#summary
-.. _deadsnakes: https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa
 .. _`git submodules`: https://git-scm.com/book/en/v2/Git-Tools-Submodules#_cloning_submodules
 .. _`Martin Fowler's definition`: https://refactoring.com/
 .. _OneFlow: https://www.endoflineblog.com/oneflow-a-git-branching-model-and-workflow
