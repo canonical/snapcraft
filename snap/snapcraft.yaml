@@ -130,7 +130,6 @@ parts:
         - python3-distutils
         - python3-pkg-resources
         - python3.10-minimal
-        - squashfs-tools
         - xdelta3
     build-attributes:
       - enable-patchelf
@@ -163,6 +162,26 @@ parts:
       # Disable site packages
       sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.10/site.py" \
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
+
+  squashfs-tools:
+    source: https://github.com/plougher/squashfs-tools
+    source-type: git
+    source-tag: "4.6.1"
+    after: ["snapcraft-libs"]
+    plugin: make
+    build-packages:
+      - help2man
+      - liblz4-dev
+      - liblzo2-dev
+    build-environment:
+      - CONFIG: "1"
+      - INSTALL_PREFIX: "${CRAFT_PART_INSTALL}/usr"
+      - LZMA_XZ_SUPPORT: "1"
+      - LZ4_SUPPORT: "1"
+      - LZO_SUPPORT: "1"
+      - XZ_SUPPORT: "1"
+    make-parameters:
+      - -C squashfs-tools
 
   libgit2:
     source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.2.tar.gz
