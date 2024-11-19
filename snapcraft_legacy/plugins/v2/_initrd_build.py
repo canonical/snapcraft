@@ -687,8 +687,17 @@ def get_build_commands(
 def _parse_kernel_release_cmd() -> List[str]:
     """Set kernel release from module/<release> directory name."""
     return [
-        'echo "Parsing kernel release..."',
-        'KERNEL_RELEASE=$(ls "${CRAFT_STAGE}/modules")',
+        textwrap.dedent(
+            """
+            echo "Parsing kernel release..."
+            KERNEL_RELEASE=$(ls "${CRAFT_STAGE}/modules")
+            space_regex="[[:space:]]+"
+            if [[ ${KERNEL_RELEASE} =~ ${space_regex} ]]; then
+                echo "ERROR: ${CRAFT_STAGE}/modules contains more than one kernel version, clean up your build environment!"
+                exit 1
+            fi
+            """
+        )
     ]
 
 
