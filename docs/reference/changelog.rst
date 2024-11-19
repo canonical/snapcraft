@@ -76,8 +76,8 @@ Changelog
 Core
 ====
 
-* Remove the Snapcraft ``Dockerfile`` in favour of the `snapcraft-rocks`_
-  registry. For more information, see the ``docker/README.md`` file.
+* Remove the Snapcraft Dockerfile in favour of the `snapcraft-rocks`_ registry.
+  For more information, see the ``docker/README.md`` file.
 
 Bases
 #####
@@ -85,7 +85,7 @@ Bases
 core24
 """"""
 
-* Add a ``--platform <platform>`` argument to the ``clean`` to filter
+* Add a ``--platform <platform>`` argument to the ``clean`` command to filter
   which build environments to clean (`canonical/craft-application#425`_).
 
 Plugins
@@ -107,7 +107,7 @@ Env-injector
 * Add a new experimental extension called
   `env-injector <https://github.com/canonical/snappy-env>`_. It simplifies
   passing environment variables to snaps at runtime using ``snap config`` or a
-  ``env`` file. For more information, see `the env-injector
+  ``.env`` file. For more information, see `the env-injector
   extension <https://forum.snapcraft.io/t/the-env-injector-extension/41477>`_
 
 Command line
@@ -133,11 +133,11 @@ Init
   directory.
 
 * Add a ``--name <name>`` argument to set the ``name`` key in the initialised
-  ``snapcraft.yaml``. If ``--name`` is not provided, the name of the project
+  ``snapcraft.yaml``. If ``--name`` isn't provided, the name of the project
   directory or current working directory is used.
 
 * Add a ``--profile <profile>`` argument to initialise a project for a specific
-  use-case. Currently, only the ``simple`` profile is supported.
+  purpose. Currently, only the ``simple`` profile is supported.
 
 Store
 =====
@@ -153,14 +153,14 @@ Documentation
 
 * Add :doc:`reference</reference/linters>` for linters.
 
-* Update the ``HACKING`` doc to instruct how to use ``tox``.
+* Update the ``HACKING`` doc with instructions for how to use ``tox``.
 
-* Update the changelog sidebar to hide subheadings underneath each release.
+* Hide subheadings in the changelog's table of contents.
 
 * Add :doc:`reference</reference/plugins/poetry_plugin>` for
   the Poetry plugin.
 
-* Fix an issue were auto-generated command reference was not rendered
+* Fix an issue where the auto-generated command reference wasn't rendered
   correctly.
 
 For a complete list of commits, check out the `8.5.0`_ release on GitHub.
