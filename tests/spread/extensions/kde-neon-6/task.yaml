@@ -29,7 +29,7 @@ execute: |
   cd "$SNAP_DIR"
   output="$(snapcraft)"
   snap install neon-hello-6_*.snap --dangerous
-  snap connect neon-hello-6:kf6-core24 kf6-core24:kf6-core24
+  snap connect neon-hello-6:kf6-core22 kf6-core22:kf6-core22
 
   [ "$(neon-hello-6)" = "hello world" ]
 
@@ -43,7 +43,7 @@ execute: |
 
   # Verify content snap was installed for dependency checks.
   snap list gtk-common-themes
-  snap list kf6-core24
+  snap list kf6-core22
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then
