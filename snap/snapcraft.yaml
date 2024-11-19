@@ -54,6 +54,29 @@ parts:
     stage:
       - snapcraft-completion
 
+  snapcraft-scripts:
+    source: snap/local
+    plugin: dump
+    organize:
+      craft.git: libexec/snapcraft/craft.git
+    stage:
+      - "libexec/"
+
+  git:
+    plugin: nil
+    stage-packages: [git]
+    build-attributes:
+      - enable-patchelf
+    prime:
+      - "-usr/bin"
+      - "-usr/share/doc"
+      - "-usr/share/man"
+      # perl is part of the core22 / core24
+      - "-usr/share/perl"
+      - "-usr/lib/x86_64-linux-gnu/perl"
+      - "-usr/lib/x86_64-linux-gnu/libperl*"
+      - "-usr/lib/x86_64-linux-gnu/libgdbm*"
+
   patchelf:
     plugin: autotools
     source: https://github.com/canonical/patchelf
