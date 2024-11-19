@@ -769,7 +769,17 @@ _setup_initrd_build_env_cmd = [
 ]
 
 _parse_kernel_release_cmd = [
-    'KERNEL_RELEASE=$(ls "${CRAFT_STAGE}/modules")',
+    textwrap.dedent(
+        """
+        echo "Parsing kernel release..."
+        KERNEL_RELEASE=$(ls "${CRAFT_STAGE}/modules")
+        space_regex="[[:space:]]+"
+        if [[ ${KERNEL_RELEASE} =~ ${space_regex} ]]; then
+            echo "ERROR: ${CRAFT_STAGE}/modules contains more than one kernel version, clean up your build environment!"
+            exit 1
+        fi
+        """
+    )
 ]
 
 _install_initrd_modules_cmd = [
