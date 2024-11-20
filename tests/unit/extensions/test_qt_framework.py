@@ -124,7 +124,7 @@ def test_get_root_snippet(qt_framework_extension, name, yaml_data):
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            f"qt-framework-{qt_framework_extension.name[2:]}-core22": {
+            f"qt-framework-{qt_framework_extension.name[2:]}": {
                 "interface": "content",
                 "default-provider": _CONTENT_SNAP[name][yaml_data["base"]],
                 "target": "$SNAP/qt-framework",
