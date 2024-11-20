@@ -1,6 +1,6 @@
-name: qt6-5-hello
+name: qt6-8-hello
 version: "1.0"
-summary: Test the qt6-5 extension
+summary: Test the qt6-8 extension
 description: It simply prints a hello world
 
 base: core22
@@ -8,15 +8,16 @@ grade: devel
 confinement: strict
 
 apps:
-  qt6-5-hello:
+  qt6-6-hello:
     command: usr/local/bin/hello
-    extensions: [qt6-5]
+    extensions: [qt6-8]
 
 parts:
   hello:
     plugin: cmake
     source: .
     build-packages:
+      - libpcre2-16-0
       - libglib2.0-0
       - libdouble-conversion3
       - libb2-1

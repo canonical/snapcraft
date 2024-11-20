@@ -26,19 +26,7 @@ from snapcraft.extensions.qt_framework import _CONTENT_SNAP
 fixture_variables = "name,yaml_data,arch,target_arch"
 base_values = [
     (
-        "qt6-6",
-        {"base": "core22", "parts": {}},
-        "amd64",
-        "amd64",
-    ),
-    (
-        "qt6-5",
-        {"base": "core22", "parts": {}},
-        "amd64",
-        "amd64",
-    ),
-    (
-        "qt5-15",
+        "qt6-8",
         {"base": "core22", "parts": {}},
         "amd64",
         "amd64",
@@ -47,28 +35,10 @@ base_values = [
 
 builtin_stable_values = [
     (
-        "qt6-6",
+        "qt6-8",
         {
             "base": "core22",
-            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/6.5/stable"]}},
-        },
-        "amd64",
-        "amd64",
-    ),
-    (
-        "qt6-5",
-        {
-            "base": "core22",
-            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/6.5/stable"]}},
-        },
-        "amd64",
-        "amd64",
-    ),
-    (
-        "qt5-15",
-        {
-            "base": "core22",
-            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/5.15/stable"]}},
+            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/6.8/stable"]}},
         },
         "amd64",
         "amd64",
@@ -77,28 +47,10 @@ builtin_stable_values = [
 
 builtin_edge_values = [
     (
-        "qt6-6",
+        "qt6-8",
         {
             "base": "core22",
-            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/6.5/edge"]}},
-        },
-        "amd64",
-        "amd64",
-    ),
-    (
-        "qt6-5",
-        {
-            "base": "core22",
-            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/6.5/edge"]}},
-        },
-        "amd64",
-        "amd64",
-    ),
-    (
-        "qt5-15",
-        {
-            "base": "core22",
-            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/5.15/edge"]}},
+            "parts": {"part1": {"build-snaps": ["qt-framework-sdk/6.8/edge"]}},
         },
         "amd64",
         "amd64",
@@ -206,7 +158,7 @@ def test_get_root_snippet_with_external_sdk(qt_framework_extension, name, yaml_d
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
             },
-            f"qt-framework-{qt_framework_extension.name[2:]}-core22": {
+            f"qt-framework-{qt_framework_extension.name[2:]}": {
                 "interface": "content",
                 "default-provider": _CONTENT_SNAP[name][yaml_data["base"]],
                 "target": "$SNAP/qt-framework",

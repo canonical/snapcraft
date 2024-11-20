@@ -23,12 +23,8 @@ from overrides import overrides
 
 from .extension import Extension, prepend_to_env
 
-_SDK_SNAP = {"core22": "qt-framework-sdk"}
-
 _CONTENT_SNAP = {
-    "qt6-6": {"core22": "qt-framework-6-6-core22"},
-    "qt6-5": {"core22": "qt-framework-6-5-core22"},
-    "qt5-15": {"core22": "qt-framework-5-15-core22"},
+    "qt6-8": "qt-framework-6-8",
 }
 
 
@@ -100,7 +96,7 @@ class QTFramework(Extension):
     def qt_snaps(self) -> QTSnaps:
         """Return the QT related snaps to use to construct the environment."""
         base = self.yaml_data["base"]
-        sdk_snap = _SDK_SNAP[base]
+        sdk_snap = "qt-framework-sdk"
         sdk_channel = f"{self.name[2:].replace('-','.')}/stable"
 
         build_snaps: List[str] = []
@@ -121,7 +117,7 @@ class QTFramework(Extension):
         sdk = {"snap": sdk_snap, "channel": sdk_channel}
 
         # The same except the trailing -sd
-        content = _CONTENT_SNAP[self.name][base]
+        content = _CONTENT_SNAP[self.name]
 
         return QTSnaps(sdk=sdk, content=content, builtin=builtin)
 

@@ -50,9 +50,7 @@ def test_command(emitter, command):
         gnome-3-38              core20
         kde-neon                core18, core20, core22
         kde-neon-6              core22
-        qt5-15                  core22
-        qt6-5                   core22
-        qt6-6                   core22
+        qt6-8                   core22, core24
         ros1-noetic             core20
         ros1-noetic-desktop     core20
         ros1-noetic-perception  core20
@@ -102,9 +100,7 @@ def test_command_extension_dups(emitter, command):
         gnome-3-38              core20
         kde-neon                core18, core20, core22
         kde-neon-6              core22
-        qt5-15                  core22
-        qt6-5                   core22
-        qt6-6                   core22
+        qt6-8                   core22, core24
         ros1-noetic             core20
         ros1-noetic-desktop     core20
         ros1-noetic-perception  core20

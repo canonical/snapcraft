@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(hello)
 
-set (QT_MIN_VERSION "6.5.0")
+set (QT_MIN_VERSION "6.8.0")
 find_package(Qt6 ${QT_MIN_VERSION} REQUIRED NO_MODULE COMPONENTS Core)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")

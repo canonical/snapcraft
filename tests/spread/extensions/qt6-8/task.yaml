@@ -6,7 +6,7 @@ systems:
   - ubuntu-22.04-amd64
 
 environment:
-  SNAP_DIR: ../snaps/qt6-5-hello
+  SNAP_DIR: ../snaps/qt6-8-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -25,12 +25,12 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
   output="$(snapcraft)"
-  snap install qt6-5-hello_*.snap --dangerous
+  snap install qt6-8-hello_*.snap --dangerous
 
-  [ "$(qt6-5-hello)" = "hello world" ]
+  [ "$(qt6-8-hello)" = "hello world" ]
 
   # Verify that the extension command chain went through the proper setup procedure
-  snap_user_data="$HOME/snap/qt6-5-hello/current"
+  snap_user_data="$HOME/snap/qt6-8-hello/current"
   [ -d "$snap_user_data/.config" ]
   [ -d "$snap_user_data/.local" ]
   [ -f "$snap_user_data/.last_revision" ]
@@ -40,7 +40,7 @@ execute: |
   # Verify content snap was installed for dependency checks.
   snap list gtk-common-themes
   if [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
-    snap list qt-framework-6-5-core22
+    snap list qt-framework-6-8-core22
   fi
 
 
