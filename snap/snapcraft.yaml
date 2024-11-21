@@ -74,6 +74,10 @@ parts:
       - "usr/lib/x86_64-linux-gnu/libpsl*"
       - "usr/lib/x86_64-linux-gnu/librtmp*"
       - "usr/lib/x86_64-linux-gnu/libnghttp2*"
+      - "usr/lib/x86_64-linux-gnu/libldap*"
+      - "usr/lib/x86_64-linux-gnu/liblber*"
+      - "usr/lib/x86_64-linux-gnu/libsasl2*"
+
 
   patchelf:
     plugin: autotools
