@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from pathlib import Path
 
 import keyring
 import pytest
@@ -57,6 +58,15 @@ def new_dir(tmp_path):
     yield tmp_path
 
     os.chdir(cwd)
+
+
+@pytest.fixture
+def prime_dir(new_dir):
+    """Create a subdirectory structure 'new_dir/meta/gui'."""
+
+    prime_dir = Path(f"{new_dir}/meta/gui")
+
+    yield prime_dir
 
 
 @pytest.fixture

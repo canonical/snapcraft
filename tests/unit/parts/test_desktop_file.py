@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -39,7 +38,9 @@ class TestDesktopExec:
             ("bar", "--arg", "foo.bar --arg"),
         ],
     )
-    def test_generate_desktop_file(self, new_dir, app_name, app_args, expected_exec):
+    def test_generate_desktop_file(
+        self, new_dir, prime_dir, app_name, app_args, expected_exec
+    ):
         snap_name = "foo"
 
         desktop_file_path = new_dir / "app.desktop"
@@ -53,9 +54,9 @@ class TestDesktopExec:
             filename=desktop_file_path,
             prime_dir=new_dir.as_posix(),
         )
-        d.write(gui_dir=Path())
+        d.write(gui_dir=prime_dir)
 
-        expected_desktop_file = new_dir / f"{app_name}.desktop"
+        expected_desktop_file = prime_dir / "app.desktop"
         assert expected_desktop_file.exists()
         with expected_desktop_file.open() as desktop_file:
             assert desktop_file.read() == dedent(
@@ -83,7 +84,9 @@ class TestDesktopIcon:
             ("foo", None, "foo"),
         ],
     )
-    def test_generate_desktop_file(self, new_dir, icon, icon_path, expected_icon):
+    def test_generate_desktop_file(
+        self, new_dir, prime_dir, icon, icon_path, expected_icon
+    ):
         snap_name = app_name = "foo"
 
         desktop_file_path = new_dir / "app.desktop"
@@ -101,14 +104,14 @@ class TestDesktopIcon:
             filename=desktop_file_path,
             prime_dir=new_dir,
         )
-        d.write(gui_dir=Path())
+        d.write(gui_dir=prime_dir)
 
         if icon_path is not None:
-            d.write(icon_path=icon_path, gui_dir=Path())
+            d.write(icon_path=icon_path, gui_dir=prime_dir)
         else:
-            d.write(gui_dir=Path())
+            d.write(gui_dir=prime_dir)
 
-        expected_desktop_file = new_dir / f"{app_name}.desktop"
+        expected_desktop_file = prime_dir / "app.desktop"
         assert expected_desktop_file.exists()
         with expected_desktop_file.open() as desktop_file:
             assert desktop_file.read() == dedent(
@@ -134,7 +137,7 @@ class TestDesktopIcon:
         ],
     )
     def test_generate_desktop_file_multisection(
-        self, new_dir, icon, icon_path, expected_icon
+        self, new_dir, prime_dir, icon, icon_path, expected_icon
     ):
         snap_name = app_name = "foo"
 
@@ -158,11 +161,11 @@ class TestDesktopIcon:
         )
 
         if icon_path is not None:
-            d.write(icon_path=icon_path, gui_dir=Path())
+            d.write(icon_path=icon_path, gui_dir=prime_dir)
         else:
-            d.write(gui_dir=Path())
+            d.write(gui_dir=prime_dir)
 
-        expected_desktop_file = new_dir / f"{app_name}.desktop"
+        expected_desktop_file = prime_dir / "app.desktop"
         assert expected_desktop_file.exists()
         with expected_desktop_file.open() as desktop_file:
             assert desktop_file.read() == dedent(
@@ -220,3 +223,22 @@ def test_missing_exec_entry(new_dir):
 
     with pytest.raises(errors.DesktopFileError):
         d.write(gui_dir=new_dir)
+
+
+def test_desktop_without_extension(new_dir, prime_dir):
+    desktop_file_path = new_dir / "app"
+    app_args = ""
+    with desktop_file_path.open("w") as desktop_file:
+        print("[Desktop Entry]", file=desktop_file)
+        print(f"Exec={' '.join(['in-snap-exe', app_args])}", file=desktop_file)
+
+    d = DesktopFile(
+        snap_name="snap",
+        app_name="app1",
+        filename=desktop_file_path,
+        prime_dir=new_dir.as_posix(),
+    )
+    d.write(gui_dir=prime_dir)
+
+    expected_desktop_file = prime_dir / "app.desktop"
+    assert expected_desktop_file.exists()

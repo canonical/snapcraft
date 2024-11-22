@@ -31,7 +31,7 @@ class DesktopFile:
 
     :param snap_name: The snap package name.
     :param app_name: The name of the app using the desktop file.
-    :param filename: The desktop file name.
+    :param filename: The desktop file path.
     :param prime_dir: The prime directory path.
 
     :raises DesktopFileError: If the desktop file does not exist.
@@ -117,9 +117,15 @@ class DesktopFile:
 
         gui_dir.mkdir(parents=True, exist_ok=True)
 
-        # Rename the desktop file to match the app name. This will help
-        # unity8 associate them (https://launchpad.net/bugs/1659330).
-        target = gui_dir / f"{self._app_name}.desktop"
+        desktop_filename = os.path.basename(self._filename)
+
+        # Stop renaming the desktop file. From snapd 2.66 onwards,
+        # users can declare custom desktop file names which snapd will not rename
+        # in the format of {SNAP_NAME}_{APP_NAME}.desktop
+        # https://snapcraft.io/docs/desktop-interface
+        target = gui_dir / desktop_filename
+        if not (desktop_filename.endswith(".desktop")):
+            target = gui_dir / f"{desktop_filename}.desktop"
 
         if target.exists():
             # Unlikely. A desktop file in meta/gui/ already existed for
