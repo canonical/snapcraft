@@ -247,7 +247,7 @@ class TestSetupAssets:
         )
 
         # desktop file should be in meta/gui and named after app
-        desktop_path = Path("prime/meta/gui/app1.desktop")
+        desktop_path = Path("prime/meta/gui/test.desktop")
         assert desktop_path.is_file()
 
         # desktop file content should make icon relative to ${SNAP}
@@ -379,7 +379,7 @@ class TestSetupAssets:
         )
 
         # desktop file should be in meta/gui and named after app
-        desktop_path = Path("prime/meta/gui/app1.desktop")
+        desktop_path = Path("prime/meta/gui/test.desktop")
         assert desktop_path.is_file()
 
         # desktop file content should make icon relative to ${SNAP}
@@ -449,7 +449,7 @@ class TestSetupAssets:
         )
 
         # desktop file should be in meta/gui and named after app
-        desktop_path = Path("prime/meta/gui/app1.desktop")
+        desktop_path = Path("prime/meta/gui/test.desktop")
         assert desktop_path.is_file()
 
         # desktop file content should make icon relative to ${SNAP}
