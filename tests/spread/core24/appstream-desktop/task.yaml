@@ -30,7 +30,7 @@ execute: |
       exit 1
   fi
 
-  if ! diff -U10 prime/meta/gui/appstream-desktop.desktop expected_appstream-desktop.desktop; then
-      echo "The formatting for appstream-desktop.desktop is incorrect"
+  if ! diff -U10 prime/meta/gui/io.snapcraft.appstream.desktop expected_appstream-desktop.desktop; then
+      echo "The formatting for io.snapcraft.appstream.desktop is incorrect"
       exit 1
   fi
