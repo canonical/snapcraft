@@ -6,6 +6,7 @@ How-to guides
 .. toctree::
    :maxdepth: 1
 
+   Language-specific snaps <craft-a-snap/index>
    architectures
    bases
    components

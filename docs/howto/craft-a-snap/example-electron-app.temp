@@ -1,0 +1,107 @@
+
+
+### Diving in
+
+The following is the typical process for running and building the [Electron quick-start example](https://github.com/electron/electron-quick-start):
+
+```
+# Clone this repository
+git clone https://github.com/electron/electron-quick-start
+
+# Go into the repository
+cd electron-quick-start
+
+# Install dependencies
+npm install
+
+# Run the app
+npm start
+```
+
+In the example above, the [electron-builder](https://www.electron.build/) tool extends the pre-existing `package.json` file to produce Linux, macOS and Windows builds of the quick-start app.
+
+To build a snap, you can extend `package.json` to automatically create a snap along with the other builds. For example, adding the following _scripts_ and _devDependencies_ snippets  to the `package.json` in the Electron quick-start example is all that's needed to generate a Linux snap:
+
+```json 
+{
+  "name": "electron-quick-start",
+  "version": "1.0.0",
+  "description": "A minimal Electron application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --linux snap"
+  },
+  "repository": "https://github.com/electron/electron-quick-start",
+  "keywords": [
+    "Electron",
+    "quick",
+    "start",
+    "tutorial",
+    "demo"
+  ],
+  "author": "GitHub",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^11.2.1", 
+    "electron-builder": "^22.9.1"
+  }
+}
+```
+
+As illustrated above, electron-builder has been added to `scripts` and `devDependencies` of this project. As well as being added manually, the `devDependencies` requirement can be added with the following command:
+
+```bash
+npm install --save-dev electron-builder
+```
+[quote]
+ⓘ Make sure your package.json depends on Electron version 9.x.x or later and electron-builder version 22.7.0 or later.
+[/quote]
+
+The script snippet named `dist` calls the `build` command from electron-builder and instructs it to build a Linux snap.
+
+```json
+ "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --linux snap"
+  },
+```
+
+You can execute this script by running:
+
+```bash
+npm run dist
+```
+This will work even if you are running Mac or Windows. electron-builder is capable of building Linux snaps from any operating system.
+
+You should now see a `.snap` file in the `dist/` directory.
+
+### Repackaging from pre-built binaries
+
+If you want to make a snap of a pre-built binary, from deb or tar release files, you can do that too.
+
+For example this is how **Discord** is packaged as a snap
+
+```yaml
+discord:
+    plugin: dump
+    source: https://dl.discordapp.net/apps/linux/${SNAPCRAFT_PROJECT_VERSION}/discord-${SNAPCRAFT_PROJECT_VERSION}.deb
+    source-type: deb
+    override-build: |
+      craftctl default
+      sed -i 's|Icon=discord|Icon=/usr/share/discord/discord\.png|' ${CRAFT_PART_INSTALL}/usr/share/discord/discord.desktop
+    stage-packages:
+      - libatomic1
+      - libc++1
+      - libnspr4
+      - libnss3
+      - libxss1
+      - xdg-utils
+    prime:
+      - -usr/share/discord/chrome-sandbox
+      - -usr/bin/xdg-open
+```
+
+We set the source to the official deb file that is released by Discord, and then remove the chrome-sandbox, as we do not need to enable browser-sandbox in simple electron apps.
+
+For more help checkout the [snap manifest for Discord](https://github.com/snapcrafters/discord/).

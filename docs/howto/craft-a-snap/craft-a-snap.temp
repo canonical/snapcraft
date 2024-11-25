@@ -1,0 +1,380 @@
+.. _craft_a_general_snap:
+
+Craft a general snap
+====================
+
+The following is an outline of the typical crafting process, which you can step
+through to create your snap:
+
+1. `Create a checklist <https://snapcraft.io/docs/snapcraft-checklist>`_ to
+   better understand your snap's requirements.
+2. Create a recipe that describes the requirements and components of your snap.
+3. Pack and test your snap.
+4. Publish and share it on the Snap Store.
+
+
+- **Snaps are easy to discover and install**. Millions of users can browse and
+  install snaps graphically in the Ubuntu Software Center, the Snap Store or
+  from the command-line.
+- **Snaps install and run the same across Linux**. They bundle the exact
+  version of whatever is required, along with all of your app's dependencies,
+  be they binaries or system libraries.
+- **You control the release schedule**. You decide when a new version of your
+  app is released without having to wait for distributions to catch up.
+- **Snaps automatically update to the latest version**. Four times a day,
+  users' systems will check for new versions and upgrade in the background.
+- **Upgrades are not disruptive**. Because upgrades are not in-place, users can
+  keep your app open as it's upgraded in the background.
+- **Upgrades are safe**. If your app fails to upgrade, users automatically roll
+  back to the previous revision.
+- **Snaps install and run the same across Linux**
+  They bundle the exact runtime versions required, along with all of your
+  app's dependencies.
+- **Simple creation of services**
+  Create a standard app or a daemon easily.
+- **Snaps are easy to discover and install**
+  Millions of users can browse and install snaps graphically in the Snap Store
+  or from the command-line.
+- **Snaps automatically update to the latest version**
+  Four times a day, users' systems will check for new versions and upgrade in
+  the background.
+- **Upgrades are not disruptive**
+  Because upgrades are not in-place, users can keep your app open as it's
+  upgraded in the background.
+- **Upgrades are safe**
+  If your app fails to upgrade, users automatically roll back to the previous
+  revision.
+
+
+About platform-specific crafting
+--------------------------------
+
+Snapcraft bundles necessary libraries required by the application, and can configure the environment for confinement of applications for end user peace of mind. Developers can ensure their application is delivered pre-packaged with libraries which will not be replaced or superseded by a distribution vendor.
+
+After making a snap available in the store, you get access to installation metrics and tools to directly manage the delivery of updates to Linux users.
+
+
+Snap recipe file
+----------------
+
+Snaps are defined in a single recipe file, named ``snapcraft.yaml`` file placed
+in a ``snap`` folder at the root of your project. This YAML file describes the
+app, its dependencies and how it should be built.
+
+The recipe starts with a small amount of human-readable metadata, which is
+often already available in the project's own packaging metadata or project
+``README``. This data is used in the presentation of the app in the
+Snap Store.
+
+
+Declare the metadata
+--------------------
+
+1. Adjust the ``name`` to be unique. Since you're registering a fork of liquidctl, change the name to reflect that it's a personal. The snap world uses a convention where users prepend forks with their username, with the format ``<username>-<snap>``.
+2. Set the ``summary``
+3. Set the ``version``
+
+The ``name`` must be unique in the Snap Store. Valid snap names consist of
+lower-case alphanumeric characters and hyphens. They can't be all numbers and
+they also cannot start or end with a hyphen.
+
+The ``summary`` can't exceed 79 characters. More detail can be provided after
+`description`, You can use the pipe symbol '|' in the `description` key to
+declare a multi-line description.
+
+The ``version`` key is arbitrary. We're calling this version ``test``, but it
+could also be a number. The output snap will include the version value in its
+filename. More advanced snaps set this value automatically with [External
+metadata](/t/using-external-metadata/4642). By specifying `git` for the
+version, the current git tag or commit will be used as the version string.
+Versions carry no semantic meaning in snaps.
+
+
+Set the base
+------------
+
+The ``base`` key declares which base snap to use with the project. A base
+snap is a special kind of snap that provides a runtime environment alongside a
+minimal set of libraries that are common to most applications. See `Base snaps
+<https://snapcraft.io/docs/base-snaps>`_ for more details.
+
+.. code:: yaml
+
+  base: core22
+
+This snap uses core22, which is built from `Ubuntu 22.04 LTS
+<http://releases.ubuntu.com/22.04/>`_. Many packages are still in the process
+of being onboarded to Ubuntu 24.04, so core22 is considered more stable.
+
+To set the base:
+
+#. Start by setting ``base`` to ``core24``.
+#. Complete the rest of the build process until you pack the snap.
+#. If packing fails, change ``base`` to ``core22`` and try repacking.
+
+
+
+
+Set the confinement
+-------------------
+
+1. Set the confinement.
+
+.. code:: yaml
+
+  confinement: strict
+
+Snaps are containerised to ensure more predictable application behaviour and
+greater security. Unlike other container systems, the shape of this confinement
+can be changed through a set of interfaces. These are declarations that tell
+the system to give permission for specific tasks, such as accessing a webcam
+or binding to a network port.
+
+Confinement determines the amount of access an application has to system
+resources, such as files, the network, peripherals and services. A value of
+``strict`` is ideal because this isolates a snap, except for access permitted
+through its interfaces.
+
+It's best to develop and test a snap with a confinement level that provides
+warnings for confinement issues instead. This is done by specifying the
+``devmode`` (developer mode). When a snap is in devmode, runtime confinement
+violations will be allowed but reported. You can review these by running
+``journalctl -xe``.
+
+Because devmode is only intended for development, snaps must use strict
+confinement before they can be published as "stable" in the Snap Store. Once an
+app is working well in devmode, you can review confinement violations,
+add appropriate interfaces, and switch to strict confinement.
+
+Packing will also succeed if you change the confinement from ``devmode`` to
+``strict``, as you would before a release.
+
+
+Declare a part
+--------------
+
+Parts define how to build your app. Parts can be anything: programs, libraries, or other assets needed to create and run your application. In this case we have three: the Arduino release tarball, a launcher script and the ``desktop-gtk2`` helper part.
+
+Parts define what sources are needed to build your application. Parts can be
+anything: programs, libraries, or other needed assets, but for this example,
+we only need to use one part: the Moon-buggy git repository.
+
+The ``plugin`` keyword is used to select a language or technology-specific
+plugin that knows how to perform the build steps for the project. In this
+example, the [autotools plugin](/t/8616) is used to automate the build, using
+the standard ``configure`` and ``make`` tools to build the part.
+
+Before building the part, the packages listed in the ``build-packages`` section
+need to be installed in the build environment. These are the tools and
+libraries that are used during the build process.
+
+Not all apps require ``stage-packages``. It is common for larger, more complex
+applications to depend on other libraries. The ``stage-packages`` section is
+used to list the packages containing those run-time dependencies.
+
+The `override-pull` key allows you to customise the actions taken during the pull step of the build process. The pull step is responsible for fetching the source code from the repository specified in the `source` keyword. By default, Snapcraft handles this step automatically, but `override-pull` lets you define your own commands to extend or replace this behaviour. See [Override build steps](https://snapcraft.io/docs/overrides) for more details.
+
+1. Declare a ``part``
+2. Use the appropriate plugin.
+3. Set the ``source`` key.
+
+
+Set the plugin
+~~~~~~~~~~~~~~
+
+The ``plugin`` key is used to select a language or technology-specific plugin
+that knows how to perform the build steps for the project.
+
+
+Declare other parts
+~~~~~~~~~~~~~~~~~~~
+
+If the app requires other parts, set their ``source`` to a pre-installed package or a remote repository, such as another source on GitHub.
+
+
+Declare a plug
+--------------
+
+1. Declare the app.
+
+.. code:: yaml
+
+  apps:
+    liquidctl:
+      command: bin/liquidctl
+      plugs:
+        - raw-usb
+        - hardware-observe
+
+2. Select the plugs.
+
+The ``plugs`` key declares which `interfaces <https://snapcraft.io/docs/supported-interfaces>`_
+an app needs to function, such as `home <https://snapcraft.io/docs/home-interface>`_ to access
+local files, or `network <https://snapcraft.io/docs/network-interfaces>`_ to access the network.
+
+
+Declare the app
+---------------
+
+Apps are the commands you want to expose to users, and also the names of any
+background services the app provides. Each key under ``apps`` is the command
+name that should be made available on users' systems.
+
+The ``command`` specifies the path to the binary to be run. This is resolved
+relative to the root of the snap contents.
+
+If the command name matches the name of the snap specified in the top-level
+``name`` key, the binary file will be given the same name as the snap, as in
+this example. If the names differ, the binary file name will be prefixed with
+the snap name to avoid naming conflicts between installed snaps. For example, if I were authoring the Firefox snap, an app inside it with a name other than ``firefox`` would reserve the name ``firefox.<command-name>``.
+
+If your application is intended to run as a service you simply add the line ``daemon: simple`` after the command keyword. This will automatically keep the service running on install, update, and reboot.
+
+You can request an alias on the  [Snapcraft forum](https://forum.snapcraft.io/t/process-for-reviewing-aliases-auto-connections-and-track-requests/455) if your command name and snap name do not match but you don’t want your command prefixed. These aliases are set up automatically when your snap is installed from the Snap Store.
+
+
+Pack the snap
+-------------
+
+1. Clone the upstream project.
+
+   .. code:: bash
+
+    git clone https://github.com/liquidctl/liquidctl.git
+
+2. Generate a boilerplate recipe in the project:
+
+   .. code:: bash
+
+    snapcraft init
+
+   A ``snap`` directory containing ``snapcraft.yaml`` is added at the root of
+   the project.
+
+   Alternatively, you can create the directory and the recipe manually, and
+   then paste the contents of the recipe at the start of this page into it.
+
+3. Pack the snap:
+
+   .. code:: bash
+
+     snapcraft
+
+   The snap builds into an artefact:
+
+   .. code:: console
+
+     Executed: pull liquidctl Executed: build liquidctl
+     Executed: stage liquidctl Executed: prime liquidctl Executed parts lifecycle
+     Generated snap metadata Created snap package liquidctl_test_amd64.snap
+
+
+Test the snap
+-------------
+
+1. Install the new snap locally. You must pass the ``--dangerous`` flag in the
+   installation command because the snap isn't yet signed by the Snap
+   Store.
+
+   .. code:: bash
+
+     snap install liquidctl_test_amd64.snap --dangerous
+
+2. Test the app:
+
+   .. code:: bash
+
+     liquidctl -h
+
+3. Remove the snap:
+
+   .. code:: bash
+
+    sudo snap remove liquidctl
+
+4. (Optional) Clean up the temporary files that were generated during packing.
+
+   .. code:: bash
+
+     snapcraft clean
+
+   Cleaning the build environment slows down iterative development, but
+   resolves any potential conflicts caused by having a dirtied temporary
+   directory.
+
+
+Clean the temporary directory
+-----------------------------
+
+By default, when you make a change to snapcraft.yaml, snapcraft only builds the
+parts that have changed. Cleaning a build, however, forces your snap to be
+rebuilt in a clean environment and will take longer.
+
+
+Sign in to the Snap Store
+-------------------------
+
+Before you can publish and curate your snap's presence on the store, you must
+sign in.
+
+1. Sign in to the `Snap Store <https://dashboard.snapcraft.io/dev/account>`_.
+
+2. Sign in to your store account in Snapcraft:
+
+   .. code::
+     
+     snapcraft login
+
+
+
+Publish the snap
+----------------
+
+To share your snaps you need to publish them in the Snap Store. First, create
+an account on [the dashboard](https://dashboard.snapcraft.io/dev/account/).
+Here you can customise how your snaps are presented, review your uploads and
+control publishing.
+
+You need to choose a unique developer namespace as part of the account
+creation process. This name will be visible by users and associated with your
+published snaps.
+
+Test your account by authenticating with Snapcraft on your local machine:
+
+.. code:: bash
+
+   snapcraft login
+
+
+Reserve a name for your snap
+----------------------------
+
+You can publish your own version of a snap, provided you do so under a
+unique name you have rights to.
+
+#. Reserve the name. Submit it either:
+
+   - On the store's `registration form
+     <https://dashboard.snapcraft.io/register-snap>`_.
+
+   - In Snapcraft:
+
+     .. code:: bash
+
+       snapcraft register ukuzama-liquidctl
+
+
+Upload your snap
+~~~~~~~~~~~~~~~~
+
+1. Push the snap to the Snap Store. With new snaps that aren't fully tested,
+   the default channel available to the wider internet is ``edge``.
+
+   .. code:: bash
+
+     snapcraft upload --release=edge mypythonsnap_*.snap
+
+If you’re happy with the result, you can commit the snapcraft.yaml to your
+GitHub repo and [turn on automatic builds](https://build.snapcraft.io) so any
+further commits automatically get released to edge, without requiring you to
+manually build locally.
