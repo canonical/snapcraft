@@ -292,6 +292,9 @@ class KDENeon6(Extension):
                             # lapack
                             f"/snap/{kf6_sdk_snap}/current/usr/lib/"
                             "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
+                            # libproxy
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy",
                             # kf6 libs
                             f"/snap/{kf6_sdk_snap}/current/usr/lib",
                             # Staged libs
