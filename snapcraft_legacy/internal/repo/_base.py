@@ -358,10 +358,14 @@ def fix_pkg_config(
         f"^prefix=(?P<trim>{'|'.join(prefixes_to_trim)})(?P<prefix>.*)"
     )
     pattern = re.compile("^prefix=(?P<prefix>.*)")
+    pattern_pcfiledir = re.compile("^prefix *= *[$]{pcfiledir}.*")
 
     # process .pc file
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
         for line in input_file:
+            if pattern_pcfiledir.search(line) is not None:
+                print(line, end="")
+                continue
             match = pattern.search(line)
             match_trim = pattern_trim.search(line)
 
