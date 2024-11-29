@@ -14,7 +14,7 @@ Example recipe for KCalc
 The following code comprises the recipe of a Qt5 KDE project, `KCalc
 <https://github.com/KDE/kcalc>`_. This project is the calculator of KDE Gear.
 
-.. collapse::
+.. collapse:: KCalc recipe
 
   .. code:: yaml
 
