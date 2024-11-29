@@ -369,6 +369,22 @@ def test_fix_pkg_config_trim_prefix(
     )
 
 
+def test_fix_pkg_config_with_pcfiledir(
+    tmpdir,
+    pkg_config_file,
+    expected_pkg_config_content,
+):
+    """Verify prefixes that begin with ${pcfiledir} aren't modified."""
+    pc_file = tmpdir / "my-file.pc"
+    pkg_config_file(pc_file, "${pcfiledir}/../../..")
+
+    fix_pkg_config(tmpdir, pc_file)
+
+    assert pc_file.read_text(encoding="utf-8") == expected_pkg_config_content(
+        "${pcfiledir}/../../.."
+    )
+
+
 def test_normalize_fix_pkg_config(tmpdir, pkg_config_file, expected_pkg_config_content):
     """Verify normalization fixes pkg-config files."""
     pc_file = tmpdir / "my-file.pc"
