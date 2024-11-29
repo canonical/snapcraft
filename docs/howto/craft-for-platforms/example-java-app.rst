@@ -116,10 +116,12 @@ To declare a Java part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``organize``, and so on.
-#. Set ``plugin`` to ``maven``.
+#. Set ``plugin: maven``.
 #. For ``build-packages``, list the following dependencies:
 
-   - ``maven``
-   - ``openjdk-11-jdk-headless``
+   .. code:: yaml
 
-#. For ``stage-packages``, list ``openjdk-11-jre-headless`` as a dependency.
+     - maven
+     - openjdk-11-jdk-headless
+
+#. For ``stage-packages``, add ``openjdk-11-jre-headless`` as a dependency.

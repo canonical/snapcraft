@@ -62,7 +62,7 @@ To declare a Rust part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
-#. Set ``plugin`` to ``python``.
+#. Set ``plugin: python``.
 #. If the snap uses core18, you can override the Rust toolchain version with
    the ``rust-revision`` list key.
 

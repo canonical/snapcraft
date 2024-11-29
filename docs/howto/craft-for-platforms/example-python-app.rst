@@ -87,5 +87,5 @@ To add a Python part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
-#. Set ``plugin`` to ``python``.
+#. Set ``plugin: python``.
 

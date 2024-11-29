@@ -160,7 +160,7 @@ To add a GTK2 app:
 
 #. Declare the general app keys, such as ``command``,
    ``plugs``, ``after``, and so on.
-#. Set ``command`` to ``desktop-launch $SNAP/<command>``.
+#. Set ``command: desktop-launch $SNAP/<command>``.
 #. Since GTK2 doesn't support Wayland, it's best to set ``DISABLE_WAYLAND``
    to ``1``. Doing so instructs the app to fall back to XWayland when a Wayland
    session is detected.

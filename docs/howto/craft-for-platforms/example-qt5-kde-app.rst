@@ -148,5 +148,7 @@ To add a Qt5 KDE part:
    technical details about how this works.
 #. For ``build-snaps``, list the following dependencies:
 
-   - ``kde-frameworks-5-core18-sdk``
-   - ``kde-frameworks-5-core18``
+   .. code:: yaml
+
+     - kde-frameworks-5-core18-sdk
+     - kde-frameworks-5-core18

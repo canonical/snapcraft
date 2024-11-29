@@ -88,7 +88,7 @@ To declare a Go part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
-#. Set ``plugin`` to ``Go``.
+#. Set ``plugin: go``.
 #. If necessary, you can override the Go compiler version by listing it in the
    ``build-snaps`` key, in the format ``go/<track>/<risk>``. The
    latest version is ``go/latest/stable``.

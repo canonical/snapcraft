@@ -49,8 +49,8 @@ obtaining local weather information.
             npm-node-version: 14.16.1
 
 
-Add a part for a Node app
--------------------------
+Add a part written in Node
+--------------------------
 
 .. code:: yaml
 
@@ -67,7 +67,7 @@ To declare a Node part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
-#. Set ``plugin`` to ``npm``.
+#. Set ``plugin: npm``.
 #. Determine how npm is added to the snap:
 
    .. tabs::
@@ -75,7 +75,7 @@ To declare a Node part:
      .. group-tab:: Snapcraft 8 and higher
 
        - If you want Snapcraft to download and pack npm, set
-         ``npm-include-node`` to ``true``, and then set ``npm-node-version`` to
+         ``npm-include-node: true``, and then set ``npm-node-version`` to
          the required NPM version.
        - If you'd rather manually pack npm into the snap, don't set either of
          these keys. Instead, manually include a copy of npm in the files, and

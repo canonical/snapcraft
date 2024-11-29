@@ -1,12 +1,12 @@
-.. _howto:
+.. _how-to-guides:
 
 How-to guides
-*************
+=============
 
 .. toctree::
    :maxdepth: 1
 
-   Language-specific snaps <craft-a-snap/index>
+   Craft for platforms <craft-for-platforms/index>
    architectures
    bases
    components

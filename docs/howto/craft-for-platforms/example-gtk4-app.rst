@@ -109,7 +109,7 @@ To add a GTK4 part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
-#. Set ``plugin`` to ``meson``.
+#. Set ``plugin: meson``.
 #. So that the app has access to its AppStream metadata, for ``parse-info`` add
    a path to the AppStream ``.xml`` file on the host system. Since we set
    ``adopt-info: gnome-text-editor`` at the start of the recipe, the AppStream
@@ -135,6 +135,6 @@ Many GTK4 apps require access to D-Bus in order to run correctly. If your app
 does, you need to explicitly grant it access as a slot:
 
 #. Declare the slot key.
-#. Set ``interface`` to ``dbus`` and ``bus`` to ``session``.
+#. Set ``interface: dbus`` and ``bus: session``.
 #. Set ``name`` to the app's AppStream ID.
 

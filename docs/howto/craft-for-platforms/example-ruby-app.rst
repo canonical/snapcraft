@@ -75,7 +75,7 @@ To declare a Ruby part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
-#. Set ``plugin`` to ``ruby``.
+#. Set ``plugin: ruby``.
 #. For the ``gems`` key, list any gem dependencies.
 #. If you need the latest version of the gem bundler, set ``use-bundler`` to
    ``true``.
