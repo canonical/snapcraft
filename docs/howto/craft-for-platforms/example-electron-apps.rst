@@ -217,5 +217,5 @@ because and instead use the `dump plugin
 
 In the definition of the ``discord`` part, you can see that we set the source
 to the official Debian archive published by the Discord authors, and then
-remove ``chrome-sandbox``, as the browser-sandbox is unecessary in simple
+remove ``chrome-sandbox``, as the browser-sandbox is unnecessary in simple
 Electron apps.
