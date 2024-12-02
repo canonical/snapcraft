@@ -78,7 +78,7 @@ Bare base snaps
 Devel builds
 ^^^^^^^^^^^^
 
-``build-base`` must be ``devel`` must be defined when ``base`` is unstable.
+``build-base`` must be ``devel`` when ``base`` is unstable.
 
 *Unstable* means that the base snap has not been released to the ``stable``
 channel.
