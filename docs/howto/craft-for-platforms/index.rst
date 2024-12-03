@@ -8,7 +8,8 @@ are supplied with their own build tools. Snapcraft uses plugins to integrate
 with these tools in order to create snaps.
 
 Snapcraft can package apps and programs from many programming languages,
-frameworks, and meta build systems, which for simplicity we call *platforms*.
+frameworks, and meta build systems, which for simplicity we call *platforms*
+(no relation to the term as it's used in snap recipes).
 
 You can create snaps from apps you've already built and zipped, or directly from source.
 
@@ -22,7 +23,7 @@ review the unique elements of crafting a snap for them.
 Platform-agnostic
 -----------------
 
-:ref:`example-compiled-app`
+:ref:`example-pre-built-app`
 
 
 Languages
@@ -56,7 +57,7 @@ Frameworks
   :maxdepth: 1
   :hidden:
 
-  example-compiled-app
+  example-pre-built-app
   example-python-app
   example-c-or-cpp-app
   example-java-app

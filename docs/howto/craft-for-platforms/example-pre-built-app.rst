@@ -1,11 +1,11 @@
-.. _example-compiled-app:
+.. _example-pre-built-app:
 
-Example compiled app
-====================
+Example pre-built app
+=====================
 
 This how-to guide covers the steps, decisions, and implementation details that
-are unique when crafting a snap of a pre-compiled app in the form of a tarball,
-Debian package, or zip file.
+are unique when crafting a snap of a pre-built app, which takes the form of a
+tarball, zip file, or Debian package.
 
 Crafting for compiled apps is platform-agnostic because the snap acts as a
 wrapper. You could wrap an app compiled with *any* underlying language or
@@ -65,5 +65,5 @@ To add a compiled part:
 
 #. Declare the general part keys, such as ``override-build``,
    ``build-packages``, and so on.
-#. Set ``source`` to a local or remote tarball, Debian package, or zip file.
+#. Set ``source`` to a local or remote tarball, zip file, or Debian package.
 #. Set ``plugin: dump``.
