@@ -441,7 +441,7 @@ class App(models.CraftBaseModel):
         "command", "stop_command", "post_stop_command", "reload_command", "bus_name"
     )
     @classmethod
-    def _validate_command(cls, command: str, info: pydantic.ValidationInfo) -> str:
+    def _validate_apps_section_content(cls, command: str, info: pydantic.ValidationInfo) -> str:
         # Find any invalid characters in the command.
         # The regex below is derived from snapd's validator code, modified to be the inverse (^).
         # https://github.com/canonical/snapd/blob/0706e2d0b20ae2bf030863f142b8491b66e80bcb/snap/validate.go#L756
