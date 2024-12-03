@@ -18,123 +18,130 @@ Example recipe for ROS 2 Talker/Listener
 
   .. group-tab:: core18
 
-    The following code comprises the recipe of an ROS 2 tutorial project, `ROS
-    2 Talker/Listener core18
-    <https://github.com/snapcraft-docs/ros2-talker-listener>`_.
+    The following code comprises the recipe for the `core18 version of ROS 2
+    Talker/Listener <https://github.com/snapcraft-docs/ros2-talker-listener>`_.
+    
+    .. collapse:: Code
 
-    .. code:: yaml
+      .. code:: yaml
 
-      name: ros2-talker-listener
-      version: '0.1'
-      summary: ROS 2 Talker/Listener Example
-      description: |
-        This example launches a ROS 2 talker and listener.
+        name: ros2-talker-listener
+        version: '0.1'
+        summary: ROS 2 Talker/Listener Example
+        description: |
+          This example launches a ROS 2 talker and listener.
 
-      base: core18
-      confinement: devmode
+        base: core18
+        confinement: devmode
 
-      parts:
-        ros-demos:
-          plugin: colcon
-          source: https://github.com/ros2/demos.git
-          source-branch: dashing
-          colcon-rosdistro: dashing
-          colcon-source-space: demo_nodes_cpp
-          stage-packages: [ros-dashing-ros2launch]
+        parts:
+          ros-demos:
+            plugin: colcon
+            source: https://github.com/ros2/demos.git
+            source-branch: dashing
+            colcon-rosdistro: dashing
+            colcon-source-space: demo_nodes_cpp
+            stage-packages: [ros-dashing-ros2launch]
 
-      apps:
-        ros2-talker-listener:
-          command: opt/ros/dashing/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
+        apps:
+          ros2-talker-listener:
+            command: opt/ros/dashing/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
 
   .. group-tab:: core20
 
-    The following code comprises the recipe of an ROS 2 tutorial project, `ROS
-    2 Talker/Listener core20
+    The following code comprises the recipe for the `core20 version of ROS 2
+    Talker/Listener core20
     <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`_.
+    
+    .. collapse:: Code
 
-    .. code:: yaml
+      .. code:: yaml
 
-      name: ros2-talker-listener
-      version: '0.1'
-      summary: ROS 2 Talker/Listener Example
-      description: |
-        This example launches a ROS 2 talker and listener.
+        name: ros2-talker-listener
+        version: '0.1'
+        summary: ROS 2 Talker/Listener Example
+        description: |
+          This example launches a ROS 2 talker and listener.
 
-      confinement: devmode
-      base: core20
+        confinement: devmode
+        base: core20
 
-      parts:
-        ros-demos:
-          plugin: colcon
-          source: https://github.com/ros2/demos.git
-          source-branch: foxy
-          source-subdir: demo_nodes_cpp
-          stage-packages: [ros-foxy-ros2launch]
+        parts:
+          ros-demos:
+            plugin: colcon
+            source: https://github.com/ros2/demos.git
+            source-branch: foxy
+            source-subdir: demo_nodes_cpp
+            stage-packages: [ros-foxy-ros2launch]
 
-      apps:
-        ros2-talker-listener:
-          command: opt/ros/foxy/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
-          extensions: [ros2-foxy]
+        apps:
+          ros2-talker-listener:
+            command: opt/ros/foxy/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
+            extensions: [ros2-foxy]
 
   .. group-tab:: core22
 
-    The following code comprises the recipe of an ROS 2 tutorial project, `ROS
-    2 Talker/Listener core22
+    The following code comprises the recipe for the `core20 version of ROS 2
+    Talker/Listener core22
     <https://github.com/snapcraft-docs/ros2-talker-listener-core22>`_.
+    
+    .. collapse:: Code
 
-    .. code:: yaml
+      .. code:: yaml
 
-      name: ros2-talker-listener
-      version: '0.1'
-      summary: ROS 2 Talker/Listener Example
-      description: |
-        This example launches a ROS 2 talker and listener.
+        name: ros2-talker-listener
+        version: '0.1'
+        summary: ROS 2 Talker/Listener Example
+        description: |
+          This example launches a ROS 2 talker and listener.
 
-      confinement: devmode
-      base: core22
+        confinement: devmode
+        base: core22
 
-      parts:
-        ros-demos:
-          plugin: colcon
-          source: https://github.com/ros2/demos.git
-          source-branch: humble
-          source-subdir: demo_nodes_cpp
-          stage-packages: [ros-humble-ros2launch]
+        parts:
+          ros-demos:
+            plugin: colcon
+            source: https://github.com/ros2/demos.git
+            source-branch: humble
+            source-subdir: demo_nodes_cpp
+            stage-packages: [ros-humble-ros2launch]
 
-      apps:
-        ros2-talker-listener:
-          command: opt/ros/humble/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
-          extensions: [ros2-humble]
+        apps:
+          ros2-talker-listener:
+            command: opt/ros/humble/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
+            extensions: [ros2-humble]
 
   .. group-tab:: core24
 
-    The following code comprises the recipe of an ROS 2 tutorial project, `ROS
-    2 Talker/Listener core24
+    The following code comprises the recipe for the `core20 version of ROS 2
+    Talker/Listener core24
     <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`_.
 
-    .. code:: yaml
+    .. collapse:: Code
 
-      name: ros2-talker-listener
-      version: '0.1'
-      summary: ROS 2 Talker/Listener Example
-      description: |
-        This example launches a ROS 2 talker and listener.
+      .. code:: yaml
 
-      confinement: devmode
-      base: core24
+        name: ros2-talker-listener
+        version: '0.1'
+        summary: ROS 2 Talker/Listener Example
+        description: |
+          This example launches a ROS 2 talker and listener.
 
-      parts:
-        ros-demos:
-          plugin: colcon
-          source: https://github.com/ros2/demos.git
-          source-branch: jazzy
-          source-subdir: demo_nodes_cpp
-          stage-packages: [ros-jazzy-ros2launch]
+        confinement: devmode
+        base: core24
 
-      apps:
-        ros2-talker-listener:
-          command: ros2 launch demo_nodes_cpp talker_listener.launch.py
-          extensions: [ros2-jazzy]
+        parts:
+          ros-demos:
+            plugin: colcon
+            source: https://github.com/ros2/demos.git
+            source-branch: jazzy
+            source-subdir: demo_nodes_cpp
+            stage-packages: [ros-jazzy-ros2launch]
+
+        apps:
+          ros2-talker-listener:
+            command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+            extensions: [ros2-jazzy]
 
 
 Add an ROS 2 app

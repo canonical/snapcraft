@@ -22,58 +22,78 @@ There are two supported bases for ROS 1 -- core20 and core18.
   you install necessary binaries, libraries, header files, and launch files.
 
 
-core20
-------
+Example recipe for ROS Talker/Listener
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-core20 is available in Snapcraft 8 and higher.
+.. tabs:: ROS Talker/Listener example
 
+  .. group-tab:: core20
 
-Example recipe for core20 ROS Talker/Listener
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    The following code comprises the recipe for the `core20 version of ROS
+    Talker/Listener
+    <https://github.com/snapcraft-docs/ros-talker-listener-core20>`_.
 
-The following code comprises the recipe of an ROS tutorial project, `ROS
-Talker/Listener
-<https://github.com/snapcraft-docs/ros-talker-listener-core20>`_.
+    .. collapse:: Code
 
-.. collapse:: ROS Talker/Listener example for core20
+      .. code:: yaml
 
-  .. code:: yaml
+        name: ros-talker-listener
+        version: '0.1'
+        summary: ROS Talker/Listener Example
+        description: |
+          This example launches a ROS talker and listener.
 
-    name: ros-talker-listener
-    version: '0.1'
-    summary: ROS Talker/Listener Example
-    description: |
-      This example launches a ROS talker and listener.
+        confinement: devmode
+        base: core20
 
-    confinement: devmode
-    base: core20
+        parts:
+        ros-tutorials:
+          plugin: catkin
+          source: https://github.com/ros/ros_tutorials.git
+          source-branch: noetic-devel
+          catkin-packages: [roscpp_tutorials]
+          stage-packages:
+              - ros-noetic-roslaunch
 
-    parts:
-    ros-tutorials:
-      plugin: catkin
-      source: https://github.com/ros/ros_tutorials.git
-      source-branch: noetic-devel
-      catkin-packages: [roscpp_tutorials]
-      stage-packages:
-          - ros-noetic-roslaunch
+        apps:
+        ros-talker-listener:
+          command: opt/ros/noetic/bin/roslaunch roscpp_tutorials talker_listener.launch
+          extensions: [ros1-noetic]
 
-    apps:
-    ros-talker-listener:
-      command: opt/ros/noetic/bin/roslaunch roscpp_tutorials talker_listener.launch
-      extensions: [ros1-noetic]
+  .. group-tab:: core18
+
+    The following code comprises the recipe for the `core18 version of ROS Talker/Listener
+    <https://github.com/snapcraft-docs/ros-talker-listener>`_.
+
+    .. collapse:: Code
+
+      .. code:: yaml
+
+        name: ros-talker-listener
+        version: '0.1'
+        summary: ROS Talker/Listener Example
+        description: |
+          This example launches a ROS talker and listener.
+
+        confinement: devmode
+        base: core18
+
+        parts:
+          ros-tutorials:
+            plugin: catkin
+            source: https://github.com/ros/ros_tutorials.git
+            source-branch: melodic-devel
+            source-space: roscpp_tutorials/
+
+        apps:
+          ros-talker-listener:
+            command: roslaunch roscpp_tutorials talker_listener.launch
 
 
 Add an ROS 1 app based on core20
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: yaml
-
-  apps:
-    ros-talker-listener:
-      command: opt/ros/noetic/bin/roslaunch roscpp_tutorials talker_listener.launch
-      extensions: [ros1-noetic]
-
-To add an ROS 1 app:
+To add an ROS 1 app based on core20:
 
 #. Declare the general app keys, such as ``command``.
 #. For ``extensions``, list ``ros1-noetic``. See
@@ -81,80 +101,8 @@ To add an ROS 1 app:
    description of what the extension does during build.
 
 
-Add a part written for ROS 1 and core20
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: yaml
-
-  parts:
-    ros-tutorials:
-      plugin: catkin
-      source: https://github.com/ros/ros_tutorials.git
-      source-branch: noetic-devel
-      catkin-packages: [roscpp_tutorials]
-      stage-packages:
-          - ros-noetic-roslaunch
-
-ROS 1 parts are built with the `catkin plugin
-<https://snapcraft.io/docs/catkin-plugin>`.
-
-To add an ROS 1 part:
-
-#. Declare the general part keys, such as ``source``, ``override-build``,
-   ``build-packages``, and so on.
-#. Set ``plugin: catkin``.
-#. For ``catkin-packages``, list any ROS package dependencies.
-
-
-core18
-------
-
-core18 is available in Snapcraft 7.
-
-
-Example recipe for core18 ROS Talker/Listener
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The following code comprises the recipe of an ROS tutorial project, `ROS
-Talker/Listener
-<https://github.com/snapcraft-docs/ros-talker-listener-core20>`_.
-
-.. collapse:: ROS Talker/Listener example for core18
-
-  .. code:: yaml
-
-    name: ros-talker-listener
-    version: '0.1'
-    summary: ROS Talker/Listener Example
-    description: |
-      This example launches a ROS talker and listener.
-
-    confinement: devmode
-    base: core18
-
-    parts:
-      ros-tutorials:
-        plugin: catkin
-        source: https://github.com/ros/ros_tutorials.git
-        source-branch: melodic-devel
-        source-space: roscpp_tutorials/
-
-    apps:
-      ros-talker-listener:
-        command: roslaunch roscpp_tutorials talker_listener.launch
-
-
-Add a part written for ROS 1 and core18
----------------------------------------
-
-.. code:: yaml
-
-  parts:
-    ros-tutorials:
-      plugin: catkin
-      source: https://github.com/ros/ros_tutorials.git
-      source-branch: melodic-devel
-      source-space: roscpp_tutorials/
+Add a part written for ROS 1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ROS 1 parts are built with the `catkin plugin
 <https://snapcraft.io/docs/catkin-plugin>`_.
@@ -164,3 +112,5 @@ To add an ROS 1 part:
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
 #. Set ``plugin: catkin``.
+#. If the snap is based on core20, for ``catkin-packages``, list any ROS
+   package dependencies.
