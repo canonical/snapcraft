@@ -70,6 +70,16 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.5.1 (YYYY-MMM-DD)
+-------------------
+
+Core
+====
+
+* Improve snapcraft.yaml validation to fail sooner with a better message
+  when given invalid values for ``command``, ``stop-command``,
+  ``post-stop-command``, ``reload-command``, and ``bus-name``.
+
 8.5.0 (2024-Nov-19)
 -------------------
 
