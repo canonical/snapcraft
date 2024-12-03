@@ -357,6 +357,7 @@ class TestGetElfFiles(TestElfBase):
 
         elf_files = elf.get_elf_files(self.fake_elf.root_path, {"fifo"})
         self.assertThat(elf_files, Equals(set()))
+        os.unlink(fifo_path)
 
 
 class TestGetRequiredGLIBC(TestElfBase):
