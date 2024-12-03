@@ -449,7 +449,7 @@ class App(models.CraftBaseModel):
         for bad_char in re.finditer(r"[^A-Za-z0-9/. _#:$-]", command):
             bad_chars.add(bad_char.group(0))
 
-        if len(bad_chars) > 0:
+        if bad_chars:
             # Guaranteed not-none as the pydantic field_validator decorator always populates it.
             deserialized = cast(str, info.field_name).replace("_", "-")
             bad_chars_print = ", ".join(sorted(bad_chars))
