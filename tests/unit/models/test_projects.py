@@ -1450,7 +1450,7 @@ class TestAppValidation:
             pytest.param(
                 "mkbird --chirps=5",
                 ["="],
-                id="no_equals",
+                id="has_bad_char",
             ),
             pytest.param(
                 'mkbird --chirps=1337 --name="81U3J@Y"', ['"', "@", "="], id="many_bad"
