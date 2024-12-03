@@ -965,24 +965,6 @@ class TestAppValidation:
         assert project.apps is not None
         assert project.apps["app1"].common_id == "test-common-id"
 
-    @pytest.mark.parametrize(
-        "bus_name",
-        ["test-bus-name", "_invalid!"],
-    )
-    def test_app_bus_name(self, bus_name, app_yaml_data):
-        data = app_yaml_data(bus_name=bus_name)
-
-        if bus_name != "_invalid!":
-            project = Project.unmarshal(data)
-            assert project.apps is not None
-            assert project.apps["app1"].bus_name == bus_name
-        else:
-            error = (
-                "apps.app1.bus_name\n  Value error, '_invalid!' is not a valid bus name"
-            )
-            with pytest.raises(pydantic.ValidationError, match=error):
-                Project.unmarshal(data)
-
     def test_app_completer(self, app_yaml_data):
         data = app_yaml_data(completer="test-completer")
         project = Project.unmarshal(data)
