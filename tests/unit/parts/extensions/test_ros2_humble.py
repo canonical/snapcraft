@@ -35,7 +35,10 @@ def setup_method_fixture():
             target_arch = "amd64"
 
         return ROS2HumbleExtension(
-            yaml_data=yaml_data, arch=arch, target_arch=target_arch
+            name=_EXTENSION_NAME,
+            yaml_data=yaml_data,
+            arch=arch,
+            target_arch=target_arch,
         )
 
     yield _setup_method_fixture
