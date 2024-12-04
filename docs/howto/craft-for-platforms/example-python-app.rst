@@ -11,25 +11,6 @@ The process of developing a snap for a Python app builds on top of standard
 Python packaging tools and configuration, making it possible to adapt or
 integrate an app's existing build tooling into the crafting process.
 
-Python projects that follow `PEP 517 <https://peps.python.org/pep-0517/>`_ and
-have a ``pyproject.toml`` must be packed with the ``edge`` channel of
-Snapcraft.
-
-To switch your existing Snapcraft installation to the ``edge`` channel, run:
-
-.. code:: bash
-
-  sudo snap refresh snapcraft --edge
-
-
-To install a parallel copy of Snapcraft with the ``edge`` channel, run:
-
-.. code:: bash
-
-  sudo snap install snapcraft snapcraft_edge --edge
-
-To run the copy, use ``snapcraft_edge`` as the command name.
-
 
 Example recipe for liquidctl
 ----------------------------

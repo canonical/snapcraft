@@ -217,20 +217,6 @@ The warnings regarding missing libraries that you might see when building your
 snap are false positive. These libraries are build time dependencies only.
 
 
-core22
-~~~~~~
-
-Due to a bug in the current version of Snapcraft, you won't be prompted to
-first install LXD if it's not already installed, causing Snapcraft to hang
-indefinitely.
-
-To install and initialise LXD, run:
-
-.. code:: bash
-
-  sudo snap install lxd && sudo lxd init --auto`
-
-
 Share content between ROS 2 snaps
 ---------------------------------
 
@@ -311,9 +297,8 @@ To turn on content sharing:
           <https://snapcraft.io/docs/ros2-jazzy-content-extension>`_
 
 
-Before launching the app for the first time, you must connect the .
-Since our snap makes use of the content provided by another snap, we have to
-connect them.
+Because the snap makes use of the content provided by another snap, you must
+connect them through an interface before you can test the app.
 
 To connect the snaps:
 
@@ -332,10 +317,3 @@ To connect the snaps:
    If the connection is successful, the output will show that through the
    content interface, the snap's ROS launch command is manually plugged in to
    the ROS base snap.
-
-Lastly, the content-sharing extension is experimental. Before you can build a
-snap that uses it, you must enable experimental extensions in your terminal:
-
-.. code:: bash
-
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1

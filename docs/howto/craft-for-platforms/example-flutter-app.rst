@@ -60,6 +60,6 @@ To add a Flutter part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
-#. Set ``plugin> flutter``.
+#. Set ``plugin: flutter``.
 #. If the part is the main app, set ``flutter-target`` to the location of the
    project's ``main.dart`` file.
