@@ -41,7 +41,7 @@ craft-grammar==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-parts==2.1.2
+craft-parts @ git+https://github.com/canonical/craft-parts@work/CRAFT-3664-craft-git
     # via
     #   craft-application
     #   snapcraft (setup.py)
