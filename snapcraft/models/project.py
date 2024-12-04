@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import copy
 import re
-import textwrap
 from typing import Any, Literal, Mapping, Tuple, cast
 
 import pydantic
@@ -441,29 +440,16 @@ class App(models.CraftBaseModel):
         "command", "stop_command", "post_stop_command", "reload_command", "bus_name"
     )
     @classmethod
-    def _validate_apps_section_content(cls, command: str, info: pydantic.ValidationInfo) -> str:
+    def _validate_apps_section_content(
+        cls, command: str, info: pydantic.ValidationInfo
+    ) -> str:
         # Find any invalid characters in the command.
         # The regex below is derived from snapd's validator code, modified to be the inverse (^).
         # https://github.com/canonical/snapd/blob/0706e2d0b20ae2bf030863f142b8491b66e80bcb/snap/validate.go#L756
-        bad_chars: set[str] = set()
-        for bad_char in re.finditer(r"[^A-Za-z0-9/. _#:$-]", command):
-            bad_chars.add(bad_char.group(0))
-
-        if bad_chars:
+        if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", command):
             # Guaranteed not-none as the pydantic field_validator decorator always populates it.
             deserialized = cast(str, info.field_name).replace("_", "-")
-            bad_chars_print = ", ".join(sorted(bad_chars))
-            doc_link = (
-                "https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-appsapp-name"
-            )
-            message = textwrap.dedent(
-                f"""\
-                {deserialized}: App commands must consist only of alphanumeric characters, spaces, and the following characters:
-                / . _ # : $ -
-                The following characters were encountered, but not allowed: {bad_chars_print}
-                For more complete details about the `command` key, see: {doc_link}
-            """
-            )
+            message = f"{deserialized}: App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
             raise ValueError(message)
 
         return command

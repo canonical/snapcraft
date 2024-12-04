@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
-import textwrap
 from typing import Any, Dict, cast
 
 import pydantic
@@ -1439,18 +1438,10 @@ class TestAppValidation:
             "bus_name",
         ],
     )
-    @pytest.mark.parametrize(
-        "value",
-        [
-            pytest.param(
-                "mkbird --chirps 5",
-                None,
-                id="good",
-            ),
-        ]
-    )
     def test_app_command_lexicon_good(
-        self, app_yaml_data, key: str, value: str
+        self,
+        app_yaml_data,
+        key: str,
     ):
         """Verify that command validation lets in a valid command."""
         command = {key: "mkbird --chirps 5"}
@@ -1459,7 +1450,7 @@ class TestAppValidation:
 
         # Ensure the happy path
         assert proj.apps is not None
-        assert getattr(proj.apps["app1"], key) == value
+        assert getattr(proj.apps["app1"], key) == "mkbird --chirps 5"
 
     @pytest.mark.parametrize(
         "key",
@@ -1472,39 +1463,26 @@ class TestAppValidation:
         ],
     )
     @pytest.mark.parametrize(
-        "value,bad_chars",
+        "value",
         [
             pytest.param(
                 "mkbird --chirps=5",
-                ["="],
                 id="has_bad_char",
             ),
-            pytest.param(
-                'mkbird --chirps=1337 --name="81U3J@Y"', ['"', "@", "="], id="many_bad"
-            ),
+            pytest.param('mkbird --chirps=1337 --name="81U3J@Y"', id="many_bad"),
         ],
     )
-    def test_app_command_lexicon_bad(self, app_yaml_data, key: str, value: str, bad_chars: list[str]):
+    def test_app_command_lexicon_bad(self, app_yaml_data, key: str, value: str):
         """Verify that invalid characters in command fields raise an error."""
         command = {key: value}
         data = app_yaml_data(**command)
-        doc_link = (
-            "https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-appsapp-name"
-        )
 
-        err_msg = textwrap.dedent(
-            f"""\
-            {key.replace('_', '-')}: App commands must consist only of alphanumeric characters, spaces, and the following characters:
-            / . _ # : $ -
-            The following characters were encountered, but not allowed: {', '.join(sorted(bad_chars))}
-            For more complete details about the `command` key, see: {doc_link}
-        """
-        )
+        err_msg = f"{key.replace('_', '-')}: App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
 
         with pytest.raises(pydantic.ValidationError) as val_err:
             Project.unmarshal(data)
 
-            assert err_msg in str(val_err.value)
+        assert err_msg in str(val_err.value)
 
 
 class TestGrammarValidation:
