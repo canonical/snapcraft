@@ -12,10 +12,10 @@ The process of developing a snap for a Node app builds on top of npm and
 existing build tooling into the crafting process.
 
 
-Example recipe for wether
--------------------------
+Example recipe for wethr
+------------------------
 
-The following code comprises the recipe of a Node project, `wether
+The following code comprises the recipe of a Node project, `wethr
 <https://github.com/snapcraft-docs/wethr>`_. This project is a CLI tool for
 obtaining local weather information.
 
