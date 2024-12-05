@@ -440,16 +440,12 @@ class App(models.CraftBaseModel):
         "command", "stop_command", "post_stop_command", "reload_command", "bus_name"
     )
     @classmethod
-    def _validate_apps_section_content(
-        cls, command: str, info: pydantic.ValidationInfo
-    ) -> str:
+    def _validate_apps_section_content(cls, command: str) -> str:
         # Find any invalid characters in the field.
         # The regex below is derived from snapd's validator code.
         # https://github.com/canonical/snapd/blob/0706e2d0b20ae2bf030863f142b8491b66e80bcb/snap/validate.go#L756
         if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", command):
-            # Guaranteed not-none as the pydantic field_validator decorator always populates it.
-            deserialized = cast(str, info.field_name).replace("_", "-")
-            message = f"{deserialized}: App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
+            message = f"App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
             raise ValueError(message)
 
         return command

@@ -1466,7 +1466,7 @@ class TestAppValidation:
         "value",
         [
             pytest.param(
-                "mkbird --chirps=5",
+                "bin/mkbird --chirps=5",
                 id="has_bad_char",
             ),
             pytest.param('mkbird --chirps=1337 --name="81U3J@Y"', id="many_bad"),
@@ -1477,7 +1477,7 @@ class TestAppValidation:
         command = {key: value}
         data = app_yaml_data(**command)
 
-        err_msg = f"{key.replace('_', '-')}: App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
+        err_msg = f"App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
 
         with pytest.raises(pydantic.ValidationError) as val_err:
             Project.unmarshal(data)
