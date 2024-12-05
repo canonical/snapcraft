@@ -20,7 +20,7 @@ Example recipe for ROS 2 Talker/Listener
 
     The following code comprises the recipe for the `core18 version of ROS 2
     Talker/Listener <https://github.com/snapcraft-docs/ros2-talker-listener>`_.
-    
+
     .. collapse:: Code
 
       .. code:: yaml
@@ -52,7 +52,7 @@ Example recipe for ROS 2 Talker/Listener
     The following code comprises the recipe for the `core20 version of ROS 2
     Talker/Listener core20
     <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`_.
-    
+
     .. collapse:: Code
 
       .. code:: yaml
@@ -84,7 +84,7 @@ Example recipe for ROS 2 Talker/Listener
     The following code comprises the recipe for the `core20 version of ROS 2
     Talker/Listener core22
     <https://github.com/snapcraft-docs/ros2-talker-listener-core22>`_.
-    
+
     .. collapse:: Code
 
       .. code:: yaml
