@@ -77,7 +77,7 @@ Core
 ====
 
 * Improve snapcraft.yaml validation to fail sooner with a better message
-  when given invalid values for ``command``, ``stop-command``, 
+  when given invalid values for ``command``, ``stop-command``,
   ``post-stop-command``, ``reload-command``, and ``bus-name``.
 
 8.5.0 (2024-Nov-19)

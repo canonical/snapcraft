@@ -1477,7 +1477,7 @@ class TestAppValidation:
         command = {key: value}
         data = app_yaml_data(**command)
 
-        err_msg = f"App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
+        err_msg = "App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
 
         with pytest.raises(pydantic.ValidationError) as val_err:
             Project.unmarshal(data)

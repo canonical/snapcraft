@@ -445,7 +445,7 @@ class App(models.CraftBaseModel):
         # The regex below is derived from snapd's validator code.
         # https://github.com/canonical/snapd/blob/0706e2d0b20ae2bf030863f142b8491b66e80bcb/snap/validate.go#L756
         if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", command):
-            message = f"App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
+            message = "App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
             raise ValueError(message)
 
         return command
