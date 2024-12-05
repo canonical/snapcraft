@@ -21,44 +21,18 @@ where you drive a buggy across the moon's surface.
 
 .. collapse:: moon-buggy recipe
 
-  .. code:: yaml
-
-    name: moon-buggy
-    base: core22
-    version: '1.0.51'
-    summary: Drive a car across the moon
-    description: |
-        Moon-buggy is a simple character graphics game, where you drive some
-        kind of car across the moon's surface. Unfortunately there are
-        dangerous craters there. Fortunately your car can jump over them!
-    confinement: devmode
-
-    parts:
-        moon-buggy:
-            plugin: autotools
-            autotools-configure-parameters: ["--prefix=/usr"]
-            source: .
-            build-packages:
-                - libncurses-dev
-                - texinfo
-    apps:
-        moon-buggy:
-            command: usr/bin/moon-buggy
+  .. literalinclude:: ../code/craft-for-platforms/example-c-or-cpp-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add a part written in C or C++
 ------------------------------
 
-.. code:: yaml
-
-  parts:
-    moon-buggy:
-      plugin: autotools
-      autotools-configure-parameters: ["--prefix=/usr"]
-      source: https://github.com/sergiusens/moon-buggy.git
-      build-packages:
-        - libncurses-dev
-        - texinfo
+.. literalinclude:: ../code/craft-for-platforms/example-c-or-cpp-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: - texinfo
 
 C and C++ parts are built with the ``autotools``, ``make``, or ``cmake``
 plugins.

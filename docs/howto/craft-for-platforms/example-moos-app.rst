@@ -17,39 +17,18 @@ The following code comprises the recipe for the `MOOS core project
 
 .. collapse:: MOOS recipe
 
-  .. code:: yaml
-
-    name: test-moos
-    version: '0.1'
-    summary: MOOS Example
-    description: |
-      This example includes MOOSDB, the main communication mechanism for all MOOS
-      apps.
-
-    base: core18
-    confinement: devmode
-
-    parts:
-      test-moos:
-        source: https://github.com/themoos/core-moos/archive/v10.4.0.tar.gz
-        plugin: cmake
-        build-packages: [g++]
-
-    apps:
-      test-moos:
-        command: bin/MOOSDB
+  .. literalinclude:: ../code/craft-for-platforms/example-moos-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add a part written for MOOS
 ---------------------------
 
-.. code:: yaml
-
-  parts:
-    test-moos:
-      source: https://github.com/themoos/core-moos/archive/v10.4.0.tar.gz
-      plugin: cmake
-      build-packages: [g++]
+.. literalinclude:: ../code/craft-for-platforms/example-moos-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: build-packages: [g++]
 
 MOOS parts are written in C++, so they require the :ref:`CMake plugin
 <craft_parts_cmake_plugin>`.

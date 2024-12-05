@@ -110,22 +110,22 @@ project is a popular instant messaging app and social platform.
     title: Discord
     summary: Chat for Communities and Friends
     description: |
-        Discord is the easiest way to communicate over voice, video, and text.
-        Chat, hang out, and stay close with your friends and communities.
+      Discord is the easiest way to communicate over voice, video, and text.
+      Chat, hang out, and stay close with your friends and communities.
 
-        Snaps are confined, as such Discord may be unable to perform some of
-        the tasks it typically does when unconfined. This may result in the
-        system log getting spammed with apparmor errors. Granting access to the
-        system-observe interface when in the snap will enable the features, and
-        thus reduce the logging.
+      Snaps are confined, as such Discord may be unable to perform some of
+      the tasks it typically does when unconfined. This may result in the
+      system log getting spammed with apparmor errors. Granting access to the
+      system-observe interface when in the snap will enable the features, and
+      thus reduce the logging.
 
-          snap connect discord:system-observe
+        snap connect discord:system-observe
 
-        **Authors**
+      **Authors**
 
-        This snap is maintained by the Snapcrafters community, and is not
-        necessarily endorsed or officially maintained by the upstream
-        developers.
+      This snap is maintained by the Snapcrafters community, and is not
+      necessarily endorsed or officially maintained by the upstream
+      developers.
 
     website: https://discord.com/
     contact: https://github.com//snapcrafters/discord/issues
@@ -141,71 +141,71 @@ project is a popular instant messaging app and social platform.
     compression: lzo
 
     assumes:
-        - snapd2.54
+      - snapd2.54
 
     architectures:
-        - amd64
+      - amd64
 
     parts:
-        launcher:
-            plugin: dump
-            source: snap/local
-            source-type: local
-            stage-packages:
-                - jq
+      launcher:
+        plugin: dump
+        source: snap/local
+        source-type: local
+        stage-packages:
+          - jq
 
-        discord:
-            plugin: dump
-            source: https://dl.discordapp.net/apps/linux/${SNAPCRAFT_PROJECT_VERSION}/discord-${SNAPCRAFT_PROJECT_VERSION}.deb
-            source-type: deb
-            override-build: |
-                craftctl default
-                sed -i 's|Icon=discord|Icon=/usr/share/discord/discord\.png|' ${CRAFT_PART_INSTALL}/usr/share/discord/discord.desktop
-            stage-packages:
-                - libatomic1
-                - libc++1
-                - libnspr4
-                - libnss3
-                - libxss1
-                - xdg-utils
-            prime:
-                - -usr/share/discord/chrome-sandbox
-                - -usr/bin/xdg-open
+      discord:
+        plugin: dump
+        source: https://dl.discordapp.net/apps/linux/${SNAPCRAFT_PROJECT_VERSION}/discord-${SNAPCRAFT_PROJECT_VERSION}.deb
+        source-type: deb
+        override-build: |
+          craftctl default
+          sed -i 's|Icon=discord|Icon=/usr/share/discord/discord\.png|' ${CRAFT_PART_INSTALL}/usr/share/discord/discord.desktop
+        stage-packages:
+          - libatomic1
+          - libc++1
+          - libnspr4
+          - libnss3
+          - libxss1
+          - xdg-utils
+        prime:
+          - -usr/share/discord/chrome-sandbox
+          - -usr/bin/xdg-open
 
     plugs:
-        shmem:
-          interface: shared-memory
-          private: true
+      shmem:
+        interface: shared-memory
+        private: true
 
     apps:
-        discord:
-            extensions: [gnome]
-            command: bin/launcher
-            command-chain: [bin/disable-updater]
-            autostart: discord-stable.desktop
-            desktop: usr/share/applications/discord.desktop
-            environment:
-                # Correct the TMPDIR path for Chromium Framework/Electron to
-                # ensure libappindicator has readable resources
-                TMPDIR: $XDG_RUNTIME_DIR
-                DISABLE_WAYLAND: 1
-                # Included temporarily until https://github.com/snapcore/snapcraft-desktop-integration/issues/28
-                # is resolved.
-                NOTIFY_IGNORE_PORTAL: 1
-            plugs:
-                - audio-playback
-                - audio-record
-                - camera
-                - home
-                - mount-observe
-                - network
-                - network-observe
-                - process-control
-                - removable-media
-                - screen-inhibit-control
-                - shmem
-                - system-observe
-                - unity7
+      discord:
+        extensions: [gnome]
+        command: bin/launcher
+        command-chain: [bin/disable-updater]
+        autostart: discord-stable.desktop
+        desktop: usr/share/applications/discord.desktop
+        environment:
+          # Correct the TMPDIR path for Chromium Framework/Electron to
+          # ensure libappindicator has readable resources
+          TMPDIR: $XDG_RUNTIME_DIR
+          DISABLE_WAYLAND: 1
+          # Included temporarily until https://github.com/snapcore/snapcraft-desktop-integration/issues/28
+          # is resolved.
+          NOTIFY_IGNORE_PORTAL: 1
+        plugs:
+          - audio-playback
+          - audio-record
+          - camera
+          - home
+          - mount-observe
+          - network
+          - network-observe
+          - process-control
+          - removable-media
+          - screen-inhibit-control
+          - shmem
+          - system-observe
+          - unity7
 
 
 Electron parts

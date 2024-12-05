@@ -18,58 +18,20 @@ default text editor of the GNOME desktop environment.
 
 .. collapse:: gnome-text-editor recipe
 
-  .. code:: yaml
+  .. literalinclude:: ../code/craft-for-platforms/example-gtk4-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
-    name: gnome-text-editor
-    grade: stable
-    adopt-info: gnome-text-editor
-    license: GPL-3.0+
 
-    base: core22
-    confinement: strict
-
-    apps:
-        gnome-text-editor:
-            extensions: [gnome]
-            command: usr/bin/gnome-text-editor
-            desktop: usr/share/applications/org.gnome.TextEditor.desktop
-            common-id: org.gnome.TextEditor.desktop
-            plugs:
-                - gsettings
-                - cups
-
-    parts:
-        gnome-text-editor:
-            source: https://gitlab.gnome.org/GNOME/gnome-text-editor
-            source-tag: '42.2'
-            source-type: git
-            plugin: meson
-            meson-parameters:
-                - --prefix=/usr
-                - --buildtype=release
-            parse-info: [usr/share/metainfo/org.gnome.TextEditor.appdata.xml]
-
-    slots:
-        gnome-text-editor:
-            interface: dbus
-            bus: session
-            name: org.gnome.TextEditor
 
 
 Add an app that uses GNOME
 --------------------------
 
-.. code:: yaml
-
-  apps:
-      gnome-text-editor:
-          extensions: [gnome]
-          command: usr/bin/gnome-text-editor
-          desktop: usr/share/applications/org.gnome.TextEditor.desktop
-          common-id: org.gnome.TextEditor.desktop
-          plugs:
-              - gsettings
-              - cups
+.. literalinclude:: ../code/craft-for-platforms/example-gtk4-recipe.yaml
+  :language: yaml
+  :start-at: apps:
+  :end-at: - cups
 
 Apps that use GTK4 and GNOME as runtime libraries require the `gnome extension
 <https://snapcraft.io/docs/the-gnome-extension>`_. The extension configures the
@@ -89,18 +51,10 @@ To add a GTK4 app:
 Add a part written for GTK4
 ---------------------------
 
-.. code:: yaml
-
-  parts:
-      gnome-text-editor:
-          source: https://gitlab.gnome.org/GNOME/gnome-text-editor
-          source-tag: '42.2'
-          source-type: git
-          plugin: meson
-          meson-parameters:
-              - --prefix=/usr
-              - --buildtype=release
-          parse-info: [usr/share/metainfo/org.gnome.TextEditor.appdata.xml]
+.. literalinclude:: ../code/craft-for-platforms/example-gtk4-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: parse-info: [usr/share/metainfo/org.gnome.TextEditor.appdata.xml]
 
 GTK4 parts are built with the `Meson plugin
 <https://snapcraft.io/docs/meson-plugin>`_.
@@ -123,13 +77,10 @@ To add a GTK4 part:
 Add required slots
 ------------------
 
-.. code:: yaml
-
-  slots:
-      gnome-text-editor:
-          interface: dbus
-          bus: session
-          name: org.gnome.TextEditor
+.. literalinclude:: ../code/craft-for-platforms/example-gtk4-recipe.yaml
+  :language: yaml
+  :start-at: slots:
+  :end-at: name: org.gnome.TextEditor
 
 Many GTK4 apps require access to D-Bus in order to run correctly. If your app
 does, you need to explicitly grant it access as a slot:
@@ -137,4 +88,3 @@ does, you need to explicitly grant it access as a slot:
 #. Declare the slot key.
 #. Set ``interface: dbus`` and ``bus: session``.
 #. Set ``name`` to the app's AppStream ID.
-

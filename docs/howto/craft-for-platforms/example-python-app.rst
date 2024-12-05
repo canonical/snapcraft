@@ -21,46 +21,18 @@ tool for power and cooling components in PCs.
 
 .. collapse:: liquidctl recipe
 
-  .. code:: yaml
-
-    name: liquidctl
-    summary: a status and control utility to for power, cooling and LED
-    components
-    version: '1.0'
-    description: |
-        liquidctl is a command-line tool to monitor and control the fan speed,
-        LED colour and pump volumes of specific power supplies, motherboards,
-        graphics cards and cooling solutions. The liquidctl snap unofficial and
-        is not endorsed by the upstream project.
-    base: core22
-    confinement: strict
-
-    parts:
-        liquidctl:
-            plugin: python
-            source: .
-            stage-packages:
-                - python3-usb
-
-    apps:
-        liquidctl:
-            command: bin/liquidctl
-            plugs:
-                - raw-usb
-                - hardware-observe
+  .. literalinclude:: ../code/craft-for-platforms/example-python-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add a part written in Python
 ----------------------------
 
-.. code:: yaml
-
-  parts:
-      liquidctl:
-          plugin: python
-          source: .
-          stage-packages:
-              - python3-usb
+.. literalinclude:: ../code/craft-for-platforms/example-python-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: - python3-usb
 
 Python parts are built with the :ref:`Python plugin <python_plugin>`.
 

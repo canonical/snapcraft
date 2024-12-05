@@ -22,43 +22,18 @@ obtaining local weather information.
 
 .. collapse:: wether recipe
 
-  .. code:: yaml
-
-    name: wethr
-    version: git
-    summary: Command line weather tool.
-    description: |
-        Get current weather:-
-          $ wethr
-        Get current weather in metric units
-          $ wethr --metric
-        Get current weather in imperial units
-          $ wethr --imperial
-
-    confinement: strict
-    base: core20
-
-    apps:
-        wethr:
-            command: bin/wethr
-
-    parts:
-        wethr:
-            source: .
-            plugin: npm
-            npm-node-version: 14.16.1
+  .. literalinclude:: ../code/craft-for-platforms/example-node-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add a part written in Node
 --------------------------
 
-.. code:: yaml
-
-  parts:
-      wethr:
-          source: .
-          plugin: npm
-          npm-node-version: 14.16.1
+.. literalinclude:: ../code/craft-for-platforms/example-node-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: npm-node-version: 14.16.1
 
 Node parts are built with the `npm plugin
 <https://snapcraft.io/docs/npm-plugin>`_.

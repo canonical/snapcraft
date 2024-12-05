@@ -24,39 +24,18 @@ The following code comprises the recipe of a C project, `Geekbench
 
 .. collapse:: Geekbench recipe
 
-  .. code:: yaml
-
-    name: test-geekbench4
-    version: 4.2.0
-    summary: Cross-Platform Benchmark
-    description: |
-      Geekbench 4 measures your system's power and tells
-      you whether your computer is ready to roar. How
-      strong is your mobile device or desktop computer?
-      How will it perform when push comes to crunch?
-      These are the questions that Geekbench can answer.
-    confinement: devmode
-    base: core18
-
-    parts:
-      test-geekbench4:
-        plugin: dump
-        source: http://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
-
-    apps:
-      test-geekbench4:
-        command: geekbench4
+  .. literalinclude:: ../code/craft-for-platforms/example-pre-built-app.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add a compiled part
 -------------------
 
-.. code:: yaml
-
-  parts:
-    test-geekbench4:
-      plugin: dump
-      source: http://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
+.. literalinclude:: ../code/craft-for-platforms/example-pre-built-app.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: source: http://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
 
 Compiled parts stored in archives are built with the `dump plugin
 <https://snapcraft.io/docs/dump-plugin>`_.

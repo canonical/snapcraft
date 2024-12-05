@@ -21,66 +21,18 @@ detects exclusive language.
 
 .. collapse:: woke recipe
 
-  .. code:: yaml
-
-    name: woke
-    summary: Detect non-inclusive language in your source code
-    description: |
-        Creating an inclusive work environment is imperative to a healthy,
-        supportive, and productive culture, and an environment where everyone
-        feels welcome and included. woke is a text file analysis tool that finds
-        places within your source code that contain non-inclusive language and
-        suggests replacing them with more inclusive alternatives.
-    adopt-info: woke
-    base: core22
-
-    confinement: devmode
-
-    plugs:
-        dot-config-woke:
-            interface: personal-files
-            read:
-                - $HOME/.config/woke.yaml
-                - $HOME/.config/woke.yml
-                - $HOME/.woke.yaml
-                - $HOME/.woke.yml
-
-    apps:
-        woke:
-            command: bin/woke
-            plugs:
-                - home
-                - dot-config-woke
-                - network
-                - removable-media
-
-    parts:
-        woke:
-            plugin: go
-            build-snaps: [go/latest/stable]
-            source: https://github.com/get-woke/woke
-            source-type: git
-            override-pull: |
-                snapcraftctl pull
-                snapcraftctl set-version \
-                "$(git describe --long --tags --always --match=v*.*.* | sed 's/v//')"
+  .. literalinclude:: ../code/craft-for-platforms/example-go-recipe.yaml
+    :language: yaml
+    :lines: 3-
 
 
 Add a part written in Go
 ------------------------
 
-.. code:: yaml
+.. literalinclude:: ../code/craft-for-platforms/example-go-recipe.yaml
+  :language: yaml
+  :start-at: parts:
 
-  parts:
-      woke:
-          plugin: go
-          build-snaps: [go/latest/stable]
-          source: https://github.com/get-woke/woke
-          source-type: git
-          override-pull: |
-              snapcraftctl pull
-              snapcraftctl set-version \
-              "$(git describe --long --tags --always --match=v*.*.* | sed 's/v//')"
 
 Go parts are built with the `Go plugin <https://snapcraft.io/docs/go-plugin>`_.
 

@@ -21,52 +21,18 @@ syntax checks for Markdown files.
 
 .. collapse:: Markdown lint tool recipe
 
-  .. code:: yaml
-
-    name: test-mdl
-    version: "0.5.0"
-    summary: Markdown lint tool
-    description: |
-        Style checker/lint tool for markdown files.
-
-    confinement: devmode
-    base: core18
-
-    parts:
-        test-mdl:
-            source: .
-            plugin: ruby
-            gems:
-                - rake
-                - bundler
-            override-build: |
-                snapcraftctl build
-                rake install
-            build-packages:
-                - git
-
-    apps:
-        test-mdl:
-          command: bin/mdl
+  .. literalinclude:: ../code/craft-for-platforms/example-ruby-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add a part written in Ruby
 --------------------------
 
-.. code:: yaml
-
-  parts:
-      test-mdl:
-          source: .
-          plugin: ruby
-          gems:
-              - rake
-              - bundler
-          override-build: |
-              snapcraftctl build
-              rake install
-          build-packages:
-              - git
+.. literalinclude:: ../code/craft-for-platforms/example-ruby-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: - git
 
 Ruby parts are built with the `Ruby <https://snapcraft.io/docs/ruby-plugin>`_
 plugin.

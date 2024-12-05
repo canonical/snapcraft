@@ -18,50 +18,18 @@ for returning the current time in cities across the globe.
 
 .. collapse:: whatime recipe
 
-  .. code:: yaml
-
-    name: whatime
-    version: '1.0.0'
-    grade: devel
-    summary: Get the current time in various cities around the world
-    description: |
-      Whatime is able to get you the current time in several different cities
-      around the world.
-
-    base: core22
-    confinement: devmode
-
-    parts:
-      whatime:
-        plugin: dotnet
-        dotnet-build-configuration: Release
-        dotnet-self-contained-runtime-identifier: linux-x64
-        source: .
-        build-packages:
-          - dotnet-sdk-6.0
-        stage-packages:
-          - libicu70
-
-    apps:
-      whatime:
-        command: Whatime
+  .. literalinclude:: ../code/craft-for-platforms/example-dotnet-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add a part written for .NET
 ---------------------------
 
-.. code:: yaml
-
-  parts:
-    whatime:
-      plugin: dotnet
-      dotnet-build-configuration: Release
-      dotnet-self-contained-runtime-identifier: linux-x64
-      source: .
-      build-packages:
-        - dotnet-sdk-6.0
-      stage-packages:
-        - libicu70
+.. literalinclude:: ../code/craft-for-platforms/example-dotnet-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: - libicu70
 
 .NET parts are built with the `dotnet plugin
 <https://snapcraft.io/docs/dotnet-plugin>`_.

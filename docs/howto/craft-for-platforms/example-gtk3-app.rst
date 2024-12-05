@@ -18,69 +18,18 @@ reader.
 
 .. collapse:: foliate recipe
 
-  .. code:: yaml
-
-    name: foliate
-    grade: stable
-    adopt-info: foliate
-    license: GPL-3.0+
-
-    base: core20
-    confinement: strict
-
-    apps:
-        foliate:
-            command: usr/bin/com.github.johnfactotum.Foliate
-            extensions: [gnome-3-38]
-            plugs:
-                - home
-            slots:
-                - dbus-daemon
-            common-id: com.github.johnfactotum.Foliate
-
-    parts:
-        foliate:
-            plugin: meson
-            source: https://github.com/johnfactotum/foliate.git
-            source-branch: 1.x
-            meson-parameters: [--prefix=/snap/foliate/current/usr]
-            override-pull: |
-                snapcraftctl pull
-                sed -i -e 's|@GJS@|/usr/bin/gjs|g' src/com.github.johnfactotum.Foliate.in
-            build-packages:
-                - libgjs-dev
-                - gettext
-            stage-packages:
-                - gjs
-            organize:
-                snap/foliate/current/usr: usr
-            parse-info: [usr/share/metainfo/com.github.johnfactotum.Foliate.appdata.xml]
-
-    slots:
-        dbus-daemon:
-            interface: dbus
-            bus: session
-            name: com.github.johnfactotum.Foliate
-
-    layout:
-        /usr/bin/gjs:
-            symlink: $SNAP/usr/bin/gjs
+  .. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add an app that uses GNOME
 --------------------------
 
-.. code:: yaml
-
-  apps:
-      foliate:
-          command: usr/bin/com.github.johnfactotum.Foliate
-          extensions: [gnome-3-38]
-          plugs:
-              - home
-          slots:
-              - dbus-daemon
-          common-id: com.github.johnfactotum.Foliate
+.. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
+  :language: yaml
+  :start-at: apps:
+  :end-at: common-id: com.github.johnfactotum.Foliate
 
 Apps that use GTK3 and GNOME as runtime libraries require the `gnome-3-38
 extension <https://snapcraft.io/docs/gnome-3-38-extension>`_. The extension
@@ -101,25 +50,10 @@ To add a GTK4 app:
 Add a part written for GTK3
 ---------------------------
 
-.. code:: yaml
-
-  parts:
-      foliate:
-          plugin: meson
-          source: https://github.com/johnfactotum/foliate.git
-          source-branch: 1.x
-          meson-parameters: [--prefix=/snap/foliate/current/usr]
-          override-pull: |
-              snapcraftctl pull
-              sed -i -e 's|@GJS@|/usr/bin/gjs|g' src/com.github.johnfactotum.Foliate.in
-          build-packages:
-              - libgjs-dev
-              - gettext
-          stage-packages:
-              - gjs
-          organize:
-              snap/foliate/current/usr: usr
-          parse-info: [usr/share/metainfo/com.github.johnfactotum.Foliate.appdata.xml]
+.. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: parse-info: [usr/share/metainfo/com.github.johnfactotum.Foliate.appdata.xml]
 
 GTK3 parts are built with the `Meson plugin
 <https://snapcraft.io/docs/meson-plugin>`_.
@@ -142,13 +76,10 @@ To add a GTK4 part:
 Add required slots
 ------------------
 
-.. code:: yaml
-
-  slots:
-      dbus-daemon:
-          interface: dbus
-          bus: session
-          name: com.github.johnfactotum.Foliate
+.. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
+  :language: yaml
+  :start-at: slots:
+  :end-at: name: com.github.johnfactotum.Foliate
 
 Many GTK3 apps require access to DBus in order to run correctly. If your app
 does, you need to explicitly grant it access as a slot:

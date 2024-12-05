@@ -18,40 +18,18 @@ project is merely a demonstration of a clicker window for GNOME.
 
 .. collapse:: Flutter app recipe
 
-  .. code:: yaml
-
-    name: my-flutter-app
-    version: '1.0'
-    summary: An example Flutter snap
-    description: |
-        An example showing how Flutter programs can be packaged as snaps.
-
-    base: core22
-    confinement: strict
-    grade: stable
-
-    apps:
-        my-flutter-app:
-            command: my_flutter_app
-            extensions: [gnome]
-
-    parts:
-        my-flutter-app:
-            source: .
-            plugin: flutter
-            flutter-target: lib/main.dart
+  .. literalinclude:: ../code/craft-for-platforms/example-flutter-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add an app written for Flutter
 ------------------------------
 
-.. code:: yaml
-
-    parts:
-      my-flutter-app:
-          source: .
-          plugin: flutter
-          flutter-target: lib/main.dart
+.. literalinclude:: ../code/craft-for-platforms/example-flutter-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: flutter-target: lib/main.dart
 
 Flutter parts are built with the `flutter plugin
 <https://snapcraft.io/docs/flutter-plugin>`_.

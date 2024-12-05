@@ -16,77 +16,18 @@ The following code comprises the recipe of a Qt5 KDE project, `KCalc
 
 .. collapse:: KCalc recipe
 
-  .. code:: yaml
-
-    name: kcalc
-    version: '19.08.0'
-    grade: stable
-    adopt-info: kcalc
-
-    confinement: strict
-    base: core18
-
-    apps:
-        kcalc:
-            command: kcalc
-            extensions: [kde-neon]
-            common-id: org.kde.kcalc.desktop
-            plugs:
-                - kde-frameworks-5-plug
-                - home
-                - opengl
-                - network
-                - network-bind
-                - pulseaudio
-
-    slots:
-        session-dbus-interface:
-            interface: dbus
-            name: org.kde.kcalc.desktop
-            bus: session
-
-    parts:
-        kcalc:
-            plugin: cmake
-            source: https://download.kde.org/stable/applications/19.08.0/src/kcalc-19.08.0.tar.xz
-            parse-info:
-                - usr/share/metainfo/org.kde.kcalc.appdata.xml
-            build-snaps:
-                - kde-frameworks-5-core18-sdk
-                - kde-frameworks-5-core18
-            build-packages:
-              - libmpfr-dev
-              - libgmp-dev
-              - kdoctools-dev
-            stage-packages:
-              - libmpfr6
-              - libgmp10
-            configflags:
-                - "-DKDE_INSTALL_USE_QT_SYS_PATHS=ON"
-                - "-DCMAKE_INSTALL_PREFIX=/usr"
-                - "-DCMAKE_BUILD_TYPE=Release"
-                - "-DENABLE_TESTING=OFF"
-                - "-DBUILD_TESTING=OFF"
-                - "-DKDE_SKIP_TEST_SETTINGS=ON"
+  .. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
+    :language: yaml
+    :lines: 2-
 
 
 Add an app that uses KDE
 ------------------------
 
-.. code:: yaml
-
-  apps:
-      kcalc:
-          command: kcalc
-          extensions: [kde-neon]
-          common-id: org.kde.kcalc.desktop
-          plugs:
-              - kde-frameworks-5-plug
-              - home
-              - opengl
-              - network
-              - network-bind
-              - pulseaudio
+.. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
+  :language: yaml
+  :start-at: apps:
+  :end-at: - pulseaudio
 
 Apps that use KDE runtime libraries require the `kde-neon
 <https://snapcraft.io/docs/kde-neon-extension>`_. The extension configures the
@@ -106,31 +47,10 @@ To add a GTK4 app:
 Add a part written for Qt5 KDE
 ------------------------------
 
-.. code:: yaml
-
-    parts:
-      kcalc:
-          plugin: cmake
-          source: https://download.kde.org/stable/applications/19.08.0/src/kcalc-19.08.0.tar.xz
-          parse-info:
-              - usr/share/metainfo/org.kde.kcalc.appdata.xml
-          build-snaps:
-              - kde-frameworks-5-core18-sdk
-              - kde-frameworks-5-core18
-          build-packages:
-            - libmpfr-dev
-            - libgmp-dev
-            - kdoctools-dev
-          stage-packages:
-            - libmpfr6
-            - libgmp10
-          configflags:
-              - "-DKDE_INSTALL_USE_QT_SYS_PATHS=ON"
-              - "-DCMAKE_INSTALL_PREFIX=/usr"
-              - "-DCMAKE_BUILD_TYPE=Release"
-              - "-DENABLE_TESTING=OFF"
-              - "-DBUILD_TESTING=OFF"
-              - "-DKDE_SKIP_TEST_SETTINGS=ON"
+.. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
+  :language: yaml
+  :start-at: parts:
+  :end-at: - "-DKDE_SKIP_TEST_SETTINGS=ON"
 
 Qt5 KDE parts don't require a special plugin. Instead, they need extra snap dependencies.
 
@@ -148,7 +68,7 @@ To add a Qt5 KDE part:
    technical details about how this works.
 #. For ``build-snaps``, list the following dependencies:
 
-   .. code:: yaml
-
-     - kde-frameworks-5-core18-sdk
-     - kde-frameworks-5-core18
+   .. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
+     :language: yaml
+     :start-at: - kde-frameworks-5-core18-sdk
+     :end-at: - kde-frameworks-5-core18
