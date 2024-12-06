@@ -16,7 +16,7 @@ Snapcraft
 
     * - | :ref:`Tutorial <tutorial>`
         | **Get started** with a hands-on introduction to Snapcraft
-      - | :ref:`How-to guides <howto>`
+      - | :ref:`How-to guides <how-to-guides>`
         | **Step-by-step guides** covering key operations and common tasks
     * - | :ref:`Reference <reference>`
         | **Technical information** about Snapcraft
