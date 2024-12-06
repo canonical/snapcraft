@@ -20,7 +20,7 @@ The following code comprises the recipe of a Node project, `wethr
 obtaining local weather information.
 
 
-.. collapse:: wether recipe
+.. collapse:: wethr recipe
 
   .. literalinclude:: ../code/craft-for-platforms/example-node-recipe.yaml
     :language: yaml

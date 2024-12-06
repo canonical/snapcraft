@@ -70,5 +70,5 @@ To add a Qt5 KDE part:
 
    .. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
      :language: yaml
-     :start-at: - kde-frameworks-5-core18-sdk
-     :end-at: - kde-frameworks-5-core18
+     :dedent: 6
+     :lines: 37-38

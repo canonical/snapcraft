@@ -31,8 +31,8 @@ Add a part written in Java
 
 .. literalinclude:: ../code/craft-for-platforms/example-java-recipe.yaml
   :language: yaml
-  :start-at: cal:
-  :end-at: rm -vf usr/lib/jvm/java-11-openjdk-*/lib/security/blacklisted.certs
+  :dedent: 2
+  :lines: 50-
 
 Java parts are built with the :ref:`Maven plugin <maven_plugin>`. The plugin
 can build the app using standard parameters. It requires a ``pom.xml``
@@ -48,6 +48,7 @@ To declare a Java part:
    .. literalinclude:: ../code/craft-for-platforms/example-java-recipe.yaml
     :language: yaml
     :start-at: - maven
+    :dedent: 6
     :end-at: - openjdk-11-jdk-headless
 
 #. For ``stage-packages``, add ``openjdk-11-jre-headless`` as a dependency.

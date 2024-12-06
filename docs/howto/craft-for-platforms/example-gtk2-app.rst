@@ -49,6 +49,7 @@ Add a part written for GTK2
 
 .. literalinclude:: ../code/craft-for-platforms/example-gtk2-recipe.yaml
   :language: yaml
+  :dedent: 2
   :start-at: desktop-gtk2:
   :end-at: - libibus-1.0-5
 

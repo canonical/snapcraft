@@ -43,14 +43,12 @@ To add a .NET part:
    ``dotnet-build-configuration`` to the name of a configuration.
 #. If you need to build the project as a single binary:
 
-   #. In the ``.csproj`` file, add the following:
+   #. In the ``.csproj`` file, add the following to the ``<PropertyGroup>``
+      tag:
 
       .. code:: xml
 
-        <PropertyGroup>
-          ...
-          <PublishSingleFile>true</PublishSingleFile>
-        </PropertyGroup>
+        <PublishSingleFile>true</PublishSingleFile>
 
    #. Set
       ``dotnet-self-contained-runtime-identifier`` to the target architecture's

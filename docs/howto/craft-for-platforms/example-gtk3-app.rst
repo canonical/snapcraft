@@ -78,7 +78,7 @@ Add required slots
 
 .. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
   :language: yaml
-  :start-at: slots:
+  :lines: 39-
   :end-at: name: com.github.johnfactotum.Foliate
 
 Many GTK3 apps require access to DBus in order to run correctly. If your app
