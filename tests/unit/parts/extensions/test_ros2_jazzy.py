@@ -56,6 +56,10 @@ class TestExtensionROS2JazzyExtension:
         extension = setup_method_fixture()
         assert extension.ROS_VERSION == "2"
 
+    def test_is_experimental(self, setup_method_fixture):
+        extension = setup_method_fixture()
+        assert not extension.is_experimental(None)
+
     def test_get_supported_bases(self, setup_method_fixture):
         extension = setup_method_fixture()
         assert extension.get_supported_bases() == ("core24",)

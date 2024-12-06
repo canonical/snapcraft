@@ -43,7 +43,7 @@ class ROS2JazzyExtension(Extension):
     @staticmethod
     @overrides
     def is_experimental(base: Optional[str]) -> bool:
-        return True
+        return False
 
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:

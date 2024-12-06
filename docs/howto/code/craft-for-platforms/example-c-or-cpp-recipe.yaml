@@ -1,0 +1,22 @@
+# moon-buggy recipe, an example of an app based on C/C++
+
+name: moon-buggy
+base: core22
+version: "1.0.51"
+summary: Drive a car across the moon
+description: |
+  Moon-buggy is a simple character graphics game, where you drive some
+  kind of car across the moon's surface. Unfortunately there are
+  dangerous craters there. Fortunately your car can jump over them!
+confinement: devmode
+parts:
+  moon-buggy:
+    plugin: autotools
+    autotools-configure-parameters: ["--prefix=/usr"]
+    source: .
+    build-packages:
+      - libncurses-dev
+      - texinfo
+apps:
+  moon-buggy:
+    command: usr/bin/moon-buggy

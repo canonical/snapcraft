@@ -44,12 +44,15 @@ html_context = {
 extensions = [
     "canonical_sphinx",
 ]
+
+sphinx_tabs_disable_tab_closing = True
 # endregion
 
 extensions.extend(
     (
         "sphinx.ext.ifconfig",
         "sphinxcontrib.details.directive",
+        "sphinx_toolbox.collapse",
     )
 )
 

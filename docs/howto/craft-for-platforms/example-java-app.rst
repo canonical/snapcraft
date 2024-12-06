@@ -1,0 +1,54 @@
+.. _example-java-app:
+
+Example Java app
+================
+
+This how-to guide covers the steps, decisions, and implementation details that
+are unique when crafting a Java-based snap. We'll work through the aspects
+unique to Java apps by examining an existing recipe.
+
+The process of developing a snap for a Java app builds on top of JRE, making it
+possible to adapt and integrate an app's existing build tooling and
+dependencies into the crafting process.
+
+
+Example recipe for Cal
+----------------------
+
+The following code comprises the recipe of a Java project, `liquidctl
+<https://github.com/frossm/cal>`_. This project is both a driver and a CLI
+tool for power and cooling components in PCs.
+
+.. collapse:: Cal recipe
+
+  .. literalinclude:: ../code/craft-for-platforms/example-java-recipe.yaml
+    :language: yaml
+    :lines: 2-
+
+
+Add a part written in Java
+--------------------------
+
+.. literalinclude:: ../code/craft-for-platforms/example-java-recipe.yaml
+  :language: yaml
+  :dedent: 2
+  :lines: 50-
+
+Java parts are built with the :ref:`Maven plugin <maven_plugin>`. The plugin
+can build the app using standard parameters. It requires a ``pom.xml``
+file at the root of the source tree.
+
+To declare a Java part:
+
+#. Declare the general part keys, such as ``source``, ``override-build``,
+   ``organize``, and so on.
+#. Set ``plugin: maven``.
+#. For ``build-packages``, list the following dependencies:
+
+   .. literalinclude:: ../code/craft-for-platforms/example-java-recipe.yaml
+    :language: yaml
+    :start-at: - maven
+    :dedent: 6
+    :end-at: - openjdk-11-jdk-headless
+
+#. For ``stage-packages``, add ``openjdk-11-jre-headless`` as a dependency.
