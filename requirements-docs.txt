@@ -243,7 +243,7 @@ polib==1.2.0
     # via sphinx-lint
 progressbar==2.5
     # via snapcraft (setup.py)
-protobuf==5.28.3
+protobuf==5.29.1
     # via macaroonbakery
 psutil==6.1.0
     # via gnupg
