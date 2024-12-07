@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ "$QT_VERSION" == "6" ]; then
+
+set -- "${SNAP}/kf6/snap/command-chain/desktop-launch6" "$@"
+# shellcheck source=/dev/null
+source "${SNAP}/snap/command-chain/run"
+
+elif [ "$QT_VERSION" == "5" ]; then
+
+set -- "${SNAP}/kf5/snap/command-chain/desktop-launch" "$@"
+# shellcheck source=/dev/null
+source "${SNAP}/snap/command-chain/run"
+
+fi
