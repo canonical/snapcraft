@@ -29,7 +29,7 @@ click==8.1.7
     # via snapcraft (setup.py)
 craft-application==4.4.0
     # via snapcraft (setup.py)
-craft-archives==2.0.1
+craft-archives==2.0.2
     # via
     #   craft-application
     #   snapcraft (setup.py)
@@ -41,7 +41,7 @@ craft-grammar==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-parts==2.1.2
+craft-parts==2.1.4
     # via
     #   craft-application
     #   snapcraft (setup.py)

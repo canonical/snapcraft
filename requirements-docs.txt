@@ -61,7 +61,7 @@ colorama==0.4.6
     # via sphinx-autobuild
 craft-application==4.4.0
     # via snapcraft (setup.py)
-craft-archives==2.0.1
+craft-archives==2.0.2
     # via
     #   craft-application
     #   snapcraft (setup.py)
@@ -73,7 +73,7 @@ craft-grammar==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-parts==2.1.2
+craft-parts==2.1.4
     # via
     #   craft-application
     #   snapcraft (setup.py)
@@ -418,7 +418,7 @@ sphinx-prompt==1.8.0
     # via sphinx-toolbox
 sphinx-reredirects==0.1.5
     # via canonical-sphinx
-sphinx-tabs==3.4.5
+sphinx-tabs==3.4.7
     # via
     #   canonical-sphinx
     #   sphinx-toolbox
@@ -442,7 +442,7 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 sphinxext-opengraph==0.9.1
     # via canonical-sphinx
-starlette==0.41.2
+starlette==0.41.3
     # via sphinx-autobuild
 tabulate==0.9.0
     # via
@@ -467,7 +467,7 @@ urllib3==2.2.3
     # via
     #   requests
     #   requests-unixsocket2
-uvicorn==0.32.0
+uvicorn==0.32.1
     # via sphinx-autobuild
 validators==0.34.0
     # via snapcraft (setup.py)
