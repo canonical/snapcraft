@@ -49,8 +49,8 @@ setup-tests: install-uv install-build-deps ##- Set up a testing environment with
 	uv sync --frozen
 
 .PHONY: setup-lint
-setup-lint: install-uv install-shellcheck  ##- Set up a linting-only environment
-	uv sync --frozen --no-dev --no-install-workspace --extra lint --extra types
+setup-lint: install-uv install-shellcheck install-lint-build-deps  ##- Set up a linting-only environment
+	uv sync --frozen --no-install-workspace --extra lint --extra types
 
 .PHONY: setup-docs
 setup-docs: install-uv  ##- Set up a documentation-only environment
@@ -72,7 +72,7 @@ clean:  ## Clean up the development environment
 autoformat: format  # Hidden alias for 'format'
 
 .PHONY: format-ruff
-format-ruff:  ##- Automatically format with ruff
+format-ruff: install-ruff  ##- Automatically format with ruff
 	success=true
 	ruff check --fix $(SOURCES) || success=false
 	ruff format $(SOURCES)
@@ -83,7 +83,7 @@ format-codespell:  ##- Fix spelling issues with codespell
 	uv run codespell --toml pyproject.toml --write-changes $(SOURCES)
 
 .PHONY: lint-ruff
-lint-ruff:  ##- Lint with ruff
+lint-ruff: install-ruff  ##- Lint with ruff
 	ruff check $(SOURCES)
 	ruff format --diff $(SOURCES)
 
@@ -102,7 +102,7 @@ ifneq ($(shell which pyright),) # Prefer the system pyright
 else
 	# Fix for a bug in npm
 	[ -d "/home/ubuntu/.npm/_cacache" ] && chown -R 1000:1000 "/home/ubuntu/.npm" || true
-	uv run pyright
+	uv run pyright --pythonpath .venv/bin/python
 endif
 
 .PHONY: lint-shellcheck
@@ -198,5 +198,5 @@ else ifneq ($(shell which snap),)
 else ifneq ($(shell which brew),)
 	brew install shellcheck
 else
-	$(warning Codespell not installed. Please install it yourself.)
+	$(warning Shellcheck not installed. Please install it yourself.)
 endif
