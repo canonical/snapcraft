@@ -85,7 +85,8 @@ Migrate existing projects
 #. If you're rebasing a library, add the integrations tests structure.
    Applications should use spread for integration tests.
 
-# Finally, once all files are manually synced, actually sync the git history:
+#. Finally, once all files are manually synced, actually sync the git history:
+
    - ``git remote add starbase git@github.com:canonical/starbase.git``
    - ``git merge --allow-unrelated-histories starbase/main``
    - ``git remote remove starbase``
@@ -99,11 +100,18 @@ Create a new project
 --------------------
 
 #. `Use this template`_ to create your repository.
+#. Sync the git history with starbase to ease future merging:
+   - ``git clone <your-repo>``
+   - ``git remote add starbase git@github.com:canonical/starbase.git``
+   - ``git merge --allow-unrelated-histories starbase/main``
+   - ``git push -f origin main``
+   - ``git remote remove starbase``
 #. Ensure the ``LICENSE`` file represents the current best practices from the
    Canonical legal team for the specific project you intend to release. We use
    LGPL v3 for libraries, and GPL v3 for apps.
 #. Rename any files or directories and ensure references are updated.
-#. Replace any instances of the word ``Starcraft`` with the product's name.
+#. Replace any instances of the words ``Starcraft`` and ``starbase`` with the product's
+   name.
 #. Place contact information in a code of conduct.
 #. Rewrite the README.
 #. If a Diataxis quadrant (tutorials, how-tos, references, explanations)
