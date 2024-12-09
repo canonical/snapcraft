@@ -84,19 +84,40 @@ format-codespell:  ##- Fix spelling issues with codespell
 
 .PHONY: lint-ruff
 lint-ruff: install-ruff  ##- Lint with ruff
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	ruff check $(SOURCES)
 	ruff format --diff $(SOURCES)
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: lint-codespell
 lint-codespell:  ##- Check spelling with codespell
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	uv run codespell --toml pyproject.toml $(SOURCES)
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: lint-mypy
 lint-mypy:  ##- Check types with mypy
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	uv run mypy --show-traceback --show-error-codes $(PROJECT)
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: lint-pyright
 lint-pyright:  ##- Check types with pyright
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 ifneq ($(shell which pyright),) # Prefer the system pyright
 	pyright --pythonpath .venv/bin/python
 else
@@ -104,22 +125,49 @@ else
 	[ -d "/home/ubuntu/.npm/_cacache" ] && chown -R 1000:1000 "/home/ubuntu/.npm" || true
 	uv run pyright --pythonpath .venv/bin/python
 endif
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: lint-shellcheck
 lint-shellcheck:  ##- Lint shell scripts
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	git ls-files | file --mime-type -Nnf- | grep shellscript | cut -f1 -d: | xargs -r shellcheck
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: lint-yaml
 lint-yaml:  ##- Lint YAML files with yamllint
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	uv run --extra lint yamllint .
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: lint-docs
 lint-docs:  ##- Lint the documentation
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	uv run --extra docs sphinx-lint --max-line-length 88 --enable all $(DOCS)
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: lint-twine
-lint-twine: dist/*  ##- Lint Python packages with twine
+lint-twine: pack-pip  ##- Lint Python packages with twine
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	uv tool run twine check dist/*
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: test
 test:  ## Run all tests
@@ -149,8 +197,14 @@ docs-auto:  ## Build and host docs with sphinx-autobuild
 	uv run --extra docs sphinx-autobuild -b html --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS)/_build
 
 .PHONY: pack-pip
-pack-pip dist/*:  ##- Build packages for pip (sdist, wheel)
+pack-pip:  ##- Build packages for pip (sdist, wheel)
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	uv build .
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 # Below are intermediate targets for setup. They are not included in help as they should
 # not be used independently.
