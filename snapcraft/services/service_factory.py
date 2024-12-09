@@ -33,6 +33,9 @@ class SnapcraftServiceFactory(ServiceFactory):
     project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
 
     # These are overrides of default ServiceFactory services
+    InitClass: type[services.Init] = (  # type: ignore[reportIncompatibleVariableOverride]
+        services.Init
+    )
     LifecycleClass: type[services.Lifecycle] = (  # type: ignore[reportIncompatibleVariableOverride]
         services.Lifecycle
     )
