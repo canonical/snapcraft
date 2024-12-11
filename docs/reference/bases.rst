@@ -86,6 +86,8 @@ channel.
 Snaps with a ``devel`` build base must have a ``grade`` of ``devel`` and cannot
 be promoted to ``stable`` or ``candidate`` channels.
 
+.. _kernel-snap-reference:
+
 Kernel snaps
 ^^^^^^^^^^^^
 
