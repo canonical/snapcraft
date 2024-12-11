@@ -6,6 +6,8 @@ How-to guides
 .. toctree::
    :maxdepth: 1
 
+   set-up-snapcraft
+   select-a-build-provider
    Craft for platforms <craft-for-platforms/index>
    architectures
    bases
