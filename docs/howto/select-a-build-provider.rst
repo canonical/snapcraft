@@ -60,8 +60,8 @@ core20 override methods
 Select through the Snapcraft configuration
 ------------------------------------------
 
-The snap configuration method mentioned in the previous sections is a feature
-of snapd.
+The snap configuration method mentioned in the previous sections is a 
+`feature of snapd<https://snapcraft.io/docs/configuration-in-snaps>`_.
 
 Like most snaps, Snapcraft isn't installed with any default configuration
 values. As a result, you won't be able to check the provider programmatically
