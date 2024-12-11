@@ -165,7 +165,7 @@ Install multiple snap instances
 
 If you're installing Snapcraft as a snap, you can install multiple concurrent
 versions at the same time. Doing so could come in handy if you want to test
-new features in your snaps, before they arrive in an mainstream release.
+new features in your snaps, before they arrive in a mainstream release.
 
 To install another version of Snapcraft as a snap:
 
@@ -193,7 +193,7 @@ instance name of the command -- in this example, ``snapcraft_edge``.
 Locate your Snapcraft instances
 -------------------------------
 
-Your system cqn have multiple versions of Snapcraft installed. This situation
+Your system can have multiple versions of Snapcraft installed. This situation
 is quite common for users who have both apt and snap copies of the tool.
 
 You can check which Snapcraft installation is selected when running
