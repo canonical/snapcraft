@@ -20,17 +20,22 @@ In Snapcraft commands, a typical channel without a branch looks like this:
 
 
 Track
-------
+-----
 
 The *track* represents the highest level of organisation for the snap's
 release. Typically, it signifies a major release. Authors can use tracks to
 maintain different major versions of their software.
 
-All snaps must have a default track called *latest*. This track is assumed for
-most operations with Snapcraft, unless otherwise specified. Aside from latest,
-the release convention for tracks is at the author's discretion. A track could,
-as examples, be used to track minor updates (2.0.1, 2.0.2), major updates (2.1,
-2.2), or releases held for long-term support (3.2, 4.1).
+All snaps have one default track, called *latest*. Most operations and commands
+within Snapcraft and the snap ecosystem assume this track, unless otherwise
+specified. If a snap has need for other tracks, they must be vetted and granted
+on a snap-by-snap basis by the Snap Store team. The process for requesting a
+track is outlined in `Process for aliases, auto-connections and tracks
+<https://snapcraft.io/docs/process-for-aliases-auto-connections-and-tracks>`_.
+
+The release semantics for a track is at the snap author's discretion. A track
+could, for examples, encompass minor updates, major updates, or long-term
+support releases. Or, it could signify something else entirely.
 
 
 Risk
@@ -59,10 +64,3 @@ Branch names convey their purpose, such as ``fix-for-bug123``. Branch names are
 not, however, discoverable in the Snap Store. Instead, they must be shared by
 authors to users and referenced by their exact name. If a snap branch has no
 new publications for 30 days, the Snap Store closes its branch.
-
-
-See also
---------
-
-`Request process for custom tracks
-<https://snapcraft.io/docs/process-for-aliases-auto-connections-and-tracks>`_
