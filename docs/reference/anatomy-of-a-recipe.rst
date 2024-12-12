@@ -53,10 +53,12 @@ The ``version`` key defines the version of the snap to the user. The maximum
 length is 32 characters.
 
 The ``summary`` key describes the software in brief. It can't exceed 79
-characters. It accepts multi-line YAML syntax.
+characters.
 
 The ``description`` key describes the software in full. It also accepts
-multi-line syntax. There is no practical limit on the length of this key.
+multi-line syntax. It has a 4,096 character limit, and can be split across
+multiple lines with `YAML's multi-line syntax
+<https://yaml.org/spec/1.2.2/#example-indentation-determines-scope>`_.
 
 When the snap is published, this metadata will be made available to users. It
 can also be used to pre-populate certain keys in the snap's Snap Store page
@@ -72,11 +74,10 @@ However, apps inside the snap still need some location to act as their root
 filesystem. They would also benefit if common libraries were drawn from this
 root file system rather than being bundled into each.
 
-The ``base`` key specifies the `core snap
-<https://snapcraft.io/docs/base-snaps>`_, which provides a minimal set of
-libraries common to most snaps. It's mounted and used as the root filesystem
-for the apps inside the snap. In essence, this means the snaps behave as though
-they were running on a system that matches the base.
+The ``base`` key specifies the :doc:`core snap </reference/bases>`, which
+provides a minimal set of libraries common to most snaps. It's mounted and used
+as the root filesystem for the apps inside the snap. In essence, this means the
+snaps behave as though they were running on a system that matches the base.
 
 The core24, core22, and core20 bases are available. Bases correspond to Ubuntu
 LTS releases. For example, the library set in core24 is equivalent to a subset
@@ -114,15 +115,17 @@ There are three confinment levels:
   because they may behave differently when confined.
 
   This confinement is a temporary measure while a snap is being crafted.
-- ``classic``. This is a permissive level equivalent to the full system access
-  that traditional apps have. Classic confinement is often used as a stop-gap
-  measure to enable developers to publish apps that need more access than the
-  current set of permissions allow.
+- ``classic``. This is the maximally permissive level equivalent to the full
+  system access that traditional apps have. Classic confinement is often used
+  as a stop-gap measure to enable developers to publish apps that need more
+  access than the current set of permissions allow.
 
-  This confinment should be used only when required for functionality, as it
-  lowers the security of the app. Classically-confined snaps must be approved
-  by the Snap Store team before publication. Snaps that use classic confinement
-  may be rejected if they don't meet the necessary requirements.
+  This confinment should be used only when required for functionality, as its
+  lack of restrictions is a security risk. Before a snap can be published with
+  classic confinement, it must be approved by the Snap Store team according to
+  a `candidate review process
+  <https://forum.snapcraft.io/t/process-for-reviewing-classic-confinement-snaps/1460>`_.
+  Snaps may be rejected if they don't meet the necessary requirements.
 
 Here are the resources the snap is exposed to, across confinement levels:
 
@@ -268,6 +271,7 @@ in two stages:
 #. The ``adopt-info`` key instructs Snapcraft to populate the metadata fields
    that aren't already declared in the recipe.
 #. In the parts section at the end of the recipe:
+
    #. A step in the build lifecycle is manually overridden.
    #. A custom script is used to derive the version string.
    #. The version string is set using the Snapcraftctl scriptlet.
@@ -287,10 +291,10 @@ either of the stable or candidate channels in the Snap Store.
 Architectures
 ~~~~~~~~~~~~~
 
-The ``architectures`` key defines the target platforms for which the snap
-should be built on and built for. It requires the build system that is running
-the Snapcraft tool to be able to compile and build the snap for the listed
-platforms.
+The ``architectures`` key defines the target :doc:`platforms
+</reference/architectures>` for which the snap should be built on and built
+for. It requires the build system that is running the Snapcraft tool to be able
+to compile and build the snap for the listed platforms.
 
 
 Parts

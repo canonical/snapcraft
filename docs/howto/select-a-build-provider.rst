@@ -13,7 +13,10 @@ provider.
 
 
 core22 and higher override methods
------------------------
+----------------------------------
+
+For core22 and higher, LXD is the default provider on Linux, and Multipass is
+the default on macOS and Windows.
 
 .. list-table::
   :header-rows: 1
@@ -36,6 +39,8 @@ core22 and higher override methods
 core20 override methods
 -----------------------
 
+For core20, Multipass is the default provider on all platforms.
+
 .. list-table::
   :header-rows: 1
   :widths: 1 1 1
@@ -57,11 +62,11 @@ core20 override methods
     - ``snap set snapcraft provider=<provider-name>``
 
 
-Select through the Snapcraft configuration
-------------------------------------------
+Select through the snap configuration
+-------------------------------------
 
-The snap configuration method mentioned in the previous sections is a 
-`feature of snapd<https://snapcraft.io/docs/configuration-in-snaps>`_.
+The snap configuration method mentioned in the previous sections is a `feature
+of snapd <https://snapcraft.io/docs/configuration-in-snaps>`_.
 
 Like most snaps, Snapcraft isn't installed with any default configuration
 values. As a result, you won't be able to check the provider programmatically

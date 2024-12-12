@@ -59,3 +59,10 @@ Branch names convey their purpose, such as ``fix-for-bug123``. Branch names are
 not, however, discoverable in the Snap Store. Instead, they must be shared by
 authors to users and referenced by their exact name. If a snap branch has no
 new publications for 30 days, the Snap Store closes its branch.
+
+
+See also
+--------
+
+`Request process for custom tracks
+<https://snapcraft.io/docs/process-for-aliases-auto-connections-and-tracks>`_

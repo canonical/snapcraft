@@ -86,6 +86,9 @@ For instance, it most likely won't itself run inside a VM.
 `LXD <https://linuxcontainers.org/lxd/introduction>`_ creates and manages Linux
 container images. It can operate inside VMs.
 
+If the default build provider isn't fit for your snap, you can
+:ref:`switch between them <select-a-build-provider>`.
+
 
 Install Multipass
 ^^^^^^^^^^^^^^^^^
@@ -127,20 +130,14 @@ To install LXD:
 
      sudo snap install lxd
 
-#. Next, add LXD to your system:
-
-   .. code:: bash
-
-     sudo snap install lxd
-
-#. You also need to add your user account to the ``lxd`` group so you can
-   access the tool's resources:
+#. Add your user account to the ``lxd`` group so you can access the tool's
+   resources:
 
    .. code:: bash
 
      sudo usermod -a -G lxd $USER
 
-#. Next, log out and back in to your account for the new group to become
+#. Log out and back in to your account for the new group to become
    active. Then, check that you're a member of the group by running:
 
    .. code:: bash

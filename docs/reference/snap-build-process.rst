@@ -11,11 +11,12 @@ The recipe file
 ---------------
 
 Snaps are created using a build configuration -- called from here on a *recipe*
--- defined in a file named ``snapcraft.yaml``. The recipe is written in YAML,
-with keys and values defining the snap's structure and behavior. When Snapcraft
-runs, it parses this file and uses the declared information to build the snap.
-For developers more familiar with the traditional Linux build systems, the
-process is somewhat similar a Makefiles and RPM SPEC files.
+-- defined in a file named ``snapcraft.yaml``. The recipe is written in a
+declarative style in YAML, with keys and values defining the snap's structure
+and behavior. When Snapcraft runs, it parses this file and uses the declared
+information to build the snap. For developers more familiar with the
+traditional Linux build systems, the process is somewhat similar a Makefiles
+and RPM SPEC files.
 
 The recipe is a plaintext file encoded in UTF-8, can be composed manually or
 generated from a template. The template contains enough boilerplate keys to
