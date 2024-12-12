@@ -31,13 +31,6 @@ Install Snapcraft
 
       sudo snap install snapcraft --classic
 
-    If your distribution lacks snapd or access to the Snap Store, but has
-    access to the Ubuntu or Debian package repository, you can install
-    Snapcraft as a deb package:
-
-    .. code:: bash
-
-      sudo apt install snapcraft
 
   .. group-tab:: macOS
 
@@ -73,8 +66,8 @@ is the default on macOS and Windows.
 For **core20**, Multipass is the default provider on all platforms.
 
 
-Chose a build provider
-^^^^^^^^^^^^^^^^^^^^^^
+Choose a build provider
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Before proceeding, you must choose a build provider.
 
@@ -187,22 +180,3 @@ Whenever you want to run this parallel version of Snapcraft, invoke the
 instance name of the command -- in this example, ``snapcraft_edge``.
 
 
-Locate your Snapcraft instances
--------------------------------
-
-Your system can have multiple versions of Snapcraft installed. This situation
-is quite common for users who have both apt and snap copies of the tool.
-
-You can check which Snapcraft installation is selected when running
-the ``snapcraft`` command by trying:
-
-.. code:: bash
-
-  which snapcraft
-
-The output prints the location of the binary that's available in the
-environment. The default snap of Snapcraft is installed in:
-
-.. terminal::
-
-  /snap/bin/snapcraft
