@@ -7,7 +7,7 @@ confinement: strict
 
 components:
   translations:
-    type: test
+    type: standard
     summary: Translations modules
     description: Translations modules
     version: "1.0"
