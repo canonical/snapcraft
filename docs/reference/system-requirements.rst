@@ -11,7 +11,8 @@ container hosts.
 Minimum hardware requirements
 -----------------------------
 
-- 64-bit processor
+- AMD64, ARM64, ARMv7-M, RISC-V 64-bit, PowerPC 64-bit little-endian, or S390x
+  processor
 - 2GB RAM
 - 10GB available storage space
 - Internet access for remote software sources and the Snap Store

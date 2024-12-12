@@ -129,34 +129,6 @@ There are three confinment levels:
 
 Here are the resources the snap is exposed to, across confinement levels:
 
-.. list-table::
-  :header-rows: 1
-
-  * - Resource
-    - strict
-    - devmode
-    - classic
-  * - Network
-    - No
-    - Yes
-    - System
-  * - Home directory
-    - No
-    - Yes
-    - system
-  * - Audio
-    - No
-    - Yes
-    - System
-  * - Webcam
-    - No
-    - Yes
-    - System
-  * - Display
-    - No
-    - Yes
-    - System
-
 A strictly-confined snap is considered untrusted, and it runs in a restricted
 sandbox. By design, untrusted apps:
 

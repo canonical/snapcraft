@@ -150,33 +150,36 @@ See `How to install LXD
 the LXD documentation for further installation options and troubleshooting.
 
 
-Install multiple snap instances
--------------------------------
+Install multiple instances of Snapcraft
+---------------------------------------
 
 If you're installing Snapcraft as a snap, you can install multiple concurrent
-versions at the same time. Doing so could come in handy if you want to test
-new features in your snaps, before they arrive in a mainstream release.
+versions at the same time. Doing so could come in handy if you want to test new
+features in your snaps, before they arrive in a mainstream release.
 
-To install another version of Snapcraft as a snap:
+To install another instance of Snapcraft:
 
-#. First, list all the available versions of Snapcraft, and take note of the
-   value in the channel column for the version you're interested in.
+#. Enable parallel installs in snapd:
+
+   .. code:: bash
+
+     sudo snap set system experimental.parallel-instances=true
+
+#. List all the available versions of Snapcraft. For the version you're
+   interested in, take note of the value in the channel column.
 
    .. code:: bash
 
      sudo snap info snapcraft
 
 #. Install Snapcraft using the `instance key naming
-   <https://snapcraft.io/docs/parallel-installs#heading--naming>`_ syntax:
+   <https://snapcraft.io/docs/parallel-installs#heading--naming>`_ syntax.
+   Replace ``edge`` with whichever name is appropriate for the instance, and
+   ``latest/edge`` with the target channel and track:
 
    .. code:: bash
 
      sudo snap install snapcraft_edge latest/edge --classic
 
-   Replace ``edge`` with whichever name is appropriate for the instance, and
-   ``latest/edge`` with the target channel and track.
-
 Whenever you want to run this parallel version of Snapcraft, invoke the
 instance name of the command -- in this example, ``snapcraft_edge``.
-
-
