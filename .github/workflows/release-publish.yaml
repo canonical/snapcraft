@@ -38,7 +38,7 @@ jobs:
           path: dist/
   pypi:
     needs: ["source-wheel"]
-    runs-on: [self-hosted, jammy]
+    runs-on: [self-hosted, jammy, amd64]
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
