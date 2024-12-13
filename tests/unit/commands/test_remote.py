@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from unittest.mock import ANY, Mock
+from unittest.mock import ANY, Mock, call
 
 import pytest
 from craft_application import launchpad
@@ -32,12 +32,12 @@ from craft_application.launchpad.models import BuildState
 from craft_application.remote.utils import get_build_id
 
 from snapcraft import application, const
-from snapcraft.errors import ClassicFallback
 from snapcraft.utils import get_host_architecture
 
 # remote-build control logic may check if the working dir is a git repo,
 # so execute all tests inside a test directory
-pytestmark = pytest.mark.usefixtures("new_dir")
+# The service also emits
+pytestmark = pytest.mark.usefixtures("new_dir", "emitter")
 
 
 @pytest.fixture()
@@ -164,7 +164,7 @@ def test_no_confirmation_for_private_project(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv")
+@pytest.mark.usefixtures("mock_argv", "emitter")
 def test_command_user_confirms_upload(
     snapcraft_yaml, base, mock_confirm, fake_services
 ):
@@ -184,7 +184,7 @@ def test_command_user_confirms_upload(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "fake_services")
+@pytest.mark.usefixtures("mock_argv", "emitter", "fake_services")
 def test_command_user_denies_upload(
     capsys,
     snapcraft_yaml,
@@ -207,7 +207,7 @@ def test_command_user_denies_upload(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "fake_services")
+@pytest.mark.usefixtures("mock_argv", "emitter", "fake_services")
 def test_command_accept_upload(
     mocker, snapcraft_yaml, base, mock_confirm, mock_run_remote_build
 ):
@@ -225,7 +225,9 @@ def test_command_accept_upload(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services", "fake_sudo")
+@pytest.mark.usefixtures(
+    "mock_argv", "mock_confirm", "emitter", "fake_services", "fake_sudo"
+)
 def test_remote_build_sudo_warns(emitter, snapcraft_yaml, base, mock_run_remote_build):
     "Check if a warning is shown when snapcraft is run with sudo."
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
@@ -240,18 +242,9 @@ def test_remote_build_sudo_warns(emitter, snapcraft_yaml, base, mock_run_remote_
     mock_run_remote_build.assert_called_once()
 
 
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
-def test_cannot_load_snapcraft_yaml(capsys, mocker):
-    """Raise an error if the snapcraft.yaml does not exist."""
-    app = application.create_app()
-
-    with pytest.raises(ClassicFallback):
-        app.run()
-
-
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
-def test_launchpad_timeout_default(mocker, snapcraft_yaml, base, fake_services):
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "emitter", "fake_services")
+def test_launchpad_timeout_default(mocker, snapcraft_yaml, base):
     """Check if no timeout is set by default."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -266,8 +259,8 @@ def test_launchpad_timeout_default(mocker, snapcraft_yaml, base, fake_services):
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
-def test_launchpad_timeout(mocker, snapcraft_yaml, base, fake_services):
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "emitter", "fake_services")
+def test_launchpad_timeout(mocker, snapcraft_yaml, base):
     """Set the timeout for the remote builder."""
     mocker.patch.object(
         sys, "argv", ["snapcraft", "remote-build", "--launchpad-timeout", "100"]
@@ -291,7 +284,7 @@ def test_launchpad_timeout(mocker, snapcraft_yaml, base, fake_services):
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_argv", "mock_confirm", "fake_services")
+@pytest.mark.usefixtures("mock_argv", "mock_confirm", "emitter", "fake_services")
 def test_run_core22_and_later(snapcraft_yaml, base, mock_remote_build_run):
     """Bases that are core22 and later will use craft-application remote-build."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
@@ -319,15 +312,8 @@ def test_run_core20(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_argv")
-def test_run_in_repo_newer_than_core22(
-    emitter,
-    mocker,
-    snapcraft_yaml,
-    base,
-    new_dir,
-    fake_services,
-):
+@pytest.mark.usefixtures("mock_confirm", "mock_argv", "emitter", "fake_services")
+def test_run_in_repo_newer_than_core22(mocker, snapcraft_yaml, base, new_dir):
     """Bases newer than core22 run craft-application remote-build regardless of being in a repo."""
     # initialize a git repo
     GitRepo(new_dir)
@@ -347,15 +333,10 @@ def test_run_in_repo_newer_than_core22(
 @pytest.mark.usefixtures(
     "mock_confirm",
     "mock_argv",
+    "mock_remote_builder_start_builds",
+    "fake_services",
 )
-def test_run_in_shallow_repo_unsupported(
-    capsys,
-    new_dir,
-    snapcraft_yaml,
-    base,
-    mock_remote_builder_start_builds,
-    fake_services,
-):
+def test_run_in_shallow_repo_unsupported(capsys, new_dir, snapcraft_yaml, base):
     """devel / core24 and newer bases run new remote-build in a shallow git repo."""
     root_path = Path(new_dir)
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
@@ -410,8 +391,8 @@ def test_run_in_shallow_repo_unsupported(
 ######################
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES)
-def test_no_platform_defined_no_platform_or_build_for(
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
+def test_default_architecture(
     mocker,
     snapcraft_yaml,
     base,
@@ -419,18 +400,9 @@ def test_no_platform_defined_no_platform_or_build_for(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
-    """Test that the remote-build command uses the host architecture if no platform is defined."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    mocker.patch.object(
-        sys,
-        "argv",
-        ["snapcraft", "remote-build"],
-    )
+    """Default to the host architecture if not defined elsewhere."""
+    snapcraft_yaml(base=base)
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
     mock_start_builds = mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
     )
@@ -442,7 +414,7 @@ def test_no_platform_defined_no_platform_or_build_for(
     )
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
 def test_platform_build_for_all(
     mocker,
     snapcraft_yaml,
@@ -451,10 +423,9 @@ def test_platform_build_for_all(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
+    """Use 'build-for: all' from the project metadata with the platforms keyword."""
     snapcraft_yaml_dict = {
         "base": base,
-        "build-base": "devel",
-        "grade": "devel",
         "platforms": {
             "test-platform": {"build-on": "arm64", "build-for": "all"},
         },
@@ -478,10 +449,9 @@ def test_platform_build_for_all_core22(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
-    """remote-build command uses all platforms if no platform or build-for is given."""
+    """Use 'build-for: all' from the project metadata with the architectures keyword."""
     snapcraft_yaml_dict = {
         "base": "core22",
-        "grade": "devel",
         "architectures": [
             {"build-on": ["arm64"], "build-for": ["all"]},
         ],
@@ -498,8 +468,8 @@ def test_platform_build_for_all_core22(
     assert mock_start_builds.call_args[1]["architectures"] == ["all"]
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-def test_platform_defined_no_platform_or_build_for(
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
+def test_platform_in_project_metadata(
     mocker,
     snapcraft_yaml,
     base,
@@ -507,14 +477,13 @@ def test_platform_defined_no_platform_or_build_for(
     mock_confirm,
     mock_remote_builder_fake_build_process,
 ):
-    """remote-build command uses all platforms if no platform or build-for is given."""
+    """Use the platform's build-for architectures from the project metadata."""
     snapcraft_yaml_dict = {
         "base": base,
-        "build-base": "devel",
-        "grade": "devel",
         "platforms": {
             "rpi4": {"build-on": "arm64", "build-for": "arm64"},
             "x86-64": {"build-on": "amd64", "build-for": "amd64"},
+            "same-build-for-x86-64": {"build-on": "riscv64", "build-for": "amd64"},
         },
     }
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -534,36 +503,26 @@ def test_platform_defined_no_platform_or_build_for(
     assert const.SnapArch.amd64 in mock_start_builds.call_args[1]["architectures"]
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.parametrize(
-    ["platform", "arch"],
-    [("rpi4", const.SnapArch.arm64), ("x86-64", const.SnapArch.amd64)],
-)
-def test_platform(
+def test_architecture_in_project_metadata(
     mocker,
     snapcraft_yaml,
-    base,
     fake_services,
     mock_confirm,
     mock_remote_builder_fake_build_process,
-    platform,
-    arch,
 ):
-    """Test that the remote-build command uses the platform if --platform is given."""
+    """Use the build-for architectures from the project metadata."""
     snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-        },
+        "base": "core22",
+        "architectures": [
+            {"build-on": ["arm64"], "build-for": ["arm64"]},
+            {"build-on": ["riscv64"], "build-for": ["riscv64"]},
+        ],
     }
     snapcraft_yaml(**snapcraft_yaml_dict)
     mocker.patch.object(
         sys,
         "argv",
-        ["snapcraft", "remote-build", "--platform", platform],
+        ["snapcraft", "remote-build"],
     )
     mock_start_builds = mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
@@ -571,75 +530,43 @@ def test_platform(
     app = application.create_app()
     app.run()
 
-    mock_start_builds.assert_called_once_with(ANY, architectures=[arch])
-
-
-@pytest.mark.xfail(
-    reason="craft-application catches before it gets to the remote-build command"
-)
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-def test_platform_error(
-    emitter,
-    mocker,
-    snapcraft_yaml,
-    base,
-    fake_services,
-    mock_confirm,
-):
-    """Test that the remote-build command errors if the given platform is not found."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-        },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    mocker.patch.object(
-        sys,
-        "argv",
-        ["snapcraft", "remote-build", "--platform", "nonexistent"],
-    )
-
-    app = application.create_app()
-    assert app.run() == 1
-    emitter.assert_progress(
-        "Platform 'nonexistent' not found in the project definition.", permanent=True
+    mock_start_builds.assert_called_once()
+    assert sorted(mock_start_builds.call_args[1]["architectures"]) == sorted(
+        ["arm64", "riscv64"]
     )
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
 @pytest.mark.parametrize(
-    ["build_for", "arch"],
-    [("amd64", const.SnapArch.amd64), ("arm64", const.SnapArch.arm64)],
+    ("platforms", "expected_platforms"),
+    [
+        *zip(const.SnapArch, [[arch] for arch in const.SnapArch]),
+        ("amd64,riscv64", ["amd64", "riscv64"]),
+        ("amd64,riscv64,s390x", ["amd64", "riscv64", "s390x"]),
+        pytest.param(" amd64 , riscv64 ", ["amd64", "riscv64"], id="with-whitespace"),
+        pytest.param(
+            "amd64,amd64,riscv64",
+            ["amd64", "amd64", "riscv64"],
+            id="launchpad-handles-duplicates",
+        ),
+    ],
 )
-def test_build_for(
+def test_platform_argument(
     mocker,
     snapcraft_yaml,
     base,
     fake_services,
     mock_confirm,
     mock_remote_builder_fake_build_process,
-    build_for,
-    arch,
+    platforms,
+    expected_platforms,
 ):
-    """Test that the remote-build command uses the build-for if --build-for is given."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-        },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
+    """Use architectures provided by the `--platform` argument."""
+    snapcraft_yaml(base=base)
     mocker.patch.object(
         sys,
         "argv",
-        ["snapcraft", "remote-build", "--build-for", build_for],
+        ["snapcraft", "remote-build", "--platform", platforms],
     )
     mock_start_builds = mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
@@ -647,35 +574,40 @@ def test_build_for(
     app = application.create_app()
     app.run()
 
-    mock_start_builds.assert_called_once_with(ANY, architectures=[arch])
+    mock_start_builds.assert_called_once_with(ANY, architectures=expected_platforms)
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES)
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
 @pytest.mark.parametrize(
-    ["build_for", "arch"],
-    [("amd64", const.SnapArch.amd64), ("arm64", const.SnapArch.arm64)],
+    ("build_fors", "expected_build_fors"),
+    [
+        *zip(const.SnapArch, [[arch] for arch in const.SnapArch]),
+        ("amd64,riscv64", ["amd64", "riscv64"]),
+        ("amd64,riscv64,s390x", ["amd64", "riscv64", "s390x"]),
+        pytest.param(" amd64 , riscv64 ", ["amd64", "riscv64"], id="with-whitespace"),
+        pytest.param(
+            "amd64,amd64,riscv64",
+            ["amd64", "amd64", "riscv64"],
+            id="duplicates-passthrough-to-launchpad",
+        ),
+    ],
 )
-def test_build_for_no_platforms(
+def test_build_for_argument(
     mocker,
     snapcraft_yaml,
     base,
     fake_services,
     mock_confirm,
     mock_remote_builder_fake_build_process,
-    build_for,
-    arch,
+    build_fors,
+    expected_build_fors,
 ):
-    """remote-build command uses the build-for if --build-for is given without platforms."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "build-base": "devel",
-        "grade": "devel",
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
+    """Use architectures provided by the `--build-for` argument."""
+    snapcraft_yaml(base=base)
     mocker.patch.object(
         sys,
         "argv",
-        ["snapcraft", "remote-build", "--build-for", build_for],
+        ["snapcraft", "remote-build", "--build-for", build_fors],
     )
     mock_start_builds = mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
@@ -683,44 +615,306 @@ def test_build_for_no_platforms(
     app = application.create_app()
     app.run()
 
-    mock_start_builds.assert_called_once_with(ANY, architectures=[arch])
+    mock_start_builds.assert_called_once_with(ANY, architectures=expected_build_fors)
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-def test_build_for_error(
+def test_architecture_defined_twice_error(
     capsys,
     mocker,
     snapcraft_yaml,
-    base,
     fake_services,
     mock_confirm,
-    mock_remote_builder_fake_build_process,
 ):
-    """Test that the remote-build command errors if the given build-for is not found."""
+    """Error if architectures are in the project metadata and as a build argument."""
+    snapcraft_yaml_dict = {
+        "base": "core22",
+        "architectures": [{"build-on": ["riscv64"], "build-for": ["riscv64"]}],
+    }
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--build-for", "riscv64"],
+    )
+    app = application.create_app()
+    app.run()
+
+    _, err = capsys.readouterr()
+
+    assert (
+        "'--build-for' cannot be used when 'architectures' is in the snapcraft.yaml."
+    ) in err
+    assert (
+        "Remove '--build-for' from the command line or remove 'architectures' in the snapcraft.yaml."
+    ) in err
+
+
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
+@pytest.mark.parametrize("argument", ["--build-for", "--platform"])
+def test_platform_defined_twice_error(
+    base,
+    argument,
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+):
+    """Error if platforms are in the project metadata and as a build argument."""
     snapcraft_yaml_dict = {
         "base": base,
-        "build-base": "devel",
-        "grade": "devel",
         "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
+            "riscv64": {"build-on": "riscv64", "build-for": "riscv64"},
         },
     }
     snapcraft_yaml(**snapcraft_yaml_dict)
     mocker.patch.object(
         sys,
         "argv",
-        ["snapcraft", "remote-build", "--build-for", "nonexistent"],
+        ["snapcraft", "remote-build", argument, "riscv64"],
+    )
+    app = application.create_app()
+    app.run()
+
+    _, err = capsys.readouterr()
+
+    assert (
+        f"{argument!r} cannot be used when 'platforms' is in the snapcraft.yaml."
+    ) in err
+    assert (
+        f"Remove {argument!r} from the command line or remove 'platforms' in the snapcraft.yaml."
+    ) in err
+
+
+@pytest.mark.parametrize(
+    "platforms",
+    [
+        "nonexistent",
+        "nonexistent,riscv64",
+        "riscv64,nonexistent",
+        "riscv64,nonexistent,amd64",
+    ],
+)
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
+def test_unknown_platform_error(
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    platforms,
+    base,
+    fake_services,
+    mock_confirm,
+):
+    """Error if `--platform` is not a valid debian architecture."""
+    snapcraft_yaml_dict = {
+        "base": base,
+        "build-base": "devel",
+        "grade": "devel",
+    }
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--platform", platforms],
+    )
+
+    app = application.create_app()
+    assert app.run() == os.EX_CONFIG
+
+    _, err = capsys.readouterr()
+    assert "Unsupported platform 'nonexistent'" in err
+    assert (
+        "Recommended resolution: Use a supported debian architecture. "
+        "Supported architectures are:"
+    ) in err
+
+
+@pytest.mark.parametrize(
+    "build_fors",
+    [
+        "nonexistent",
+        "nonexistent,riscv64",
+        "riscv64,nonexistent",
+        "riscv64,nonexistent,amd64",
+    ],
+)
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
+def test_unknown_build_for_error(
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    build_fors,
+    base,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+):
+    """Error if `--build-for` is not a valid debian architecture."""
+    snapcraft_yaml(base=base)
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--build-for", build_fors],
     )
     mocker.patch(
         "craft_application.services.remotebuild.RemoteBuildService.start_builds"
     )
     app = application.create_app()
-    assert app.run() == 1
+    assert app.run() == os.EX_CONFIG
 
     _, err = capsys.readouterr()
 
-    assert "Architecture 'nonexistent' is not supported." in err
+    assert "Unsupported build-for architecture 'nonexistent'" in err
+    assert (
+        "Recommended resolution: Use a supported debian architecture. "
+        "Supported architectures are:"
+    ) in err
+
+
+def test_platform_core22_error(
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+):
+    """Error on `--platform` for core22 snaps."""
+    snapcraft_yaml(base="core22")
+    mocker.patch.object(
+        sys,
+        "argv",
+        ["snapcraft", "remote-build", "--platform", "amd64"],
+    )
+    mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+    app = application.create_app()
+    assert app.run() == os.EX_CONFIG
+
+    _, err = capsys.readouterr()
+
+    assert "--platform' cannot be used for core22 snaps" in err
+    assert "Use '--build-for' instead." in err
+
+
+@pytest.mark.parametrize(
+    ("base", "build_info", "error_messages"),
+    [
+        pytest.param(
+            "core22",
+            {
+                "architectures": [
+                    {"build-on": "amd64", "build-for": "amd64"},
+                    {"build-on": ["amd64", "riscv64"], "build-for": "riscv64"},
+                ],
+            },
+            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            id="core22-simple",
+        ),
+        pytest.param(
+            "core22",
+            {
+                "architectures": [
+                    {"build-on": "amd64", "build-for": "amd64"},
+                    {"build-on": ["amd64", "riscv64"], "build-for": "riscv64"},
+                    {"build-on": "s390x", "build-for": "s390x"},
+                    {"build-on": "s390x", "build-for": "ppc64el"},
+                ],
+            },
+            [
+                "Building on 'amd64' will create snaps for 'amd64' and 'riscv64'.",
+                "Building on 's390x' will create snaps for 'ppc64el' and 's390x'.",
+            ],
+            id="core22-complex",
+        ),
+        pytest.param(
+            "core24",
+            {
+                "platforms": {
+                    "platform1": {"build-on": "amd64", "build-for": "amd64"},
+                    "platform2": {
+                        "build-on": ["amd64", "riscv64"],
+                        "build-for": "riscv64",
+                    },
+                },
+            },
+            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            id="core24-simple",
+        ),
+        pytest.param(
+            "core24",
+            {
+                "platforms": {
+                    "platform1": {"build-on": "amd64", "build-for": "riscv64"},
+                    "identical-platform": {"build-on": "amd64", "build-for": "riscv64"},
+                },
+            },
+            # this will show 'riscv64' twice because the platform name is different
+            ["Building on 'amd64' will create snaps for 'riscv64' and 'riscv64'."],
+            id="core24-same-architectures-different-platform-name",
+        ),
+        pytest.param(
+            "core24",
+            {
+                "platforms": {
+                    "amd64": None,
+                    "riscv64": {"build-on": "amd64", "build-for": "riscv64"},
+                },
+            },
+            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            id="core24-shorthand",
+        ),
+        pytest.param(
+            "core24",
+            {
+                "platforms": {
+                    "platform1": {"build-on": "amd64", "build-for": "amd64"},
+                    "platform2": {
+                        "build-on": ["amd64", "s390x"],
+                        "build-for": "riscv64",
+                    },
+                    "s390x": None,
+                    "platform4": {"build-on": "s390x", "build-for": "riscv64"},
+                },
+            },
+            [
+                "Building on 'amd64' will create snaps for 'amd64' and 'riscv64'.",
+                "Building on 's390x' will create snaps for 'riscv64', 'riscv64', and 's390x'.",
+            ],
+            id="core24-complex",
+        ),
+    ],
+)
+def test_multiple_artifacts_per_build_on(
+    check,
+    base,
+    build_info,
+    error_messages,
+    capsys,
+    mocker,
+    snapcraft_yaml,
+    fake_services,
+    mock_confirm,
+    mock_remote_builder_fake_build_process,
+):
+    """Error when multiple artifacts will be produced on one build-on architecture."""
+    snapcraft_yaml(**{"base": base, **build_info})
+    mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
+    )
+    app = application.create_app()
+    assert app.run() == os.EX_CONFIG
+
+    _, err = capsys.readouterr()
+
+    check.is_in(
+        "Remote build does not support building multiple snaps on the same architecture",
+        err,
+    )
+    for message in error_messages:
+        check.is_in(message, err)
 
 
 ########################
@@ -825,9 +1019,13 @@ def test_monitor_build_error(mocker, emitter, snapcraft_yaml, base, fake_service
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_confirm")
-def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_services):
+@pytest.mark.parametrize("cleanup", [True, False])
+def test_monitor_build_interrupt(
+    cleanup, mock_confirm, mocker, emitter, snapcraft_yaml, base, fake_services
+):
     """Test the monitor_build cleanup when a keyboard interrupt occurs."""
+    # first prompt is for public upload, second is to cancel builds
+    mock_confirm.side_effect = [True, cleanup]
     mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -849,6 +1047,10 @@ def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_ser
         "craft_application.services.remotebuild.RemoteBuildService.cleanup"
     )
 
+    mock_cancel_builds = mocker.patch(
+        "craft_application.services.remotebuild.RemoteBuildService.cancel_builds"
+    )
+
     app = application.create_app()
     app.services.remote_build._name = get_build_id(
         app.services.app.name, app.project.name, app.project_dir
@@ -856,15 +1058,24 @@ def test_monitor_build_interrupt(mocker, emitter, snapcraft_yaml, base, fake_ser
     app.services.remote_build._is_setup = True
     app.services.remote_build.request.download_files_with_progress = Mock()
 
-    assert app.run() == 0
+    assert app.run() == os.EX_OK
 
     mock_start_builds.assert_called_once()
     mock_monitor_builds.assert_called_once()
     mock_fetch_logs.assert_not_called()
-    mock_cleanup.assert_called_once()
 
-    emitter.assert_progress("Cancelling builds.")
-    emitter.assert_progress("Cleaning up")
+    cancel_emitted = call("progress", "Cancelling builds.") in emitter.interactions
+    clean_emitted = call("progress", "Cleaning up.") in emitter.interactions
+    if cleanup:
+        mock_cancel_builds.assert_called_once()
+        assert cancel_emitted
+        mock_cleanup.assert_called_once()
+        assert clean_emitted
+    else:
+        mock_cancel_builds.assert_not_called()
+        assert not cancel_emitted
+        mock_cleanup.assert_not_called()
+        assert not clean_emitted
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
@@ -897,7 +1108,7 @@ def test_monitor_build_timeout(mocker, emitter, snapcraft_yaml, base, fake_servi
         app.services.app.name, app.project.name, app.project_dir
     )
 
-    assert app.run() == 75
+    assert app.run() == os.EX_TEMPFAIL
 
     mock_start_builds.assert_called_once()
     mock_monitor_builds.assert_called_once()

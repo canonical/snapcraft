@@ -16,15 +16,19 @@
 
 """Tests for the Snapcraft provider service."""
 
+from craft_application.services.provider import DEFAULT_FORWARD_ENVIRONMENT_VARIABLES
+
+from snapcraft.const import SNAPCRAFT_ENVIRONMENT_VARIABLES
+
 
 def test_provider(provider_service, monkeypatch):
-    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "foo")
-    monkeypatch.setenv("SNAPCRAFT_IMAGE_INFO", "bar")
-    monkeypatch.setenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS", "baz")
-    provider_service.setup()
-    assert provider_service.environment["SNAPCRAFT_BUILD_INFO"] == "foo"
-    assert provider_service.environment["SNAPCRAFT_IMAGE_INFO"] == "bar"
-    assert (
-        provider_service.environment["SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"]
-        == "baz"
+    variables = SNAPCRAFT_ENVIRONMENT_VARIABLES | set(
+        DEFAULT_FORWARD_ENVIRONMENT_VARIABLES
     )
+    for variable in variables:
+        monkeypatch.setenv(variable, f"{variable}-test-value")
+
+    provider_service.setup()
+
+    for variable in variables:
+        assert provider_service.environment[variable] == f"{variable}-test-value"

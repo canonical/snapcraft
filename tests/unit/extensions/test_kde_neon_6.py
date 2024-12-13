@@ -88,7 +88,7 @@ def test_is_experimental():
 
 
 def test_get_app_snippet(kde_neon_6_extension):
-    assert kde_neon_6_extension.get_app_snippet() == {
+    assert kde_neon_6_extension.get_app_snippet(app_name="test-app") == {
         "command-chain": ["snap/command-chain/desktop-launch6"],
         "plugs": [
             "desktop",
@@ -121,50 +121,15 @@ def test_get_root_snippet(kde_neon_6_extension):
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
-            "gtk-2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
-            "kde-gtk2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "qt-common-themes",
-            },
-            "kde-gtk3-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "qt-common-themes",
-            },
-            "gtk-3-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
-            "qt-icon-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/icons",
-                "default-provider": "qt-common-themes",
-            },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "gtk-common-themes",
             },
-            "qt-sound-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/sounds",
-                "default-provider": "qt-common-themes",
-            },
             "sound-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
-            },
-            "qt-6-themes": {
-                "interface": "content",
-                "target": "$SNAP/kf6",
-                "default-provider": "qt-common-themes",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",
@@ -193,50 +158,15 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
-            "gtk-2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
-            "kde-gtk2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "qt-common-themes",
-            },
-            "kde-gtk3-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "qt-common-themes",
-            },
-            "gtk-3-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
-            "qt-icon-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/icons",
-                "default-provider": "qt-common-themes",
-            },
             "icon-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/icons",
                 "default-provider": "gtk-common-themes",
             },
-            "qt-sound-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/sounds",
-                "default-provider": "qt-common-themes",
-            },
             "sound-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/sounds",
                 "default-provider": "gtk-common-themes",
-            },
-            "qt-6-themes": {
-                "interface": "content",
-                "target": "$SNAP/kf6",
-                "default-provider": "qt-common-themes",
             },
             "kf6-core22": {
                 "content": "kf6-core22-all",

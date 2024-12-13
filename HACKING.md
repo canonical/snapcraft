@@ -7,7 +7,7 @@ We want to make sure everyone develops using a consistent base, to ensure that t
 Clone the snapcraft repository and its submodules and make it your working directory:
 
 ```shell
-git clone https://github.com/snapcore/snapcraft.git --recurse-submodules
+git clone https://github.com/canonical/snapcraft.git --recurse-submodules
 cd snapcraft
 ```
 
@@ -54,16 +54,59 @@ See the [Testing guide](TESTING.md).
 
 Given that the `--debug` option in snapcraft is reserved for project specific debugging, enabling for the `logger.debug` calls is achieved by setting the "SNAPCRAFT_ENABLE_DEVELOPER_DEBUG" environment variable to a truthful value. Snapcraft's internal tools, e.g.; `snapcraftctl` should pick up this environment variable as well.
 
+
+## Documentation
+
+
+### Build
+
+To render the documentation as HTML in `docs/_build`, run:
+
+```shell
+tox run -e build-docs
+```
+
+> **Important**
+> 
+> Interactive builds are currently defective and cause an infinite loop. [This GitHub issue](https://github.com/sphinx-doc/sphinx/issues/11556#issuecomment-1667451983) posits that this is caused by by pages referencing each other.
+
+If you prefer to compose pages interactively, you can host the documentation on a local server:
+
+```shell
+tox run -e autobuild-docs
+```
+
+You can reach the interactive site at http://127.0.0.1:8080 in a web browser.
+
+
+### Test
+
+The documentation Makefile provided by the [Sphinx Starter Pack](https://github.com/canonical/sphinx-docs-starter-pack) provides a number of natural language checks such as style guide adherence, inclusive words, and product terminology, however they currently aren't configured correctly for Snapcraft. Instead, you can validate for basic language and syntax using two of the development tests.
+
+To check for syntax errors in documentation, run:
+
+```shell
+tox run -e lint-docs
+```
+
+For a rudimentary spell check, you can use codespell:
+
+```shell
+tox run -e lint-codespell
+```
+
+
 ## Evaluating pull requests
 
-Oftentimes all you want to do is see if a given pull request solves the issue you were having. To make this easier, the Travis CI setup for snapcraft _publishes_ the resulting snap that was built for x86-64 using `transfer.sh`.
-To download the snap, find the relevant CI job run for the PR under review and locate the "snap" stage, the URL to download from will be located at the end of logs for that job.
+Oftentimes all you want to do is see if a given pull request solves the issue you were having. To make this easier, a snap is published for `amd64` on a channel named `latest/edge/pr-<PR number>` where `PR number` is the number of the pull request.
+
+For feature branches, a snap is published for `amd64` on a channel named `latest/edge/<branch name>`. For example, a branch named `feature/offline-mode` would be available on the channel `latest/edge/offline-mode`.
 
 ## Reaching out
 
 We'd love the help!
 
-- Submit pull requests against [snapcraft](https://github.com/snapcore/snapcraft/pulls)
+- Submit pull requests against [snapcraft](https://github.com/canonical/snapcraft/pulls)
 - Make sure to read the [contribution guide](CONTRIBUTING.md)
 - Find us under the snapcraft category of the forum https://forum.snapcraft.io
 - Discuss with us using IRC in #snapcraft on Freenode.

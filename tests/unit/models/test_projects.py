@@ -82,6 +82,44 @@ def socket_yaml_data(app_yaml_data):
     yield _socket_yaml_data
 
 
+@pytest.fixture
+def fake_project_with_numbers(project_yaml_data):
+    """Returns a fake project with numbers in string fields.
+
+    This includes numbers in fields that are validated by snapcraft and fields
+    validated by craft-parts.
+    """
+    return project_yaml_data(
+        # string
+        version=1.0,
+        # string
+        icon=2,
+        # list[str]
+        website=[3.0, 4],
+        # dict[str, str]
+        environment={
+            "float": 5.0,
+            "int": 6,
+        },
+        parts={
+            "p1": {
+                "plugin": "nil",
+                # string
+                "source-type": 7,
+                # string
+                "source-commit": 8.0,
+                # list[str]
+                "build-snaps": [9, 10.0],
+                # dict[str, str]
+                "build-environment": [
+                    {"float": 11.0},
+                    {"int": 12},
+                ],
+            }
+        },
+    )
+
+
 class TestProjectDefaults:
     """Ensure unspecified items have the correct default value."""
 
@@ -699,6 +737,23 @@ class TestProjectValidation:
         assert project.website == [
             "https://github.com/NickvisionApps/Parabolic",
             "https://github.com/NickvisionApps/Denaro",
+        ]
+
+    def test_coerce_numbers(self, fake_project_with_numbers):
+        """Coerce numbers into strings."""
+        project = Project.unmarshal(fake_project_with_numbers)
+
+        assert project.version == "1.0"
+        assert project.icon == "2"
+        assert project.website == ["3.0", "4"]
+        assert project.environment == {"float": "5.0", "int": "6"}
+        # parts remain a dictionary with original types
+        assert project.parts["p1"]["source-type"] == 7
+        assert project.parts["p1"]["source-commit"] == 8.0
+        assert project.parts["p1"]["build-snaps"] == [9, 10.0]
+        assert project.parts["p1"]["build-environment"] == [
+            {"float": 11.0},
+            {"int": 12},
         ]
 
 
@@ -1504,6 +1559,10 @@ class TestGrammarValidation:
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
 
+    def test_grammar_number_coercion(self, fake_project_with_numbers):
+        """Ensure that grammar validation does not fail when coercing numbers into strings."""
+        GrammarAwareProject.validate_grammar(fake_project_with_numbers)
+
     def test_grammar_type_error(self, project_yaml_data):
         data = project_yaml_data(
             parts={
@@ -1516,7 +1575,7 @@ class TestGrammarValidation:
             }
         )
 
-        error = r"value must be a str: \[25\]"
+        error = r"Input should be a valid string \(in field 'parts\.p1\.source\[0\]'\)"
         with pytest.raises(errors.ProjectValidationError, match=error):
             GrammarAwareProject.validate_grammar(data)
 
@@ -1999,6 +2058,30 @@ class TestArchitecture:
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(**CORE24_DATA, architectures=["amd64"]))
 
+    @pytest.mark.parametrize(
+        ("data", "expected"),
+        [
+            ({"base": "core22", "architectures": ["amd64"]}, True),
+            ({"base": "core22"}, False),
+            # core24 and newer do not set this field
+            ({"base": "core24"}, None),
+        ],
+    )
+    def test_architectures_in_yaml(self, project_yaml_data, data, expected):
+        """Check if architectures were present in the yaml before unmarshalling."""
+        project_yaml = project_yaml_data(**data)
+
+        project = Project.unmarshal(project_yaml)
+
+        assert project._architectures_in_yaml is expected
+
+        # adding architectures after unmarshalling does not change the field
+        if project.base == "core22":
+            project.architectures = [
+                Architecture(build_on=["amd64"], build_for=["amd64"])
+            ]
+            assert project._architectures_in_yaml is expected
+
 
 class TestApplyRootPackages:
     """Test Transform the Project."""
@@ -2043,6 +2126,37 @@ class TestApplyRootPackages:
                 )
             ],
             id="single_platform_as_arch",
+        ),
+        pytest.param(
+            {
+                "s390x": {
+                    "build-on": "s390x",
+                },
+                "riscv64": {
+                    "build-on": ["amd64", "riscv64"],
+                },
+            },
+            [
+                BuildInfo(
+                    build_on="s390x",
+                    build_for="s390x",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="s390x",
+                ),
+                BuildInfo(
+                    build_on="amd64",
+                    build_for="riscv64",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="riscv64",
+                ),
+                BuildInfo(
+                    build_on="riscv64",
+                    build_for="riscv64",
+                    base=BaseName(name="ubuntu", version="24.04"),
+                    platform="riscv64",
+                ),
+            ],
+            id="implicit_build_for",
         ),
         pytest.param(
             {
@@ -2372,40 +2486,6 @@ def test_platform_default():
     ]
 
 
-def test_build_planner_get_build_plan_base(mocker):
-    """Test `get_build_plan()` uses the correct base."""
-    mock_get_effective_base = mocker.patch(
-        "snapcraft.models.project.get_effective_base", return_value="core24"
-    )
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {
-            "name": "test-snap",
-            "base": "test-base",
-            "build-base": "test-build-base",
-            "platforms": {"amd64": None},
-            "project_type": "test-type",
-        }
-    )
-
-    actual_build_infos = planner.get_build_plan()
-
-    assert actual_build_infos == [
-        BuildInfo(
-            platform="amd64",
-            build_on="amd64",
-            build_for="amd64",
-            base=BaseName(name="ubuntu", version="24.04"),
-        )
-    ]
-    mock_get_effective_base.assert_called_once_with(
-        base="test-base",
-        build_base="test-build-base",
-        project_type="test-type",
-        name="test-snap",
-        translate_devel=False,
-    )
-
-
 def test_project_platform_error_has_context():
     """Platform validation errors include which platform entry is invalid."""
     error = r"build-on\n  Field required"
@@ -2486,16 +2566,17 @@ class TestComponents:
 
         assert test_project.components == components
 
+    @pytest.mark.parametrize("component_type", ["test", "kernel-modules", "standard"])
     def test_component_type_valid(
-        self, project, project_yaml_data, stub_component_data
+        self, component_type, project, project_yaml_data, stub_component_data
     ):
         component = {"foo": stub_component_data}
-        component["foo"]["type"] = "test"
+        component["foo"]["type"] = component_type
 
         test_project = project.unmarshal(project_yaml_data(components=component))
 
         assert test_project.components
-        assert test_project.components["foo"].type == "test"
+        assert test_project.components["foo"].type == component_type
 
     def test_component_type_invalid(
         self, project, project_yaml_data, stub_component_data

@@ -35,7 +35,7 @@ def recursive_data_files(directory, install_directory):
 name = "snapcraft"
 description = "Publish your app for Linux users for desktop, cloud, and IoT."
 author_email = "snapcraft@lists.snapcraft.io"
-url = "https://github.com/snapcore/snapcraft"
+url = "https://github.com/canonical/snapcraft"
 license_ = "GPL v3"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -80,6 +80,7 @@ dev_requires = [
     "pyramid",
     "pytest",
     "pytest-cov",
+    "pytest-check",
     "pytest-mock",
     "pytest-subprocess",
     "tox>=4.5",
@@ -97,14 +98,14 @@ install_requires = [
     "attrs",
     "catkin-pkg; sys_platform == 'linux'",
     "click",
-    "craft-application~=4.0",
+    "craft-application~=4.4",
     "craft-archives~=2.0",
-    "craft-cli~=2.6",
-    "craft-grammar~=2.0",
-    "craft-parts~=2.0",
-    "craft-platforms~=0.1",
-    "craft-providers~=2.0",
-    "craft-store~=3.0",
+    "craft-cli~=2.9",
+    "craft-grammar>=2.0.1,<3.0.0",
+    "craft-parts>=2.1.2,<3.0.0",
+    "craft-platforms~=0.4",
+    "craft-providers>=2.0.4,<3.0.0",
+    "craft-store>=3.0.2,<4.0.0",
     "docutils<0.20",  # Frozen until we can update sphinx dependencies.
     "gnupg",
     "jsonschema==2.5.1",
@@ -129,7 +130,7 @@ install_requires = [
     "pyyaml",
     "raven",
     "requests-toolbelt",
-    "requests-unixsocket",
+    "requests-unixsocket2",
     "requests",
     "simplejson",
     "snap-helpers",
@@ -137,16 +138,17 @@ install_requires = [
     "toml",
     "tinydb",
     "typing-extensions",
-    "urllib3<2",  # requests-unixsocket does not yet work with urllib3 v2.0+
     "validators>=0.28.3",
 ]
 
 docs_requires = {
-    "canonical-sphinx",
-    "pyspelling",
-    "sphinxcontrib-details-directive",
+    "canonical-sphinx[full]>=0.2.0",
     "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+    "sphinxcontrib-details-directive",
     "sphinx-lint",
+    "sphinx-toolbox",
+    "pyspelling",
 }
 
 extras_requires = {"dev": dev_requires, "docs": docs_requires}
@@ -172,6 +174,10 @@ setup(
         + recursive_data_files("keyrings", "share/snapcraft")
         + recursive_data_files("extensions", "share/snapcraft")
     ),
+    include_package_data=True,
+    package_data={
+        "snapcraft": ["templates/*"],
+    },
     python_requires=">=3.10",
     install_requires=install_requires,
     extras_require=extras_requires,

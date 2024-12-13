@@ -97,7 +97,7 @@ def fake_extension():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {"grade": "fake-grade"}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -136,7 +136,7 @@ def fake_extension_extra():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -170,7 +170,7 @@ def fake_extension_invalid_parts():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {"grade": "fake-grade"}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -206,7 +206,7 @@ def fake_extension_experimental():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -242,7 +242,7 @@ def fake_extension_name_from_legacy():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -528,6 +528,50 @@ def remote_build_service(default_factory, mocker):
     service.lp = fake_lp
 
     return service
+
+
+@pytest.fixture()
+def registries_service(default_factory, mocker):
+    from snapcraft.application import APP_METADATA
+    from snapcraft.services import Registries
+
+    service = Registries(app=APP_METADATA, services=default_factory)
+    service._store_client = mocker.patch(
+        "snapcraft.store.StoreClientCLI", autospec=True
+    )
+
+    return service
+
+
+@pytest.fixture()
+def fake_registry_assertion():
+    """Returns a fake registry assertion with required fields."""
+    from snapcraft.models import RegistryAssertion
+
+    def _fake_registry_assertion(**kwargs) -> RegistryAssertion:
+        return RegistryAssertion.unmarshal(
+            {
+                "account_id": "test-account-id",
+                "authority_id": "test-authority-id",
+                "name": "test-registry",
+                "timestamp": "2024-01-01T10:20:30Z",
+                "type": "registry",
+                "views": {
+                    "wifi-setup": {
+                        "rules": [
+                            {
+                                "access": "read-write",
+                                "request": "ssids",
+                                "storage": "wifi.ssids",
+                            }
+                        ]
+                    }
+                },
+                **kwargs,
+            }
+        )
+
+    return _fake_registry_assertion
 
 
 @pytest.fixture()

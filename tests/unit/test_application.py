@@ -17,21 +17,24 @@
 
 import json
 import os
+import re
 import sys
 from textwrap import dedent
 
+import craft_application.remote
 import craft_cli
 import craft_parts.plugins
 import craft_store
 import pytest
 import yaml
 from craft_application import util
+from craft_application.commands import get_other_command_group
 from craft_parts.packages import snaps
 from craft_providers import bases
 
-from snapcraft import application, const, services
+from snapcraft import application, cli, const, services
 from snapcraft.commands import PackCommand
-from snapcraft.errors import ClassicFallback, SnapcraftError
+from snapcraft.errors import ClassicFallback
 from snapcraft.models.project import Architecture
 
 
@@ -377,17 +380,22 @@ def test_default_command_integrated(monkeypatch, mocker, new_dir):
 
 
 @pytest.mark.parametrize("base", const.ESM_BASES)
-def test_esm_error(snapcraft_yaml, base):
+def test_esm_error(snapcraft_yaml, base, monkeypatch, capsys):
     """Test that an error is raised when using an ESM base."""
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
+    monkeypatch.setattr("sys.argv", ["snapcraft"])
 
-    app = application.create_app()
+    application.main()
 
-    with pytest.raises(
-        RuntimeError, match=f"ERROR: base {base!r} was last supported on Snapcraft"
-    ):
-        app.run()
+    _, err = capsys.readouterr()
+
+    assert re.match(
+        rf"^Base {base!r} is not supported by this version of Snapcraft.\n"
+        rf"Recommended resolution: Use Snapcraft .* from the '.*' channel of snapcraft where {base!r} was last supported.\n"
+        r"For more information, check out: .*/reference/bases\n",
+        err,
+    )
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
@@ -410,12 +418,10 @@ def test_esm_pass(mocker, snapcraft_yaml, base):
         mock_dispatch.assert_called_once()
 
 
-@pytest.mark.parametrize(
-    "envvar", ["force-fallback", "disable-fallback", "badvalue", None]
-)
+@pytest.mark.parametrize("envvar", ["disable-fallback", None])
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
-def test_run_envvar(
+def test_run_remote_build_core24(
     monkeypatch,
     snapcraft_yaml,
     base,
@@ -423,7 +429,7 @@ def test_run_envvar(
     mock_remote_build_run,
     mock_run_legacy,
 ):
-    """Bases core24 and later run new remote-build regardless of envvar."""
+    """Bases core24 and later use the new remote-build."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
 
@@ -438,20 +444,43 @@ def test_run_envvar(
     mock_run_legacy.assert_not_called()
 
 
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
+@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+def test_run_remote_build_core24_error(monkeypatch, snapcraft_yaml, base, capsys):
+    """Error if using force-fallback for core24 or newer."""
+    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "force-fallback")
+    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
+
+    application.main()
+
+    _, err = capsys.readouterr()
+    assert re.match(
+        r"^'SNAPCRAFT_REMOTE_BUILD_STRATEGY=force-fallback' cannot be used for core24 and newer snaps\.\n"
+        r"Recommended resolution: Unset the environment variable or set it to 'disable-fallback'\.\n"
+        r"For more information, check out: .*/explanation/remote-build",
+        err,
+    )
+
+
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
-def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch):
+def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch, capsys):
     """core20 bases cannot use the new remote-build."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
+    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
 
-    with pytest.raises(RuntimeError) as raised:
-        application.main()
+    application.main()
 
-    assert str(raised.value) == (
-        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' cannot be used for core20 "
-        "snaps. Unset the environment variable or use 'force-fallback'."
+    _, err = capsys.readouterr()
+    assert re.match(
+        r"'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' cannot be used for core20 snaps\.\n"
+        r"Recommended resolution: Unset the environment variable or set it to 'force-fallback'\.\n"
+        r"For more information, check out: .*/explanation/remote-build",
+        err,
     )
 
 
@@ -503,22 +532,104 @@ def test_run_envvar_force_fallback_empty_core22(
     mock_run_legacy.assert_not_called()
 
 
-@pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
+@pytest.mark.parametrize("base", const.LEGACY_BASES | const.CURRENT_BASES)
 @pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
-def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch):
+def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch, capsys):
     """core20 and core22 bases raise an error if the envvar is invalid."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "badvalue")
+    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
 
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
-    with pytest.raises(SnapcraftError) as err:
-        application.main()
 
-    assert err.match(
-        "Unknown value 'badvalue' in environment variable "
-        "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. Valid values are 'disable-fallback' and "
-        "'force-fallback'"
+    application.main()
+
+    _, err = capsys.readouterr()
+    assert re.match(
+        r"Unknown value 'badvalue' in environment variable 'SNAPCRAFT_REMOTE_BUILD_STRATEGY'\.\n"
+        r"Recommended resolution: Valid values are 'disable-fallback' and 'force-fallback'\.\n"
+        r"For more information, check out: .*/explanation/remote-build",
+        err,
     )
+
+
+@pytest.mark.parametrize("command", ["plugins", "list-plugins"])
+@pytest.mark.parametrize(
+    "args",
+    [
+        [],
+        ["--base", "core22"],
+        ["--base=core22"],
+        ["--base", "core24"],
+        ["--base=core24"],
+    ],
+)
+@pytest.mark.parametrize("base", const.CURRENT_BASES | {None})
+def test_run_list_plugins(command, args, base, mocker, monkeypatch, snapcraft_yaml):
+    """Do not trigger a classic fallback for `list-plugins` for core22 or newer."""
+    monkeypatch.setattr("sys.argv", ["snapcraft", command, *args])
+    if base:
+        snapcraft_yaml(base=base)
+    mock_dispatch = mocker.patch(
+        "craft_application.application.Application._get_dispatcher"
+    )
+
+    app = application.create_app()
+    app.run()
+
+    mock_dispatch.assert_called_once()
+
+
+@pytest.mark.parametrize("command", ["plugins", "list-plugins"])
+@pytest.mark.parametrize("args", [["--base", "core20"], ["--base=core20"]])
+@pytest.mark.parametrize("base", const.LEGACY_BASES | const.CURRENT_BASES | {None})
+def test_run_list_plugins_classic(
+    command, args, base, mocker, monkeypatch, snapcraft_yaml
+):
+    """`list-plugins` triggers a fallback only with `--base=core20`."""
+    monkeypatch.setattr("sys.argv", ["snapcraft", command, *args])
+    if base:
+        snapcraft_yaml(base=base)
+    mock_dispatch = mocker.patch(
+        "craft_application.application.Application._get_dispatcher"
+    )
+
+    app = application.create_app()
+    with pytest.raises(ClassicFallback):
+        app.run()
+
+    mock_dispatch.assert_not_called()
+
+
+def test_run_expand_extensions_classic(mocker, monkeypatch, snapcraft_yaml):
+    """`expand-extensions` triggers a fallback for core20 snaps."""
+    monkeypatch.setattr("sys.argv", ["snapcraft", "expand-extensions"])
+    snapcraft_yaml(base="core20")
+    mock_dispatch = mocker.patch(
+        "craft_application.application.Application._get_dispatcher"
+    )
+
+    app = application.create_app()
+    with pytest.raises(ClassicFallback):
+        app.run()
+
+    mock_dispatch.assert_not_called()
+
+
+@pytest.mark.parametrize("base", const.CURRENT_BASES | {None})
+def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
+    """Do not trigger a classic fallback for `version`."""
+    monkeypatch.setattr("sys.argv", ["snapcraft", "version"])
+    if base:
+        snapcraft_yaml(base=base)
+    mock_dispatch = mocker.patch(
+        "craft_application.application.Application._get_dispatcher"
+    )
+
+    app = application.create_app()
+    app.run()
+
+    mock_dispatch.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -557,7 +668,7 @@ def test_known_core24(snapcraft_yaml, base, build_base, is_known_core24):
 )
 def test_store_error(mocker, capsys, message, resolution, expected_message):
     mocker.patch(
-        "snapcraft.application.Application.run",
+        "snapcraft.application.Application._run_inner",
         side_effect=craft_store.errors.CraftStoreError(message, resolution=resolution),
     )
 
@@ -565,12 +676,12 @@ def test_store_error(mocker, capsys, message, resolution, expected_message):
 
     assert return_code == 1
     _, err = capsys.readouterr()
-    assert f"craft-store error: {expected_message}" in err
+    assert expected_message in err
 
 
 def test_store_key_error(mocker, capsys):
     mocker.patch(
-        "snapcraft.application.Application.run",
+        "snapcraft.application.Application._run_inner",
         side_effect=craft_store.errors.NoKeyringError(),
     )
 
@@ -584,10 +695,100 @@ def test_store_key_error(mocker, capsys):
         # pylint: disable=[line-too-long]
         dedent(
             """\
-            craft-store error: No keyring found to store or retrieve credentials from.
+            No keyring found to store or retrieve credentials from.
             Recommended resolution: Ensure the keyring is working or SNAPCRAFT_STORE_CREDENTIALS is correctly exported into the environment
             For more information, check out: https://snapcraft.io/docs/snapcraft-authentication
         """
             # pylint: enable=[line-too-long]
         )
     )
+
+
+def test_remote_build_error(mocker, capsys):
+    """Catch remote build errors and include a documentation link."""
+    mocker.patch(
+        "snapcraft.application.Application._run_inner",
+        side_effect=craft_application.remote.RemoteBuildError(message="test-error"),
+    )
+
+    return_code = application.main()
+
+    assert return_code == 1
+    _, err = capsys.readouterr()
+
+    assert re.match(
+        r"^test-error\n"
+        r"For more information, check out: .*/explanation/remote-build\n",
+        err,
+    )
+
+
+@pytest.mark.parametrize(
+    "command",
+    {
+        command.name
+        for group in [
+            *cli.COMMAND_GROUPS,
+            cli.CORE22_LIFECYCLE_COMMAND_GROUP,
+            cli.CORE24_LIFECYCLE_COMMAND_GROUP,
+            get_other_command_group(),
+        ]
+        for command in group.commands
+    },
+)
+def test_get_argv_command(command, monkeypatch):
+    """Get the command."""
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "snapcraft",
+            "--verbosity" "trace",
+            "--build-for=armhf",
+            "--shell-after",
+            command,
+        ],
+    )
+
+    app = application.create_app()
+    actual_command = app._get_argv_command()
+
+    assert actual_command == command
+
+
+@pytest.mark.parametrize(
+    ["args", "expected_command"],
+    [
+        # no default command
+        ([], None),
+        (["--verbosity=trace"], None),
+        (["--verbosity", "trace"], None),
+        (["--shell-after"], None),
+        # no options
+        (["pack"], "pack"),
+        # with an option
+        (["pack", "--verbosity=trace"], "pack"),
+        (["pack", "--verbosity", "trace"], "pack"),
+        (["--verbosity=trace", "pack"], "pack"),
+        (["--verbosity", "trace", "pack"], "pack"),
+        # with a flag
+        (["pack", "--shell-after"], "pack"),
+        (["--shell-after", "pack"], "pack"),
+        # with an option and a flag
+        (["pack", "--verbosity=trace", "--shell-after"], "pack"),
+        (["--shell-after", "pack", "--verbosity=trace", "--shell-after"], "pack"),
+        (["pack", "--verbosity", "trace", "--shell-after"], "pack"),
+        (["--shell-after", "pack", "--verbosity", "trace"], "pack"),
+        (["--verbosity=trace", "pack", "--shell-after"], "pack"),
+        (["--shell-after", "--verbosity=trace", "pack"], "pack"),
+        (["--verbosity", "trace", "pack"], "pack"),
+        (["--shell-after", "--verbosity", "trace", "pack"], "pack"),
+    ],
+)
+def test_get_argv_command_with_options(args, expected_command, monkeypatch):
+    """Get the command no with a variety of options."""
+    monkeypatch.setattr("sys.argv", ["snapcraft", *args])
+
+    app = application.create_app()
+    command = app._get_argv_command()
+
+    assert command == expected_command

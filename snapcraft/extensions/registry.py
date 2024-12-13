@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Dict, List, Type
 
 from snapcraft import errors
 
+from .env_injector import EnvInjector
 from .gnome import GNOME
 from .kde_neon import KDENeon
 from .kde_neon_6 import KDENeon6
@@ -38,6 +39,7 @@ if TYPE_CHECKING:
     ExtensionType = Type[Extension]
 
 _EXTENSIONS: Dict[str, "ExtensionType"] = {
+    "env-injector": EnvInjector,
     "gnome": GNOME,
     "ros2-humble": ROS2HumbleExtension,
     "ros2-humble-ros-core": ROS2HumbleRosCoreExtension,

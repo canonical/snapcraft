@@ -28,7 +28,6 @@ from .extensions import (
     ExtensionsCommand,
     ListExtensionsCommand,
 )
-from .init import InitCommand
 from .legacy import (
     StoreLegacyCreateKeyCommand,
     StoreLegacyGatedCommand,
@@ -52,6 +51,7 @@ from .names import (
     StoreRegisterCommand,
 )
 from .plugins import ListPluginsCommand, PluginsCommand
+from .registries import StoreEditRegistriesCommand, StoreListRegistriesCommand
 from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
@@ -66,7 +66,6 @@ from .validation_sets import StoreEditValidationSetsCommand
 __all__ = [
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
-    "InitCommand",
     "LintCommand",
     "ListExtensionsCommand",
     "ListPluginsCommand",
@@ -76,6 +75,7 @@ __all__ = [
     "SnapCommand",
     "StoreCloseCommand",
     "StoreEditValidationSetsCommand",
+    "StoreEditRegistriesCommand",
     "StoreExportLoginCommand",
     "StoreLegacyCreateKeyCommand",
     "StoreLegacyGatedCommand",
@@ -92,6 +92,7 @@ __all__ = [
     "StoreLegacyUploadMetadataCommand",
     "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
+    "StoreListRegistriesCommand",
     "StoreListTracksCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",

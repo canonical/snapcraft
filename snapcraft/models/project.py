@@ -32,6 +32,7 @@ from craft_application.models.constraints import (
 )
 from craft_cli import emit
 from craft_grammar.models import Grammar  # type: ignore[import-untyped]
+from craft_platforms import Platforms, snap
 from craft_providers import bases
 from pydantic import ConfigDict, PrivateAttr, StringConstraints
 from typing_extensions import Annotated, Self, override
@@ -223,7 +224,7 @@ def _validate_version_name(version: str, model_name: str) -> None:
         )
 
 
-def _validate_name(*, name: str, field_name: str) -> str:
+def validate_name(*, name: str, field_name: str) -> str:
     """Validate a name.
 
     :param name: The name to validate.
@@ -260,7 +261,7 @@ def _validate_component(name: str) -> str:
         raise ValueError(
             "component names cannot start with the reserved prefix 'snap-'"
         )
-    return _validate_name(name=name, field_name="component")
+    return validate_name(name=name, field_name="component")
 
 
 def _get_partitions_from_components(
@@ -275,6 +276,14 @@ def _get_partitions_from_components(
         return ["default", *[f"component/{name}" for name in components_data.keys()]]
 
     return None
+
+
+def _validate_mandatory_base(base: str | None, snap_type: str | None) -> None:
+    """Validate that the base is specified, if required by the snap_type."""
+    if (base is not None) ^ (snap_type not in ["base", "kernel", "snapd"]):
+        raise ValueError(
+            "Snap base must be declared when type is not base, kernel or snapd"
+        )
 
 
 class Socket(models.CraftBaseModel):
@@ -572,7 +581,7 @@ class Component(models.CraftBaseModel):
 
     summary: SummaryStr
     description: str
-    type: Literal["test"]
+    type: Literal["test", "kernel-modules", "standard"]
     version: VersionStr | None = None
     hooks: dict[str, Hook] | None = None
 
@@ -609,6 +618,7 @@ class Project(models.Project):
     ) = None
     grade: Literal["stable", "devel"] | None = None
     architectures: list[str | Architecture] | None = None
+    _architectures_in_yaml: bool | None = None
     platforms: dict[str, Platform] | None = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     assumes: UniqueList[str] = pydantic.Field(default_factory=list)
     hooks: dict[str, Hook] | None = None
@@ -713,18 +723,13 @@ class Project(models.Project):
 
     @pydantic.model_validator(mode="after")
     def _validate_mandatory_base(self):
-        snap_type = self.type
-        base = self.base
-        if (base is not None) ^ (snap_type not in ["base", "kernel", "snapd"]):
-            raise ValueError(
-                "Snap base must be declared when type is not base, kernel or snapd"
-            )
+        _validate_mandatory_base(self.base, self.type)
         return self
 
     @pydantic.field_validator("name")
     @classmethod
     def _validate_snap_name(cls, name):
-        return _validate_name(name=name, field_name="snap")
+        return validate_name(name=name, field_name="snap")
 
     @pydantic.field_validator("components")
     @classmethod
@@ -759,8 +764,14 @@ class Project(models.Project):
                     f"'platforms' keyword is not supported for base {base!r}. "
                     "Use 'architectures' keyword instead."
                 )
-            # set default value
-            if not self.architectures:
+
+            # this is a one-shot - the value should not change when re-validating
+            if self.architectures and self._architectures_in_yaml is None:
+                # record if architectures are defined in the yaml for remote-build (#4881)
+                self._architectures_in_yaml = True
+            elif not self.architectures:
+                self._architectures_in_yaml = False
+                # set default value
                 self.architectures = [
                     Architecture(
                         build_on=[get_host_architecture()],
@@ -1131,6 +1142,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
     base: str | None = None
     build_base: str | None = None
     name: str
+    type: Literal["app", "base", "gadget", "kernel", "snapd"] | None = None
     platforms: dict[str, Platform] | None = None  # type: ignore[assignment]
     architectures: list[str | Architecture] | None = None
     project_type: str | None = pydantic.Field(default=None, alias="type")
@@ -1185,7 +1197,6 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
     def get_build_plan(self) -> list[BuildInfo]:
         """Get the build plan for this project."""
-        build_infos: list[BuildInfo] = []
         effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
             str(
                 get_effective_base(
@@ -1197,8 +1208,6 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                 )
             )
         ].value
-
-        base = bases.BaseName("ubuntu", effective_base)
 
         # set default value
         if self.platforms is None:
@@ -1214,16 +1223,31 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
                     Platform.from_architectures(self.architectures)
                 )
 
-        for platform_entry, platform in self.platforms.items():
-            for build_for in platform.build_for or [SnapArch(platform_entry)]:
-                for build_on in platform.build_on or [SnapArch(platform_entry)]:
-                    build_infos.append(
-                        BuildInfo(
-                            platform=platform_entry,
-                            build_on=build_on,
-                            build_for=build_for,
-                            base=base,
-                        )
-                    )
+        platforms = cast(
+            Platforms,
+            {name: platform.marshal() for name, platform in self.platforms.items()},
+        )
 
-        return build_infos
+        # In _validate_mandatory_base, we ensure that the possible values of
+        # 'base' and 'snap_type' are narrowed so they'll always match one of
+        # the two overloads of get_platforms_snap_build_plan.  But, pyright and
+        # mypy aren't smart enough to realize this, so we need the type checker
+        # ignores.
+        _validate_mandatory_base(self.base, self.type)
+        return [
+            BuildInfo(
+                platform=buildinfo.platform,
+                build_on=str(buildinfo.build_on),
+                build_for=str(buildinfo.build_for),
+                base=bases.BaseName(
+                    name=buildinfo.build_base.distribution,
+                    version=buildinfo.build_base.series,
+                ),
+            )
+            for buildinfo in snap.get_platforms_snap_build_plan(  # pyright: ignore[reportCallIssue]
+                base=self.base,  # type: ignore[arg-type]
+                build_base=self.build_base,
+                snap_type=self.type,  # type: ignore[arg-type]
+                platforms=platforms,
+            )
+        ]

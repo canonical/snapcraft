@@ -81,14 +81,14 @@ def test_is_experimental(base):
 
 
 def test_get_app_snippet(gnome_extension):
-    assert gnome_extension.get_app_snippet() == {
+    assert gnome_extension.get_app_snippet(app_name="test-app") == {
         "command-chain": ["snap/command-chain/desktop-launch"],
         "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
     }
 
 
 def test_get_app_snippet_core24(gnome_extension_core24):
-    assert gnome_extension_core24.get_app_snippet() == {
+    assert gnome_extension_core24.get_app_snippet(app_name="test-app") == {
         "command-chain": [
             "snap/command-chain/gpu-2404-wrapper",
             "snap/command-chain/desktop-launch",

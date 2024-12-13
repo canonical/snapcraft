@@ -38,17 +38,21 @@ ogp_site_name = project
 html_context = {
     "product_page": "github.com/canonical/snapcraft",
     "github_url": "https://github.com/canonical/snapcraft",
+    "display_contributors": False,
 }
 
 extensions = [
     "canonical_sphinx",
 ]
+
+sphinx_tabs_disable_tab_closing = True
 # endregion
 
 extensions.extend(
     (
         "sphinx.ext.ifconfig",
         "sphinxcontrib.details.directive",
+        "sphinx_toolbox.collapse",
     )
 )
 
@@ -72,6 +76,7 @@ exclude_patterns = [
     "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",
+    "common/craft-parts/reference/plugins/poetry_plugin.rst",
     "common/craft-parts/reference/plugins/python_plugin.rst",
     "common/craft-parts/reference/plugins/maven_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment

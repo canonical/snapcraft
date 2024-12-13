@@ -23,18 +23,18 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import craft_store
+import pydantic
 import requests
+from craft_application.util.error_formatting import format_pydantic_errors
 from craft_cli import emit
 from overrides import overrides
 
-from snapcraft import __version__, errors, utils
+from snapcraft import __version__, errors, models, utils
 from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
 
 from . import channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
 from .onprem_client import ON_PREM_ENDPOINTS, OnPremClient
-
-_TESTING_ENV_PREFIXES = ["TRAVIS", "AUTOPKGTEST_TMP"]
 
 _POLL_DELAY = 1
 _HUMAN_STATUS = {
@@ -51,13 +51,7 @@ def build_user_agent(
     os_platform: utils.OSPlatform = utils.get_os_platform(),  # noqa: B008
 ):
     """Build Snapcraft's user agent."""
-    if any(
-        key.startswith(prefix) for prefix in _TESTING_ENV_PREFIXES for key in os.environ
-    ):
-        testing = " (testing) "
-    else:
-        testing = " "
-    return f"snapcraft/{version}{testing}{os_platform!s}"
+    return f"snapcraft/{version} {os_platform!s}"
 
 
 def use_candid() -> bool:
@@ -502,6 +496,114 @@ class LegacyStoreClientCLI:
         )
 
         return Revisions.unmarshal(response.json())
+
+    @staticmethod
+    def _unmarshal_registries_set(registries_data) -> models.RegistryAssertion:
+        """Unmarshal a registries set.
+
+        :raises StoreAssertionError: If the registries set cannot be unmarshalled.
+        """
+        try:
+            return models.RegistryAssertion.unmarshal(registries_data)
+        except pydantic.ValidationError as err:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid registries set from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"{format_pydantic_errors(err.errors(), file_name='registries set')}",
+            ) from err
+
+    def list_registries(
+        self, *, name: str | None = None
+    ) -> list[models.RegistryAssertion]:
+        """Return a list of registries.
+
+        :param name: If specified, only list the registry set with that name.
+        """
+        endpoint = f"{self._base_url}/api/v2/registries"
+        if name:
+            endpoint += f"/{name}"
+
+        response = self.request(
+            "GET",
+            endpoint,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        registry_assertions = []
+        if assertions := response.json().get("assertions"):
+            for assertion_data in assertions:
+                # move body into model
+                assertion_data["headers"]["body"] = assertion_data.get("body")
+
+                assertion = self._unmarshal_registries_set(assertion_data["headers"])
+                registry_assertions.append(assertion)
+                emit.debug(f"Parsed registries set: {assertion.model_dump_json()}")
+
+        return registry_assertions
+
+    def build_registries(
+        self, *, registries: models.EditableRegistryAssertion
+    ) -> models.RegistryAssertion:
+        """Build a registries set.
+
+        Sends an edited registries set to the store, which validates the data,
+        populates additional fields, and returns the registries set.
+
+        :param registries: The registries set to build.
+
+        :returns: The built registries set.
+        """
+        response = self.request(
+            "POST",
+            f"{self._base_url}/api/v2/registries/build-assertion",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=registries.marshal(),
+        )
+
+        assertion = self._unmarshal_registries_set(response.json())
+        emit.debug(f"Built registries set: {assertion.model_dump_json()}")
+        return assertion
+
+    def post_registries(self, *, registries_data: bytes) -> models.RegistryAssertion:
+        """Send a registries set to be published.
+
+        :param registries_data: A signed registries set represented as bytes.
+
+        :returns: The published assertion.
+        """
+        response = self.request(
+            "POST",
+            f"{self._base_url}/api/v2/registries",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/x.ubuntu.assertion",
+            },
+            data=registries_data,
+        )
+
+        assertions = response.json().get("assertions")
+
+        if not assertions or len(assertions) != 1:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid registries set from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"Received data: {assertions}",
+            )
+
+        # move body into model
+        assertions[0]["headers"]["body"] = assertions[0]["body"]
+
+        assertion = self._unmarshal_registries_set(assertions[0]["headers"])
+        emit.debug(f"Published registries set: {assertion.model_dump_json()}")
+        return assertion
 
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):

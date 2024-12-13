@@ -51,8 +51,6 @@ class KDENeon6(Extension):
     It configures each application with the following plugs:
 
     \b
-    - Common GTK themes.
-    - Common Qt themes.
     - Common Icon Themes.
     - Common Sound Themes.
     - The Qt6 and KDE Frameworks 6 runtime libraries and utilities.
@@ -88,7 +86,7 @@ class KDENeon6(Extension):
         return False
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
         return {
             "command-chain": ["snap/command-chain/desktop-launch6"],
             "plugs": [
@@ -153,50 +151,15 @@ class KDENeon6(Extension):
             "compression": "lzo",
             "plugs": {
                 "desktop": {"mount-host-font-cache": False},
-                "gtk-2-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes",
-                },
-                "kde-gtk2-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "qt-common-themes",
-                },
-                "kde-gtk3-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "qt-common-themes",
-                },
-                "gtk-3-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes",
-                },
-                "qt-icon-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/icons",
-                    "default-provider": "qt-common-themes",
-                },
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
                     "default-provider": "gtk-common-themes",
                 },
-                "qt-sound-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "qt-common-themes",
-                },
                 "sound-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/sounds",
                     "default-provider": "gtk-common-themes",
-                },
-                "qt-6-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/kf6",
-                    "default-provider": "qt-common-themes",
                 },
                 platform_kf6_snap: {
                     "content": content_kf6_snap,
@@ -314,7 +277,7 @@ class KDENeon6(Extension):
     def get_parts_snippet(self) -> Dict[str, Any]:
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
-        # https://github.com/snapcore/snapcraft-desktop-integration
+        # https://github.com/canonical/snapcraft-desktop-integration
         source = get_extensions_data_dir() / "desktop" / "kde-neon-6"
 
         if self.kde_snaps.kf6_builtin:

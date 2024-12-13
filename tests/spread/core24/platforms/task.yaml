@@ -9,6 +9,7 @@ environment:
   SNAP/env_var_all: env-var-all
   SNAP/env_var_match: env-var-match
   SNAP/env_var_no_match: env-var-no-match
+  SNAP/implicit_build_for: implicit-build-for
   SNAP/multiple_build_for: multiple-build-for
   SNAP/platform_all: platform-all
   SNAP/platform_match: platform-match

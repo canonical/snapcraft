@@ -1,0 +1,42 @@
+summary: test the registries commands
+
+environment:
+  SNAPCRAFT_ASSERTION_KEY: "$(HOST: echo ${SNAPCRAFT_ASSERTION_KEY})"
+  SNAPCRAFT_STORE_CREDENTIALS: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING})"
+
+prepare: |
+  if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then
+    ERROR "No credentials set in env SNAPCRAFT_STORE_CREDENTIALS"
+  fi
+
+  if [[ -z "$SNAPCRAFT_ASSERTION_KEY" ]]; then
+    ERROR "No gpg key set in env SNAPCRAFT_ASSERTION_KEY"
+  fi
+
+  # setup snap gpg dir
+  mkdir -p "$HOME/.snap/gnupg"
+  chmod 700 "$HOME/.snap/gnupg"
+
+  # import a registered key
+  gpg --homedir "$HOME/.snap/gnupg" --import <(echo "$SNAPCRAFT_ASSERTION_KEY" | base64 --decode)
+
+  snap install yq
+  # registries only available in edge
+  snap refresh snapd --edge
+
+execute: |
+  # ensure snapcraft is logged in and can access the store
+  snapcraft whoami
+
+  # snapcraft will use a fake file editor
+  export EDITOR="$PWD/editor.sh"
+
+  snapcraft edit-registries "$(snapcraft whoami | yq .id)" testset --key-name testspreadkey
+
+  snapcraft list-registries | MATCH testset
+
+restore: |
+  rm -rf "$HOME/.snap/gnupg"
+
+  snap remove --purge yq
+  snap refresh snapd --stable

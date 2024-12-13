@@ -14,9 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 
-import fixtures
 from testtools.matchers import Equals
 
 from snapcraft_legacy import ProjectOptions
@@ -54,27 +52,3 @@ class UserAgentTestCase(unit.TestCase):
         expected = f"snapcraft/{snapcraft_version} Darwin ({arch})"
 
         self.expectThat(agent.get_user_agent(platform="darwin"), Equals(expected))
-
-    def test_in_travis_ci_env(self):
-        self.useFixture(fixtures.EnvironmentVariable("TRAVIS_TESTING", "1"))
-
-        self.assertTrue(agent._is_ci_env())
-
-    def test_in_autopkgtest_ci_env(self):
-        self.useFixture(fixtures.EnvironmentVariable("AUTOPKGTEST_TMP", "1"))
-
-        self.assertTrue(agent._is_ci_env())
-
-    def test_not_in_ci_env(self):
-        # unset any known testing environment vars
-        testing_vars = ["TRAVIS", "AUTHPKGTEST_TMP"]
-        vars_to_unset = []
-        for env_var in os.environ:
-            for test_var in testing_vars:
-                if env_var.startswith(test_var):
-                    vars_to_unset.append(env_var)
-
-        for var in vars_to_unset:
-            self.useFixture(fixtures.EnvironmentVariable(var, None))
-
-        self.assertFalse(agent._is_ci_env())

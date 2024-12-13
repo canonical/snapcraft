@@ -12,7 +12,7 @@ license: GPL-3.0
 assumes:
   - snapd2.43
 
-# https://github.com/snapcore/snapcraft/issues/4187
+# https://github.com/canonical/snapcraft/issues/4187
 environment:
   PATH: "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   LD_LIBRARY_PATH: "$SNAP/none"
@@ -49,14 +49,39 @@ build-packages:
 
 parts:
   bash-completion:
-    source: debian
+    source: snap/local
     plugin: dump
     stage:
       - snapcraft-completion
 
+  snapcraft-scripts:
+    source: snap/local
+    plugin: dump
+    organize:
+      craft.git: libexec/snapcraft/craft.git
+    stage:
+      - "libexec/"
+
+  git:
+    plugin: nil
+    stage-packages: [git]
+    build-attributes:
+      - enable-patchelf
+    prime:
+      - "usr/lib/git-core"
+      - "usr/share/git-core"
+      - "usr/lib/x86_64-linux-gnu/libcurl-gnutls*"
+      - "usr/lib/x86_64-linux-gnu/libpsl*"
+      - "usr/lib/x86_64-linux-gnu/librtmp*"
+      - "usr/lib/x86_64-linux-gnu/libnghttp2*"
+      - "usr/lib/x86_64-linux-gnu/libldap*"
+      - "usr/lib/x86_64-linux-gnu/liblber*"
+      - "usr/lib/x86_64-linux-gnu/libsasl2*"
+
+
   patchelf:
     plugin: autotools
-    source: https://github.com/snapcore/patchelf
+    source: https://github.com/canonical/patchelf
     source-type: git
     source-branch: '0.9+snapcraft'
     autotools-configure-parameters:
@@ -140,11 +165,12 @@ parts:
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
 
   libgit2:
-    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.1.tar.gz
-    source-checksum: sha256/17d2b292f21be3892b704dddff29327b3564f96099a1c53b00edc23160c71327
+    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.2.tar.gz
+    source-checksum: sha256/de384e29d7efc9330c6cdb126ebf88342b5025d920dcb7c645defad85195ea7f
     plugin: cmake
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
     build-attributes:
       - enable-patchelf
     prime:
@@ -171,7 +197,7 @@ parts:
     build-environment:
         # Build PyNaCl from source since the wheel files interact
         # strangely with classic snaps. Well, build it all from source.
-        - "PIP_NO_BINARY": ":all"
+        - "PIP_NO_BINARY": ":all:"
         # Use base image's libsodium for PyNaCl.
         - "SODIUM_INSTALL": "system"
         - "CFLAGS": "$(pkg-config python-3.10 yaml-0.1 --cflags)"

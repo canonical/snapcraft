@@ -14,23 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import sys
 
 import snapcraft_legacy
 from snapcraft_legacy import project
 from snapcraft_legacy.internal import os_release
 from snapcraft_legacy.internal.errors import OsReleaseNameError, OsReleaseVersionIdError
-
-
-def _is_ci_env():
-    env_prefixes = ["TRAVIS", "AUTOPKGTEST_TMP"]
-    matches = []
-
-    for prefix in env_prefixes:
-        matches += [var for var in os.environ.keys() if var.startswith(prefix)]
-
-    return len(matches) > 0
 
 
 def _get_linux_release(release: os_release.OsRelease) -> str:
@@ -48,11 +37,10 @@ def _get_linux_release(release: os_release.OsRelease) -> str:
 
 def get_user_agent(platform: str = sys.platform) -> str:
     arch = project.Project().deb_arch
-    testing = "(testing) " if _is_ci_env() else ""
 
     if platform == "linux":
         os_platform = _get_linux_release(os_release.OsRelease())
     else:
         os_platform = platform.title()
 
-    return f"snapcraft/{snapcraft_legacy.__version__} {testing}{os_platform} ({arch})"
+    return f"snapcraft/{snapcraft_legacy.__version__} {os_platform} ({arch})"
