@@ -92,8 +92,12 @@ class TestGetElfFiles:
     def test_fifo(self, new_dir):
         fifo_path = os.path.join(new_dir, "fifo")
         os.mkfifo(fifo_path)
-        elf_files = elf_utils.get_elf_files_from_list(new_dir, {"fifo"})
-        assert elf_files == []
+
+        try:
+            elf_files = elf_utils.get_elf_files_from_list(new_dir, {"fifo"})
+            assert elf_files == []
+        finally:
+            os.unlink(fifo_path)
 
 
 class TestGetDynamicLinker:

@@ -15,6 +15,12 @@ append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/blas"
 # lapack
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/lapack"
 
+# KConfig uses QStandardPaths:GenericConfigLocation to get the config dir paths
+# and checks for the kdeglobals file there for theming. The kdeglobals file is
+# stored in $SNAP_REAL_HOME/.config folder.
+
+prepend_dir XDG_CONFIG_DIRS "$SNAP_REAL_HOME/.config"
+
 # Add QT_PLUGIN_PATH (Qt Modules).
 append_dir QT_PLUGIN_PATH "$SNAP/usr/lib/$ARCH/qt6/plugins"
 append_dir QT_PLUGIN_PATH "$SNAP/usr/lib/$ARCH"
