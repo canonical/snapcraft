@@ -49,12 +49,19 @@ Past releases
 Release policy and schedule
 ---------------------------
 
-Canonical is committed to supporting the <"latest major release" or "last two
-major releases"> of Starcraft. <Optional: "We forward-port changes in older
-releases to the latest release, if they're compatible.">
+<Apps: Canonical is committed to releasing Starcraft on a regular monthly
+cadence. Our goal is to have new features and fixes available as soon as
+possible. On the first Monday of the month, we publish a major or minor
+version of Starcraft to the candidate channel, where it undergoes testing and
+feedback. If we determine the candidate is ready for mainstream use by the
+Monday of the week after, we release it as a stable version. During testing
+and feedback of a candidate, we prioritise fixes for critical issues.>
 
-Starcraft is released when it achieves development milestones in its product
-lifecycle. It doesn't follow a predefined release cadence.
+<Libraries: Canonical is committed to supporting the <"latest major release" or
+"last two major releases"> of Starcraft. [Optional: We forward-port changes in
+older releases to the latest release, if they're compatible.] Starcraft is
+released when it achieves development milestones in its lifecycle. It doesn't
+follow a predefined release cadence.>
 
 Starcraft release naming follows the Semantic Versioning 2.0.0 scheme with
 numbers for major, minor, and patch versions.
@@ -86,8 +93,8 @@ Starcraft doesn't have long-term support (LTS) releases. However, we typically
 deliver a compatibility release shortly after Ubuntu LTS releases to ensure
 continuity.
 
-Starcraft software bases are derived from Ubuntu LTS releases, and their
-development keeps pace with the OS's new releases and support lifecycle.
+<Apps: Starcraft software bases are derived from Ubuntu LTS releases, and their
+development keeps pace with the OS's new releases and support lifecycle.>
 
 .. toctree::
    :maxdepth: 1
@@ -95,12 +102,12 @@ development keeps pace with the OS's new releases and support lifecycle.
 
 .. release note template:
 
-  Starcraft 1.0 release notes
+  Starcraft 2.0 release notes
   ===========================
 
   15 October 2024
 
-  Learn about the new features, changes, and fixes introduced in Starcraft 1.0.
+  Learn about the new features, changes, and fixes introduced in Starcraft 2.0.
   For information about the Starcraft release cycle, see the
   :ref:`release_policy_and_schedule`.
 
@@ -108,7 +115,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   Requirements and compatibility
   ------------------------------
 
-  Starcraft 1.0 requires Python 3.11 or higher.
+  Starcraft 2.0 requires Python 3.11 or higher.
 
   <If there are multiple requirements, remove "Python 3.11 or higher" in the
   previous paragraph and add a separate list here, with the same format of
@@ -121,7 +128,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   What's new
   ----------
 
-  Starcraft 1.0 brings the following features, integrations, and improvements.
+  Starcraft 2.0 brings the following features, integrations, and improvements.
 
 
   <Important change>
@@ -171,10 +178,10 @@ development keeps pace with the OS's new releases and support lifecycle.
   Minor features
   --------------
 
-  Starcraft 1.0 brings the following minor changes.
+  Starcraft 2.0 brings the following minor changes.
 
 
-  <Feature x>
+  <Feature A>
   ~~~~~~~~~~~
 
   <Add a short list of changes to the feature. Keep each item brief and for the
@@ -183,13 +190,13 @@ development keeps pace with the OS's new releases and support lifecycle.
   ``method()`` more descriptive and recommend a likely remedy.">
 
 
-  Backwards-incompatible changes in Starcraft 1.0
-  -----------------------------------------------
+  Backwards-incompatible changes
+  ------------------------------
 
   The following changes are incompatible with previous versions of Starcraft.
 
 
-  <"Removed" or "Disabled"> <feature y>
+  <"Removed" or "Disabled"> <feature B>
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   <Paragraph 1, optional: Briefly cover the sequence of events that led to this
@@ -201,43 +208,66 @@ development keeps pace with the OS's new releases and support lifecycle.
   alternative solution, or state if no alternative exists. If necessary,
   describe the consequences of the reader's inaction. Link to relevant
   documentation, standards, or public discussion. For example, "In accordance
-  with the report, Starcraft 1.0 no longer supports encryption algorithm X. As
+  with the report, Starcraft 2.0 no longer supports encryption algorithm X. As
   of this release, if you haven't already we highly recommend you immediately
   switch to encryption algorithm Y to ensure your data stays protected. For
   more details about this decision and our policy, see ```Security notice on
   encryption X <>`_`` on the Ubuntu blog.">
 
 
-  Deprecated features in Starcraft 1.0
-  ------------------------------------
+  Feature deprecations
+  --------------------
 
-  The following features should no longer be used in Starcraft 1.0, and will be
-  removed in Starcraft 1.1.
+  The following features are deprecated in Starcraft 2.0:
 
-
-  Deprecated <feature z>
+  Deprecated <feature C>
   ~~~~~~~~~~~~~~~~~~~~~~
 
-  <Use the same format as backwards-incompatible changes, but use future tense
-  to describe what we *intend* and *plan* to do in subsequent releases. Think
-  of this as a promise or commitment to the reader, and be mindful of the trust
-  we want them to place in us. Don't write conjecture or make promises about
-  details that haven't been decided. Include only the decisions that we have
-  set in stone and information we're allowed to disclose at of the release day.
-  Use phrases like "we plan to", or "we are working on", or "we have scheduled
-  development of". End by linking to relevant documentation, standards, or
-  public discussion. For example, "In October 2024, the NIST published SP
-  ABC-123, urging software publishers to cease the use of encryption algorithm
-  X. We are deprecating its usage in this release, and plan to remove it in
-  Starcraft 1.1. For more details about this decision and our policy, see
-  ```Security notice on encryption X <>`_`` on the Ubuntu blog.">
+  <Use the same format as backwards-incompatible changes, but use present tense
+  to describe what is deprecated in this release, and how. Advise on an
+  alternative replacement, if it exists. This item is a statement of fact, not
+  a promise. If the implementation or schedule for the deprecation changed from
+  what we originally planned, don't make a point of it -- simply describe what
+  *is*. End by linking to relevant documentation, standards, or public
+  discussion. For example, "In October 2024, the NIST published SP ABC-123,
+  urging software publishers to cease the use of encryption algorithm X. We are
+  deprecating its usage in this release, and advise you to adopt algorithm Z as
+  a replacement. For more details about this decision and our policy, see
+  `Security notice on encryption X <>`_ on the Ubuntu blog.">
+
+
+  Scheduled feature deprecations
+  ------------------------------
+
+  <Iterate on the following paragraph+items if you're covering multiple
+  versions in this section.>
+
+  The following features will be deprecated in Starcraft <planned version>:
+
+
+  <Feature D>
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  <Future deprecation: Use the same format as backwards-incompatible changes,
+  but use future tense to describe what we *intend* and *plan* to do in
+  subsequent releases. Think of this as a promise or commitment to the reader,
+  and be mindful of the trust we want them to place in us. Don't write
+  conjecture or make promises about details that haven't been decided. Include
+  only the decisions that we have set in stone and information we're allowed to
+  disclose at of the release day. Use phrases like "we plan to", "we are
+  working on", or "we have scheduled development of". End by linking to
+  relevant documentation, standards, or public discussion. For example, "In
+  October 2024, the NIST published SP ABC-123, urging software publishers to
+  cease the use of encryption algorithm X. We plan to deprecate it in Starcraft
+  1.2. For more details about this decision and our policy, see `Security
+  notice on encryption X <>`_ on the Ubuntu blog.">
 
 
   Known issues
   ------------
 
-  The following issues are known and scheduled to be fixed in upcoming patch
-  releases.
+  The following issues were reported and are scheduled to be fixed in upcoming
+  patch releases.
 
   See individual issue links for any mitigations.
 
@@ -248,7 +278,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   Fixed bugs and issues
   ---------------------
 
-  The following issues have been resolved in Starcraft 1.0:
+  The following issues have been resolved in Starcraft 2.0:
 
   - <Ticket ID> <Title>
   - <Ticket ID> <Title>
@@ -257,7 +287,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   Contributors
   ------------
 
-  We would like to share a big thank you to all the people who contributed to this release.
+  We would like to express a big thank you to all the people who contributed to
+  this release.
 
   `@alex <>`_, `@blair <>`_, `@cam <>`_, `@devin <>`_
-
