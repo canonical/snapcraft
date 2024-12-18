@@ -178,7 +178,7 @@ setup(
     package_data={
         "snapcraft": ["templates/*"],
     },
-    python_requires=">=3.12",
+    python_requires=">=3.10",
     install_requires=install_requires,
     extras_require=extras_requires,
     test_suite="tests.unit",
