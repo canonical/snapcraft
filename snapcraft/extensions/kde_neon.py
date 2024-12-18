@@ -34,9 +34,15 @@ _QT_VERSION = "5"
 class KDESnaps:
     """A structure of KDE related snaps.
 
-    :cvar sdk: The name of the SDK snap to use.
-    :cvar content: The name of the content snap to use.
-    :cvar builtin: True if the SDK is built into the content snap.
+    :cvar qt5_sdk_snap: The name of the qt5 SDK snap to use.
+    :cvar kf5_sdk_snap: The name of the kf5 SDK snap to use.
+    :cvar content_qt5: The name of the qt5 content snap to use.
+    :cvar content_kf5: The name of the kf5 content snap to use.
+    :cvar qt_version: The major version of qt to use.
+    :cvar gpu_plugs: The gpu plugs to use with gpu-2404.
+    :cvar gpu_layouts: The gpu layouts to use with gpu-2404.
+    :cvar qt5_builtin: True if the SDK is built into the qt5 content snap.
+    :cvar kf5_builtin: True if the SDK is built into the kf5 content snap.
     """
 
     qt5_sdk_snap: str
@@ -225,7 +231,7 @@ class KDENeon(Extension):
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
-                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                    "command-chain": ["snap/command-chain/hooks-configure-fonts"],
                 }
             },
             "layout": {

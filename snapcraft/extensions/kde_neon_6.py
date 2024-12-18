@@ -237,7 +237,7 @@ class KDENeon6(Extension):
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
-                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                    "command-chain": ["snap/command-chain/hooks-configure-fonts"],
                 }
             },
             "layout": {

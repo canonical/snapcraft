@@ -173,7 +173,7 @@ def test_get_root_snippet(kde_neon_extension):
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-fonts"],
             }
         },
         "layout": {
@@ -225,7 +225,7 @@ def test_get_root_snippet_core24(kde_neon_extension_core24):
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-fonts"],
             }
         },
         "layout": {
@@ -314,7 +314,7 @@ def test_get_root_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-fonts"],
             }
         },
         "layout": {
@@ -368,7 +368,7 @@ def test_get_root_snippet_with_external_sdk_core24(
         "hooks": {
             "configure": {
                 "plugs": ["desktop"],
-                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-fonts"],
             }
         },
         "layout": {
