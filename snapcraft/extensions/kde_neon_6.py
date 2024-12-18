@@ -33,7 +33,18 @@ _QT_VERSION = "6"
 
 @dataclasses.dataclass
 class KDESnaps6:
-    """A structure of KDE related snaps."""
+    """A structure of KDE related snaps.
+
+    :cvar qt6_sdk_snap: The name of the qt6 SDK snap to use.
+    :cvar kf6_sdk_snap: The name of the kf6 SDK snap to use.
+    :cvar content_qt6: The name of the qt6 content snap to use.
+    :cvar content_kf6: The name of the kf6 content snap to use.
+    :cvar qt_version: The major version of qt to use.
+    :cvar gpu_plugs: The gpu plugs to use with gpu-2404.
+    :cvar gpu_layouts: The gpu layouts to use with gpu-2404.
+    :cvar qt6_builtin: True if the SDK is built into the qt6 content snap.
+    :cvar kf6_builtin: True if the SDK is built into the kf6 content snap.
+    """
 
     qt6_sdk_snap: str
     kf6_sdk_snap: str
