@@ -436,13 +436,19 @@ class App(models.CraftBaseModel):
 
         return name
 
-    @pydantic.field_validator("bus_name")
+    @pydantic.field_validator(
+        "command", "stop_command", "post_stop_command", "reload_command", "bus_name"
+    )
     @classmethod
-    def _validate_bus_name(cls, name):
-        if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", name):
-            raise ValueError(f"{name!r} is not a valid bus name")
+    def _validate_apps_section_content(cls, command: str) -> str:
+        # Find any invalid characters in the field.
+        # The regex below is derived from snapd's validator code.
+        # https://github.com/canonical/snapd/blob/0706e2d0b20ae2bf030863f142b8491b66e80bcb/snap/validate.go#L756
+        if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", command):
+            message = "App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
+            raise ValueError(message)
 
-        return name
+        return command
 
     @pydantic.field_validator(
         "start_timeout", "stop_timeout", "watchdog_timeout", "restart_delay"

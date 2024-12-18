@@ -70,6 +70,24 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.5.1 (2024-Dec-17)
+-------------------
+
+Core
+====
+
+* Improve validation of ``app`` commands in a ``snapcraft.yaml`` file.
+  This includes ``command``, ``stop-command``, ``post-stop-command``,
+  ``reload-command``, and ``bus-name`` (`#4999`_).
+
+Command line
+============
+
+* Fix crash in command line help when positional arguments exist with
+  no associated help (`#5169`_).
+
+For a complete list of commits, check out the `8.5.1`_ release on GitHub.
+
 8.5.0 (2024-Nov-19)
 -------------------
 
@@ -1431,11 +1449,13 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#4963: https://github.com/canonical/snapcraft/issues/4963
 .. _#4990: https://github.com/canonical/snapcraft/issues/4990
 .. _#4995: https://github.com/canonical/snapcraft/issues/4995
+.. _#4999: https://github.com/canonical/snapcraft/issues/4999
 .. _#5008: https://github.com/canonical/snapcraft/issues/5008
 .. _#5048: https://github.com/canonical/snapcraft/issues/5048
 .. _#5077: https://github.com/canonical/snapcraft/issues/5077
 .. _#5079: https://github.com/canonical/snapcraft/issues/5079
 .. _#5089: https://github.com/canonical/snapcraft/issues/5089
+.. _#5169: https://github.com/canonical/snapcraft/issues/5169
 
 .. _7.5.6: https://github.com/canonical/snapcraft/releases/tag/7.5.6
 .. _7.5.7: https://github.com/canonical/snapcraft/releases/tag/7.5.7
@@ -1471,3 +1491,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.4.3: https://github.com/canonical/snapcraft/releases/tag/8.4.3
 .. _8.4.4: https://github.com/canonical/snapcraft/releases/tag/8.4.4
 .. _8.5.0: https://github.com/canonical/snapcraft/releases/tag/8.5.0
+.. _8.5.1: https://github.com/canonical/snapcraft/releases/tag/8.5.1
