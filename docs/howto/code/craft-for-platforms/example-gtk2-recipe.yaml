@@ -1,0 +1,114 @@
+# Arduino IDE recipe, an example of a GTK2-based app
+
+name: arduino
+title: Arduino IDE
+version: 1.8.12
+summary: Write code and upload it to your Arduino-compatible board.
+description: |
+  Arduino is an open-source physical computing platform based on a simple I/O
+  board and a development environment that implements the Processing/Wiring
+  language. Arduino can be used to develop stand-alone interactive objects or
+  can be connected to software on your computer (e.g. Flash, Processing and
+  MaxMSP). The boards can be assembled by hand or purchased preassembled at
+  https://arduino.cc.
+license: GPL-2.0
+icon: snap/gui/arduino.png
+grade: stable
+
+base: core18
+confinement: strict
+
+architectures:
+  - build-on: amd64
+  - build-on: i386
+  - build-on: armhf
+  - build-on: arm64
+
+apps:
+  arduino:
+    command: desktop-launch $SNAP/arduino-snap
+    environment:
+      # Fallback to XWayland if running in a Wayland session.
+      DISABLE_WAYLAND: 1
+    plugs:
+      - x11
+      - unity7
+      - home
+      - network
+      - serial-port
+      - raw-usb
+  builder:
+    command: arduino-builder
+
+parts:
+  upstream:
+    source:
+      - on amd64: https://www.arduino.cc/download.php?f=/arduino-$SNAPCRAFT_PROJECT_VERSION-linux64.tar.xz
+      - on i386: https://www.arduino.cc/download.php?f=/arduino-$SNAPCRAFT_PROJECT_VERSION-linux32.tar.xz
+      - on armhf: https://www.arduino.cc/download.php?f=/arduino-$SNAPCRAFT_PROJECT_VERSION-linuxarm.tar.xz
+      - on arm64: https://www.arduino.cc/download.php?f=/arduino-$SNAPCRAFT_PROJECT_VERSION-linuxaarch64.tar.xz
+    source-type: tar
+    plugin: dump
+    prime:
+      - -install.sh
+      - -uninstall.sh
+      - -java/lib/ext/jfxrt.jar
+      - -java/lib/jfxswt.jar
+      - -java/lib/*/libjfxwebkit.so
+      - -java/lib/*/libjfxmedia.so
+    stage-packages:
+      - libxtst6
+      - libcanberra-gtk-module
+    after:
+      - desktop-gtk2
+
+  launcher:
+    plugin: dump
+    source: scripts
+    prime:
+      - arduino-snap
+
+  desktop-gtk2:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: gtk
+    plugin: make
+    make-parameters: ["FLAVOR=gtk2"]
+    build-packages:
+      - build-essential
+      - libgtk2.0-dev
+    stage-packages:
+      - libxkbcommon0 # XKB_CONFIG_ROOT
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libgtk2.0-0
+      - libgdk-pixbuf2.0-0
+      - libglib2.0-bin
+      - libgtk2.0-bin
+      - unity-gtk2-module
+      - locales-all
+      - libappindicator1
+      - xdg-user-dirs
+      - ibus-gtk
+      - libibus-1.0-5
+
+plugs:
+  gtk-2-engines:
+    interface: content
+    target: $SNAP/lib/gtk-2.0
+    default-provider: gtk2-common-themes
+  gtk-2-themes:
+    interface: content
+    target: $SNAP/data-dir/themes
+    default-provider: gtk-common-themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+  sound-themes:
+    interface: content
+    target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes
