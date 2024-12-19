@@ -191,7 +191,7 @@ class KDENeon(Extension):
         qt_version = self.kde_snaps.qt_version
 
         return {
-            "assumes": ["snapd2.58.3"],  # for 'snapctl is-connected'
+            "assumes": ["snapd2.58.3"],  # for cups support
             "compression": "lzo",
             "plugs": {
                 "desktop": {"mount-host-font-cache": False},
@@ -231,7 +231,7 @@ class KDENeon(Extension):
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
-                    "command-chain": ["snap/command-chain/hooks-configure-fonts"],
+                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
                 }
             },
             "layout": {
