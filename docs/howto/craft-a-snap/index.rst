@@ -1,23 +1,19 @@
 .. _craft-a-snap:
 
-Craft for platforms
-===================
+Craft a snap
+============
 
-Apps are often built using programming languages and technologies that
-are supplied with their own build tools. Snapcraft uses plugins to integrate
-with these tools in order to create snaps.
+Snapcraft can package apps and programs from multiple languages, frameworks,
+and meta build systems. You can create snaps from apps you've already built and
+zipped, or directly from source. No matter their underlying code, all apps gain
+the same benefits from being packed into snaps.
 
-Snapcraft can package apps and programs from many programming languages,
-frameworks, and meta build systems, which for simplicity we call *platforms*
-(no relation to the term as it's used in snap recipes).
+Snapcraft uses special :ref:`plugins` and extensions to hook into and manage
+the different languages and frameworks.
 
-You can create snaps from apps you've already built and zipped, or directly from source.
-
-All supported platforms receive the same benefits from having their apps
-snapped.
-
-Choose a from the following guides to see examples for each platform, and
-review the unique elements of crafting a snap for them.
+Choose from the following guides to see example recipes for the supported
+languages and frameworks. These guides are intended to provide you a good basis
+to learn how to craft a snap with a given plugin.
 
 
 Platform-agnostic

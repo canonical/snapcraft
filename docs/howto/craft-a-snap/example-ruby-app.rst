@@ -21,7 +21,7 @@ syntax checks for Markdown files.
 
 .. collapse:: Markdown lint tool recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-ruby-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-ruby-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -29,7 +29,7 @@ syntax checks for Markdown files.
 Add a part written in Ruby
 --------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-ruby-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-ruby-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: - git
@@ -45,4 +45,3 @@ To declare a Ruby part:
 #. For the ``gems`` key, list any gem dependencies.
 #. If you need the latest version of the gem bundler, set ``use-bundler`` to
    ``true``.
-

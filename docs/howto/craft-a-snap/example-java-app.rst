@@ -21,7 +21,7 @@ tool for power and cooling components in PCs.
 
 .. collapse:: Cal recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-java-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-java-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -29,7 +29,7 @@ tool for power and cooling components in PCs.
 Add a part written in Java
 --------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-java-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-java-recipe.yaml
   :language: yaml
   :dedent: 2
   :lines: 50-
@@ -45,7 +45,7 @@ To declare a Java part:
 #. Set ``plugin: maven``.
 #. For ``build-packages``, list the following dependencies:
 
-   .. literalinclude:: ../code/craft-for-platforms/example-java-recipe.yaml
+   .. literalinclude:: ../code/craft-a-snap/example-java-recipe.yaml
     :language: yaml
     :start-at: - maven
     :dedent: 6

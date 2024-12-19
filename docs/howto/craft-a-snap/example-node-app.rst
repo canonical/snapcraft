@@ -22,7 +22,7 @@ obtaining local weather information.
 
 .. collapse:: wethr recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-node-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-node-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -30,7 +30,7 @@ obtaining local weather information.
 Add a part written in Node
 --------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-node-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-node-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: npm-node-version: 14.16.1
@@ -59,4 +59,3 @@ To declare a Node part:
      .. group-tab:: Snapcraft 7
 
        Set ``npm-node-version`` to the required NPM version.
-
