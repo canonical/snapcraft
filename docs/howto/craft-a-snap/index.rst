@@ -8,9 +8,8 @@ and meta build systems. You can create snaps from apps you've already built and
 zipped, or directly from source. No matter their underlying code, all apps gain
 the same benefits from being packed into snaps.
 
-Snapcraft uses special :ref:`plugins` to hook into and manage the different
-languages and frameworks, so snap crafting is usually separated between the
-different plugins.
+Snapcraft uses special :ref:`plugins` and extensions to hook into and manage
+the different languages and frameworks.
 
 Choose from the following guides to see example recipes for the supported
 languages and frameworks. These guides are intended to provide you a good basis
