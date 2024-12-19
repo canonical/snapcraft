@@ -21,7 +21,7 @@ files.
 
 .. collapse:: XSV recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-rust-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-rust-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -29,7 +29,7 @@ files.
 Add a part written in Rust
 --------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-rust-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-rust-recipe.yaml
     :language: yaml
     :start-at: parts:
     :end-at: source: .
@@ -46,4 +46,3 @@ To declare a Rust part:
 #. Set ``plugin: python``.
 #. If the snap uses core18, you can override the Rust toolchain version with
    the ``rust-revision`` list key.
-

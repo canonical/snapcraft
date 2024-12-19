@@ -21,7 +21,7 @@ where you drive a buggy across the moon's surface.
 
 .. collapse:: moon-buggy recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-c-or-cpp-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-c-or-cpp-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -29,7 +29,7 @@ where you drive a buggy across the moon's surface.
 Add a part written in C or C++
 ------------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-c-or-cpp-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-c-or-cpp-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: - texinfo

@@ -16,7 +16,7 @@ The following code comprises the recipe of a Qt5 KDE project, `KCalc
 
 .. collapse:: KCalc recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -24,7 +24,7 @@ The following code comprises the recipe of a Qt5 KDE project, `KCalc
 Add an app that uses KDE
 ------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
   :language: yaml
   :start-at: apps:
   :end-at: - pulseaudio
@@ -47,7 +47,7 @@ To add a GTK4 app:
 Add a part written for Qt5 KDE
 ------------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: - "-DKDE_SKIP_TEST_SETTINGS=ON"
@@ -68,7 +68,7 @@ To add a Qt5 KDE part:
    technical details about how this works.
 #. For ``build-snaps``, list the following dependencies:
 
-   .. literalinclude:: ../code/craft-for-platforms/example-qt5-kde-recipe.yaml
+   .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
      :language: yaml
      :dedent: 6
      :lines: 37-38

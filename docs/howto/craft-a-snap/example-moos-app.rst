@@ -17,7 +17,7 @@ The following code comprises the recipe for the `MOOS core project
 
 .. collapse:: MOOS recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-moos-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-moos-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -25,7 +25,7 @@ The following code comprises the recipe for the `MOOS core project
 Add a part written for MOOS
 ---------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-moos-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-moos-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: build-packages: [g++]

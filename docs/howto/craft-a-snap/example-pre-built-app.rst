@@ -24,7 +24,7 @@ The following code comprises the recipe of a C project, `Geekbench
 
 .. collapse:: Geekbench recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-pre-built-app.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-pre-built-app.yaml
     :language: yaml
     :lines: 2-
 
@@ -32,7 +32,7 @@ The following code comprises the recipe of a C project, `Geekbench
 Add a compiled part
 -------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-pre-built-app.yaml
+.. literalinclude:: ../code/craft-a-snap/example-pre-built-app.yaml
   :language: yaml
   :start-at: parts:
   :end-at: source: http://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
