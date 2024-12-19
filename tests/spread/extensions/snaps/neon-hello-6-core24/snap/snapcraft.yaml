@@ -5,7 +5,7 @@ description: It simply prints a hello world
 
 grade: devel
 confinement: strict
-base: core22
+base: core24
 
 apps:
   neon-hello-6:
