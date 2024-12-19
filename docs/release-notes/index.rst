@@ -44,26 +44,12 @@ Past releases
 - <link to past release, initial, such as 6.0.0>
 
 
-.. _release_policy_and_schedule:
+.. _release-versioning:
 
-Release policy and schedule
----------------------------
+Release versioning
+------------------
 
-<Apps: Canonical is committed to releasing Starcraft on a regular monthly
-cadence. Our goal is to have new features and fixes available as soon as
-possible. On the first Monday of the month, we publish a major or minor
-version of Starcraft to the candidate channel, where it undergoes testing and
-feedback. If we determine the candidate is ready for mainstream use by the
-Monday of the week after, we release it as a stable version. During testing
-and feedback of a candidate, we prioritise fixes for critical issues.>
-
-<Libraries: Canonical is committed to supporting the <"latest major release" or
-"last two major releases"> of Starcraft. [Optional: We forward-port changes in
-older releases to the latest release, if they're compatible.] Starcraft is
-released when it achieves development milestones in its lifecycle. It doesn't
-follow a predefined release cadence.>
-
-Starcraft release naming follows the Semantic Versioning 2.0.0 scheme with
+Starcraft version naming follows the Semantic Versioning 2.0.0 scheme with
 numbers for major, minor, and patch versions.
 
 .. list-table::
@@ -108,8 +94,6 @@ development keeps pace with the OS's new releases and support lifecycle.>
   15 October 2024
 
   Learn about the new features, changes, and fixes introduced in Starcraft 2.0.
-  For information about the Starcraft release cycle, see the
-  :ref:`release_policy_and_schedule`.
 
 
   Requirements and compatibility
