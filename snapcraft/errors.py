@@ -186,7 +186,7 @@ class SnapcraftAssertionError(SnapcraftError):
 class SnapPackError(SnapcraftError):
     """Snapd packing error."""
 
-    def _get_error_string_from_stderr(self, stderr: str) -> str | None:
+    def _get_error_string_from_stderr(self, stderr: str | None) -> str | None:
         if stderr is None:
             return "snapd did not report an error"
 
