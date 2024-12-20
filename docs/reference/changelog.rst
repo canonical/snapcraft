@@ -70,6 +70,15 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.6.0 (2025-Jan-20)
+-------------------
+
+Core
+====
+
+* Improved error messaging when unable to pack.
+
+
 8.5.1 (2024-Dec-17)
 -------------------
 
