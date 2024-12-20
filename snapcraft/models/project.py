@@ -517,7 +517,7 @@ class App(models.CraftBaseModel):
     )
     command_chain: list[str] = pydantic.Field(
         default_factory=list,
-        description="The sequence of commands to run before the app's command runs. Also applied when running ``snap run --shell``",
+        description="The sequence of commands to run before the app's command runs. These commands also run when the user invokes ``snap run --shell``.",
     )
     sockets: dict[str, Socket] | None = pydantic.Field(
         default=None,
@@ -535,7 +535,12 @@ class App(models.CraftBaseModel):
     )
     passthrough: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="Attributes to not validate for correctness. Useful for testing experimental snapd features.",
+        description=(
+            "Values to push to the built snap's metadata file, snap.yaml. "
+            "Snapcraft doesn't validate the values provided here, so this key is "
+            "a convenient means of configuring snap features that are "
+            "experimental or in early access."
+        ),
     )
 
     @pydantic.field_validator("autostart")
@@ -868,12 +873,12 @@ class Project(models.Project):
     )
     build_packages: Grammar[list[str]] | None = pydantic.Field(
         default=None,
-        description="Base dependent build dependencies required to build parts.",
+        description="The system packages required on the host so that it can build parts for the snap.",
         examples=["build-packages: libssl-dev, libyaml-dev"],
     )
     build_snaps: Grammar[list[str]] | None = pydantic.Field(
         default=None,
-        description="Snap dependencies required to build parts.",
+        description="The snaps required on the host so that it can build parts for the snap.",
         examples=["build-snaps: go/1.22/stable, yq"],
     )
     ua_services: set[str] | None = pydantic.Field(
