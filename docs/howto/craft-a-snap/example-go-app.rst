@@ -21,7 +21,7 @@ detects exclusive language.
 
 .. collapse:: woke recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-go-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-go-recipe.yaml
     :language: yaml
     :lines: 3-
 
@@ -29,7 +29,7 @@ detects exclusive language.
 Add a part written in Go
 ------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-go-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-go-recipe.yaml
   :language: yaml
   :start-at: parts:
 

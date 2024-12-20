@@ -18,7 +18,7 @@ reader.
 
 .. collapse:: foliate recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-gtk3-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -26,7 +26,7 @@ reader.
 Add an app that uses GNOME
 --------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk3-recipe.yaml
   :language: yaml
   :start-at: apps:
   :end-at: common-id: com.github.johnfactotum.Foliate
@@ -50,7 +50,7 @@ To add a GTK4 app:
 Add a part written for GTK3
 ---------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk3-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: parse-info: [usr/share/metainfo/com.github.johnfactotum.Foliate.appdata.xml]
@@ -76,7 +76,7 @@ To add a GTK4 part:
 Add required slots
 ------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk3-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk3-recipe.yaml
   :language: yaml
   :lines: 39-
   :end-at: name: com.github.johnfactotum.Foliate
