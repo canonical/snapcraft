@@ -376,7 +376,7 @@ soupsieve==2.6
     # via
     #   beautifulsoup4
     #   pyspelling
-sphinx==7.3.7
+sphinx==7.4.7
     # via
     #   autodocsumm
     #   canonical-sphinx
