@@ -19,7 +19,7 @@ pytz==2022.6
 requests==2.32.2
 six==1.16.0
 snowballstemmer==2.2.0
-soupsieve==2.3.2.post1
+soupsieve==2.6
 Sphinx==5.3.0
 sphinx-autobuild==2021.3.14
 sphinx-basic-ng==1.0.0b2
