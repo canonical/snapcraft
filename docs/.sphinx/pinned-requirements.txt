@@ -14,7 +14,7 @@ MarkupSafe==2.1.5
 packaging==23.2
 pyenchant==3.2.2
 Pygments==2.15.0
-pyparsing==3.0.9
+pyparsing==3.2.0
 pytz==2022.6
 requests==2.32.2
 six==1.16.0
