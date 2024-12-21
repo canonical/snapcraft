@@ -59,7 +59,7 @@ click==8.1.7
     #   uvicorn
 colorama==0.4.6
     # via sphinx-autobuild
-craft-application==4.4.0
+craft-application==4.6.0
     # via snapcraft (setup.py)
 craft-archives==2.0.1
     # via

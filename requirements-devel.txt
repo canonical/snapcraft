@@ -45,7 +45,7 @@ coverage[toml]==7.6.4
     # via
     #   pytest-cov
     #   snapcraft (setup.py)
-craft-application==4.4.0
+craft-application==4.6.0
     # via snapcraft (setup.py)
 craft-archives==2.0.1
     # via
