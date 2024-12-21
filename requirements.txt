@@ -14,7 +14,7 @@ boolean-py==4.0
     # via license-expression
 catkin-pkg==1.0.0 ; sys_platform == "linux"
     # via snapcraft (setup.py)
-certifi==2024.8.30
+certifi==2024.12.14
     # via requests
 cffi==1.17.1
     # via

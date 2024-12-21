@@ -20,7 +20,7 @@ cachetools==5.5.0
     # via tox
 catkin-pkg==1.0.0 ; sys_platform == "linux"
     # via snapcraft (setup.py)
-certifi==2024.8.30
+certifi==2024.12.14
     # via requests
 cffi==1.17.1
     # via
