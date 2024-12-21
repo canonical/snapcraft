@@ -8,7 +8,7 @@ annotated-types==0.7.0
     # via
     #   craft-platforms
     #   pydantic
-astroid==3.3.5
+astroid==3.3.6
     # via pylint
 attrs==24.2.0
     # via snapcraft (setup.py)
@@ -41,13 +41,13 @@ codespell[toml]==2.3.0
     # via snapcraft (setup.py)
 colorama==0.4.6
     # via tox
-coverage[toml]==7.6.4
+coverage[toml]==7.6.9
     # via
     #   pytest-cov
     #   snapcraft (setup.py)
 craft-application==4.4.0
     # via snapcraft (setup.py)
-craft-archives==2.0.1
+craft-archives==2.0.2
     # via
     #   craft-application
     #   snapcraft (setup.py)
@@ -139,7 +139,7 @@ lazr-restfulclient==0.14.6
     #   craft-archives
     #   launchpadlib
     #   snapcraft (setup.py)
-lazr-uri==1.0.6
+lazr-uri==1.0.7
     # via
     #   craft-archives
     #   launchpadlib
@@ -262,7 +262,7 @@ pygit2==1.13.3
     # via
     #   craft-application
     #   snapcraft (setup.py)
-pylint==3.3.1
+pylint==3.3.2
     # via snapcraft (setup.py)
 pylxd==2.3.5 ; sys_platform == "linux"
     # via snapcraft (setup.py)
@@ -284,7 +284,7 @@ pyramid==2.0.2
     # via snapcraft (setup.py)
 pyrfc3339==1.1
     # via macaroonbakery
-pytest==8.3.3
+pytest==8.3.4
     # via
     #   pytest-check
     #   pytest-cov
@@ -387,7 +387,7 @@ types-setuptools==75.3.0.20241112
     # via snapcraft (setup.py)
 types-simplejson==3.19.0.20240801
     # via snapcraft (setup.py)
-types-tabulate==0.9.0.20240106
+types-tabulate==0.9.0.20241207
     # via snapcraft (setup.py)
 types-toml==0.10.8.20240310
     # via snapcraft (setup.py)
@@ -407,7 +407,7 @@ urllib3==2.2.3
     #   requests-unixsocket2
 validators==0.34.0
     # via snapcraft (setup.py)
-venusian==3.1.0
+venusian==3.1.1
     # via pyramid
 virtualenv==20.27.1
     # via tox
@@ -428,4 +428,4 @@ zope-interface==7.1.1
 # pip
 # setuptools
 python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz ; sys.platform == "linux"
-pyinstaller==5.13.1; sys.platform == "win32"
+pyinstaller==5.13.2; sys.platform == "win32"
