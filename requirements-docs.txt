@@ -262,7 +262,7 @@ pydantic-core==2.27.1
     # via pydantic
 pyelftools==0.31
     # via snapcraft (setup.py)
-pygit2==1.13.3
+pygit2==1.16.0
     # via
     #   craft-application
     #   snapcraft (setup.py)
