@@ -16,6 +16,9 @@
 
 """Snapcraft error tests."""
 
+import subprocess
+import textwrap
+
 import pytest
 
 from snapcraft import errors
@@ -40,3 +43,86 @@ def test_maintenance_base_fallback():
     assert str(error) == "'unknown-base' is not supported on this version of Snapcraft."
     assert error.resolution is None
     assert error.docs_url == "https://snapcraft.io/docs/base-snaps"
+
+
+def test_snap_pack_error():
+    error = errors.SnapPackError(
+        call_error=subprocess.CalledProcessError(
+            returncode=1,
+            cmd=["snap", "pack"],
+            stderr=textwrap.dedent(
+                """\
+                2024/12/20 11:25:37.751687 container.go:411: in snap "my-snap-name": path "this/file/does/not" does not exist
+                2024/12/20 11:25:37.751693 container.go:411: in snap "my-snap-name": path "this/file/does" does not exist
+                2024/12/20 11:25:37.751697 container.go:411: in snap "my-snap-name": path "this/file" does not exist
+                2024/12/20 11:25:37.751700 container.go:411: in snap "my-snap-name": path "this" does not exist
+                error: referenced command not found in snap
+                """
+            ),
+        )
+    )
+
+    assert str(error) == "Snapd failed to pack"
+    assert error.details == "referenced command not found in snap"
+    assert error.resolution is None
+    assert error.docs_url is None
+
+
+def test_snap_pack_error_keep_last_error():
+    error = errors.SnapPackError(
+        call_error=subprocess.CalledProcessError(
+            returncode=1,
+            cmd=["snap", "pack"],
+            stderr=textwrap.dedent(
+                """\
+                2024/12/20 11:25:37.751687 container.go:411: in snap "my-snap-name": path "this/file/does/not" does not exist
+                2024/12/20 11:25:37.751693 container.go:411: in snap "my-snap-name": path "this/file/does" does not exist
+                error: something happened
+                2024/12/20 11:25:37.751697 container.go:411: in snap "my-snap-name": path "this/file" does not exist
+                2024/12/20 11:25:37.751700 container.go:411: in snap "my-snap-name": path "this" does not exist
+                error: referenced command not found in snap
+                """
+            ),
+        )
+    )
+
+    assert str(error) == "Snapd failed to pack"
+    assert error.details == "referenced command not found in snap"
+    assert error.resolution is None
+    assert error.docs_url is None
+
+
+def test_snap_pack_error_no_error_lines():
+    error = errors.SnapPackError(
+        call_error=subprocess.CalledProcessError(
+            returncode=1,
+            cmd=["snap", "pack"],
+            stderr=textwrap.dedent(
+                """\
+                2024/12/20 11:25:37.751687 container.go:411: in snap "my-snap-name": path "this/file/does/not" does not exist
+                2024/12/20 11:25:37.751693 container.go:411: in snap "my-snap-name": path "this/file/does" does not exist
+                2024/12/20 11:25:37.751697 container.go:411: in snap "my-snap-name": path "this/file" does not exist
+                2024/12/20 11:25:37.751700 container.go:411: in snap "my-snap-name": path "this" does not exist
+                """
+            ),
+        )
+    )
+
+    assert str(error) == "Snapd failed to pack"
+    assert error.details == "snapd did not report an error"
+    assert error.resolution is None
+    assert error.docs_url is None
+
+
+def test_snap_pack_error_no_stderr():
+    error = errors.SnapPackError(
+        call_error=subprocess.CalledProcessError(
+            returncode=1,
+            cmd=["snap", "pack"],
+        )
+    )
+
+    assert str(error) == "Snapd failed to pack"
+    assert error.details == "snapd did not report an error"
+    assert error.resolution is None
+    assert error.docs_url is None
