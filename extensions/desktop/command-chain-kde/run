@@ -12,8 +12,8 @@ fi
 
 
 if [ ! -f "$1" ]; then
-  >&2 echo "Content snap command-chain for $1 not found: ensure slot is connected"
-  exit 1
+  echo "Content snap command-chain for $1 not found: ensure slot is connected"
+  exit
 fi
 
 # emulate "exec $@" using "source"
