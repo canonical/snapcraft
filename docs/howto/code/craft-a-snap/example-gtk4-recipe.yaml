@@ -1,0 +1,36 @@
+# gnome-text-editor recipe, an example of a GTK4-based app
+
+name: gnome-text-editor
+grade: stable
+adopt-info: gnome-text-editor
+license: GPL-3.0+
+
+base: core22
+confinement: strict
+
+apps:
+  gnome-text-editor:
+    extensions: [gnome]
+    command: usr/bin/gnome-text-editor
+    desktop: usr/share/applications/org.gnome.TextEditor.desktop
+    common-id: org.gnome.TextEditor.desktop
+    plugs:
+      - gsettings
+      - cups
+
+parts:
+  gnome-text-editor:
+    source: https://gitlab.gnome.org/GNOME/gnome-text-editor
+    source-tag: "42.2"
+    source-type: git
+    plugin: meson
+    meson-parameters:
+      - --prefix=/usr
+      - --buildtype=release
+    parse-info: [usr/share/metainfo/org.gnome.TextEditor.appdata.xml]
+
+slots:
+  gnome-text-editor:
+    interface: dbus
+    bus: session
+    name: org.gnome.TextEditor

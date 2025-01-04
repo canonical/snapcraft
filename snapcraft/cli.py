@@ -151,7 +151,6 @@ COMMAND_GROUPS = [
         "Other",
         [
             commands.LintCommand,
-            commands.InitCommand,
         ],
     ),
 ]

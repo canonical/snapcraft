@@ -14,28 +14,60 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import pathlib
 import sys
-from pathlib import Path
 from textwrap import dedent
-from unittest.mock import call
 
 import pytest
 
-from snapcraft import cli
+from snapcraft import application
 from snapcraft.models.project import Project
-from snapcraft.parts.yaml_utils import _SNAP_PROJECT_FILES, apply_yaml, process_yaml
+from snapcraft.parts.yaml_utils import apply_yaml, process_yaml
 
 
-@pytest.fixture(autouse=True)
-def mock_argv(mocker):
-    return mocker.patch.object(sys, "argv", ["snapcraft", "init"])
+@pytest.fixture
+def valid_new_dir(tmp_path, monkeypatch):
+    """Change to a new temporary directory whose name is a valid snap name."""
+    new_dir = tmp_path / "test-snap-name-dir"
+    new_dir.mkdir()
+    monkeypatch.chdir(new_dir)
+    return new_dir
 
 
-def test_init_default(emitter, new_dir):
+def _create_command(
+    *,
+    profile: str | None = None,
+    project_dir: str | None = None,
+    name: str | None = None,
+):
+    """Build a snapcraft init command."""
+    cmd = ["snapcraft", "init"]
+    if profile:
+        cmd.extend(["--profile", profile])
+    if project_dir:
+        cmd.append(project_dir)
+    if name:
+        cmd.extend(["--name", name])
+    return cmd
+
+
+@pytest.mark.parametrize("profile", [None, "simple"])
+@pytest.mark.parametrize("name", [None, "test-snap-name"])
+@pytest.mark.parametrize("project_dir", [None, "test-project-dir"])
+def test_init_default(profile, name, project_dir, emitter, valid_new_dir, mocker):
     """Test the 'snapcraft init' command."""
-    snapcraft_yaml = Path("snap/snapcraft.yaml")
+    if name:
+        expected_name = name
+    elif project_dir:
+        expected_name = project_dir
+    else:
+        expected_name = str(valid_new_dir.name)
+    snapcraft_yaml = pathlib.Path(project_dir or valid_new_dir) / "snap/snapcraft.yaml"
+    cmd = _create_command(profile=profile, project_dir=project_dir, name=name)
+    mocker.patch.object(sys, "argv", cmd)
+    app = application.create_app()
 
-    cli.run()
+    app.run()
 
     assert snapcraft_yaml.exists()
     # unmarshal the snapcraft.yaml to verify its contents
@@ -43,7 +75,7 @@ def test_init_default(emitter, new_dir):
     project = Project.unmarshal(data)
     assert project == Project.unmarshal(
         {
-            "name": "my-snap-name",
+            "name": expected_name,
             "base": "core24",
             "version": "0.1",
             "summary": "Single-line elevator pitch for your amazing snap",
@@ -61,46 +93,10 @@ def test_init_default(emitter, new_dir):
             "platforms": {"amd64": {"build-on": "amd64", "build-for": "amd64"}},
         }
     )
-    emitter.assert_interactions(
-        [
-            call("progress", "Checking for an existing 'snapcraft.yaml'."),
-            call("progress", "Could not find an existing 'snapcraft.yaml'."),
-            call("progress", "Creating 'snap/snapcraft.yaml'."),
-            call("message", "Created 'snap/snapcraft.yaml'."),
-            call(
-                "message",
-                "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-                "information about the snapcraft.yaml format.",
-            ),
-        ]
-    )
-
-
-def test_init_snap_dir_exists(emitter, new_dir):
-    """'snapcraft init' should work even if the 'snap/' directory already exists."""
-    snapcraft_yaml = Path("snap/snapcraft.yaml")
-    Path("snap").mkdir()
-
-    cli.run()
-
-    assert snapcraft_yaml.exists()
-    emitter.assert_message("Created 'snap/snapcraft.yaml'.")
-
-
-@pytest.mark.parametrize(
-    "snapcraft_yaml", [project.project_file for project in _SNAP_PROJECT_FILES]
-)
-def test_init_exists(capsys, emitter, new_dir, snapcraft_yaml):
-    """Raise an error if a snapcraft.yaml file already exists."""
-    snapcraft_yaml.parent.mkdir(parents=True, exist_ok=True)
-    snapcraft_yaml.touch()
-
-    cli.run()
-
-    out, err = capsys.readouterr()
-    assert not out
-    assert (
-        "could not initialize a new snapcraft project because "
-        f"{str(snapcraft_yaml)!r} already exists"
-    ) in err
     emitter.assert_progress("Checking for an existing 'snapcraft.yaml'.")
+    emitter.assert_debug("Could not find an existing 'snapcraft.yaml'.")
+    emitter.assert_message(
+        "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
+        "information about the snapcraft.yaml format."
+    )
+    emitter.assert_message("Successfully initialised project.")

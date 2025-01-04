@@ -56,6 +56,10 @@ class TestExtensionROS2JazzyExtension:
         extension = setup_method_fixture()
         assert extension.ROS_VERSION == "2"
 
+    def test_is_experimental(self, setup_method_fixture):
+        extension = setup_method_fixture()
+        assert not extension.is_experimental(None)
+
     def test_get_supported_bases(self, setup_method_fixture):
         extension = setup_method_fixture()
         assert extension.get_supported_bases() == ("core24",)
@@ -110,7 +114,7 @@ class TestExtensionROS2JazzyExtension:
             "${PYTHONPATH}",
         ]
         extension = setup_method_fixture()
-        assert extension.get_app_snippet() == {
+        assert extension.get_app_snippet(app_name="test-app") == {
             "command-chain": ["snap/command-chain/ros2-launch"],
             "environment": {
                 "ROS_VERSION": "2",

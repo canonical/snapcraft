@@ -31,10 +31,10 @@ execute: |
   # First with lxd
   snapcraft --use-lxd
   ls -l
-  test -f my-snap-name_5.5-dirty_amd64.snap
+  test -f test-snap_5.5-dirty_amd64.snap
   rm ./*.snap
 
   # Then on host.
   snapcraft --destructive-mode
   ls -l
-  test -f my-snap-name_5.5-dirty_amd64.snap
+  test -f test-snap_5.5-dirty_amd64.snap

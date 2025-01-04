@@ -12,8 +12,6 @@ systems:
 
 environment:
 
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
-
   SNAP_DIR: ../snaps/ros2-jazzy-hello
   SNAP: ros2-jazzy-hello
 

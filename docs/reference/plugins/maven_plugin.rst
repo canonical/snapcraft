@@ -1,3 +1,4 @@
+.. _maven_plugin:
 
 .. include:: /common/craft-parts/reference/plugins/maven_plugin.rst
    :end-before: .. _maven-details-begin:

@@ -218,13 +218,21 @@ def apply_yaml(
     return yaml_data
 
 
-def get_snap_project() -> _SnapProject:
+def get_snap_project(project_dir: Path | None = None) -> _SnapProject:
     """Find the snapcraft.yaml to load.
+
+    :param project_dir: The directory to search for the project yaml file. If not
+    provided, the current working directory is used.
 
     :raises SnapcraftError: if the project yaml file cannot be found.
     """
     for snap_project in _SNAP_PROJECT_FILES:
-        if snap_project.project_file.exists():
+        if project_dir:
+            snap_project_path = project_dir / snap_project.project_file
+        else:
+            snap_project_path = snap_project.project_file
+
+        if snap_project_path.exists():
             return snap_project
 
     raise errors.ProjectMissing()

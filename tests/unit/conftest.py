@@ -103,7 +103,7 @@ def fake_extension():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {"grade": "fake-grade"}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -142,7 +142,7 @@ def fake_extension_extra():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -176,7 +176,7 @@ def fake_extension_invalid_parts():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {"grade": "fake-grade"}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -212,7 +212,7 @@ def fake_extension_experimental():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
@@ -248,7 +248,7 @@ def fake_extension_name_from_legacy():
         def get_root_snippet(self) -> Dict[str, Any]:
             return {}
 
-        def get_app_snippet(self) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
         def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:

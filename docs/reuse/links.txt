@@ -14,7 +14,6 @@
 .. _`snapcraft.yaml`: https://snapcraft.io/docs/snapcraft-schema
 .. _`snap-channels`: https://snapcraft.io/docs/channels
 .. _`Snap Store desktop app`: https://snapcraft.io/snap-store
-.. _`Snap Store`: https://snapcraft.io/store
 .. _Sphinx reStructuredText Primer: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`the Snapcraft forum`: https://forum.snapcraft.io
 .. _`Ubuntu Core`: https://ubuntu.com/core/

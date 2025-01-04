@@ -964,24 +964,6 @@ class TestAppValidation:
         assert project.apps is not None
         assert project.apps["app1"].common_id == "test-common-id"
 
-    @pytest.mark.parametrize(
-        "bus_name",
-        ["test-bus-name", "_invalid!"],
-    )
-    def test_app_bus_name(self, bus_name, app_yaml_data):
-        data = app_yaml_data(bus_name=bus_name)
-
-        if bus_name != "_invalid!":
-            project = Project.unmarshal(data)
-            assert project.apps is not None
-            assert project.apps["app1"].bus_name == bus_name
-        else:
-            error = (
-                "apps.app1.bus_name\n  Value error, '_invalid!' is not a valid bus name"
-            )
-            with pytest.raises(pydantic.ValidationError, match=error):
-                Project.unmarshal(data)
-
     def test_app_completer(self, app_yaml_data):
         data = app_yaml_data(completer="test-completer")
         project = Project.unmarshal(data)
@@ -1445,6 +1427,62 @@ class TestAppValidation:
         error = "provenance must consist of alphanumeric characters and/or hyphens."
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(provenance=provenance))
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "command",
+            "stop_command",
+            "post_stop_command",
+            "reload_command",
+            "bus_name",
+        ],
+    )
+    def test_app_command_lexicon_good(
+        self,
+        app_yaml_data,
+        key: str,
+    ):
+        """Verify that command validation lets in a valid command."""
+        command = {key: "mkbird --chirps 5"}
+        data = app_yaml_data(**command)
+        proj = Project.unmarshal(data)
+
+        # Ensure the happy path
+        assert proj.apps is not None
+        assert getattr(proj.apps["app1"], key) == "mkbird --chirps 5"
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "command",
+            "stop_command",
+            "post_stop_command",
+            "reload_command",
+            "bus_name",
+        ],
+    )
+    @pytest.mark.parametrize(
+        "value",
+        [
+            pytest.param(
+                "bin/mkbird --chirps=5",
+                id="has_bad_char",
+            ),
+            pytest.param('mkbird --chirps=1337 --name="81U3J@Y"', id="many_bad"),
+        ],
+    )
+    def test_app_command_lexicon_bad(self, app_yaml_data, key: str, value: str):
+        """Verify that invalid characters in command fields raise an error."""
+        command = {key: value}
+        data = app_yaml_data(**command)
+
+        err_msg = "App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
+
+        with pytest.raises(pydantic.ValidationError) as val_err:
+            Project.unmarshal(data)
+
+        assert err_msg in str(val_err.value)
 
 
 class TestGrammarValidation:
@@ -2486,40 +2524,6 @@ def test_platform_default():
     ]
 
 
-def test_build_planner_get_build_plan_base(mocker):
-    """Test `get_build_plan()` uses the correct base."""
-    mock_get_effective_base = mocker.patch(
-        "snapcraft.models.project.get_effective_base", return_value="core24"
-    )
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {
-            "name": "test-snap",
-            "base": "test-base",
-            "build-base": "test-build-base",
-            "platforms": {"amd64": None},
-            "project_type": "test-type",
-        }
-    )
-
-    actual_build_infos = planner.get_build_plan()
-
-    assert actual_build_infos == [
-        BuildInfo(
-            platform="amd64",
-            build_on="amd64",
-            build_for="amd64",
-            base=BaseName(name="ubuntu", version="24.04"),
-        )
-    ]
-    mock_get_effective_base.assert_called_once_with(
-        base="test-base",
-        build_base="test-build-base",
-        project_type="test-type",
-        name="test-snap",
-        translate_devel=False,
-    )
-
-
 def test_project_platform_error_has_context():
     """Platform validation errors include which platform entry is invalid."""
     error = r"build-on\n  Field required"
@@ -2600,16 +2604,17 @@ class TestComponents:
 
         assert test_project.components == components
 
+    @pytest.mark.parametrize("component_type", ["test", "kernel-modules", "standard"])
     def test_component_type_valid(
-        self, project, project_yaml_data, stub_component_data
+        self, component_type, project, project_yaml_data, stub_component_data
     ):
         component = {"foo": stub_component_data}
-        component["foo"]["type"] = "test"
+        component["foo"]["type"] = component_type
 
         test_project = project.unmarshal(project_yaml_data(components=component))
 
         assert test_project.components
-        assert test_project.components["foo"].type == "test"
+        assert test_project.components["foo"].type == component_type
 
     def test_component_type_invalid(
         self, project, project_yaml_data, stub_component_data

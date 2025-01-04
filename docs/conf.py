@@ -38,17 +38,21 @@ ogp_site_name = project
 html_context = {
     "product_page": "github.com/canonical/snapcraft",
     "github_url": "https://github.com/canonical/snapcraft",
+    "display_contributors": False,
 }
 
 extensions = [
     "canonical_sphinx",
 ]
+
+sphinx_tabs_disable_tab_closing = True
 # endregion
 
 extensions.extend(
     (
         "sphinx.ext.ifconfig",
         "sphinxcontrib.details.directive",
+        "sphinx_toolbox.collapse",
     )
 )
 
