@@ -26,6 +26,7 @@ from .kernel_plugin import KernelPlugin
 from .matter_sdk_plugin import MatterSdkPlugin
 from .poetry_plugin import PoetryPlugin
 from .python_plugin import PythonPlugin
+from .uv_plugin import UvPlugin
 
 
 def get_plugins(core22: bool) -> dict[str, PluginType]:
@@ -40,6 +41,7 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "python": PythonPlugin,
         "matter-sdk": MatterSdkPlugin,
         "poetry": PoetryPlugin,
+        "uv": UvPlugin,
     }
 
     if core22:

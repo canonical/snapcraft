@@ -14,29 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft specific plugins."""
+"""Snapcraft uv plugin"""
+
+from typing import Optional
+
+from craft_parts.plugins import uv_plugin
+from overrides import override
+
+from snapcraft.parts.plugins import python_common
 
 
-from .register import get_plugins, register
+class UvPlugin(uv_plugin.UvPlugin):
+    """A uv plugin for Snapcraft."""
 
-from .colcon_plugin import ColconPlugin
-from .conda_plugin import CondaPlugin
-from .flutter_plugin import FlutterPlugin
-from .kernel_plugin import KernelPlugin
-from .matter_sdk_plugin import MatterSdkPlugin
-from .poetry_plugin import PoetryPlugin
-from .python_plugin import PythonPlugin
-from .uv_plugin import UvPlugin
-
-__all__ = [
-    "ColconPlugin",
-    "CondaPlugin",
-    "FlutterPlugin",
-    "MatterSdkPlugin",
-    "KernelPlugin",
-    "PoetryPlugin",
-    "PythonPlugin",
-    "get_plugins",
-    "register",
-    "UvPlugin",
-]
+    @override
+    def _get_system_python_interpreter(self) -> Optional[str]:
+        return python_common.get_system_interpreter(self._part_info)
