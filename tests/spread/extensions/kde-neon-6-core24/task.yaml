@@ -4,12 +4,12 @@ summary: Build and run a basic kde snap using extensions
 # available on a subset of all the architectures this testbed
 # can run on.
 systems:
-  - ubuntu-22.04
-  - ubuntu-22.04-64
-  - ubuntu-22.04-amd64
+  - ubuntu-24.04
+  - ubuntu-24.04-64
+  - ubuntu-24.04-amd64
 
 environment:
-  SNAP_DIR: ../snaps/neon-hello
+  SNAP_DIR: ../snaps/neon-hello-6-core24
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -28,13 +28,13 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
   output="$(snapcraft)"
-  snap install neon-hello_*.snap --dangerous
-  snap connect neon-hello:kf5-core22 kf5-core22:kf5-core22
+  snap install neon-hello-6_*.snap --dangerous
+  snap connect neon-hello-6:kf6-core24 kf6-core24:kf6-core24
 
-  [ "$(neon-hello)" = "hello world" ]
+  [ "$(neon-hello-6)" = "hello world" ]
 
   # Verify that the extension command chain went through the proper setup procedure
-  snap_user_data="$HOME/snap/neon-hello/current"
+  snap_user_data="$HOME/snap/neon-hello-6/current"
   [ -d "$snap_user_data/.config" ]
   [ -d "$snap_user_data/.local" ]
   [ -f "$snap_user_data/.last_revision" ]
@@ -43,11 +43,7 @@ execute: |
 
   # Verify content snap was installed for dependency checks.
   snap list gtk-common-themes
-  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
-    snap list kde-frameworks-5-99-qt-5-15-7-core20
-  elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
-    snap list kf5-core22
-  fi
+  snap list kf6-core24
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then
