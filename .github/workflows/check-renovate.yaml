@@ -10,7 +10,7 @@ on:
     inputs:
       enable_ssh_access:
         type: boolean
-        description: 'Enable ssh access'
+        description: "Enable ssh access"
         required: false
         default: false
 

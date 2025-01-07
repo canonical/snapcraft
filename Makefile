@@ -3,10 +3,10 @@ PROJECT=starcraft
 include common.mk
 
 .PHONY: format
-format: format-ruff format-codespell  ## Run all automatic formatters
+format: format-ruff format-codespell format-prettier  ## Run all automatic formatters
 
 .PHONY: lint
-lint: lint-ruff lint-codespell lint-mypy lint-pyright lint-shellcheck lint-yaml lint-docs lint-twine  ## Run all linters
+lint: lint-ruff lint-codespell lint-mypy lint-prettier lint-pyright lint-shellcheck lint-docs lint-twine  ## Run all linters
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages

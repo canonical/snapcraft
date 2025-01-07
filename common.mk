@@ -8,10 +8,13 @@ ifneq ($(OS),Windows_NT)
 	OS := $(shell uname)
 endif
 ifdef CI
-    APT := apt-get --yes
+	APT := apt-get --yes
 else
 	APT := apt-get
 endif
+
+PRETTIER=npm exec --package=prettier -- prettier
+PRETTIER_FILES=**.yaml **.yml **.json **.json5 **.css **.md
 
 .DEFAULT_GOAL := help
 
@@ -82,6 +85,10 @@ format-ruff: install-ruff  ##- Automatically format with ruff
 format-codespell:  ##- Fix spelling issues with codespell
 	uv run codespell --toml pyproject.toml --write-changes $(SOURCES)
 
+.PHONY: format-prettier
+format-prettier: install-npm  ##- Format files with prettier
+	$(PRETTIER) --write $(PRETTIER_FILES)
+
 .PHONY: lint-ruff
 lint-ruff: install-ruff  ##- Lint with ruff
 ifneq ($(CI),)
@@ -137,12 +144,12 @@ ifneq ($(CI),)
 	@echo ::endgroup::
 endif
 
-.PHONY: lint-yaml
-lint-yaml:  ##- Lint YAML files with yamllint
+.PHONY: lint-prettier
+lint-prettier: install-npm  ##- Lint files with prettier
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run --extra lint yamllint .
+	$(PRETTIER) --check $(PRETTIER_FILES)
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
@@ -238,7 +245,7 @@ ifneq ($(shell which pyright),)
 else ifneq ($(shell which snap),)
 	sudo snap install --classic pyright
 else
-    # Workaround for a bug in npm
+	# Workaround for a bug in npm
 	[ -d "$(HOME)/.npm/_cacache" ] && chown -R `id -u`:`id -g` "$(HOME)/.npm" || true
 	uv tool install pyright
 endif
@@ -262,4 +269,15 @@ else ifneq ($(shell which brew),)
 	brew install shellcheck
 else
 	$(warning Shellcheck not installed. Please install it yourself.)
+endif
+
+.PHONY: install-npm
+install-npm:
+ifneq ($(shell which npm),)
+else ifneq ($(shell which snap),)
+	sudo snap install --classic node
+else ifneq ($(shell which brew),)
+	brew install node
+else
+	$(error npm not installed. Please install it yourself.)
 endif

@@ -13,14 +13,16 @@ repos:
       - id: fix-byte-order-marker
       - id: mixed-line-ending
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.8.6"
+    rev: "v0.8.4"
     hooks:
       # Run the linter
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
       # Run the formatter
       - id: ruff-format
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: "v1.35.1"
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "" # Intentionally blank, despite the warning.
     hooks:
-      - id: yamllint
+      - id: prettier
+        additional_dependencies:
+          - prettier@3.4.2

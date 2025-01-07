@@ -1526,7 +1526,6 @@ dev = [
     { name = "types-colorama" },
     { name = "types-pygments" },
     { name = "types-setuptools" },
-    { name = "yamllint" },
 ]
 
 [package.metadata]
@@ -1555,7 +1554,6 @@ dev = [
     { name = "types-colorama" },
     { name = "types-pygments" },
     { name = "types-setuptools" },
-    { name = "yamllint", specifier = "~=1.34" },
 ]
 
 [[package]]

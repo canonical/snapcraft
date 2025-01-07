@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - hotfix/*
-      - work/check-policy  # For development
+      - work/check-policy # For development
 
 jobs:
   policy:
