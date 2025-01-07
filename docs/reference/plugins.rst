@@ -26,3 +26,4 @@ Snapcraft.
    /common/craft-parts/reference/plugins/qmake_plugin
    /common/craft-parts/reference/plugins/rust_plugin
    /common/craft-parts/reference/plugins/scons_plugin
+   plugins/uv_plugin
