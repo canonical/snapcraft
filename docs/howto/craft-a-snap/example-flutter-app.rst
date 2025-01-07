@@ -18,7 +18,7 @@ project is merely a demonstration of a clicker window for GNOME.
 
 .. collapse:: Flutter app recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-flutter-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-flutter-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -26,7 +26,7 @@ project is merely a demonstration of a clicker window for GNOME.
 Add an app written for Flutter
 ------------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-flutter-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-flutter-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: flutter-target: lib/main.dart

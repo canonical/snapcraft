@@ -17,7 +17,7 @@ IDE <https://github.com/arduino/Arduino>`_.
 
 .. collapse:: Arduino IDE recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-gtk2-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -25,7 +25,7 @@ IDE <https://github.com/arduino/Arduino>`_.
 Add an app that uses GNOME
 --------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk2-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
   :language: yaml
   :start-at: apps:
   :end-at: command: arduino-builder
@@ -47,7 +47,7 @@ To add a GTK2 app:
 Add a part written for GTK2
 ---------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk2-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
   :language: yaml
   :dedent: 2
   :start-at: desktop-gtk2:
@@ -66,7 +66,7 @@ example.
 Add required plugs
 ------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk2-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
   :language: yaml
   :lines: 98-
 

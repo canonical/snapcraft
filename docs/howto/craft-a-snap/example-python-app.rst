@@ -21,7 +21,7 @@ tool for power and cooling components in PCs.
 
 .. collapse:: liquidctl recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-python-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-python-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -29,7 +29,7 @@ tool for power and cooling components in PCs.
 Add a part written in Python
 ----------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-python-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-python-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: - python3-usb
@@ -41,4 +41,3 @@ To add a Python part:
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
 #. Set ``plugin: python``.
-

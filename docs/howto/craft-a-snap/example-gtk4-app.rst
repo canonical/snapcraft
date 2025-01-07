@@ -18,7 +18,7 @@ default text editor of the GNOME desktop environment.
 
 .. collapse:: gnome-text-editor recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-gtk4-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -28,7 +28,7 @@ default text editor of the GNOME desktop environment.
 Add an app that uses GNOME
 --------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk4-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
   :language: yaml
   :start-at: apps:
   :end-at: - cups
@@ -51,7 +51,7 @@ To add a GTK4 app:
 Add a part written for GTK4
 ---------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk4-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: parse-info: [usr/share/metainfo/org.gnome.TextEditor.appdata.xml]
@@ -77,7 +77,7 @@ To add a GTK4 part:
 Add required slots
 ------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-gtk4-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
   :language: yaml
   :start-at: slots:
   :end-at: name: org.gnome.TextEditor

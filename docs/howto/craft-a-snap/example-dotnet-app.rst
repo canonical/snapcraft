@@ -18,7 +18,7 @@ for returning the current time in cities across the globe.
 
 .. collapse:: whatime recipe
 
-  .. literalinclude:: ../code/craft-for-platforms/example-dotnet-recipe.yaml
+  .. literalinclude:: ../code/craft-a-snap/example-dotnet-recipe.yaml
     :language: yaml
     :lines: 2-
 
@@ -26,7 +26,7 @@ for returning the current time in cities across the globe.
 Add a part written for .NET
 ---------------------------
 
-.. literalinclude:: ../code/craft-for-platforms/example-dotnet-recipe.yaml
+.. literalinclude:: ../code/craft-a-snap/example-dotnet-recipe.yaml
   :language: yaml
   :start-at: parts:
   :end-at: - libicu70
