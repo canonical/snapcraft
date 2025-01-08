@@ -1,9 +1,9 @@
 Architectures
 =============
 
-By default, Snapcraft builds a snap to run on the same architecture as the build
-environment. This behaviour can be modified with the top-level keywords
-``architectures`` and ``platforms`` in the snap’s ``snapcraft.yaml``.
+By default, Snapcraft builds a snap to run on the same architecture as the
+build environment. This behaviour can be modified with the top-level keywords
+``architectures`` and ``platforms`` in the snap's ``snapcraft.yaml``.
 
 The ``architectures`` and ``platforms`` keywords are used to create a build
 plan. See :ref:`build plans<build-plans>` for an explanation on how build
