@@ -39,6 +39,8 @@ boolean-py==4.0
     # via license-expression
 bracex==2.5.post1
     # via wcmatch
+cachecontrol[filecache]==0.14.2
+    # via sphinx-toolbox
 canonical-sphinx[full]==0.3.0
     # via snapcraft (setup.py)
 canonical-sphinx-extensions==0.0.23
@@ -61,13 +63,10 @@ charset-normalizer==3.4.1
     # via requests
 click==8.1.8
     # via
-    #   consolekit
     #   snapcraft (setup.py)
     #   uvicorn
 colorama==0.4.6
     # via sphinx-autobuild
-consolekit==1.7.2
-    # via sphinx-toolbox
 craft-application==4.7.0
     # via snapcraft (setup.py)
 craft-archives==2.0.2
@@ -100,12 +99,10 @@ cryptography==44.0.0
     # via
     #   pylxd
     #   secretstorage
-deprecation==2.1.0
-    # via deprecation-alias
-deprecation-alias==0.3.3
-    # via
-    #   consolekit
-    #   sphinx-toolbox
+cssutils==2.11.1
+    # via dict2css
+dict2css==0.3.0.post1
+    # via sphinx-toolbox
 distro==1.9.0
     # via
     #   craft-archives
@@ -125,7 +122,11 @@ domdf-python-tools==3.9.0
     # via
     #   apeye
     #   apeye-core
-    #   consolekit
+    #   dict2css
+    #   sphinx-toolbox
+filelock==3.16.1
+    # via
+    #   cachecontrol
     #   sphinx-toolbox
 furo==2024.8.6
     # via canonical-sphinx
@@ -161,8 +162,6 @@ imagesize==1.4.1
     # via sphinx
 importlib-metadata==8.5.0
     # via keyring
-importlib-resources==6.5.2
-    # via sphinx-toolbox
 jaraco-classes==3.4.0
     # via
     #   craft-store
@@ -180,6 +179,7 @@ jinja2==3.1.5
     #   craft-application
     #   myst-parser
     #   sphinx
+    #   sphinx-jinja2-compat
 jsonschema==2.5.1
     # via snapcraft (setup.py)
 keyring==25.6.0
@@ -217,21 +217,22 @@ markdown-it-py==3.0.0
     #   mdit-py-plugins
     #   myst-parser
 markupsafe==3.0.2
-    # via jinja2
+    # via
+    #   jinja2
+    #   sphinx-jinja2-compat
 mdit-py-plugins==0.4.2
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-mistletoe==1.4.0
-    # via consolekit
 more-itertools==10.5.0
     # via
+    #   cssutils
     #   jaraco-classes
     #   jaraco-functools
+msgpack==1.1.0
+    # via cachecontrol
 mypy-extensions==1.0.0
-    # via
-    #   snapcraft (setup.py)
-    #   typing-inspect
+    # via snapcraft (setup.py)
 myst-parser==4.0.0
     # via canonical-sphinx
 natsort==8.4.0
@@ -248,8 +249,6 @@ overrides==7.7.0
 packaging==24.2
     # via
     #   craft-providers
-    #   deprecation
-    #   deprecation-alias
     #   snapcraft (setup.py)
     #   sphinx
 platformdirs==4.3.6
@@ -343,6 +342,7 @@ regex==2024.11.6
 requests==2.32.3
     # via
     #   apeye
+    #   cachecontrol
     #   canonical-sphinx-extensions
     #   craft-application
     #   craft-parts
@@ -415,7 +415,7 @@ sphinx==7.3.7
     #   sphinxext-opengraph
 sphinx-autobuild==2024.10.3
     # via snapcraft (setup.py)
-sphinx-autodoc-typehints==1.11.1
+sphinx-autodoc-typehints==2.3.0
     # via
     #   snapcraft (setup.py)
     #   sphinx-toolbox
@@ -425,6 +425,8 @@ sphinx-copybutton==0.5.2
     # via canonical-sphinx
 sphinx-design==0.6.1
     # via canonical-sphinx
+sphinx-jinja2-compat==0.3.0
+    # via sphinx-toolbox
 sphinx-lint==1.0.0
     # via snapcraft (setup.py)
 sphinx-notfound-page==1.0.4
@@ -433,11 +435,11 @@ sphinx-prompt==1.8.0
     # via sphinx-toolbox
 sphinx-reredirects==0.1.5
     # via canonical-sphinx
-sphinx-tabs==3.4.7
+sphinx-tabs==3.4.5
     # via
     #   canonical-sphinx
     #   sphinx-toolbox
-sphinx-toolbox==1.8.2
+sphinx-toolbox==3.8.1
     # via snapcraft (setup.py)
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
@@ -470,7 +472,6 @@ toml==0.10.2
 typing-extensions==4.12.2
     # via
     #   anyio
-    #   consolekit
     #   craft-application
     #   craft-platforms
     #   craft-store
@@ -479,9 +480,6 @@ typing-extensions==4.12.2
     #   pydantic-core
     #   snapcraft (setup.py)
     #   sphinx-toolbox
-    #   typing-inspect
-typing-inspect==0.9.0
-    # via sphinx-toolbox
 uc-micro-py==1.0.3
     # via linkify-it-py
 urllib3==2.3.0
