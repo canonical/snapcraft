@@ -113,7 +113,6 @@ parts:
         - execstack
         - gpg
         - gpgv
-        - libffi8
         - libsodium23
         - libxml2
         - libxslt1.1
