@@ -78,6 +78,15 @@ Core
 
 * Improved error messaging when unable to pack.
 
+Plugins
+#######
+
+uv
+""
+
+* Add a new plugin for projects using `uv <https://docs.astral.sh/uv/>`_.
+  For more information, see :doc:`uv plugin reference 
+  </reference/plugins/uv_plugin>`.
 
 8.5.1 (2024-Dec-17)
 -------------------
