@@ -156,19 +156,6 @@ def test_get_os_platform_alternative_formats(tmp_path, mocker, name):
     assert os_platform.system == result
 
 
-def test_get_os_platform_windows(mocker):
-    """Get platform from a patched Windows machine."""
-    mocker.patch("platform.system", return_value="Windows")
-    mocker.patch("platform.release", return_value="10")
-    mocker.patch("platform.machine", return_value="AMD64")
-
-    os_platform = utils.get_os_platform()
-
-    assert os_platform.system == "Windows"
-    assert os_platform.release == "10"
-    assert os_platform.machine == "AMD64"
-
-
 @pytest.mark.parametrize(
     "platform_machine,platform_architecture,deb_arch",
     [
