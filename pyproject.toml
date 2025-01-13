@@ -99,7 +99,16 @@ version_scheme = "post-release"
 # deviations from the default 'git describe' command:
 # - only match annotated tags
 # - only match tags formatted as 'X.Y.Z'
-git_describe_command = "git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'"
+git_describe_command = [
+    "git",
+    "describe",
+    "--dirty",
+    "--long",
+    "--match",
+    "[0-9]*.[0-9]*.[0-9]*",
+    "--exclude",
+    "*[^0-9.]*",
+]
 
 [tool.setuptools.packages.find]
 include = ["*craft*"]
