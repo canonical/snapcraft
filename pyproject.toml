@@ -241,8 +241,8 @@ select = [  # Base linting rule selections.
     # The team have chosen to only use type-checking blocks when necessary to prevent circular imports.
     # As such, the only enabled type-checking checks are those that warn of an import that needs to be
     # removed from a type-checking block.
-    "TCH004",  # Remove imports from type-checking guard blocks if used at runtime
-    "TCH005",  # Delete empty type-checking blocks
+    "TC004",  # Remove imports from type-checking guard blocks if used at runtime
+    "TC005",  # Delete empty type-checking blocks
     "ARG",  # Unused arguments
     "PTH",  # Migrate to pathlib
     "FIX",  # All TODOs, FIXMEs, etc. should be turned into issues instead.
