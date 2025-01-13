@@ -16,6 +16,9 @@ endif
 PRETTIER=npm exec --package=prettier -- prettier
 PRETTIER_FILES=**.yaml **.yml **.json **.json5 **.css **.md
 
+# By default we should not update the uv lock file here.
+export UV_FROZEN := true
+
 .DEFAULT_GOAL := help
 
 .ONESHELL:
@@ -45,19 +48,19 @@ help: ## Show this help.
 
 .PHONY: setup
 setup: install-uv setup-precommit ## Set up a development environment
-	uv sync --frozen --all-extras
+	uv sync --all-extras
 
 .PHONY: setup-tests
 setup-tests: install-uv install-build-deps ##- Set up a testing environment without linters
-	uv sync --frozen
+	uv sync
 
 .PHONY: setup-lint
 setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps  ##- Set up a linting-only environment
-	uv sync --frozen --no-install-workspace --extra lint --extra types
+	uv sync --no-install-workspace --extra lint --extra types
 
 .PHONY: setup-docs
 setup-docs: install-uv  ##- Set up a documentation-only environment
-	uv sync --frozen --no-dev --no-install-workspace --extra docs
+	uv sync --no-dev --no-install-workspace --extra docs
 
 .PHONY: setup-precommit
 setup-precommit: install-uv  ##- Set up pre-commit hooks in this repository.
