@@ -22,7 +22,7 @@ In Snapcraft commands, a typical channel without a branch looks like this:
 Track
 -----
 
-The *track* represents the highest level of organisation for the snap's
+The *track* represents the highest level of organization for the snap's
 release. Typically, it signifies a major release. Authors can use tracks to
 maintain different major versions of their software.
 
