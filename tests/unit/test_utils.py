@@ -317,27 +317,6 @@ def test_process_version_git(mocker):
     assert utils.process_version("git") == "1.2.3-dirty"
 
 
-###########################
-# Supported architectures #
-###########################
-
-
-def get_supported_architectures():
-    """Validate list of supported architectures."""
-    supported_archs = utils.get_supported_architectures()
-
-    assert supported_archs == [
-        "arm64",
-        "armhf",
-        "i386",
-        "powerpc",
-        "ppc64el",
-        "amd64",
-        "s390x",
-        "riscv64",
-    ]
-
-
 #########################
 # Convert Architectures #
 #########################

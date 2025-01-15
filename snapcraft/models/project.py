@@ -47,7 +47,6 @@ from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
-    get_supported_architectures,
 )
 
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
@@ -115,7 +114,7 @@ def validate_architectures(architectures, base):
             for arch in element.build_for + element.build_on:
                 if arch != "all" and arch not in snap.get_default_architectures(base):
                     supported_archs = utils.humanize_list(
-                        get_supported_architectures(), "and"
+                        snap.get_default_architectures(base), "and"
                     )
                     raise ValueError(
                         f"Architecture {arch!r} is not supported. Supported "
