@@ -33,32 +33,6 @@ from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
 
-# architecture translations from the deb/snap syntax to the platform syntax
-_ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
-    "arm64": "aarch64",
-    "armhf": "armv7l",
-    "i386": "i686",
-    "powerpc": "ppc",
-    "ppc64el": "ppc64le",
-    "amd64": "x86_64",
-    "s390x": "s390x",
-    "riscv64": "riscv64",
-}
-
-
-def convert_architecture_deb_to_platform(architecture: str) -> str:
-    """Convert an architecture from deb/snap syntax to platform syntax.
-
-    :param architecture: architecture string in debian/snap syntax
-    :return: architecture in platform syntax
-    :raises InvalidArchitecture: if architecture is not valid
-    """
-    platform_arch = _ARCH_TRANSLATIONS_DEB_TO_PLATFORM.get(architecture)
-    if not platform_arch:
-        raise errors.InvalidArchitecture(architecture)
-
-    return platform_arch
-
 
 def is_managed_mode() -> bool:
     """Check if snapcraft is running in a managed environment."""

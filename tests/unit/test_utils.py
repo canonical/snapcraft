@@ -317,39 +317,6 @@ def test_process_version_git(mocker):
     assert utils.process_version("git") == "1.2.3-dirty"
 
 
-#########################
-# Convert Architectures #
-#########################
-
-
-@pytest.mark.parametrize(
-    "deb_arch, platform_arch",
-    [
-        ("arm64", "aarch64"),
-        ("armhf", "armv7l"),
-        ("i386", "i686"),
-        ("powerpc", "ppc"),
-        ("ppc64el", "ppc64le"),
-        ("amd64", "x86_64"),
-        ("s390x", "s390x"),
-        ("riscv64", "riscv64"),
-    ],
-)
-def test_convert_architectures_valid(deb_arch, platform_arch):
-    """Test all architecture mappings."""
-
-    assert utils.convert_architecture_deb_to_platform(deb_arch) == platform_arch
-
-
-def test_convert_architectures_invalid():
-    """Test unknown architecture raises InvalidArchitecture error."""
-
-    with pytest.raises(errors.InvalidArchitecture) as raised:
-        utils.convert_architecture_deb_to_platform("unknown")
-
-    assert str(raised.value) == "Architecture 'unknown' is not supported."
-
-
 ########################
 # Is running from snap #
 ########################

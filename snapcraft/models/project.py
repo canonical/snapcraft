@@ -44,10 +44,7 @@ from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
-from snapcraft.utils import (
-    convert_architecture_deb_to_platform,
-    get_effective_base,
-)
+from snapcraft.utils import get_effective_base
 
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
 
@@ -1276,7 +1273,9 @@ class Project(models.Project):
         arch = self.get_build_for()
 
         if arch != "all":
-            return get_arch_triplet(convert_architecture_deb_to_platform(arch))
+            return get_arch_triplet(
+                DebianArchitecture.from_machine(arch).to_platform_arch()
+            )
 
         return None
 
