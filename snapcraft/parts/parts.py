@@ -92,7 +92,7 @@ class PartsLifecycle:
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
 
         if target_arch == "all":
-            target_arch = str(DebianArchitecture.from_host())
+            target_arch = DebianArchitecture.from_host()
 
         try:
             self._lcm = craft_parts.LifecycleManager(

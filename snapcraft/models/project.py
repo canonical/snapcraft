@@ -1126,7 +1126,7 @@ class Project(models.Project):
             elif not self.architectures:
                 self._architectures_in_yaml = False
                 # set default value
-                host_arch = str(DebianArchitecture.from_host())
+                host_arch = DebianArchitecture.from_host()
                 self.architectures = [
                     Architecture(
                         build_on=[host_arch],
@@ -1337,7 +1337,7 @@ class ArchitectureProject(models.CraftBaseModel, extra="ignore"):
     """Project definition containing only architecture data."""
 
     architectures: list[str | Architecture] = pydantic.Field(
-        default=[str(DebianArchitecture.from_host())],
+        default=[DebianArchitecture.from_host()],
         validate_default=True,
     )
 
@@ -1569,7 +1569,7 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
         # set default value
         if self.platforms is None:
-            host_arch = str(DebianArchitecture.from_host())
+            host_arch = DebianArchitecture.from_host()
             self.platforms = {
                 host_arch: Platform(
                     build_on=[SnapArch(host_arch).value],

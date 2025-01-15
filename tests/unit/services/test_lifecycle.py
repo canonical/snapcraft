@@ -173,7 +173,7 @@ def test_generate_manifest(
         grade=default_project.grade,
         confinement=default_project.confinement,
         parts=parts,
-        architectures=[str(DebianArchitecture.from_host())],
+        architectures=[DebianArchitecture.from_host()],
         image_info=image_info,
         build_packages=default_project.build_packages or [],
         build_snaps=default_project.build_snaps or [],

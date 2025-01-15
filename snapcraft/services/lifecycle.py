@@ -159,7 +159,7 @@ class Lifecycle(LifecycleService):
 
         osrel = os_release.OsRelease()
         version = utils.process_version(project.version)
-        host_arch = str(DebianArchitecture.from_host())
+        host_arch = DebianArchitecture.from_host()
         build_for = self._build_plan[0].build_for if self._build_plan else host_arch
 
         return models.Manifest(

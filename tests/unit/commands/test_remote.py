@@ -410,7 +410,7 @@ def test_default_architecture(
     app.run()
 
     mock_start_builds.assert_called_once_with(
-        ANY, architectures=[str(DebianArchitecture.from_host())]
+        ANY, architectures=[DebianArchitecture.from_host()]
     )
 
 

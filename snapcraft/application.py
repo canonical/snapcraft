@@ -246,7 +246,7 @@ class Snapcraft(Application):
         self, yaml_data: dict[str, Any], *, build_on: str, build_for: str | None
     ) -> dict[str, Any]:
         arch = build_on
-        target_arch = build_for if build_for else str(DebianArchitecture.from_host())
+        target_arch = build_for if build_for else DebianArchitecture.from_host()
         new_yaml_data = apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
         self._parse_info = extract_parse_info(new_yaml_data)
         return apply_root_packages(new_yaml_data)

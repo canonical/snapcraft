@@ -122,7 +122,7 @@ class ExpandExtensionsCommand(AppCommand):
         yaml_data = process_yaml(snap_project.project_file)
 
         # process yaml before unmarshalling the data
-        arch = str(DebianArchitecture.from_host())
+        arch = DebianArchitecture.from_host()
         yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
 
         # `apply_yaml()` adds or replaces the architectures keyword with an Architecture

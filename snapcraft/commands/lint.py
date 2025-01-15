@@ -280,7 +280,7 @@ class LintCommand(AppCommand):
             ) from error
 
         # process yaml before unmarshalling the data
-        arch = str(DebianArchitecture.from_host())
+        arch = DebianArchitecture.from_host()
         yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
         # discard parse-info - it is not needed
         extract_parse_info(yaml_data_for_arch)
