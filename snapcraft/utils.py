@@ -46,16 +46,6 @@ _ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
 }
 
 
-def is_architecture_supported(architecture: str) -> bool:
-    """Check if an debian-syntax architecture is supported.
-
-    :param architecture: architecture to check
-
-    :returns: True if the architecture is supported by snapcraft.
-    """
-    return architecture in list(_ARCH_TRANSLATIONS_DEB_TO_PLATFORM)
-
-
 def get_supported_architectures() -> List[str]:
     """Get a list of architectures supported by snapcraft.
 

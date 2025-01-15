@@ -322,17 +322,6 @@ def test_process_version_git(mocker):
 ###########################
 
 
-@pytest.mark.parametrize("arch", utils.get_supported_architectures())
-def test_is_architecture_supported(arch):
-    """Supported architectures should return true."""
-    assert utils.is_architecture_supported(arch)
-
-
-def test_is_architecture_not_supported():
-    """Unsupported architectures should return false."""
-    assert not utils.is_architecture_supported("unknown")
-
-
 def get_supported_architectures():
     """Validate list of supported architectures."""
     supported_archs = utils.get_supported_architectures()

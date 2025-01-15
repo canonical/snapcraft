@@ -55,7 +55,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     :raises SnapcraftError: if the step name is invalid, or the project
         yaml file cannot be loaded.
-    :raises LegacyFallback: if the project's base is not core22.
+    :raises LegacyFallback: if the project's base is core20 or below.
     """
     emit.debug(f"command: {command_name}, arguments: {parsed_args}")
 

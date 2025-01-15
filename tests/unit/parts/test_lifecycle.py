@@ -1923,7 +1923,7 @@ def test_get_build_plan_list_without_matching_element(snapcraft_yaml, mocker, ne
     mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="arm64")
     yaml_data = {
         "base": "core22",
-        "architectures": ["powerpc", "armhf"],
+        "architectures": ["ppc64el", "armhf"],
     }
 
     snapcraft_yaml_data = snapcraft_yaml(**yaml_data)

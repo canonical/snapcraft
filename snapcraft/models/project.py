@@ -48,7 +48,6 @@ from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
     get_supported_architectures,
-    is_architecture_supported,
 )
 
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
@@ -67,7 +66,7 @@ def _validate_command_chain(command_chains: list[str] | None) -> list[str] | Non
     return command_chains
 
 
-def validate_architectures(architectures):
+def validate_architectures(architectures, base):
     """Expand and validate architecture data.
 
     Validation includes:
@@ -114,7 +113,7 @@ def validate_architectures(architectures):
     if len(architectures):
         for element in architectures:
             for arch in element.build_for + element.build_on:
-                if arch != "all" and not is_architecture_supported(arch):
+                if arch != "all" and arch not in snap.get_default_architectures(base):
                     supported_archs = utils.humanize_list(
                         get_supported_architectures(), "and"
                     )
@@ -1170,9 +1169,10 @@ class Project(models.Project):
 
     @pydantic.field_validator("architectures")
     @classmethod
-    def _validate_architecture_data(cls, architectures):
+    def _validate_architecture_data(cls, architectures, info: pydantic.ValidationInfo):
         """Validate architecture data."""
-        return validate_architectures(architectures)
+        base = info.data.get("build_base")
+        return validate_architectures(architectures, base)
 
     @pydantic.field_validator("provenance")
     @classmethod
@@ -1336,16 +1336,30 @@ class GrammarAwareProject(_GrammarAwareModel):
 class ArchitectureProject(models.CraftBaseModel, extra="ignore"):
     """Project definition containing only architecture data."""
 
+    base: str = pydantic.Field(
+        description="The build environment to use when building the snap",
+        examples=["base: core20", "base: core22", "base: core24", "base: devel"],
+    )
+
     architectures: list[str | Architecture] = pydantic.Field(
         default=[DebianArchitecture.from_host()],
         validate_default=True,
     )
 
+    @pydantic.field_validator("base")
+    @classmethod
+    def _validate_base(
+        cls, value: str | None, info: pydantic.ValidationInfo
+    ) -> str | None:
+        """Build-base defaults to the base value if not specified."""
+        return value or info.data.get("base")
+
     @pydantic.field_validator("architectures")
     @classmethod
-    def _validate_architecture_data(cls, architectures):
+    def _validate_architecture_data(cls, architectures, info: pydantic.ValidationInfo):
         """Validate architecture data."""
-        return validate_architectures(architectures)
+        base = info.data.get("base")
+        return validate_architectures(architectures, base)
 
 
 class ComponentProject(models.CraftBaseModel, extra="ignore"):
