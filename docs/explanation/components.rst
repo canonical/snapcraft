@@ -36,7 +36,7 @@ When a part is built, the output is the default partition's install directory
 for that part.
 
 Each component has a partition. This means each component has its own install,
-stage, and prime directories. When a file is organised into a component's
+stage, and prime directories. When a file is organized into a component's
 partition, it is moved to the part's install directory for that component's
 partition.
 
