@@ -28,7 +28,6 @@ from .extensions import (
     ExtensionsCommand,
     ListExtensionsCommand,
 )
-from .init import InitCommand
 from .legacy import (
     StoreLegacyCreateKeyCommand,
     StoreLegacyGatedCommand,
@@ -67,7 +66,6 @@ from .validation_sets import StoreEditValidationSetsCommand
 __all__ = [
     "ExpandExtensionsCommand",
     "ExtensionsCommand",
-    "InitCommand",
     "LintCommand",
     "ListExtensionsCommand",
     "ListPluginsCommand",

@@ -25,28 +25,35 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
-_SDK_SNAP = {"core22": "kf5-5-113-qt-5-15-11-core22-sdk"}
-
-
-@dataclasses.dataclass
-class ExtensionInfo:
-    """Content/SDK build information."""
-
-    cmake_args: str
+_QT5_SDK_SNAP = {"core22": "kde-qt5-core22-sdk", "core24": "kde-qt5-core24-sdk"}
+_KF5_SDK_SNAP = {"core22": "kf5-core22-sdk", "core24": "kf5-core24-sdk"}
+_QT_VERSION = "5"
 
 
 @dataclasses.dataclass
 class KDESnaps:
     """A structure of KDE related snaps.
 
-    :cvar sdk: The name of the SDK snap to use.
-    :cvar content: The name of the content snap to use.
-    :cvar builtin: True if the SDK is built into the content snap.
+    :cvar qt5_sdk_snap: The name of the qt5 SDK snap to use.
+    :cvar kf5_sdk_snap: The name of the kf5 SDK snap to use.
+    :cvar content_qt5: The name of the qt5 content snap to use.
+    :cvar content_kf5: The name of the kf5 content snap to use.
+    :cvar qt_version: The major version of qt to use.
+    :cvar gpu_plugs: The gpu plugs to use with gpu-2404.
+    :cvar gpu_layouts: The gpu layouts to use with gpu-2404.
+    :cvar qt5_builtin: True if the SDK is built into the qt5 content snap.
+    :cvar kf5_builtin: True if the SDK is built into the kf5 content snap.
     """
 
-    sdk: str
-    content: str
-    builtin: bool = True
+    qt5_sdk_snap: str
+    kf5_sdk_snap: str
+    content_qt5: str
+    content_kf5: str
+    qt_version: str
+    gpu_plugs: Dict[str, Any]
+    gpu_layouts: Dict[str, Any]
+    qt5_builtin: bool = True
+    kf5_builtin: bool = True
 
 
 class KDENeon(Extension):
@@ -76,7 +83,7 @@ class KDENeon(Extension):
     @staticmethod
     @overrides
     def get_supported_bases() -> Tuple[str, ...]:
-        return ("core22",)
+        return ("core22", "core24")
 
     @staticmethod
     @overrides
@@ -89,53 +96,115 @@ class KDENeon(Extension):
         return False
 
     @overrides
-    def get_app_snippet(self) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        command_chain = ["snap/command-chain/desktop-launch"]
+        if self.yaml_data["base"] == "core24":
+            command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
         return {
-            "command-chain": ["snap/command-chain/desktop-launch"],
-            "plugs": ["desktop", "desktop-legacy", "opengl", "wayland", "x11"],
+            "command-chain": command_chain,
+            "plugs": [
+                "desktop",
+                "desktop-legacy",
+                "opengl",
+                "wayland",
+                "x11",
+                "audio-playback",
+                "unity7",
+                "network",
+                "network-bind",
+            ],
         }
 
     @functools.cached_property
     def kde_snaps(self) -> KDESnaps:
         """Return the KDE related snaps to use to construct the environment."""
         base = self.yaml_data["base"]
-        sdk_snap = _SDK_SNAP[base]
+        qt5_sdk_snap = _QT5_SDK_SNAP[base]
+        kf5_sdk_snap = _KF5_SDK_SNAP[base]
+        qt_version = _QT_VERSION
+
+        match base:
+            case "core22":
+                gpu_plugs = {}
+                gpu_layouts = {
+                    "/usr/share/libdrm": {"bind": "$SNAP/kf5-core22/usr/share/libdrm"},
+                }
+            case "core24":
+                gpu_plugs = {
+                    "gpu-2404": {
+                        "interface": "content",
+                        "target": "$SNAP/gpu-2404",
+                        "default-provider": "mesa-2404",
+                    },
+                }
+                gpu_layouts = {
+                    "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
+                    "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+                    "/usr/share/X11/XErrorDB": {
+                        "symlink": "$SNAP/gpu-2404/X11/XErrorDB"
+                    },
+                }
+            case _:
+                raise AssertionError(f"Unsupported base: {base}")
 
         build_snaps: List[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
-        # use the sdk snap if it is defined in any part's build-snaps
-        # otherwise, assume it is built into the content snap
-        matcher = re.compile(r"kf5-\d+-\d+-qt-\d+.*-" + base + r"-sdk.*")
-        sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
-        if sdk_snap_candidates:
-            sdk_snap = sdk_snap_candidates[0].split("/")[0]
-            builtin = False
+        matcher = re.compile(r"kde-qt5-" + base + r"-sdk.*")
+        qt5_sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
+        if qt5_sdk_snap_candidates:
+            qt5_sdk_snap = qt5_sdk_snap_candidates[0].split("/")[0]
+            qt5_builtin = False
         else:
-            builtin = True
-        # The same except the trailing -sd
-        content = sdk_snap[:-4]
+            qt5_builtin = True
 
-        return KDESnaps(sdk=sdk_snap, content=content, builtin=builtin)
+        matcher = re.compile(r"kf5-" + base + r"-sdk.*")
+        kf5_sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
+        if kf5_sdk_snap_candidates:
+            kf5_sdk_snap = kf5_sdk_snap_candidates[0].split("/")[0]
+            kf5_builtin = False
+        else:
+            kf5_builtin = True
+        # The same except the trailing -sdk
+        content_qt5_snap = qt5_sdk_snap[:-4]
+        content_kf5_snap = kf5_sdk_snap[:-4]
 
-    @functools.cached_property
-    def ext_info(self) -> ExtensionInfo:
-        """Return the extension info cmake_args, provider, content, build_snaps."""
-        cmake_args = "-DCMAKE_FIND_ROOT_PATH=/snap/" + self.kde_snaps.sdk + "/current"
-
-        return ExtensionInfo(cmake_args=cmake_args)
+        return KDESnaps(
+            qt5_sdk_snap=qt5_sdk_snap,
+            content_qt5=content_qt5_snap,
+            qt5_builtin=qt5_builtin,
+            kf5_sdk_snap=kf5_sdk_snap,
+            content_kf5=content_kf5_snap,
+            kf5_builtin=kf5_builtin,
+            gpu_layouts=gpu_layouts,
+            gpu_plugs=gpu_plugs,
+            qt_version=qt_version,
+        )
 
     @overrides
     def get_root_snippet(self) -> Dict[str, Any]:
-        platform_snap = self.kde_snaps.content
-        content_snap = self.kde_snaps.content + "-all"
+        platform_kf5_snap = self.kde_snaps.content_kf5
+        content_kf5_snap = self.kde_snaps.content_kf5 + "-all"
+        gpu_plugs = self.kde_snaps.gpu_plugs
+        gpu_layouts = self.kde_snaps.gpu_layouts
+        qt_version = self.kde_snaps.qt_version
 
         return {
-            "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
+            "assumes": ["snapd2.58.3"],  # for cups support
             "compression": "lzo",
             "plugs": {
                 "desktop": {"mount-host-font-cache": False},
+                "gtk-2-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/themes",
+                    "default-provider": "gtk-common-themes",
+                },
+                "gtk-3-themes": {
+                    "interface": "content",
+                    "target": "$SNAP/data-dir/themes",
+                    "default-provider": "gtk-common-themes",
+                },
                 "icon-themes": {
                     "interface": "content",
                     "target": "$SNAP/data-dir/icons",
@@ -146,50 +215,119 @@ class KDENeon(Extension):
                     "target": "$SNAP/data-dir/sounds",
                     "default-provider": "gtk-common-themes",
                 },
-                platform_snap: {
-                    "content": content_snap,
+                platform_kf5_snap: {
+                    "content": content_kf5_snap,
                     "interface": "content",
-                    "default-provider": platform_snap,
+                    "default-provider": platform_kf5_snap,
                     "target": "$SNAP/kf5",
                 },
+                **gpu_plugs,
             },
-            "environment": {"SNAP_DESKTOP_RUNTIME": "$SNAP/kf5"},
+            "environment": {
+                "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
+                "GTK_USE_PORTAL": "1",
+                "QT_VERSION": qt_version,
+            },
             "hooks": {
                 "configure": {
                     "plugs": ["desktop"],
                     "command-chain": ["snap/command-chain/hooks-configure-desktop"],
                 }
             },
-            "layout": {"/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"}},
+            "layout": {
+                "/usr/share/X11": {"symlink": "$SNAP/kf5/usr/share/X11"},
+                "/usr/share/qt5": {"symlink": "$SNAP/kf5/usr/share/qt5"},
+                **gpu_layouts,
+            },
         }
 
     @overrides
     def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
-        sdk_snap = self.kde_snaps.sdk
-        cmake_args = self.ext_info.cmake_args
+        qt5_sdk_snap = self.kde_snaps.qt5_sdk_snap
+        kf5_sdk_snap = self.kde_snaps.kf5_sdk_snap
 
         return {
             "build-environment": [
                 {
                     "PATH": prepend_to_env(
-                        "PATH", [f"/snap/{sdk_snap}/current/usr/bin"]
+                        "PATH",
+                        [
+                            f"/snap/{qt5_sdk_snap}/current/usr/bin",
+                            f"/snap/{kf5_sdk_snap}/current/usr/bin",
+                        ],
                     ),
                 },
                 {
                     "XDG_DATA_DIRS": prepend_to_env(
                         "XDG_DATA_DIRS",
                         [
-                            f"$CRAFT_STAGE/usr/share:/snap/{sdk_snap}/current/usr/share",
+                            "$CRAFT_STAGE/usr/share",
+                            f"/snap/{qt5_sdk_snap}/current/usr/share",
+                            f"/snap/{kf5_sdk_snap}/current/usr/share",
                             "/usr/share",
                         ],
                     ),
                 },
                 {
-                    "SNAPCRAFT_CMAKE_ARGS": prepend_to_env(
-                        "SNAPCRAFT_CMAKE_ARGS",
+                    "XDG_CONFIG_HOME": prepend_to_env(
+                        "XDG_CONFIG_HOME",
                         [
-                            cmake_args,
+                            "$CRAFT_STAGE/etc/xdg",
+                            f"/snap/{qt5_sdk_snap}/current/etc/xdg",
+                            f"/snap/{kf5_sdk_snap}/current/etc/xdg",
+                            "/etc/xdg",
                         ],
+                    ),
+                },
+                {
+                    "LD_LIBRARY_PATH": prepend_to_env(
+                        "LD_LIBRARY_PATH",
+                        [
+                            # Qt5 arch specific libs
+                            f"/snap/{qt5_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            # Qt5 libs
+                            f"/snap/{qt5_sdk_snap}/current/usr/lib",
+                            # kf5 arch specific libs
+                            f"/snap/{kf5_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            # blas
+                            f"/snap/{kf5_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
+                            # lapack
+                            f"/snap/{kf5_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
+                            # kf6 libs
+                            f"/snap/{kf5_sdk_snap}/current/usr/lib",
+                            # Staged libs
+                            "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            "$CRAFT_STAGE/usr/lib",
+                            "$CRAFT_STAGE/lib/",
+                        ],
+                    ),
+                },
+                {
+                    "CMAKE_PREFIX_PATH": prepend_to_env(
+                        "CMAKE_PREFIX_PATH",
+                        [
+                            "$CRAFT_STAGE",
+                            f"/snap/{qt5_sdk_snap}/current",
+                            f"/snap/{kf5_sdk_snap}/current",
+                            "/usr",
+                        ],
+                        separator=";",
+                    ),
+                },
+                {
+                    "CMAKE_FIND_ROOT_PATH": prepend_to_env(
+                        "CMAKE_FIND_ROOT_PATH",
+                        [
+                            "$CRAFT_STAGE",
+                            f"/snap/{qt5_sdk_snap}/current",
+                            f"/snap/{kf5_sdk_snap}/current",
+                            "/usr",
+                        ],
+                        separator=";",
                     ),
                 },
             ],
@@ -205,15 +343,34 @@ class KDENeon(Extension):
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
         # https://github.com/canonical/snapcraft-desktop-integration
-        source = get_extensions_data_dir() / "desktop" / "kde-neon"
 
-        if self.kde_snaps.builtin:
+        source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
+
+        gpu_opts = {}
+        if self.yaml_data["base"] == "core24":
+            gpu_opts["make-parameters"] = ["GPU_WRAPPER=gpu-2404-wrapper"]
+
+        if self.kde_snaps.kf5_builtin:
             return {
                 "kde-neon/sdk": {
                     "source": str(source),
                     "plugin": "make",
-                    "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content}"],
-                    "build-snaps": [self.kde_snaps.sdk],
+                    "build-snaps": [
+                        self.kde_snaps.qt5_sdk_snap,
+                        self.kde_snaps.kf5_sdk_snap,
+                    ],
+                    "build-packages": [
+                        "gettext",
+                        "doxygen",
+                        "graphviz",
+                        "libxml2-utils",
+                        "docbook-xml",
+                        "docbook-xsl",
+                        "libglx-dev",
+                        "libgl-dev",
+                        "libglvnd-dev",
+                    ],
+                    **gpu_opts,
                 },
             }
 
@@ -221,6 +378,6 @@ class KDENeon(Extension):
             "kde-neon/sdk": {
                 "source": str(source),
                 "plugin": "make",
-                "make-parameters": [f"PLATFORM_PLUG={self.kde_snaps.content}"],
+                **gpu_opts,
             },
         }

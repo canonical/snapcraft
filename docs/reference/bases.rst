@@ -78,13 +78,15 @@ Bare base snaps
 Devel builds
 ^^^^^^^^^^^^
 
-``build-base`` must be ``devel`` must be defined when ``base`` is unstable.
+``build-base`` must be ``devel`` when ``base`` is unstable.
 
 *Unstable* means that the base snap has not been released to the ``stable``
 channel.
 
 Snaps with a ``devel`` build base must have a ``grade`` of ``devel`` and cannot
 be promoted to ``stable`` or ``candidate`` channels.
+
+.. _kernel-snap-reference:
 
 Kernel snaps
 ^^^^^^^^^^^^

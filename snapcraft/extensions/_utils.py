@@ -79,8 +79,8 @@ def _apply_extension(
         )
 
     # Apply the app-specific components of the extension (if any)
-    app_extension = extension.get_app_snippet()
     for app_name in app_names:
+        app_extension = extension.get_app_snippet(app_name=app_name)
         app_definition = yaml_data["apps"][app_name]
         for property_name, property_value in app_extension.items():
             app_definition[property_name] = _apply_extension_property(

@@ -16,6 +16,7 @@
 
 """Snapcraft error definitions."""
 
+import subprocess
 from typing import Optional
 
 from craft_cli import CraftError
@@ -180,3 +181,25 @@ class SnapcraftAssertionError(SnapcraftError):
 
     Not to be confused with Python's built-in AssertionError.
     """
+
+
+class SnapPackError(SnapcraftError):
+    """Snapd packing error."""
+
+    def _get_error_string_from_stderr(self, stderr: str | None) -> str | None:
+        if stderr is None:
+            return "snapd did not report an error"
+
+        error_lines = (err for err in stderr.splitlines() if err.startswith("error: "))
+        clean_error_lines = [err[len("error: ") :] for err in error_lines]
+        # There shall only be one
+        try:
+            return clean_error_lines[-1]
+        except IndexError:
+            return "snapd did not report an error"
+
+    def __init__(self, call_error: subprocess.CalledProcessError) -> None:
+        super().__init__(
+            message="Snapd failed to pack",
+            details=self._get_error_string_from_stderr(call_error.stderr),
+        )

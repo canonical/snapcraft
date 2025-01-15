@@ -1,0 +1,22 @@
+# my-flutter-app recipe, an example of a Flutter-based app
+
+name: my-flutter-app
+version: "1.0"
+summary: An example Flutter snap
+description: |
+  An example showing how Flutter programs can be packaged as snaps.
+
+base: core22
+confinement: strict
+grade: stable
+
+apps:
+  my-flutter-app:
+    command: my_flutter_app
+    extensions: [gnome]
+
+parts:
+  my-flutter-app:
+    source: .
+    plugin: flutter
+    flutter-target: lib/main.dart

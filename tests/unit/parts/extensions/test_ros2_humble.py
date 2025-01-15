@@ -110,7 +110,7 @@ class TestExtensionROS2HumbleExtension:
             "${PYTHONPATH}",
         ]
         extension = setup_method_fixture()
-        assert extension.get_app_snippet() == {
+        assert extension.get_app_snippet(app_name="test-app") == {
             "command-chain": ["snap/command-chain/ros2-launch"],
             "environment": {
                 "ROS_VERSION": "2",

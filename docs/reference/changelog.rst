@@ -70,6 +70,176 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.6.0 (2025-Jan-20)
+-------------------
+
+Core
+====
+
+* Improved error messaging when unable to pack.
+
+
+8.5.1 (2024-Dec-17)
+-------------------
+
+Core
+====
+
+* Improve validation of ``app`` commands in a ``snapcraft.yaml`` file.
+  This includes ``command``, ``stop-command``, ``post-stop-command``,
+  ``reload-command``, and ``bus-name`` (`#4999`_).
+
+Command line
+============
+
+* Fix crash in command line help when positional arguments exist with
+  no associated help (`#5169`_).
+
+For a complete list of commits, check out the `8.5.1`_ release on GitHub.
+
+8.5.0 (2024-Nov-19)
+-------------------
+
+Core
+====
+
+* Remove the Snapcraft Dockerfile in favour of the `snapcraft-rocks`_ registry.
+  For more information, see the ``docker/README.md`` file.
+
+Bases
+#####
+
+core24
+""""""
+
+* Add a ``--platform <platform>`` argument to the ``clean`` command to filter
+  which build environments to clean (`canonical/craft-application#425`_).
+
+Plugins
+#######
+
+Poetry
+""""""
+
+* Add a new plugin for projects using `Poetry <https://python-poetry.org/>`_.
+  For more information, see :doc:`Poetry plugin
+  reference</reference/plugins/poetry_plugin>`.
+
+Extensions
+##########
+
+Env-injector
+""""""""""""
+
+* Add a new experimental extension called
+  `env-injector <https://github.com/canonical/snappy-env>`_. It simplifies
+  passing environment variables to snaps at runtime using ``snap config`` or a
+  ``.env`` file. For more information, see `the env-injector
+  extension <https://forum.snapcraft.io/t/the-env-injector-extension/41477>`_
+
+Command line
+============
+
+* Order lifecycle commands in the sequence they run rather than alphabetically
+  in help messages.
+
+* Show positional arguments in help messages.
+
+* Hide the terminal cursor when Snapcraft is running.
+
+* Fix a bug where the version and path to the log file were logged multiple
+  times.
+
+* Fix a bug where deprecated commands were suggested when an invalid command
+  was entered (`canonical/craft-cli#297`_).
+
+Init
+====
+
+* Add a ``<project-dir>`` argument to initialise the project in a particular
+  directory.
+
+* Add a ``--name <name>`` argument to set the ``name`` key in the initialised
+  ``snapcraft.yaml``. If ``--name`` isn't provided, the name of the project
+  directory or current working directory is used.
+
+* Add a ``--profile <profile>`` argument to initialise a project for a specific
+  purpose. Currently, only the ``simple`` profile is supported.
+
+Store
+=====
+
+* Add support for ``registries`` with new commands ``list-registries`` and
+  ``edit-registries``.
+
+* Add support for specifying components in a validation set when using the
+  ``edit-validation-sets`` command.
+
+Documentation
+=============
+
+* Add :doc:`reference</reference/linters>` for linters.
+
+* Update the ``HACKING`` doc with instructions for how to use ``tox``.
+
+* Hide subheadings in the changelog's table of contents.
+
+* Add :doc:`reference</reference/plugins/poetry_plugin>` for
+  the Poetry plugin.
+
+* Fix an issue where the auto-generated command reference wasn't rendered
+  correctly.
+
+For a complete list of commits, check out the `8.5.0`_ release on GitHub.
+
+
+8.4.4 (2024-Oct-24)
+-------------------
+
+Core
+====
+
+Bases
+#####
+
+core24
+""""""
+
+* Fix a bug where ``CRAFT_PARALLEL_BUILD_COUNT`` was not evaluated in
+  ``snapcraft.yaml`` files (`#4785`_).
+
+* Fix a bug where ``package-repositories`` declarations could conflict with
+  default sources present in Noble (`LP#2083013`_).
+
+For a complete list of commits, check out the `8.4.4`_ release on GitHub.
+
+
+7.5.8 (2024-Oct-24)
+-------------------
+
+Core
+====
+
+* Fix a regression where Snapcraft would fail to run on some architectures due
+  to a ``cryptography`` dependency that attempted to load legacy algorithms
+  (`#5077`_).
+
+For a complete list of commits, check out the `7.5.8`_ release on GitHub.
+
+
+8.4.3 (2024-Oct-10)
+-------------------
+
+Core
+====
+
+Components
+##########
+
+* Add support for component types ``kernel-modules`` and ``standard``
+  (`#5089`_).
+
+For a complete list of commits, check out the `8.4.3`_ release on GitHub.
 
 8.4.2 (2024-Oct-07)
 -------------------
@@ -1217,12 +1387,15 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _Releases page: https://github.com/canonical/snapcraft/releases
 .. _PEP 518: https://peps.python.org/pep-0518/
 .. _ROS architectures with snaps: https://ubuntu.com/robotics/docs/ros-architectures-with-snaps.
+.. _snapcraft-rocks: https://github.com/canonical/snapcraft-rocks/pkgs/container/snapcraft
 
 .. _canonical/charmcraft#406: https://github.com/canonical/charmcraft/issues/406
 .. _canonical/craft-application#225: https://github.com/canonical/craft-application/pull/225
 .. _canonical/craft-application#355: https://github.com/canonical/craft-application/pull/355
 .. _canonical/craft-application#382: https://github.com/canonical/craft-application/pull/382
+.. _canonical/craft-application#425: https://github.com/canonical/craft-application/pull/425
 .. _canonical/craft-cli#270: https://github.com/canonical/craft-parts/issues/270
+.. _canonical/craft-cli#297: https://github.com/canonical/craft-parts/issues/297
 .. _canonical/craft-parts#717: https://github.com/canonical/craft-parts/issues/717
 .. _canonical/craft-parts#802: https://github.com/canonical/craft-parts/issues/802
 .. _canonical/craft-parts#804: https://github.com/canonical/craft-parts/issues/804
@@ -1230,6 +1403,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _LP#2061603: https://bugs.launchpad.net/snapcraft/+bug/2061603
 .. _LP#2064639: https://bugs.launchpad.net/snapcraft/+bug/2064639
 .. _LP#2069783: https://bugs.launchpad.net/snapcraft/+bug/2069783
+.. _LP#2083013: https://bugs.launchpad.net/snapcraft/+bug/2083013
 
 .. _#4142: https://github.com/canonical/snapcraft/issues/4142
 .. _#4356: https://github.com/canonical/snapcraft/issues/4356
@@ -1255,6 +1429,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#4780: https://github.com/canonical/snapcraft/issues/4780
 .. _#4781: https://github.com/canonical/snapcraft/issues/4781
 .. _#4783: https://github.com/canonical/snapcraft/issues/4783
+.. _#4785: https://github.com/canonical/snapcraft/issues/4785
 .. _#4791: https://github.com/canonical/snapcraft/issues/4791
 .. _#4798: https://github.com/canonical/snapcraft/issues/4798
 .. _#4804: https://github.com/canonical/snapcraft/issues/4804
@@ -1283,13 +1458,17 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#4963: https://github.com/canonical/snapcraft/issues/4963
 .. _#4990: https://github.com/canonical/snapcraft/issues/4990
 .. _#4995: https://github.com/canonical/snapcraft/issues/4995
+.. _#4999: https://github.com/canonical/snapcraft/issues/4999
 .. _#5008: https://github.com/canonical/snapcraft/issues/5008
 .. _#5048: https://github.com/canonical/snapcraft/issues/5048
 .. _#5077: https://github.com/canonical/snapcraft/issues/5077
 .. _#5079: https://github.com/canonical/snapcraft/issues/5079
+.. _#5089: https://github.com/canonical/snapcraft/issues/5089
+.. _#5169: https://github.com/canonical/snapcraft/issues/5169
 
 .. _7.5.6: https://github.com/canonical/snapcraft/releases/tag/7.5.6
 .. _7.5.7: https://github.com/canonical/snapcraft/releases/tag/7.5.7
+.. _7.5.8: https://github.com/canonical/snapcraft/releases/tag/7.5.8
 .. _8.0.0: https://github.com/canonical/snapcraft/releases/tag/8.0.0
 .. _8.0.1: https://github.com/canonical/snapcraft/releases/tag/8.0.1
 .. _8.0.2: https://github.com/canonical/snapcraft/releases/tag/8.0.2
@@ -1318,3 +1497,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.4.0: https://github.com/canonical/snapcraft/releases/tag/8.4.0
 .. _8.4.1: https://github.com/canonical/snapcraft/releases/tag/8.4.1
 .. _8.4.2: https://github.com/canonical/snapcraft/releases/tag/8.4.2
+.. _8.4.3: https://github.com/canonical/snapcraft/releases/tag/8.4.3
+.. _8.4.4: https://github.com/canonical/snapcraft/releases/tag/8.4.4
+.. _8.5.0: https://github.com/canonical/snapcraft/releases/tag/8.5.0
+.. _8.5.1: https://github.com/canonical/snapcraft/releases/tag/8.5.1

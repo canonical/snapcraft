@@ -56,7 +56,8 @@ class StoreReleaseCommand(AppCommand):
             - <branch> is optional and dynamically creates a channel with a
               specific expiration date.
 
-        Examples:
+        Examples::
+
             snapcraft release my-snap 8 stable
             snapcraft release my-snap 8 stable/my-branch
             snapcraft release my-snap 9 beta,edge
@@ -120,7 +121,8 @@ class StoreCloseCommand(AppCommand):
         As such, closing the 'candidate' channel for a snap would make
         that snap begin to track the 'stable' channel.
 
-        Examples:
+        Examples::
+
             snapcraft close my-snap --channel beta
         """
     )
