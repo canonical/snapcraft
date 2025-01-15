@@ -1,5 +1,5 @@
 name: snapcraft
-base: core22
+base: core24
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -15,7 +15,6 @@ assumes:
 # https://github.com/canonical/snapcraft/issues/4187
 environment:
   PATH: "$SNAP/libexec/snapcraft:/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-  LD_LIBRARY_PATH: "$SNAP/none"
   # cryptography>=42.0 cannot load legacy algorithms on
   # Ubuntu 20.04 for armhf, ppc64el, riscv64, and s390x
   CRYPTOGRAPHY_OPENSSL_NO_LEGACY: "1"
@@ -68,15 +67,14 @@ parts:
     build-attributes:
       - enable-patchelf
     prime:
-      - "usr/lib/git-core"
-      - "usr/share/git-core"
-      - "usr/lib/x86_64-linux-gnu/libcurl-gnutls*"
-      - "usr/lib/x86_64-linux-gnu/libpsl*"
-      - "usr/lib/x86_64-linux-gnu/librtmp*"
-      - "usr/lib/x86_64-linux-gnu/libnghttp2*"
-      - "usr/lib/x86_64-linux-gnu/libldap*"
-      - "usr/lib/x86_64-linux-gnu/liblber*"
-      - "usr/lib/x86_64-linux-gnu/libsasl2*"
+      - "-usr/bin"
+      - "-usr/share/doc"
+      - "-usr/share/man"
+      # perl is part of the core22 / core24
+      - "-usr/share/perl"
+      - "-usr/lib/x86_64-linux-gnu/perl"
+      - "-usr/lib/x86_64-linux-gnu/libperl*"
+      - "-usr/lib/x86_64-linux-gnu/libgdbm*"
 
 
   patchelf:
@@ -115,21 +113,19 @@ parts:
         - execstack
         - gpg
         - gpgv
-        - libffi7
         - libsodium23
         - libxml2
         - libxslt1.1
         - libpython3-stdlib
-        - libpython3.10-stdlib
-        - libpython3.10-minimal
+        - libpython3.12-stdlib
+        - libpython3.12-minimal
         - python3-pip
         - python3-setuptools
         - python3-wheel
         - python3-venv
         - python3-minimal
-        - python3-distutils
         - python3-pkg-resources
-        - python3.10-minimal
+        - python3.12-minimal
         - squashfs-tools
         - xdelta3
     build-attributes:
@@ -145,7 +141,7 @@ parts:
       ln -s "$LIBSODIUM" "$TRIPLET_PATH/libsodium.so"
 
       # Restore patched files
-      PYTHON_PACKAGE_PATH="${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.10/"
+      PYTHON_PACKAGE_PATH="${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.12/"
       CTYPES_INIT="ctypes/__init__.py"
       CTYPES_INIT_ORIG="patched/${CTYPES_INIT}.orig"
       [ -f "${CTYPES_INIT_ORIG}" ] && mv "${CTYPES_INIT_ORIG}" "${PYTHON_PACKAGE_PATH}/${CTYPES_INIT}"
@@ -161,7 +157,7 @@ parts:
       fi
 
       # Disable site packages
-      sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.10/site.py" \
+      sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.12/site.py" \
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
 
   libgit2:
@@ -200,7 +196,7 @@ parts:
         - "PIP_NO_BINARY": ":all:"
         # Use base image's libsodium for PyNaCl.
         - "SODIUM_INSTALL": "system"
-        - "CFLAGS": "$(pkg-config python-3.10 yaml-0.1 --cflags)"
+        - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
     override-build: |
         ${SNAP}/libexec/snapcraft/craftctl default
 
@@ -212,7 +208,7 @@ parts:
         ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
 
         # The new implementation still requires this.
-        ln -sf ../usr/bin/python3.10 $SNAPCRAFT_PART_INSTALL/bin/python3
+        ln -sf ../usr/bin/python3.12 $SNAPCRAFT_PART_INSTALL/bin/python3
     after: [snapcraft-libs, libgit2]
 
   chisel:
