@@ -29,6 +29,7 @@ from typing import Any, Iterator, Optional
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
+from craft_platforms import DebianArchitecture
 from craft_providers.multipass import MultipassProvider
 from craft_providers.util import snap_cmd
 from overrides import overrides
@@ -37,7 +38,6 @@ from snapcraft import errors, linters, models, providers
 from snapcraft.meta import snap_yaml
 from snapcraft.parts.yaml_utils import apply_yaml, extract_parse_info, process_yaml
 from snapcraft.utils import (
-    get_host_architecture,
     get_managed_environment_home_path,
     is_managed_mode,
 )
@@ -280,7 +280,7 @@ class LintCommand(AppCommand):
             ) from error
 
         # process yaml before unmarshalling the data
-        arch = get_host_architecture()
+        arch = str(DebianArchitecture.from_host())
         yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
         # discard parse-info - it is not needed
         extract_parse_info(yaml_data_for_arch)

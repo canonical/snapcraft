@@ -169,32 +169,6 @@ def test_get_os_platform_windows(mocker):
     assert os_platform.machine == "AMD64"
 
 
-@pytest.mark.parametrize(
-    "platform_machine,platform_architecture,deb_arch",
-    [
-        ("AMD64", ("64bit", "ELF"), "amd64"),
-        ("aarch64", ("64bit", "ELF"), "arm64"),
-        ("aarch64", ("32bit", "ELF"), "armhf"),
-        ("armv7l", ("64bit", "ELF"), "armhf"),
-        ("ppc", ("64bit", "ELF"), "powerpc"),
-        ("ppc64le", ("64bit", "ELF"), "ppc64el"),
-        ("x86_64", ("64bit", "ELF"), "amd64"),
-        ("x86_64", ("32bit", "ELF"), "i386"),
-        ("s390x", ("64bit", "ELF"), "s390x"),
-        ("riscv64", ("64bit", "ELF"), "riscv64"),
-        ("unknown-arch", ("64bit", "ELF"), "unknown-arch"),
-    ],
-)
-def test_get_host_architecture(
-    platform_machine, platform_architecture, mocker, deb_arch
-):
-    """Test all platform mappings in addition to unknown."""
-    mocker.patch("platform.machine", return_value=platform_machine)
-    mocker.patch("platform.architecture", return_value=platform_architecture)
-
-    assert utils.get_host_architecture() == deb_arch
-
-
 ########################
 # Parallel build count #
 ########################

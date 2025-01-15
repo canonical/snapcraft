@@ -34,7 +34,7 @@ from craft_application.models.constraints import (
 )
 from craft_cli import emit
 from craft_grammar.models import Grammar  # type: ignore[import-untyped]
-from craft_platforms import Platforms, snap
+from craft_platforms import DebianArchitecture, Platforms, snap
 from craft_providers import bases
 from pydantic import ConfigDict, PrivateAttr, StringConstraints
 from typing_extensions import Annotated, Self, override
@@ -47,7 +47,6 @@ from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import (
     convert_architecture_deb_to_platform,
     get_effective_base,
-    get_host_architecture,
     get_supported_architectures,
     is_architecture_supported,
 )
@@ -1127,10 +1126,11 @@ class Project(models.Project):
             elif not self.architectures:
                 self._architectures_in_yaml = False
                 # set default value
+                host_arch = str(DebianArchitecture.from_host())
                 self.architectures = [
                     Architecture(
-                        build_on=[get_host_architecture()],
-                        build_for=[get_host_architecture()],
+                        build_on=[host_arch],
+                        build_for=[host_arch],
                     )
                 ]
 
@@ -1337,7 +1337,7 @@ class ArchitectureProject(models.CraftBaseModel, extra="ignore"):
     """Project definition containing only architecture data."""
 
     architectures: list[str | Architecture] = pydantic.Field(
-        default=[get_host_architecture()],
+        default=[str(DebianArchitecture.from_host())],
         validate_default=True,
     )
 
@@ -1569,10 +1569,11 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
         # set default value
         if self.platforms is None:
+            host_arch = str(DebianArchitecture.from_host())
             self.platforms = {
-                get_host_architecture(): Platform(
-                    build_on=[SnapArch(get_host_architecture()).value],
-                    build_for=[SnapArch(get_host_architecture()).value],
+                host_arch: Platform(
+                    build_on=[SnapArch(host_arch).value],
+                    build_for=[SnapArch(host_arch).value],
                 )
             }
             # For backwards compatibility with core22, convert the platforms.

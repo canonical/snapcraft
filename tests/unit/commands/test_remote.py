@@ -30,9 +30,9 @@ from craft_application.errors import RemoteBuildError
 from craft_application.git import GitRepo
 from craft_application.launchpad.models import BuildState
 from craft_application.remote.utils import get_build_id
+from craft_platforms import DebianArchitecture
 
 from snapcraft import application, const
-from snapcraft.utils import get_host_architecture
 
 # remote-build control logic may check if the working dir is a git repo,
 # so execute all tests inside a test directory
@@ -410,7 +410,7 @@ def test_default_architecture(
     app.run()
 
     mock_start_builds.assert_called_once_with(
-        ANY, architectures=[get_host_architecture()]
+        ANY, architectures=[str(DebianArchitecture.from_host())]
     )
 
 

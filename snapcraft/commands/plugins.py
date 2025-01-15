@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Optional
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_parts.plugins import get_registered_plugins
+from craft_platforms import DebianArchitecture
 from overrides import overrides
 
 from snapcraft import const, errors, models
@@ -31,7 +32,6 @@ from snapcraft.parts.yaml_utils import (
     get_snap_project,
     process_yaml,
 )
-from snapcraft.utils import get_host_architecture
 
 if TYPE_CHECKING:
     import argparse
@@ -73,7 +73,7 @@ class ListPluginsCommand(AppCommand):
                 yaml_data = process_yaml(snap_project.project_file)
 
                 # process yaml before unmarshalling the data
-                arch = get_host_architecture()
+                arch = str(DebianArchitecture.from_host())
                 yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
                 # discard parse-info as it is not part of Project which we use to
                 # determine the base

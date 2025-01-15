@@ -49,21 +49,6 @@ class OSPlatform:
         return f"{self.system}/{self.release} ({self.machine})"
 
 
-# architecture translations from the platform syntax to the deb/snap syntax
-# These two architecture mappings are almost inverses of each other, except one map is
-# not reversible (same value for different keys)
-_ARCH_TRANSLATIONS_PLATFORM_TO_DEB = {
-    "aarch64": "arm64",
-    "armv7l": "armhf",
-    "i686": "i386",
-    "ppc": "powerpc",
-    "ppc64le": "ppc64el",
-    "x86_64": "amd64",
-    "AMD64": "amd64",  # Windows support
-    "s390x": "s390x",
-    "riscv64": "riscv64",
-}
-
 # architecture translations from the deb/snap syntax to the platform syntax
 _ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
     "arm64": "aarch64",
@@ -74,13 +59,6 @@ _ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
     "amd64": "x86_64",
     "s390x": "s390x",
     "riscv64": "riscv64",
-}
-
-_32BIT_USERSPACE_ARCHITECTURE = {
-    "aarch64": "armv7l",
-    "armv8l": "armv7l",
-    "ppc64le": "ppc",
-    "x86_64": "i686",
 }
 
 
@@ -114,20 +92,6 @@ def get_os_platform(
             release = os_release.get("VERSION_ID", release)
 
     return OSPlatform(system=system, release=release, machine=machine)
-
-
-def get_host_architecture():
-    """Get host architecture in deb format suitable for base definition."""
-    os_platform_machine = get_os_platform().machine
-
-    if platform.architecture()[0] == "32bit":
-        userspace = _32BIT_USERSPACE_ARCHITECTURE.get(os_platform_machine)
-        if userspace:
-            os_platform_machine = userspace
-
-    return _ARCH_TRANSLATIONS_PLATFORM_TO_DEB.get(
-        os_platform_machine, os_platform_machine
-    )
 
 
 def is_architecture_supported(architecture: str) -> bool:
