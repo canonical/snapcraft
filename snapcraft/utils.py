@@ -20,11 +20,9 @@ from __future__ import annotations
 import multiprocessing
 import os
 import pathlib
-import platform
 import re
 import shutil
 import sys
-from dataclasses import dataclass
 from getpass import getpass
 from pathlib import Path
 from typing import Iterable, List, Optional
@@ -34,20 +32,6 @@ from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
 
 from snapcraft import errors
-
-
-@dataclass
-class OSPlatform:
-    """Platform definition for a given host."""
-
-    system: str
-    release: str
-    machine: str
-
-    def __str__(self) -> str:
-        """Return the string representation of an OSPlatform."""
-        return f"{self.system}/{self.release} ({self.machine})"
-
 
 # architecture translations from the deb/snap syntax to the platform syntax
 _ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
@@ -60,38 +44,6 @@ _ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
     "s390x": "s390x",
     "riscv64": "riscv64",
 }
-
-
-def get_os_platform(
-    filepath=pathlib.Path(  # noqa: B008 Function call in arg defaults
-        "/etc/os-release"
-    ),
-):
-    """Determine a system/release combo for an OS using /etc/os-release if available."""
-    system = platform.system()
-    release = platform.release()
-    machine = platform.machine()
-
-    if system == "Linux":
-        try:
-            with filepath.open("rt", encoding="utf-8") as release_file:
-                lines = release_file.readlines()
-        except FileNotFoundError:
-            emit.debug("Unable to locate 'os-release' file, using default values")
-        else:
-            os_release = {}
-            for line in lines:
-                line = line.strip()  # noqa PLW2901
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, value = line.rstrip().split("=", 1)
-                if value[0] == value[-1] and value[0] in ('"', "'"):
-                    value = value[1:-1]
-                os_release[key] = value
-            system = os_release.get("ID", system)
-            release = os_release.get("VERSION_ID", release)
-
-    return OSPlatform(system=system, release=release, machine=machine)
 
 
 def is_architecture_supported(architecture: str) -> bool:
