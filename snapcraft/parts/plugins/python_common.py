@@ -24,7 +24,11 @@ confinement parameters.
 import logging
 from pathlib import Path
 
-from craft_parts import PartInfo, StepInfo, errors
+from craft_parts import PartInfo, StepInfo, errors, plugins
+
+from .poetry_plugin import PoetryPlugin
+from .python_plugin import PythonPlugin
+from .uv_plugin import UvPlugin
 
 logger = logging.getLogger(__name__)
 
@@ -94,3 +98,11 @@ def post_prime(step_info: StepInfo) -> None:
     if old_contents != contents:
         logger.debug("Updating pyvenv.cfg to:\n%s", contents)
         pyvenv.write_text(contents)
+
+
+def get_python_plugins() -> dict[str, plugins.plugins.PluginType]:
+    return {
+        "poetry": PoetryPlugin,
+        "python": PythonPlugin,
+        "uv": UvPlugin,
+    }

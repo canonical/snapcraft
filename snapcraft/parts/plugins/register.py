@@ -19,14 +19,13 @@
 import craft_parts
 from craft_parts.plugins.plugins import PluginType
 
+from snapcraft.parts.plugins import python_common
+
 from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
 from .matter_sdk_plugin import MatterSdkPlugin
-from .poetry_plugin import PoetryPlugin
-from .python_plugin import PythonPlugin
-from .uv_plugin import UvPlugin
 
 
 def get_plugins(core22: bool) -> dict[str, PluginType]:
@@ -38,10 +37,8 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "colcon": ColconPlugin,
         "conda": CondaPlugin,
         "flutter": FlutterPlugin,
-        "python": PythonPlugin,
         "matter-sdk": MatterSdkPlugin,
-        "poetry": PoetryPlugin,
-        "uv": UvPlugin,
+        **python_common.get_python_plugins()
     }
 
     if core22:
