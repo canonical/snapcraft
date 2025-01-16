@@ -432,7 +432,7 @@ def default_build_plan():
 
     # Set the build info base to match the host's, so we can test in destructive
     # mode with no issues.
-    arch = DebianArchitecture.from_host()
+    arch = str(DebianArchitecture.from_host())
     base = util.get_host_base()
 
     return [

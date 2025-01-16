@@ -73,7 +73,7 @@ class ListPluginsCommand(AppCommand):
                 yaml_data = process_yaml(snap_project.project_file)
 
                 # process yaml before unmarshalling the data
-                arch = DebianArchitecture.from_host()
+                arch = str(DebianArchitecture.from_host())
                 yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
                 # discard parse-info as it is not part of Project which we use to
                 # determine the base

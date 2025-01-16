@@ -295,7 +295,7 @@ def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
                 destructive_mode=False,
                 use_lxd=False,
                 provider="some",
-                build_for=DebianArchitecture.from_host(),
+                build_for=str(DebianArchitecture.from_host()),
             ),
         )
 
@@ -339,7 +339,7 @@ def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, m
                 use_lxd=False,
                 provider=None,
                 ua_token=None,
-                build_for=DebianArchitecture.from_host(),
+                build_for=str(DebianArchitecture.from_host()),
             ),
         )
 
@@ -365,7 +365,7 @@ def test_lifecycle_run_ua_services_without_experimental_flag(
                 use_lxd=False,
                 provider=None,
                 ua_token="my-token",
-                build_for=DebianArchitecture.from_host(),
+                build_for=str(DebianArchitecture.from_host()),
                 enable_experimental_ua_services=False,
             ),
         )
@@ -517,7 +517,7 @@ def test_lifecycle_run_local_destructive_mode(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=DebianArchitecture.from_host(),
+            target_arch=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -582,7 +582,7 @@ def test_lifecycle_run_local_managed_mode(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=DebianArchitecture.from_host(),
+            target_arch=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -647,7 +647,7 @@ def test_lifecycle_run_local_build_env(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=DebianArchitecture.from_host(),
+            target_arch=str(DebianArchitecture.from_host()),
         )
     ]
 

@@ -149,8 +149,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=cast(UniqueStrList, [DebianArchitecture.from_host()]),
-                build_for=cast(UniqueStrList, [DebianArchitecture.from_host()]),
+                build_on=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
+                build_for=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
             )
         ]
         assert project.ua_services is None
@@ -2348,10 +2348,10 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
             None,
             [
                 BuildInfo(
-                    build_on=DebianArchitecture.from_host(),
-                    build_for=DebianArchitecture.from_host(),
+                    build_on=str(DebianArchitecture.from_host()),
+                    build_for=str(DebianArchitecture.from_host()),
                     base=BaseName(name="ubuntu", version="22.04"),
-                    platform=DebianArchitecture.from_host(),
+                    platform=str(DebianArchitecture.from_host()),
                 )
             ],
             id="no_arch",
@@ -2516,10 +2516,10 @@ def test_platform_default():
 
     assert actual_build_infos == [
         BuildInfo(
-            build_on=DebianArchitecture.from_host(),
-            build_for=DebianArchitecture.from_host(),
+            build_on=str(DebianArchitecture.from_host()),
+            build_for=str(DebianArchitecture.from_host()),
             base=BaseName(name="ubuntu", version="24.04"),
-            platform=DebianArchitecture.from_host(),
+            platform=str(DebianArchitecture.from_host()),
         )
     ]
 

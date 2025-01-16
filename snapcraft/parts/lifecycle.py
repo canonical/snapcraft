@@ -743,7 +743,7 @@ def _expand_environment(
     }
 
     if target_arch == "all":
-        target_arch = DebianArchitecture.from_host()
+        target_arch = str(DebianArchitecture.from_host())
 
     dirs = craft_parts.ProjectDirs(work_dir=work_dir, partitions=partitions)
     info = craft_parts.ProjectInfo(
@@ -779,7 +779,7 @@ def get_build_plan(
     """
     archs = models.ArchitectureProject.unmarshal(yaml_data).architectures
 
-    host_arch = DebianArchitecture.from_host()
+    host_arch = str(DebianArchitecture.from_host())
     build_plan: List[Tuple[str, str]] = []
 
     # `isinstance()` calls are for mypy type checking and should not change logic
