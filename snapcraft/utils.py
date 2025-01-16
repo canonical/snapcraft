@@ -30,8 +30,12 @@ from typing import Iterable, List, Optional
 from craft_application.util import strtobool
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
+from craft_platforms import DebianArchitecture
 
 from snapcraft import errors
+
+def get_supported_architectures() -> list[str]:
+    return [arch.value for arch in DebianArchitecture]
 
 
 def is_managed_mode() -> bool:
