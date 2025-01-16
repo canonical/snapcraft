@@ -4,7 +4,7 @@ Snap build process
 ==================
 
 This page describes at a high level the workflow between a snap recipe and its
-resulting artefact.
+resulting artifact.
 
 
 The recipe file
@@ -100,7 +100,7 @@ The result
 The result of a successful Snapcraft build is a snap file, which is itself a
 compressed Squashfs archive with a ``.snap`` extension.
 
-After the build is complete, the resulting artefact is placed in the current
+After the build is complete, the resulting artifact is placed in the current
 working directory. Snapcraft then halts the VM or container and preserves it
 for reuse in any re-builds of the snap, to reduce processing time.
 

@@ -100,8 +100,8 @@ def _pack(
     """Pack a directory with `snap pack` as a snap or component.
 
     :param directory: Directory to pack.
-    :param output_dir: Directory to output the artefact to.
-    :param output_file: Name of the artefact.
+    :param output_dir: Directory to output the artifact to.
+    :param output_file: Name of the artifact.
     :param compression: Compression type to use, None for default.
 
     :returns: The filename of the packed snap or component.

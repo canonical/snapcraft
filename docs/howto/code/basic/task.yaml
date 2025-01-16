@@ -8,7 +8,7 @@ execute: |
 
   snapcraft pack
 
-  # assert artefacts were packed
+  # assert artifacts were packed
   if [ ! -e "hello-components_1.0_amd64.snap" ]; then
     echo "snap was not packed"
     exit 1

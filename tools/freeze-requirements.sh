@@ -42,7 +42,6 @@ requirements_fixups "requirements.txt"
 pip-compile --upgrade --extra docs --output-file requirements-docs.txt
 requirements_fixups "requirements-docs.txt"
 
-# Set the configured python-apt and python-distutils-extra packages.
 pip-compile --upgrade --extra dev --output-file requirements-devel.txt
 requirements_fixups "requirements-devel.txt"
 
