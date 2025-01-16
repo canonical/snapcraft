@@ -34,7 +34,9 @@ from craft_platforms import DebianArchitecture
 
 from snapcraft import errors
 
+
 def get_supported_architectures() -> list[str]:
+    """Get list of supported architectures for building."""
     return [arch.value for arch in DebianArchitecture]
 
 

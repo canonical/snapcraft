@@ -1167,7 +1167,6 @@ class Project(models.Project):
     @classmethod
     def _validate_architecture_data(cls, architectures, info: pydantic.ValidationInfo):
         """Validate architecture data."""
-        base = info.data.get("build_base")
         return validate_architectures(architectures)
 
     @pydantic.field_validator("provenance")
