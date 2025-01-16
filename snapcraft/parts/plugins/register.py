@@ -38,7 +38,7 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "conda": CondaPlugin,
         "flutter": FlutterPlugin,
         "matter-sdk": MatterSdkPlugin,
-        **python_common.get_python_plugins()
+        **python_common.get_python_plugins(),
     }
 
     if core22:
