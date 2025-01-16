@@ -857,11 +857,6 @@ _setup_initrd_chroot_fnc = [
                 rm -rf ${UC_INITRD_ROOT}/usr/lib/modules/*/build
                 touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules"
             fi
-
-            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.os-release" ]; then
-                cp "/snap/${UBUNTU_CORE_BASE}/current/etc/os-release" "${UC_INITRD_ROOT}/etc/os-release"
-                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.os-release"
-            fi
             set -x
         }
         """
