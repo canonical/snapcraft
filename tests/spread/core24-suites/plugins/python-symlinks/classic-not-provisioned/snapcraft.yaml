@@ -8,7 +8,7 @@ description: |
   found, we must fail.
 
 grade: devel
-base: core22
+base: core24
 confinement: classic
 
 apps:

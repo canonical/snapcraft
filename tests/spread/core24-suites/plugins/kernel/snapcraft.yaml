@@ -5,7 +5,7 @@ summary: Kernel plugin test
 description: A stripped-down pc kernel to test the kernel plugin.
 
 grade: stable
-build-base: core22
+build-base: core24
 confinement: strict
 type: kernel
 adopt-info: kernel

@@ -1,5 +1,5 @@
 name: dotnet-hello
-base: core22
+base: core24
 version: '1.0'
 summary: a simple dotnet snap
 description: a simple dotnet snap

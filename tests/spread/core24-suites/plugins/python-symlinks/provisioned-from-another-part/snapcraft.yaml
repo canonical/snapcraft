@@ -10,7 +10,7 @@ description: |
   python3 -> ../usr/bin/<staged interpreter>.
 
 grade: devel
-base: core22
+base: core24
 confinement: strict
 
 apps:

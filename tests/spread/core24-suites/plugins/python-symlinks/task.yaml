@@ -3,15 +3,15 @@ summary: >-
   configurations
 
 environment:
-  # base core22, strict confinement: use provisioned if available
+  # base core24, strict confinement: use provisioned if available
   SNAP/strict_not_provisioned: strict-not-provisioned
   SNAP/strict_provisioned: strict-provisioned
 
-  # base core22, classic confinement: requires provisioning
+  # base core24, classic confinement: requires provisioning
   SNAP/classic_not_provisioned: classic-not-provisioned
   SNAP/classic_provisioned: classic-provisioned
 
-  # base core22, devmode: same as strict
+  # base core24, devmode: same as strict
   SNAP/devmode_not_provisioned: devmode-not-provisioned
   SNAP/devmode_provisioned: devmode-provisioned
 

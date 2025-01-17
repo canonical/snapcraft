@@ -1,8 +1,8 @@
 name: python-hello
 version: "1.0"
 summary: simple python application
-description: build a python application using core22
-base: core22
+description: build a python application using core24
+base: core24
 confinement: strict
 
 apps:

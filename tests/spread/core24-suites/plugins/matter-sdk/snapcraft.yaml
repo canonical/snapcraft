@@ -3,10 +3,9 @@ summary: Matter plugin test
 description: An lighting application to test the matter plugin.
 version: "1.0"
 
-base: core22
+base: core24
 
 grade: stable
-build-base: core22
 confinement: strict
 
 layout:

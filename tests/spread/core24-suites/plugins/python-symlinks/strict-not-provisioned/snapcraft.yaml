@@ -5,10 +5,10 @@ description: |
   When we have a strict snap with no staged python the venv
   symlink must point to the interpreter provided by the base
   snap (which will appear as the root filesystem). The expected
-  link for core22 is python3 -> /usr/bin/python3.10.
+  link for core24 is python3 -> /usr/bin/python3.10.
 
 grade: devel
-base: core22
+base: core24
 confinement: strict
 
 apps:

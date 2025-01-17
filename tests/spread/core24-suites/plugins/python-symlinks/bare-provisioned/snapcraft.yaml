@@ -8,7 +8,7 @@ description: |
 
 grade: devel
 base: bare
-build-base: core22
+build-base: core24
 confinement: strict
 
 apps:
