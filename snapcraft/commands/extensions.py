@@ -22,6 +22,7 @@ from typing import Dict, List
 import tabulate
 from craft_application.commands import AppCommand
 from craft_cli import emit
+from craft_platforms import DebianArchitecture
 from overrides import overrides
 from pydantic import BaseModel
 
@@ -32,7 +33,6 @@ from snapcraft.parts.yaml_utils import (
     get_snap_project,
     process_yaml,
 )
-from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
     supported_extension_names,
@@ -122,7 +122,7 @@ class ExpandExtensionsCommand(AppCommand):
         yaml_data = process_yaml(snap_project.project_file)
 
         # process yaml before unmarshalling the data
-        arch = get_host_architecture()
+        arch = str(DebianArchitecture.from_host())
         yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
 
         # `apply_yaml()` adds or replaces the architectures keyword with an Architecture

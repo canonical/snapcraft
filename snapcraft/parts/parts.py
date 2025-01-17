@@ -26,13 +26,13 @@ from craft_archives import repo
 from craft_cli import emit
 from craft_parts import Action, ActionType, Step
 from craft_parts.packages import Repository
+from craft_platforms import DebianArchitecture
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts.extract_metadata import extract_lifecycle_metadata
 from snapcraft.services.lifecycle import get_prime_dirs_from_project
-from snapcraft.utils import get_host_architecture
 
 _LIFECYCLE_STEPS = {
     "pull": Step.PULL,
@@ -92,7 +92,7 @@ class PartsLifecycle:
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
 
         if target_arch == "all":
-            target_arch = get_host_architecture()
+            target_arch = str(DebianArchitecture.from_host())
 
         try:
             self._lcm = craft_parts.LifecycleManager(

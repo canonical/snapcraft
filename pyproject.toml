@@ -8,10 +8,10 @@ extend-exclude = '''
 '''
 # Targeting future versions as well so we don't have black reformatting code
 # en masse later.
-target-version = ["py310", "py311"]
+target-version = ["py312"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 ignore_missing_imports = true
 follow_imports = "silent"
 exclude = [
@@ -29,16 +29,16 @@ plugins = [
 [tool.pyright]
 include = ["snapcraft", "tests"]
 exclude = ["build", "tests/legacy", "tests/spread"]
-pythonVersion = "3.10"
+pythonVersion = "3.12"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.10", "pytest-subprocess>=1.4"]
+required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.12", "pytest-subprocess>=1.4"]
 addopts = ["--cov=snapcraft"]
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 line-length = 88
 extend-exclude = [
     "docs",

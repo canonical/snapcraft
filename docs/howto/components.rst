@@ -46,16 +46,16 @@ Pack the snap with:
     :end-before: [docs:pack-end]
     :dedent: 2
 
-This will produce 2 artefacts, the snap and the component:
+This will produce 2 artifacts, the snap and the component:
 
 * ``hello-components_1.0_amd64.snap``
 * ``hello-components+translations_1.0.comp``
 
 The ``my-app`` and ``la`` files are staged, primed, and packed in the snap
-artefact. The component artefact has no payload. It is empty except for a
+artifact. The component artifact has no payload. It is empty except for a
 metadata file ``meta/component.yaml``.
 
-To move the ``la`` translation file to the ``component`` artefact, use the
+To move the ``la`` translation file to the ``component`` artifact, use the
 ``organize`` keyword for the ``translations`` part:
 
 .. literalinclude:: code/components-organize/snapcraft.yaml
@@ -72,7 +72,7 @@ Pack the snap again with:
     :end-before: [docs:pack-end]
     :dedent: 2
 
-This will produce two artefacts again but the component now contains the
+This will produce two artifacts again but the component now contains the
 ``la`` translation file.
 
 To upload the snap and the component to the store, specify the snap file

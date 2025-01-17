@@ -31,6 +31,7 @@ from craft_application import Application, AppMetadata, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
+from craft_platforms import DebianArchitecture
 from overrides import override
 
 import snapcraft
@@ -39,7 +40,7 @@ from snapcraft import cli, commands, errors, models, services, store
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
 from snapcraft.parts import set_global_environment
-from snapcraft.utils import get_effective_base, get_host_architecture
+from snapcraft.utils import get_effective_base
 from snapcraft_legacy.cli import legacy
 
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
@@ -245,7 +246,7 @@ class Snapcraft(Application):
         self, yaml_data: dict[str, Any], *, build_on: str, build_for: str | None
     ) -> dict[str, Any]:
         arch = build_on
-        target_arch = build_for if build_for else get_host_architecture()
+        target_arch = build_for if build_for else str(DebianArchitecture.from_host())
         new_yaml_data = apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
         self._parse_info = extract_parse_info(new_yaml_data)
         return apply_root_packages(new_yaml_data)

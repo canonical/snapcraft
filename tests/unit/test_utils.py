@@ -16,7 +16,6 @@
 
 import os
 from pathlib import Path
-from textwrap import dedent
 from typing import List
 from unittest.mock import call, patch
 
@@ -79,120 +78,6 @@ def test_get_effective_base_translate_devel():
 
     translate_false = utils.get_effective_base(translate_devel=False, **params)
     assert translate_false == "devel"
-
-
-def test_get_os_platform_linux(tmp_path, mocker):
-    """Utilize an /etc/os-release file to determine platform."""
-    # explicitly add commented and empty lines, for parser robustness
-    filepath = tmp_path / "os-release"
-    filepath.write_text(
-        dedent(
-            """
-        # the following is an empty line
-
-        NAME="Ubuntu"
-        VERSION="20.04.1 LTS (Focal Fossa)"
-        ID=ubuntu
-        ID_LIKE=debian
-        PRETTY_NAME="Ubuntu 20.04.1 LTS"
-        VERSION_ID="20.04"
-        HOME_URL="https://www.ubuntu.com/"
-        SUPPORT_URL="https://help.ubuntu.com/"
-        BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
-
-        # more in the middle; the following even would be "out of standard", but
-        # we should not crash, just ignore it
-        SOMETHING-WEIRD
-
-        PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
-        VERSION_CODENAME=focal
-        UBUNTU_CODENAME=focal
-        """
-        )
-    )
-    mocker.patch("platform.machine", return_value="x86_64")
-    mocker.patch("platform.system", return_value="Linux")
-
-    os_platform = utils.get_os_platform(filepath)
-
-    assert os_platform.system == "ubuntu"
-    assert os_platform.release == "20.04"
-    assert os_platform.machine == "x86_64"
-
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        ('"foo bar"', "foo bar"),  # what's normally found
-        ("foo bar", "foo bar"),  # no quotes
-        ('"foo " bar"', 'foo " bar'),  # quotes in the middle
-        ('foo bar"', 'foo bar"'),  # unbalanced quotes (no really enclosing)
-        ('"foo bar', '"foo bar'),  # unbalanced quotes (no really enclosing)
-        ("'foo bar'", "foo bar"),  # enclosing with single quote
-        ("'foo ' bar'", "foo ' bar"),  # single quote in the middle
-        ("foo bar'", "foo bar'"),  # unbalanced single quotes (no really enclosing)
-        ("'foo bar", "'foo bar"),  # unbalanced single quotes (no really enclosing)
-        ("'foo bar\"", "'foo bar\""),  # unbalanced mixed quotes
-        ("\"foo bar'", "\"foo bar'"),  # unbalanced mixed quotes
-    ],
-)
-def test_get_os_platform_alternative_formats(tmp_path, mocker, name):
-    """Support different ways of building the string."""
-    source, result = name
-    filepath = tmp_path / "os-release"
-    filepath.write_text(
-        dedent(
-            f"""
-            ID={source}
-            VERSION_ID="20.04"
-            """
-        )
-    )
-    # need to patch this to "Linux" so actually uses /etc/os-release...
-    mocker.patch("platform.system", return_value="Linux")
-
-    os_platform = utils.get_os_platform(filepath)
-
-    assert os_platform.system == result
-
-
-def test_get_os_platform_windows(mocker):
-    """Get platform from a patched Windows machine."""
-    mocker.patch("platform.system", return_value="Windows")
-    mocker.patch("platform.release", return_value="10")
-    mocker.patch("platform.machine", return_value="AMD64")
-
-    os_platform = utils.get_os_platform()
-
-    assert os_platform.system == "Windows"
-    assert os_platform.release == "10"
-    assert os_platform.machine == "AMD64"
-
-
-@pytest.mark.parametrize(
-    "platform_machine,platform_architecture,deb_arch",
-    [
-        ("AMD64", ("64bit", "ELF"), "amd64"),
-        ("aarch64", ("64bit", "ELF"), "arm64"),
-        ("aarch64", ("32bit", "ELF"), "armhf"),
-        ("armv7l", ("64bit", "ELF"), "armhf"),
-        ("ppc", ("64bit", "ELF"), "powerpc"),
-        ("ppc64le", ("64bit", "ELF"), "ppc64el"),
-        ("x86_64", ("64bit", "ELF"), "amd64"),
-        ("x86_64", ("32bit", "ELF"), "i386"),
-        ("s390x", ("64bit", "ELF"), "s390x"),
-        ("riscv64", ("64bit", "ELF"), "riscv64"),
-        ("unknown-arch", ("64bit", "ELF"), "unknown-arch"),
-    ],
-)
-def test_get_host_architecture(
-    platform_machine, platform_architecture, mocker, deb_arch
-):
-    """Test all platform mappings in addition to unknown."""
-    mocker.patch("platform.machine", return_value=platform_machine)
-    mocker.patch("platform.architecture", return_value=platform_architecture)
-
-    assert utils.get_host_architecture() == deb_arch
 
 
 ########################
@@ -430,71 +315,6 @@ def test_process_version_git(mocker):
     )
 
     assert utils.process_version("git") == "1.2.3-dirty"
-
-
-###########################
-# Supported architectures #
-###########################
-
-
-@pytest.mark.parametrize("arch", utils.get_supported_architectures())
-def test_is_architecture_supported(arch):
-    """Supported architectures should return true."""
-    assert utils.is_architecture_supported(arch)
-
-
-def test_is_architecture_not_supported():
-    """Unsupported architectures should return false."""
-    assert not utils.is_architecture_supported("unknown")
-
-
-def get_supported_architectures():
-    """Validate list of supported architectures."""
-    supported_archs = utils.get_supported_architectures()
-
-    assert supported_archs == [
-        "arm64",
-        "armhf",
-        "i386",
-        "powerpc",
-        "ppc64el",
-        "amd64",
-        "s390x",
-        "riscv64",
-    ]
-
-
-#########################
-# Convert Architectures #
-#########################
-
-
-@pytest.mark.parametrize(
-    "deb_arch, platform_arch",
-    [
-        ("arm64", "aarch64"),
-        ("armhf", "armv7l"),
-        ("i386", "i686"),
-        ("powerpc", "ppc"),
-        ("ppc64el", "ppc64le"),
-        ("amd64", "x86_64"),
-        ("s390x", "s390x"),
-        ("riscv64", "riscv64"),
-    ],
-)
-def test_convert_architectures_valid(deb_arch, platform_arch):
-    """Test all architecture mappings."""
-
-    assert utils.convert_architecture_deb_to_platform(deb_arch) == platform_arch
-
-
-def test_convert_architectures_invalid():
-    """Test unknown architecture raises InvalidArchitecture error."""
-
-    with pytest.raises(errors.InvalidArchitecture) as raised:
-        utils.convert_architecture_deb_to_platform("unknown")
-
-    assert str(raised.value) == "Architecture 'unknown' is not supported."
 
 
 ########################

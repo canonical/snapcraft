@@ -838,7 +838,7 @@ Remote builder
 * Add an exponential backoff to API retries with a maximum total delay of
   62 seconds (`canonical/craft-application#355`_).
 
-* Fix a bug where the remote builder would not fail if no artefacts were
+* Fix a bug where the remote builder would not fail if no artifacts were
   created (`#4783`_).
 
 For a complete list of commits, check out the `8.2.10`_ release on GitHub.
