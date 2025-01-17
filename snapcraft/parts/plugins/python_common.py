@@ -101,6 +101,7 @@ def post_prime(step_info: StepInfo) -> None:
 
 
 def get_python_plugins() -> dict[str, plugins.plugins.PluginType]:
+    """Get a list of currently supported Python-based plugins."""
     return {
         "poetry": PoetryPlugin,
         "python": PythonPlugin,
