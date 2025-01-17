@@ -26,4 +26,4 @@ parts:
 
   other-part:
     plugin: nil
-    stage-packages: [python3-minimal, python3.10-minimal]
+    stage-packages: [python3-minimal, python3.12-minimal]

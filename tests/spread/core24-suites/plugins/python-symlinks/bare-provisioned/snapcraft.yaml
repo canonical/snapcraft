@@ -22,5 +22,5 @@ parts:
     python-packages: [black]
     stage-packages:
       - python3-minimal
-      - python3.10-minimal
+      - python3.12-minimal
       - python3-venv
