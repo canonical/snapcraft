@@ -28,7 +28,6 @@ from craft_store.models import RevisionsResponseModel
 from snapcraft import errors, models
 from snapcraft.store import LegacyUbuntuOne, client, constants
 from snapcraft.store.channel_map import ChannelMap
-from snapcraft.utils import OSPlatform
 from snapcraft_legacy.storeapi.v2.releases import Releases
 
 from .utils import FakeResponse
@@ -264,13 +263,15 @@ def post_registries_payload():
 ####################
 
 
-def test_useragent_linux():
+def test_useragent_linux(mocker):
     """Construct a user-agent as a patched Linux machine"""
-    os_platform = OSPlatform(
-        system="Arch Linux", release="5.10.10-arch1-1", machine="x86_64"
+    mocker.patch("distro.id", return_value="Arch Linux")
+    mocker.patch("distro.version", return_value="5.10.10-arch1-1")
+    mocker.patch(
+        "craft_platforms.DebianArchitecture.to_platform_arch", return_value="x86_64"
     )
 
-    assert client.build_user_agent(version="7.1.0", os_platform=os_platform) == (
+    assert client.build_user_agent(version="7.1.0") == (
         "snapcraft/7.1.0 Arch Linux/5.10.10-arch1-1 (x86_64)"
     )
 
