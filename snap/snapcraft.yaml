@@ -26,7 +26,7 @@ apps:
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
     command: bin/python $SNAP/bin/snapcraft
-    completer: snapcraft-completion
+    completer: completion.sh
 
 build-packages:
   - cargo
@@ -47,11 +47,6 @@ build-packages:
   - sed
 
 parts:
-  bash-completion:
-    source: snap/local
-    plugin: dump
-    stage:
-      - snapcraft-completion
 
   snapcraft-scripts:
     source: snap/local
@@ -199,6 +194,8 @@ parts:
         - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
     override-build: |
         ${SNAP}/libexec/snapcraft/craftctl default
+
+        PYTHONPATH=/root/parts/$CRAFT_PART_NAME/install/lib/python3.12/site-packages python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.cli:get_dispatcher > $CRAFT_PART_INSTALL/completion.sh
 
         version="$(python3 setup.py --version)"
         ${SNAP}/libexec/snapcraft/craftctl set version="$version"
