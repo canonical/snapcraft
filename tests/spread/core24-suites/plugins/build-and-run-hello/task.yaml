@@ -9,7 +9,8 @@ environment:
   SNAP/colcon_ros2_jazzy: colcon-ros2-jazzy-hello
   SNAP/colcon_ros2_wrapper: colcon-ros2-wrapper
   SNAP/flutter: flutter-hello
-  SNAP/python: python-hello
+  # https://github.com/canonical/snapcraft/issues/5207
+  # SNAP/python: python-hello
   SNAP/poetry: poetry-hello
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
