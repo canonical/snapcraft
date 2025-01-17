@@ -1,0 +1,27 @@
+name: colcon-packages-ignore
+version: "1.0"
+summary: snapcraft test
+description: |
+  Exercise colcon-packages-ignore/colcon-packages-select options.
+
+grade: stable
+confinement: strict
+base: core22
+
+apps:
+  colcon-packages-ignore:
+    command: opt/ros/snap/lib/package1/package1
+    plugs: [network, network-bind]
+    extensions: [ros2-humble]
+
+parts:
+  test-part:
+    plugin: colcon
+    source: .
+    build-packages: [g++, make]
+
+    # By default, all packages in the workspace will be built.
+    # Request that package1 & package2 is build.
+    colcon-packages: [package1, package2]
+    # Request that package2 is ignored.
+    colcon-packages-ignore: [package2]

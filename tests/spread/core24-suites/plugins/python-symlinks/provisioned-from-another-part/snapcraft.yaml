@@ -1,0 +1,29 @@
+name: provisioned-from-another-part
+version: "1.0"
+summary: Python staged from a different part
+description: |
+  It doesn't matter if a python interpreter is staged from
+  the part using the python plugin or from a different part,
+  the venv symlink should be the same (as long as the part
+  using the python plugin is built after the part that
+  stages the python interpreter). The expected symlink is
+  python3 -> ../usr/bin/<staged interpreter>.
+
+grade: devel
+base: core22
+confinement: strict
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  python-sample:
+    after: [other-part]
+    plugin: python
+    source: src
+    python-packages: [black]
+
+  other-part:
+    plugin: nil
+    stage-packages: [python3-minimal, python3.10-minimal]

@@ -1,0 +1,22 @@
+name: classic-not-provisioned
+version: "1.0"
+summary: Classic confinement, python not staged
+description: |
+  Classic confinement requires the python interpreter to be
+  provisioned by the user because we can't rely on the host to
+  provide a compatible version. If a staged interpreter is not
+  found, we must fail.
+
+grade: devel
+base: core22
+confinement: classic
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  python-sample:
+    plugin: python
+    source: src
+    python-packages: [black]

@@ -1,0 +1,22 @@
+name: colcon-ros2-humble-hello
+version: "1.0"
+summary: hello world
+description: |
+  A ROS2 rlcpp-based workspace.
+
+grade: stable
+confinement: strict
+base: core22
+
+apps:
+  colcon-ros2-humble-hello:
+    command: opt/ros/humble/bin/ros2 run colcon_ros2_rlcpp_hello colcon_ros2_rlcpp_hello
+    plugs: [network, network-bind]
+    extensions: [ros2-humble]
+
+parts:
+  hello:
+    plugin: colcon
+    source: .
+    build-packages: [g++, make, vim]
+    stage-packages: [ros-humble-ros2run]

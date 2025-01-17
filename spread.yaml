@@ -263,6 +263,11 @@ suites:
    systems:
      - ubuntu-24.04*
 
+ tests/spread/core24-suites/plugins/:
+   summary: core24 plugin tests
+   systems:
+     - ubuntu-24.04*
+
  # General, core suite
  tests/spread/general/:
    summary: tests of snapcraft core functionality

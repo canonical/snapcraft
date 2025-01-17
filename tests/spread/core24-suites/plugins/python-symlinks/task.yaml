@@ -1,0 +1,43 @@
+summary: >-
+  Verify python symlinks with different base and confinement
+  configurations
+
+environment:
+  # base core22, strict confinement: use provisioned if available
+  SNAP/strict_not_provisioned: strict-not-provisioned
+  SNAP/strict_provisioned: strict-provisioned
+
+  # base core22, classic confinement: requires provisioning
+  SNAP/classic_not_provisioned: classic-not-provisioned
+  SNAP/classic_provisioned: classic-provisioned
+
+  # base core22, devmode: same as strict
+  SNAP/devmode_not_provisioned: devmode-not-provisioned
+  SNAP/devmode_provisioned: devmode-provisioned
+
+  # base bare: requires provisioning
+  SNAP/bare_not_provisioned: bare-not-provisioned
+  SNAP/bare_provisioned: bare-provisioned
+
+  # provisioned from a different part
+  SNAP/provisioned_from_another_part: provisioned-from-another-part
+
+  # using the gnome extension
+  SNAP/strict_gnome_extension: strict-gnome-extension
+
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "${SNAP}"
+
+  if [ -f expected-symlink ]; then
+    snapcraft prime
+    ls -l prime/bin
+    [ -x prime/bin/hello ]
+    [ "$(readlink prime/bin/python3)" == "$(cat expected-symlink)" ]
+  else
+    snapcraft prime 2>&1 | MATCH "No suitable Python interpreter found, giving up."
+  fi 

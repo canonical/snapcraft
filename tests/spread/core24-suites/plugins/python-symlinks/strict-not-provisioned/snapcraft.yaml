@@ -1,0 +1,22 @@
+name: strict-not-provisioned
+version: "1.0"
+summary: Strict confinement without staged python
+description: |
+  When we have a strict snap with no staged python the venv
+  symlink must point to the interpreter provided by the base
+  snap (which will appear as the root filesystem). The expected
+  link for core22 is python3 -> /usr/bin/python3.10.
+
+grade: devel
+base: core22
+confinement: strict
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  python-sample:
+    plugin: python
+    source: src
+    python-packages: [black]

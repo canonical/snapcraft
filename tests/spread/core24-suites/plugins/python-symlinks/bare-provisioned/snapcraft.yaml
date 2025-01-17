@@ -1,0 +1,26 @@
+name: bare-provisioned
+version: "1.0"
+summary: Bare base with staged python
+description: |
+  If we use base bare staging python is mandatory, and the venv
+  symlink must point to the staged interpreter. The expected
+  symlink is python3 -> ../usr/bin/<staged interpreter>.
+
+grade: devel
+base: bare
+build-base: core22
+confinement: strict
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  python-sample:
+    plugin: python
+    source: src
+    python-packages: [black]
+    stage-packages:
+      - python3-minimal
+      - python3.10-minimal
+      - python3-venv
