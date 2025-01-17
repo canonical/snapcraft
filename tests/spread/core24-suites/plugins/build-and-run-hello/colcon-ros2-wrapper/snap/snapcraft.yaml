@@ -12,11 +12,11 @@ apps:
   colcon-ros2-wrapper:
     command: ros2 run colcon_ros2_rlcpp_hello colcon_ros2_rlcpp_hello
     plugs: [network, network-bind]
-    extensions: [ros2-humble]
+    extensions: [ros2-jazzy]
 
 parts:
   hello:
     plugin: colcon
     source: .
     build-packages: [g++, make, vim]
-    stage-packages: [ros-humble-ros2run]
+    stage-packages: [ros-jazzy-ros2run]
