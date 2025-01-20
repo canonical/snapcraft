@@ -22,17 +22,10 @@ from typing import Dict, List, cast
 import tabulate
 from craft_application.commands import AppCommand
 from craft_cli import emit
-from craft_platforms import DebianArchitecture
 from overrides import overrides
 from pydantic import BaseModel
 
 from snapcraft import extensions, models
-from snapcraft.parts.yaml_utils import (
-    apply_yaml,
-    extract_parse_info,
-    get_snap_project,
-    process_yaml,
-)
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
     supported_extension_names,

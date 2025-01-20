@@ -71,7 +71,7 @@ def process_parts(
     # TODO: make checker optional in craft-grammar.
     processor = GrammarProcessor(arch=arch, target_arch=target_arch, checker=self_check)
 
-    for part_name in parts_yaml_data:
+    for part_name in parts_yaml_data:  # noqa: PLC0206
         parts_yaml_data[part_name] = process_part(
             part_yaml_data=parts_yaml_data[part_name], processor=processor
         )
