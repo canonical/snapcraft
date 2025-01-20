@@ -23,10 +23,12 @@ from datetime import timedelta
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import craft_store
+import distro
 import pydantic
 import requests
 from craft_application.util.error_formatting import format_pydantic_errors
 from craft_cli import emit
+from craft_platforms import DebianArchitecture
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, utils
@@ -48,10 +50,12 @@ _HUMAN_STATUS = {
 
 def build_user_agent(
     version=__version__,
-    os_platform: utils.OSPlatform = utils.get_os_platform(),  # noqa: B008
 ):
     """Build Snapcraft's user agent."""
-    return f"snapcraft/{version} {os_platform!s}"
+    dist_id = distro.id()
+    dist_version = distro.version()
+    dist_arch = DebianArchitecture.from_host().to_platform_arch()
+    return f"snapcraft/{version} {dist_id}/{dist_version} ({dist_arch})"
 
 
 def use_candid() -> bool:

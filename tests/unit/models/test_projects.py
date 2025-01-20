@@ -21,10 +21,11 @@ import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, UniqueStrList, VersionStr
+from craft_platforms import DebianArchitecture
 from craft_providers.bases import BaseName
 
 import snapcraft.models
-from snapcraft import const, errors, providers, utils
+from snapcraft import const, errors, providers
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
@@ -36,7 +37,6 @@ from snapcraft.models import (
     Project,
 )
 from snapcraft.models.project import apply_root_packages
-from snapcraft.utils import get_host_architecture
 
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
@@ -149,8 +149,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=cast(UniqueStrList, [get_host_architecture()]),
-                build_for=cast(UniqueStrList, [get_host_architecture()]),
+                build_on=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
+                build_for=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
             )
         ]
         assert project.ua_services is None
@@ -2348,10 +2348,10 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
             None,
             [
                 BuildInfo(
-                    build_on=utils.get_host_architecture(),
-                    build_for=utils.get_host_architecture(),
+                    build_on=str(DebianArchitecture.from_host()),
+                    build_for=str(DebianArchitecture.from_host()),
                     base=BaseName(name="ubuntu", version="22.04"),
-                    platform=utils.get_host_architecture(),
+                    platform=str(DebianArchitecture.from_host()),
                 )
             ],
             id="no_arch",
@@ -2516,10 +2516,10 @@ def test_platform_default():
 
     assert actual_build_infos == [
         BuildInfo(
-            build_on=get_host_architecture(),
-            build_for=get_host_architecture(),
+            build_on=str(DebianArchitecture.from_host()),
+            build_for=str(DebianArchitecture.from_host()),
             base=BaseName(name="ubuntu", version="24.04"),
-            platform=get_host_architecture(),
+            platform=str(DebianArchitecture.from_host()),
         )
     ]
 

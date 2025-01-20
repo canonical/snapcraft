@@ -178,7 +178,7 @@ def test_expand_extensions_complex_core22(new_dir, emitter, mocker):
     """
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch(
-        "snapcraft.commands.extensions.get_host_architecture",
+        "craft_platforms.DebianArchitecture.from_host",
         return_value="amd64",
     )
     with Path("snapcraft.yaml").open("w") as yaml_file:
@@ -271,7 +271,7 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
     """
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch(
-        "snapcraft.commands.extensions.get_host_architecture",
+        "craft_platforms.DebianArchitecture.from_host",
         return_value="amd64",
     )
     with Path("snapcraft.yaml").open("w") as yaml_file:

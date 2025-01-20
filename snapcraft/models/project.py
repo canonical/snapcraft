@@ -34,7 +34,7 @@ from craft_application.models.constraints import (
 )
 from craft_cli import emit
 from craft_grammar.models import Grammar  # type: ignore[import-untyped]
-from craft_platforms import Platforms, snap
+from craft_platforms import DebianArchitecture, Platforms, snap
 from craft_providers import bases
 from pydantic import ConfigDict, PrivateAttr, StringConstraints
 from typing_extensions import Annotated, Self, override
@@ -44,13 +44,7 @@ from snapcraft.const import SUPPORTED_ARCHS, SnapArch
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
-from snapcraft.utils import (
-    convert_architecture_deb_to_platform,
-    get_effective_base,
-    get_host_architecture,
-    get_supported_architectures,
-    is_architecture_supported,
-)
+from snapcraft.utils import get_effective_base
 
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
 
@@ -115,9 +109,9 @@ def validate_architectures(architectures):
     if len(architectures):
         for element in architectures:
             for arch in element.build_for + element.build_on:
-                if arch != "all" and not is_architecture_supported(arch):
+                if arch != "all" and arch not in utils.get_supported_architectures():
                     supported_archs = utils.humanize_list(
-                        get_supported_architectures(), "and"
+                        utils.get_supported_architectures(), "and"
                     )
                     raise ValueError(
                         f"Architecture {arch!r} is not supported. Supported "
@@ -1127,10 +1121,11 @@ class Project(models.Project):
             elif not self.architectures:
                 self._architectures_in_yaml = False
                 # set default value
+                host_arch = str(DebianArchitecture.from_host())
                 self.architectures = [
                     Architecture(
-                        build_on=[get_host_architecture()],
-                        build_for=[get_host_architecture()],
+                        build_on=[host_arch],
+                        build_for=[host_arch],
                     )
                 ]
 
@@ -1170,7 +1165,7 @@ class Project(models.Project):
 
     @pydantic.field_validator("architectures")
     @classmethod
-    def _validate_architecture_data(cls, architectures):
+    def _validate_architecture_data(cls, architectures, info: pydantic.ValidationInfo):
         """Validate architecture data."""
         return validate_architectures(architectures)
 
@@ -1277,7 +1272,9 @@ class Project(models.Project):
         arch = self.get_build_for()
 
         if arch != "all":
-            return get_arch_triplet(convert_architecture_deb_to_platform(arch))
+            return get_arch_triplet(
+                DebianArchitecture.from_machine(arch).to_platform_arch()
+            )
 
         return None
 
@@ -1337,7 +1334,7 @@ class ArchitectureProject(models.CraftBaseModel, extra="ignore"):
     """Project definition containing only architecture data."""
 
     architectures: list[str | Architecture] = pydantic.Field(
-        default=[get_host_architecture()],
+        default=[str(DebianArchitecture.from_host())],
         validate_default=True,
     )
 
@@ -1569,10 +1566,11 @@ class SnapcraftBuildPlanner(models.BuildPlanner):
 
         # set default value
         if self.platforms is None:
+            host_arch = str(DebianArchitecture.from_host())
             self.platforms = {
-                get_host_architecture(): Platform(
-                    build_on=[SnapArch(get_host_architecture()).value],
-                    build_for=[SnapArch(get_host_architecture()).value],
+                host_arch: Platform(
+                    build_on=[SnapArch(host_arch).value],
+                    build_for=[SnapArch(host_arch).value],
                 )
             }
             # For backwards compatibility with core22, convert the platforms.

@@ -35,7 +35,6 @@ from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts import set_global_environment, yaml_utils
 from snapcraft.parts.plugins import KernelPlugin, MatterSdkPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
-from snapcraft.utils import get_host_architecture
 
 _SNAPCRAFT_YAML_FILENAMES = [
     "snap/snapcraft.yaml",
@@ -296,7 +295,7 @@ def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
                 destructive_mode=False,
                 use_lxd=False,
                 provider="some",
-                build_for=get_host_architecture(),
+                build_for=str(DebianArchitecture.from_host()),
             ),
         )
 
@@ -340,7 +339,7 @@ def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, m
                 use_lxd=False,
                 provider=None,
                 ua_token=None,
-                build_for=get_host_architecture(),
+                build_for=str(DebianArchitecture.from_host()),
             ),
         )
 
@@ -366,7 +365,7 @@ def test_lifecycle_run_ua_services_without_experimental_flag(
                 use_lxd=False,
                 provider=None,
                 ua_token="my-token",
-                build_for=get_host_architecture(),
+                build_for=str(DebianArchitecture.from_host()),
                 enable_experimental_ua_services=False,
             ),
         )
@@ -518,7 +517,7 @@ def test_lifecycle_run_local_destructive_mode(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=get_host_architecture(),
+            target_arch=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -583,7 +582,7 @@ def test_lifecycle_run_local_managed_mode(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=get_host_architecture(),
+            target_arch=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -648,7 +647,7 @@ def test_lifecycle_run_local_build_env(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=get_host_architecture(),
+            target_arch=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -1865,9 +1864,7 @@ def test_lifecycle_run_in_provider_devel_base(
 
 def test_get_build_plan_single_element_matching(snapcraft_yaml, mocker, new_dir):
     """Test get_build_plan with a single matching element."""
-    mocker.patch(
-        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
-    )
+    mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="arm64")
     yaml_data = {
         "base": "core22",
         "architectures": [{"build-on": "arm64", "build-for": "arm64"}],
@@ -1882,9 +1879,7 @@ def test_get_build_plan_single_element_matching(snapcraft_yaml, mocker, new_dir)
 
 def test_get_build_plan_build_for_all(snapcraft_yaml, mocker, new_dir):
     """Test get_build_plan with `build-for: all`."""
-    mocker.patch(
-        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
-    )
+    mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="arm64")
     yaml_data = {
         "base": "core22",
         "architectures": [{"build-on": "arm64", "build-for": "all"}],
@@ -1901,9 +1896,7 @@ def test_get_build_plan_with_matching_elements(snapcraft_yaml, mocker, new_dir):
     """The build plan should only contain builds where `build-on` matches
     the host architecture.
     """
-    mocker.patch(
-        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
-    )
+    mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="arm64")
     yaml_data = {
         "base": "core22",
         "architectures": [
@@ -1927,12 +1920,10 @@ def test_get_build_plan_list_without_matching_element(snapcraft_yaml, mocker, ne
     """The build plan should be empty when no build has a `build-on` that matches
     the host architecture.
     """
-    mocker.patch(
-        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
-    )
+    mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="arm64")
     yaml_data = {
         "base": "core22",
-        "architectures": ["powerpc", "armhf"],
+        "architectures": ["ppc64el", "armhf"],
     }
 
     snapcraft_yaml_data = snapcraft_yaml(**yaml_data)
@@ -1949,9 +1940,7 @@ def test_get_build_plan_list_with_matching_element_and_env_var(
     snapcraft_yaml, mocker, monkeypatch, new_dir
 ):
     """The build plan should be filtered down when `SNAPCRAFT_BUILD_FOR` is defined."""
-    mocker.patch(
-        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
-    )
+    mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="arm64")
     yaml_data = {
         "base": "core22",
         "architectures": [
@@ -1972,9 +1961,7 @@ def test_get_build_plan_list_without_matching_element_and_build_for_arg(
 ):
     """The build plan should be empty when no plan has a matching `build_for`
     matching `SNAPCRAFT_BUILD_FOR.`"""
-    mocker.patch(
-        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
-    )
+    mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="arm64")
     yaml_data = {
         "base": "core22",
         "architectures": [
@@ -2326,9 +2313,7 @@ def test_lifecycle_warn_on_multiple_builds(
 ):
     """Warn if multiple snaps will be built in the same environment."""
     mocker.patch("snapcraft.parts.lifecycle._is_manager", return_value=False)
-    mocker.patch(
-        "snapcraft.parts.lifecycle.get_host_architecture", return_value="arm64"
-    )
+    mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="arm64")
     snapcraft_yaml(
         base="core22",
         architectures=[

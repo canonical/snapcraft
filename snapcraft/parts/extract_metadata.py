@@ -34,7 +34,7 @@ def extract_lifecycle_metadata(
     """Obtain metadata information.
 
     :param adopt_info: the Project's ``adopt-info``
-    :param parse_info: the ``parse-info`` information from the Project, organised
+    :param parse_info: the ``parse-info`` information from the Project, organized
       as a dict of "part-name" to "list of files providing metadata".
     :param work_dir: the lifecycle's working directory.
     """
