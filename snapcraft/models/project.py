@@ -294,7 +294,8 @@ DurationString = Annotated[
     str,
     pydantic.Field(
         examples=["1", "2s", "3m", "4ms", "5us", "6m7s8ms"],
-        pattern=TIME_DURATION_REGEX
+        pattern=TIME_DURATION_REGEX,
+        description="A duration string to be parsed by snapd.",
     ),
     pydantic.BeforeValidator(_validate_duration_string),
 ]
