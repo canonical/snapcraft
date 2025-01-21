@@ -95,7 +95,7 @@ class Lifecycle(LifecycleService):
         plugin_name = project.parts[part_name]["plugin"]
 
         # Handle plugin-specific prime fixes
-        if plugin_name in ("python", "poetry"):
+        if plugin_name in python_common.get_python_plugins().keys():
             python_common.post_prime(step_info)
 
         # Handle patch-elf
