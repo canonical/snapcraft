@@ -46,6 +46,7 @@ from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
 
+TIME_DURATION_REGEX = re.compile(r"^([0-9]+(ns|us|ms|s|m)){1,5}$")
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
 
 
@@ -282,6 +283,23 @@ def _validate_mandatory_base(base: str | None, snap_type: str | None) -> None:
         )
 
 
+def _validate_duration_string(duration: str):
+    if not TIME_DURATION_REGEX.match(duration):
+        raise ValueError(f"{duration!r} is not a valid time value")
+
+    return duration
+
+
+DurationString = Annotated[
+    str,
+    pydantic.Field(
+        examples=["1", "2s", "3m", "4ms", "5us", "6m7s8ms"],
+        pattern=TIME_DURATION_REGEX
+    ),
+    pydantic.BeforeValidator(_validate_duration_string),
+]
+
+
 class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
@@ -415,17 +433,17 @@ class App(models.CraftBaseModel):
         description="The command to run after the service is stopped.",
         examples=["post-stop-command: bin/logrotate --force"],
     )
-    start_timeout: str | None = pydantic.Field(
+    start_timeout: DurationString | None = pydantic.Field(
         default=None,
         description="The maximum amount of time to wait for the service to start.",
         examples=["start-timeout: 10s", "start-timeout: 2m"],
     )
-    stop_timeout: str | None = pydantic.Field(
+    stop_timeout: DurationString | None = pydantic.Field(
         default=None,
         description="The maximum amount of time to wait for the service to stop.",
         examples=["stop-timeout: 10s", "stop-timeout: 2m"],
     )
-    watchdog_timeout: str | None = pydantic.Field(
+    watchdog_timeout: DurationString | None = pydantic.Field(
         default=None,
         description="The maximum amount of time the service can run without sending a heartbeat to the watchdog.",
         examples=["watchdog-timeout: 10s", "watchdog-timeout: 2m"],
@@ -435,7 +453,7 @@ class App(models.CraftBaseModel):
         description="The command to run to restart the service.",
         examples=["reload-command: bin/foo-app --restart"],
     )
-    restart_delay: str | None = pydantic.Field(
+    restart_delay: DurationString | None = pydantic.Field(
         default=None,
         description="The time to wait between service restarts.",
         examples=["restart-delay: 10s", "restart-delay: 2m"],
@@ -587,16 +605,6 @@ class App(models.CraftBaseModel):
             raise ValueError(message)
 
         return command
-
-    @pydantic.field_validator(
-        "start_timeout", "stop_timeout", "watchdog_timeout", "restart_delay"
-    )
-    @classmethod
-    def _validate_time(cls, timeval):
-        if not re.match(r"^[0-9]+(ns|us|ms|s|m)*$", timeval):
-            raise ValueError(f"{timeval!r} is not a valid time value")
-
-        return timeval
 
     @pydantic.field_validator("command_chain")
     @classmethod
