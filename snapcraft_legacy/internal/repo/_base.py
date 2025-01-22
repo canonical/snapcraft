@@ -346,6 +346,10 @@ def fix_pkg_config(
     - From snaps built locally: `<local-path-to-project>/stage`
     - Built during the build stage: the install directory
 
+    But if the prefix begins with `${pcfiledir}`, it must be kept as-is, because
+    that variable refers to the current location of the .pc file. It allows
+    to do "relocatable" pkgconfig files, so no changes are required.
+
     :param pkg_config_file: pkg-config (.pc) file to modify
     :param prefix_prepend: directory to prepend to the prefix
     :param prefix_trim: directory to remove from prefix
@@ -363,6 +367,9 @@ def fix_pkg_config(
     # process .pc file
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
         for line in input_file:
+            # If the prefix begins with ${pcfiledir} statement, this is
+            # a position-independent (thus, "relocatable") .pc file, so
+            # no changes are required.
             if pattern_pcfiledir.search(line) is not None:
                 print(line, end="")
                 continue
