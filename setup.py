@@ -102,7 +102,7 @@ install_requires = [
     "craft-archives~=2.0",
     "craft-cli @ git+https://github.com/canonical/craft-cli@work/tab-completion-fix/CRAFT-3994",
     "craft-grammar>=2.0.1,<3.0.0",
-    "craft-parts>=2.1.2,<3.0.0",
+    "craft-parts==2.3.0",
     "craft-platforms~=0.4",
     "craft-providers>=2.0.4,<3.0.0",
     "craft-store>=3.0.2,<4.0.0",

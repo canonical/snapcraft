@@ -30,6 +30,7 @@ __pycache__
 *.comp
 *.snap
 snap/.snapcraft/
+.spread_multipass
 .spread-reuse.*
 /stage
 *.swp

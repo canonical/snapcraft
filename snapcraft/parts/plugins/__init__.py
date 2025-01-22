@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022, 2025 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,6 +17,8 @@
 """Snapcraft specific plugins."""
 
 
+from .register import get_plugins, register
+
 from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
@@ -24,7 +26,7 @@ from .kernel_plugin import KernelPlugin
 from .matter_sdk_plugin import MatterSdkPlugin
 from .poetry_plugin import PoetryPlugin
 from .python_plugin import PythonPlugin
-from .register import get_plugins, register
+from .uv_plugin import UvPlugin
 
 __all__ = [
     "ColconPlugin",
@@ -36,4 +38,5 @@ __all__ = [
     "PythonPlugin",
     "get_plugins",
     "register",
+    "UvPlugin",
 ]

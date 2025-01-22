@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2022, 2025 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,13 +19,13 @@
 import craft_parts
 from craft_parts.plugins.plugins import PluginType
 
+from snapcraft.parts.plugins import python_common
+
 from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
 from .matter_sdk_plugin import MatterSdkPlugin
-from .poetry_plugin import PoetryPlugin
-from .python_plugin import PythonPlugin
 
 
 def get_plugins(core22: bool) -> dict[str, PluginType]:
@@ -37,10 +37,8 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "colcon": ColconPlugin,
         "conda": CondaPlugin,
         "flutter": FlutterPlugin,
-        "python": PythonPlugin,
         "matter-sdk": MatterSdkPlugin,
-        "poetry": PoetryPlugin,
-    }
+    } | python_common.get_python_plugins()
 
     if core22:
         plugins["kernel"] = KernelPlugin
