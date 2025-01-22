@@ -51,7 +51,7 @@ craft-archives==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-cli==2.13.0
+craft-cli @ git+https://github.com/canonical/craft-cli@work/tab-completion-fix/CRAFT-3994
     # via
     #   craft-application
     #   snapcraft (setup.py)
@@ -237,7 +237,7 @@ pycodestyle==2.12.1
     #   snapcraft (setup.py)
 pycparser==2.22
     # via cffi
-pydantic==2.10.3
+pydantic==2.10.4
     # via
     #   craft-application
     #   craft-archives
@@ -246,7 +246,7 @@ pydantic==2.10.3
     #   craft-providers
     #   craft-store
     #   snapcraft (setup.py)
-pydantic-core==2.27.1
+pydantic-core==2.27.2
     # via pydantic
 pydocstyle==6.3.0
     # via snapcraft (setup.py)

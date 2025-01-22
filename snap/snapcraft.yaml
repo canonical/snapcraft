@@ -195,7 +195,9 @@ parts:
     override-build: |
         ${SNAP}/libexec/snapcraft/craftctl default
 
-        PYTHONPATH=/root/parts/$CRAFT_PART_NAME/install/lib/python3.12/site-packages python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.cli:get_dispatcher > $CRAFT_PART_INSTALL/completion.sh
+        PYTHONPATH=/root/parts/$CRAFT_PART_NAME/install/lib/python3.12/site-packages \
+          python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.application:get_dispatcher \
+          > $CRAFT_PART_INSTALL/completion.sh
 
         version="$(python3 setup.py --version)"
         ${SNAP}/libexec/snapcraft/craftctl set version="$version"

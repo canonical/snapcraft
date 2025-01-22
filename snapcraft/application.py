@@ -22,7 +22,7 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Any
+from typing import Any, Tuple
 
 import craft_cli
 import craft_parts
@@ -461,6 +461,12 @@ def create_app() -> Snapcraft:
         app.add_command_group(group.name, group.commands)
 
     return app
+
+
+def get_dispatcher() -> Tuple[craft_cli.Dispatcher, dict[str, Any]]:
+    app = create_app()
+    dispatcher = app._create_dispatcher()
+    return dispatcher, app.app_config
 
 
 def main() -> int:

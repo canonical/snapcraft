@@ -65,7 +65,7 @@ craft-archives==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-cli==2.13.0
+craft-cli @ git+https://github.com/canonical/craft-cli@work/tab-completion-fix/CRAFT-3994
     # via
     #   craft-application
     #   snapcraft (setup.py)
