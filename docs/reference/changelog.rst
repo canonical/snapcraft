@@ -97,7 +97,7 @@ Ant
 Go Use
 """"""
 
-* Add a new :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a
+* Add the new :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a
   `workspace <https://go.dev/ref/mod#workspaces>`_ for Go modules.
 
 Maven
@@ -119,14 +119,14 @@ Poetry
 * Add new ``poetry-export-extra-args`` and ``poetry-pip-extra-args`` keys
   (`canonical/craft-parts#932`_).
 
-* Fix an issue where the :ref:`poetry plugin <craft_parts_poetry_plugin>` would
-  try to install poetry from the package repositories when ``poetry-deps`` was
+* Fix an issue where the :ref:`Poetry plugin <craft_parts_poetry_plugin>` would
+  try to install Poetry from the package repositories when ``poetry-deps`` was
   declared as a dependency (`canonical/charmcraft#1996`_).
 
 uv
 ""
 
-* Add a new :ref:`uv plugin<craft_parts_uv_plugin>` for projects using
+* Add the new :ref:`uv plugin<craft_parts_uv_plugin>` for projects using
   `uv <https://docs.astral.sh/uv/>`_.
 
 Extensions
@@ -138,7 +138,7 @@ KDE Neon 6
 * Add support for ``core24`` snaps.
 
 * Fix a bug where themes defined in ``$SNAP_REAL_HOME/.config/kdeglobals``
-  would not be loaded.
+  wouldn't be loaded.
 
 ROS 2 Jazzy
 """""""""""
@@ -159,7 +159,7 @@ Store
 * Remove the ``list-registries`` and ``edit-registries`` commands. In a future
   release, these commands will be replaced with ``list-confdbs`` and
   ``edit-confdbs`` (`#5139`_).
-* Fix a bug where snaps could not be uploaded on some ``arm64`` and ``amd64``
+* Fix a bug where snaps could not be uploaded on some ARM64 and AMD64
   systems (`#5132`_).
 
 Documentation
