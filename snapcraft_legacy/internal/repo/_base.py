@@ -346,9 +346,9 @@ def fix_pkg_config(
     - From snaps built locally: `<local-path-to-project>/stage`
     - Built during the build stage: the install directory
 
-    But if the prefix begins with `${pcfiledir}`, it must be kept as-is, because
-    that variable refers to the current location of the .pc file. It allows
-    to do "relocatable" pkgconfig files, so no changes are required.
+    But if the prefix begins with `pcfiledir` variable, it must be kept as-is,
+    because that variable refers to the current location of the .pc file. It
+    allows to create "relocatable" pkgconfig files, so no changes are required.
 
     :param pkg_config_file: pkg-config (.pc) file to modify
     :param prefix_prepend: directory to prepend to the prefix
