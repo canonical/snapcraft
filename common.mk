@@ -163,7 +163,7 @@ lint-docs:  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run --extra docs sphinx-lint --max-line-length 88 --enable all $(DOCS)
+	uv run --extra docs sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS)
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
