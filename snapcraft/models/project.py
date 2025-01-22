@@ -1144,14 +1144,6 @@ class Project(models.Project):
             raise ValueError("grade must be 'devel' when build-base is 'devel'")
         return self
 
-    @pydantic.field_validator("build_base")
-    @classmethod
-    def _validate_build_base(
-        cls, value: str | None, info: pydantic.ValidationInfo
-    ) -> str | None:
-        """Build-base defaults to the base value if not specified."""
-        return value or info.data.get("base")
-
     @pydantic.field_validator("epoch")
     @classmethod
     def _validate_epoch(cls, epoch):

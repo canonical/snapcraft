@@ -40,7 +40,7 @@ def valid_core_data(request) -> CoreData:
     if request.param == "devel":
         return CoreData(base="core24", build_base="devel", grade="devel")
 
-    return CoreData(base=request.param, build_base=request.param, grade="stable")
+    return CoreData(base=request.param, build_base="null", grade="stable")
 
 
 @pytest.mark.usefixtures("fake_extension")
