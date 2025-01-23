@@ -70,23 +70,123 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-8.6.0 (2025-Jan-20)
+8.6.0 (2025-Feb-05)
 -------------------
 
 Core
 ====
 
-* Improved error messaging when unable to pack.
+.. note::
+
+  Unless stated otherwise, the changes in this section apply to snaps using
+  ``core22`` or ``core24`` bases.
+
+* Add ``chisel`` as a ``build-snap`` if any part has slices and ``chisel``
+  isn't already listed as a ``build-snap``.
 
 Plugins
 #######
 
+Ant
+"""
+
+* Set ``JAVA_HOME`` environment variable to allow the
+  :ref:`Ant plugin <craft_parts_maven_plugin>` to detect the latest available
+  JDK.
+
+Go Use
+""""""
+
+* Add the new :ref:`Go Use plugin<craft_parts_go_use_plugin>` for setting up a
+  `workspace <https://go.dev/ref/mod#workspaces>`_ for Go modules.
+
+Maven
+"""""
+
+* Set ``JAVA_HOME`` environment variable to allow the
+  :ref:`Maven plugin <craft_parts_maven_plugin>` to detect the latest available
+  JDK.
+
+Rust
+""""
+
+* Fix dependency validation for the ``rust`` plugin when a ``rust-deps``
+  part exists (`canonical/craft-parts#890`_).
+
+Poetry
+""""""
+
+* Add new ``poetry-export-extra-args`` and ``poetry-pip-extra-args`` keys
+  (`canonical/craft-parts#932`_).
+
+* Fix an issue where the :ref:`Poetry plugin <craft_parts_poetry_plugin>` would
+  try to install Poetry from the package repositories when ``poetry-deps`` was
+  declared as a dependency (`canonical/charmcraft#1996`_).
+
 uv
 ""
 
-* Add a new plugin for projects using `uv <https://docs.astral.sh/uv/>`_.
-  For more information, see :doc:`uv plugin reference
-  </reference/plugins/uv_plugin>`.
+* Add the new :ref:`uv plugin<craft_parts_uv_plugin>` for projects using
+  `uv <https://docs.astral.sh/uv/>`_.
+
+Extensions
+##########
+
+KDE Neon 6
+""""""""""
+
+* Add support for ``core24`` snaps.
+
+* Fix a bug where themes defined in ``$SNAP_REAL_HOME/.config/kdeglobals``
+  wouldn't be loaded.
+
+ROS 2 Jazzy
+"""""""""""
+
+* Remove the experimental flag from the ROS 2 Jazzy extension.
+
+Command line
+============
+
+* Show error details in all verbosity modes except ``quiet``.
+* Improve error presentation when the snap fails to pack.
+* Improve error presentation when a step or an override script fails
+  by splitting stderr and stdout.
+
+Store
+=====
+
+* Remove the ``list-registries`` and ``edit-registries`` commands. In a future
+  release, these commands will be replaced with ``list-confdbs`` and
+  ``edit-confdbs`` (`#5139`_).
+* Fix a bug where snaps could not be uploaded on some ARM64 and AMD64
+  systems (`#5132`_).
+
+Documentation
+=============
+
+* Add a :ref:`Snapcraft quickstart guide <install-snapcraft>`.
+
+* Add a :ref:`how-to guide <select-a-build-provider>` for selecting a build
+  provider.
+
+* Add :ref:`how-to guides <craft-a-snap>` for crafting snaps for common
+  languages, frameworks, and meta build systems.
+
+* Update the :doc:`component documentation </reference/components>` to include
+  component types.
+
+* Add the following reference documentation:
+
+  * :ref:`anatomy-of-a-recipe`
+  * :ref:`snap-build-process`
+  * :ref:`snap-publishing-process`
+  * :ref:`channels`
+  * :ref:`system-requirements`
+  * :ref:`uv plugin<craft_parts_uv_plugin>`
+  * :ref:`Go Use plugin<craft_parts_go_use_plugin>`
+
+For a complete list of commits, check out the `8.6.0`_ release on GitHub.
 
 8.5.1 (2024-Dec-17)
 -------------------
@@ -1399,6 +1499,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _snapcraft-rocks: https://github.com/canonical/snapcraft-rocks/pkgs/container/snapcraft
 
 .. _canonical/charmcraft#406: https://github.com/canonical/charmcraft/issues/406
+.. _canonical/charmcraft#1996: https://github.com/canonical/charmcraft/issues/1996
 .. _canonical/craft-application#225: https://github.com/canonical/craft-application/pull/225
 .. _canonical/craft-application#355: https://github.com/canonical/craft-application/pull/355
 .. _canonical/craft-application#382: https://github.com/canonical/craft-application/pull/382
@@ -1408,6 +1509,8 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _canonical/craft-parts#717: https://github.com/canonical/craft-parts/issues/717
 .. _canonical/craft-parts#802: https://github.com/canonical/craft-parts/issues/802
 .. _canonical/craft-parts#804: https://github.com/canonical/craft-parts/issues/804
+.. _canonical/craft-parts#890: https://github.com/canonical/craft-parts/issues/890
+.. _canonical/craft-parts#932: https://github.com/canonical/craft-parts/issues/932
 
 .. _LP#2061603: https://bugs.launchpad.net/snapcraft/+bug/2061603
 .. _LP#2064639: https://bugs.launchpad.net/snapcraft/+bug/2064639
@@ -1473,6 +1576,8 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _#5077: https://github.com/canonical/snapcraft/issues/5077
 .. _#5079: https://github.com/canonical/snapcraft/issues/5079
 .. _#5089: https://github.com/canonical/snapcraft/issues/5089
+.. _#5132: https://github.com/canonical/snapcraft/issues/5132
+.. _#5139: https://github.com/canonical/snapcraft/issues/5139
 .. _#5169: https://github.com/canonical/snapcraft/issues/5169
 
 .. _7.5.6: https://github.com/canonical/snapcraft/releases/tag/7.5.6
@@ -1510,3 +1615,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.4.4: https://github.com/canonical/snapcraft/releases/tag/8.4.4
 .. _8.5.0: https://github.com/canonical/snapcraft/releases/tag/8.5.0
 .. _8.5.1: https://github.com/canonical/snapcraft/releases/tag/8.5.1
+.. _8.6.0: https://github.com/canonical/snapcraft/releases/tag/8.6.0
