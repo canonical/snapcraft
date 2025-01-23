@@ -12,6 +12,7 @@ environment:
   SNAP/platforms: platforms
   SNAP/no_platforms: no-platforms
   SNAP/platform_arg: platform-arg
+  SNAP/platforms_filtered: platforms-filtered
   SNAP/build_for_arg: build-for-arg
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
@@ -33,13 +34,16 @@ prepare: |
 
   # set up launchpad token
   mkdir -p "$(dirname "$CREDENTIALS_FILE")"
-  echo -e "$LAUNCHPAD_TOKEN" >> "$CREDENTIALS_FILE"
+  echo -e "$LAUNCHPAD_TOKEN" > "$CREDENTIALS_FILE"
 
 restore: |
   cd "./snaps/$SNAP"
 
-  rm -f ./*.snap ./*.txt
-  rm -rf snap .git
+  # remove snaps and log files
+  rm -f ./*.snap ./snapcraft-*.txt
+
+  # remove the temporary git repository
+  rm -rf .git
 
 execute: |
   cd "./snaps/$SNAP"

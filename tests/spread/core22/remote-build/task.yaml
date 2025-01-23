@@ -8,6 +8,7 @@ environment:
   SNAP/all: all
   SNAP/no_architectures: no-architectures
   SNAP/architectures: architectures
+  SNAP/architectures_filtered: architectures-filtered
   SNAP/build_for_arg: build-for-arg
   SNAPCRAFT_REMOTE_BUILD_STRATEGY: disable-fallback
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"

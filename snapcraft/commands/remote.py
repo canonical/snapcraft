@@ -24,14 +24,17 @@ from collections.abc import Collection, Mapping
 from pathlib import Path
 from typing import Any, cast
 
+import craft_application.errors
 import lazr.restfulclient.errors
-from craft_application import errors
+from craft_application import errors, launchpad
+from craft_application.application import filter_plan
 from craft_application.commands import ExtensibleCommand
 from craft_application.errors import RemoteBuildError
 from craft_application.launchpad.models import Build, BuildState
 from craft_application.remote.utils import get_build_id
 from craft_application.util import humanize_list
 from craft_cli import emit
+from craft_platforms import DebianArchitecture
 from overrides import overrides
 
 from snapcraft import models
@@ -57,9 +60,16 @@ class RemoteBuildCommand(ExtensibleCommand):
         architecture are retrieved and will be available in the
         local filesystem.
 
-        If not specified in the snapcraft.yaml file, the list of
-        architectures to build can be set using the --platforms option.
-        If both are specified, an error will occur.
+        If the project contains a ``platforms`` or ``architectures`` key,
+        then project's build plan is used. The build plan can be filtered
+        using the ``--platform`` or ``--build-for`` arguments.
+
+        If the project doesn't contain a ``platforms`` or ``architectures`` key,
+        then the architectures to build for are defined by the ``--platform`` or
+        ``--build-for`` arguments.
+
+        If there are no architectures defined in the project or as arguments,
+        then the default behavior is to build for the host architecture.
 
         Interrupted remote builds can be resumed using the --recover
         option, followed by the build number informed when the remote
@@ -154,55 +164,16 @@ class RemoteBuildCommand(ExtensibleCommand):
                 retcode=os.EX_NOPERM,
             )
 
-        build_fors = parsed_args.remote_build_build_fors or None
-        platforms = parsed_args.remote_build_platforms or None
-        parameter = "--build-for" if build_fors else "--platform" if platforms else None
-        keyword = (
-            "architectures"
-            if self.project._architectures_in_yaml
-            else "platforms" if self.project.platforms else None
-        )
-
-        if keyword and parameter:
+        if (
+            parsed_args.remote_build_platforms
+            and self.project.get_effective_base() == "core22"
+        ):
             raise errors.RemoteBuildError(
-                f"{parameter!r} cannot be used when {keyword!r} is in the snapcraft.yaml.",
-                resolution=f"Remove {parameter!r} from the command line or remove {keyword!r} in the snapcraft.yaml.",
+                "'--platform' cannot be used for core22 snaps.",
+                resolution="Use '--build-for' instead.",
                 doc_slug="/explanation/remote-build.html",
                 retcode=os.EX_CONFIG,
             )
-
-        if platforms:
-            if self.project.get_effective_base() == "core22":
-                raise errors.RemoteBuildError(
-                    "'--platform' cannot be used for core22 snaps.",
-                    resolution="Use '--build-for' instead.",
-                    doc_slug="/explanation/remote-build.html",
-                    retcode=os.EX_CONFIG,
-                )
-            for platform in platforms:
-                if platform not in SUPPORTED_ARCHS:
-                    raise errors.RemoteBuildError(
-                        f"Unsupported platform {platform!r}.",
-                        resolution=(
-                            "Use a supported debian architecture. Supported "
-                            f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
-                        ),
-                        doc_slug="/explanation/remote-build.html",
-                        retcode=os.EX_CONFIG,
-                    )
-
-        if build_fors:
-            for build_for in build_fors:
-                if build_for not in SUPPORTED_ARCHS:
-                    raise errors.RemoteBuildError(
-                        f"Unsupported build-for architecture {build_for!r}.",
-                        resolution=(
-                            "Use a supported debian architecture. Supported "
-                            f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
-                        ),
-                        doc_slug="/explanation/remote-build.html",
-                        retcode=os.EX_CONFIG,
-                    )
 
         self._validate_single_artifact_per_build_on()
 
@@ -274,14 +245,10 @@ class RemoteBuildCommand(ExtensibleCommand):
         emit.trace(f"Project directory: {project_dir}")
         self._validate(parsed_args)
 
-        if parsed_args.remote_build_build_fors:
-            architectures = parsed_args.remote_build_build_fors
-        elif parsed_args.remote_build_platforms:
-            architectures = parsed_args.remote_build_platforms
-        else:
-            architectures = self._get_project_build_fors()
-
-        emit.debug(f"Architectures to build for: {architectures}")
+        archs = self._get_archs(
+            build_fors=parsed_args.remote_build_build_fors,
+            platforms=parsed_args.remote_build_platforms,
+        )
 
         if parsed_args.launchpad_timeout:
             emit.debug(f"Setting timeout to {parsed_args.launchpad_timeout} seconds")
@@ -296,10 +263,8 @@ class RemoteBuildCommand(ExtensibleCommand):
                 "Starting new build. It may take a while to upload large projects."
             )
             try:
-                builds = builder.start_builds(
-                    project_dir, architectures=architectures or None
-                )
-            except RemoteBuildError:
+                builds = builder.start_builds(project_dir, architectures=archs)
+            except (RemoteBuildError, launchpad.LaunchpadError):
                 emit.progress("Starting build failed.", permanent=True)
                 emit.progress("Cleaning up")
                 builder.cleanup()
@@ -407,12 +372,95 @@ class RemoteBuildCommand(ExtensibleCommand):
         )
         return return_code
 
-    def _get_project_build_fors(self) -> list[str]:
-        """Get a unique list of build-for architectures from the project.
+    def _get_archs(self, build_fors: list[str], platforms: list[str]) -> list[str]:
+        """Get the architectures to build for.
+
+        If the project contains a ``platforms`` or ``architectures`` key, then project's
+        build plan is used to determine the architectures to build for. The build plan
+        can be filtered using the ``--platform`` or ``--build-for`` arguments.
+
+        If the project doesn't contain a ``platforms`` or ``architectures`` key, then
+        the architectures to build for are defined by the ``--platform`` or
+        ``--build-for`` arguments.
+
+        If there are no architectures defined in the project or as arguments, then the
+        default behavior is to build for the host architecture.
+
+        :param build_fors: A list of build-for entries.
+        :param platforms: A list of platforms.
+
+        :raises EmptyBuildPlanError: If the build plan is filtered to an empty list.
+        :raises RemoteBuildError: If an unsupported architecture is provided.
 
         :returns: A list of architectures.
         """
-        build_fors = set({build_info.build_for for build_info in self.build_plan})
-        emit.debug(f"Parsed build-for architectures from build plan: {build_fors}")
+        archs: list[str] = []
+        # core22 projects with an `architectures` key will have a corresponding `platforms`
+        # key when the project is unmarshalled
+        if self.project.platforms or self.project._architectures_in_yaml:
+            # if the project has platforms, then the `--platforms` and `--build-for` arguments act as filters
+            if build_fors:
+                emit.debug("Filtering the build plan using the '--build-for' argument.")
+                for build_for in build_fors:
+                    filtered_build_plan = filter_plan(
+                        self.build_plan,
+                        platform=None,
+                        build_for=build_for,
+                        host_arch=None,
+                    )
+                    archs.extend([info.build_for for info in filtered_build_plan])
+                    if not archs:
+                        raise craft_application.errors.EmptyBuildPlanError()
+            elif platforms:
+                emit.debug("Filtering the build plan using the '--platforms' argument.")
+                for platform in platforms:
+                    filtered_build_plan = filter_plan(
+                        self.build_plan,
+                        platform=platform,
+                        build_for=None,
+                        host_arch=None,
+                    )
+                    archs.extend([info.build_for for info in filtered_build_plan])
+                    if not archs:
+                        raise craft_application.errors.EmptyBuildPlanError()
+            else:
+                emit.debug("Using the project's build plan")
+                archs = [build_info.build_for for build_info in self.build_plan]
+        # No platforms in the project means '--build-for' and '--platforms' no longer act as filters.
+        # Instead, they define the architectures to build for.
+        elif build_fors:
+            emit.debug("Using '--build-for' as the list of architectures to build for")
+            _validate_archs(build_fors, "build-for architecture")
+            archs = build_fors
+        elif platforms:
+            emit.debug("Using '--platforms' as the list of architectures to build for")
+            _validate_archs(platforms, "platform")
+            archs = platforms
+        # default is to build for the host architecture
+        else:
+            archs = [str(DebianArchitecture.from_host())]
+            emit.debug(
+                f"Using host architecture {archs[0]} because no architectures were "
+                "defined in the project or as a command-line argument."
+            )
 
-        return list(build_fors)
+        emit.debug(f"Architectures to build for: {humanize_list(archs, 'and')}")
+        return archs
+
+
+def _validate_archs(archs: list[str], key_name: str) -> None:
+    """Validate that a list of architectures are valid.
+
+    :raises RemoteBuildError: If an unsupported architecture is provided.
+    """
+    for arch in archs:
+        if arch not in SUPPORTED_ARCHS:
+            raise errors.RemoteBuildError(
+                f"Unsupported {key_name} {arch!r}.",
+                resolution=(
+                    "Use a supported debian architecture. Supported "
+                    f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
+                ),
+                doc_slug="/explanation/remote-build.html",
+                retcode=os.EX_CONFIG,
+            )

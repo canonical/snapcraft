@@ -89,12 +89,20 @@ Current
    ``--platform`` and ``--build-for`` behave differently than they do for
    :ref:`lifecycle commands<reference-lifecycle-commands>`.
 
-``--platform`` or ``--build-for`` can only be provided when the ``platforms``
-or ``architectures`` keywords are not defined in the project metadata
-(`[12]`_).
+If the project file contains a ``platforms`` or ``architectures`` key, then
+``--platform`` or ``--build-for`` filter the build plan defined by that key.
+For more information about build plans and filtering, see
+:ref:`Build plans <build-plans>`.
 
-These keywords are mutually exclusive and must be a comma-separated list of
-debian architectures.
+If the project file doesn't contain a ``platforms`` or ``architectures`` entry,
+then ``--platform`` or ``--build-for`` define the architectures to build for.
+
+It the project file doesn't contain a ``platforms`` or ``architectures`` entry
+and ``--platform`` or ``--build-for`` are not provided, Snapcraft will build
+for the host system's architecture.
+
+These ``--platform`` and ``--build-for`` arguments are mutually exclusive and
+must be a comma-separated list of debian architectures.
 
 ``core22`` snaps can only use ``--build-for``. ``core24`` and newer snaps
 can use ``--platform`` or ``--build-for``.
@@ -180,6 +188,5 @@ Launchpad is not able to parse this notation (`[9]`_).
 .. _`[8]`: https://bugs.launchpad.net/snapcraft/+bug/2007789
 .. _`[9]`: https://bugs.launchpad.net/snapcraft/+bug/2042167
 .. _`[10]`: https://github.com/canonical/snapcraft/issues/4885
-.. _`[12]`: https://github.com/canonical/snapcraft/issues/4992
 .. _`[13]`: https://github.com/canonical/snapcraft/issues/4996
 .. _`[14]`: https://github.com/canonical/snapcraft/issues/4995

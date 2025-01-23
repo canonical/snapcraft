@@ -27,7 +27,7 @@ from typing import Any
 import craft_cli
 import craft_parts
 import craft_store
-from craft_application import Application, AppMetadata, remote, util
+from craft_application import Application, AppMetadata, launchpad, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
@@ -224,6 +224,14 @@ class Snapcraft(Application):
             err.doc_slug = "/explanation/remote-build"
             self._emit_error(err)
             return_code = err.retcode
+        except launchpad.LaunchpadError as err:
+            self._emit_error(
+                craft_cli.errors.CraftError(
+                    f"{err}", doc_slug="/explanation/remote-build"
+                ),
+                cause=err,
+            )
+            return_code = 1
 
         return return_code
 
