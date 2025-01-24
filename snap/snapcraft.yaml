@@ -26,7 +26,7 @@ apps:
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
     command: bin/python $SNAP/bin/snapcraft
-    completer: snapcraft-completion
+    completer: completion.sh
 
 build-packages:
   - cargo
@@ -47,12 +47,6 @@ build-packages:
   - sed
 
 parts:
-  bash-completion:
-    source: snap/local
-    plugin: dump
-    stage:
-      - snapcraft-completion
-
   snapcraft-scripts:
     source: snap/local
     plugin: dump
@@ -220,3 +214,11 @@ parts:
     stage:
       - libexec/snapcraft/chisel
 
+  completion-script:
+    after: [snapcraft]
+    plugin: nil
+    build-environment:
+      - PYTHONPATH: $CRAFT_STAGE/lib/python3.12/site-packages
+    override-build: |
+      python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.application:get_app_info \
+          > $CRAFT_PART_INSTALL/completion.sh

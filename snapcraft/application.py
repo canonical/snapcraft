@@ -464,6 +464,14 @@ def create_app() -> Snapcraft:
     return app
 
 
+def get_app_info() -> tuple[craft_cli.Dispatcher, dict[str, Any]]:
+    """Retrieve application info. Used by craft-cli's completion module."""
+    app = create_app()
+    dispatcher = app._create_dispatcher()
+
+    return dispatcher, app.app_config
+
+
 def main() -> int:
     """Run craft-application based snapcraft with classic fallback."""
     if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
