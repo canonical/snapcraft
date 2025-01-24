@@ -28,6 +28,7 @@ Migrate existing projects
 #. Update this guide as you go along, if something is unclear or missing.
 
 #. Use ruff.
+
    #. Pull in the bare minimum ``pyproject.toml`` needed to use ruff.
    #. Make your codebase pass with ruff.  Commit after each step:
 
@@ -40,8 +41,10 @@ Migrate existing projects
       with:
       - ``ruff check --fix``
       - ``ruff format``
+
 #. Modify top-level files in your project to match what's in Starbase as closely
    as possible.
+
    #. ``Makefile`` - Ensure you use ``uv`` and at least have the same targets:
 
       - ``setup``
@@ -56,7 +59,9 @@ Migrate existing projects
    #. ``README`` - If your readme is .md, convert to .rst with pandoc:
       ``pandoc -o README.rst README.md``
       Don't worry about making the contents match, Starbase's is very specific.
+
 #. Run all the linters: ``make lint``
+
    #. ``mypy``:
 
       - Mypy checks the same things as ``ruff``'s ``ANNXXX`` checks, but
