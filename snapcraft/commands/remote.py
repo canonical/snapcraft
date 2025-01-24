@@ -69,7 +69,8 @@ class RemoteBuildCommand(ExtensibleCommand):
         ``--build-for`` arguments.
 
         If there are no architectures defined in the project or as arguments,
-        then the default behavior is to build for the host architecture.
+        then the default behavior is to build for the host architecture of the
+        local machine.
 
         Interrupted remote builds can be resumed using the --recover
         option, followed by the build number informed when the remote

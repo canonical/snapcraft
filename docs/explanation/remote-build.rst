@@ -89,20 +89,29 @@ Current
    ``--platform`` and ``--build-for`` behave differently than they do for
    :ref:`lifecycle commands<reference-lifecycle-commands>`.
 
-If the project file contains a ``platforms`` or ``architectures`` key, then
-``--platform`` or ``--build-for`` filter the build plan defined by that key.
+Remote builds are useful for building snaps on different architectures. Due
+to this, the semantics for the ``--platform`` and ``--build-for`` arguments are
+more complex than when building a snap locally.
+
+These arguments operate in one of two different ways depending on the
+project file, depending on the presence of a ``platforms`` or ``architectures``
+key in the project file.
+
+The first mode of operation is when the ``platforms`` or ``architectures``
+key is present in the project file. In this scenario, ``--build-for`` and
+``--platform`` operate similar to how they do for lifecycle commands.
+``--platforms`` filters by platform name and ``--build-for`` filters by the
+``build-for`` key. The difference from their usage in lifecycle commands is that
+they may be a comma-separated list which allowing multiple snaps to be built.
 For more information about build plans and filtering, see
 :ref:`Build plans <build-plans>`.
 
-If the project file doesn't contain a ``platforms`` or ``architectures`` entry,
-then ``--platform`` or ``--build-for`` define the architectures to build for.
+The second mode of operation is when there isn't a ``platforms`` or
+``architectures`` key in the project file. In this scenario, ``--platforms``
+or ``--build-for`` define the architectures to build for.
 
-It the project file doesn't contain a ``platforms`` or ``architectures`` entry
-and ``--platform`` or ``--build-for`` are not provided, Snapcraft will build
-for the host system's architecture.
-
-These ``--platform`` and ``--build-for`` arguments are mutually exclusive and
-must be a comma-separated list of debian architectures.
+Similar to their usage in lifecycle comands, the ``--platform`` and
+``--build-for`` arguments are mutually exclusive.
 
 ``core22`` snaps can only use ``--build-for``. ``core24`` and newer snaps
 can use ``--platform`` or ``--build-for``.
