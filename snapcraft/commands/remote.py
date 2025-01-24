@@ -61,7 +61,7 @@ class RemoteBuildCommand(ExtensibleCommand):
         local filesystem.
 
         If the project contains a ``platforms`` or ``architectures`` key,
-        then project's build plan is used. The build plan can be filtered
+        then the project's build plan is used. The build plan can be filtered
         using the ``--build-for`` argument.
 
         If the project doesn't contain a ``platforms`` or ``architectures`` key,
@@ -371,7 +371,7 @@ class RemoteBuildCommand(ExtensibleCommand):
         the architectures to build for are defined by the ``--build-for`` argument.
 
         If there are no architectures defined in the project or as arguments, then the
-        default behavior is to build for the host architecture.
+        default behavior is to build for the host architecture of the local machine.
 
         :param build_fors: A list of build-for entries.
 
