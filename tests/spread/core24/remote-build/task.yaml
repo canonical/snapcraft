@@ -11,9 +11,8 @@ environment:
   SNAP/all: all
   SNAP/platforms: platforms
   SNAP/no_platforms: no-platforms
-  SNAP/platform_arg: platform-arg
-  SNAP/platforms_filtered: platforms-filtered
-  SNAP/build_for_arg: build-for-arg
+  SNAP/build_for: build-for
+  SNAP/build_for_with_platforms: build-for-with-platforms
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/old_credentials: "$HOME/.local/share/snapcraft/provider/launchpad/credentials"

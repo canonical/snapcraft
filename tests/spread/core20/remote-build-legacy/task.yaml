@@ -4,10 +4,10 @@ kill-timeout: 180m
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
-  SNAP: no-architectures
+  SNAP: no-archs
   SNAP/all: all
-  SNAP/no_architectures: no-architectures
-  SNAP/architectures: architectures
+  SNAP/no_archs: no-archs
+  SNAP/archs: archs
   SNAPCRAFT_REMOTE_BUILD_STRATEGY: force-fallback
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
@@ -29,12 +29,13 @@ prepare: |
 
   # set up launchpad token
   mkdir -p "$(dirname "$CREDENTIALS_FILE")"
-  echo -e "$LAUNCHPAD_TOKEN" >> "$CREDENTIALS_FILE"
+  echo -e "$LAUNCHPAD_TOKEN" > "$CREDENTIALS_FILE"
 
 restore: |
   cd "./snaps/$SNAP"
 
-  rm -f ./*.snap ./*.txt
+  # remove snaps and log files
+  rm -f ./*.snap ./snapcraft-*.txt
 
 execute: |
   cd "./snaps/$SNAP"
