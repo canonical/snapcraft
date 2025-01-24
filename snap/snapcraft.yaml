@@ -194,10 +194,6 @@ parts:
     override-build: |
         ${SNAP}/libexec/snapcraft/craftctl default
 
-        PYTHONPATH=$CRAFT_PART_INSTALL/lib/python3.12/site-packages \
-          python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.application:get_app_info \
-          > $CRAFT_PART_INSTALL/completion.sh
-
         version="$(python3 setup.py --version)"
         ${SNAP}/libexec/snapcraft/craftctl set version="$version"
 
@@ -218,3 +214,11 @@ parts:
     stage:
       - libexec/snapcraft/chisel
 
+  completion-script:
+    after: [snapcraft]
+    plugin: nil
+    build-environment:
+      - PYTHONPATH: $CRAFT_STAGE/lib/python3.12/site-packages
+    override-build: |
+      python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.application:get_app_info \
+          > $CRAFT_PART_INSTALL/completion.sh
