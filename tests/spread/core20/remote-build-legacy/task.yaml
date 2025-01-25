@@ -31,11 +31,15 @@ prepare: |
   mkdir -p "$(dirname "$CREDENTIALS_FILE")"
   echo -e "$LAUNCHPAD_TOKEN" > "$CREDENTIALS_FILE"
 
+  # build ids are based on the project contents
+  # adding a date ensures each test has a unique build id
+  date > date.txt
+
 restore: |
   cd "./snaps/$SNAP"
 
-  # remove snaps and log files
-  rm -f ./*.snap ./snapcraft-*.txt
+  # remove snaps, logs, and date files
+  rm -f ./*.snap ./snapcraft-*.txt ./date.txt
 
 execute: |
   cd "./snaps/$SNAP"
