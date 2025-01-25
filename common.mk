@@ -14,7 +14,7 @@ else
 endif
 
 PRETTIER=npm exec --package=prettier -- prettier
-PRETTIER_FILES=**.yaml **.yml **.json **.json5 **.css **.md
+PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 
 # By default we should not update the uv lock file here.
 export UV_FROZEN := true
