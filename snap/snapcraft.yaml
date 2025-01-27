@@ -187,7 +187,7 @@ parts:
     build-environment:
         # Build PyNaCl from source since the wheel files interact
         # strangely with classic snaps. Well, build it all from source.
-        - "PIP_NO_BINARY": ":all:"
+        #- "PIP_NO_BINARY": ":all:"
         # Use base image's libsodium for PyNaCl.
         - "SODIUM_INSTALL": "system"
         - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"

@@ -45,7 +45,7 @@ coverage[toml]==7.6.4
     # via
     #   pytest-cov
     #   snapcraft (setup.py)
-craft-application==4.4.0
+git+https://github.com/canonical/craft-application@work/CRAFT-3984-private-repos#egg=craft-application
     # via snapcraft (setup.py)
 craft-archives==2.0.1
     # via
@@ -63,11 +63,11 @@ craft-parts==2.3.0
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-platforms==0.4.0
+craft-platforms==0.5.0
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-providers==2.0.4
+craft-providers==2.1.0
     # via
     #   craft-application
     #   snapcraft (setup.py)
