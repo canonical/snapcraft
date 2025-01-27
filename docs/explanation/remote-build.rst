@@ -82,22 +82,30 @@ Remote builds can be orchestrated for multiple platforms and architectures.
 Current
 ^^^^^^^
 
-``--platform`` and ``--build-for``
-**********************************
+``--build-for``
+***************
 
 .. note::
-   ``--platform`` and ``--build-for`` behave differently than they do for
+   ``--build-for`` behaves differently for ``remote-build`` than it does for
    :ref:`lifecycle commands<reference-lifecycle-commands>`.
 
-``--platform`` or ``--build-for`` can only be provided when the ``platforms``
-or ``architectures`` keywords are not defined in the project metadata
-(`[12]`_).
+Remote builds are useful for building snaps on different architectures. Due
+to this, the semantics for the ``--build-for`` argument is more complex than
+when building a snap locally.
 
-These keywords are mutually exclusive and must be a comma-separated list of
-debian architectures.
+The argument operates in one of two different ways depending on the presence
+of a ``platforms`` or ``architectures`` key in the project file.
 
-``core22`` snaps can only use ``--build-for``. ``core24`` and newer snaps
-can use ``--platform`` or ``--build-for``.
+The first mode of operation is when the ``platforms`` or ``architectures``
+key is present in the project file. In this scenario, ``--build-for`` operates
+similar to how it does for lifecycle commands. The difference from its usage in
+lifecycle commands is that ``--build-for`` may be a comma-separated list, which
+allows multiple snaps to be built. For more information about build plans and
+filtering, see :ref:`Build plans <build-plans>`.
+
+The second mode of operation is when there isn't a ``platforms`` or
+``architectures`` key in the project file. In this scenario, ``--build-for``
+defines the architectures to build for.
 
 Project platforms and architectures
 ***********************************
@@ -117,8 +125,8 @@ Snapcraft will request a build for each unique ``build-for`` architecture.
     ``build-on`` architecture (`[14]`_).
 
 If the project metadata does not contain a ``platforms`` or ``architectures``
-entry and no ``--build-for`` or ``--platform`` are passed, Snapcraft will
-request a build on, and for, the host's architecture.
+entry and ``--build-for`` is not provided, Snapcraft will request a build on,
+and for, the host's architecture.
 
 The remote builder does not work for ``core20`` snaps because it cannot parse
 the ``run-on`` keyword in a ``core20`` architecture entry (`[2]`_).
@@ -180,6 +188,5 @@ Launchpad is not able to parse this notation (`[9]`_).
 .. _`[8]`: https://bugs.launchpad.net/snapcraft/+bug/2007789
 .. _`[9]`: https://bugs.launchpad.net/snapcraft/+bug/2042167
 .. _`[10]`: https://github.com/canonical/snapcraft/issues/4885
-.. _`[12]`: https://github.com/canonical/snapcraft/issues/4992
 .. _`[13]`: https://github.com/canonical/snapcraft/issues/4996
 .. _`[14]`: https://github.com/canonical/snapcraft/issues/4995
