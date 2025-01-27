@@ -711,19 +711,19 @@
                         },
                         "start-timeout": {
                             "type": "string",
-                            "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+                            "pattern": "^([0-9]+(ns|us|ms|s|m)){1,5}$",
                             "validation-failure": "{.instance!r} is not a valid timeout value.",
                             "description": "Optional time to wait for daemon to start - <n>ns | <n>us | <n>ms | <n>s | <n>m"
                         },
                         "stop-timeout": {
                             "type": "string",
-                            "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+                            "pattern": "^([0-9]+(ns|us|ms|s|m)){1,5}$",
                             "validation-failure": "{.instance!r} is not a valid timeout value.",
                             "description": "Optional time to wait for daemon to stop - <n>ns | <n>us | <n>ms | <n>s | <n>m"
                         },
                         "watchdog-timeout": {
                             "type": "string",
-                            "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+                            "pattern": "^([0-9]+(ns|us|ms|s|m)){1,5}$",
                             "validation-failure": "{.instance!r} is not a valid timeout value.",
                             "description": "Service watchdog timeout - <n>ns | <n>us | <n>ms | <n>s | <n>m"
                         },
@@ -733,7 +733,7 @@
                         },
                         "restart-delay": {
                             "type": "string",
-                            "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+                            "pattern": "^([0-9]+(ns|us|ms|s|m)){1,5}$",
                             "validation-failure": "{.instance!r} is not a valid delay value.",
                             "description": "Delay between service restarts - <n>ns | <n>us | <n>ms | <n>s | <n>m. Defaults to unset. See the systemd.service manual on RestartSec for details."
                         },
