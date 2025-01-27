@@ -1,3 +1,113 @@
+[project]
+name = "snapcraft"
+description = "Create snaps"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    "attrs==24.2.0",
+    "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
+    "click==8.1.7",
+    "craft-application~=4.4",
+    "craft-archives~=2.0",
+    "craft-cli~=2.9",
+    "craft-grammar>=2.0.1,<3.0.0",
+    "craft-parts==2.3.0",
+    "craft-platforms~=0.4",
+    "craft-store>=3.0.2,<4.0.0",
+    "cryptography==43.0.3", # Pinned due to https://github.com/canonical/snapcraft/issues/5217
+    "docutils<0.20", # Frozen until we can update sphinx dependencies.
+    "gnupg",
+    "jsonschema==2.5.1",
+    "launchpadlib",
+    "lazr.restfulclient",
+    "lxml",
+    "macaroonbakery",
+    "mypy-extensions",
+    "overrides",
+    "packaging",
+    "progressbar",
+    "pydantic~=2.8",
+    "pyelftools",
+    # Pygit2 and libgit2 need to match versions.
+    # Further info: https://www.pygit2.org/install.html#version-numbers
+    "pygit2~=1.13.0",
+    "pylxd ; sys_platform == 'linux'",
+    "pymacaroons",
+    "python-apt @ https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/python-apt/2.4.0ubuntu1/python-apt_2.4.0ubuntu1.tar.xz ; sys_platform == 'linux'",
+    "python-debian ; sys_platform == 'linux'",
+    "pyxdg",
+    "pyyaml",
+    "raven",
+    "requests-toolbelt",
+    "requests-unixsocket2",
+    "requests",
+    "simplejson",
+    "snap-helpers",
+    "tabulate",
+    "toml",
+    "tinydb",
+    "typing-extensions",
+    "validators>=0.28.3",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Natural Language :: English",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Software Distribution",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.12"
+
+[project.scripts]
+snapcraft = "snapcraft.application:main"
+snapcraft_legacy = "snapcraft_legacy.cli.__main__:run"
+
+[build-system]
+requires = [
+    "setuptools>=69.0",
+    "setuptools_scm[toml]>=7.1",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "snapcraft/_version.py"
+# the version comes from the latest annotated git tag formatted as 'X.Y.Z'
+# version scheme:
+#   - X.Y.Z.post<commits since tag>+g<hash>.d<%Y%m%d>
+# parts of scheme:
+#   - X.Y.Z - most recent git tag
+#   - post<commits since tag>+g<hash> - present when current commit is not tagged
+#   - +dirty - present when working dir is dirty
+# version scheme when no tags exist:
+#   - 0.0.post<total commits>+g<hash>
+version_scheme = "post-release"
+# deviations from the default 'git describe' command:
+# - only match annotated tags
+# - only match tags formatted as 'X.Y.Z'
+git_describe_command = [
+    "git",
+    "describe",
+    "--dirty",
+    "--long",
+    "--match",
+    "[0-9]*.[0-9]*.[0-9]*",
+    "--exclude",
+    "*[^0-9.]*",
+]
+# Appends "+dirty" to the version when working dir is dirty
+# Necessary to avoid version numbers being too long
+local_scheme = "dirty-tag"
+
+[tool.setuptools.packages.find]
+include = ["*craft*"]
+namespaces = false
+
 [tool.black]
 extend-exclude = '''
 /(

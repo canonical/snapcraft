@@ -194,7 +194,7 @@ parts:
     override-build: |
         ${SNAP}/libexec/snapcraft/craftctl default
 
-        version="$(python3 setup.py --version)"
+        version=$(PYTHONPATH=$CRAFT_PART_INSTALL/lib/python3.12/site-packages python3 -c "import snapcraft;print(snapcraft.__version__)")
         ${SNAP}/libexec/snapcraft/craftctl set version="$version"
 
         [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
