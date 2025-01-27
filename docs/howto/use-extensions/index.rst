@@ -13,3 +13,5 @@ It covers general usage, as well as special guidance for particular extensions.
 
     list-extensions
     enable-experimental-extensions
+    use-the-env-injector-extension
+    use-the-gnome-extension

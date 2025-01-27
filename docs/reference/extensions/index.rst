@@ -11,3 +11,6 @@ For guidance on specific extensions, see :ref:`use-extensions`.
 
 .. toctree::
     :hidden:
+
+    env-injector-extension
+    gnome-extension
