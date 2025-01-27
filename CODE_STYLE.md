@@ -13,8 +13,8 @@ tests. Some other rules are only socially enforced during code reviews.
 
 ## Code Formatting
 
-This code base adheres to black[2].
-You can `snap install black --beta --devmode` to install the linter and formatter onto your host.
+This code base adheres to [Ruff][2].
+You can `snap install ruff` to install the linter and formatter onto your host.
 
 ## Conditionals
 
@@ -76,4 +76,4 @@ fix it.
 Generally speaking, all comments should end with some punctuation.
 
 [1]: TESTING.md
-[2]: https://github.com/ambv/black
+[2]: https://docs.astral.sh/ruff/

@@ -108,18 +108,6 @@ local_scheme = "dirty-tag"
 include = ["*craft*"]
 namespaces = false
 
-[tool.black]
-extend-exclude = '''
-/(
-  | snapcraft_legacy
-  | tools
-  | docs/sphinx-resources
-)/
-'''
-# Targeting future versions as well so we don't have black reformatting code
-# en masse later.
-target-version = ["py312"]
-
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true

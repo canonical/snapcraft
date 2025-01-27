@@ -2,7 +2,7 @@
 [![Documentation Status](https://readthedocs.com/projects/canonical-snapcraft/badge/?version=latest)](https://canonical-snapcraft.readthedocs-hosted.com/en/latest/?badge=latest)
 [![Scheduled spread tests](https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml/badge.svg?branch=main)](https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml)
 [![Coverage Status][codecov-image]][codecov-url]
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 
 # Snapcraft

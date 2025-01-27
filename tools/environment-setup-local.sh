@@ -41,9 +41,6 @@ pip install -r "${SNAPCRAFT_DIR}/requirements.txt"
 # Install the project for quick tests
 pip install --editable "${SNAPCRAFT_DIR}"
 
-# Install black to run static tests.
-sudo snap install black --beta
-
 # Install shellcheck for static tests.
 sudo snap install shellcheck
 
