@@ -39,6 +39,7 @@ Migrate existing projects
 
    #. Replace use of black, flake8, pydocstyle, isort, and pylint in Makefile/CI
       with:
+
       - ``ruff check --fix``
       - ``ruff format``
 
@@ -57,7 +58,9 @@ Migrate existing projects
    #. ``pyproject.toml`` - Expand from just the ruff things: move things into
       here from your ``setup.py``, ``setup.cfg``, and ``requirements.*.txt``.
    #. ``README`` - If your readme is .md, convert to .rst with pandoc:
+
       ``pandoc -o README.rst README.md``
+
       Don't worry about making the contents match, Starbase's is very specific.
 
 #. Run all the linters: ``make lint``
@@ -81,6 +84,7 @@ Migrate existing projects
    sense upstream.
 
 #. Bring in remaining top-level files:
+
    - .editorconfig
    - .pre-commit-config.yaml
    - .shellcheckrc
@@ -106,6 +110,7 @@ Create a new project
 
 #. `Use this template`_ to create your repository.
 #. Sync the git history with starbase to ease future merging:
+
    - ``git clone <your-repo>``
    - ``git remote add starbase git@github.com:canonical/starbase.git``
    - ``git merge --allow-unrelated-histories starbase/main``
