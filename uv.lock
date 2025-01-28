@@ -7,7 +7,6 @@ resolution-markers = [
 
 [manifest]
 constraints = [
-    { name = "build", specifier = ">=0.7.0" },
     { name = "cffi", specifier = ">=1.15" },
     { name = "httplib2", specifier = ">=0.20.0" },
     { name = "iniconfig", specifier = ">=1.1.0" },
@@ -454,7 +453,7 @@ name = "importlib-metadata"
 version = "8.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.13'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cd/12/33e59336dca5be0c398a7482335911a33aa0e20776128f038019f1a95f1b/importlib_metadata-8.5.0.tar.gz", hash = "sha256:71522656f0abace1d072b9e5481a48f07c138e00f079c38c8f883823f9c26bd7", size = 55304 }
 wheels = [
@@ -816,15 +815,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nodeenv"
-version = "1.9.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/43/16/fc88b08840de0e0a72a2f9d8c6bae36be573e475a6326ae854bcc549fc45/nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f", size = 47437 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/1d/1b658dbd2b9fa9c4c9f32accbfc0205d532c8c6194dc0f2a4c0428e7128a/nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9", size = 22314 },
-]
-
-[[package]]
 name = "packaging"
 version = "24.2"
 source = { registry = "https://pypi.org/simple" }
@@ -974,19 +964,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e7/82/28175b2414effca1cdac8dc99f76d660e7a4fb0ceefa4b4ab8f5f6742925/pyproject_hooks-1.2.0.tar.gz", hash = "sha256:1e859bd5c40fae9448642dd871adf459e5e2084186e8d2c2a79a824c970da1f8", size = 19228 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/24/12818598c362d7f300f18e74db45963dbcb85150324092410c8b49405e42/pyproject_hooks-1.2.0-py3-none-any.whl", hash = "sha256:9e5c6bfa8dcc30091c74b0cf803c81fdd29d94f01992a7707bc97babb1141913", size = 10216 },
-]
-
-[[package]]
-name = "pyright"
-version = "1.1.391"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "nodeenv" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/11/05/4ea52a8a45cc28897edb485b4102d37cbfd5fce8445d679cdeb62bfad221/pyright-1.1.391.tar.gz", hash = "sha256:66b2d42cdf5c3cbab05f2f4b76e8bec8aa78e679bfa0b6ad7b923d9e027cadb2", size = 21965 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/89/66f49552fbeb21944c8077d11834b2201514a56fd1b7747ffff9630f1bd9/pyright-1.1.391-py3-none-any.whl", hash = "sha256:54fa186f8b3e8a55a44ebfa842636635688670c6896dcf6cf4a7fc75062f4d15", size = 18579 },
 ]
 
 [[package]]
@@ -1493,9 +1470,21 @@ wheels = [
 
 [[package]]
 name = "starcraft"
+version = "0.0.post293+g096e54a.d20250123"
 source = { editable = "." }
 
-[package.optional-dependencies]
+[package.dev-dependencies]
+dev = [
+    { name = "build" },
+    { name = "coverage", extra = ["toml"] },
+    { name = "mypy", extra = ["reports"] },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "types-colorama" },
+    { name = "types-pygments" },
+    { name = "types-setuptools" },
+]
 docs = [
     { name = "canonical-sphinx" },
     { name = "sphinx-autobuild" },
@@ -1513,43 +1502,30 @@ types = [
     { name = "types-setuptools" },
 ]
 
-[package.dev-dependencies]
+[package.metadata]
+
+[package.metadata.requires-dev]
 dev = [
-    { name = "build" },
-    { name = "coverage", extra = ["toml"] },
-    { name = "mypy", extra = ["reports"] },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
+    { name = "build", specifier = ">=0.7.0" },
+    { name = "coverage", extras = ["toml"], specifier = "~=7.4" },
+    { name = "mypy", extras = ["reports"], specifier = "~=1.14.1" },
+    { name = "pytest", specifier = "~=8.0" },
+    { name = "pytest-cov", specifier = "~=6.0" },
+    { name = "pytest-mock", specifier = "~=3.12" },
     { name = "types-colorama" },
     { name = "types-pygments" },
     { name = "types-setuptools" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "canonical-sphinx", marker = "extra == 'docs'", specifier = "~=0.3.0" },
-    { name = "mypy", extras = ["reports"], marker = "extra == 'types'", specifier = "~=1.14.1" },
-    { name = "sphinx-autobuild", marker = "extra == 'docs'", specifier = "~=2024.2" },
-    { name = "sphinx-lint", marker = "extra == 'docs'", specifier = "==1.0.0" },
-    { name = "sphinx-pydantic", marker = "extra == 'docs'", specifier = "==0.1.1" },
-    { name = "sphinx-toolbox", marker = "extra == 'docs'", specifier = "~=3.5" },
-    { name = "types-colorama", marker = "extra == 'types'" },
-    { name = "types-pygments", marker = "extra == 'types'" },
-    { name = "types-setuptools", marker = "extra == 'types'" },
-    { name = "yamllint", marker = "extra == 'lint'", specifier = "~=1.34" },
+docs = [
+    { name = "canonical-sphinx", specifier = "~=0.3.0" },
+    { name = "sphinx-autobuild", specifier = "~=2024.2" },
+    { name = "sphinx-lint", specifier = "==1.0.0" },
+    { name = "sphinx-pydantic", specifier = "==0.1.1" },
+    { name = "sphinx-toolbox", specifier = "~=3.5" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "build" },
-    { name = "coverage", extras = ["toml"], specifier = "~=7.4" },
+lint = [{ name = "yamllint", specifier = "~=1.34" }]
+types = [
     { name = "mypy", extras = ["reports"], specifier = "~=1.14.1" },
-    { name = "pyright", specifier = "==1.1.391" },
-    { name = "pytest", specifier = "~=8.0" },
-    { name = "pytest-cov", specifier = "~=6.0" },
-    { name = "pytest-mock", specifier = "~=3.12" },
     { name = "types-colorama" },
     { name = "types-pygments" },
     { name = "types-setuptools" },

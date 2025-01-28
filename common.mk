@@ -48,7 +48,7 @@ help: ## Show this help.
 
 .PHONY: setup
 setup: install-uv setup-precommit ## Set up a development environment
-	uv sync --all-extras
+	uv sync --all-groups
 
 .PHONY: setup-tests
 setup-tests: install-uv install-build-deps ##- Set up a testing environment without linters
@@ -56,11 +56,11 @@ setup-tests: install-uv install-build-deps ##- Set up a testing environment with
 
 .PHONY: setup-lint
 setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps  ##- Set up a linting-only environment
-	uv sync --no-install-workspace --extra lint --extra types
+	uv sync --no-install-workspace --group lint --group types
 
 .PHONY: setup-docs
 setup-docs: install-uv  ##- Set up a documentation-only environment
-	uv sync --no-dev --no-install-workspace --extra docs
+	uv sync --no-dev --group docs
 
 .PHONY: setup-precommit
 setup-precommit: install-uv  ##- Set up pre-commit hooks in this repository.
@@ -105,7 +105,7 @@ ifneq ($(CI),)
 endif
 
 .PHONY: lint-codespell
-lint-codespell:  ##- Check spelling with codespell
+lint-codespell: install-codespell  ##- Check spelling with codespell
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
@@ -163,7 +163,7 @@ lint-docs:  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run --extra docs sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS)
+	uv run --group docs sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS)
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
@@ -199,11 +199,11 @@ test-coverage:  ## Generate coverage report
 
 .PHONY: docs
 docs:  ## Build documentation
-	uv run --extra docs sphinx-build -b html -W $(DOCS) $(DOCS)/_build
+	uv run --group docs sphinx-build -b html -W $(DOCS) $(DOCS)/_build
 
 .PHONY: docs-auto
 docs-auto:  ## Build and host docs with sphinx-autobuild
-	uv run --extra docs sphinx-autobuild -b html --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS)/_build
+	uv run --group docs sphinx-autobuild -b html --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS)/_build
 
 .PHONY: pack-pip
 pack-pip:  ##- Build packages for pip (sdist, wheel)

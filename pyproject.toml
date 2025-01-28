@@ -17,7 +17,7 @@ requires-python = ">=3.10"
 [project.scripts]
 starcraft-hello = "starcraft:hello"
 
-[project.optional-dependencies]
+[dependency-groups]
 lint = [
     "yamllint~=1.34",
 ]
@@ -34,11 +34,21 @@ docs = [
     "sphinx-toolbox~=3.5",
     "sphinx-lint==1.0.0",
 ]
+dev = [
+    "build>=0.7.0",
+    "coverage[toml]~=7.4",
+    "pytest~=8.0",
+    "pytest-cov~=6.0",
+    "pytest-mock~=3.12",
+    "mypy[reports]~=1.14.1",
+    "types-Pygments",
+    "types-colorama",
+    "types-setuptools",
+]
 
 [tool.uv]
 constraint-dependencies = [
     # Basic constraints to allow --resolution=lowest
-    "build>=0.7.0",
     "cffi>=1.15",
     "iniconfig>=1.1.0",
     "httplib2>=0.20.0",
@@ -61,17 +71,7 @@ constraint-dependencies = [
     "webencodings>=0.4.0",
     "wheel>=0.38",
 ]
-dev-dependencies = [
-    "build",
-    "coverage[toml]~=7.4",
-    "pytest~=8.0",
-    "pytest-cov~=6.0",
-    "pytest-mock~=3.12",
-    "mypy[reports]~=1.14.1",
-    "types-Pygments",
-    "types-colorama",
-    "types-setuptools",
-]
+
 
 [build-system]
 requires = [
