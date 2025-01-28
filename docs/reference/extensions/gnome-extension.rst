@@ -124,7 +124,7 @@ build-environment for each part in your snap to use.
 Build variables
 ~~~~~~~~~~~~~~~
 
-The following build enviornment variables are included in each part built in a snap that
+The following build environment variables are included in each part built in a snap that
 this this extension.
 
 You can declare additional variables in the ``build-environment`` key. Furthermore,
@@ -247,7 +247,7 @@ reading.
 
 .. collapse:: Expanded project file for GNOME System Monitor
 
-    .. literalinclude:: ../code/extensions/gnome-extension-gnome-system-monitor-expanded-diff.yaml
+    .. literalinclude:: ../code/extensions/gnome-extension-gnome-system-monitor-expanded.diff
         :language: diff
         :lines: 3-
         :emphasize-lines: 57-66, 78-87, 100-150, 158-163, 171-173, 180-201, 210-212

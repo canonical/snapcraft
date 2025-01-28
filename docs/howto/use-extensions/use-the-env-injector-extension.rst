@@ -73,7 +73,7 @@ Environment variables are applied to apps in one of two ways:
 
 
 
-As a snap confiugration option
+As a snap configuration option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Users can set environment variables one at a time as a snap configuration options with
