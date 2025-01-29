@@ -16,22 +16,6 @@ This extension is compatible with the core22 and core24 bases.
 Included plugs
 --------------
 
-The extension connects the following snap-wide plugs.
-
-.. collapse:: Included snap-wide plugs
-
-    .. code-block:: yaml
-
-        plugs:
-          - desktop
-          - desktop-legacy
-          - gsettings
-          - opengl
-          - wayland
-          - x11
-          - mount-observe
-          - calendar-service
-
 When this extension is used, the following plugs are connected for the app. The paths
 slightly differ between core24 and core22 bases.
 
@@ -39,7 +23,7 @@ slightly differ between core24 and core22 bases.
 
     .. group-tab:: core24
 
-        .. collapse:: Included app plugs
+        .. collapse:: Included snap-wide plugs
 
             .. code-block:: yaml
 
@@ -69,7 +53,7 @@ slightly differ between core24 and core22 bases.
 
     .. group-tab:: core22
 
-        .. collapse:: Included app plugs
+        .. collapse:: Included snap-wide plugs
 
             .. code-block:: yaml
 
@@ -92,6 +76,22 @@ slightly differ between core24 and core22 bases.
                       interface: content
                       target: $SNAP/gnome-platform
                       default-provider: gnome-42-2204
+
+The extension also connects the following plugs to all apps that use it.
+
+.. collapse:: Included app plugs
+
+    .. code-block:: yaml
+
+        plugs:
+          - desktop
+          - desktop-legacy
+          - gsettings
+          - opengl
+          - wayland
+          - x11
+          - mount-observe
+          - calendar-service
 
 
 Included packages

@@ -79,10 +79,10 @@ As a snap configuration option
 Users can set environment variables one at a time as a snap configuration options with
 the ``snap set`` command.
 
-To set an environment variable globally, the user can call ``snap set`` and target the
-snap and its app. The passed environment variable name must be lowercase. For example,
-to set ``HTTP_PORT=8080`` for all apps in a snap that use the env-injector, the user
-would run:
+To set an environment variable for all apps in a snap, the user can call ``snap set``
+and target the snap and its app. The passed environment variable name must be lowercase.
+For example, to set ``HTTP_PORT=8080`` for all apps in a snap that use the env-injector,
+the user would run:
 
 .. code-block:: bash
 

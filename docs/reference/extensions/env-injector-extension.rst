@@ -109,11 +109,11 @@ names:
     in it is invalid in a snap option name.
 
 
-Environment file paths
-----------------------
+User-generated environment files
+--------------------------------
 
-Environment (``.env``) files can pass variables to the snap with the special ``envfile``
-option:
+With the special ``envfile`` snap options, the user can also pass whole environment
+(``.env``) files to the snap, provided the file is already packed into the snap:
 
 .. list-table::
     :header-rows: 1
