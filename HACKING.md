@@ -47,7 +47,59 @@ you with tox, but you'll need to install:
 
 ### Testing
 
-See the [Testing guide](TESTING.md).
+By default, our CI suite will run both unit and integration testing on every PR. Generally speaking, it's good to run unit tests before pushing any code anyways as they are quick and great for catching bugs early. Integration tests, on the other hand, are quite heavy and slow to run locally. Due to this, we only recommend running the integration tests locally if there is an obvious need, such as debugging an integration test that failed in CI.
+
+#### Unit testing
+
+For unit testing, use the provided make recipes:
+
+```shell
+make test       # All unit tests
+make test-fast  # Only the fast tests
+make test-slow  # Only the slow tests
+```
+
+#### Integration testing
+
+For integration testing, Snapcraft uses [Spread](https://github.com/canonical/spread). Spread is a system for distributing tests and executing them in different backends, in parallel.
+
+To test with Spread, first fetch the Spread testing tools:
+
+```shell
+git submodule update --init
+```
+
+Next, build Snapcraft into a snap:
+
+```shell
+snapcraft pack
+```
+
+Then, move the resulting snap into the tests directory:
+
+```shell
+mv *.snap tests/
+```
+
+Next, install Spread with Go:
+
+```shell
+go install github.com/snapcore/spread/cmd/spread@latest
+```
+
+Ensure that the installation added the `$HOME/go/bin` directory to the `$PATH` environment variable.
+
+Then, you can run the integration tests using a local LXD backend with:
+
+```shell
+spread -v lxd:
+```
+
+You can also run them in Google Cloud if you have a Google Cloud credentials JSON file. In order to do this, run:
+
+```shell
+SPREAD_GOOGLE_KEY={credentials_path} spread -v google:
+```
 
 ### Enabling debug output
 
