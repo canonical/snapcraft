@@ -1,7 +1,6 @@
 summary: test the "How to package and upload a snap with components"
 
-restore:
-  rm -r *.snap *.comp
+restore: rm -r *.snap *.comp
 
 execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT

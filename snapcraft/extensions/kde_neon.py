@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generic KDE NEON extension to support core22 and onwards."""
+
 import dataclasses
 import functools
 import re

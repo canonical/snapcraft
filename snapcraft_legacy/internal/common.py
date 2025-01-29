@@ -180,8 +180,9 @@ def is_snap() -> bool:
     snap_name = os.environ.get("SNAP_NAME", "")
     is_snap = snap_name == "snapcraft"
     logger.debug(
-        "snapcraft is running as a snap {!r}, "
-        "SNAP_NAME set to {!r}".format(is_snap, snap_name)
+        "snapcraft is running as a snap {!r}, SNAP_NAME set to {!r}".format(
+            is_snap, snap_name
+        )
     )
     return is_snap
 

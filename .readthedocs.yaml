@@ -16,8 +16,8 @@ build:
     - libapt-pkg-dev
   jobs:
     post_checkout:
-      - git fetch --tags --unshallow  # Also fetch tags
-      - git describe                  # Make sure we get a proper version
+      - git fetch --tags --unshallow # Also fetch tags
+      - git describe # Make sure we get a proper version
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:

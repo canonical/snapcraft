@@ -99,9 +99,7 @@ def _prompt_login() -> Tuple[str, str]:
 
 
 def _get_hostname(
-    hostname: Optional[
-        str
-    ] = platform.node(),  # noqa: B008 Function call in arg defaults
+    hostname: Optional[str] = platform.node(),  # noqa: B008 Function call in arg defaults
 ) -> str:
     """Return the computer's network name or UNNKOWN if it cannot be determined."""
     if not hostname:
@@ -641,8 +639,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
                 "Components are currently unsupported for on-prem stores"
             )
         emit.debug(
-            f"Ignoring snap_file_size of {snap_file_size!r} and "
-            f"built_at {built_at!r}"
+            f"Ignoring snap_file_size of {snap_file_size!r} and built_at {built_at!r}"
         )
 
         revision_request = cast(

@@ -3,9 +3,9 @@ name: TICS
 on:
   push:
     branches:
-    - main
-    # to easy test changes to the workflow
-    - tiobe
+      - main
+      # to easy test changes to the workflow
+      - tiobe
 
 jobs:
   CI:

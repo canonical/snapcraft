@@ -214,11 +214,6 @@ include = ["snapcraft", "tests"]
 exclude = ["build", "tests/legacy", "tests/spread"]
 pythonVersion = "3.12"
 
-[tool.pytest.ini_options]
-minversion = "7.0"
-required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.12", "pytest-subprocess>=1.4"]
-addopts = ["--cov=snapcraft"]
-
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
 target-version = "py312"
@@ -228,6 +223,7 @@ extend-exclude = [
     "__pycache__",
     "legacy",
     "tests/legacy",
+    "snapcraft/_version.py",  # setuptools_scm generates old-style type annotations and single quotes
 ]
 lint.select = [
     "E", "F",  # The rules built into Flake8
@@ -312,5 +308,44 @@ max-branches = 16
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
 
-[tool.ruff.lint.flake8-annotations]
-suppress-none-returning = true  # We don't need to explicitly point out that a function doesn't return anything
+[tool.ruff.lint.pydocstyle]
+ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
+    "typing.overload", # Default configuration
+    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
+    "overrides.override",
+    "overrides.overrides",
+    "typing.override",
+    "typing_extensions.override",
+]
+
+[tool.ruff.lint.pep8-naming]
+# Allow Pydantic's `@validator` decorator to trigger class method treatment.
+classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = "tests"
+xfail_strict = true
+markers = ["slow: slow tests"]
+
+[tool.coverage.run]
+branch = true
+omit = ["test/**"]
+
+[tool.coverage.report]
+skip_empty = true
+exclude_also = [
+    "if (typing\\.)?TYPE_CHECKING:",
+]
+
+[tool.codespell]
+ignore-words-list = [
+    "buildd",
+]
+skip = [
+    # Keyrings aren't code
+    "*.asc",
+    # These tests include some non-English text
+    "*/test_appstream.py",
+    "*/test_update_metadata.py",
+]

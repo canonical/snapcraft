@@ -67,17 +67,17 @@ To run the unit tests, execute:
 You can also run a subsuite of the unit suites specifying the path to the directory.
 For example:
 
-  * To run only the unit tests for the plugins:
+- To run only the unit tests for the plugins:
 
-    ```
-    pytest tests/unit/parts/plugins
-    ```
+  ```
+  pytest tests/unit/parts/plugins
+  ```
 
-  * To run only the integration tests for the store:
+- To run only the integration tests for the store:
 
-    ```
-    pytest tests/unit/store
-    ```
+  ```
+  pytest tests/unit/store
+  ```
 
 The snaps tests script has more complex arguments. For an explanation of them, run:
 
@@ -135,60 +135,60 @@ It is possible to emulate an arm64 machine on an amd64 host, which is very usefu
 1. Download the latest ubuntu arm64 uefi image from https://cloud-images.ubuntu.com/releases/16.04/release/
 2. Keep a pristine copy of the image, in case you want to reset the machine, replacing <ubuntu-image> with the name of the file you downloaded on step 1:
 
-    ```
-    $ cp <ubuntu-image> <ubuntu-image>.pristine
-    ```
+   ```
+   $ cp <ubuntu-image> <ubuntu-image>.pristine
+   ```
 
 3. Download the latest UEFI firmware image QEMU_EFI.fd from https://releases.linaro.org/components/kernel/uefi-linaro/latest/release/qemu64/
 4. Create a cloud init file, replacing <launchpad-user-name> with your values:
 
-    ```
-    $ cat > cloud-data.yaml << EOF
-    #cloud-config
-    users:
-      - name: $USER
-        ssh-import-id: <launchpad-user-name>
-        sudo: ['ALL=(ALL) NOPASSWD:ALL']
-        groups: sudo
-        shell: /bin/bash
-    EOF
-    ```
+   ```
+   $ cat > cloud-data.yaml << EOF
+   #cloud-config
+   users:
+     - name: $USER
+       ssh-import-id: <launchpad-user-name>
+       sudo: ['ALL=(ALL) NOPASSWD:ALL']
+       groups: sudo
+       shell: /bin/bash
+   EOF
+   ```
 
 5. Create a cloud config disk image on the file `cloud-config.img`:
 
-    ```
-    $ sudo apt install --yes cloud-image-utils
-    $ cloud-localds --disk-format qcow2 cloud-config.img cloud-data.yaml
-    ```
+   ```
+   $ sudo apt install --yes cloud-image-utils
+   $ cloud-localds --disk-format qcow2 cloud-config.img cloud-data.yaml
+   ```
 
 6. Run the image in qemu, replacing <ubuntu-image> with the path of the file you downloaded on step 1.
 
-    ```
-    $ sudo apt install qemu-system-arm
-    $ qemu-system-aarch64 \
-        -smp 2 \
-        -m 1024 \
-        -M virt \
-        -cpu cortex-a57 \
-        -bios QEMU_EFI.fd \
-        -nographic \
-        -device virtio-blk-device,drive=image \
-        -drive if=none,id=image,file=<ubuntu-image> \
-        -device virtio-blk-device,drive=cloud \
-        -drive if=none,id=cloud,file=cloud-config.img \
-        -device virtio-net-device,netdev=user0 \
-        -netdev user,id=user0 \
-        -redir tcp:2222::22
-    ```
+   ```
+   $ sudo apt install qemu-system-arm
+   $ qemu-system-aarch64 \
+       -smp 2 \
+       -m 1024 \
+       -M virt \
+       -cpu cortex-a57 \
+       -bios QEMU_EFI.fd \
+       -nographic \
+       -device virtio-blk-device,drive=image \
+       -drive if=none,id=image,file=<ubuntu-image> \
+       -device virtio-blk-device,drive=cloud \
+       -drive if=none,id=cloud,file=cloud-config.img \
+       -device virtio-net-device,netdev=user0 \
+       -netdev user,id=user0 \
+       -redir tcp:2222::22
+   ```
 
 This will show a few errors, and a weird screen while the machine boots.
 TODO: research how to make it nicer, but for now, just be patient until the login prompt appears.
 
 7. ssh into the emulated machine:
 
-    ```
-    $ ssh -p 2222 localhost
-    ```
+   ```
+   $ ssh -p 2222 localhost
+   ```
 
 (Source: https://gist.github.com/george-hawkins/16ee37063213f348a17717a7007d2c79)
 

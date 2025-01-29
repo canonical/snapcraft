@@ -283,10 +283,7 @@ def _print_trace_output(exc_info, file=sys.stdout) -> None:
 
 def _is_send_to_sentry(exc_info) -> bool:  # noqa: C901
     # Check to see if error reporting has been disabled
-    if (
-        strtobool(os.getenv("SNAPCRAFT_ENABLE_ERROR_REPORTING", "y"))
-        == 0
-    ):
+    if strtobool(os.getenv("SNAPCRAFT_ENABLE_ERROR_REPORTING", "y")) == 0:
         return False
 
     # Check the environment to see if we should allow for silent reporting
@@ -384,6 +381,6 @@ def _submit_trace(exc_info):
             "raven.processors.RemoveStackLocalsProcessor",
             "raven.processors.SanitizePasswordsProcessor",
         ),
-        **kwargs
+        **kwargs,
     )
     client.captureException(exc_info=exc_info)

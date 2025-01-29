@@ -4,12 +4,11 @@
 [![Coverage Status][codecov-image]][codecov-url]
 [![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-
 # Snapcraft
 
 Package, distribute, and update any app for Linux and IoT.
 
-Snaps are containerised software packages that are simple to create and 
+Snaps are containerised software packages that are simple to create and
 install. They auto-update and are safe to run. And because they bundle their
 dependencies, they work on all major Linux systems without modification.
 
@@ -26,7 +25,6 @@ Learn about the latest features by following Snapcraft on
 ## Contribute to Snapcraft
 
 We love contributors. Read the [hacking guide](HACKING.md) if you're interested in helping out.
-
 
 [codecov-image]: https://codecov.io/github/canonical/snapcraft/coverage.svg?branch=master
 [codecov-url]: https://codecov.io/github/canonical/snapcraft?branch=master

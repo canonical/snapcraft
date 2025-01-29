@@ -41,9 +41,9 @@ you with tox, but you'll need to install:
 
 - Python 3.12 (default on Ubuntu 24.04) with setuptools.
 - [tox](https://tox.wiki) version 3.8 or later
-- [pyright](https://github.com/microsoft/pyright)  (also available via snap: `snap install pyright`)
+- [pyright](https://github.com/microsoft/pyright) (also available via snap: `snap install pyright`)
 - [ruff](https://github.com/astral/ruff) (also available via snap: `snap install ruff`)
-- [ShellCheck](https://www.shellcheck.net/)  (also available via snap: `snap install shellcheck`)
+- [ShellCheck](https://www.shellcheck.net/) (also available via snap: `snap install shellcheck`)
 
 ### Testing
 
@@ -53,9 +53,7 @@ See the [Testing guide](TESTING.md).
 
 Given that the `--debug` option in snapcraft is reserved for project specific debugging, enabling for the `logger.debug` calls is achieved by setting the "SNAPCRAFT_ENABLE_DEVELOPER_DEBUG" environment variable to a truthful value. Snapcraft's internal tools, e.g.; `snapcraftctl` should pick up this environment variable as well.
 
-
 ## Documentation
-
 
 ### Build
 
@@ -66,7 +64,7 @@ tox run -e build-docs
 ```
 
 > **Important**
-> 
+>
 > Interactive builds are currently defective and cause an infinite loop. [This GitHub issue](https://github.com/sphinx-doc/sphinx/issues/11556#issuecomment-1667451983) posits that this is caused by by pages referencing each other.
 
 If you prefer to compose pages interactively, you can host the documentation on a local server:
@@ -76,7 +74,6 @@ tox run -e autobuild-docs
 ```
 
 You can reach the interactive site at http://127.0.0.1:8080 in a web browser.
-
 
 ### Test
 
@@ -93,7 +90,6 @@ For a rudimentary spell check, you can use codespell:
 ```shell
 tox run -e lint-codespell
 ```
-
 
 ## Evaluating pull requests
 

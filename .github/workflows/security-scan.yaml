@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - hotfix/*
-      - work/secscan  # For development
+      - work/secscan # For development
 
 jobs:
   python-scans:
@@ -13,5 +13,5 @@ jobs:
     uses: canonical/starflow/.github/workflows/scan-python.yaml@main
     with:
       packages: python-apt-dev
-      osv-extra-args: '--config=source/osv-scanner.toml'
+      osv-extra-args: "--config=source/osv-scanner.toml"
       trivy-extra-args: '--severity HIGH,CRITICAL --ignore-unfixed --skip-dirs "tests/spread/**"'

@@ -155,7 +155,7 @@ class ContentPlug(Plug):
                 message=(
                     "Specifying a snap channel in 'default_provider' is not supported: "
                     f"{self._default_provider}"
-                )
+                ),
             )
 
     @classmethod

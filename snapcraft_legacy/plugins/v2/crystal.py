@@ -31,6 +31,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings, default: '[]')
       These options are passed to `shards build`.
 """
+
 import os
 import shlex
 import shutil

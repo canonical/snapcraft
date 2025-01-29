@@ -48,7 +48,6 @@ class StoreError(SnapcraftError):
 
 
 class GeneralStoreError(StoreError):
-
     fmt = "Store Error: {message}"
 
     def __init__(self, message, response=None):
@@ -156,7 +155,6 @@ class SnapNotFoundError(SnapcraftException):
 
 
 class NoSnapIdError(StoreError):
-
     fmt = (
         "Failed to get snap ID for snap {snap_name!r}. This is an error in "
         "the store, please open a new topic in the 'store' category in the "
@@ -172,7 +170,6 @@ class StoreDownloadError(StoreError):
 
 
 class DownloadNotFoundError(StoreDownloadError):
-
     fmt = "Downloaded file not found {path!r}."
 
     def __init__(self, *, path: str) -> None:
@@ -180,7 +177,6 @@ class DownloadNotFoundError(StoreDownloadError):
 
 
 class SHAMismatchError(StoreDownloadError):
-
     fmt = (
         "The SHA3-384 checksum for {path!r} was {calculated!r}: expected {expected!r}."
     )
@@ -190,7 +186,6 @@ class SHAMismatchError(StoreDownloadError):
 
 
 class DeveloperAgreementSignError(StoreError):
-
     fmt = (
         "There was an error while signing developer agreement.\n"
         "Reason: {reason!r}\n"
@@ -202,7 +197,6 @@ class DeveloperAgreementSignError(StoreError):
 
 
 class NeedTermsSignedError(StoreError):
-
     fmt = (
         "Developer Terms of Service agreement must be signed "
         "before continuing: {message}"
@@ -213,7 +207,6 @@ class NeedTermsSignedError(StoreError):
 
 
 class StoreAccountInformationError(StoreError):
-
     fmt = "Error fetching account information from store: {error}"
 
     def __init__(self, response):
@@ -236,7 +229,6 @@ class StoreAccountInformationError(StoreError):
 
 
 class StoreKeyRegistrationError(StoreError):
-
     fmt = "Key registration failed: {error}"
 
     def __init__(self, response):
@@ -278,8 +270,7 @@ class StoreRegistrationError(StoreError):
     )
 
     __FMT_RETRY_WAIT = (
-        "You must wait {retry_after} seconds before trying to register "
-        "your next snap."
+        "You must wait {retry_after} seconds before trying to register your next snap."
     )
 
     __FMT_INVALID = "{message}"
@@ -338,11 +329,8 @@ class StoreRegistrationError(StoreError):
 
 
 class StoreUpDownError(StoreError):
-
     fmt = (
-        "There was an error uploading the package.\n"
-        "Reason: {reason!r}\n"
-        "Text: {text!r}"
+        "There was an error uploading the package.\nReason: {reason!r}\nText: {text!r}"
     )
 
     def __init__(self, response):
@@ -350,7 +338,6 @@ class StoreUpDownError(StoreError):
 
 
 class StoreUploadError(StoreError):
-
     __FMT_NOT_REGISTERED = (
         "This snap is not registered. Register the snap and try again."
     )
@@ -385,7 +372,6 @@ class StoreUploadError(StoreError):
 
 
 class StoreReviewError(StoreError):
-
     __FMT_NEED_MANUAL_REVIEW = (
         "The Store automatic review failed.\n"
         "A human will soon review your snap, but if you can't wait please "
@@ -426,7 +412,6 @@ class StoreReviewError(StoreError):
 
 
 class StoreReleaseError(StoreError):
-
     fmt = "{message}"
 
     __FMT_NOT_REGISTERED = (
@@ -508,7 +493,6 @@ class StoreReleaseError(StoreError):
 
 
 class StoreMetadataError(StoreError):
-
     __FMT_NOT_FOUND = (
         "Sorry, updating the information in the store has failed, first run "
         "`snapcraft register {snap_name}` and then "
@@ -559,7 +543,6 @@ class StoreMetadataError(StoreError):
 
 
 class StoreValidationError(StoreError):
-
     fmt = "Received error {status_code!r}: {text!r}"
 
     def __init__(self, snap_id, response, message=None):
@@ -577,7 +560,6 @@ class StoreValidationError(StoreError):
 
 
 class StoreValidationSetsError(StoreError):
-
     fmt = "Issues encountered with validation set: {error}"
 
     def __init__(self, response):
@@ -596,7 +578,6 @@ class StoreValidationSetsError(StoreError):
 
 
 class StoreSnapBuildError(StoreError):
-
     fmt = "Could not assert build: {error}"
 
     def __init__(self, response):
@@ -614,7 +595,6 @@ class StoreSnapBuildError(StoreError):
 
 
 class StoreSnapRevisionsError(StoreError):
-
     fmt = (
         "Error fetching revisions of snap id {snap_id!r} for {arch!r} "
         "in {series!r} series: {error}."
@@ -641,7 +621,6 @@ class StoreSnapRevisionsError(StoreError):
 
 
 class StoreDeltaApplicationError(StoreError):
-
     fmt = "{message}"
 
     def __init__(self, message):
@@ -742,7 +721,6 @@ class StoreMetricsUnmarshalError(SnapcraftReportableException):
 
 
 class StoreSnapStatusError(StoreSnapRevisionsError):
-
     fmt = (
         "Error fetching status of snap id {snap_id!r} for {arch!r} "
         "in {series!r} series: {error}."
@@ -750,7 +728,6 @@ class StoreSnapStatusError(StoreSnapRevisionsError):
 
 
 class StoreChannelClosingError(StoreError):
-
     fmt = "Could not close channel: {error}"
 
     def __init__(self, response):
@@ -764,7 +741,6 @@ class StoreChannelClosingError(StoreError):
 
 
 class StoreChannelClosingPermissionError(StoreError):
-
     fmt = (
         "Your account lacks permission to close channels for this snap. Make "
         "sure the logged in account has upload permissions on {snap_name!r} "
@@ -776,7 +752,6 @@ class StoreChannelClosingPermissionError(StoreError):
 
 
 class StoreBuildAssertionPermissionError(StoreError):
-
     fmt = (
         "Your account lacks permission to assert builds for this snap. Make "
         "sure you are logged in as the publisher of {snap_name!r} "
@@ -788,12 +763,10 @@ class StoreBuildAssertionPermissionError(StoreError):
 
 
 class StoreAssertionError(StoreError):
-
     fmt = "Error signing {endpoint} assertion for {snap_name}: {error!s}"
 
 
 class KeyAlreadyExistsError(StoreError):
-
     fmt = "The key {key_name!r} already exists"
 
     def __init__(self, key_name):
@@ -801,7 +774,6 @@ class KeyAlreadyExistsError(StoreError):
 
 
 class KeyAlreadyRegisteredError(StoreError):
-
     fmt = "You have already registered a key named {key_name!r}"
 
     def __init__(self, key_name):
@@ -809,7 +781,6 @@ class KeyAlreadyRegisteredError(StoreError):
 
 
 class NoKeysError(StoreError):
-
     fmt = (
         "You have no usable keys.\nPlease create at least one key with "
         "`snapcraft create-key` for use with snap."
@@ -817,7 +788,6 @@ class NoKeysError(StoreError):
 
 
 class NoSuchKeyError(StoreError):
-
     fmt = (
         "You have no usable key named {key_name!r}.\nSee the keys available "
         "in your system with `snapcraft keys`."
@@ -828,7 +798,6 @@ class NoSuchKeyError(StoreError):
 
 
 class KeyNotRegisteredError(StoreError):
-
     fmt = (
         "The key {key_name!r} is not registered in the Store.\nPlease "
         "register it with `snapcraft register-key {key_name!r}` before "
@@ -840,7 +809,6 @@ class KeyNotRegisteredError(StoreError):
 
 
 class InvalidValidationRequestsError(StoreError):
-
     fmt = "Invalid validation requests (format must be name=revision): {requests}"
 
     def __init__(self, requests):
@@ -849,7 +817,6 @@ class InvalidValidationRequestsError(StoreError):
 
 
 class SignBuildAssertionError(StoreError):
-
     fmt = "Failed to sign build assertion for {snap_name!r}"
 
     def __init__(self, snap_name):

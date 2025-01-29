@@ -2,10 +2,10 @@ name: snapcraft
 base: core24
 summary: easily create snaps
 description: |
-    Snapcraft aims to make upstream developers' lives easier and as such is not
-    a single toolset, but instead is a collection of tools that enable the
-    natural workflow of an upstream to be extended with a simple release step
-    into Snappy.
+  Snapcraft aims to make upstream developers' lives easier and as such is not
+  a single toolset, but instead is a collection of tools that enable the
+  natural workflow of an upstream to be extended with a simple release step
+  into Snappy.
 adopt-info: snapcraft
 confinement: classic
 license: GPL-3.0
@@ -18,7 +18,6 @@ environment:
   # cryptography>=42.0 cannot load legacy algorithms on
   # Ubuntu 20.04 for armhf, ppc64el, riscv64, and s390x
   CRYPTOGRAPHY_OPENSSL_NO_LEGACY: "1"
-
 
 apps:
   snapcraft:
@@ -70,12 +69,11 @@ parts:
       - "-usr/lib/x86_64-linux-gnu/libperl*"
       - "-usr/lib/x86_64-linux-gnu/libgdbm*"
 
-
   patchelf:
     plugin: autotools
     source: https://github.com/canonical/patchelf
     source-type: git
-    source-branch: '0.9+snapcraft'
+    source-branch: "0.9+snapcraft"
     autotools-configure-parameters:
       - --prefix=/
     build-attributes:
@@ -100,28 +98,28 @@ parts:
   snapcraft-libs:
     plugin: nil
     stage-packages:
-        - apt
-        - apt-transport-https
-        - apt-utils
-        - binutils
-        - execstack
-        - gpg
-        - gpgv
-        - libsodium23
-        - libxml2
-        - libxslt1.1
-        - libpython3-stdlib
-        - libpython3.12-stdlib
-        - libpython3.12-minimal
-        - python3-pip
-        - python3-setuptools
-        - python3-wheel
-        - python3-venv
-        - python3-minimal
-        - python3-pkg-resources
-        - python3.12-minimal
-        - squashfs-tools
-        - xdelta3
+      - apt
+      - apt-transport-https
+      - apt-utils
+      - binutils
+      - execstack
+      - gpg
+      - gpgv
+      - libsodium23
+      - libxml2
+      - libxslt1.1
+      - libpython3-stdlib
+      - libpython3.12-stdlib
+      - libpython3.12-minimal
+      - python3-pip
+      - python3-setuptools
+      - python3-wheel
+      - python3-venv
+      - python3-minimal
+      - python3-pkg-resources
+      - python3.12-minimal
+      - squashfs-tools
+      - xdelta3
     build-attributes:
       - enable-patchelf
     override-build: |
@@ -169,47 +167,47 @@ parts:
     source: .
     plugin: python
     python-packages:
-        - wheel
-        - pip
+      - wheel
+      - pip
     python-constraints:
-        - constraints.txt
+      - constraints.txt
     python-requirements:
-        - uv-requirements.txt
+      - uv-requirements.txt
     organize:
-        # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
-        # without including other binaries.
-        bin/craftctl: libexec/snapcraft/craftctl
-        bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
-        # Also install the compatibility wrapper for core22+.
-        bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
-        # Include general data in the share directory
-        "**/site-packages/extensions": share/snapcraft/extensions
-        "**/site-packages/keyrings": share/snapcraft/keyrings
-        "**/site-packages/schema": share/snapcraft/schema
+      # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
+      # without including other binaries.
+      bin/craftctl: libexec/snapcraft/craftctl
+      bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
+      # Also install the compatibility wrapper for core22+.
+      bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
+      # Include general data in the share directory
+      "**/site-packages/extensions": share/snapcraft/extensions
+      "**/site-packages/keyrings": share/snapcraft/keyrings
+      "**/site-packages/schema": share/snapcraft/schema
     build-attributes:
       - enable-patchelf
     build-environment:
-        # Build PyNaCl from source since the wheel files interact
-        # strangely with classic snaps. Well, build it all from source.
-        - "PIP_NO_BINARY": ":all:"
-        # Use base image's libsodium for PyNaCl.
-        - "SODIUM_INSTALL": "system"
-        - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
+      # Build PyNaCl from source since the wheel files interact
+      # strangely with classic snaps. Well, build it all from source.
+      - "PIP_NO_BINARY": ":all:"
+      # Use base image's libsodium for PyNaCl.
+      - "SODIUM_INSTALL": "system"
+      - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
     build-snaps:
-        - astral-uv
+      - astral-uv
     override-build: |
-        uv export --no-dev --no-emit-workspace --output-file uv-requirements.txt
-        ${SNAP}/libexec/snapcraft/craftctl default
+      uv export --no-dev --no-emit-workspace --output-file uv-requirements.txt
+      ${SNAP}/libexec/snapcraft/craftctl default
 
-        version=$(PYTHONPATH=$CRAFT_PART_INSTALL/lib/python3.12/site-packages python3 -c "import snapcraft;print(snapcraft.__version__)")
-        ${SNAP}/libexec/snapcraft/craftctl set version="$version"
+      version=$(PYTHONPATH=$CRAFT_PART_INSTALL/lib/python3.12/site-packages python3 -c "import snapcraft;print(snapcraft.__version__)")
+      ${SNAP}/libexec/snapcraft/craftctl set version="$version"
 
-        [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
-        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
-        ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
+      [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
+      sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
+      ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
 
-        # The new implementation still requires this.
-        ln -sf ../usr/bin/python3.12 $SNAPCRAFT_PART_INSTALL/bin/python3
+      # The new implementation still requires this.
+      ln -sf ../usr/bin/python3.12 $SNAPCRAFT_PART_INSTALL/bin/python3
     after: [snapcraft-libs, libgit2]
 
   chisel:
