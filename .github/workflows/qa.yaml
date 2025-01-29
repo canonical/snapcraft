@@ -1,0 +1,16 @@
+name: QA
+on:
+  push:
+    branches:
+      - "main"
+      - "feature/*"
+      - "hotfix/*"
+      - "release/*"
+      - "renovate/*"
+  pull_request:
+
+jobs:
+  lint:
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
+  test:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main

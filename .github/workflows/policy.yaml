@@ -1,0 +1,15 @@
+name: Check policy
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - hotfix/*
+      - work/check-policy # For development
+
+jobs:
+  policy:
+    uses: canonical/starflow/.github/workflows/policy.yaml@main
+  python-scans:
+    name: Security scan
+    uses: canonical/starflow/.github/workflows/scan-python.yaml@main

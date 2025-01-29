@@ -9,7 +9,7 @@ on:
 
 jobs:
   CI:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,22 +22,32 @@ jobs:
           sudo apt-get update
           echo "::endgroup::"
           echo "::group::apt-get install..."
-          sudo apt-get install -y python3 python3-dev libapt-pkg-dev libyaml-dev xdelta3 patchelf
+          sudo apt-get install -y python3 python3-dev libapt-pkg-dev libyaml-dev umoci
           echo "::endgroup::"
-          echo "::group::pip install"
-          python -m pip install 'tox<5.0' tox-gh
+          echo "::group::snap install"
+          sudo snap install --classic astral-uv
+          echo "::endgroup::"
+          echo "::group::install requirements"
+          uv sync --frozen --group dev
           echo "::endgroup::"
 
-      - name: Setup Tox environment
-        run: tox --workdir /tmp/tox run-parallel --parallel auto --parallel-no-spinner --parallel-live --colored yes -e test-all-py310 --notest
+      - name: Install project
+        run: |
+          python -m pip install -e .
 
-      - name: Test with tox
-        run: tox --workdir /tmp/tox run --skip-pkg-install --result-json results/tox-py310.json --colored yes -e test-all-py310
+      - name: Run coverage
+        run: |
+          make test-coverage
+
+      - name: Upload test results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-ubuntu-24.04
+          path: results/
 
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
-        env:
-          PATH: "/tmp/tox/test-all-py310/bin:/snap/bin:/home/runner/.local/bin:/home/runner/.cargo/bin:/bin:/usr/bin:/usr/local/bin:"
         with:
           mode: qserver
           project: snapcraft
