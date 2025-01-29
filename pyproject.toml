@@ -94,6 +94,7 @@ docs = [
     "sphinxcontrib-details-directive",
     "sphinx-lint",
     "sphinx-toolbox",
+    "sphinxext-rediraffe==0.2.7",
     "pyspelling",
 ]
 lint = [
@@ -188,6 +189,9 @@ local_scheme = "dirty-tag"
 [tool.setuptools.packages.find]
 include = ["snapcraft", "extensions", "keyrings", "schema", "snapcraft_legacy"]
 namespaces = true
+
+[tool.setuptools.package-data]
+snapcraft = ["templates/*"]
 
 [tool.mypy]
 python_version = "3.12"
