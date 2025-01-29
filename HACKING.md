@@ -23,27 +23,13 @@ newgrp lxd
 Setup the environment by running:
 
 ```shell
-./tools/environment-setup.sh
+make setup
 ```
-
-To work inside this environment, run:
-
-```shell
-lxc exec snapcraft-dev -- sudo -iu ubuntu bash
-```
-
-Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH](https://code.visualstudio.com/docs/remote/ssh) plugin.
 
 ### Tooling
 
 We use a large number of tools for our project. Most of these are installed for
-you with tox, but you'll need to install:
-
-- Python 3.12 (default on Ubuntu 24.04) with setuptools.
-- [tox](https://tox.wiki) version 3.8 or later
-- [pyright](https://github.com/microsoft/pyright) (also available via snap: `snap install pyright`)
-- [ruff](https://github.com/astral/ruff) (also available via snap: `snap install ruff`)
-- [ShellCheck](https://www.shellcheck.net/) (also available via snap: `snap install shellcheck`)
+you with `make setup`, but you'll need to install Python 3.12 separately.
 
 ### Testing
 
@@ -112,7 +98,7 @@ Given that the `--debug` option in snapcraft is reserved for project specific de
 To render the documentation as HTML in `docs/_build`, run:
 
 ```shell
-tox run -e build-docs
+make docs
 ```
 
 > **Important**
@@ -122,7 +108,7 @@ tox run -e build-docs
 If you prefer to compose pages interactively, you can host the documentation on a local server:
 
 ```shell
-tox run -e autobuild-docs
+make auto-docs
 ```
 
 You can reach the interactive site at http://127.0.0.1:8080 in a web browser.
@@ -134,13 +120,13 @@ The documentation Makefile provided by the [Sphinx Starter Pack](https://github.
 To check for syntax errors in documentation, run:
 
 ```shell
-tox run -e lint-docs
+make lint-docs
 ```
 
 For a rudimentary spell check, you can use codespell:
 
 ```shell
-tox run -e lint-codespell
+make lint-codespell
 ```
 
 ## Evaluating pull requests
