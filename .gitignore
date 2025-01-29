@@ -1,45 +1,116 @@
-build
-Cargo.lock
-.coverage**
-coverage-*
-demos/*/parts/
-demos/*/prime/
-demos/**/*.snap
-demos/*/snap/.snapcraft/
-demos/*/stage/
-.direnv
-dist
-docs/**.html
-docs/reference.md
-docs/reference/commands
-docs/.sphinx
-docs/_build
-docs/common
-*.egg-info
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
 .eggs/
-.envrc
-htmlcov
-.idea
-.mypy_cache
-/parts
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 pip-wheel-metadata/
-/prime
-*.pyc
-__pycache__
-.pytest_cache
-*.comp
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 *.snap
-snap/.snapcraft/
+MANIFEST
+
+# Build outputs
+*.comp
 /snapcraft/_version.py
+snap/.snapcraft/
+*.snap
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Docs
+docs/_build
+# Auto-generated command reference
+docs/common/craft-parts
+docs/reference/commands
+
+# Unit test / coverage reports
+htmlcov/
+.cache
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.results.*.xml
 .spread_multipass
 .spread-reuse.*
-/stage
-*.swp
-target
-tests/unit/snap/
-tests/unit/stage/
-test-results*
-.tox
+results/
+
+# Translations
+*.mo
+*.pot
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Environments
+.env
+.envrc
+.direnv
+.venv/
+.venv.bak/
+venv/
+venv.bak/
+env/
+ENV/
+env.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Lifecycle
+build/
+parts/
+prime/
+stage/
+
+# Python virtual environment
+venv/
+.venv/
+
+# backups
+*~
+.*.*swp
+
+# Editor configs
+.idea
 .vscode
-venv
-.venv
+.spyderproject
+.spyproject
