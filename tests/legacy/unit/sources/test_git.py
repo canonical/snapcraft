@@ -20,6 +20,7 @@ import subprocess
 from unittest import mock
 
 import fixtures
+import pytest
 from testtools.matchers import Equals
 
 from snapcraft_legacy.internal import sources
@@ -652,6 +653,7 @@ class GitBaseTestCase(unit.TestCase):
         self.assertThat(body, Equals(expected))
 
 
+@pytest.mark.slow
 class TestGitConflicts(GitBaseTestCase):
     """Test that git pull errors don't kill the parser"""
 
@@ -773,6 +775,7 @@ class TestGitConflicts(GitBaseTestCase):
         )
 
 
+@pytest.mark.slow
 class GitDetailsTestCase(GitBaseTestCase):
     def setUp(self):
         def _add_and_commit_file(filename, content=None, message=None):

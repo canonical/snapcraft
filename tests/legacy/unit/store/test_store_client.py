@@ -48,6 +48,7 @@ class StoreTestCase(unit.TestCase):
         self.client.login(email="dummy", password="test correct password", ttl=2)
 
 
+@pytest.mark.slow
 class DownloadTestCase(StoreTestCase):
     # sha3-384 of tests/data/test-snap.snap
     EXPECTED_SHA3_384 = ""
@@ -153,6 +154,7 @@ class DownloadTestCase(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class PushSnapBuildTestCase(StoreTestCase):
     def test_push_snap_build_invalid_data(self):
         raised = self.assertRaises(
@@ -171,6 +173,7 @@ class PushSnapBuildTestCase(StoreTestCase):
         self.client.push_snap_build("snap-id", "dummy")
 
 
+@pytest.mark.slow
 class GetAccountInformationTestCase(StoreTestCase):
     def test_get_account_information_successfully(self):
         self.assertThat(
@@ -242,6 +245,7 @@ class GetAccountInformationTestCase(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class RegisterKeyTestCase(StoreTestCase):
     def test_register_key_successfully(self):
         # No exception will be raised if this is successful.
@@ -269,6 +273,7 @@ class RegisterKeyTestCase(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class RegisterTestCase(StoreTestCase):
     def test_register_name_successfully(self):
         # No exception will be raised if this is successful
@@ -374,6 +379,7 @@ class RegisterTestCase(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class ValidationSetsTestCase(StoreTestCase):
     def setUp(self):
         super().setUp()
@@ -534,6 +540,7 @@ class ValidationSetsTestCase(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class ValidationsTestCase(StoreTestCase):
     def setUp(self):
         super().setUp()
@@ -618,6 +625,7 @@ class ValidationsTestCase(StoreTestCase):
         self.assertIn("Invalid response from the server", self.fake_logger.output)
 
 
+@pytest.mark.slow
 class ReleaseTest(StoreTestCase):
     def test_release_snap(self):
         channel_map = self.client.release("test-snap", "19", ["beta"])
@@ -689,6 +697,7 @@ class ReleaseTest(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class GetSnapStatusTestCase(StoreTestCase):
     def setUp(self):
         super().setUp()
@@ -799,6 +808,7 @@ class GetSnapStatusTestCase(StoreTestCase):
         self.assertThat(e.snap_name, Equals("no-id"))
 
 
+@pytest.mark.slow
 class SnapsMetricsTest(StoreTestCase):
     def test_get_metrics(self):
         mf = metrics.MetricsFilter(
@@ -868,6 +878,7 @@ class SnapsMetricsTest(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class WhoAmITest(StoreTestCase):
     def test_whoami(self):
         self.assertThat(
@@ -876,6 +887,7 @@ class WhoAmITest(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class SignDeveloperAgreementTestCase(StoreTestCase):
     def test_sign_dev_agreement_success(self):
         response = {
@@ -904,6 +916,7 @@ class SignDeveloperAgreementTestCase(StoreTestCase):
         )
 
 
+@pytest.mark.slow
 class UploadMetadataTestCase(StoreTestCase):
     def setUp(self):
         super().setUp()
@@ -1003,6 +1016,7 @@ class UploadMetadataTestCase(StoreTestCase):
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
 
+@pytest.mark.slow
 class UploadBinaryMetadataTestCase(StoreTestCase):
     def setUp(self):
         super().setUp()
@@ -1091,6 +1105,7 @@ class UploadBinaryMetadataTestCase(StoreTestCase):
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
 
+@pytest.mark.slow
 class SnapNotFoundTestCase(StoreTestCase):
     def _setup_snap(self):
         """Login, register and upload a snap.
