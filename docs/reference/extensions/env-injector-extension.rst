@@ -18,7 +18,7 @@ This extension splits environment variables into two types:
 
 - *Global* environment variables are visible to all apps in the snap that use
   env-injector.
-- *Local* environment variables are visible only to apps with env-ibjector that the user
+- *Local* environment variables are visible only to apps with env-injector that the user
   specifically targets.
 
 At a high level, the extension has the following processes and rules during build and

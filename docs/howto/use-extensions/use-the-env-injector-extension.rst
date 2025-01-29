@@ -86,7 +86,7 @@ would run:
 
 .. code-block:: bash
 
-    bash sudo snap set <snap-name> env.http-port=8080
+    sudo snap set <snap-name> env.http-port=8080
 
 To set a local environment variable and target a specific app, they can call ``snap
 set`` and prefix the option name with ``apps.<app-name>``. To target only the server app
