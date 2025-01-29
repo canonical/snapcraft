@@ -15,13 +15,12 @@ cache:
 build: off
 
 install:
-- cmd: |
-    %PYTHON%\python.exe -m venv venv
-    venv\Scripts\activate.bat
-    python -c "import sys; print(sys.executable)"
-    python -m pip install -r requirements-devel.txt
-    python -m pip install --prefix %VIRTUAL_ENV% -e .
-    venv\Scripts\deactivate.bat
+  - cmd: |
+      %PYTHON%\python.exe -m venv venv
+      venv\Scripts\activate.bat
+      python -c "import sys; print(sys.executable)"
+      python -m pip install --prefix %VIRTUAL_ENV% -e .
+      venv\Scripts\deactivate.bat
 
 build_script:
 - cmd: |

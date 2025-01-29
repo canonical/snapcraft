@@ -174,7 +174,7 @@ parts:
     python-constraints:
         - constraints.txt
     python-requirements:
-        - requirements.txt
+        - uv-requirements.txt
     organize:
         # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
         # without including other binaries.
@@ -195,7 +195,10 @@ parts:
         # Use base image's libsodium for PyNaCl.
         - "SODIUM_INSTALL": "system"
         - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
+    build-snaps:
+        - astral-uv
     override-build: |
+        uv export --no-dev --no-emit-workspace --output-file uv-requirements.txt
         ${SNAP}/libexec/snapcraft/craftctl default
 
         version=$(PYTHONPATH=$CRAFT_PART_INSTALL/lib/python3.12/site-packages python3 -c "import snapcraft;print(snapcraft.__version__)")
