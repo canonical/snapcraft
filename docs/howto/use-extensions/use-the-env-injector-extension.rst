@@ -4,7 +4,7 @@ Use the env-injector extension
 ==============================
 
 The :ref:`env-injector-extension` lets you expose environment variables within the snap
-to users. These variables are accessible by the snap's apps and can modify their
+to the user. These variables are accessible by the snap's apps and can modify their
 behavior as they would in a bare host environment.
 
 The user has multiple available methods for setting these environment variables. Your
@@ -76,8 +76,8 @@ Environment variables are applied to apps in one of two ways:
 As a snap configuration option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Users can set environment variables one at a time as a snap configuration options with
-the ``snap set`` command.
+The user can set environment variables one at a time as snap configuration options
+with the ``snap set`` command.
 
 To set an environment variable for all apps in a snap, the user can call ``snap set``
 and target the snap and its app. The passed environment variable name must be lowercase.
@@ -98,7 +98,7 @@ in the previous example, the user would run:
 
 The app's name is taken from the snap's ``snapcraft.yaml``.
 
-When running ``snap set``, users must the adjust environment variable name. For the
+When running ``snap set``, the user must the adjust environment variable name. For the
 complete details on how snap options interpret environment variables, see
 :ref:`env-injector-naming-rules`.
 
@@ -106,7 +106,7 @@ complete details on how snap options interpret environment variables, see
 With an environment file
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Users can pass environment variables in ``.env`` files to the snap with the ``snap
+The user can pass environment variables in ``.env`` files to the snap with the ``snap
 set`` command.
 
 If a snap is confined, its file system needs access to the file, either by storing the

@@ -13,7 +13,7 @@ key in the snap recipe. For example:
         extensions: [gnome]
         command: usr/bin/tali
 
-For a comprehensive example of snap recipe that includes the extension, see
+For a comprehensive example of a snap recipe that includes the extension, see
 :ref:`example-gtk4-app`.
 
 

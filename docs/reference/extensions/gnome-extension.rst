@@ -124,8 +124,8 @@ build-environment for each part in your snap to use.
 Build variables
 ~~~~~~~~~~~~~~~
 
-The following build environment variables are included in each part built in a snap that
-this this extension.
+The following build environment variables are added to each part in a snap that uses
+this extension.
 
 You can declare additional variables in the ``build-environment`` key. Furthermore,
 these default variables can be overridden by declaring them in the recipe.
@@ -238,7 +238,7 @@ Example expanded project file
 
 Here's an example of the result of Snapcraft expanding a core24-based project file, as
 immediately prior to build. It demonstrates the added plugs, packages, variables, and
-layouts, that the GNOME extension includes in a project.
+layouts that the GNOME extension includes in a project.
 
 The original file was the `GNOME System Monitor snap
 <https://snapcraft.io/gnome-system-monitor>`_. This text contains the difference between
