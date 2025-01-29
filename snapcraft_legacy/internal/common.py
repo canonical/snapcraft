@@ -35,13 +35,16 @@ from snaphelpers import SnapConfigOptions, SnapCtlError
 from snapcraft_legacy.internal import errors
 
 SNAPCRAFT_FILES = ["parts", "stage", "prime"]
+
 _DEFAULT_PLUGINDIR = os.path.join(sys.prefix, "share", "snapcraft", "plugins")
 _plugindir = _DEFAULT_PLUGINDIR
-_DEFAULT_SCHEMADIR = os.path.join(sys.prefix, "share", "snapcraft", "schema")
+
+_BASE_DIR = Path(__file__).parents[2]
+_DEFAULT_SCHEMADIR = _BASE_DIR / "schema"
 _schemadir = _DEFAULT_SCHEMADIR
-_DEFAULT_EXTENSIONSDIR = os.path.join(sys.prefix, "share", "snapcraft", "extensions")
+_DEFAULT_EXTENSIONSDIR = _BASE_DIR / "extensions"
 _extensionsdir = _DEFAULT_EXTENSIONSDIR
-_DEFAULT_KEYRINGSDIR = os.path.join(sys.prefix, "share", "snapcraft", "keyrings")
+_DEFAULT_KEYRINGSDIR = _BASE_DIR / "keyrings"
 _keyringsdir = _DEFAULT_KEYRINGSDIR
 
 _DOCKERENV_FILE = "/.dockerenv"
