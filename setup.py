@@ -99,7 +99,7 @@ install_requires = [
     "catkin-pkg; sys_platform == 'linux'",
     "click",
     "craft-application~=4.4",
-    "craft-archives~=2.0",
+    "craft-archives @ git+https://github.com/canonical/craft-archives@work/CRAFT-2425-foreign-archs",
     "craft-cli>=2.15.0",
     "craft-grammar>=2.0.1,<3.0.0",
     "craft-parts==2.4.1",

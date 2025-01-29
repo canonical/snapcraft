@@ -29,7 +29,7 @@ click==8.1.7
     # via snapcraft (setup.py)
 craft-application==4.4.0
     # via snapcraft (setup.py)
-craft-archives==2.0.1
+git+https://github.com/canonical/craft-archives@work/CRAFT-2425-foreign-archs
     # via
     #   craft-application
     #   snapcraft (setup.py)
