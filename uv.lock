@@ -1470,7 +1470,6 @@ wheels = [
 
 [[package]]
 name = "starcraft"
-version = "0.0.post293+g096e54a.d20250123"
 source = { editable = "." }
 
 [package.dev-dependencies]
