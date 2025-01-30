@@ -457,7 +457,7 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.3.0"
+version = "2.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "overrides" },
@@ -467,7 +467,10 @@ dependencies = [
     { name = "requests" },
     { name = "requests-unixsocket2" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a7/2f/299694e04ea30f21ab1638ab54342f38a711b198f5fbf0bb9f5a085053d0/craft_parts-2.3.0.tar.gz", hash = "sha256:96516a8a4314659f53f6f2999a38250f8bc5308bb41ac74df9b23e330aaa34ae", size = 639970 }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/6c/ff0f9aa805da1670e408c644fbe5740d69056691de4953dbaa7546d80ce6/craft_parts-2.4.1.tar.gz", hash = "sha256:18f6c9a45fb99e5a366fcd9b827df8886d955dace9ded9f08759206f5e5ef729", size = 640144 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/13/0dbcca9f1fb0b2b61809cb65fcba88d6b676f015f87628ca603161be47ed/craft_parts-2.4.1-py3-none-any.whl", hash = "sha256:22adf92b77c25868518fa426ad789aee794b17c0e8c0408d22e902c846d3d325", size = 449809 },
+]
 
 [[package]]
 name = "craft-platforms"
@@ -2240,6 +2243,13 @@ docs = [
 ]
 lint = [
     { name = "codespell" },
+    { name = "mypy" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+    { name = "types-setuptools" },
+    { name = "types-simplejson" },
+    { name = "types-tabulate" },
+    { name = "types-toml" },
     { name = "yamllint" },
 ]
 types = [
@@ -2261,7 +2271,7 @@ requires-dist = [
     { name = "craft-archives", specifier = "~=2.0" },
     { name = "craft-cli", specifier = "~=2.15.0" },
     { name = "craft-grammar", specifier = ">=2.0.1,<3.0.0" },
-    { name = "craft-parts", specifier = "==2.3.0" },
+    { name = "craft-parts", specifier = "==2.4.1" },
     { name = "craft-platforms", specifier = "~=0.4" },
     { name = "craft-store", specifier = ">=3.0.2,<4.0.0" },
     { name = "cryptography", specifier = "==43.0.3" },
@@ -2339,6 +2349,13 @@ docs = [
 ]
 lint = [
     { name = "codespell", extras = ["toml"] },
+    { name = "mypy" },
+    { name = "types-pyyaml" },
+    { name = "types-requests", specifier = "==2.31.0.6" },
+    { name = "types-setuptools" },
+    { name = "types-simplejson" },
+    { name = "types-tabulate" },
+    { name = "types-toml" },
     { name = "yamllint", specifier = "~=1.34" },
 ]
 types = [
