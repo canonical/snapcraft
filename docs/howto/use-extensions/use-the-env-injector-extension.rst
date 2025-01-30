@@ -111,8 +111,7 @@ set`` command.
 
 If a snap is confined, its file system needs access to the file, either by storing the
 file in its `writable area <https://snapcraft.io/docs/data-locations>`_ or through a
-file interface, such as the `home interface <https://snapcraft.io/docs/home-interface>`_
-or `personal-files interface <https://snapcraft.io/docs/personal-files-interface>`_.
+file interface.
 
 For a simple example, to globally export the contents of an environment file stored in
 the local host, the user would run:
