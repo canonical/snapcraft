@@ -15,7 +15,6 @@ dependencies = [
     "craft-platforms~=0.4",
     "craft-store>=3.0.2,<4.0.0",
     "cryptography==43.0.3", # Pinned due to https://github.com/canonical/snapcraft/issues/5217
-    "docutils<0.20", # Frozen until we can update sphinx dependencies.
     "gnupg",
     "jsonschema==2.5.1",
     "launchpadlib",
@@ -88,6 +87,7 @@ dev = [
 ]
 docs = [
     "canonical-sphinx[full]>=0.2.0",
+    "docutils<0.20", # Frozen until we can update sphinx dependencies.
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
     "sphinxcontrib-details-directive",

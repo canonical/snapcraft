@@ -2140,7 +2140,7 @@ wheels = [
 
 [[package]]
 name = "snapcraft"
-version = "8.5.1.post87+dirty"
+version = "8.5.1.post88+dirty"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
@@ -2154,7 +2154,6 @@ dependencies = [
     { name = "craft-platforms" },
     { name = "craft-store" },
     { name = "cryptography" },
-    { name = "docutils" },
     { name = "gnupg" },
     { name = "jsonschema" },
     { name = "launchpadlib" },
@@ -2233,6 +2232,7 @@ dev-plucky = [
 ]
 docs = [
     { name = "canonical-sphinx", extra = ["full"] },
+    { name = "docutils" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },
@@ -2275,7 +2275,6 @@ requires-dist = [
     { name = "craft-platforms", specifier = "~=0.4" },
     { name = "craft-store", specifier = ">=3.0.2,<4.0.0" },
     { name = "cryptography", specifier = "==43.0.3" },
-    { name = "docutils", specifier = "<0.20" },
     { name = "gnupg" },
     { name = "jsonschema", specifier = "==2.5.1" },
     { name = "launchpadlib" },
@@ -2339,6 +2338,7 @@ dev-oracular = [{ name = "python-apt", marker = "sys_platform == 'linux'", speci
 dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = ">=2.9.0" }]
 docs = [
     { name = "canonical-sphinx", extras = ["full"], specifier = ">=0.2.0" },
+    { name = "docutils", specifier = "<0.20" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },
