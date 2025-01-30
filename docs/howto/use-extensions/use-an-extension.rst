@@ -4,7 +4,7 @@ Use an extension
 ================
 
 To use an extension in an app, list it in the app's ``extensions`` key in the snap's
-project file. Here's an example of an app using the KDE Neon 6 extension:
+project file. Here's an example of an app using the KDE neon 6 extension:
 
 .. code:: yaml
 
