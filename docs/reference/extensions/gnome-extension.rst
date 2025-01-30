@@ -240,15 +240,28 @@ Here's an example of the result of Snapcraft expanding a core24-based project fi
 immediately prior to build. It demonstrates the added plugs, packages, variables, and
 layouts that the GNOME extension includes in a project.
 
-The original file was the `GNOME System Monitor snap
-<https://snapcraft.io/gnome-system-monitor>`_. This text contains the difference between
-the original file and the output of the :ref:`snapcraft expand-extensions
+The original files were for the `GNOME System Monitor snap
+<https://snapcraft.io/gnome-system-monitor>`_. These texts contain the difference
+between the original file and the output of the :ref:`snapcraft expand-extensions
 <ref_commands_expand-extensions>` command. Some of the text has been altered for ease of
 reading.
 
-.. collapse:: Expanded project file for GNOME System Monitor
+.. tabs::
 
-    .. literalinclude:: ../code/extensions/gnome-extension-gnome-system-monitor-expanded.diff
-        :language: diff
-        :lines: 3-
-        :emphasize-lines: 57-66, 78-87, 100-150, 158-163, 171-173, 180-201, 210-212
+    .. group-tab:: core24
+
+        .. collapse:: Expanded project file for GNOME System Monitor
+
+            .. literalinclude:: ../code/extensions/gnome-extension-gnome-system-monitor-core-24-expanded.diff
+                :language: diff
+                :lines: 3-
+                :emphasize-lines: 57-66, 78-87, 100-150, 158-163, 171-173, 180-201, 210-212
+
+    .. group-tab:: core22
+
+        .. collapse:: Expanded project file for GNOME System Monitor
+
+            .. literalinclude:: ../code/extensions/gnome-extension-gnome-system-monitor-core-22-expanded.diff
+                :language: diff
+                :lines: 3-
+                :emphasize-lines: 60-69, 81-90, 103-155, 159-160, 164-170, 178-179, 186-207
