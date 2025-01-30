@@ -94,7 +94,7 @@ backends:
         "if [ -d /etc/ssh/sshd_config.d/ ]
         then
           echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/10-custom.conf
-          echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config.d/10-custom.conf 
+          echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config.d/10-custom.conf
         else
           sed -i /etc/ssh/sshd_config -E -e 's/^#?PasswordAuthentication.*/PasswordAuthentication yes/' -e 's/^#?PermitRootLogin.*/PermitRootLogin yes/'
         fi"
@@ -348,6 +348,3 @@ path: /snapcraft/
 include:
   - docs/
   - tests/
-  - requirements.txt
-  - requirements-devel.txt
-  - runtests.sh
