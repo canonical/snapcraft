@@ -38,17 +38,27 @@ publish: publish-pypi  ## Publish packages
 publish-pypi: clean package-pip lint-twine  ##- Publish Python packages to pypi
 	uv tool run twine upload dist/*
 
+# Find dependencies that need installing
+APT_PACKAGES :=
+ifeq ($(wildcard /usr/include/libxml2/libxml/xpath.h),)
+APT_PACKAGES += libxml2-dev
+endif
+ifeq ($(wildcard /usr/include/libxslt/xslt.h),)
+APT_PACKAGES += libxslt1-dev
+endif
+ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
+APT_PACKAGES += python3-venv
+endif
+
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
 install-build-deps: install-lint-build-deps
-ifeq ($(shell which apt-get),)
+ifeq ($(APT_PACKAGES),)
+else ifeq ($(shell which apt-get),)
 	$(warning Cannot install build dependencies without apt.)
-else ifeq ($(wildcard /usr/include/libxml2/libxml/xpath.h),)
-	sudo $(APT) install libxml2-dev libxslt1-dev python3-venv
-else ifeq ($(wildcard /usr/include/libxslt/xslt.h),)
-	sudo $(APT) install libxslt1-dev python3-venv
-else ifeq ($(wildcard /usr/share/doc/python3-venv/copyright),)
-	sudo $(APT) install python3-venv
+	$(warning Please ensure the equivalents to these packages are installed: $(APT_PACKAGES))
+else
+	sudo $(APT) install $(APT_PACKAGES)
 endif
 
 # If additional build dependencies need installing in order to build the linting env.
