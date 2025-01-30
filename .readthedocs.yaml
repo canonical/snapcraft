@@ -15,6 +15,15 @@ build:
   apt_packages:
     - libapt-pkg-dev
   jobs:
+    create_environment:
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
+    install:
+      - uv sync --frozen --group docs --group dev-noble
+    build:
+      html:
+        - uv run sphinx-build -T -b dirhtml docs $READTHEDOCS_OUTPUT/html
     post_checkout:
       - git fetch --tags --unshallow # Also fetch tags
       - git describe # Make sure we get a proper version
@@ -22,11 +31,4 @@ build:
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
-  builder: dirhtml
   fail_on_warning: true
-
-python:
-  install:
-    - requirements: requirements-docs.txt
-    - method: pip
-      path: .
