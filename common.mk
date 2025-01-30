@@ -47,7 +47,7 @@ help: ## Show this help.
 	}'
 
 .PHONY: setup
-setup: install-uv setup-precommit ## Set up a development environment
+setup: install-uv setup-precommit install-build-deps ## Set up a development environment
 	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_DOCS_GROUPS)
 
 .PHONY: setup-tests
