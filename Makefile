@@ -23,7 +23,7 @@ lint-docs:  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
+	uv run $(UV_DOCS_GROUPS) sphinx-lint --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink,line-too-long
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
