@@ -98,7 +98,7 @@ in the previous example, the user would run:
 
 The app's name is taken from the snap's ``snapcraft.yaml``.
 
-When running ``snap set``, the user must the adjust environment variable name. For the
+When running ``snap set``, the user must adjust the environment variable name. For the
 complete details on how snap options interpret environment variables, see
 :ref:`env-injector-naming-rules`.
 
