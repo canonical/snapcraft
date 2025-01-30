@@ -13,3 +13,10 @@ jobs:
   python-scans:
     name: Security scan
     uses: canonical/starflow/.github/workflows/scan-python.yaml@main
+    with:
+      # 1. requirements-noble.txt can't build on jammy
+      # 2. Ignore requirements files in spread tests, as some of these intentionally
+      #    contain vulnerable versions.
+      # 3. Docs contain requirements.txt files that don't specify versions.
+      requirements-find-args: '! -name requirements-noble.txt ! -path "./tests/spread*" ! -path "./docs/**"'
+      trivy-extra-args: "--severity HIGH,CRITICAL --ignore-unfixed --skip-dirs tests/spread/"
