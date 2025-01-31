@@ -19,3 +19,4 @@ For guidance on specific extensions, see :ref:`use-extensions`.
 
     env-injector-extension
     gnome-extension
+    kde-neon-extensions
