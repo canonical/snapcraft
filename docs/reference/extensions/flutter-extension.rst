@@ -6,14 +6,14 @@ Flutter extension
 The Flutter family of extensions help fill in common settings for software built with
 the `Flutter <https://flutter.dev>`__ framework.
 
-The Flutter extensions are currently only supported with the core18 base. Snaps using
-cores higher than core18 should instead use the `flutter
-<https://snapcraft.io/docs/the-flutter-plugi>`_ plugin with the `GNOME
-<https://snapcraft.io/docs/the-gnome-extension>`_ extension.
+The Flutter extensions require Snapcraft 7 and lower and are currently only supported
+with the core18 base. Snaps using cores higher than core18 should instead use the
+`flutter <https://snapcraft.io/docs/flutter-plugin>`_ plugin with the `GNOME
+<https://snapcraft.io/docs/gnome-extension>`_ extension.
 
-There are four extensions in the family. Each tracks a different `Flutter build
-release channel
-<https://github.com/flutter/flutter/wiki/Flutter-build-release-channels>`_:
+There are four extensions in the family. Each tracks a different `Flutter build release
+channel
+<https://github.com/flutter/flutter/blob/master/docs/releases/Flutter-build-release-channels.md>`_:
 
 - ``flutter-stable`` for the stable channel
 - ``flutter-beta`` for the beta channel
@@ -145,4 +145,4 @@ The file is based on the :ref:`my-flutter-app <example-flutter-app>` project.
     .. literalinclude:: ../code/extensions/flutter-extension-my-flutter-app-expanded.diff
         :language: diff
         :lines: 3-
-        :emphasize-lines: 14-24, 27-78
+        :emphasize-lines: 14-24, 31-78
