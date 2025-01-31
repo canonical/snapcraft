@@ -32,6 +32,15 @@ with the format ``ros2-<version>-<metapackage>``. The available extensions are:
 These extensions require Snapcraft 8 and higher, and are experimental.
 
 
+Included interface connections
+------------------------------
+
+The most important modification the content extensions make to the project file is to
+connect the `content plug <https://snapcraft.io/docs/content-interface>`_ which mounts
+the provider snap content at ``$SNAP/opt/ros/underlay_ws`` and defines a default
+provider.
+
+
 Included build environment settings
 -----------------------------------
 
@@ -40,9 +49,6 @@ First, the content extension includes all the build settings from the correspond
 
 Then, it adds stage packages for the environment, workspace, and the C++ and Python
 libraries for the `ament resource index <https://github.com/ament/ament_index>`_.
-
-It adds a `content plug <https://snapcraft.io/docs/content-interface>`_ which mounts the
-provider snap content at ``$SNAP/opt/ros/underlay_ws`` and defines a default provider.
 
 It sets the ``CMAKE_SYSTEM_PREFIX_PATH`` variable to point at the mounted system path.
 
@@ -64,7 +70,7 @@ workspaces.
 Example expanded project file
 -----------------------------
 
-Here are examples of the result of a project file that uses a content extension for
+Here is an example of the result of a project file that uses a content extension for
 ROS 2 Jazzy Jalisco. It demonstrates the added plugs, packages, variables, and layouts
 that the content extensions add to the project file immediately prior to build.
 
