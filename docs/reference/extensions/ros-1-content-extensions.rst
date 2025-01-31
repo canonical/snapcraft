@@ -3,7 +3,7 @@
 ROS 1 Content extensions
 ========================
 
-The ROS 1 Content extensions comprise the main ROS 1 extension, plus additional
+The ROS 1 Content extensions comprise the main :ref:`ros-1-extension`, plus additional
 settings to enable `content sharing <https://snapcraft.io/docs/content-interface>`_.
 
 These extensions are split across content types, and are declared with the format
