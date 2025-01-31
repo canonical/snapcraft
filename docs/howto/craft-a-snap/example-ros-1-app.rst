@@ -22,6 +22,8 @@ There are two supported bases for ROS 1 -- core20 and core18.
   you install necessary binaries, libraries, header files, and launch files.
 
 
+.. _example-ros-1-app-project-files:
+
 Example recipe for ROS Talker/Listener
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -47,18 +49,18 @@ Example recipe for ROS Talker/Listener
         base: core20
 
         parts:
-        ros-tutorials:
-          plugin: catkin
-          source: https://github.com/ros/ros_tutorials.git
-          source-branch: noetic-devel
-          catkin-packages: [roscpp_tutorials]
-          stage-packages:
-              - ros-noetic-roslaunch
+          ros-tutorials:
+            plugin: catkin
+            source: https://github.com/ros/ros_tutorials.git
+            source-branch: noetic-devel
+            catkin-packages: [roscpp_tutorials]
+            stage-packages:
+                - ros-noetic-roslaunch
 
         apps:
-        ros-talker-listener:
-          command: opt/ros/noetic/bin/roslaunch roscpp_tutorials talker_listener.launch
-          extensions: [ros1-noetic]
+          ros-talker-listener:
+            command: opt/ros/noetic/bin/roslaunch roscpp_tutorials talker_listener.launch
+            extensions: [ros1-noetic]
 
   .. group-tab:: core18
 
