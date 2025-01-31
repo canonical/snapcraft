@@ -49,6 +49,10 @@ execute: |
   # Make sure expand-extensions works
   snapcraft expand-extensions
 
+  # Ensure we can run individual plugin steps
+  snapcraft pull
+  snapcraft build
+
   # Build what we have and verify the snap runs as expected.
   snapcraft
   snap install "${SNAP}"_1.0_*.snap --dangerous
