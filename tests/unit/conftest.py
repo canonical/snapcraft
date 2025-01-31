@@ -24,6 +24,7 @@ from unittest.mock import Mock
 import pytest
 import yaml
 from craft_parts import Features, callbacks, plugins
+from craft_platforms import DebianArchitecture
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
 from overrides import override
@@ -431,7 +432,7 @@ def default_build_plan():
 
     # Set the build info base to match the host's, so we can test in destructive
     # mode with no issues.
-    arch = util.get_host_architecture()
+    arch = str(DebianArchitecture.from_host())
     base = util.get_host_base()
 
     return [

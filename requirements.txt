@@ -33,7 +33,7 @@ craft-archives==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-cli==2.13.0
+craft-cli==2.15.0
     # via
     #   craft-application
     #   snapcraft (setup.py)
@@ -41,7 +41,7 @@ craft-grammar==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-parts==2.3.0
+craft-parts==2.4.1
     # via
     #   craft-application
     #   snapcraft (setup.py)

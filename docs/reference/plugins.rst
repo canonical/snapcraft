@@ -16,6 +16,7 @@ Snapcraft.
    /common/craft-parts/reference/plugins/cmake_plugin
    /common/craft-parts/reference/plugins/dump_plugin
    /common/craft-parts/reference/plugins/go_plugin
+   /common/craft-parts/reference/plugins/go_use_plugin
    /common/craft-parts/reference/plugins/make_plugin
    plugins/maven_plugin
    /common/craft-parts/reference/plugins/meson_plugin
@@ -26,3 +27,4 @@ Snapcraft.
    /common/craft-parts/reference/plugins/qmake_plugin
    /common/craft-parts/reference/plugins/rust_plugin
    /common/craft-parts/reference/plugins/scons_plugin
+   plugins/uv_plugin

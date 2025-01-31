@@ -9,6 +9,7 @@ environment:
   PARAM/strict: ""
   PARAM/classic: "--classic"
   PARAM/poetry: ""
+  PARAM/uv: ""
 
 restore: |
   cd ./"${SPREAD_VARIANT}"

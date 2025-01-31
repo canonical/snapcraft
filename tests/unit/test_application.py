@@ -21,6 +21,7 @@ import re
 import sys
 from textwrap import dedent
 
+import craft_application.launchpad
 import craft_application.remote
 import craft_cli
 import craft_parts.plugins
@@ -704,11 +705,18 @@ def test_store_key_error(mocker, capsys):
     )
 
 
-def test_remote_build_error(mocker, capsys):
+@pytest.mark.parametrize(
+    "error_class",
+    [
+        craft_application.remote.RemoteBuildError,
+        craft_application.launchpad.LaunchpadError,
+    ],
+)
+def test_remote_build_error(mocker, capsys, error_class):
     """Catch remote build errors and include a documentation link."""
     mocker.patch(
         "snapcraft.application.Application._run_inner",
-        side_effect=craft_application.remote.RemoteBuildError(message="test-error"),
+        side_effect=error_class("test-error"),
     )
 
     return_code = application.main()

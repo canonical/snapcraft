@@ -17,6 +17,7 @@ Reference
    components
    linters
    plugins
+   extensions/index
    /common/craft-parts/reference/part_properties
    parts_steps
    system-requirements
