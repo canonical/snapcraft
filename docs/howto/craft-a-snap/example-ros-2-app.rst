@@ -11,6 +11,8 @@ existing recipe.
 There are three supported bases for ROS 2 -- core24, core20, and core18.
 
 
+.. _example-ros-2-app-project-files:
+
 Example recipe for ROS 2 Talker/Listener
 ----------------------------------------
 
