@@ -16,7 +16,7 @@ with the format ``ros2-<version>-<metapackage>``. The available extensions are:
         - ``ros2-foxy-ros-core``
         - ``ros2-foxy-ros-base``
         - ``ros2-foxy-desktop``
-    
+
     .. group-tab:: ROS 2 Humble
 
         - ``ros2-humble-ros-core``
