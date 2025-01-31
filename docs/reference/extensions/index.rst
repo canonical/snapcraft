@@ -21,3 +21,5 @@ For guidance on specific extensions, see :ref:`use-extensions`.
     gnome-extension
     kde-neon-extensions
     flutter-extension
+    ros-1-extension
+    ros-1-content-extensions
