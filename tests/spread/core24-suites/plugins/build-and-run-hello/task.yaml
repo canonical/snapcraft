@@ -3,12 +3,14 @@ summary: >-
   with different plugin configurations
 
 environment:
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
   # ros extensions for core24 are still experimental
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
   SNAP/conda: conda-hello
   SNAP/colcon_ros2_jazzy: colcon-ros2-jazzy-hello
   SNAP/colcon_ros2_wrapper: colcon-ros2-wrapper
   SNAP/flutter: flutter-hello
+  SNAP/npm: npm-hello
   # https://github.com/canonical/snapcraft/issues/5207
   # SNAP/python: python-hello
   SNAP/poetry: poetry-hello
