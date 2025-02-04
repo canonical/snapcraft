@@ -1,12 +1,18 @@
 #!/bin/bash
 
-if [ "$QT_VERSION" == "6" ]; then
+if [ "$PLATFORM_PLUG" == "kf6-core24" ]; then
 
 set -- "${SNAP}/kf6/snap/command-chain/desktop-launch6" "$@"
 # shellcheck source=/dev/null
 source "${SNAP}/snap/command-chain/run"
 
-elif [ "$QT_VERSION" == "5" ]; then
+if [ "$PLATFORM_PLUG" == "kde-qt6-core24" ]; then
+
+set -- "${SNAP}/qt6/snap/command-chain/desktop-launch6" "$@"
+# shellcheck source=/dev/null
+source "${SNAP}/snap/command-chain/run"
+
+elif [ "$PLATFORM_PLUG" == "kf5-core24" ]; then
 
 set -- "${SNAP}/kf5/snap/command-chain/desktop-launch" "$@"
 # shellcheck source=/dev/null
