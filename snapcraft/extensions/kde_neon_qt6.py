@@ -235,7 +235,7 @@ class KDENeonQt6(Extension):
                         [
                             "$CRAFT_STAGE/usr/bin",
                             f"/snap/{qt6_sdk_snap}/current/usr/bin",
-                            "/usr/bin"
+                            "/usr/bin",
                         ],
                     ),
                 },
@@ -269,7 +269,7 @@ class KDENeonQt6(Extension):
                             # Qt6 libs
                             f"/snap/{qt6_sdk_snap}/current/usr/lib",
                             # Mesa libs
-                            f"/snap/mesa-2404/current/usr/lib/"
+                            "/snap/mesa-2404/current/usr/lib/"
                             "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
                             # blas
                             f"/snap/{qt6_sdk_snap}/current/usr/lib/"

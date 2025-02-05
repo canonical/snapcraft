@@ -490,7 +490,7 @@ def test_get_part_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_sn
         plugin_name="cmake"
     ) == {
         "build-environment": [
-           {
+            {
                 "PATH": (
                     "$CRAFT_STAGE/usr/bin:"
                     "/snap/kde-qt6-core22-sdk/current/usr/bin:"
@@ -554,7 +554,7 @@ def test_get_part_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_sn
 def assert_get_part_snippet(kde_neon_qt6_instance):
     assert kde_neon_qt6_instance.get_part_snippet(plugin_name="cmake") == {
         "build-environment": [
-           {
+            {
                 "PATH": (
                     "$CRAFT_STAGE/usr/bin:"
                     "/snap/kde-qt6-core24-sdk/current/usr/bin:"
