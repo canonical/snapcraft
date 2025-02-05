@@ -233,7 +233,9 @@ class KDENeonQt6(Extension):
                     "PATH": prepend_to_env(
                         "PATH",
                         [
+                            "$CRAFT_STAGE/usr/bin",
                             f"/snap/{qt6_sdk_snap}/current/usr/bin",
+                            "/usr/bin"
                         ],
                     ),
                 },
@@ -266,6 +268,9 @@ class KDENeonQt6(Extension):
                             "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
                             # Qt6 libs
                             f"/snap/{qt6_sdk_snap}/current/usr/lib",
+                            # Mesa libs
+                            f"/snap/mesa-2404/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
                             # blas
                             f"/snap/{qt6_sdk_snap}/current/usr/lib/"
                             "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
@@ -278,7 +283,7 @@ class KDENeonQt6(Extension):
                             # Staged libs
                             "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
                             "$CRAFT_STAGE/usr/lib",
-                            "$CRAFT_STAGE/lib/",
+                            "$CRAFT_STAGE/lib",
                         ],
                     ),
                 },
@@ -329,12 +334,6 @@ class KDENeonQt6(Extension):
                     "plugin": "make",
                     "build-snaps": [
                         self.kde_snaps.qt6_sdk_snap,
-                    ],
-                    "build-packages": [
-                        "gettext",
-                        "doxygen",
-                        "graphviz",
-                        "libxml2-utils",
                     ],
                     **gpu_opts,
                 },

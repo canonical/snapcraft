@@ -360,7 +360,6 @@ def test_get_root_snippet_with_external_sdk_core24(
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/qt6",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "6",
         },
         "hooks": {
             "configure": {
@@ -430,7 +429,9 @@ class TestGetPartSnippet:
             "build-environment": [
                 {
                     "PATH": (
-                        "/snap/kde-qt6-core22-sdk/current/usr/bin:" "${PATH:+:$PATH}"
+                        "$CRAFT_STAGE/usr/bin:"
+                        "/snap/kde-qt6-core22-sdk/current/usr/bin:"
+                        "/usr/bin${PATH:+:$PATH}"
                     )
                 },
                 {
@@ -451,6 +452,7 @@ class TestGetPartSnippet:
                     "LD_LIBRARY_PATH": (
                         "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                         "/snap/kde-qt6-core22-sdk/current/usr/lib:"
+                        "/snap/mesa-2404/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                         "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
                         "/blas:"
                         "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
@@ -459,7 +461,7 @@ class TestGetPartSnippet:
                         "/libproxy:"
                         "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                         "$CRAFT_STAGE/usr/lib:"
-                        "$CRAFT_STAGE/lib/"
+                        "$CRAFT_STAGE/lib"
                         "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
                     )
                 },
@@ -488,7 +490,13 @@ def test_get_part_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_sn
         plugin_name="cmake"
     ) == {
         "build-environment": [
-            {"PATH": ("/snap/kde-qt6-core22-sdk/current/usr/bin:" "${PATH:+:$PATH}")},
+           {
+                "PATH": (
+                    "$CRAFT_STAGE/usr/bin:"
+                    "/snap/kde-qt6-core22-sdk/current/usr/bin:"
+                    "/usr/bin${PATH:+:$PATH}"
+                )
+            },
             {
                 "XDG_DATA_DIRS": (
                     "$CRAFT_STAGE/usr/share:"
@@ -507,15 +515,18 @@ def test_get_part_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_sn
                 "LD_LIBRARY_PATH": (
                     "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "/snap/kde-qt6-core22-sdk/current/usr/lib:"
-                    "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
-                    "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas:"
-                    "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack:"
-                    "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy:"
+                    "/snap/mesa-2404/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                    "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                    "/blas:"
+                    "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                    "/lapack:"
+                    "/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                    "/libproxy:"
                     "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "$CRAFT_STAGE/usr/lib:"
-                    "$CRAFT_STAGE/lib/"
+                    "$CRAFT_STAGE/lib"
                     "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-                ),
+                )
             },
             {
                 "CMAKE_PREFIX_PATH": (
@@ -543,7 +554,13 @@ def test_get_part_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_sn
 def assert_get_part_snippet(kde_neon_qt6_instance):
     assert kde_neon_qt6_instance.get_part_snippet(plugin_name="cmake") == {
         "build-environment": [
-            {"PATH": ("/snap/kde-qt6-core24-sdk/current/usr/bin:" "${PATH:+:$PATH}")},
+           {
+                "PATH": (
+                    "$CRAFT_STAGE/usr/bin:"
+                    "/snap/kde-qt6-core24-sdk/current/usr/bin:"
+                    "/usr/bin${PATH:+:$PATH}"
+                )
+            },
             {
                 "XDG_DATA_DIRS": (
                     "$CRAFT_STAGE/usr/share:"
@@ -562,7 +579,7 @@ def assert_get_part_snippet(kde_neon_qt6_instance):
                 "LD_LIBRARY_PATH": (
                     "/snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "/snap/kde-qt6-core24-sdk/current/usr/lib:"
-                    "/snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                    "/snap/mesa-2404/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "/snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
                     "/blas:"
                     "/snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
@@ -571,7 +588,7 @@ def assert_get_part_snippet(kde_neon_qt6_instance):
                     "/libproxy:"
                     "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "$CRAFT_STAGE/usr/lib:"
-                    "$CRAFT_STAGE/lib/"
+                    "$CRAFT_STAGE/lib"
                     "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
                 )
             },
@@ -619,12 +636,6 @@ def test_get_parts_snippet_core24(kde_neon_qt6_extension_core24):
                 "PLATFORM_PLUG=kde-qt6-core24",
             ],
             "build-snaps": ["kde-qt6-core24-sdk"],
-            "build-packages": [
-                "gettext",
-                "doxygen",
-                "graphviz",
-                "libxml2-utils",
-            ],
         }
     }
 

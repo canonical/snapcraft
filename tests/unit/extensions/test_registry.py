@@ -36,6 +36,7 @@ def test_get_extension_names():
         "ros2-jazzy-desktop",
         "kde-neon",
         "kde-neon-6",
+        "kde-neon-qt6",
         "fake-extension-experimental",
         "fake-extension-extra",
         "fake-extension",
