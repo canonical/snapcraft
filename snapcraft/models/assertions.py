@@ -54,7 +54,7 @@ def _to_string(data: Any) -> Any:
     return data
 
 
-class Registry(models.CraftBaseModel):
+class Confdb(models.CraftBaseModel):
     """Access and data definitions for a specific facet of a snap or system."""
 
     request: str | None = None
@@ -71,16 +71,16 @@ class Registry(models.CraftBaseModel):
 
 
 class Rules(models.CraftBaseModel):
-    """A list of registries for a particular view."""
+    """A list of confdbs for a particular view."""
 
-    rules: list[Registry]
+    rules: list[Confdb]
 
 
-class EditableRegistryAssertion(models.CraftBaseModel):
-    """Subset of a registries assertion that can be edited by the user."""
+class EditableConfdbAssertion(models.CraftBaseModel):
+    """Subset of a confdbs assertion that can be edited by the user."""
 
     account_id: str
-    """Issuer of the registry assertion and owner of the signing key."""
+    """Issuer of the confdb assertion and owner of the signing key."""
 
     name: str
     revision: int | None = 0
@@ -96,13 +96,13 @@ class EditableRegistryAssertion(models.CraftBaseModel):
         return cast_dict_scalars_to_strings(self.marshal())
 
 
-class RegistryAssertion(EditableRegistryAssertion):
-    """A full registries assertion containing editable and non-editable fields."""
+class ConfdbAssertion(EditableConfdbAssertion):
+    """A full confdbs assertion containing editable and non-editable fields."""
 
-    type: Literal["registry"]
+    type: Literal["confdb"]
 
     authority_id: str
-    """Issuer of the registry assertion and owner of the signing key."""
+    """Issuer of the confdb assertion and owner of the signing key."""
 
     timestamp: str
     """Timestamp of when the assertion was issued."""
@@ -114,16 +114,16 @@ class RegistryAssertion(EditableRegistryAssertion):
     """Signing key ID."""
 
 
-class RegistriesList(models.CraftBaseModel):
-    """A list of registry assertions."""
+class ConfdbsList(models.CraftBaseModel):
+    """A list of confdb assertions."""
 
-    registry_list: list[RegistryAssertion] = pydantic.Field(default_factory=list)
+    confdb_list: list[ConfdbAssertion] = pydantic.Field(default_factory=list)
 
 
-# this will be a union for validation sets and registries once
+# this will be a union for validation sets and confdbs once
 # validation sets are migrated from the legacy codebase
-Assertion = RegistryAssertion
+Assertion = ConfdbAssertion
 
-# this will be a union for editable validation sets and editable registries once
+# this will be a union for editable validation sets and editable confdbs once
 # validation sets are migrated from the legacy codebase
-EditableAssertion = EditableRegistryAssertion
+EditableAssertion = EditableConfdbAssertion

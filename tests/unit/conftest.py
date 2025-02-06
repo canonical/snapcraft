@@ -532,11 +532,11 @@ def remote_build_service(default_factory, mocker):
 
 
 @pytest.fixture()
-def registries_service(default_factory, mocker):
+def confdbs_service(default_factory, mocker):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import Registries
+    from snapcraft.services import Confdbs
 
-    service = Registries(app=APP_METADATA, services=default_factory)
+    service = Confdbs(app=APP_METADATA, services=default_factory)
     service._store_client = mocker.patch(
         "snapcraft.store.StoreClientCLI", autospec=True
     )
@@ -545,18 +545,18 @@ def registries_service(default_factory, mocker):
 
 
 @pytest.fixture()
-def fake_registry_assertion():
-    """Returns a fake registry assertion with required fields."""
-    from snapcraft.models import RegistryAssertion
+def fake_confdb_assertion():
+    """Returns a fake confdb assertion with required fields."""
+    from snapcraft.models import ConfdbAssertion
 
-    def _fake_registry_assertion(**kwargs) -> RegistryAssertion:
-        return RegistryAssertion.unmarshal(
+    def _fake_confdb_assertion(**kwargs) -> ConfdbAssertion:
+        return ConfdbAssertion.unmarshal(
             {
                 "account_id": "test-account-id",
                 "authority_id": "test-authority-id",
-                "name": "test-registry",
+                "name": "test-confdb",
                 "timestamp": "2024-01-01T10:20:30Z",
-                "type": "registry",
+                "type": "confdb",
                 "views": {
                     "wifi-setup": {
                         "rules": [
@@ -572,7 +572,7 @@ def fake_registry_assertion():
             }
         )
 
-    return _fake_registry_assertion
+    return _fake_confdb_assertion
 
 
 @pytest.fixture()

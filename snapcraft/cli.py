@@ -141,10 +141,10 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
-        "Store Registries",
+        "Store Confdbs",
         [
-            commands.StoreEditRegistriesCommand,
-            commands.StoreListRegistriesCommand,
+            commands.StoreEditConfdbsCommand,
+            commands.StoreListConfdbsCommand,
         ],
     ),
     craft_cli.CommandGroup(

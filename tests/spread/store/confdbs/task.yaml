@@ -1,4 +1,4 @@
-summary: test the registries commands
+summary: test the confdbs commands
 
 environment:
   SNAPCRAFT_ASSERTION_KEY: "$(HOST: echo ${SNAPCRAFT_ASSERTION_KEY})"
@@ -21,7 +21,7 @@ prepare: |
   gpg --homedir "$HOME/.snap/gnupg" --import <(echo "$SNAPCRAFT_ASSERTION_KEY" | base64 --decode)
 
   snap install yq
-  # registries only available in edge
+  # confdbs only available in edge
   snap refresh snapd --edge
 
 execute: |
@@ -31,9 +31,9 @@ execute: |
   # snapcraft will use a fake file editor
   export EDITOR="$PWD/editor.sh"
 
-  snapcraft edit-registries "$(snapcraft whoami | yq .id)" testset --key-name testspreadkey
+  snapcraft edit-confdbs "$(snapcraft whoami | yq .id)" testset --key-name testspreadkey
 
-  snapcraft list-registries | MATCH testset
+  snapcraft list-confdbs | MATCH testset
 
 restore: |
   rm -rf "$HOME/.snap/gnupg"

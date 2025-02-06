@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft Store Registry Sets commands."""
+"""Snapcraft Store Confdb Sets commands."""
 
 import argparse
 import textwrap
@@ -25,20 +25,20 @@ from typing_extensions import override
 from snapcraft import const, services
 
 
-class StoreListRegistriesCommand(craft_application.commands.AppCommand):
-    """List registries."""
+class StoreListConfdbsCommand(craft_application.commands.AppCommand):
+    """List confdbs."""
 
-    name = "list-registries"
-    help_msg = "List registries sets"
+    name = "list-confdbs"
+    help_msg = "List confdbs sets"
     overview = textwrap.dedent(
         """
-        List all registries for the authenticated account.
+        List all confdbs for the authenticated account.
 
-        Shows the account ID, name, revision, and last modified date of each registry.
+        Shows the account ID, name, revision, and last modified date of each confdb.
 
-        If a name is provided, only the registry with that name will be listed.
+        If a name is provided, only the confdb with that name will be listed.
 
-        Use the ``edit-registries`` command create and edit registries.
+        Use the ``edit-confdbs`` command create and edit confdbs.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
@@ -50,7 +50,7 @@ class StoreListRegistriesCommand(craft_application.commands.AppCommand):
             metavar="name",
             required=False,
             type=str,
-            help="Name of the registry to list",
+            help="Name of the confdb to list",
         )
         parser.add_argument(
             "--format",
@@ -65,29 +65,29 @@ class StoreListRegistriesCommand(craft_application.commands.AppCommand):
 
     @override
     def run(self, parsed_args: "argparse.Namespace"):
-        self._services.registries.list_assertions(
+        self._services.confdbs.list_assertions(
             name=parsed_args.name,
             output_format=parsed_args.format,
         )
 
 
-class StoreEditRegistriesCommand(craft_application.commands.AppCommand):
-    """Edit a registries set."""
+class StoreEditConfdbsCommand(craft_application.commands.AppCommand):
+    """Edit a confdbs set."""
 
-    name = "edit-registries"
-    help_msg = "Edit or create a registries set"
+    name = "edit-confdbs"
+    help_msg = "Edit or create a confdbs set"
     overview = textwrap.dedent(
         """
-        Edit a registries set.
+        Edit a confdbs set.
 
-        If the registries set does not exist, then a new registries set will be created.
+        If the confdbs set does not exist, then a new confdbs set will be created.
 
         If a key name is not provided, the default key is used.
 
         The account ID of the authenticated account can be determined with the
         ``snapcraft whoami`` command.
 
-        Use the ``list-registries`` command to view existing registries.
+        Use the ``list-confdbs`` command to view existing confdbs.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
@@ -97,18 +97,18 @@ class StoreEditRegistriesCommand(craft_application.commands.AppCommand):
         parser.add_argument(
             "account_id",
             metavar="account-id",
-            help="The account ID of the registries set to edit",
+            help="The account ID of the confdbs set to edit",
         )
         parser.add_argument(
-            "name", metavar="name", help="Name of the registries set to edit"
+            "name", metavar="name", help="Name of the confdbs set to edit"
         )
         parser.add_argument(
-            "--key-name", metavar="key-name", help="Key used to sign the registries set"
+            "--key-name", metavar="key-name", help="Key used to sign the confdbs set"
         )
 
     @override
     def run(self, parsed_args: "argparse.Namespace"):
-        self._services.registries.edit_assertion(
+        self._services.confdbs.edit_assertion(
             name=parsed_args.name,
             account_id=parsed_args.account_id,
             key_name=parsed_args.key_name,
