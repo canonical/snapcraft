@@ -1,8 +1,5 @@
 summary: test the registries commands
 
-# disabled until confdb commands are exposed (#5193)
-manual: true
-
 environment:
   SNAPCRAFT_ASSERTION_KEY: "$(HOST: echo ${SNAPCRAFT_ASSERTION_KEY})"
   SNAPCRAFT_STORE_CREDENTIALS: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING})"
