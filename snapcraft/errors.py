@@ -177,7 +177,7 @@ class StoreCredentialsUnauthorizedError(SnapcraftError):
 
 
 class SnapcraftAssertionError(SnapcraftError):
-    """Error raised when an assertion (validation or registries set) is invalid.
+    """Error raised when an assertion (validation or confdbs set) is invalid.
 
     Not to be confused with Python's built-in AssertionError.
     """
