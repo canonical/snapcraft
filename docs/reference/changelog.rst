@@ -70,6 +70,19 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.6.1 (2025-Feb-DD)
+-------------------
+
+Remote build
+============
+
+* Fix a bug where the source code, build recipes, and build logs for remote
+  builds of private Launchpad projects would be publicly available on
+  Launchpad while the build was in progress.
+
+..
+  For a complete list of commits, check out the `8.6.1`_ release on GitHub.
+
 8.6.0 (2025-Feb-05)
 -------------------
 
