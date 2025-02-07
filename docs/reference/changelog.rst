@@ -70,8 +70,21 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
-8.6.1 (2025-Feb-DD)
+8.6.1 (2025-Feb-10)
 -------------------
+
+Core
+====
+
+Plugins
+#######
+
+uv
+""
+
+* Fix a bug where a classic snap using the
+  :ref:`uv plugin<craft_parts_uv_plugin>` would fail to find the Python
+  interpreter included in the snap itself.
 
 Remote build
 ============
@@ -80,8 +93,7 @@ Remote build
   builds of private Launchpad projects would be publicly available on
   Launchpad while the build was in progress.
 
-..
-  For a complete list of commits, check out the `8.6.1`_ release on GitHub.
+For a complete list of commits, check out the `8.6.1`_ release on GitHub.
 
 8.6.0 (2025-Feb-05)
 -------------------
@@ -647,7 +659,7 @@ core24
 """"""
 
 * Fix a bug where classic snaps with a Python virtual environment would attempt
-  to use the system's Python intepretter (`#4942`_).
+  to use the system's Python interpreter (`#4942`_).
 
 Plugins
 #######
@@ -1629,3 +1641,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.5.0: https://github.com/canonical/snapcraft/releases/tag/8.5.0
 .. _8.5.1: https://github.com/canonical/snapcraft/releases/tag/8.5.1
 .. _8.6.0: https://github.com/canonical/snapcraft/releases/tag/8.6.0
+.. _8.6.1: https://github.com/canonical/snapcraft/releases/tag/8.6.1
