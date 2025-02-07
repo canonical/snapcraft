@@ -13,7 +13,7 @@ else
 	APT := apt-get
 endif
 
-PRETTIER=npm exec --package=prettier -- prettier
+PRETTIER=npm exec --package=prettier -- prettier --log-level warn
 PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 
 # By default we should not update the uv lock file here.
@@ -210,7 +210,7 @@ pack-pip:  ##- Build packages for pip (sdist, wheel)
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv build .
+	uv build --quiet .
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
