@@ -212,6 +212,7 @@ Examples include:
 * type changes
 * accommodating a developer-facing deprecation warning
 * many *small* fixes for an existing PR
+* reverts (``chore(revert): <header of reverted commit>``)
 * merge commits (``chore(merge): <branch or tag> into <branch>``)
 
   * the remote name should not be included (for example, use ``main``
