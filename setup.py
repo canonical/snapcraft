@@ -149,6 +149,7 @@ docs_requires = {
     "sphinx-lint",
     "sphinx-toolbox",
     "pyspelling",
+    "sphinxext-rediraffe==0.2.7",
 }
 
 extras_requires = {"dev": dev_requires, "docs": docs_requires}
