@@ -102,7 +102,7 @@ install_requires = [
     "craft-archives~=2.0",
     "craft-cli~=2.9",
     "craft-grammar>=2.0.1,<3.0.0",
-    "craft-parts==2.3.0",
+    "craft-parts==2.3.1",
     "craft-platforms~=0.4",
     "craft-providers>=2.0.4,<3.0.0",
     "craft-store>=3.0.2,<4.0.0",

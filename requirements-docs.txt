@@ -73,7 +73,7 @@ craft-grammar==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-parts==2.3.0
+craft-parts==2.3.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
