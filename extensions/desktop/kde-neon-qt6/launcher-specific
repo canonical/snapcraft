@@ -35,7 +35,7 @@ append_dir QML2_IMPORT_PATH "$SNAP_DESKTOP_RUNTIME/lib/$ARCH"
 # Fix locating the QtWebEngineProcess executable
 export QTWEBENGINEPROCESS_PATH="$SNAP_DESKTOP_RUNTIME/usr/lib/qt6/libexec/QtWebEngineProcess"
 # And QtWebEngine's path to resources
-QTWEBENGINE_RESOURCES_PATH="$SNAP_DESKTOP_RUNTIME/usr/share/qt6/resources"
+export QTWEBENGINE_RESOURCES_PATH="$SNAP_DESKTOP_RUNTIME/usr/share/qt6/resources"
 
 # Removes Qt warning: Could not find a location
 # of the system Compose files
