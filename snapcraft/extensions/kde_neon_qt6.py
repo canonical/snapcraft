@@ -307,83 +307,82 @@ class KDENeonQt6(Extension):
                     },
                 ],
             }
-        else:
-            return {
-                "build-environment": [
-                    {
-                        "PATH": prepend_to_env(
-                            "PATH",
-                            [
-                                "$CRAFT_STAGE/usr/bin",
-                                f"/snap/{qt6_sdk_snap}/current/usr/bin",
-                            ],
-                        ),
-                    },
-                    {
-                        "XDG_DATA_DIRS": prepend_to_env(
-                            "XDG_DATA_DIRS",
-                            [
-                                "$CRAFT_STAGE/usr/share",
-                                f"/snap/{qt6_sdk_snap}/current/usr/share",
-                            ],
-                        ),
-                    },
-                    {
-                        "XDG_CONFIG_HOME": prepend_to_env(
-                            "XDG_CONFIG_HOME",
-                            [
-                                "$CRAFT_STAGE/etc/xdg",
-                                f"/snap/{qt6_sdk_snap}/current/etc/xdg",
-                            ],
-                        ),
-                    },
-                    {
-                        "LD_LIBRARY_PATH": prepend_to_env(
-                            "LD_LIBRARY_PATH",
-                            [
-                                # Qt6 arch specific libs
-                                f"/snap/{qt6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                                # Qt6 libs
-                                f"/snap/{qt6_sdk_snap}/current/usr/lib",
-                                # blas
-                                f"/snap/{qt6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
-                                # lapack
-                                f"/snap/{qt6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
-                                # libproxy
-                                f"/snap/{qt6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy",
-                                # Staged libs
-                                "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                                "$CRAFT_STAGE/usr/lib",
-                                "$CRAFT_STAGE/lib",
-                            ],
-                        ),
-                    },
-                    {
-                        "CMAKE_PREFIX_PATH": prepend_to_env(
-                            "CMAKE_PREFIX_PATH",
-                            [
-                                "$CRAFT_STAGE",
-                                f"/snap/{qt6_sdk_snap}/current",
-                            ],
-                            separator=";",
-                        ),
-                    },
-                    {
-                        "CMAKE_FIND_ROOT_PATH": prepend_to_env(
-                            "CMAKE_FIND_ROOT_PATH",
-                            [
-                                "$CRAFT_STAGE",
-                                f"/snap/{qt6_sdk_snap}/current",
-                            ],
-                            separator=";",
-                        ),
-                    },
-                ],
-            }
+        return {
+            "build-environment": [
+                {
+                    "PATH": prepend_to_env(
+                        "PATH",
+                        [
+                            "$CRAFT_STAGE/usr/bin",
+                            f"/snap/{qt6_sdk_snap}/current/usr/bin",
+                        ],
+                    ),
+                },
+                {
+                    "XDG_DATA_DIRS": prepend_to_env(
+                        "XDG_DATA_DIRS",
+                        [
+                            "$CRAFT_STAGE/usr/share",
+                            f"/snap/{qt6_sdk_snap}/current/usr/share",
+                        ],
+                    ),
+                },
+                {
+                    "XDG_CONFIG_HOME": prepend_to_env(
+                        "XDG_CONFIG_HOME",
+                        [
+                            "$CRAFT_STAGE/etc/xdg",
+                            f"/snap/{qt6_sdk_snap}/current/etc/xdg",
+                        ],
+                    ),
+                },
+                {
+                    "LD_LIBRARY_PATH": prepend_to_env(
+                        "LD_LIBRARY_PATH",
+                        [
+                            # Qt6 arch specific libs
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            # Qt6 libs
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib",
+                            # blas
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
+                            # lapack
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
+                            # libproxy
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy",
+                            # Staged libs
+                            "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            "$CRAFT_STAGE/usr/lib",
+                            "$CRAFT_STAGE/lib",
+                        ],
+                    ),
+                },
+                {
+                    "CMAKE_PREFIX_PATH": prepend_to_env(
+                        "CMAKE_PREFIX_PATH",
+                        [
+                            "$CRAFT_STAGE",
+                            f"/snap/{qt6_sdk_snap}/current",
+                        ],
+                        separator=";",
+                    ),
+                },
+                {
+                    "CMAKE_FIND_ROOT_PATH": prepend_to_env(
+                        "CMAKE_FIND_ROOT_PATH",
+                        [
+                            "$CRAFT_STAGE",
+                            f"/snap/{qt6_sdk_snap}/current",
+                        ],
+                        separator=";",
+                    ),
+                },
+            ],
+        }
 
     @overrides
     def get_parts_snippet(self) -> dict[str, Any]:
