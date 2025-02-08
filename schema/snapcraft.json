@@ -917,7 +917,7 @@
                                     "gnome-3-38",
                                     "kde-neon",
                                     "kde-neon-6",
-                                    "kde-neon-qt6"
+                                    "kde-neon-qt6",
                                     "ros1-noetic",
                                     "ros1-noetic-desktop",
                                     "ros1-noetic-perception",
