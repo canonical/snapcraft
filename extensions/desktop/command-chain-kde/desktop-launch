@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo $PLATFORM_PLUG
-
 if [[ "${PLATFORM_PLUG}" == "kf6-core24" ]]
 then
     set -- "${SNAP}/kf6/command-chain/desktop-launch6" "$@"
