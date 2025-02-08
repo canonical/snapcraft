@@ -81,17 +81,17 @@ class KDENeonQt6(Extension):
 
     @staticmethod
     @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
     @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return False
 
     @overrides
@@ -143,7 +143,7 @@ class KDENeonQt6(Extension):
             case _:
                 raise AssertionError(f"Unsupported base: {base}")
 
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
