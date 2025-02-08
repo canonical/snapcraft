@@ -502,29 +502,27 @@ class LegacyStoreClientCLI:
         return Revisions.unmarshal(response.json())
 
     @staticmethod
-    def _unmarshal_registries_set(registries_data) -> models.RegistryAssertion:
-        """Unmarshal a registries set.
+    def _unmarshal_confdbs_set(confdbs_data) -> models.ConfdbAssertion:
+        """Unmarshal a confdbs set.
 
-        :raises StoreAssertionError: If the registries set cannot be unmarshalled.
+        :raises StoreAssertionError: If the confdbs set cannot be unmarshalled.
         """
         try:
-            return models.RegistryAssertion.unmarshal(registries_data)
+            return models.ConfdbAssertion.unmarshal(confdbs_data)
         except pydantic.ValidationError as err:
             raise errors.SnapcraftAssertionError(
-                message="Received invalid registries set from the store",
+                message="Received invalid confdbs set from the store",
                 # this is an unexpected failure that the user can't fix, so hide
                 # the response in the details
-                details=f"{format_pydantic_errors(err.errors(), file_name='registries set')}",
+                details=f"{format_pydantic_errors(err.errors(), file_name='confdbs set')}",
             ) from err
 
-    def list_registries(
-        self, *, name: str | None = None
-    ) -> list[models.RegistryAssertion]:
-        """Return a list of registries.
+    def list_confdbs(self, *, name: str | None = None) -> list[models.ConfdbAssertion]:
+        """Return a list of confdbs.
 
-        :param name: If specified, only list the registry set with that name.
+        :param name: If specified, only list the confdb set with that name.
         """
-        endpoint = f"{self._base_url}/api/v2/registries"
+        endpoint = f"{self._base_url}/api/v2/confdbs"
         if name:
             endpoint += f"/{name}"
 
@@ -537,66 +535,66 @@ class LegacyStoreClientCLI:
             },
         )
 
-        registry_assertions = []
+        confdb_assertions = []
         if assertions := response.json().get("assertions"):
             for assertion_data in assertions:
                 # move body into model
                 assertion_data["headers"]["body"] = assertion_data.get("body")
 
-                assertion = self._unmarshal_registries_set(assertion_data["headers"])
-                registry_assertions.append(assertion)
-                emit.debug(f"Parsed registries set: {assertion.model_dump_json()}")
+                assertion = self._unmarshal_confdbs_set(assertion_data["headers"])
+                confdb_assertions.append(assertion)
+                emit.debug(f"Parsed confdbs set: {assertion.model_dump_json()}")
 
-        return registry_assertions
+        return confdb_assertions
 
-    def build_registries(
-        self, *, registries: models.EditableRegistryAssertion
-    ) -> models.RegistryAssertion:
-        """Build a registries set.
+    def build_confdbs(
+        self, *, confdbs: models.EditableConfdbAssertion
+    ) -> models.ConfdbAssertion:
+        """Build a confdbs set.
 
-        Sends an edited registries set to the store, which validates the data,
-        populates additional fields, and returns the registries set.
+        Sends an edited confdbs set to the store, which validates the data,
+        populates additional fields, and returns the confdbs set.
 
-        :param registries: The registries set to build.
+        :param confdbs: The confdbs set to build.
 
-        :returns: The built registries set.
+        :returns: The built confdbs set.
         """
         response = self.request(
             "POST",
-            f"{self._base_url}/api/v2/registries/build-assertion",
+            f"{self._base_url}/api/v2/confdbs/build-assertion",
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
-            json=registries.marshal(),
+            json=confdbs.marshal(),
         )
 
-        assertion = self._unmarshal_registries_set(response.json())
-        emit.debug(f"Built registries set: {assertion.model_dump_json()}")
+        assertion = self._unmarshal_confdbs_set(response.json())
+        emit.debug(f"Built confdbs set: {assertion.model_dump_json()}")
         return assertion
 
-    def post_registries(self, *, registries_data: bytes) -> models.RegistryAssertion:
-        """Send a registries set to be published.
+    def post_confdbs(self, *, confdbs_data: bytes) -> models.ConfdbAssertion:
+        """Send a confdbs set to be published.
 
-        :param registries_data: A signed registries set represented as bytes.
+        :param confdbs_data: A signed confdbs set represented as bytes.
 
         :returns: The published assertion.
         """
         response = self.request(
             "POST",
-            f"{self._base_url}/api/v2/registries",
+            f"{self._base_url}/api/v2/confdbs",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/x.ubuntu.assertion",
             },
-            data=registries_data,
+            data=confdbs_data,
         )
 
         assertions = response.json().get("assertions")
 
         if not assertions or len(assertions) != 1:
             raise errors.SnapcraftAssertionError(
-                message="Received invalid registries set from the store",
+                message="Received invalid confdbs set from the store",
                 # this is an unexpected failure that the user can't fix, so hide
                 # the response in the details
                 details=f"Received data: {assertions}",
@@ -605,8 +603,8 @@ class LegacyStoreClientCLI:
         # move body into model
         assertions[0]["headers"]["body"] = assertions[0]["body"]
 
-        assertion = self._unmarshal_registries_set(assertions[0]["headers"])
-        emit.debug(f"Published registries set: {assertion.model_dump_json()}")
+        assertion = self._unmarshal_confdbs_set(assertions[0]["headers"])
+        emit.debug(f"Published confdbs set: {assertion.model_dump_json()}")
         return assertion
 
 

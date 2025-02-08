@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Service class for registries."""
+"""Service class for confdbs."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ _REGISTRY_SETS_TEMPLATE = textwrap.dedent(
     """\
     account-id: {account_id}
     name: {set_name}
-    # The revision for this registries set
+    # The revision for this confdbs set
     # revision: {revision}
     {views}
     {body}
@@ -67,37 +67,37 @@ _REGISTRY_SETS_BODY_TEMPLATE = textwrap.dedent(
 )
 
 
-class Registries(Assertion):
-    """Service for interacting with registries."""
+class Confdbs(Assertion):
+    """Service for interacting with confdbs."""
 
     @property
     @override
     def _assertion_name(self) -> str:
-        return "registries set"
+        return "confdbs set"
 
     @property
     @override
     def _editable_assertion_class(self) -> type[models.EditableAssertion]:
-        return models.EditableRegistryAssertion
+        return models.EditableConfdbAssertion
 
     @override
     def _get_assertions(self, name: str | None = None) -> list[models.Assertion]:
-        return self._store_client.list_registries(name=name)
+        return self._store_client.list_confdbs(name=name)
 
     @override
     def _build_assertion(self, assertion: models.EditableAssertion) -> models.Assertion:
-        return self._store_client.build_registries(registries=assertion)
+        return self._store_client.build_confdbs(confdbs=assertion)
 
     @override
     def _post_assertion(self, assertion_data: bytes) -> models.Assertion:
-        return self._store_client.post_registries(registries_data=assertion_data)
+        return self._store_client.post_confdbs(confdbs_data=assertion_data)
 
     @override
     def _normalize_assertions(
         self, assertions: list[models.Assertion]
     ) -> tuple[list[str], list[list[Any]]]:
         headers = ["Account ID", "Name", "Revision", "When"]
-        registries = [
+        confdbs = [
             [
                 assertion.account_id,
                 assertion.name,
@@ -107,7 +107,7 @@ class Registries(Assertion):
             for assertion in assertions
         ]
 
-        return headers, registries
+        return headers, confdbs
 
     @override
     def _generate_yaml_from_model(self, assertion: models.Assertion) -> str:
