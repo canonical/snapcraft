@@ -7,7 +7,7 @@ then
     set -- "${SNAP}/kf6/command-chain/desktop-launch6" "$@"
     # shellcheck source=/dev/null
     source "${SNAP}/snap/command-chain/run"
-elif [ $PLATFORM_PLUG == "kde-qt6-core24" ]
+elif [[ "$PLATFORM_PLUG" == "kde-qt6-core24" ]]
 then
     set -- "${SNAP}/qt6/command-chain/desktop-launch6" "$@"
     # shellcheck source=/dev/null
