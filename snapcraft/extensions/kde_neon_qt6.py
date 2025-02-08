@@ -42,8 +42,8 @@ class KDESnapsQt6:
 
     qt6_sdk_snap: str
     content_qt6: str
-    gpu_plugs: Dict[str, Any]
-    gpu_layouts: Dict[str, Any]
+    gpu_plugs: dict[str, Any]
+    gpu_layouts: dict[str, Any]
     qt6_builtin: bool = True
 
 
@@ -95,7 +95,7 @@ class KDENeonQt6(Extension):
         return False
 
     @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
             command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
@@ -167,7 +167,7 @@ class KDENeonQt6(Extension):
         )
 
     @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         platform_qt6_snap = self.kde_snaps.content_qt6
         content_qt6_snap = self.kde_snaps.content_qt6 + "-all"
         gpu_plugs = self.kde_snaps.gpu_plugs
@@ -224,7 +224,7 @@ class KDENeonQt6(Extension):
         }
 
     @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
 
         if self.yaml_data["base"] == "core24":
@@ -386,7 +386,7 @@ class KDENeonQt6(Extension):
             }
 
     @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
         # https://github.com/canonical/snapcraft-desktop-integration
