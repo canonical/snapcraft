@@ -8,19 +8,18 @@ different architectures.
 Architectures supported by Launchpad can be found
 :ref:`here<supported-architectures>`.
 
-Open vs closed source
----------------------
+Public vs. Private projects
+---------------------------
 
-By default, prospective snaps must be open source because the build will be
-publicly available.
+By default, prospective snaps will be publicly uploaded to `Launchpad`_.
 
 Developers are reminded of this by confirming that their project will be
 publicly available when starting a remote build. This prompt can be
 automatically agreed to by passing ``--launchpad-accept-public-upload``.
 
-Closed-source projects can be built using the remote builder. This requires
+Private projects can still be built using the remote builder. This requires
 the user to create a private `Launchpad project`_ and pass the project with the
-``--project <project-name>`` command line argument. An ``ssh`` key must be
+``--project <project-name>`` command line argument. An SSH key must be
 registered in Launchpad because source code is uploaded using SSH.
 
 Git repository
@@ -85,6 +84,8 @@ Current
 
 ``--build-for``
 ***************
+**Type**: Comma-separated list of strings
+**Default**: The architectures specified in your project file
 
 .. note::
    ``--build-for`` behaves differently for ``remote-build`` than it does for
@@ -107,6 +108,31 @@ filtering, see :ref:`Build plans <build-plans>`.
 The second mode of operation is when there isn't a ``platforms`` or
 ``architectures`` key in the project file. In this scenario, ``--build-for``
 defines the architectures to build for.
+
+``--launchpad-accept-public-upload``
+************************************
+
+Used to bypass the interactive prompt for confirming the public upload of data. It is
+not necessary to use this flag if using ``--project`` to specify a private project.
+
+``--project``
+*************
+**Type**: String
+
+Explicitly specify a project to upload to.
+
+``--launchpad-timeout``
+***********************
+**Type**: Integer
+**Default**: 0
+
+Time, in seconds, to wait for Launchpad to complete a build. A time of 0 seconds will
+wait indefinitely.
+
+``--recover``
+*************
+
+Attempt to recover previously interrupted builds.
 
 Project platforms and architectures
 ***********************************
