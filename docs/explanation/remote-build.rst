@@ -19,8 +19,9 @@ publicly available when starting a remote build. This prompt can be
 automatically agreed to by passing ``--launchpad-accept-public-upload``.
 
 Closed-source projects can be built using the remote builder. This requires
-the user to create a private Launchpad project and pass the project with the
-``--project <project-name>`` command line argument.
+the user to create a private `Launchpad project`_ and pass the project with the
+``--project <project-name>`` command line argument. An ``ssh`` key must be
+registered in Launchpad because source code is uploaded using SSH.
 
 Git repository
 --------------
@@ -178,6 +179,7 @@ Similarly, ``core22`` supports a shorthand notation for ``architectures`` but
 Launchpad is not able to parse this notation (`[9]`_).
 
 .. _`Launchpad account`: https://launchpad.net/+login
+.. _`Launchpad project`: https://launchpad.net/projects/+new
 .. _`Launchpad`: https://launchpad.net/
 .. _`build farm`: https://launchpad.net/builders
 .. _`[2]`: https://github.com/canonical/snapcraft/issues/4842
