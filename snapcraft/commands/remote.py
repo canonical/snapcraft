@@ -62,10 +62,7 @@ class RemoteBuildCommand(RemoteBuild):
         architecture of the local machine.
 
         Interrupted remote builds can be resumed using the --recover
-        option, followed by the build number informed when the remote
-        build was originally dispatched. The current state of the
-        remote build for each architecture can be checked using the
-        --status option.
+        option.
 
         To set a timeout on the remote-build command, use the option
         ``--launchpad-timeout=<seconds>``. The timeout is local, so the build on
