@@ -430,21 +430,21 @@ class TestGetPartSnippet:
                 {
                     "PATH": (
                         "$CRAFT_STAGE/usr/bin:"
-                        "/snap/kde-qt6-core22-sdk/current/usr/bin:"
+                        "/snap/kde-qt6-core22-sdk/current/usr/bin"
                         "${PATH:+:$PATH}"
                     )
                 },
                 {
                     "XDG_DATA_DIRS": (
                         "$CRAFT_STAGE/usr/share:"
-                        "/snap/kde-qt6-core22-sdk/current/usr/share:"
+                        "/snap/kde-qt6-core22-sdk/current/usr/share"
                         "${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                     )
                 },
                 {
                     "XDG_CONFIG_HOME": (
                         "$CRAFT_STAGE/etc/xdg:"
-                        "/snap/kde-qt6-core22-sdk/current/etc/xdg:"
+                        "/snap/kde-qt6-core22-sdk/current/etc/xdg"
                         "${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                     )
                 },
@@ -467,14 +467,14 @@ class TestGetPartSnippet:
                 {
                     "CMAKE_PREFIX_PATH": (
                         "$CRAFT_STAGE;"
-                        "/snap/kde-qt6-core22-sdk/current;"
+                        "/snap/kde-qt6-core22-sdk/current"
                         "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
                     )
                 },
                 {
                     "CMAKE_FIND_ROOT_PATH": (
                         "$CRAFT_STAGE;"
-                        "/snap/kde-qt6-core22-sdk/current;"
+                        "/snap/kde-qt6-core22-sdk/current"
                         "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
                     )
                 },
@@ -490,21 +490,21 @@ def test_get_part_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_sn
             {
                 "PATH": (
                     "$CRAFT_STAGE/usr/bin:"
-                    "/snap/kde-qt6-core22-sdk/current/usr/bin:"
+                    "/snap/kde-qt6-core22-sdk/current/usr/bin"
                     "${PATH:+:$PATH}"
                 )
             },
             {
                 "XDG_DATA_DIRS": (
                     "$CRAFT_STAGE/usr/share:"
-                    "/snap/kde-qt6-core22-sdk/current/usr/share:"
+                    "/snap/kde-qt6-core22-sdk/current/usr/share"
                     "${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
             {
                 "XDG_CONFIG_HOME": (
                     "$CRAFT_STAGE/etc/xdg:"
-                    "/snap/kde-qt6-core22-sdk/current/etc/xdg:"
+                    "/snap/kde-qt6-core22-sdk/current/etc/xdg"
                     "${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                 )
             },
@@ -527,14 +527,14 @@ def test_get_part_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_sn
             {
                 "CMAKE_PREFIX_PATH": (
                     "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core22-sdk/current;"
+                    "/snap/kde-qt6-core22-sdk/current"
                     "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
                 )
             },
             {
                 "CMAKE_FIND_ROOT_PATH": (
                     "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core22-sdk/current;"
+                    "/snap/kde-qt6-core22-sdk/current"
                     "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
                 )
             },
@@ -551,21 +551,21 @@ def assert_get_part_snippet(kde_neon_qt6_instance):
             {
                 "PATH": (
                     "$CRAFT_STAGE/usr/bin:"
-                    "/snap/kde-qt6-core24-sdk/current/usr/bin:"
+                    "/snap/kde-qt6-core24-sdk/current/usr/bin"
                     "${PATH:+:$PATH}"
                 )
             },
             {
                 "XDG_DATA_DIRS": (
                     "$CRAFT_STAGE/usr/share:"
-                    "/snap/kde-qt6-core24-sdk/current/usr/share:"
+                    "/snap/kde-qt6-core24-sdk/current/usr/share"
                     "${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
             {
                 "XDG_CONFIG_HOME": (
                     "$CRAFT_STAGE/etc/xdg:"
-                    "/snap/kde-qt6-core24-sdk/current/etc/xdg:"
+                    "/snap/kde-qt6-core24-sdk/current/etc/xdg"
                     "${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                 )
             },
@@ -589,14 +589,14 @@ def assert_get_part_snippet(kde_neon_qt6_instance):
             {
                 "CMAKE_PREFIX_PATH": (
                     "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core24-sdk/current;"
+                    "/snap/kde-qt6-core24-sdk/current"
                     "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
                 )
             },
             {
                 "CMAKE_FIND_ROOT_PATH": (
                     "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core24-sdk/current;"
+                    "/snap/kde-qt6-core24-sdk/current"
                     "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
                 )
             },
