@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from argparse import Namespace
 from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
@@ -22,7 +21,7 @@ from textwrap import dedent
 import pytest
 from craft_platforms import DebianArchitecture
 
-from snapcraft import commands, const
+from snapcraft import application, const
 
 
 @dataclass
@@ -41,11 +40,11 @@ def valid_core_data(request) -> CoreData:
     if request.param == "devel":
         return CoreData(base="core24", build_base="devel", grade="devel")
 
-    return CoreData(base=request.param, build_base=request.param, grade="stable")
+    return CoreData(base=request.param, build_base="null", grade="stable")
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_expand_extensions_simple_core22(new_dir, emitter):
+def test_expand_extensions_simple_core22(new_dir, emitter, mocker):
     """Expand an extension for a simple snapcraft.yaml file."""
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
@@ -73,8 +72,8 @@ def test_expand_extensions_simple_core22(new_dir, emitter):
             file=yaml_file,
         )
 
-    cmd = commands.ExpandExtensionsCommand(None)
-    cmd.run(Namespace())
+    mocker.patch("sys.argv", ["snapcraft", "expand-extensions"])
+    application.main()
     emitter.assert_message(
         dedent(
             f"""\
@@ -110,7 +109,7 @@ def test_expand_extensions_simple_core22(new_dir, emitter):
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_expand_extensions_simple(new_dir, emitter, valid_core_data):
+def test_expand_extensions_simple(new_dir, emitter, valid_core_data, mocker):
     """Expand an extension for a simple snapcraft.yaml file."""
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
@@ -139,8 +138,8 @@ def test_expand_extensions_simple(new_dir, emitter, valid_core_data):
             file=yaml_file,
         )
 
-    cmd = commands.ExpandExtensionsCommand(None)
-    cmd.run(Namespace())
+    mocker.patch("sys.argv", ["snapcraft", "expand-extensions"])
+    application.main()
     emitter.assert_message(
         dedent(
             f"""\
@@ -216,11 +215,11 @@ def test_expand_extensions_complex_core22(new_dir, emitter, mocker):
             file=yaml_file,
         )
 
-    cmd = commands.ExpandExtensionsCommand(None)
-    cmd.run(Namespace())
+    mocker.patch("sys.argv", ["snapcraft", "expand-extensions"])
+    application.main()
     emitter.assert_message(
         dedent(
-            f"""\
+            """\
             name: test-name
             version: '0.1'
             summary: testing extensions
@@ -241,9 +240,17 @@ def test_expand_extensions_complex_core22(new_dir, emitter, mocker):
             grade: stable
             architectures:
             - build-on:
-              - {DebianArchitecture.from_host()}
+              - amd64
               build-for:
-              - {DebianArchitecture.from_host()}
+              - amd64
+            - build-on:
+              - arm64
+              build-for:
+              - arm64
+            - build-on:
+              - armhf
+              build-for:
+              - armhf
             apps:
               app1:
                 command: app1
@@ -279,7 +286,10 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
                 build-base: {valid_core_data.build_base}
                 confinement: strict
                 grade: {valid_core_data.grade}
-                platforms: [amd64, arm64, armhf]
+                platforms:
+                  amd64:
+                  arm64:
+                  armhf:
 
                 apps:
                   app1:
@@ -301,9 +311,8 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
             ),
             file=yaml_file,
         )
-
-    cmd = commands.ExpandExtensionsCommand(None)
-    cmd.run(Namespace())
+    mocker.patch("sys.argv", ["snapcraft", "expand-extensions"])
+    application.main()
     emitter.assert_message(
         dedent(
             f"""\
@@ -313,6 +322,22 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
             description: expand a fake extension
             base: {valid_core_data.base}
             build-base: {valid_core_data.build_base}
+            platforms:
+              amd64:
+                build-on:
+                - amd64
+                build-for:
+                - amd64
+              arm64:
+                build-on:
+                - arm64
+                build-for:
+                - arm64
+              armhf:
+                build-on:
+                - armhf
+                build-for:
+                - armhf
             parts:
               nil:
                 plugin: nil

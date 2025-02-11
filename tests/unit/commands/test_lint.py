@@ -852,7 +852,6 @@ def test_load_project_complex(mocker, tmp_path):
         {
             "name": "test-name",
             "base": "core22",
-            "build_base": "core22",
             "version": "1.0",
             "summary": "test summary",
             "description": "test description",

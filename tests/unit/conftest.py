@@ -45,6 +45,12 @@ def reset_plugins():
     plugins.unregister_all()
 
 
+@pytest.fixture(autouse=True)
+def set_debug(monkeypatch):
+    # Instead of eating exceptions, calls to app.run() will raise them.
+    monkeypatch.setenv("CRAFT_DEBUG", "1")
+
+
 @pytest.fixture
 def snapcraft_yaml(new_dir):
     """Return a fixture that can write a snapcraft.yaml."""

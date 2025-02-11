@@ -126,7 +126,7 @@ class TestProjectDefaults:
     def test_project_defaults(self, project_yaml_data):
         project = Project.unmarshal(project_yaml_data())
 
-        assert project.build_base == project.base
+        assert project.build_base is None
         assert project.compression == "xz"
         assert project.contact is None
         assert project.donation is None
