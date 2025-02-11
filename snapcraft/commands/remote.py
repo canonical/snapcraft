@@ -33,10 +33,6 @@ from overrides import override
 from snapcraft import models
 from snapcraft.const import SUPPORTED_ARCHS
 
-_CONFIRMATION_PROMPT = (
-    "All data sent to remote builders will be publicly available. "
-    "Are you sure you want to continue?"
-)
 
 class RemoteBuildCommand(RemoteBuild):
     """Command passthrough for the remote-build command."""
