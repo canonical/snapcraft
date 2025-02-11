@@ -53,6 +53,7 @@ extensions.extend(
         "sphinx.ext.ifconfig",
         "sphinxcontrib.details.directive",
         "sphinx_toolbox.collapse",
+        "sphinxext.rediraffe",
     )
 )
 
@@ -100,3 +101,6 @@ craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-
 (common_docs_path / "craft-parts").symlink_to(
     craft_parts_docs_path, target_is_directory=True
 )
+
+# Client-side page redirects.
+rediraffe_redirects = "redirects.txt"

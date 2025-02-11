@@ -20,3 +20,8 @@ For guidance on specific extensions, see :ref:`use-extensions`.
     env-injector-extension
     gnome-extension
     kde-neon-extensions
+    flutter-extension
+    ros-1-extension
+    ros-1-content-extensions
+    ros-2-extensions
+    ros-2-content-extensions

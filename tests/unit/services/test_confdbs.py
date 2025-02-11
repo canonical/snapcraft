@@ -14,82 +14,80 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Tests for the registries service."""
+"""Tests for the confdbs service."""
 
 import textwrap
 from unittest import mock
 
-from snapcraft.models import EditableRegistryAssertion, RegistryAssertion
+from snapcraft.models import ConfdbAssertion, EditableConfdbAssertion
 
 
-def test_registries_service_type(registries_service):
-    assert registries_service._assertion_name == "registries set"
+def test_confdbs_service_type(confdbs_service):
+    assert confdbs_service._assertion_name == "confdbs set"
 
 
-def test_editable_assertion_class(registries_service):
-    assert registries_service._editable_assertion_class == EditableRegistryAssertion
+def test_editable_assertion_class(confdbs_service):
+    assert confdbs_service._editable_assertion_class == EditableConfdbAssertion
 
 
-def test_get_assertions(registries_service):
-    registries_service._get_assertions("test-registry")
+def test_get_assertions(confdbs_service):
+    confdbs_service._get_assertions("test-confdb")
 
-    registries_service._store_client.list_registries.assert_called_once_with(
-        name="test-registry"
+    confdbs_service._store_client.list_confdbs.assert_called_once_with(
+        name="test-confdb"
     )
 
 
-def test_build_assertion(registries_service):
-    mock_assertion = mock.Mock(spec=RegistryAssertion)
+def test_build_assertion(confdbs_service):
+    mock_assertion = mock.Mock(spec=ConfdbAssertion)
 
-    registries_service._build_assertion(mock_assertion)
+    confdbs_service._build_assertion(mock_assertion)
 
-    registries_service._store_client.build_registries.assert_called_once_with(
-        registries=mock_assertion
+    confdbs_service._store_client.build_confdbs.assert_called_once_with(
+        confdbs=mock_assertion
     )
 
 
-def test_post_assertions(registries_service):
-    registries_service._post_assertion(b"test-assertion-data")
+def test_post_assertions(confdbs_service):
+    confdbs_service._post_assertion(b"test-assertion-data")
 
-    registries_service._store_client.post_registries.assert_called_once_with(
-        registries_data=b"test-assertion-data"
+    confdbs_service._store_client.post_confdbs.assert_called_once_with(
+        confdbs_data=b"test-assertion-data"
     )
 
 
-def test_normalize_assertions_empty(registries_service, check):
-    headers, registries = registries_service._normalize_assertions([])
+def test_normalize_assertions_empty(confdbs_service, check):
+    headers, confdbs = confdbs_service._normalize_assertions([])
 
     check.equal(headers, ["Account ID", "Name", "Revision", "When"])
-    check.equal(registries, [])
+    check.equal(confdbs, [])
 
 
-def test_normalize_assertions(fake_registry_assertion, registries_service, check):
-    registries = [
-        fake_registry_assertion(),
-        fake_registry_assertion(
+def test_normalize_assertions(fake_confdb_assertion, confdbs_service, check):
+    confdbs = [
+        fake_confdb_assertion(),
+        fake_confdb_assertion(
             account_id="test-account-id-2",
-            name="test-registry-2",
+            name="test-confdb-2",
             revision=100,
             timestamp="2024-12-31",
         ),
     ]
 
-    headers, normalized_registries = registries_service._normalize_assertions(
-        registries
-    )
+    headers, normalized_confdbs = confdbs_service._normalize_assertions(confdbs)
 
     check.equal(headers, ["Account ID", "Name", "Revision", "When"])
     check.equal(
-        normalized_registries,
+        normalized_confdbs,
         [
-            ["test-account-id", "test-registry", 0, "2024-01-01"],
-            ["test-account-id-2", "test-registry-2", 100, "2024-12-31"],
+            ["test-account-id", "test-confdb", 0, "2024-01-01"],
+            ["test-account-id-2", "test-confdb-2", 100, "2024-12-31"],
         ],
     )
 
 
-def test_generate_yaml_from_model(fake_registry_assertion, registries_service):
-    assertion = fake_registry_assertion(
+def test_generate_yaml_from_model(fake_confdb_assertion, confdbs_service):
+    assertion = fake_confdb_assertion(
         revision="10",
         views={
             "wifi-setup": {
@@ -114,13 +112,13 @@ def test_generate_yaml_from_model(fake_registry_assertion, registries_service):
             "'values': 'any'\n      }\n    }\n  }\n}"
         ),
     )
-    yaml_data = registries_service._generate_yaml_from_model(assertion)
+    yaml_data = confdbs_service._generate_yaml_from_model(assertion)
 
     assert yaml_data == textwrap.dedent(
         """\
         account-id: test-account-id
-        name: test-registry
-        # The revision for this registries set
+        name: test-confdb
+        # The revision for this confdbs set
         # revision: 10
         views:
           wifi-setup:
@@ -148,9 +146,7 @@ def test_generate_yaml_from_model(fake_registry_assertion, registries_service):
     )
 
 
-def test_get_success_message(fake_registry_assertion, registries_service):
-    message = registries_service._get_success_message(
-        fake_registry_assertion(revision=10)
-    )
+def test_get_success_message(fake_confdb_assertion, confdbs_service):
+    message = confdbs_service._get_success_message(fake_confdb_assertion(revision=10))
 
-    assert message == "Successfully created revision 10 for 'test-registry'."
+    assert message == "Successfully created revision 10 for 'test-confdb'."

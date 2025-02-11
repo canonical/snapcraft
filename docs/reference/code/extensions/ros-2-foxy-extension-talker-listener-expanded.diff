@@ -1,0 +1,54 @@
+# Diff between snapcraft.yaml and `snapcraft expand-extensions`, showing the differences
+# that the ROS 2 Foxy extension applies to a project file.
+ name: ros2-talker-listener
+ version: "0.1"
+ summary: ROS 2 Talker/Listener Example
+ description: |
+   This example launches a ROS 2 talker and listener.
+ 
+ confinement: devmode
+ base: core20
+ 
+ parts:
+   ros-demos:
+     plugin: colcon
+     source: https://github.com/ros2/demos.git
+     source-branch: foxy
+     source-subdir: demo_nodes_cpp
+     stage-packages:
+       - ros-foxy-ros2launch
++    build-environment:
++      - ROS_VERSION: "2"
++      - ROS_DISTRO: foxy
++  ros2-foxy-extension:
++    build-packages:
++      - ros-foxy-ros-environment
++      - ros-foxy-ros-workspace
++      - ros-foxy-ament-index-cpp
++      - ros-foxy-ament-index-python
++    plugin: make
++    source: $SNAPCRAFT_EXTENSIONS_DIR/ros2
+ 
+ apps:
+   ros2-talker-listener:
+     command: opt/ros/foxy/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
+-    extensions:
+-      - ros2-foxy
++    command-chain:
++      - snap/command-chain/ros2-launch
++    environment:
++      PYTHONPATH: $SNAP/opt/ros/foxy/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}
++      ROS_DISTRO: foxy
++      ROS_VERSION: "2"
++
++package-repositories:
++  - components:
++      - main
++    formats:
++      - deb
++    key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
++    key-server: keyserver.ubuntu.com
++    suites:
++      - focal
++    type: apt
++    url: http://repo.ros2.org/ubuntu/main
