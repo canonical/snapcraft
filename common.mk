@@ -199,7 +199,7 @@ test-coverage:  ## Generate coverage report
 
 .PHONY: docs
 docs:  ## Build documentation
-	uv run --group docs sphinx-build -b html -W $(DOCS) $(DOCS)/_build
+	uv run $(UV_DOCS_GROUPS) sphinx-build -b html -W $(DOCS) $(DOCS)/_build
 
 .PHONY: docs-auto
 docs-auto:  ## Build and host docs with sphinx-autobuild
