@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         runner: 
-          - ubuntu-latest
+          - [self-hosted, amd64]
           - [self-hosted, arm64]
     runs-on: ${{ matrix.runner }}
     steps:
