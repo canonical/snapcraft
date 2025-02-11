@@ -62,9 +62,9 @@ fix it.
 - When asserting for equality, we prefer to use the `Equals` matcher from
   testtools:
 
-  ```
-  self.assertThat(actual, Equals(expected))
-  ```
+    ```
+    self.assertThat(actual, Equals(expected))
+    ```
 
 - When writing unit tests that raise errors, the tests should only check the
   class of the exception raised and it's attributes, not the format of the

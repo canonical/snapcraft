@@ -702,30 +702,11 @@
             "stop-mode": {
               "type": "string",
               "description": "controls how the daemon should be stopped",
-              "enum": [
-                "sigterm",
-                "sigterm-all",
-                "sighup",
-                "sighup-all",
-                "sigusr1",
-                "sigusr1-all",
-                "sigusr2",
-                "sigusr2-all",
-                "sigint",
-                "sigint-all"
-              ]
+              "enum": ["sigterm", "sigterm-all", "sighup", "sighup-all", "sigusr1", "sigusr1-all", "sigusr2", "sigusr2-all", "sigint", "sigint-all"]
             },
             "restart-condition": {
               "type": "string",
-              "enum": [
-                "on-success",
-                "on-failure",
-                "on-abnormal",
-                "on-abort",
-                "on-watchdog",
-                "always",
-                "never"
-              ]
+              "enum": ["on-success", "on-failure", "on-abnormal", "on-abort", "on-watchdog", "always", "never"]
             },
             "install-mode": {
               "type": "string",
@@ -816,33 +797,7 @@
               "minitems": 1,
               "uniqueItems": true,
               "items": {
-                "enum": [
-                  "env-injector",
-                  "flutter-stable",
-                  "flutter-beta",
-                  "flutter-dev",
-                  "flutter-master",
-                  "gnome",
-                  "gnome-3-28",
-                  "gnome-3-34",
-                  "gnome-3-38",
-                  "kde-neon",
-                  "kde-neon-6",
-                  "ros1-noetic",
-                  "ros1-noetic-desktop",
-                  "ros1-noetic-perception",
-                  "ros1-noetic-robot",
-                  "ros1-noetic-ros-base",
-                  "ros1-noetic-ros-core",
-                  "ros2-foxy",
-                  "ros2-foxy-ros-base",
-                  "ros2-foxy-ros-core",
-                  "ros2-foxy-desktop",
-                  "ros2-humble",
-                  "ros2-humble-ros-base",
-                  "ros2-humble-ros-core",
-                  "ros2-humble-desktop"
-                ]
+                "enum": ["env-injector", "flutter-stable", "flutter-beta", "flutter-dev", "flutter-master", "gnome", "gnome-3-28", "gnome-3-34", "gnome-3-38", "kde-neon", "kde-neon-6", "ros1-noetic", "ros1-noetic-desktop", "ros1-noetic-perception", "ros1-noetic-robot", "ros1-noetic-ros-base", "ros1-noetic-ros-core", "ros2-foxy", "ros2-foxy-ros-base", "ros2-foxy-ros-core", "ros2-foxy-desktop", "ros2-humble", "ros2-humble-ros-base", "ros2-humble-ros-core", "ros2-humble-desktop"]
               }
             }
           }
@@ -940,20 +895,7 @@
             "source-type": {
               "type": "string",
               "default": "",
-              "enum": [
-                "bzr",
-                "git",
-                "hg",
-                "mercurial",
-                "subversion",
-                "svn",
-                "tar",
-                "zip",
-                "deb",
-                "rpm",
-                "7z",
-                "local"
-              ]
+              "enum": ["bzr", "git", "hg", "mercurial", "subversion", "svn", "tar", "zip", "deb", "rpm", "7z", "local"]
             },
             "disable-parallel": {
               "type": "boolean",
@@ -998,14 +940,7 @@
               "uniqueItems": true,
               "items": {
                 "type": "string",
-                "enum": [
-                  "core22-step-dependencies",
-                  "enable-patchelf",
-                  "no-patchelf",
-                  "no-install",
-                  "debug",
-                  "keep-execstack"
-                ]
+                "enum": ["core22-step-dependencies", "enable-patchelf", "no-patchelf", "no-install", "debug", "keep-execstack"]
               },
               "default": []
             },
