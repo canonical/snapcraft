@@ -73,7 +73,7 @@ craft-providers==2.0.4
     #   snapcraft (setup.py)
 craft-store==3.0.2
     # via snapcraft (setup.py)
-cryptography==43.0.3
+cryptography==44.0.1
     # via
     #   pylxd
     #   secretstorage
