@@ -49,6 +49,7 @@ extensions.extend(
         "sphinx_toolbox",
         "sphinx_toolbox.more_autodoc",
         "sphinx.ext.autodoc",  # Must be loaded after more_autodoc
+        "sphinxext.rediraffe",
     ]
 )
 
@@ -72,3 +73,6 @@ github_username = "canonical"
 github_repository = "starbase"
 
 # endregion
+
+# Client-side page redirects.
+rediraffe_redirects = "redirects.txt"

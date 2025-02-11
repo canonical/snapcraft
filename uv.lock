@@ -1460,6 +1460,18 @@ wheels = [
 ]
 
 [[package]]
+name = "sphinxext-rediraffe"
+version = "0.2.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1f/b4/e5fbb493f796430230189a1ce5f9beff1ac1b98619fc71ed35deca6059a5/sphinxext-rediraffe-0.2.7.tar.gz", hash = "sha256:651dcbfae5ffda9ffd534dfb8025f36120e5efb6ea1a33f5420023862b9f725d", size = 8735 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/4f/c8797e796199e55cf6c8979ecdf5f4b09b81e93f87b3193c759faea63263/sphinxext_rediraffe-0.2.7-py3-none-any.whl", hash = "sha256:9e430a52d4403847f4ffb3a8dd6dfc34a9fe43525305131f52ed899743a5fd8c", size = 8267 },
+]
+
+[[package]]
 name = "standard-imghdr"
 version = "3.10.14"
 source = { registry = "https://pypi.org/simple" }
@@ -1490,6 +1502,7 @@ docs = [
     { name = "sphinx-lint" },
     { name = "sphinx-pydantic" },
     { name = "sphinx-toolbox" },
+    { name = "sphinxext-rediraffe" },
 ]
 lint = [
     { name = "yamllint" },
@@ -1521,6 +1534,7 @@ docs = [
     { name = "sphinx-lint", specifier = "~=1.0" },
     { name = "sphinx-pydantic", specifier = "==0.1.1" },
     { name = "sphinx-toolbox", specifier = "~=3.5" },
+    { name = "sphinxext-rediraffe", specifier = "==0.2.7" },
 ]
 lint = [{ name = "yamllint", specifier = "~=1.34" }]
 types = [

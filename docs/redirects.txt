@@ -1,0 +1,5 @@
+# Client-side page redirects. Each mapping takes the format:
+#     "<old path>" "<current path>"
+# Paths must be represented as source files relative to the root of the `docs` dir.
+# The old path must be a file that _doesn't exist_ in the source. The current path
+# must be a file that _does exist_ in the source.
