@@ -178,7 +178,7 @@ cheaper to modify without changing its observable behavior.*"
 ``style``
 """"""""""
 
-Commits that change the syntax, format, or aesthics of any text the codebase.
+Commits that change the syntax, format, or aesthetics of any text in the codebase.
 The meaning of the text should not change.
 
 Examples include:
