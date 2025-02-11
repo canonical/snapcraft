@@ -10,7 +10,12 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runner: 
+          - ubuntu-latest
+          - [self-hosted, arm64]
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Decision to Publish
         id: decisions
