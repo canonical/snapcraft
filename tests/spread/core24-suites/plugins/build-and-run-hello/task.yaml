@@ -16,6 +16,7 @@ environment:
   SNAP/poetry: poetry-hello
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
+  SNAP/uv: uv-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/package-utils.sh
