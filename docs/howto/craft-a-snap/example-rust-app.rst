@@ -5,38 +5,39 @@ Example Rust app
 
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a Rust-based snap. We'll work through the aspects
-unique to Rust apps by examining an existing recipe.
+unique to Rust apps by examining an existing project.
 
 The process of developing a snap for a Rust app builds on top of standard Rust
 packaging tools and configuration, making it possible to adapt or integrate an
 app's existing build tooling into the crafting process.
 
 
-Example recipe for XSV
-----------------------
+Example project file for XSV
+----------------------------
 
-The following code comprises the recipe of a Rust project, `liquidctl
-<https://github.com/snapcraft-docs/xsv>`_. The app analyses and manipulates CSV
-files.
+The following code comprises the project file of a Rust app, `liquidctl
+<https://github.com/snapcraft-docs/xsv>`_. The app analyses and manipulates CSV files.
 
-.. collapse:: XSV recipe
+.. collapse:: XSV project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-rust-recipe.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: ../code/craft-a-snap/example-rust-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Add a part written in Rust
 --------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-rust-recipe.yaml
+    :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:
     :end-at: source: .
 
 Rust parts are built with the `Rust plugin <https://snapcraft.io/docs/rust-plugin>`_.
 
-This recipe bundles the current stable release of Rust in the snap using
+This project file bundles the current stable release of Rust in the snap using
 Rustup. Dependencies from the project's ``Cargo.toml`` are also bundled.
 
 To declare a Rust part:

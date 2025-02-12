@@ -8,7 +8,7 @@ Snapcraft 7.2 and higher provides built-in linter functionality when the snap
 uses core22 or higher as its :doc:`base </reference/bases>`.
 
 By default, these built-in linters run automatically when a snap is built. If
-they're unneeded, you can disable them in the snap's ``snapcraft.yaml``.
+they're unneeded, you can disable them in the snap's project file.
 
 Built-in linters
 -----------------
@@ -25,14 +25,15 @@ Disable a linter
 ----------------
 
 You can disable a linter by adding it to the ``lint.ignore`` key in
-``snapcraft.yaml``. For example:
+the project file. For example:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-   lint:
-     ignore:
-       - classic
-       - library
+    lint:
+      ignore:
+        - classic
+        - library
 
 
 Ignore specific files
@@ -47,13 +48,13 @@ In the following example, the ``classic`` linter is disabled entirely, and the
 specified pattern:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-   lint:
-     ignore:
-       - classic
-       - library:
-         - usr/lib/**/libfoo.so*
-
+    lint:
+      ignore:
+        - classic
+        - library:
+          - usr/lib/**/libfoo.so*
 
 
 .. _classic: https://snapcraft.io/docs/linters-classic
