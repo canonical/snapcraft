@@ -34,7 +34,7 @@ Example Electron package manifest
 
 The following code comprises the ``package.json`` file of the starter Electron
 project, `electron-quick-start
-<https://gitlab.gnome.org/GNOME/gnome-text-editor>`_, but modified to build
+<https://github.com/electron/electron-quick-start>`_, but modified to build
 snaps.
 
 .. collapse:: electron-quick-start package manifest
@@ -98,9 +98,9 @@ you can craft that into a snap, too.
 Example Discord project file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following code comprises the project file of an Electron app,
-`gnome-text-editor <https://gitlab.gnome.org/GNOME/gnome-text-editor>`_. This
-project is a popular instant messaging app and social platform.
+The following code comprises the project file of an Electron app, `Discord
+<https://github.com/snapcrafters/discord>`_. It's a popular instant messaging app and
+social platform.
 
 .. collapse:: Discord project file
 

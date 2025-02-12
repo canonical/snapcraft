@@ -15,8 +15,8 @@ app's existing build tooling into the crafting process.
 Example project file for XSV
 ----------------------------
 
-The following code comprises the project file of a Rust app, `liquidctl
-<https://github.com/snapcraft-docs/xsv>`_. The app analyses and manipulates CSV files.
+The following code comprises the project file of a Rust app, `XSV
+<https://github.com/snapcraft-docs/xsv>`_. It analyses and manipulates CSV files.
 
 .. collapse:: XSV project file
 

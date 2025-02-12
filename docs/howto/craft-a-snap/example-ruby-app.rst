@@ -12,10 +12,10 @@ The process of developing a snap for a Python app builds on top of YARV and
 app's existing build tooling into the crafting process.
 
 
-Example project file for liquidctl
-----------------------------------
+Example project file for Markdown lint tool
+-------------------------------------------
 
-The following code comprises the project file of a Ruby tool, `Markdown lint tool
+The following code comprises the project file of a Ruby app, the `Markdown lint tool
 <https://github.com/snapcraft-docs/mdl>`_. This project provides style and syntax checks
 for Markdown files.
 
