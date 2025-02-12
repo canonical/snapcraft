@@ -41,7 +41,7 @@ craft-grammar==2.0.1
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-parts==2.4.1
+craft-parts @ git+https://github.com/canonical/craft-parts@CRAFT-4070-Error-presentation-sometimes-omits-the-last-lines
     # via
     #   craft-application
     #   snapcraft (setup.py)
