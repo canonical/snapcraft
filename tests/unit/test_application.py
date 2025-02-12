@@ -67,7 +67,9 @@ def mock_run_legacy(mocker):
 @pytest.fixture()
 def mock_remote_build_argv(mocker):
     """Mock `snapcraft remote-build` cli."""
-    return mocker.patch.object(sys, "argv", ["snapcraft", "remote-build", "--launchpad-accept-public-upload"])
+    return mocker.patch.object(
+        sys, "argv", ["snapcraft", "remote-build", "--launchpad-accept-public-upload"]
+    )
 
 
 @pytest.mark.parametrize("env_vars", application.MAPPED_ENV_VARS.items())

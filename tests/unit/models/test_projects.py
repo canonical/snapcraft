@@ -2572,10 +2572,7 @@ def test_project_platform_unknown_name():
             }
         )
 
-    assert (
-        "'unknown' is not a valid Debian architecture."
-        in str(raised.value)
-    )
+    assert "'unknown' is not a valid Debian architecture." in str(raised.value)
 
 
 @pytest.mark.parametrize("project", [ComponentProject, Project])

@@ -8,10 +8,10 @@ different architectures.
 Architectures supported by Launchpad can be found
 :ref:`here<supported-architectures>`.
 
-Public vs. Private projects
+Public and private projects
 ---------------------------
 
-By default, prospective snaps will be publicly uploaded to `Launchpad`_.
+By default, prospective snaps are publicly uploaded to `Launchpad`_.
 
 Developers are reminded of this by confirming that their project will be
 publicly available when starting a remote build. This prompt can be
@@ -85,7 +85,7 @@ Current
 ``--build-for``
 ***************
 **Type**: Comma-separated list of strings
-**Default**: The architectures specified in your project file
+**Default**: The architectures specified in your project file or your host architecture
 
 .. note::
    ``--build-for`` behaves differently for ``remote-build`` than it does for
@@ -112,8 +112,8 @@ defines the architectures to build for.
 ``--launchpad-accept-public-upload``
 ************************************
 
-Used to bypass the interactive prompt for confirming the public upload of data. It is
-not necessary to use this flag if using ``--project`` to specify a private project.
+Bypasses the prompt that confirms whether you want to upload data to the public. It's
+not necessary to use this flag if you used ``--project`` to specify a private project.
 
 ``--project``
 *************

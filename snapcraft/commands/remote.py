@@ -105,7 +105,9 @@ class RemoteBuildCommand(RemoteBuild):
                 )
 
         project = cast(models.Project, self._services.project)
-        build_plan = self._app.BuildPlannerClass.unmarshal(project.marshal()).get_build_plan()
+        build_plan = self._app.BuildPlannerClass.unmarshal(
+            project.marshal()
+        ).get_build_plan()
 
         # mapping of `build-on` to `build-for` architectures
         build_map: dict[str, list[str]] = {}
@@ -138,7 +140,9 @@ class RemoteBuildCommand(RemoteBuild):
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
         project = cast(models.Project, self._services.project)
-        build_plan = self._app.BuildPlannerClass.unmarshal(project.marshal()).get_build_plan()
+        build_plan = self._app.BuildPlannerClass.unmarshal(
+            project.marshal()
+        ).get_build_plan()
         build_fors = cast(list[str], parsed_args.remote_build_build_fors)
         archs: list[str] = []
         if project.platforms or project._architectures_in_yaml:
