@@ -10,6 +10,7 @@ environment:
   PARAM/classic: "--classic"
   PARAM/poetry: ""
   PARAM/uv: ""
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 restore: |
   cd ./"${SPREAD_VARIANT}"
