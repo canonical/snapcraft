@@ -266,7 +266,7 @@ suites:
  tests/spread/core24-suites/plugins/:
    summary: core24 plugin tests
    systems:
-     - ubuntu-22.04*
+     - ubuntu-24.04*
 
  # General, core suite
  tests/spread/general/:
