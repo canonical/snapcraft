@@ -12,7 +12,6 @@ Reference
    channels
    architectures
    bases
-   changelog
    commands
    components
    linters
