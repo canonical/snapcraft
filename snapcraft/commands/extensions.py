@@ -65,7 +65,7 @@ class ListExtensionsCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         extension_presentation: Dict[str, ExtensionModel] = {}
 
         # New extensions.
@@ -78,7 +78,9 @@ class ListExtensionsCommand(AppCommand):
 
         # Extensions from snapcraft_legacy.
         for _extension_name in supported_extension_names():
-            extension_class = find_extension(_extension_name)
+            # Ignore assignment type error as the conversion from legacy to modern Snapcraft `Extension`
+            # should be trivial
+            extension_class = find_extension(_extension_name)  # type: ignore[assignment]
             extension_name = _extension_name.replace("_", "-")
             extension_bases = list(extension_class.get_supported_bases())
             if extension_name in extension_presentation:

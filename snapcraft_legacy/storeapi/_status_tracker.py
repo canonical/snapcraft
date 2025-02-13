@@ -10,7 +10,6 @@ from . import constants, errors
 
 
 class StatusTracker:
-
     __messages = {
         "being_processed": "Processing...",
         "ready_to_release": "Ready to release!",

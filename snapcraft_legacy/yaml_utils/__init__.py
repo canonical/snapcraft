@@ -89,7 +89,7 @@ def dump(
     data: Union[Dict[str, Any], yaml.YAMLObject],
     *,
     stream: Optional[TextIO] = None,
-    sort_keys=True
+    sort_keys=True,
 ) -> Optional[str]:
     """Safely dump YAML in ordered manner."""
     return yaml.dump(

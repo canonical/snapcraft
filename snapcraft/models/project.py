@@ -1013,7 +1013,7 @@ class Project(models.Project):
 
     @pydantic.field_validator("plugs")
     @classmethod
-    def _validate_plugs(cls, plugs):
+    def _validate_plugs(cls, plugs) -> dict[str, ContentPlug | Any]:
         empty_plugs = []
         if plugs is not None:
             for plug_name, plug in plugs.items():

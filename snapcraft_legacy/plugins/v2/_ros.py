@@ -77,7 +77,9 @@ class RosPlugin(PluginV2):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
     def get_build_snaps(self) -> Set[str]:
-        return set(self.options.ros_build_snaps) if self.options.ros_build_snaps else set()
+        return (
+            set(self.options.ros_build_snaps) if self.options.ros_build_snaps else set()
+        )
 
     def get_build_packages(self) -> Set[str]:
         return {
@@ -122,7 +124,6 @@ class RosPlugin(PluginV2):
         """
 
     def _get_list_packages_commands(self) -> List[str]:
-
         cmd = list()
 
         # Clean up previously established list of packages in build snaps
@@ -133,25 +134,25 @@ class RosPlugin(PluginV2):
             for ros_build_snap in self.options.ros_build_snaps:
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
                 path = f"/snap/{snap_name}/current/opt/ros"
-                cmd.extend([
-                    # Retrieve the list of all ROS packages available in the build snap
-                    f"if [ -d {path} ]; then",
-                    f"ROS_PACKAGE_PATH={path} "
-                    'rospack list-names | (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | '
-                    'awk "/#apt/{getline;print;}" >> "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
-                    "fi",
-
-                    # Retrieve the list of all non-ROS packages available in the build snap
-                    f'if [ -d "{path}/${{ROS_DISTRO}}/" ]; then',
-                    f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/${{ROS_DISTRO}}" --ignore-packages-from-source '
-                    '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
-                    "fi",
-
-                    f'if [ -d "{path}/snap/" ]; then',
-                    f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/snap" --ignore-packages-from-source '
-                    '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
-                    "fi",
-                ])
+                cmd.extend(
+                    [
+                        # Retrieve the list of all ROS packages available in the build snap
+                        f"if [ -d {path} ]; then",
+                        f"ROS_PACKAGE_PATH={path} "
+                        'rospack list-names | (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | '
+                        'awk "/#apt/{getline;print;}" >> "${SNAPCRAFT_PART_INSTALL}/.installed_packages.txt"',
+                        "fi",
+                        # Retrieve the list of all non-ROS packages available in the build snap
+                        f'if [ -d "{path}/${{ROS_DISTRO}}/" ]; then',
+                        f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/${{ROS_DISTRO}}" --ignore-packages-from-source '
+                        '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+                        "fi",
+                        f'if [ -d "{path}/snap/" ]; then',
+                        f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path}/snap" --ignore-packages-from-source '
+                        '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${SNAPCRAFT_PART_INSTALL}"/.installed_packages.txt',
+                        "fi",
+                    ]
+                )
             cmd.append("")
 
         return cmd

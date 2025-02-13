@@ -34,7 +34,7 @@ class ExtractedMetadata(yaml_utils.SnapcraftYAMLObject):
         version: Optional[str] = None,
         grade: Optional[str] = None,
         icon: Optional[str] = None,
-        desktop_file_paths: Optional[List[str]] = None
+        desktop_file_paths: Optional[List[str]] = None,
     ) -> None:
         """Create a new ExtractedMetadata instance.
 

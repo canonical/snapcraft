@@ -750,7 +750,7 @@ def test_get_argv_command(command, monkeypatch):
         "sys.argv",
         [
             "snapcraft",
-            "--verbosity" "trace",
+            "--verbositytrace",
             "--build-for=armhf",
             "--shell-after",
             command,

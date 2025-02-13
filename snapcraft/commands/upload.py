@@ -102,7 +102,7 @@ class StoreUploadCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         snap_file = pathlib.Path(parsed_args.snap_file)
         if not snap_file.exists() or not snap_file.is_file():
             raise ArgumentParsingError(f"{str(snap_file)!r} is not a valid file")

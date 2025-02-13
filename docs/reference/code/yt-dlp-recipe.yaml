@@ -3,9 +3,9 @@
 name: yt-dlp
 summary: A fork of youtube-dl with additional features and patches
 description: |
-      Download and play videos on your local system. Runs from the command 
-      line and with all the features and patches of youtube-dlc in addition
-      to the latest youtube-dl.
+  Download and play videos on your local system. Runs from the command 
+  line and with all the features and patches of youtube-dlc in addition
+  to the latest youtube-dl.
 version: test
 grade: stable
 confinement: strict

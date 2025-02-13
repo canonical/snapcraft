@@ -16,6 +16,7 @@ import os
 import pathlib
 from unittest.mock import MagicMock, call, patch
 
+import pytest
 from testtools.matchers import Equals
 
 from snapcraft_legacy import file_utils
@@ -73,6 +74,7 @@ class CleanTestCase(TestCase):
         mock_listdir.assert_called_once_with(partdir)
         self.assertFalse(mock_rmdir.called)
 
+    @pytest.mark.slow
     def test_clean_prime_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
         handler1 = self.load_part("part1")
@@ -123,6 +125,7 @@ class CleanTestCase(TestCase):
             "Expected part2's primeped files to be untouched",
         )
 
+    @pytest.mark.slow
     def test_clean_prime_after_fileset_change(self):
         # Create part1 and get it through the "build" step.
         handler = self.load_part("part1")
@@ -188,6 +191,7 @@ class CleanTestCase(TestCase):
         self.assertThat(raised.step, Equals(steps.PRIME))
         self.assertTrue(os.path.isfile(primed_file))
 
+    @pytest.mark.slow
     def test_clean_stage_multiple_independent_parts(self):
         # Create part1 and get it through the "build" step.
         handler1 = self.load_part("part1")
@@ -299,6 +303,7 @@ class CleanTestCase(TestCase):
         self.assertTrue(os.path.isfile(staged_file))
 
 
+@pytest.mark.slow
 class TestCleanPrime:
     scenarios = [
         ("all", {"fileset": ["*"]}),

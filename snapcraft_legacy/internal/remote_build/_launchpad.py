@@ -130,8 +130,12 @@ class LaunchpadClient:
         If the credentials file does not exist in the default location but exists in the
         legacy location, emit a deprecation warning and return the legacy location.
         """
-        credentials_filepath = platformdirs.user_data_path("snapcraft") / "launchpad-credentials"
-        legacy_credentials_filepath = platformdirs.user_data_path("snapcraft") / "provider/launchpad/credentials"
+        credentials_filepath = (
+            platformdirs.user_data_path("snapcraft") / "launchpad-credentials"
+        )
+        legacy_credentials_filepath = (
+            platformdirs.user_data_path("snapcraft") / "provider/launchpad/credentials"
+        )
 
         if not credentials_filepath.exists() and legacy_credentials_filepath.exists():
             logger.warning(

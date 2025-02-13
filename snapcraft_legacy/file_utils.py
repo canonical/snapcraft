@@ -197,8 +197,9 @@ def link_or_copy_tree(
         os.path.exists(destination_tree) or os.path.islink(destination_tree)
     ):
         raise errors.SnapcraftEnvironmentError(
-            "Cannot overwrite non-directory {!r} with directory "
-            "{!r}".format(destination_tree, source_tree)
+            "Cannot overwrite non-directory {!r} with directory {!r}".format(
+                destination_tree, source_tree
+            )
         )
 
     create_similar_directory(source_tree, destination_tree)

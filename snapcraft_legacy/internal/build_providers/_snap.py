@@ -56,7 +56,7 @@ class _SnapManager:
         snap_name: str,
         remote_snap_dir: str,
         latest_revision: Optional[str],
-        inject_from_host: bool = True
+        inject_from_host: bool = True,
     ) -> None:
         # name of the snap instance, which may have an alias
         self.snap_instance_name = snap_name
@@ -137,7 +137,9 @@ class _SnapManager:
         # TODO not being able to lock down on a snap revision can lead to races.
         host_snap_repo = self._get_snap_repo()
         with tempfile.TemporaryDirectory() as temp_dir:
-            snap_file_path = os.path.join(temp_dir, "{}.snap".format(self.snap_instance_name))
+            snap_file_path = os.path.join(
+                temp_dir, "{}.snap".format(self.snap_instance_name)
+            )
             assertion_file_path = os.path.join(
                 temp_dir, "{}.assert".format(self.snap_instance_name)
             )
@@ -170,7 +172,11 @@ class _SnapManager:
 
             if not snap_revision.startswith("x") and snap_channel:
                 switch_cmd = [
-                    "snap", "switch", self.snap_name, "--channel", snap_channel
+                    "snap",
+                    "switch",
+                    self.snap_name,
+                    "--channel",
+                    snap_channel,
                 ]
 
             if snap_revision.startswith("x"):
@@ -304,7 +310,7 @@ class SnapInjector:
         registry_filepath: str,
         runner: Callable[..., Optional[bytes]],
         file_pusher: Callable[..., None],
-        inject_from_host: bool = True
+        inject_from_host: bool = True,
     ) -> None:
         """
         Initialize a SnapInjector instance.

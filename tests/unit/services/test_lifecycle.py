@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Tests for the Snapcraft Lifecycle service."""
+
 import json
 import platform
 import shutil

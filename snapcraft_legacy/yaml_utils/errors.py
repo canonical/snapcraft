@@ -28,7 +28,6 @@ _VALIDATION_ERROR_CAUSES = {
 
 
 class YamlValidationError(SnapcraftError):
-
     fmt = "Issues while validating {source}: {message}"
 
     @classmethod
