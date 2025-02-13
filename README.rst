@@ -97,6 +97,7 @@ Migrate existing projects
 #. Finally, once all files are manually synced, actually sync the git history:
 
    - ``git remote add starbase git@github.com:canonical/starbase.git``
+   - ``git fetch starbase main``
    - ``git merge --allow-unrelated-histories starbase/main``
    - ``git remote remove starbase``
    - Don't forget to review all the new files and dirs that this merge adds -
@@ -113,6 +114,7 @@ Create a new project
 
    - ``git clone <your-repo>``
    - ``git remote add starbase git@github.com:canonical/starbase.git``
+   - ``git fetch starbase main``
    - ``git merge --allow-unrelated-histories starbase/main``
    - ``git push -f origin main``
    - ``git remote remove starbase``
