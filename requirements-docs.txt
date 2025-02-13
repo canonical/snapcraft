@@ -81,7 +81,7 @@ craft-platforms==0.4.0
     # via
     #   craft-application
     #   snapcraft (setup.py)
-craft-providers==2.0.4
+craft-providers==2.2.0
     # via
     #   craft-application
     #   snapcraft (setup.py)
