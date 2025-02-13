@@ -30,7 +30,6 @@ class VCSError(SnapcraftSourceError):
 
 
 class SnapcraftSourceNotFoundError(SnapcraftSourceError):
-
     fmt = (
         "Failed to pull source: {source!r}.\n"
         "Please ensure the source path is correct and that it is accessible.\n"
@@ -42,7 +41,6 @@ class SnapcraftSourceNotFoundError(SnapcraftSourceError):
 
 
 class SnapcraftSourceUnhandledError(SnapcraftSourceError):
-
     fmt = (
         "Failed to pull source: "
         "unable to determine source type of {source!r}.\n"
@@ -56,7 +54,6 @@ class SnapcraftSourceUnhandledError(SnapcraftSourceError):
 
 
 class SnapcraftSourceInvalidOptionError(SnapcraftSourceError):
-
     fmt = (
         "Failed to pull source: "
         "{option!r} cannot be used with a {source_type} source.\n"
@@ -68,7 +65,6 @@ class SnapcraftSourceInvalidOptionError(SnapcraftSourceError):
 
 
 class SnapcraftSourceIncompatibleOptionsError(SnapcraftSourceError):
-
     fmt = (
         "Failed to pull source: "
         "cannot specify both {humanized_options} for a {source_type} source.\n"
@@ -84,7 +80,6 @@ class SnapcraftSourceIncompatibleOptionsError(SnapcraftSourceError):
 
 
 class DigestDoesNotMatchError(SnapcraftSourceError):
-
     fmt = "Expected the digest for source to be {expected}, but it was {calculated}"
 
     def __init__(self, expected, calculated):
@@ -92,7 +87,6 @@ class DigestDoesNotMatchError(SnapcraftSourceError):
 
 
 class InvalidDebError(SnapcraftSourceError):
-
     fmt = (
         "The {deb_file} used does not contain valid data. "
         "Ensure a proper deb file is passed for .deb files "
@@ -101,7 +95,6 @@ class InvalidDebError(SnapcraftSourceError):
 
 
 class InvalidSnapError(SnapcraftSourceError):
-
     fmt = (
         "The snap file does not contain valid data. "
         "Ensure the source lists a proper snap file"
@@ -109,7 +102,6 @@ class InvalidSnapError(SnapcraftSourceError):
 
 
 class SourceUpdateUnsupportedError(SnapcraftSourceError):
-
     fmt = "Failed to update source: {source!s} sources don't support updating."
 
     def __init__(self, source):
@@ -117,7 +109,6 @@ class SourceUpdateUnsupportedError(SnapcraftSourceError):
 
 
 class SnapcraftPullError(SnapcraftSourceError):
-
     fmt = "Failed to pull source, command {command!r} exited with code {exit_code}."
 
     def __init__(self, command, exit_code):
@@ -129,7 +120,6 @@ class SnapcraftPullError(SnapcraftSourceError):
 
 
 class SnapcraftRequestError(SnapcraftSourceError):
-
     fmt = "Network request error: {message}"
 
 

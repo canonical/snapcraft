@@ -16,24 +16,24 @@
 
 """The catkin plugin for ROS 1 parts.
 
-    - catkin-packages:
-      (list of strings)
-      List of catkin packages to build. If not specified, all packages in the
-      workspace will be built. If set to an empty list ([]), no packages will
-      be built, which could be useful if you only want ROS debs in the snap.
+- catkin-packages:
+  (list of strings)
+  List of catkin packages to build. If not specified, all packages in the
+  workspace will be built. If set to an empty list ([]), no packages will
+  be built, which could be useful if you only want ROS debs in the snap.
 
-    - catkin-packages-ignore:
-      (list of strings)
-      List of catkin packages to ignore (i.e. not build or install). If not
-      specified or set to an empty list ([]), no packages will be ignored.
+- catkin-packages-ignore:
+  (list of strings)
+  List of catkin packages to ignore (i.e. not build or install). If not
+  specified or set to an empty list ([]), no packages will be ignored.
 
-    - catkin-cmake-args:
-      (list of strings)
-      Arguments to pass to cmake projects.
+- catkin-cmake-args:
+  (list of strings)
+  Arguments to pass to cmake projects.
 
-    This plugin requires certain variables that are specified by the `ros1-noetic`
-    extension. If you're not using the extension, set these in your `build-environment`:
-      - ROS_DISTRO: "noetic"
+This plugin requires certain variables that are specified by the `ros1-noetic`
+extension. If you're not using the extension, set these in your `build-environment`:
+  - ROS_DISTRO: "noetic"
 """
 
 from typing import Any, Dict, List, Set
@@ -118,12 +118,16 @@ class CatkinPlugin(_ros.RosPlugin):
         if self.options.ros_build_snaps:
             for ros_build_snap in self.options.ros_build_snaps:
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
-                activation_commands.extend(self._get_source_command(f"/snap/{snap_name}/current"))
+                activation_commands.extend(
+                    self._get_source_command(f"/snap/{snap_name}/current")
+                )
             activation_commands.append("")
 
         # Source ROS ws in stage-snaps next
         activation_commands.append("## Sourcing ROS ws in stage snaps")
-        activation_commands.extend(self._get_source_command("${SNAPCRAFT_PART_INSTALL}"))
+        activation_commands.extend(
+            self._get_source_command("${SNAPCRAFT_PART_INSTALL}")
+        )
         activation_commands.append("")
 
         # Finally source system's ROS ws
@@ -134,7 +138,6 @@ class CatkinPlugin(_ros.RosPlugin):
         return activation_commands
 
     def _get_build_commands(self) -> List[str]:
-
         build_command = [
             "catkin_make_isolated",
             "--install",
@@ -155,9 +158,12 @@ class CatkinPlugin(_ros.RosPlugin):
         if self.options.catkin_packages_ignore:
             build_command.extend(["--ignore-pkg", *self.options.catkin_packages_ignore])
 
-        if self.options.catkin_cmake_args or self.options.ros_content_sharing_extension_cmake_args:
+        if (
+            self.options.catkin_cmake_args
+            or self.options.ros_content_sharing_extension_cmake_args
+        ):
             build_command.append("--cmake-args")
             build_command.extend(self.options.catkin_cmake_args)
             build_command.extend(self.options.ros_content_sharing_extension_cmake_args)
 
-        return (["## Build command", " ".join(build_command)])
+        return ["## Build command", " ".join(build_command)]

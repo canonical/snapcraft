@@ -21,7 +21,9 @@ from snapcraft_legacy.internal.lifecycle._status_cache import StatusCache
 
 from . import LifecycleTestBase
 
+import pytest
 
+@pytest.mark.slow
 class StatusCacheTestCase(LifecycleTestBase):
     def setUp(self):
         super().setUp()

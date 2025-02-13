@@ -61,13 +61,12 @@ class RosFoxyMetaBase(RosFoxyExtension):
         ]
 
         self.root_snippet["plugs"] = {
-            self.ros2_foxy_snaps.content:
-                {
-                    "interface": "content",
-                    "content": self.ros2_foxy_snaps.content,
-                    "target": "$SNAP/opt/ros/underlay_ws",
-                    "default-provider": self.ros2_foxy_snaps.content,
-                }
+            self.ros2_foxy_snaps.content: {
+                "interface": "content",
+                "content": self.ros2_foxy_snaps.content,
+                "target": "$SNAP/opt/ros/underlay_ws",
+                "default-provider": self.ros2_foxy_snaps.content,
+            }
         }
 
         self.part_snippet["colcon-cmake-args"] = [
@@ -82,4 +81,6 @@ class RosFoxyMetaBase(RosFoxyExtension):
             "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
 
-        self.app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
+        self.app_snippet["environment"]["PYTHONPATH"] = (
+            f"{python_paths}:{':'.join(new_python_paths)}"
+        )

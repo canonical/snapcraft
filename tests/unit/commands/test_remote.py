@@ -224,6 +224,7 @@ def test_command_accept_upload(
     mock_run_remote_build.assert_called_once()
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures(
     "mock_argv", "mock_confirm", "emitter", "fake_services", "fake_sudo"

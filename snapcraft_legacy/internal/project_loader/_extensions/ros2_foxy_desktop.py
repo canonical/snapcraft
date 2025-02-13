@@ -29,6 +29,4 @@ class ExtensionImpl(RosFoxyMetaBase):
     @functools.cached_property
     @overrides
     def ros2_foxy_snaps(self) -> ROS2FoxySnaps:
-        return ROS2FoxySnaps(
-            content="ros-foxy-desktop", sdk="ros-foxy-desktop-dev"
-        )
+        return ROS2FoxySnaps(content="ros-foxy-desktop", sdk="ros-foxy-desktop-dev")

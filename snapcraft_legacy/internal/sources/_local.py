@@ -50,7 +50,7 @@ class Local(Base):
         self._updated_files = set()
         self._updated_directories = set()
 
-        for (root, directories, files) in os.walk(self.source_abspath, topdown=True):
+        for root, directories, files in os.walk(self.source_abspath, topdown=True):
             ignored = set(self._ignore(root, directories + files, check=True))
             if ignored:
                 # Prune our search appropriately given an ignore list, i.e.

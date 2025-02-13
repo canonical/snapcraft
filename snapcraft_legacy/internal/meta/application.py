@@ -50,7 +50,7 @@ class Application:
         install_mode: str = None,
         command_chain: List[str] = None,
         passthrough: Dict[str, Any] = None,
-        commands: Dict[str, Command] = None
+        commands: Dict[str, Command] = None,
     ) -> None:
         """Initialize an application entry.
 

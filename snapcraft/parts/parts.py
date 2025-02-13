@@ -19,7 +19,7 @@
 import pathlib
 import subprocess
 import types
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, cast
 
 import craft_parts
 from craft_archives import repo
@@ -227,7 +227,8 @@ class PartsLifecycle:
             msg = err.strerror
             if err.filename:
                 msg = f"{err.filename}: {msg}"
-            raise errors.PartsLifecycleError(msg) from err
+            # Casting as a str as OSError should always contain an error message
+            raise errors.PartsLifecycleError(cast(str, msg)) from err
         except Exception as err:
             raise errors.PartsLifecycleError(str(err)) from err
 

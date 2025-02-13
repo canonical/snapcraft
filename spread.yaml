@@ -94,7 +94,7 @@ backends:
         "if [ -d /etc/ssh/sshd_config.d/ ]
         then
           echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/10-custom.conf
-          echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config.d/10-custom.conf 
+          echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config.d/10-custom.conf
         else
           sed -i /etc/ssh/sshd_config -E -e 's/^#?PasswordAuthentication.*/PasswordAuthentication yes/' -e 's/^#?PermitRootLogin.*/PermitRootLogin yes/'
         fi"
@@ -183,177 +183,173 @@ restore-each: |
   "$TOOLS_DIR"/restore.sh
 
 suites:
- tests/spread/core20/:
-   summary: core20 specific tests
-   systems:
-     - ubuntu-20.04*
+  tests/spread/core20/:
+    summary: core20 specific tests
+    systems:
+      - ubuntu-20.04*
 
- tests/spread/core22/:
-   summary: core22 specific tests
-   systems:
-     - ubuntu-22.04
-     - ubuntu-22.04-64
-     - ubuntu-22.04-amd64
-     - ubuntu-22.04-arm64
-     - ubuntu-22.04-armhf
-     - ubuntu-22.04-s390x
-     - ubuntu-22.04-ppc64el
-   environment:
-     SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  tests/spread/core22/:
+    summary: core22 specific tests
+    systems:
+      - ubuntu-22.04
+      - ubuntu-22.04-64
+      - ubuntu-22.04-amd64
+      - ubuntu-22.04-arm64
+      - ubuntu-22.04-armhf
+      - ubuntu-22.04-s390x
+      - ubuntu-22.04-ppc64el
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
- tests/spread/core22/environment/:
-   summary: core22 environment tests
-   systems:
-     - ubuntu-22.04*
+  tests/spread/core22/environment/:
+    summary: core22 environment tests
+    systems:
+      - ubuntu-22.04*
 
- tests/spread/core22/scriptlets/:
-   summary: core22 scriptlet tests
-   systems:
-     - ubuntu-22.04*
+  tests/spread/core22/scriptlets/:
+    summary: core22 scriptlet tests
+    systems:
+      - ubuntu-22.04*
 
- tests/spread/core22/manifest/:
-   summary: core22 manifest tests
-   systems:
-     - ubuntu-22.04*
+  tests/spread/core22/manifest/:
+    summary: core22 manifest tests
+    systems:
+      - ubuntu-22.04*
 
- tests/spread/core22/architectures/:
-   summary: core22 architecture tests
-   systems:
-     - ubuntu-22.04
-     - ubuntu-22.04-64
-     - ubuntu-22.04-amd64
+  tests/spread/core22/architectures/:
+    summary: core22 architecture tests
+    systems:
+      - ubuntu-22.04
+      - ubuntu-22.04-64
+      - ubuntu-22.04-amd64
 
- tests/spread/core22/linters/:
-   summary: core22 linter tests
-   environment:
-     SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
+  tests/spread/core22/linters/:
+    summary: core22 linter tests
+    environment:
+      SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
 
-   systems:
-     - ubuntu-22.04*
+    systems:
+      - ubuntu-22.04*
 
- tests/spread/core22/patchelf/:
-   summary: core22 patchelf tests
-   systems:
-     - ubuntu-22.04*
+  tests/spread/core22/patchelf/:
+    summary: core22 patchelf tests
+    systems:
+      - ubuntu-22.04*
 
- tests/spread/core24/:
-   summary: core24 specific tests
-   systems:
-     - ubuntu-24.04*
-   environment:
-     SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  tests/spread/core24/:
+    summary: core24 specific tests
+    systems:
+      - ubuntu-24.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
- tests/spread/core24-suites/environment/:
-   summary: core24 environment tests
-   systems:
-     - ubuntu-24.04*
+  tests/spread/core24-suites/environment/:
+    summary: core24 environment tests
+    systems:
+      - ubuntu-24.04*
 
- tests/spread/core24-suites/scriptlets/:
-   summary: core24 scriptlet tests
-   systems:
-     - ubuntu-24.04*
+  tests/spread/core24-suites/scriptlets/:
+    summary: core24 scriptlet tests
+    systems:
+      - ubuntu-24.04*
 
- tests/spread/core24-suites/manifest/:
-   summary: core24 manifest tests
-   systems:
-     - ubuntu-24.04*
+  tests/spread/core24-suites/manifest/:
+    summary: core24 manifest tests
+    systems:
+      - ubuntu-24.04*
 
- tests/spread/core24-suites/patchelf/:
-   summary: core24 patchelf tests
-   systems:
-     - ubuntu-24.04*
+  tests/spread/core24-suites/patchelf/:
+    summary: core24 patchelf tests
+    systems:
+      - ubuntu-24.04*
 
- tests/spread/core24-suites/plugins/:
-   summary: core24 plugin tests
-   systems:
-     - ubuntu-24.04*
+  tests/spread/core24-suites/plugins/:
+    summary: core24 plugin tests
+    systems:
+      - ubuntu-24.04*
 
- # General, core suite
- tests/spread/general/:
-   summary: tests of snapcraft core functionality
-   systems:
-     - ubuntu-20.04*
-     - ubuntu-22.04*
+    # General, core suite
+    tests/spread/general/:
+      summary: tests of snapcraft core functionality
+      systems:
+        - ubuntu-20.04*
+        - ubuntu-22.04*
 
- tests/spread/general/hooks/:
-   summary: tests of snapcraft hook functionality
-   systems:
-     - ubuntu-20.04*
-     - ubuntu-22.04*
+    tests/spread/general/hooks/:
+      summary: tests of snapcraft hook functionality
+      systems:
+        - ubuntu-20.04*
+        - ubuntu-22.04*
 
-# 'build-base: devel' fails due to an issue with the 24.10 buildd image (#4921)
-# tests/spread/core-devel/:
-#   summary: tests of devel base snaps
-#   environment:
-#     SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  # 'build-base: devel' fails due to an issue with the 24.10 buildd image (#4921)
+  # tests/spread/core-devel/:
+  #   summary: tests of devel base snaps
+  #   environment:
+  #     SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
- # General, core suite
- tests/spread/cross-compile/:
-   summary: tests of supported cross-compile functionality
-   systems:
-   - ubuntu-20.04
-   - ubuntu-20.04-64
-   - ubuntu-20.04-amd64
+  # General, core suite
+  tests/spread/cross-compile/:
+    summary: tests of supported cross-compile functionality
+    systems:
+      - ubuntu-20.04
+      - ubuntu-20.04-64
+      - ubuntu-20.04-amd64
 
- # Use of multipass and lxd build providers
- tests/spread/providers/:
-   summary: tests of snapcraft using build providers
-   systems:
-   - ubuntu-20.04-64
-   - ubuntu-22.04-64
-   kill-timeout: 180m
-   priority: 90  # Run this test relatively early since fetching images can take time
- tests/spread/providers/legacy/:
-   summary: tests of snapcraft using build providers
-   systems:
-   - ubuntu-20.04-64
-   kill-timeout: 180m
-   priority: 90  # Run this test relatively early since fetching images can take time
+  # Use of multipass and lxd build providers
+  tests/spread/providers/:
+    summary: tests of snapcraft using build providers
+    systems:
+      - ubuntu-20.04-64
+      - ubuntu-22.04-64
+    kill-timeout: 180m
+    priority: 90 # Run this test relatively early since fetching images can take time
+  tests/spread/providers/legacy/:
+    summary: tests of snapcraft using build providers
+    systems:
+      - ubuntu-20.04-64
+    kill-timeout: 180m
+    priority: 90 # Run this test relatively early since fetching images can take time
 
- # Plugin-specific suites
- tests/spread/plugins/v2/:
-   summary: tests of snapcraft's v2 plugins
-   systems:
-   - ubuntu-20.04*
- tests/spread/plugins/craft-parts/:
-   summary: tests of snapcraft's craft-part's based plugins
-   systems:
-   - ubuntu-22.04*
+  # Plugin-specific suites
+  tests/spread/plugins/v2/:
+    summary: tests of snapcraft's v2 plugins
+    systems:
+      - ubuntu-20.04*
+  tests/spread/plugins/craft-parts/:
+    summary: tests of snapcraft's craft-part's based plugins
+    systems:
+      - ubuntu-22.04*
 
-# Extensions tests
- tests/spread/extensions/:
-   summary: tests of snapcraft's extensions
-   kill-timeout: 20m
+  # Extensions tests
+  tests/spread/extensions/:
+    summary: tests of snapcraft's extensions
+    kill-timeout: 20m
 
-# External snap tests
- tests/spread/snaps/:
-   environment:
-     SNAPCRAFT_BUILD_ENVIRONMENT: ""
-   manual: true
-   summary: external snaps
-   prepare: |
-     sudo apt-get install git
-     sudo apt-mark auto git
+  # External snap tests
+  tests/spread/snaps/:
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
+    manual: true
+    summary: external snaps
+    prepare: |
+      sudo apt-get install git
+      sudo apt-mark auto git
 
- tests/spread/store/:
-   summary: tests of store-related snapcraft commands
-   manual: true
-   environment:
-     STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io
-     STORE_API_URL: https://api.staging.snapcraft.io
-     STORE_UPLOAD_URL: https://storage.staging.snapcraftcontent.com
-     UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com
+  tests/spread/store/:
+    summary: tests of store-related snapcraft commands
+    manual: true
+    environment:
+      STORE_DASHBOARD_URL: https://dashboard.staging.snapcraft.io
+      STORE_API_URL: https://api.staging.snapcraft.io
+      STORE_UPLOAD_URL: https://storage.staging.snapcraftcontent.com
+      UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com
 
- docs/howto/code/:
-   summary: tests how-to guides from the docs
-   systems:
-   - ubuntu-24.04-64
-
+  docs/howto/code/:
+    summary: tests how-to guides from the docs
+    systems:
+      - ubuntu-24.04-64
 
 path: /snapcraft/
 include:
   - docs/
   - tests/
-  - requirements.txt
-  - requirements-devel.txt
-  - runtests.sh

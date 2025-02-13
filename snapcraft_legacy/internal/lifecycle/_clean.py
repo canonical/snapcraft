@@ -69,8 +69,7 @@ def _clean_parts(part_names, step, config, staged_state, primed_state):
         parts_not_being_cleaned = dirty_part_names.difference(part_names)
         if parts_not_being_cleaned:
             logger.warning(
-                "Cleaned {!r}, which makes the following {} out of date: "
-                "{}".format(
+                "Cleaned {!r}, which makes the following {} out of date: {}".format(
                     part_name,
                     formatting_utils.pluralize(
                         parts_not_being_cleaned, "part", "parts"
