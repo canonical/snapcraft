@@ -7,3 +7,4 @@
 "howto/install-snapcraft.rst" "howto/set-up-snapcraft.rst"
 "howto/install.rst" "howto/set-up-snapcraft.rst"
 "reference/anatomy-of-a-recipe.rst" "reference/anatomy-of-a-project-file.rst"
+"reference/changelog.rst" "release-notes/changelog.rst"
