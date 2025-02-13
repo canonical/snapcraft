@@ -361,6 +361,7 @@ core24
 
 For a complete list of commits, check out the `8.4.4`_ release on GitHub.
 
+.. _changelog-7-5-8:
 
 7.5.8 (2024-Oct-24)
 -------------------
