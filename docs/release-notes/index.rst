@@ -3,45 +3,43 @@
 Release notes
 =============
 
-This page lists the notes for past releases of Starcraft, which summarise new features,
+This page lists the notes for past releases of Snapcraft, which summarise new features,
 bug fixes and backwards-incompatible changes in each version. It also contains the
-release and support policies for Starcraft.
+release and support policies for Snapcraft.
 
 
 Current releases
 ----------------
 
+Snapcraft 8
+~~~~~~~~~~~
 
-<latest release>
-~~~~~~~~~~~~~~~~
-
-- <link to latest release, update, such as 8.2.0>
-- <link to latest release, update, such as 8.1.0>
-- <link to latest release, initial, such as 8.0.0>
+- :ref:`Snapcraft 8.7 <release-8.7>`
 
 
-<parallel release>
-~~~~~~~~~~~~~~~~~~
+Snapcraft 7
+~~~~~~~~~~~
 
-<If necessary, add guidance and caveats about these older releases, such as
-"Snapcraft 7 is available for building core18 snaps. When building for a newer
-base, use Snapcraft 8.">
+Snapcraft 7 is available for building ``core18`` snaps. When building for newer bases,
+use Snapcraft 8. See
+:ref:`How to install multiple instances of Snapcraft <multiple-installs>` for
+more information.
 
-- <link to parallel release, update, such as 7.2.0>
-- <link to parallel release, update, such as 7.1.0>
-- <link to parallel release, initial, such as 7.0.0>
+- :ref:`Snapcraft 7.5.8 <changelog-7-5-8>`
 
 
 Past releases
 -------------
 
+For a list of the latest major version of Snapcraft that supports a particular
+base, see the :ref:`Base snaps reference <base-snap-reference>`.
 
-<past release>
-~~~~~~~~~~~~~~
+Snapcraft 6
+~~~~~~~~~~~
 
-- <link to past release, update, such as 6.2.0>
-- <link to past release, update, such as 6.1.0>
-- <link to past release, initial, such as 6.0.0>
+Snapcraft 6 is available for building ``core`` snaps.
+
+- `Snapcraft 6.1 <https://github.com/canonical/snapcraft/releases/tag/6.1>`_
 
 
 .. _release-versioning:
@@ -49,7 +47,7 @@ Past releases
 Release versioning
 ------------------
 
-Starcraft version naming follows the Semantic Versioning 2.0.0 scheme with
+Snapcraft version naming follows the `Semantic Versioning 2.0.0`_ scheme with
 numbers for major, minor, and patch versions.
 
 .. list-table::
@@ -60,10 +58,7 @@ numbers for major, minor, and patch versions.
       - Significance
     * - Major
       - **3**.1.2
-      - <Apps: "A change that drops support for an earlier software base.">
-
-        <Libraries: "A change that breaks compatibility with the previous
-        version.">
+      - A change that drops support for an earlier software base.
     * - Minor
       - 3.\ **1**\ .2
       - A new feature within the major version.
@@ -75,17 +70,23 @@ numbers for major, minor, and patch versions.
 Long-term support
 -----------------
 
-Starcraft doesn't have long-term support (LTS) releases. However, we typically
+Snapcraft doesn't have long-term support (LTS) releases. However, we typically
 deliver a compatibility release shortly after Ubuntu LTS releases to ensure
 continuity.
 
-<Apps: Starcraft software bases are derived from Ubuntu LTS releases, and their
-development keeps pace with the OS's new releases and support lifecycle.>
+Snapcraft software bases are derived from Ubuntu LTS releases, and their
+development keeps pace with the OS's new releases and support lifecycle.
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
+   Snapcraft 8.7 <snapcraft-8-7>
    changelog
+
+
+.. _`Semantic Versioning 2.0.0`: https://semver.org/spec/v2.0.0.html
+
 
 
 .. release note template:
