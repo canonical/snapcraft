@@ -17,5 +17,5 @@ apps:
 parts:
   python-sample:
     plugin: python
-    source: src
+    source: ./src
     python-packages: [black]

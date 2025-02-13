@@ -3,6 +3,8 @@ summary: >-
   configurations
 
 environment:
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
   # base core24, strict confinement: use provisioned if available
   SNAP/strict_not_provisioned: strict-not-provisioned
   SNAP/strict_provisioned: strict-provisioned
