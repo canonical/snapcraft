@@ -85,6 +85,7 @@ Current
 ``--build-for``
 ***************
 **Type**: Comma-separated list of strings
+
 **Default**: The architectures specified in your project file or your host architecture
 
 .. note::
@@ -124,6 +125,7 @@ Explicitly specify a project to upload to.
 ``--launchpad-timeout``
 ***********************
 **Type**: Integer
+
 **Default**: 0
 
 Time, in seconds, to wait for Launchpad to complete a build. A time of 0 seconds will
