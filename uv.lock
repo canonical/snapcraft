@@ -487,7 +487,7 @@ wheels = [
 
 [[package]]
 name = "craft-providers"
-version = "2.1.0"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
@@ -496,9 +496,9 @@ dependencies = [
     { name = "requests" },
     { name = "requests-unixsocket2" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/29/1f/4c0eb72331e11ec8fec5cd24e993fe1e34ca04331251b90b8b6c7b1b72c7/craft_providers-2.1.0.tar.gz", hash = "sha256:9494a70cd0f86c13a746157bc1a54520e867656690f60d07d4ffdce39f60a99a", size = 180276 }
+sdist = { url = "https://files.pythonhosted.org/packages/16/92/93e3f7adff46a338ae7087ffedab34dd116b329917735677f3205369b931/craft_providers-2.2.0.tar.gz", hash = "sha256:dda4df4f777fbc6fbb4fd72cb85ccd237d07875b80a5c95bc70ace3c22d26b07", size = 185832 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bd/53/81f948ad5cd368bd7774b716e9afcae383ac8a389b7b462b214cd8981ade/craft_providers-2.1.0-py2.py3-none-any.whl", hash = "sha256:502e6fbb92435fac0db3bee0fcdaa84f0826880176b4635d896c5e4d429e3c5e", size = 97031 },
+    { url = "https://files.pythonhosted.org/packages/66/09/6958083cd574fcb13fdf3943b2d3151c4422a6b649a130bcdb055a2ba063/craft_providers-2.2.0-py2.py3-none-any.whl", hash = "sha256:3198eee67f93fb5903b40635f0561c294a05b9c20127cabd2295173dfd443f83", size = 101447 },
 ]
 
 [[package]]
@@ -2145,6 +2145,7 @@ dependencies = [
     { name = "craft-grammar" },
     { name = "craft-parts" },
     { name = "craft-platforms" },
+    { name = "craft-providers" },
     { name = "craft-store" },
     { name = "cryptography" },
     { name = "gnupg" },
@@ -2254,6 +2255,7 @@ requires-dist = [
     { name = "craft-grammar", specifier = ">=2.0.1,<3.0.0" },
     { name = "craft-parts", specifier = "==2.4.1" },
     { name = "craft-platforms", specifier = "~=0.4" },
+    { name = "craft-providers", specifier = ">=2.2.0,<3.0.0" },
     { name = "craft-store", specifier = ">=3.0.2,<4.0.0" },
     { name = "cryptography", specifier = "==43.0.3" },
     { name = "gnupg" },

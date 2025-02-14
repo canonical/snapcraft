@@ -70,6 +70,20 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.6.2 (2025-Feb-14)
+-------------------
+
+Core
+====
+
+* Fix a bug where LXD instances would fail during setup due to a race
+  condition where the setup began before the instance had started.
+
+* Require Multipass ``1.14.1`` or higher when using Multipass to build
+  ``core22`` or ``core24`` snaps.
+
+For a complete list of commits, check out the `8.6.2`_ release on GitHub.
+
 8.6.1 (2025-Feb-10)
 -------------------
 
@@ -1642,3 +1656,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.5.1: https://github.com/canonical/snapcraft/releases/tag/8.5.1
 .. _8.6.0: https://github.com/canonical/snapcraft/releases/tag/8.6.0
 .. _8.6.1: https://github.com/canonical/snapcraft/releases/tag/8.6.1
+.. _8.6.2: https://github.com/canonical/snapcraft/releases/tag/8.6.2
