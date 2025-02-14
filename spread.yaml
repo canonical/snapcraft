@@ -263,18 +263,23 @@ suites:
     systems:
       - ubuntu-24.04*
 
-  # General, core suite
-  tests/spread/general/:
-    summary: tests of snapcraft core functionality
+  tests/spread/core24-suites/plugins/:
+    summary: core24 plugin tests
     systems:
-      - ubuntu-20.04*
-      - ubuntu-22.04*
+      - ubuntu-24.04*
 
-  tests/spread/general/hooks/:
-    summary: tests of snapcraft hook functionality
-    systems:
-      - ubuntu-20.04*
-      - ubuntu-22.04*
+    # General, core suite
+    tests/spread/general/:
+      summary: tests of snapcraft core functionality
+      systems:
+        - ubuntu-20.04*
+        - ubuntu-22.04*
+
+    tests/spread/general/hooks/:
+      summary: tests of snapcraft hook functionality
+      systems:
+        - ubuntu-20.04*
+        - ubuntu-22.04*
 
   # 'build-base: devel' fails due to an issue with the 24.10 buildd image (#4921)
   # tests/spread/core-devel/:
