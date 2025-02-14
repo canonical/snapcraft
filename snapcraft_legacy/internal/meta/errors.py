@@ -30,7 +30,6 @@ class SnapMetaGenerationError(errors.SnapcraftError):
 
 
 class MissingSnapcraftYamlKeysError(SnapMetaGenerationError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "Missing required key(s) in snapcraft.yaml: {keys}. "
@@ -43,7 +42,6 @@ class MissingSnapcraftYamlKeysError(SnapMetaGenerationError):
 
 
 class AdoptedPartMissingError(SnapMetaGenerationError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "'adopt-info' refers to a part named {part!r}, but it is not defined "
@@ -55,7 +53,6 @@ class AdoptedPartMissingError(SnapMetaGenerationError):
 
 
 class AdoptedPartNotParsingInfo(SnapMetaGenerationError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "'adopt-info' refers to part {part!r}, but that part is lacking the "
@@ -67,7 +64,6 @@ class AdoptedPartNotParsingInfo(SnapMetaGenerationError):
 
 
 class AmbiguousPassthroughKeyError(SnapMetaGenerationError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "The following keys are specified in their regular location "
@@ -80,7 +76,6 @@ class AmbiguousPassthroughKeyError(SnapMetaGenerationError):
 
 
 class InvalidAppCommandError(errors.SnapcraftError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "The specified command {command!r} defined in the app {app_name!r} does "
@@ -93,7 +88,6 @@ class InvalidAppCommandError(errors.SnapcraftError):
 
 
 class InvalidAppCommandNotFound(errors.SnapcraftError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "The specified command {command!r} defined in the app {app_name!r} does "
@@ -106,7 +100,6 @@ class InvalidAppCommandNotFound(errors.SnapcraftError):
 
 
 class InvalidAppCommandNotExecutable(errors.SnapcraftError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "The specified command {command!r} defined in the app {app_name!r} "
@@ -118,7 +111,6 @@ class InvalidAppCommandNotExecutable(errors.SnapcraftError):
 
 
 class InvalidAppCommandFormatError(errors.SnapcraftError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "The specified command {command!r} defined in the app {app_name!r} does "
@@ -132,7 +124,6 @@ class InvalidAppCommandFormatError(errors.SnapcraftError):
 
 
 class InvalidCommandChainError(errors.SnapcraftError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "The command-chain item {item!r} defined in the app {app_name!r} does "
@@ -145,10 +136,8 @@ class InvalidCommandChainError(errors.SnapcraftError):
 
 
 class InvalidDesktopFileError(errors.SnapcraftError):
-
     fmt = (
-        "Failed to generate desktop file: "
-        "Invalid desktop file {filename!r}: {message}."
+        "Failed to generate desktop file: Invalid desktop file {filename!r}: {message}."
         # FIXME include how to fix each of the possible desktop file errors.
         # https://bugs.launchpad.net/snapcraft/+bug/1727435
         # --elopio - 2017-10-25

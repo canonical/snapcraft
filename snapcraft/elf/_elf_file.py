@@ -57,7 +57,7 @@ class _NeededLibrary:
 class SonameCache:
     """A cache for sonames."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._soname_paths: _SonameCacheDict = {}
 
     def __getitem__(self, key):

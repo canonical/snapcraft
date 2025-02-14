@@ -24,6 +24,7 @@ from unittest.mock import patch
 
 import fixtures
 import testtools
+import pytest
 from testtools.matchers import (
     Annotate,
     Contains,
@@ -43,6 +44,7 @@ from snapcraft_legacy.project import Project
 from tests.legacy import fixture_setup, unit
 
 
+@pytest.mark.slow
 class CreateBaseTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
@@ -414,6 +416,7 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
         )
         self.assertThat(raised.keys, Equals("'confinement'"))
 
+    @pytest.mark.slow
     def test_app_ambiguous_key_fails(self):
         self.config_data["apps"] = {
             "foo": {
@@ -438,6 +441,7 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
         )
         self.assertThat(raised.keys, Equals("'plugs'"))
 
+    @pytest.mark.slow
     def test_warn_once_only(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
@@ -638,6 +642,7 @@ class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
 
 
 class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
+    @pytest.mark.slow
     def test_create_metadata_with_missing_parse_info(self):
         del self.config_data["summary"]
         del self.config_data["parts"]["test-part"]["parse-info"]
@@ -654,6 +659,7 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
         )
         self.assertThat(raised.part, Equals("wrong-part"))
 
+    @pytest.mark.slow
     def test_metadata_doesnt_overwrite_specified(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
@@ -683,6 +689,7 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
             ),
         )
 
+    @pytest.mark.slow
     def test_metadata_with_unexisting_icon(self):
         def _fake_extractor(file_path, workdir):
             return extractors.ExtractedMetadata(
@@ -694,6 +701,7 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
         # The meta generation should just ignore the dead path, and not fail.
         self.generate_meta_yaml(build=True)
 
+    @pytest.mark.slow
     def test_metadata_satisfies_required_property(self):
         del self.config_data["summary"]
 
@@ -711,6 +719,7 @@ class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
         self.assertThat(y["summary"], Equals("extracted summary"))
         self.assertThat(y["description"], Equals(self.config_data["description"]))
 
+    @pytest.mark.slow
     def test_metadata_not_all_properties_satisfied(self):
         del self.config_data["summary"]
         del self.config_data["description"]
@@ -813,6 +822,7 @@ class CreateWithAssetsTestCase(CreateBaseTestCase):
         self.assert_create_meta_with_hook("build-aux/snap")
 
 
+@pytest.mark.slow
 class MetadataFromSourceWithIconFileTestCase(CreateMetadataFromSourceBaseTestCase):
     def assert_no_overwrite(self, snapcraft_assets_dir, directory, file_name):
         os.makedirs(directory)
@@ -855,6 +865,7 @@ class MetadataFromSourceWithIconFileTestCase(CreateMetadataFromSourceBaseTestCas
         self.assert_no_overwrite("build-aux/snap", "build-aux/snap/gui", "icon.png")
 
 
+@pytest.mark.slow
 class MetadataFromSourceWithDesktopFileTestCase(CreateMetadataFromSourceBaseTestCase):
     def assert_no_overwrite(self, snapcraft_assets_dir, directory):
         os.makedirs(directory)
@@ -892,6 +903,7 @@ class MetadataFromSourceWithDesktopFileTestCase(CreateMetadataFromSourceBaseTest
         self.assert_no_overwrite("build-aux/snap", "build-aux/snap/gui")
 
 
+@pytest.mark.slow
 class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
     def assert_scriptlets_satisfy_required_property(
         self, keyword, original, value, setter

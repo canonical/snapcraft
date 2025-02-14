@@ -72,9 +72,9 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
             "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
 
-        app_snippet["environment"][
-            "PYTHONPATH"
-        ] = f'{python_paths}:{":".join(new_python_paths)}'
+        app_snippet["environment"]["PYTHONPATH"] = (
+            f"{python_paths}:{':'.join(new_python_paths)}"
+        )
 
         return app_snippet
 

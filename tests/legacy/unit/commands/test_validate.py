@@ -16,6 +16,7 @@
 from unittest import mock
 
 import fixtures
+import pytest
 from testtools.matchers import Contains, Equals, FileExists
 
 import snapcraft_legacy.storeapi.errors
@@ -23,6 +24,7 @@ import snapcraft_legacy.storeapi.errors
 from . import StoreCommandsBaseTestCase
 
 
+@pytest.mark.slow
 class ValidateCommandTestCase(StoreCommandsBaseTestCase):
     def setUp(self):
         super().setUp()

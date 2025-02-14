@@ -1190,8 +1190,7 @@ def test_list_confdbs_unmarshal_error(fake_client, list_confdbs_payload):
 
     assert str(raised.value) == "Received invalid confdbs set from the store"
     assert raised.value.details == (
-        "Bad confdbs set content:\n"
-        "- field 'name' required in top-level configuration"
+        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
     )
 
 
@@ -1237,8 +1236,7 @@ def test_build_confdbs_unmarshal_error(fake_client, build_confdbs_payload):
 
     assert str(raised.value) == "Received invalid confdbs set from the store"
     assert raised.value.details == (
-        "Bad confdbs set content:\n"
-        "- field 'name' required in top-level configuration"
+        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
     )
 
 
@@ -1303,8 +1301,7 @@ def test_post_confdbs_unmarshal_error(fake_client, post_confdbs_payload):
 
     assert str(raised.value) == "Received invalid confdbs set from the store"
     assert raised.value.details == (
-        "Bad confdbs set content:\n"
-        "- field 'name' required in top-level configuration"
+        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
     )
 
 

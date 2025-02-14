@@ -85,9 +85,9 @@ class SnapAPI(Requests):
         )
 
         params = dict()
-        params[
-            "fields"
-        ] = "channel-map,snap-id,name,publisher,confinement,revision,download"
+        params["fields"] = (
+            "channel-map,snap-id,name,publisher,confinement,revision,download"
+        )
         if arch is not None:
             params["architecture"] = arch
         logger.debug("Getting information for {}".format(snap_name))

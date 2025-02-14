@@ -16,7 +16,6 @@
 
 """Utilities to run inside a correct snapcrafting environment."""
 
-
 import tempfile
 
 from snapcraft_legacy.internal import common

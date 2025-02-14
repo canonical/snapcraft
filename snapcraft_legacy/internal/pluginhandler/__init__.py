@@ -771,8 +771,9 @@ class PluginHandler:
             )
         except subprocess.CalledProcessError as e:
             logger.warning(
-                "'uname' exited with code {}: unable to record machine "
-                "manifest".format(e.returncode)
+                "'uname' exited with code {}: unable to record machine manifest".format(
+                    e.returncode
+                )
             )
             return {}
 
