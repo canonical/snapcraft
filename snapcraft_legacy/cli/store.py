@@ -68,9 +68,7 @@ def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
         channels:    {channels}
         permissions: {permissions}
         expires:     {expires}
-    """.format(
-            **human_readable_acl
-        )
+    """.format(**human_readable_acl)
     )
 
 

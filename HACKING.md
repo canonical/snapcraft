@@ -23,60 +23,95 @@ newgrp lxd
 Setup the environment by running:
 
 ```shell
-./tools/environment-setup.sh
+make setup
 ```
-
-To work inside this environment, run:
-
-```shell
-lxc exec snapcraft-dev -- sudo -iu ubuntu bash
-```
-
-Import your keys (`ssh-import-id`) and add a `Host` entry to your ssh config if you are interested in [Code's](https://snapcraft.io/code) [Remote-SSH](https://code.visualstudio.com/docs/remote/ssh) plugin.
 
 ### Tooling
 
 We use a large number of tools for our project. Most of these are installed for
-you with tox, but you'll need to install:
-
-- Python 3.12 (default on Ubuntu 24.04) with setuptools.
-- [tox](https://tox.wiki) version 3.8 or later
-- [pyright](https://github.com/microsoft/pyright)  (also available via snap: `snap install pyright`)
-- [ruff](https://github.com/astral/ruff) (also available via snap: `snap install ruff`)
-- [ShellCheck](https://www.shellcheck.net/)  (also available via snap: `snap install shellcheck`)
+you with `make setup`, but you'll need to install Python 3.12 separately.
 
 ### Testing
 
-See the [Testing guide](TESTING.md).
+By default, our CI suite will run both unit and integration testing on every PR. Generally speaking, it's good to run unit tests before pushing any code anyways as they are quick and great for catching bugs early. Integration tests, on the other hand, are quite heavy and slow to run locally. Due to this, we only recommend running the integration tests locally if there is an obvious need, such as debugging an integration test that failed in CI.
+
+#### Unit testing
+
+For unit testing, use the provided make recipes:
+
+```shell
+make test       # All unit tests
+make test-fast  # Only the fast tests
+make test-slow  # Only the slow tests
+```
+
+#### Integration testing
+
+For integration testing, Snapcraft uses [Spread](https://github.com/canonical/spread). Spread is a system for distributing tests and executing them in different backends, in parallel.
+
+To test with Spread, first fetch the Spread testing tools:
+
+```shell
+git submodule update --init
+```
+
+Next, build Snapcraft into a snap:
+
+```shell
+snapcraft pack
+```
+
+Then, move the resulting snap into the tests directory:
+
+```shell
+mv *.snap tests/
+```
+
+Next, install Spread with Go:
+
+```shell
+go install github.com/snapcore/spread/cmd/spread@latest
+```
+
+Ensure that the installation added the `$HOME/go/bin` directory to the `$PATH` environment variable.
+
+Then, you can run the integration tests using a local LXD backend with:
+
+```shell
+spread -v lxd:
+```
+
+You can also run them in Google Cloud if you have a Google Cloud credentials JSON file. In order to do this, run:
+
+```shell
+SPREAD_GOOGLE_KEY={credentials_path} spread -v google:
+```
 
 ### Enabling debug output
 
 Given that the `--debug` option in snapcraft is reserved for project specific debugging, enabling for the `logger.debug` calls is achieved by setting the "SNAPCRAFT_ENABLE_DEVELOPER_DEBUG" environment variable to a truthful value. Snapcraft's internal tools, e.g.; `snapcraftctl` should pick up this environment variable as well.
 
-
 ## Documentation
-
 
 ### Build
 
 To render the documentation as HTML in `docs/_build`, run:
 
 ```shell
-tox run -e build-docs
+make docs
 ```
 
 > **Important**
-> 
+>
 > Interactive builds are currently defective and cause an infinite loop. [This GitHub issue](https://github.com/sphinx-doc/sphinx/issues/11556#issuecomment-1667451983) posits that this is caused by by pages referencing each other.
 
 If you prefer to compose pages interactively, you can host the documentation on a local server:
 
 ```shell
-tox run -e autobuild-docs
+make auto-docs
 ```
 
 You can reach the interactive site at http://127.0.0.1:8080 in a web browser.
-
 
 ### Test
 
@@ -85,15 +120,14 @@ The documentation Makefile provided by the [Sphinx Starter Pack](https://github.
 To check for syntax errors in documentation, run:
 
 ```shell
-tox run -e lint-docs
+make lint-docs
 ```
 
 For a rudimentary spell check, you can use codespell:
 
 ```shell
-tox run -e lint-codespell
+make lint-codespell
 ```
-
 
 ## Evaluating pull requests
 

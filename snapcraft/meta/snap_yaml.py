@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Create snap.yaml metadata file."""
+
 from __future__ import annotations
 
 import re
@@ -560,7 +561,7 @@ def _populate_environment(
 
 
 def _process_components(
-    components: dict[str, models.Component] | None
+    components: dict[str, models.Component] | None,
 ) -> dict[str, ComponentMetadata] | None:
     """Convert Components from a project to ComponentMetadata for a snap.yaml.
 

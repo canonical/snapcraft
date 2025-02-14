@@ -92,9 +92,7 @@ def _run_installer(installer_path: str, echoer):
             [Environment]::Exit(1)
         }}
       }}
-    """.format(
-        path=installer_path
-    )
+    """.format(path=installer_path)
 
     try:
         subprocess.check_call(["powershell.exe", "-Command", cmd])

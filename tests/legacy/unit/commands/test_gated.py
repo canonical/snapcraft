@@ -16,6 +16,7 @@
 
 import textwrap
 
+import pytest
 from testtools.matchers import Contains, Equals
 
 import snapcraft_legacy.storeapi.errors
@@ -25,6 +26,7 @@ from . import StoreCommandsBaseTestCase
 account_info_data = {"snaps": {"16": {"core": {"snap-id": "good"}}}}
 
 
+@pytest.mark.slow
 class GatedCommandTestCase(StoreCommandsBaseTestCase):
     def test_gated_unknown_snap(self):
         raised = self.assertRaises(

@@ -59,7 +59,7 @@ class ListPluginsCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         if parsed_args.base == "core20":
             raise errors.LegacyFallback()
 

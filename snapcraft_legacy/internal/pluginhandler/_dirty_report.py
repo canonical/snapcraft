@@ -50,7 +50,7 @@ class DirtyReport:
         *,
         dirty_properties: StrCollection = None,
         dirty_project_options: StrCollection = None,
-        changed_dependencies: DependencyCollection = None
+        changed_dependencies: DependencyCollection = None,
     ) -> None:
         """Create a new DirtyReport.
 

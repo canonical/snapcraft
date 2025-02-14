@@ -19,6 +19,7 @@ from collections import OrderedDict
 from unittest.mock import call, patch
 
 import fixtures
+import pytest
 from testtools.matchers import Contains, Equals
 
 from snapcraft_legacy import extractors
@@ -313,6 +314,7 @@ class StateTestCase(StateBaseTestCase):
             files, Equals([os.path.join(self.handler.part_build_dir, "metadata-file")])
         )
 
+    @pytest.mark.slow
     def test_build_state_with_scriptlet_metadata(self):
         self.handler = self.load_part(
             "test_part",
@@ -385,6 +387,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
+    @pytest.mark.slow
     def test_stage_state_with_scriptlet_metadata(self):
         self.handler = self.load_part(
             "test_part",
@@ -532,6 +535,7 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertThat(raised.step, Equals(steps.STAGE))
 
+    @pytest.mark.slow
     @patch("shutil.copy")
     def test_prime_state(self, mock_copy):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
@@ -571,6 +575,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
+    @pytest.mark.slow
     def test_prime_state_with_scriptlet_metadata(self):
         self.handler = self.load_part(
             "test_part",
@@ -608,6 +613,7 @@ class StateTestCase(StateBaseTestCase):
         metadata = state.scriptlet_metadata
         self.assertThat(metadata.get_version(), Equals("override-version"))
 
+    @pytest.mark.slow
     @patch("shutil.copy")
     def test_prime_state_with_stuff_already_primed(self, mock_copy):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
@@ -650,6 +656,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
+    @pytest.mark.slow
     @patch("snapcraft_legacy.internal.elf.ElfFile._extract_attributes")
     @patch("snapcraft_legacy.internal.elf.ElfFile.load_dependencies")
     @patch("snapcraft_legacy.internal.pluginhandler._migrate_files")
@@ -721,6 +728,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
+    @pytest.mark.slow
     @patch("snapcraft_legacy.internal.elf.ElfFile._extract_attributes")
     @patch("snapcraft_legacy.internal.elf.ElfFile.load_dependencies")
     @patch("snapcraft_legacy.internal.pluginhandler._migrate_files")
@@ -779,6 +787,7 @@ class StateTestCase(StateBaseTestCase):
         # The rest should be considered missing.
         self.assertThat(state.dependency_paths, Equals({"lib3"}))
 
+    @pytest.mark.slow
     @patch("snapcraft_legacy.internal.elf.ElfFile._extract_attributes")
     @patch("snapcraft_legacy.internal.elf.ElfFile.load_dependencies")
     @patch("snapcraft_legacy.internal.pluginhandler._migrate_files")
@@ -825,6 +834,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state) is states.PrimeState)
         self.assertThat(state.dependency_paths, Equals({"foo/bar"}))
 
+    @pytest.mark.slow
     @patch("shutil.copy")
     def test_prime_state_with_prime_keyword(self, mock_copy):
         self.handler = self.load_part("test_part", part_properties={"prime": ["bin/1"]})

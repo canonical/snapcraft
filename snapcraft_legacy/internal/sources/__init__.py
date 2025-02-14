@@ -80,6 +80,7 @@ cases you want to refer to the help text for the specific plugin.
   snapcraft help <plugin>
 
 """
+
 import logging
 import os
 import os.path

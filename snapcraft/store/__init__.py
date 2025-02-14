@@ -16,7 +16,6 @@
 
 """Snapcraft CLI interface for the Snap Store."""
 
-
 from . import constants
 from ._legacy_account import LegacyUbuntuOne
 from .channel_map import ChannelMap

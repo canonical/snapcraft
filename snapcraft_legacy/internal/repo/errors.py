@@ -30,7 +30,6 @@ class RepoError(errors.SnapcraftError):
 
 
 class NoNativeBackendError(RepoError):
-
     fmt = "Native builds aren't supported on {distro}."
 
     def __init__(self):
@@ -42,7 +41,6 @@ class NoNativeBackendError(RepoError):
 
 
 class CacheUpdateFailedError(RepoError):
-
     fmt = (
         "Failed to update the package cache: "
         "Some files could not be downloaded:{errors}"
@@ -79,7 +77,6 @@ class PopulateCacheDirError(SnapcraftException):
 
 
 class FileProviderNotFound(RepoError):
-
     fmt = "{file_path} is not provided by any package."
 
     def __init__(self, *, file_path: Path) -> None:
@@ -87,7 +84,6 @@ class FileProviderNotFound(RepoError):
 
 
 class BuildPackageNotFoundError(RepoError):
-
     fmt = "Could not find a required package in 'build-packages': {package}"
 
     def __init__(self, package):
@@ -95,7 +91,6 @@ class BuildPackageNotFoundError(RepoError):
 
 
 class BuildPackagesNotInstalledError(RepoError):
-
     fmt = "Could not install all requested build packages: {packages}"
 
     def __init__(self, *, packages: List[str]) -> None:
@@ -103,7 +98,6 @@ class BuildPackagesNotInstalledError(RepoError):
 
 
 class PackageFetchError(RepoError):
-
     fmt = "Package fetch error: {message}"
 
     def __init__(self, message: str) -> None:
@@ -111,7 +105,6 @@ class PackageFetchError(RepoError):
 
 
 class PackageBrokenError(RepoError):
-
     fmt = "The package {package} has unmet dependencies: {deps}"
 
     def __init__(self, package: str, deps: List[str]) -> None:
@@ -153,7 +146,6 @@ class PackagesNotFoundError(SnapcraftException):
 
 
 class UnpackError(RepoError):
-
     fmt = "Error while provisioning {package!r}"
 
     def __init__(self, package):
@@ -161,7 +153,6 @@ class UnpackError(RepoError):
 
 
 class SnapUnavailableError(RepoError):
-
     fmt = (
         "Failed to install or refresh a snap: {snap_name!r} does not exist "
         "or is not available on the desired channel {snap_channel!r}. "
@@ -174,7 +165,6 @@ class SnapUnavailableError(RepoError):
 
 
 class SnapFindError(RepoError):
-
     fmt = (
         "Could not find the snap {snap_name!r} installed on this host.\n"
         "Install the snap and try again."
@@ -185,7 +175,6 @@ class SnapFindError(RepoError):
 
 
 class SnapInstallError(RepoError):
-
     fmt = "Error while installing snap {snap_name!r} from channel {snap_channel!r}"
 
     def __init__(self, *, snap_name, snap_channel):
@@ -193,7 +182,6 @@ class SnapInstallError(RepoError):
 
 
 class SnapDownloadError(RepoError):
-
     fmt = "Error while downloading snap {snap_name!r} from channel {snap_channel!r}"
 
     def __init__(self, *, snap_name, snap_channel):
@@ -201,7 +189,6 @@ class SnapDownloadError(RepoError):
 
 
 class SnapGetAssertionError(RepoError):
-
     fmt = (
         "Error while retrieving assertion with parameters "
         "{assertion_params!r}\n"
@@ -213,7 +200,6 @@ class SnapGetAssertionError(RepoError):
 
 
 class SnapRefreshError(RepoError):
-
     fmt = "Error while refreshing snap {snap_name!r} to channel {snap_channel!r}"
 
     def __init__(self, *, snap_name, snap_channel):
@@ -221,7 +207,6 @@ class SnapRefreshError(RepoError):
 
 
 class SnapdConnectionError(RepoError):
-
     fmt = (
         "Failed to get information for snap {snap_name!r}: "
         "could not connect to {url!r}."

@@ -18,7 +18,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, Dict, List, Optional, TextIO, cast
 
 import yaml
 import yaml.error
@@ -271,6 +271,7 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
         msg = err.strerror
         if err.filename:
             msg = f"{msg}: {err.filename!r}."
-        raise errors.SnapcraftError(msg) from err
+        # Casting as a str as OSError should always contain an error message
+        raise errors.SnapcraftError(cast(str, msg)) from err
 
     return yaml_data
