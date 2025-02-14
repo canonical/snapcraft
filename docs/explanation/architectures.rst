@@ -49,7 +49,7 @@ in the project file and filtered with command-line arguments and
 environment variables.
 
 Snapcraft can create multiple snaps, each built for a different architecture.
-Consider the following equivalent project file snippets.
+These project file snippets both select two architectures.
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
