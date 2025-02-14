@@ -233,7 +233,6 @@ def test_get_root_snippet_core24(kde_neon_extension_core24):
             "/usr/share/qt5": {"symlink": "$SNAP/kf5/usr/share/qt5"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-            "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -284,9 +283,6 @@ def test_get_root_snippet_with_gpu(kde_neon_extension_core24):
     }
     assert snippet["layout"]["/usr/share/drirc.d"] == {
         "symlink": "$SNAP/gpu-2404/drirc.d",
-    }
-    assert snippet["layout"]["/usr/share/X11/XErrorDB"] == {
-        "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
     }
 
 
@@ -376,7 +372,6 @@ def test_get_root_snippet_with_external_sdk_core24(
             "/usr/share/qt5": {"symlink": "$SNAP/kf5/usr/share/qt5"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-            "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -443,16 +438,16 @@ class TestGetPartSnippet:
                     "XDG_DATA_DIRS": (
                         "$CRAFT_STAGE/usr/share:"
                         "/snap/kde-qt5-core22-sdk/current/usr/share:"
-                        "/snap/kf5-core22-sdk/current/usr/share:"
-                        "/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+                        "/snap/kf5-core22-sdk/current/usr/share"
+                        "${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                     )
                 },
                 {
                     "XDG_CONFIG_HOME": (
                         "$CRAFT_STAGE/etc/xdg:"
                         "/snap/kde-qt5-core22-sdk/current/etc/xdg:"
-                        "/snap/kf5-core22-sdk/current/etc/xdg:"
-                        "/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
+                        "/snap/kf5-core22-sdk/current/etc/xdg"
+                        "${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                     )
                 },
                 {
@@ -492,6 +487,81 @@ class TestGetPartSnippet:
             ]
         }
 
+    def test_get_part_snippet_core24(self, kde_neon_extension_core24):
+        self.assert_get_part_snippet_core24(kde_neon_extension_core24)
+
+    def test_get_part_snippet_latest_edge_core24(
+        self, kde_neon_extension_with_default_build_snap_from_latest_edge_core24
+    ):
+        self.assert_get_part_snippet_core24(
+            kde_neon_extension_with_default_build_snap_from_latest_edge_core24
+        )
+
+    @staticmethod
+    def assert_get_part_snippet_core24(kde_neon_instance):
+        assert kde_neon_instance.get_part_snippet(plugin_name="cmake") == {
+            "build-environment": [
+                {
+                    "PATH": (
+                        "/snap/kde-qt5-core24-sdk/current/usr/bin:"
+                        "/snap/kf5-core24-sdk/current/usr/bin"
+                        "${PATH:+:$PATH}"
+                    )
+                },
+                {
+                    "XDG_DATA_DIRS": (
+                        "$CRAFT_STAGE/usr/share:"
+                        "/snap/kde-qt5-core24-sdk/current/usr/share:"
+                        "/snap/kf5-core24-sdk/current/usr/share"
+                        "${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+                    )
+                },
+                {
+                    "XDG_CONFIG_HOME": (
+                        "$CRAFT_STAGE/etc/xdg:"
+                        "/snap/kde-qt5-core24-sdk/current/etc/xdg:"
+                        "/snap/kf5-core24-sdk/current/etc/xdg"
+                        "${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
+                    )
+                },
+                {
+                    "LD_LIBRARY_PATH": (
+                        "/snap/kde-qt5-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                        "/snap/kde-qt5-core24-sdk/current/usr/lib:"
+                        "/snap/kf5-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                        "/snap/mesa-2404/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                        "/snap/kf5-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                        "/blas:"
+                        "/snap/kf5-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                        "/lapack:"
+                        "/snap/kf5-core24-sdk/current/usr/lib:"
+                        "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                        "$CRAFT_STAGE/usr/lib:"
+                        "$CRAFT_STAGE/lib/"
+                        "${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+                    )
+                },
+                {
+                    "CMAKE_PREFIX_PATH": (
+                        "$CRAFT_STAGE;"
+                        "/snap/kde-qt5-core24-sdk/current;"
+                        "/snap/kf5-core24-sdk/current;"
+                        "/usr"
+                        "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
+                    )
+                },
+                {
+                    "CMAKE_FIND_ROOT_PATH": (
+                        "$CRAFT_STAGE;"
+                        "/snap/kde-qt5-core24-sdk/current;"
+                        "/snap/kf5-core24-sdk/current;"
+                        "/usr"
+                        "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                    )
+                },
+            ]
+        }
+
 
 def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
     assert kde_neon_extension_with_build_snap.get_part_snippet(plugin_name="cmake") == {
@@ -507,16 +577,16 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
                 "XDG_DATA_DIRS": (
                     "$CRAFT_STAGE/usr/share:"
                     "/snap/kde-qt5-core22-sdk/current/usr/share:"
-                    "/snap/kf5-core22-sdk/current/usr/share:"
-                    "/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+                    "/snap/kf5-core22-sdk/current/usr/share"
+                    "${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
             {
                 "XDG_CONFIG_HOME": (
                     "$CRAFT_STAGE/etc/xdg:"
                     "/snap/kde-qt5-core22-sdk/current/etc/xdg:"
-                    "/snap/kf5-core22-sdk/current/etc/xdg:"
-                    "/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
+                    "/snap/kf5-core22-sdk/current/etc/xdg"
+                    "${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                 )
             },
             {
@@ -554,12 +624,13 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
         ]
     }
 
-    def test_get_part_snippet_core24(self, kde_neon_extension_core24):
-        self.assert_get_part_snippet(kde_neon_extension_core24)
 
-
-def assert_get_part_snippet(kde_neon_instance):
-    assert kde_neon_instance.get_part_snippet(plugin_name="cmake") == {
+def test_get_part_snippet_with_external_sdk_core24(
+    kde_neon_extension_with_build_snap_core24,
+):
+    assert kde_neon_extension_with_build_snap_core24.get_part_snippet(
+        plugin_name="cmake"
+    ) == {
         "build-environment": [
             {
                 "PATH": (
@@ -572,16 +643,16 @@ def assert_get_part_snippet(kde_neon_instance):
                 "XDG_DATA_DIRS": (
                     "$CRAFT_STAGE/usr/share:"
                     "/snap/kde-qt5-core24-sdk/current/usr/share:"
-                    "/snap/kf5-core24-sdk/current/usr/share:"
-                    "/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+                    "/snap/kf5-core24-sdk/current/usr/share"
+                    "${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                 )
             },
             {
                 "XDG_CONFIG_HOME": (
                     "$CRAFT_STAGE/etc/xdg:"
                     "/snap/kde-qt5-core24-sdk/current/etc/xdg:"
-                    "/snap/kf5-core24-sdk/current/etc/xdg:"
-                    "/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
+                    "/snap/kf5-core24-sdk/current/etc/xdg"
+                    "${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}"
                 )
             },
             {
@@ -589,6 +660,7 @@ def assert_get_part_snippet(kde_neon_instance):
                     "/snap/kde-qt5-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "/snap/kde-qt5-core24-sdk/current/usr/lib:"
                     "/snap/kf5-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                    "/snap/mesa-2404/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                     "/snap/kf5-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
                     "/blas:"
                     "/snap/kf5-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
@@ -629,6 +701,9 @@ def test_get_parts_snippet(kde_neon_extension):
         "kde-neon/sdk": {
             "source": str(source),
             "plugin": "make",
+            "make-parameters": [
+                "PLATFORM_PLUG=kf5-core22",
+            ],
             "build-snaps": ["kde-qt5-core22-sdk", "kf5-core22-sdk"],
             "build-packages": [
                 "gettext",
@@ -654,6 +729,7 @@ def test_get_parts_snippet_core24(kde_neon_extension_core24):
             "plugin": "make",
             "make-parameters": [
                 "GPU_WRAPPER=gpu-2404-wrapper",
+                "PLATFORM_PLUG=kf5-core24",
             ],
             "build-snaps": ["kde-qt5-core24-sdk", "kf5-core24-sdk"],
             "build-packages": [
@@ -676,6 +752,9 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_extension_with_build_snap)
 
     assert kde_neon_extension_with_build_snap.get_parts_snippet() == {
         "kde-neon/sdk": {
+            'make-parameters': [
+                'PLATFORM_PLUG=kf5-core22',
+          ],
             "source": str(source),
             "plugin": "make",
         }
@@ -692,6 +771,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
             "plugin": "make",
             "make-parameters": [
                 "GPU_WRAPPER=gpu-2404-wrapper",
+                "PLATFORM_PLUG=kf5-core24",
             ],
         }
     }
