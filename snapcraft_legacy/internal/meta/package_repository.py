@@ -27,8 +27,7 @@ logger = logging.getLogger(__name__)
 
 class PackageRepository(abc.ABC):
     @abc.abstractmethod
-    def marshal(self) -> Dict[str, Any]:
-        ...
+    def marshal(self) -> Dict[str, Any]: ...
 
     @classmethod
     def unmarshal(cls, data: Dict[str, str]) -> "PackageRepository":

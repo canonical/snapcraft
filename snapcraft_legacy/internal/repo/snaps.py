@@ -160,8 +160,9 @@ class SnapPackage:
             # hard to debug as they only occur there, logging in debug mode
             # will help uncover the root cause if it happens again.
             logger.debug(
-                "Current store channels are {!r} and the store"
-                "payload is {!r}".format(store_channels, self._store_snap_info)
+                "Current store channels are {!r} and the storepayload is {!r}".format(
+                    store_channels, self._store_snap_info
+                )
             )
             raise
 
@@ -183,7 +184,7 @@ class SnapPackage:
                 [
                     "snap-declaration",
                     # use the snap name without any alias
-                    f"snap-name={self.name.partition('_')[0]}"
+                    f"snap-name={self.name.partition('_')[0]}",
                 ]
             )
             assertions.append(

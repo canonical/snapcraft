@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snapcraft Store Account management commands."""
+
 import itertools
 import operator
 import textwrap
@@ -71,7 +72,7 @@ class StoreStatusCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
         )
@@ -391,7 +392,7 @@ class StoreListTracksCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
         )

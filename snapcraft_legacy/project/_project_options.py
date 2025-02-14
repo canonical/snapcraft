@@ -364,9 +364,8 @@ class ProjectOptions:
         debug=False,
         *,
         work_dir: str = None,
-        architectures = None,
+        architectures=None,
     ) -> None:
-
         # Here for backwards compatibility.
         project_dir = os.getcwd()
         if work_dir is None:

@@ -186,7 +186,7 @@ class StoreExportLoginCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
                 "--experimental-login no longer supported. "

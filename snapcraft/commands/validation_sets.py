@@ -210,11 +210,13 @@ def edit_validation_sets(
         try:
             with validation_sets_path.open() as file:
                 data = craft_application.util.safe_yaml_load(file)
-            edited_validation_sets = validation_sets.EditableBuildAssertion.from_yaml_data(
-                data=data,
-                # filepath is only shown for pydantic errors and snapcraft should
-                # not expose the temp file name
-                filepath=Path("validation-sets"),
+            edited_validation_sets = (
+                validation_sets.EditableBuildAssertion.from_yaml_data(
+                    data=data,
+                    # filepath is only shown for pydantic errors and snapcraft should
+                    # not expose the temp file name
+                    filepath=Path("validation-sets"),
+                )
             )
             return edited_validation_sets
         except (yaml.YAMLError, CraftValidationError) as err:

@@ -203,8 +203,9 @@ class Runner:
             # This means a snapcraft developer messed up adding a new
             # snapcraftctl function. Should never be encountered in real life.
             raise ValueError(
-                "{!r} scriptlet called a function with invalid json: "
-                "{}".format(scriptlet_name, function_call)
+                "{!r} scriptlet called a function with invalid json: {}".format(
+                    scriptlet_name, function_call
+                )
             ) from e
 
         try:
@@ -226,8 +227,9 @@ class Runner:
             # This means a snapcraft developer messed up adding a new
             # snapcraftctl function. Should never be encountered in real life.
             raise ValueError(
-                "{!r} scriptlet called an undefined builtin function: "
-                "{}".format(scriptlet_name, function_name)
+                "{!r} scriptlet called an undefined builtin function: {}".format(
+                    scriptlet_name, function_name
+                )
             ) from e
 
         function(**function_args)

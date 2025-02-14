@@ -18,6 +18,7 @@
 These methods, which are named after common logging levels, wrap around
 click.echo adding the corresponding color codes for each level.
 """
+
 import os
 import shutil
 import sys
@@ -92,7 +93,7 @@ def exit_error(
     resolution: Optional[str] = None,
     details: Optional[str] = None,
     docs_url: Optional[str] = None,
-    exit_code: int = 2
+    exit_code: int = 2,
 ):
     """Display an error and gracefully exit."""
     message_parts = [brief]
