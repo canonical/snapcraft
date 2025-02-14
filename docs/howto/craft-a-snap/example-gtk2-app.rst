@@ -6,29 +6,31 @@ Example GTK2 app
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a snap of an app built using GTK4 and GNOME. We'll
 work through the aspects unique to GTK4-based apps by examining an existing
-recipe.
+project file.
 
 
-Example Arduino IDE recipe
---------------------------
+Example Arduino IDE project file
+--------------------------------
 
-The following code comprises the recipe of a GTK2 project, the legacy `Arduino
-IDE <https://github.com/arduino/Arduino>`_.
+The following code comprises the project file of a GTK2 app, the legacy `Arduino IDE
+<https://github.com/arduino/Arduino>`_.
 
-.. collapse:: Arduino IDE recipe
+.. collapse:: Arduino IDE project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Add an app that uses GNOME
 --------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
-  :language: yaml
-  :start-at: apps:
-  :end-at: command: arduino-builder
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: apps:
+    :end-at: command: arduino-builder
 
 Apps that use GTK2 and GNOME as runtime libraries require a special script. It
 brings in the runtime environment and dependencies so that all desktop
@@ -48,10 +50,11 @@ Add a part written for GTK2
 ---------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
-  :language: yaml
-  :dedent: 2
-  :start-at: desktop-gtk2:
-  :end-at: - libibus-1.0-5
+    :caption: snapcraft.yaml
+    :language: yaml
+    :dedent: 2
+    :start-at: desktop-gtk2:
+    :end-at: - libibus-1.0-5
 
 GTK2 parts don't require a special plugin. Instead, the snap itself requires a
 special ``desktop-gtk2`` part which containas the GTK2 runtime libraries, and
@@ -67,8 +70,9 @@ Add required plugs
 ------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-gtk2-recipe.yaml
-  :language: yaml
-  :lines: 98-
+    :caption: snapcraft.yaml
+    :language: yaml
+    :lines: 98-
 
 Some GTK2 snaps need a number of desktop environment packages containing
 common theming content. These packages are hosted on the Snap Store.

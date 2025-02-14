@@ -55,10 +55,9 @@ The "fallback" or legacy version of the remote builder can be used for
 ``core20`` and ``core22`` snaps.  It is not available for ``core24`` and newer
 snaps.
 
-The legacy remote builder was deprecated because of its design. It retrieves
-and tarballs remote sources and modifies the project's ``snapcraft.yaml``
-file to point to the local tarballs. This caused many unexpected failures that
-could not be reproduced locally.
+The legacy remote builder was deprecated because of its design. It retrieves and
+tarballs remote sources and modifies the project file to point to the local tarballs.
+This caused many unexpected failures that could not be reproduced locally.
 
 Choosing a remote-builder
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -111,7 +110,7 @@ defines the architectures to build for.
 Project platforms and architectures
 ***********************************
 
-The ``snapcraft.yaml`` file is always parsed by the new remote builder.
+The project file is always parsed by the new remote builder.
 
 If the project metadata contains a ``platforms`` or ``architectures`` entry,
 Snapcraft will request a build for each unique ``build-for`` architecture.
@@ -130,7 +129,7 @@ entry and ``--build-for`` is not provided, Snapcraft will request a build on,
 and for, the host's architecture.
 
 The remote builder does not work for ``core20`` snaps because it cannot parse
-the ``run-on`` keyword in a ``core20`` architecture entry (`[2]`_).
+the ``run-on`` key in a ``core20`` architecture entry (`[2]`_).
 
 Legacy
 ^^^^^^
@@ -154,26 +153,26 @@ Snapcraft will request builds to occur on each specified architecture.
 Project architectures
 *********************
 
-If the ``snapcraft.yaml`` file contains the top-level ``architectures``
-keyword, snapcraft will request a build for each ``build-on`` architecture.
+If the project file contains the top-level ``architectures``
+key, snapcraft will request a build for each ``build-on`` architecture.
 
 An architecture can only be listed once across all ``build-on`` keys in the
-``architectures`` keyword, otherwise Snapcraft will fail to parse the
+``architectures`` key, otherwise Snapcraft will fail to parse the
 project (`[4]`_).
 
 If no architectures are defined in the project metadata, snapcraft will
 request a build for the host's architecture.
 
 ``--build-for`` and ``--build-on`` cannot be provided when the
-``architectures`` keyword is defined in the project metadata. This is because
+``architectures`` key is defined in the project metadata. This is because
 Launchpad will ignore the requested architectures and prefer those defined
-in the ``snapcraft.yaml`` (`[5]`_).
+in the project file (`[5]`_).
 
 The legacy remote builder can be used for ``core20`` and ``core22`` snaps but
 the project is parsed using ``core20``'s ``snapcraft.yaml`` schema. This
-means that snaps using keywords introduced in ``core22`` cannot be built with
+means that snaps using keys introduced in ``core22`` cannot be built with
 the remote builder (`[6]`_ `[7]`_ `[8]`_). This includes the ``core22``
-``architectures`` keyword change of ``run-on`` to ``build-for``.
+``architectures`` key change of ``run-on`` to ``build-for``.
 
 Similarly, ``core22`` supports a shorthand notation for ``architectures`` but
 Launchpad is not able to parse this notation (`[9]`_).

@@ -16,26 +16,29 @@ craft snaps as well as an effective fallback for languages and platforms that
 don't have an official plugin in Snapcraft.
 
 
-Example recipe for Geekbench
-----------------------------
+Example project file for Geekbench
+----------------------------------
 
-The following code comprises the recipe of a C project, `Geekbench
-<https://github.com/snapcraft-docs/geekbench4>`_. This project is a popular PC hardware benchmarking suite.
+The following code comprises the project file of a C app, `Geekbench
+<https://github.com/snapcraft-docs/geekbench4>`_. This project is a popular PC hardware
+benchmarking suite.
 
-.. collapse:: Geekbench recipe
+.. collapse:: Geekbench project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-pre-built-app.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: ../code/craft-a-snap/example-pre-built-app.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Add a compiled part
 -------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-pre-built-app.yaml
-  :language: yaml
-  :start-at: parts:
-  :end-at: source: http://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: parts:
+    :end-at: source: http://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
 
 Compiled parts stored in archives are built with the `dump plugin
 <https://snapcraft.io/docs/dump-plugin>`_.

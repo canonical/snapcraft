@@ -217,7 +217,7 @@ Documentation
 
 * Add the following reference documentation:
 
-  * :ref:`anatomy-of-a-recipe`
+  * :ref:`anatomy-of-a-project-file`
   * :ref:`snap-build-process`
   * :ref:`snap-publishing-process`
   * :ref:`channels`

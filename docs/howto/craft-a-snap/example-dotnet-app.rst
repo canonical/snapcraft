@@ -6,30 +6,32 @@ Example .NET app
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a snap of an app built using .NET. We'll
 work through the aspects unique to .NET-based apps by examining an existing
-recipe.
+project file.
 
 
-Example whatime recipe
-----------------------
+Example whatime project file
+----------------------------
 
-The following code comprises the recipe of a .NET project, `whatime
-<https://github.com/snapcraft-docs/whatime>`_. This project is a CLI command
-for returning the current time in cities across the globe.
+The following code comprises the project file of a .NET tool, `whatime
+<https://github.com/snapcraft-docs/whatime>`_. This project is a CLI command for
+returning the current time in cities across the globe.
 
-.. collapse:: whatime recipe
+.. collapse:: whatime project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-dotnet-recipe.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: ../code/craft-a-snap/example-dotnet-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Add a part written for .NET
 ---------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-dotnet-recipe.yaml
-  :language: yaml
-  :start-at: parts:
-  :end-at: - libicu70
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: parts:
+    :end-at: - libicu70
 
 .NET parts are built with the `dotnet plugin
 <https://snapcraft.io/docs/dotnet-plugin>`_.

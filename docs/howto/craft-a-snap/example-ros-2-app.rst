@@ -6,21 +6,21 @@ Example ROS 2 app
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a `ROS 2 <https://index.ros.org/doc/ros2>`_-based
 snap. We'll work through the aspects unique to ROS 2 apps by examining an
-existing recipe.
+existing project.
 
 There are three supported bases for ROS 2 -- core24, core20, and core18.
 
 
 .. _example-ros-2-app-project-files:
 
-Example recipe for ROS 2 Talker/Listener
-----------------------------------------
+Example project file for ROS 2 Talker/Listener
+----------------------------------------------
 
 .. tabs::
 
   .. group-tab:: core18
 
-    The following code comprises the recipe for the `core18 version of ROS 2
+    The following code comprises the project file for the `core18 version of ROS 2
     Talker/Listener <https://github.com/snapcraft-docs/ros2-talker-listener>`_.
 
     .. collapse:: Code
@@ -51,7 +51,7 @@ Example recipe for ROS 2 Talker/Listener
 
   .. group-tab:: core20
 
-    The following code comprises the recipe for the `core20 version of ROS 2
+    The following code comprises the project file for the `core20 version of ROS 2
     Talker/Listener core20
     <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`_.
 
@@ -83,7 +83,7 @@ Example recipe for ROS 2 Talker/Listener
 
   .. group-tab:: core22
 
-    The following code comprises the recipe for the `core20 version of ROS 2
+    The following code comprises the project file for the `core20 version of ROS 2
     Talker/Listener core22
     <https://github.com/snapcraft-docs/ros2-talker-listener-core22>`_.
 
@@ -115,7 +115,7 @@ Example recipe for ROS 2 Talker/Listener
 
   .. group-tab:: core24
 
-    The following code comprises the recipe for the `core20 version of ROS 2
+    The following code comprises the project file for the `core20 version of ROS 2
     Talker/Listener core24
     <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`_.
 
@@ -232,8 +232,8 @@ You can find more information in `ROS architectures with snaps
 <https://ubuntu.com/robotics/docs/ros-architectures-with-snaps>`_ in the
 Canonical ROS documentation.
 
-Turning on content sharing takes requires two small changes in the recipe.
-Here's the difference in the recipe when content sharing is enabled:
+Turning on content sharing takes requires two small changes in the project file.
+Here's the difference in the project file when content sharing is enabled:
 
 .. tabs::
 
