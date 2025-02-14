@@ -774,4 +774,4 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
                 "PLATFORM_PLUG=kf5-core24",
             ],
         }
-    )
+    }
