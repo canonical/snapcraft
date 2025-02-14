@@ -21,11 +21,11 @@ Components and Partitions
 -------------------------
 
 Components utilise a `Craft Parts`_ feature called ``partitions``. This feature
-is enabled only when the ``component`` keyword is defined in the project file.
+is enabled only when the ``component`` key is defined in the project file.
 
 Each component has a namespaced partition ``component/<component-name>`` where
 ``component`` is the partition's namespace and ``<component-name>`` is the name
-of the component from the ``snapcraft.yaml`` file.
+of the component from the project file.
 
 The partition for the snap itself is known as the ``default`` partition.
 
@@ -40,9 +40,10 @@ stage, and prime directories. When a file is organized into a component's
 partition, it is moved to the part's install directory for that component's
 partition.
 
-For example, consider a part with the ``organize`` keyword:
+For example, consider a part with the ``organize`` key:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
     parts:
       my-part:
@@ -53,10 +54,10 @@ For example, consider a part with the ``organize`` keyword:
           hello: (component/translations)/hello-world
 
 This part's build creates a file called ``hello`` in ``my-part``'s default
-install directory. If no ``organize`` keyword was used, this file would be
+install directory. If no ``organize`` key was used, this file would be
 included in the snap itself.
 
-However this example uses the ``organize`` keyword to move the file ``hello``
+However this example uses the ``organize`` key to move the file ``hello``
 from ``my-part``'s default install directory to ``my-parts``'s install
 directory for the ``translations`` component. It also renames the file from
 ``hello`` to ``hello-world``.

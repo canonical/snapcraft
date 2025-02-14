@@ -26,6 +26,7 @@ slightly differ between core24 and core22 bases.
         .. collapse:: Included snap-wide plugs
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 plugs:
                   desktop:
@@ -56,6 +57,7 @@ slightly differ between core24 and core22 bases.
         .. collapse:: Included snap-wide plugs
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 plugs:
                   desktop:
@@ -82,6 +84,7 @@ The extension also connects the following plugs to all apps that use it.
 .. collapse:: Included app plugs
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         plugs:
           - desktop
@@ -128,7 +131,7 @@ The following build environment variables are added to each part in a snap that 
 this extension.
 
 You can declare additional variables in the ``build-environment`` key. Furthermore,
-these default variables can be overridden by declaring them in the recipe.
+these default variables can be overridden by declaring them in the project file.
 
 The paths differ slightly between core24 and core22 bases.
 
@@ -139,6 +142,7 @@ The paths differ slightly between core24 and core22 bases.
         .. collapse:: Included build environment variables
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 build-environment:
                   - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
@@ -156,6 +160,7 @@ The paths differ slightly between core24 and core22 bases.
         .. collapse:: Included build environment variables
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 build-environment:
                   - PATH: /snap/gnome-42-2204-sdk/current/usr/bin${PATH:+:$PATH}
@@ -176,6 +181,7 @@ The following environment variables are exported when the app runs:
 .. collapse:: Environment variables
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         environment:
           SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
@@ -197,6 +203,7 @@ the size.
         .. collapse:: Included layouts
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 layout:
                   /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0:
@@ -217,6 +224,7 @@ the size.
         .. collapse:: Included layouts
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 layout:
                   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libgweather-4:
