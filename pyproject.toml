@@ -6,7 +6,7 @@ dynamic = ["version"]
 dependencies = [
     "attrs",
     "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
-    "click==8.1.7",
+    "click==8.1.8",
     "craft-application[remote]~=4.9",
     "craft-archives~=2.0",
     "craft-cli~=2.15.0",
