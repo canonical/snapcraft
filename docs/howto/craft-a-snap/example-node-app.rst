@@ -5,35 +5,37 @@ Example Node app
 
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a Node-based snap. We'll work through the aspects
-unique to Node apps by examining an existing recipe.
+unique to Node apps by examining an existing project.
 
 The process of developing a snap for a Node app builds on top of npm and
 ``package.json`` manifests, making it possible to adapt or integrate an app's
 existing build tooling into the crafting process.
 
 
-Example recipe for wethr
-------------------------
+Example project file for wethr
+------------------------------
 
-The following code comprises the recipe of a Node project, `wethr
-<https://github.com/snapcraft-docs/wethr>`_. This project is a CLI tool for
-obtaining local weather information.
+The following code comprises the project file of a Node tool, `wethr
+<https://github.com/snapcraft-docs/wethr>`_. This project is a CLI tool for obtaining
+local weather information.
 
 
-.. collapse:: wethr recipe
+.. collapse:: wethr project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-node-recipe.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: ../code/craft-a-snap/example-node-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Add a part written in Node
 --------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-node-recipe.yaml
-  :language: yaml
-  :start-at: parts:
-  :end-at: npm-node-version: 14.16.1
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: parts:
+    :end-at: npm-node-version: 14.16.1
 
 Node parts are built with the `npm plugin
 <https://snapcraft.io/docs/npm-plugin>`_.

@@ -8,19 +8,18 @@ different architectures.
 Architectures supported by Launchpad can be found
 :ref:`here<supported-architectures>`.
 
-Open vs closed source
----------------------
+Public and private projects
+---------------------------
 
-By default, prospective snaps must be open source because the build will be
-publicly available.
+By default, prospective snaps are publicly uploaded to `Launchpad`_.
 
 Developers are reminded of this by confirming that their project will be
 publicly available when starting a remote build. This prompt can be
 automatically agreed to by passing ``--launchpad-accept-public-upload``.
 
-Closed-source projects can be built using the remote builder. This requires
+Private projects can still be built using the remote builder. This requires
 the user to create a private `Launchpad project`_ and pass the project with the
-``--project <project-name>`` command line argument. An ``ssh`` key must be
+``--project <project-name>`` command line argument. An SSH key must be
 registered in Launchpad because source code is uploaded using SSH.
 
 Git repository
@@ -55,10 +54,9 @@ The "fallback" or legacy version of the remote builder can be used for
 ``core20`` and ``core22`` snaps.  It is not available for ``core24`` and newer
 snaps.
 
-The legacy remote builder was deprecated because of its design. It retrieves
-and tarballs remote sources and modifies the project's ``snapcraft.yaml``
-file to point to the local tarballs. This caused many unexpected failures that
-could not be reproduced locally.
+The legacy remote builder was deprecated because of its design. It retrieves and
+tarballs remote sources and modifies the project file to point to the local tarballs.
+This caused many unexpected failures that could not be reproduced locally.
 
 Choosing a remote-builder
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -85,6 +83,9 @@ Current
 
 ``--build-for``
 ***************
+**Type**: Comma-separated list of strings
+
+**Default**: The architectures specified in your project file or your host architecture
 
 .. note::
    ``--build-for`` behaves differently for ``remote-build`` than it does for
@@ -108,10 +109,36 @@ The second mode of operation is when there isn't a ``platforms`` or
 ``architectures`` key in the project file. In this scenario, ``--build-for``
 defines the architectures to build for.
 
+``--launchpad-accept-public-upload``
+************************************
+
+Bypasses the prompt that confirms whether you want to upload data to the public. It's
+not necessary to use this flag if you used ``--project`` to specify a private project.
+
+``--project``
+*************
+**Type**: String
+
+Explicitly specify a project to upload to.
+
+``--launchpad-timeout``
+***********************
+**Type**: Integer
+
+**Default**: 0
+
+Time, in seconds, to wait for Launchpad to complete a build. A time of 0 seconds will
+wait indefinitely.
+
+``--recover``
+*************
+
+Attempt to recover previously interrupted builds.
+
 Project platforms and architectures
 ***********************************
 
-The ``snapcraft.yaml`` file is always parsed by the new remote builder.
+The project file is always parsed by the new remote builder.
 
 If the project metadata contains a ``platforms`` or ``architectures`` entry,
 Snapcraft will request a build for each unique ``build-for`` architecture.
@@ -130,7 +157,7 @@ entry and ``--build-for`` is not provided, Snapcraft will request a build on,
 and for, the host's architecture.
 
 The remote builder does not work for ``core20`` snaps because it cannot parse
-the ``run-on`` keyword in a ``core20`` architecture entry (`[2]`_).
+the ``run-on`` key in a ``core20`` architecture entry (`[2]`_).
 
 Legacy
 ^^^^^^
@@ -154,26 +181,26 @@ Snapcraft will request builds to occur on each specified architecture.
 Project architectures
 *********************
 
-If the ``snapcraft.yaml`` file contains the top-level ``architectures``
-keyword, snapcraft will request a build for each ``build-on`` architecture.
+If the project file contains the top-level ``architectures``
+key, snapcraft will request a build for each ``build-on`` architecture.
 
 An architecture can only be listed once across all ``build-on`` keys in the
-``architectures`` keyword, otherwise Snapcraft will fail to parse the
+``architectures`` key, otherwise Snapcraft will fail to parse the
 project (`[4]`_).
 
 If no architectures are defined in the project metadata, snapcraft will
 request a build for the host's architecture.
 
 ``--build-for`` and ``--build-on`` cannot be provided when the
-``architectures`` keyword is defined in the project metadata. This is because
+``architectures`` key is defined in the project metadata. This is because
 Launchpad will ignore the requested architectures and prefer those defined
-in the ``snapcraft.yaml`` (`[5]`_).
+in the project file (`[5]`_).
 
 The legacy remote builder can be used for ``core20`` and ``core22`` snaps but
 the project is parsed using ``core20``'s ``snapcraft.yaml`` schema. This
-means that snaps using keywords introduced in ``core22`` cannot be built with
+means that snaps using keys introduced in ``core22`` cannot be built with
 the remote builder (`[6]`_ `[7]`_ `[8]`_). This includes the ``core22``
-``architectures`` keyword change of ``run-on`` to ``build-for``.
+``architectures`` key change of ``run-on`` to ``build-for``.
 
 Similarly, ``core22`` supports a shorthand notation for ``architectures`` but
 Launchpad is not able to parse this notation (`[9]`_).

@@ -5,33 +5,35 @@ Example Go app
 
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a Go-based snap. We'll work through the aspects
-unique to Go apps by examining an existing recipe.
+unique to Go apps by examining an existing project.
 
 The process of developing a snap for a Go app builds on top of the standard Go
 compiler and configuration, making it possible to adapt or integrate an app's
 existing build tooling into the crafting process.
 
 
-Example recipe for woke
------------------------
+Example project file for woke
+-----------------------------
 
-The following code comprises the recipe of a Go project, `woke
-<https://github.com/get-woke/woke>`_. This project is a text analysis tool that
-detects exclusive language.
+The following code comprises the project file of a Go tool, `woke
+<https://github.com/get-woke/woke>`_. This project is a text analysis tool that detects
+exclusive language.
 
-.. collapse:: woke recipe
+.. collapse:: woke project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-go-recipe.yaml
-    :language: yaml
-    :lines: 3-
+    .. literalinclude:: ../code/craft-a-snap/example-go-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 3-
 
 
 Add a part written in Go
 ------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-go-recipe.yaml
-  :language: yaml
-  :start-at: parts:
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: parts:
 
 
 Go parts are built with the `Go plugin <https://snapcraft.io/docs/go-plugin>`_.

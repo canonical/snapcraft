@@ -6,13 +6,12 @@ Reference
 .. toctree::
    :maxdepth: 1
 
-   anatomy-of-a-recipe
+   anatomy-of-a-project-file
    snap-build-process
    snap-publishing-process
    channels
    architectures
    bases
-   changelog
    commands
    components
    linters
