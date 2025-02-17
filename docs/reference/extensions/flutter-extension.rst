@@ -34,6 +34,7 @@ components that Flutter-based apps need.
 .. collapse:: Included parts
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         gnome-3-28-extension:
           build-packages:
@@ -63,6 +64,7 @@ The Flutter extensions connect the following snap-wide plugs.
 .. collapse:: Included snap-wide plugs
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         plugs:
           gnome-3-28-1804:
@@ -87,6 +89,7 @@ They also connect the following plugs in apps that use the extensions.
 .. collapse:: Included app plugs
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         plugs:
           - desktop
@@ -105,6 +108,7 @@ The extensions add one runtime environment variable:
 .. collapse:: Included runtime environment variables
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         environment:
           SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
@@ -119,6 +123,7 @@ The Flutter extensions add the following `layouts
 .. collapse:: Included layouts
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         layout:
           /usr/share/libdrm:

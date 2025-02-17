@@ -6,7 +6,7 @@ Example ROS 1 app
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a `ROS 1 <https://wiki.ros.org/noetic>`_-based snap.
 We'll work through the aspects unique to ROS 1 apps by examining an existing
-recipe.
+project.
 
 There are two supported bases for ROS 1 -- core20 and core18.
 
@@ -24,14 +24,14 @@ There are two supported bases for ROS 1 -- core20 and core18.
 
 .. _example-ros-1-app-project-files:
 
-Example recipe for ROS Talker/Listener
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Example project file for ROS Talker/Listener
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. tabs:: ROS Talker/Listener example
 
   .. group-tab:: core20
 
-    The following code comprises the recipe for the `core20 version of ROS
+    The following code comprises the project file for the `core20 version of ROS
     Talker/Listener
     <https://github.com/snapcraft-docs/ros-talker-listener-core20>`_.
 
@@ -64,8 +64,8 @@ Example recipe for ROS Talker/Listener
 
   .. group-tab:: core18
 
-    The following code comprises the recipe for the `core18 version of ROS Talker/Listener
-    <https://github.com/snapcraft-docs/ros-talker-listener>`_.
+    The following code comprises the project file for the `core18 version of ROS
+    Talker/Listener <https://github.com/snapcraft-docs/ros-talker-listener>`_.
 
     .. collapse:: Code
 

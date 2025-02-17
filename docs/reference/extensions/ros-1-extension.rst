@@ -18,6 +18,7 @@ The extension adds its own part to the project, which pulls in the ROS build pac
 .. collapse:: Included parts
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         ros1-noetic-extension:
           build-packages:
@@ -35,6 +36,7 @@ variables.
 .. collapse:: Included build environment variables
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         build-environment:
           - ROS_VERSION: "1"
@@ -51,6 +53,7 @@ ROS before launching the app, similar to sourcing the typical ROS ``setup.sh`` o
 .. collapse:: Included runtime environment settings
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         command-chain:
           - snap/command-chain/ros1-launch
@@ -70,18 +73,19 @@ which installs the necessary GPG key.
 .. collapse:: Included package repositories
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
-      package-repositories:
-        - components:
-              - main
-            formats:
-              - deb
-            key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-            key-server: keyserver.ubuntu.com
-            suites:
-              - focal
-            type: apt
-            url: http://packages.ros.org/ros/ubuntu
+        package-repositories:
+          - components:
+                - main
+              formats:
+                - deb
+              key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+              key-server: keyserver.ubuntu.com
+              suites:
+                - focal
+              type: apt
+              url: http://packages.ros.org/ros/ubuntu
 
 
 Example expanded project file

@@ -10,7 +10,7 @@ the host snap can access it.
 Types
 -----
 
-A component must declare a ``type`` in the project's ``snapcraft.yaml`` file.
+A component must declare a ``type`` in the project file.
 For some types, Snapcraft may place requirements on the files of a component
 and snapd may have special handling for the component.
 

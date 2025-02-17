@@ -39,11 +39,12 @@ To add the env-injector extension to an app in your snap:
 
        # Optional validation logic
 
-3. In your snap's recipe, the target app's ``extensions`` key must list
+3. In your snap's project file, the target app's ``extensions`` key must list
    ``env-injector``. For example, if your snap had an app named ``server``, the key
    would declare:
 
    .. code-block:: yaml
+       :caption: snapcraft.yaml
 
        apps:
          server:
@@ -67,8 +68,8 @@ Environment variables are applied to apps in one of two ways:
 - *Globally*, where the environment variable is passed to all apps that use
   env-injector.
 - *Locally*, where the environment variable is passed to a specific app that uses
-  env-injector. The app's name is taken from its definition in the snap recipe. The name
-  according to the extension can be :ref:`overridden with an alias
+  env-injector. The app's name is taken from its definition in the snap project file.
+  The name according to the extension can be :ref:`overridden with an alias
   <use-the-env-injector-give-app-alias>` to avoid naming conflicts.
 
 
@@ -96,7 +97,7 @@ in the previous example, the user would run:
 
     sudo snap set <snap-name> apps.server.env.http-port=8080
 
-The app's name is taken from the snap's ``snapcraft.yaml``.
+The app's name is taken from the snap's project file.
 
 When running ``snap set``, the user must adjust the environment variable name. For the
 complete details on how snap options interpret environment variables, see
@@ -136,13 +137,14 @@ app, the user would run:
 Give an app an alias for the environment
 ----------------------------------------
 
-The app's name is taken from its definition in the snap's recipe. You can override how
-the app is referred to in the environment by setting its ``env_alias`` key.
+The app's name is taken from its definition in the snap's project file. You can override
+how the app is referred to in the environment by setting its ``env_alias`` key.
 
-For example, to override an app named ``server`` with ``web-server``, the recipe would
-declare:
+For example, to override an app named ``server`` with ``web-server``, the project file
+would declare:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
     apps:
       server:

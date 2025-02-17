@@ -4,7 +4,7 @@ Use the GNOME extension
 =======================
 
 To use the :ref:`gnome-extension` with an app, add it to the app's ``extensions``
-key in the snap recipe. For example:
+key in the snap project file. For example:
 
 .. code:: yaml
 
@@ -13,7 +13,7 @@ key in the snap recipe. For example:
         extensions: [gnome]
         command: usr/bin/tali
 
-For a comprehensive example of a snap recipe that includes the extension, see
+For a comprehensive example of a snap project file that includes the extension, see
 :ref:`example-gtk4-app`.
 
 

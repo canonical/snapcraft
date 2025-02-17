@@ -5,29 +5,31 @@ Example Qt5 KDE app
 
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a snap for an app that uses Qt5 KDE. We'll work
-through the aspects unique to Qt5 KDE apps by examining an existing recipe.
+through the aspects unique to Qt5 KDE apps by examining an existing project.
 
 
-Example recipe for KCalc
-------------------------
+Example project file for KCalc
+------------------------------
 
-The following code comprises the recipe of a Qt5 KDE project, `KCalc
+The following code comprises the project file of a Qt5 KDE app, `KCalc
 <https://github.com/KDE/kcalc>`_. This project is the calculator of KDE Gear.
 
-.. collapse:: KCalc recipe
+.. collapse:: KCalc project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Add an app that uses KDE
 ------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
-  :language: yaml
-  :start-at: apps:
-  :end-at: - pulseaudio
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: apps:
+    :end-at: - pulseaudio
 
 Apps that use KDE runtime libraries require the `kde-neon
 <https://snapcraft.io/docs/kde-neon-extension>`_. The extension configures the
@@ -48,9 +50,10 @@ Add a part written for Qt5 KDE
 ------------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
-  :language: yaml
-  :start-at: parts:
-  :end-at: - "-DKDE_SKIP_TEST_SETTINGS=ON"
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: parts:
+    :end-at: - "-DKDE_SKIP_TEST_SETTINGS=ON"
 
 Qt5 KDE parts don't require a special plugin. Instead, they need extra snap dependencies.
 
@@ -60,7 +63,7 @@ To add a Qt5 KDE part:
    ``build-packages``, and so on.
 #. So that the app has access to its AppStream metadata, for ``parse-info`` add
    a path to the AppStream ``.xml`` file on the host system. Since we set
-   ``adopt-info: kcalc`` at the start of the recipe, the AppStream file of the
+   ``adopt-info: kcalc`` at the start of the project file, the AppStream file of the
    ``kcalc`` part will be used to fill in the ``summary``, ``description`` and
    ``icon`` of this snap and copy the AppStream file. See `Using AppStream
    metadata
@@ -69,6 +72,7 @@ To add a Qt5 KDE part:
 #. For ``build-snaps``, list the following dependencies:
 
    .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
-     :language: yaml
-     :dedent: 6
-     :lines: 37-38
+       :caption: snapcraft.yaml
+       :language: yaml
+       :dedent: 6
+       :lines: 37-38

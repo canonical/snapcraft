@@ -47,6 +47,7 @@ The extension adds its own part to the project, which pulls in the ROS 2 build p
         .. collapse:: Included parts
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 ros2-foxy-extension:
                   build-packages:
@@ -62,6 +63,7 @@ The extension adds its own part to the project, which pulls in the ROS 2 build p
         .. collapse:: Included parts
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 ros2-humble/ros2-launch:
                   source: /snap/snapcraft/13181/share/snapcraft/extensions/ros2
@@ -77,6 +79,7 @@ The extension adds its own part to the project, which pulls in the ROS 2 build p
         .. collapse:: Included parts
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 ros2-jazzy/ros2-launch:
                   source: /snap/snapcraft/13181/share/snapcraft/extensions/ros2
@@ -101,6 +104,7 @@ variables.
         .. collapse:: Included build environment variables
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 build-environment:
                   - ROS_VERSION: "2"
@@ -111,6 +115,7 @@ variables.
         .. collapse:: Included build environment variables
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 build-environment:
                   - ROS_VERSION: "2"
@@ -121,6 +126,7 @@ variables.
         .. collapse:: Included build environment variables
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 build-environment:
                   - ROS_VERSION: "2"
@@ -141,6 +147,7 @@ ROS 2 before launching the app, similar to sourcing the typical ROS 2
         .. collapse:: Included runtime environment settings
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 command-chain:
                   - snap/command-chain/ros2-launch
@@ -154,6 +161,7 @@ ROS 2 before launching the app, similar to sourcing the typical ROS 2
         .. collapse:: Included runtime environment settings
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 environment:
                   ROS_VERSION: "2"
@@ -169,6 +177,7 @@ ROS 2 before launching the app, similar to sourcing the typical ROS 2
         .. collapse:: Included runtime environment settings
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 environment:
                   ROS_VERSION: "2"
@@ -193,6 +202,7 @@ installs the necessary GPG key.
         .. collapse:: Included package repositories
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 package-repositories:
                   - components:
@@ -211,6 +221,7 @@ installs the necessary GPG key.
         .. collapse:: Included package repositories
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 package-repositories:
                   - type: apt
@@ -229,6 +240,7 @@ installs the necessary GPG key.
         .. collapse:: Included package repositories
 
             .. code-block:: yaml
+                :caption: snapcraft.yaml
 
                 package-repositories:
                   - type: apt
