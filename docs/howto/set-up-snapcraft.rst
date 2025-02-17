@@ -149,6 +149,7 @@ See `How to install LXD
 <https://documentation.ubuntu.com/lxd/en/latest/installing/#installing>`_ in
 the LXD documentation for further installation options and troubleshooting.
 
+.. _multiple-installs:
 
 Install multiple instances of Snapcraft
 ---------------------------------------

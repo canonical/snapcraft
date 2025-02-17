@@ -2561,7 +2561,7 @@ def test_project_platform_mismatch():
 
 def test_project_platform_unknown_name():
     """Raise an error if an empty platform is not a valid architecture."""
-    with pytest.raises(CraftValidationError) as raised:
+    with pytest.raises(pydantic.ValidationError) as raised:
         snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
             {
                 "name": "test-snap",
@@ -2572,10 +2572,7 @@ def test_project_platform_unknown_name():
             }
         )
 
-    assert (
-        "Invalid architecture: 'unknown' must be a valid debian architecture."
-        in str(raised.value)
-    )
+    assert "'unknown' is not a valid Debian architecture." in str(raised.value)
 
 
 @pytest.mark.parametrize("project", [ComponentProject, Project])

@@ -5,34 +5,36 @@ Example Ruby app
 
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a Ruby-based snap. We'll work through the aspects
-unique to Ruby apps by examining an existing recipe.
+unique to Ruby apps by examining an existing project.
 
 The process of developing a snap for a Python app builds on top of YARV and
 ``gemspec`` file configuration, making it possible to adapt or integrate an
 app's existing build tooling into the crafting process.
 
 
-Example recipe for liquidctl
-----------------------------
+Example project file for Markdown lint tool
+-------------------------------------------
 
-The following code comprises the recipe of a Ruby project, `Markdown lint tool
-<https://github.com/snapcraft-docs/mdl>`_. This project provides style and
-syntax checks for Markdown files.
+The following code comprises the project file of a Ruby app, the `Markdown lint tool
+<https://github.com/snapcraft-docs/mdl>`_. This project provides style and syntax checks
+for Markdown files.
 
-.. collapse:: Markdown lint tool recipe
+.. collapse:: Markdown lint tool project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-ruby-recipe.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: ../code/craft-a-snap/example-ruby-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Add a part written in Ruby
 --------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-ruby-recipe.yaml
-  :language: yaml
-  :start-at: parts:
-  :end-at: - git
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: parts:
+    :end-at: - git
 
 Ruby parts are built with the `Ruby <https://snapcraft.io/docs/ruby-plugin>`_
 plugin.

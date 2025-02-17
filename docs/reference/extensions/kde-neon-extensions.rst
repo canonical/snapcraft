@@ -70,6 +70,7 @@ The extension automatically includes the required plugs for these runtime librar
 .. collapse:: Included interfaces from KDE neon 6
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         plugs:
           desktop:
@@ -105,6 +106,7 @@ In addition, the extension adds the following plugs to each app that uses it:
 .. collapse:: Included plugs for apps from KDE neon 6
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         plugs:
           - desktop
@@ -149,6 +151,7 @@ correctly. The project's main part receives the following variables.
 .. collapse:: Included build environment variables from KDE neon 6
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         build-environment:
           - PATH: /snap/kde-qt6-core24-sdk/current/usr/bin:/snap/kf6-core24-sdk/current/usr/bin${PATH::$PATH}
@@ -169,6 +172,7 @@ The main runtime variables apply to the whole snap.
 .. collapse:: Included snap-wide runtime variables from KDE neon 6
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         environment:
           SNAP_DESKTOP_RUNTIME: $SNAP/kf6
@@ -183,6 +187,7 @@ included by a `configure hook <https://snapcraft.io/docs/supported-snap-hooks>`_
 .. collapse:: Included configure hook from KDE neon 6
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         hooks:
           configure:
@@ -194,6 +199,7 @@ The KDE neon 6 extension adds this shell script to the snap through a special pa
 .. collapse:: Included SDK build part from KDE neon 6
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         parts:
           ...
@@ -217,6 +223,7 @@ The KDE neon 6 extension adds the following `layouts
 .. collapse:: Included layouts
 
     .. code-block:: yaml
+        :caption: snapcraft.yaml
 
         layout:
           /usr/share/X11:

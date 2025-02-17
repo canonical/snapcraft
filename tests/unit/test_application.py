@@ -52,13 +52,6 @@ def architectures(request):
 
 
 @pytest.fixture()
-def mock_confirm(mocker):
-    return mocker.patch(
-        "snapcraft.commands.remote.confirm_with_user", return_value=True
-    )
-
-
-@pytest.fixture()
 def mock_remote_build_run(mocker):
     _mock_remote_build_run = mocker.patch(
         "snapcraft.commands.remote.RemoteBuildCommand._run"
@@ -74,7 +67,9 @@ def mock_run_legacy(mocker):
 @pytest.fixture()
 def mock_remote_build_argv(mocker):
     """Mock `snapcraft remote-build` cli."""
-    return mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    return mocker.patch.object(
+        sys, "argv", ["snapcraft", "remote-build", "--launchpad-accept-public-upload"]
+    )
 
 
 @pytest.mark.parametrize("env_vars", application.MAPPED_ENV_VARS.items())
@@ -421,7 +416,7 @@ def test_esm_pass(mocker, snapcraft_yaml, base):
 
 @pytest.mark.parametrize("envvar", ["disable-fallback", None])
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_remote_build_core24(
     monkeypatch,
     snapcraft_yaml,
@@ -446,13 +441,12 @@ def test_run_remote_build_core24(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_remote_build_core24_error(monkeypatch, snapcraft_yaml, base, capsys):
     """Error if using force-fallback for core24 or newer."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "force-fallback")
-    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
 
     application.main()
 
@@ -466,11 +460,10 @@ def test_run_remote_build_core24_error(monkeypatch, snapcraft_yaml, base, capsys
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch, capsys):
     """core20 bases cannot use the new remote-build."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
-    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
 
@@ -486,7 +479,7 @@ def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch, c
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_force_fallback_core22(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
 ):
@@ -502,7 +495,7 @@ def test_run_envvar_force_fallback_core22(
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_force_fallback_unset_core20(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
 ):
@@ -518,7 +511,7 @@ def test_run_envvar_force_fallback_unset_core20(
 
 
 @pytest.mark.parametrize("base", {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_force_fallback_empty_core22(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
 ):
@@ -534,11 +527,10 @@ def test_run_envvar_force_fallback_empty_core22(
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES | const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch, capsys):
     """core20 and core22 bases raise an error if the envvar is invalid."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "badvalue")
-    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
 
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)

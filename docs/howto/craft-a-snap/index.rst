@@ -11,7 +11,7 @@ the same benefits from being packed into snaps.
 Snapcraft uses special :ref:`plugins` and extensions to hook into and manage
 the different languages and frameworks.
 
-Choose from the following guides to see example recipes for the supported
+Choose from the following guides to see example project files for the supported
 languages and frameworks. These guides are intended to provide you a good basis
 to learn how to craft a snap with a given plugin.
 

@@ -1,31 +1,32 @@
-.. _anatomy-of-a-recipe:
+.. _anatomy-of-a-project-file:
 
-Anatomy of a recipe
-===================
+Anatomy of a project file
+=========================
 
-This page provides a break down of the keys in complete Snapcraft recipes, as
-declared in ``snapcraft.yaml`` files.
+This page provides a breakdown of the keys in complete Snapcraft project files, as
+declared in project files.
 
-Two recipes will be examined. The first is a simple recipe from a Python-based
-snap called `yt-dlp <https://github.com/yt-dlp/yt-dlp>`_. The second is more
-complex and builds the `wethr <https://github.com/twobucks/wethr>`_ app, which
-is written in Node.
+Two project files will be examined. The first is a simple project file from a
+Python-based snap called `yt-dlp <https://github.com/yt-dlp/yt-dlp>`_. The second is
+more complex and builds the `wethr <https://github.com/twobucks/wethr>`_ app, which is
+written in Node.
 
-Each key in the yt-dlp recipe will be covered, and the more advanced keys in
+Each key in the yt-dlp project file will be covered, and the more advanced keys in
 wethr will be examined.
 
 
-Simple recipe
--------------
+Simple project file
+-------------------
 
 yt-dlp is a command line tool for extracting online videos, and is a
 self-contained Python project.
 
-.. collapse:: yt-dlp recipe
+.. collapse:: yt-dlp project file
 
-  .. literalinclude:: code/yt-dlp-recipe.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: code/yt-dlp-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Top-level directives
@@ -189,7 +190,7 @@ The `app directives
 define the command path for each app, how it will be run, optional parameters,
 and the interface connections that will be established at runtime.
 
-The yt-dlp recipe declares a single app, which is the main app itself. Other
+The yt-dlp project file declares a single app, which is the main app itself. Other
 snaps may have multiple sub-apps or executables.
 
 The ``command`` key defines the path to the executable -- relative to the snap
@@ -203,24 +204,25 @@ will allow the user of the tool to access files in the user's home directory,
 from a network connection, or from any mounted removable media locations.
 
 
-Advanced recipe
----------------
+Advanced project file
+---------------------
 
-For a more complex example, there's the recipe for wethr, a CLI command for
+For a more complex example, there's the project file for wethr, a CLI command for
 retrieving local weather conditions.
 
 The metadata, base, and confinement declarations are rather similar to the
 simple example, but with some notable differences.
 
-.. collapse:: wethr recipe
+.. collapse:: wethr project file
 
-  .. literalinclude:: code/wethr-recipe.yaml
-    :language: yaml
-    :lines: 2-
+    .. literalinclude:: code/wethr-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 .. note::
 
-  The recipe shown here has been modified from the actual snap's recipe to
+  The project file shown here has been modified from the actual snap's project file to
   highlight features of Snapcraft.
 
 
@@ -229,20 +231,20 @@ Adopting metadata
 
 The ``adopt-info`` key instructs Snapcraft to import metadata from another
 source. Such use can be useful for continuous integration and delivery systems,
-where the declarations in the recipe can be obtained from scripts rather than
+where the declarations in the project file can be obtained from scripts rather than
 manually.
 
 There are multiple ways that information can be obtained. For a how-to guide on
 bringing in external metadata, see `Using external metadata
 <https://snapcraft.io/docs/using-external-metadata>`_.
 
-Multiple metadata fields can be populated using this key. In this recipe, the
+Multiple metadata fields can be populated using this key. In this project file, the
 snap's version is obtained from the Git repository release tag, which proceeds
 in two stages:
 
 #. The ``adopt-info`` key instructs Snapcraft to populate the metadata fields
-   that aren't already declared in the recipe.
-#. In the parts section at the end of the recipe:
+   that aren't already declared in the project file.
+#. In the parts section at the end of the project file:
 
    #. A step in the build lifecycle is manually overridden.
    #. A custom script is used to derive the version string.
@@ -272,7 +274,7 @@ to compile and build the snap for the listed platforms.
 Parts
 ~~~~~
 
-Compared to the recipe of yt-dlp, wethr has a part that's notably more
+Compared to the project file of yt-dlp, wethr has a part that's notably more
 intricate.
 
 It too has one part, but it's built with the `npm plugin
