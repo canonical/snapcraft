@@ -653,13 +653,16 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
     kde_neon_qt6_extension_with_default_build_snap_from_latest_edge_core24,
 ):
     source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
-    assert kde_neon_qt6_extension_with_default_build_snap_from_latest_edge_core24.get_parts_snippet() == {
-        "kde-neon-qt6/sdk": {
-            "source": str(source),
-            "plugin": "make",
-            "make-parameters": [
-                "GPU_WRAPPER=gpu-2404-wrapper",
-                "PLATFORM_PLUG=kde-qt6-core24",
-            ],
+    assert (
+        kde_neon_qt6_extension_with_default_build_snap_from_latest_edge_core24.get_parts_snippet()
+        == {
+            "kde-neon-qt6/sdk": {
+                "source": str(source),
+                "plugin": "make",
+                "make-parameters": [
+                    "GPU_WRAPPER=gpu-2404-wrapper",
+                    "PLATFORM_PLUG=kde-qt6-core24",
+                ],
+            }
         }
-    }
+    )
