@@ -31,6 +31,7 @@ restore: |
   cd "${SNAP}"
   snapcraft clean
   rm -f ./*.snap
+  rm -rf ./squashfs-root
 
 execute: |
   cd "${SNAP}"
