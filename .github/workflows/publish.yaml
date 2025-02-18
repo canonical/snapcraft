@@ -12,7 +12,7 @@ jobs:
   publish:
     strategy:
       matrix:
-        runner: 
+        runner:
           - [self-hosted, amd64]
           - [self-hosted, arm64]
     runs-on: ${{ matrix.runner }}
