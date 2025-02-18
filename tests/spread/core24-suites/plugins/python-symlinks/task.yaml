@@ -3,6 +3,7 @@ summary: >-
   configurations
 
 environment:
+  # These must run in managed mode in order to have the right Python versions
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   # base core24, strict confinement: use provisioned if available

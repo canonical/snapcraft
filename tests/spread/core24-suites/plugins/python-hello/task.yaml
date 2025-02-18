@@ -10,6 +10,7 @@ environment:
   PARAM/classic: "--classic"
   PARAM/poetry: ""
   PARAM/uv: ""
+  # These must run in managed mode in order to have the right Python versions
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 restore: |
