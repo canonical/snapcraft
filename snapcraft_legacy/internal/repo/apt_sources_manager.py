@@ -107,7 +107,6 @@ class AptSourcesManager:
     :param sources_list_d: Path to sources.list.d directory.
     """
 
-
     def __init__(
         self,
         *,

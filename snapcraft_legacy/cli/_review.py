@@ -27,7 +27,7 @@ def review_snap(*, snap_file: str) -> None:
     # Review the snap.
     if review_tools.is_available():
         echo.info(
-            "Running the review tools before pushing this snap to the Snap " "Store."
+            "Running the review tools before pushing this snap to the Snap Store."
         )
         # TODO just raise when we can override.
         try:

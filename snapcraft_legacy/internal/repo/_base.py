@@ -211,7 +211,7 @@ class BaseRepo:
     ) -> Set[str]:
         """Mark all files in sources_dir as coming from stage_package."""
         file_list = set()
-        for (root, dirs, files) in os.walk(sources_dir):
+        for root, dirs, files in os.walk(sources_dir):
             for file_name in files:
                 file_path = os.path.join(root, file_name)
 

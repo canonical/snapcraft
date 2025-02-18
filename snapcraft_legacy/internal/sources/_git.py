@@ -162,7 +162,7 @@ class Git(Base):
                 "origin",
                 self.source_commit,
             ],
-            **self._call_kwargs
+            **self._call_kwargs,
         )
 
     def _pull_existing(self):
@@ -191,7 +191,7 @@ class Git(Base):
 
         self._run(
             [self.command, "-C", self.source_dir, "reset", "--hard", reset_spec],
-            **self._call_kwargs
+            **self._call_kwargs,
         )
 
         if self.source_submodules is None or len(self.source_submodules) > 0:
@@ -229,7 +229,7 @@ class Git(Base):
 
             self._run(
                 [self.command, "-C", self.source_dir, "checkout", self.source_commit],
-                **self._call_kwargs
+                **self._call_kwargs,
             )
 
     def is_local(self):

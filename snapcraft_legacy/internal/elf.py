@@ -240,7 +240,6 @@ class Library:
         arch: ElfArchitectureTuple,
         soname_cache: SonameCache,
     ) -> None:
-
         self.soname = soname
         self.soname_path = soname_path
         self.search_paths = search_paths

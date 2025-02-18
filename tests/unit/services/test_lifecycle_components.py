@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Tests for Components in Snapcraft's Lifecycle service."""
+
 import pytest
 
 from snapcraft import errors
@@ -22,7 +23,6 @@ from snapcraft import errors
 
 @pytest.fixture
 def extra_project_params(extra_project_params):
-
     extra_project_params["components"] = {
         "firstcomponent": {
             "type": "test",
@@ -52,7 +52,6 @@ def extra_project_params(extra_project_params):
     ],
 )
 def test_lifecycle_get_prime_dir(lifecycle_service, component, expected_prime):
-
     lifecycle_service.setup()
 
     assert (

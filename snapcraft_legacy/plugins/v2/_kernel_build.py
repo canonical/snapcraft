@@ -181,9 +181,7 @@ def _download_generic_initrd_cmd(target_arch: str) -> List[str]:
         if [ ! -e ${{UC_INITRD_DEB}} ]; then
         	download_core_initrd {arch} ${{UC_INITRD_DEB}}
         fi
-        """.format(
-            arch=target_arch
-        )
+        """.format(arch=target_arch)
     )
     return [cmd]
 
@@ -214,9 +212,7 @@ def _download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
         if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
         	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
         fi
-        """.format(
-            arch=target_arch
-        )
+        """.format(arch=target_arch)
     )
     return [cmd]
 
@@ -231,9 +227,7 @@ def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
                 	echo "cloning zfs..."
                 	git clone --depth=1 {zfs_url} {dest_dir}/zfs -b master
                 fi
-                """.format(
-                    dest_dir=dest_dir, zfs_url=_ZFS_URL
-                )
+                """.format(dest_dir=dest_dir, zfs_url=_ZFS_URL)
             )
         ]
     return [
@@ -249,9 +243,7 @@ def _clean_old_build_cmd(dest_dir: str) -> List[str]:
             echo "Cleaning previous build first..."
             [ -e {dest_dir}/modules ] && rm -rf {dest_dir}/modules
             [ -L {dest_dir}/lib/modules ] && rm -rf {dest_dir}/lib/modules
-            """.format(
-                dest_dir=dest_dir
-            )
+            """.format(dest_dir=dest_dir)
         )
     ]
 
@@ -293,15 +285,13 @@ def _do_base_config_cmd(
 		fakeroot debian/rules clean
 		rm -rf CONFIGS/
 		popd
-	fi""".format(
-                config_flavour=config_flavour, dest_dir=dest_dir
-            )
+	fi""".format(config_flavour=config_flavour, dest_dir=dest_dir)
         )
         cmd.extend([conf_cmd])
     else:
         make_cmd = make_cmd.copy()
         make_cmd[1] = "-j1"  # FIXME: make this more robust
-        cmd.append(f'\t{" ".join(make_cmd + defconfig)}')
+        cmd.append(f"\t{' '.join(make_cmd + defconfig)}")
 
     cmd.append("fi")
 
@@ -522,7 +512,6 @@ def _get_perf_build_commands(
         " ".join(cmd),
         f'install -Dm0755 "{build_dir}/tools/perf/perf" "{install_dir}/bin/perf"',
     ]
-
 
 
 def _make_initrd_cmd(
@@ -917,7 +906,6 @@ def _make_initrd_cmd(
     ]
 
 
-
 def get_build_commands(
     make_cmd: List[str],
     make_targets: List[str],
@@ -1118,9 +1106,7 @@ def _arrange_install_dir_cmd(install_dir: str) -> List[str]:
             # create symlinks for modules and firmware for convenience
             ln -sf ../modules {install_dir}/lib/modules
             ln -sf ../firmware {install_dir}/lib/firmware
-            """.format(
-                install_dir=install_dir
-            )
+            """.format(install_dir=install_dir)
         )
     ]
 
@@ -1140,7 +1126,6 @@ def _compression_cmd(
     cmd = f"{compressor} {options}"
     logger.warning("WARNING: Using custom initrd compressions command: %s", cmd)
     return cmd
-
 
 
 def _get_post_install_cmd(
@@ -1190,7 +1175,6 @@ def _get_post_install_cmd(
         ),
         "",
     ]
-
 
 
 def _get_install_command(

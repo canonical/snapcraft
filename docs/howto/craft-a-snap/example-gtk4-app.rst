@@ -6,32 +6,32 @@ Example GTK4 app
 This how-to guide covers the steps, decisions, and implementation details that
 are unique when crafting a snap of an app built using GTK4 and GNOME. We'll
 work through the aspects unique to GTK4-based apps by examining an existing
-recipe.
+project file.
 
 
-Example gnome-text-editor recipe
---------------------------------
+Example gnome-text-editor project file
+--------------------------------------
 
-The following code comprises the recipe of a GTK4 project, `gnome-text-editor
-<https://gitlab.gnome.org/GNOME/gnome-text-editor>`_. This project is the
-default text editor of the GNOME desktop environment.
+The following code comprises the project file of a GTK4 app, `gnome-text-editor
+<https://gitlab.gnome.org/GNOME/gnome-text-editor>`_. This project is the default text
+editor of the GNOME desktop environment.
 
-.. collapse:: gnome-text-editor recipe
+.. collapse:: gnome-text-editor project file
 
-  .. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
-    :language: yaml
-    :lines: 2-
-
-
+    .. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
+        :caption: snapcraft.yaml
+        :language: yaml
+        :lines: 2-
 
 
 Add an app that uses GNOME
 --------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
-  :language: yaml
-  :start-at: apps:
-  :end-at: - cups
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: apps:
+    :end-at: - cups
 
 Apps that use GTK4 and GNOME as runtime libraries require the `gnome extension
 <https://snapcraft.io/docs/the-gnome-extension>`_. The extension configures the
@@ -52,9 +52,10 @@ Add a part written for GTK4
 ---------------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
-  :language: yaml
-  :start-at: parts:
-  :end-at: parse-info: [usr/share/metainfo/org.gnome.TextEditor.appdata.xml]
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: parts:
+    :end-at: parse-info: [usr/share/metainfo/org.gnome.TextEditor.appdata.xml]
 
 GTK4 parts are built with the `Meson plugin
 <https://snapcraft.io/docs/meson-plugin>`_.
@@ -66,7 +67,7 @@ To add a GTK4 part:
 #. Set ``plugin: meson``.
 #. So that the app has access to its AppStream metadata, for ``parse-info`` add
    a path to the AppStream ``.xml`` file on the host system. Since we set
-   ``adopt-info: gnome-text-editor`` at the start of the recipe, the AppStream
+   ``adopt-info: gnome-text-editor`` at the start of the project file, the AppStream
    file of the ``gnome-text-editor`` part will be used to fill in the
    ``summary``, ``description`` and ``icon`` of this snap and copy the
    AppStream file. See `Using AppStream metadata
@@ -78,9 +79,10 @@ Add required slots
 ------------------
 
 .. literalinclude:: ../code/craft-a-snap/example-gtk4-recipe.yaml
-  :language: yaml
-  :start-at: slots:
-  :end-at: name: org.gnome.TextEditor
+    :caption: snapcraft.yaml
+    :language: yaml
+    :start-at: slots:
+    :end-at: name: org.gnome.TextEditor
 
 Many GTK4 apps require access to D-Bus in order to run correctly. If your app
 does, you need to explicitly grant it access as a slot:

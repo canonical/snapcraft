@@ -13,30 +13,30 @@ tests. Some other rules are only socially enforced during code reviews.
 
 ## Code Formatting
 
-This code base adheres to black[2].
-You can `snap install black --beta --devmode` to install the linter and formatter onto your host.
+This code base adheres to [Ruff][2].
+You can `snap install ruff` to install the linter and formatter onto your host.
 
 ## Conditionals
 
-* Always check for expected value e.g.; `if foo is True` instead of `if foo`
+- Always check for expected value e.g.; `if foo is True` instead of `if foo`
   or `if foo is not None`.
-  
+
 ## Methods
 
-* Return only once from a method unless it is through a guard.
-* Method names should start with a =verb= unless it is a `@property`.
-* Attribute names should be a `noun`.
+- Return only once from a method unless it is through a guard.
+- Method names should start with a =verb= unless it is a `@property`.
+- Attribute names should be a `noun`.
 
 ## Classes
 
-* `classmethods` should be defined before `__init__`.
-* Serialization/marshalling/dumping shall use methods named `marshal` and
+- `classmethods` should be defined before `__init__`.
+- Serialization/marshalling/dumping shall use methods named `marshal` and
   `unmarshal` but if specific types are serialized we append the information
   type, e.g.; `unmarshal_dict`.
 
 ## Iterating
 
-* Always use generators, list comprehensions, reduce and functional resolution
+- Always use generators, list comprehensions, reduce and functional resolution
   when possible.
 
 ## Multiline strings
@@ -59,14 +59,14 @@ fix it.
 
 ## Tests
 
-* When asserting for equality, we prefer to use the `Equals` matcher from
+- When asserting for equality, we prefer to use the `Equals` matcher from
   testtools:
 
     ```
     self.assertThat(actual, Equals(expected))
     ```
 
-* When writing unit tests that raise errors, the tests should only check the
+- When writing unit tests that raise errors, the tests should only check the
   class of the exception raised and it's attributes, not the format of the
   error message. The formatting of the exception as a string should be
   tested only once, in the module tests/unit/test_errors.py
@@ -76,4 +76,4 @@ fix it.
 Generally speaking, all comments should end with some punctuation.
 
 [1]: TESTING.md
-[2]: https://github.com/ambv/black
+[2]: https://docs.astral.sh/ruff/

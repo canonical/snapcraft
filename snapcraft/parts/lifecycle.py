@@ -22,7 +22,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 
 import craft_parts
 from craft_cli import emit
@@ -212,7 +212,8 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
         if parsed_args.debug:
             emit.progress(str(err), permanent=True)
             launch_shell()
-        raise errors.FilePermissionError(err.filename, reason=err.strerror)
+        # Casting as a str as OSError should always contain an error message
+        raise errors.FilePermissionError(err.filename, reason=cast(str, err.strerror))
     except OSError as err:
         msg = err.strerror
         if err.filename:
@@ -220,7 +221,8 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
         if parsed_args.debug:
             emit.progress(msg, permanent=True)
             launch_shell()
-        raise errors.SnapcraftError(msg) from err
+        # Casting as a str as OSError should always contain an error message
+        raise errors.SnapcraftError(cast(str, msg)) from err
     except errors.SnapcraftError as err:
         if parsed_args.debug:
             emit.progress(str(err), permanent=True)
