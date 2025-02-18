@@ -90,8 +90,6 @@ class RemoteBuildCommand(RemoteBuild):
         :raises RemoteBuildError: If an unsupported architecture is specified, or multiple
         artifacts will be created for the same build-on.
         """
-        print(parsed_args)
-
         for build_for in cast(list[str], parsed_args.remote_build_build_fors) or []:
             if build_for not in [*SUPPORTED_ARCHS, "all"]:
                 raise errors.RemoteBuildError(
@@ -156,12 +154,17 @@ class RemoteBuildCommand(RemoteBuild):
                         build_for=build_for,
                         host_arch=None,
                     )
-                    archs.extend([info.build_for for info in filtered_build_plan])
+                    # Launchpad's API only accepts a list of architectures but doesn't
+                    # have a concept of 'build-on' vs 'build-for'.
+                    # Passing the build-on archs is safe because:
+                    # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
+                    # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
+                    archs.extend([info.build_on for info in filtered_build_plan])
                     if not archs:
                         raise craft_application.errors.EmptyBuildPlanError()
             else:
                 emit.debug("Using the project's build plan")
-                archs = [build_info.build_for for build_info in build_plan]
+                archs = [build_info.build_on for build_info in build_plan]
         # No architectures in the project means '--build-for' no longer acts as a filter.
         # Instead, it defines the architectures to build for.
         elif build_fors:
