@@ -101,8 +101,6 @@ patch releases.
 See individual issue links for any mitigations.
 
 - `#4996`_ Remote build gives an unfriendly error when attempting to cross-compile.
-- `#5258`_ The Flutter plugin fails to install Flutter for ``core22`` and ``core24``
-  snaps.
 
 
 Fixed bugs and issues
@@ -110,6 +108,8 @@ Fixed bugs and issues
 
 The following issues have been resolved in Snapcraft 8.7:
 
+- `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
+  snaps.
 - `#5250`_ Resources path for ``QtWebEngineProcess`` wasn't exported for snaps
   using the KDE Neon 6 extension.
 - `craft-parts#978`_ The ``source-subdir`` field was ignored for the

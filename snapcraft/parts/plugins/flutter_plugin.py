@@ -86,6 +86,10 @@ class FlutterPlugin(plugins.Plugin):
         return [
             # TODO detect changes to plugin properties
             f"git clone --depth 1 -b {options.flutter_channel} {FLUTTER_REPO} {self.flutter_dir}",
+            # Workaround for flutter#163308
+            # Deletion of this file avoids an if statement that causes the following commands to
+            # fail
+            f"rm {self.flutter_dir}/engine/src/.gn",
             "flutter precache --linux",
             "flutter pub get",
         ]
