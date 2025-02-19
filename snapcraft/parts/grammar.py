@@ -72,8 +72,6 @@ def process_parts(
     processor = GrammarProcessor(arch=arch, target_arch=target_arch, checker=self_check)
 
     for part in parts_yaml_data.values():
-        part = process_part(
-            part_yaml_data=part, processor=processor
-        )
+        process_part(part_yaml_data=part, processor=processor)
 
     return parts_yaml_data

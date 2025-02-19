@@ -121,7 +121,6 @@ def _update_project_links(
 
         # only update the project if the project has not defined the field
         if not project_field:
-
             # values for a field from all metadata files
             metadata_values: list[str] = list()
 
