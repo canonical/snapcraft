@@ -95,9 +95,10 @@ env.bak/
 dmypy.json
 
 # Lifecycle
-build/
-prime/
-stage/
+/build/
+/prime/
+/stage/
+/parts/
 
 # Python virtual environment
 venv/
