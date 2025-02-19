@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """The flutter plugin."""
+
 from typing import Literal, cast
 
 from craft_parts import infos, plugins
