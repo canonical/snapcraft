@@ -41,6 +41,9 @@ html_context = {
     "display_contributors": False,
 }
 
+html_copy_source = False
+html_show_sourcelink = False
+
 extensions = [
     "canonical_sphinx",
 ]
