@@ -16,7 +16,6 @@
 
 """Snapcraft specific plugins."""
 
-
 from .register import get_plugins, register
 
 from .colcon_plugin import ColconPlugin

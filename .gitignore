@@ -15,7 +15,6 @@ eggs/
 .eggs/
 lib/
 lib64/
-parts/
 sdist/
 var/
 wheels/
@@ -96,10 +95,10 @@ env.bak/
 dmypy.json
 
 # Lifecycle
-build/
-parts/
-prime/
-stage/
+/build/
+/prime/
+/stage/
+/parts/
 
 # Python virtual environment
 venv/
