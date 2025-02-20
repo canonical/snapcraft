@@ -1,17 +1,10 @@
 summary: Build and run Python-based snaps in core24
 
-systems:
-  # Must *not* run this on 24.04, which can give false-positives due to the
-  # presence of the system Python 3.12.
-  - ubuntu-22.04*
-
 environment:
   PARAM/strict: ""
   PARAM/classic: "--classic"
   PARAM/poetry: ""
   PARAM/uv: ""
-  # These must run in managed mode in order to have the right Python versions
-  SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
 restore: |
   cd ./"${SPREAD_VARIANT}"
