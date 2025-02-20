@@ -44,6 +44,8 @@ html_context = {
 html_copy_source = False
 html_show_sourcelink = False
 
+theme_top_of_page_buttons = ["edit"]
+
 extensions = [
     "canonical_sphinx",
 ]
