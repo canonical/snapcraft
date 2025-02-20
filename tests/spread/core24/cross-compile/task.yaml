@@ -1,0 +1,8 @@
+summary: Cross-compile a snap with build-packages and stage-packages from a foreign architecture.
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft pack
