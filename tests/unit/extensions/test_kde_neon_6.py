@@ -546,6 +546,8 @@ class TestGetPartSnippet:
                         "/blas:"
                         "/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
                         "/lapack:"
+                        "/snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
+                        "/libproxy:"
                         "/snap/kf6-core24-sdk/current/usr/lib:"
                         "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
                         "$CRAFT_STAGE/usr/lib:"
