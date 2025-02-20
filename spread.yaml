@@ -246,40 +246,48 @@ suites:
   tests/spread/core24-suites/environment/:
     summary: core24 environment tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
 
   tests/spread/core24-suites/scriptlets/:
     summary: core24 scriptlet tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      - SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   tests/spread/core24-suites/manifest/:
     summary: core24 manifest tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      - SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   tests/spread/core24-suites/patchelf/:
     summary: core24 patchelf tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      - SNAPCRAFT_BUILD_ENVIRONMENT: host
 
   tests/spread/core24-suites/plugins/:
     summary: core24 plugin tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      - SNAPCRAFT_BUILD_ENVIRONMENT: host
 
-    # General, core suite
-    tests/spread/general/:
-      summary: tests of snapcraft core functionality
-      systems:
-        - ubuntu-20.04*
-        - ubuntu-22.04*
+  # General, core suite
+  tests/spread/general/:
+    summary: tests of snapcraft core functionality
+    systems:
+      - ubuntu-20.04*
+      - ubuntu-22.04*
 
-    tests/spread/general/hooks/:
-      summary: tests of snapcraft hook functionality
-      systems:
-        - ubuntu-20.04*
-        - ubuntu-22.04*
+  tests/spread/general/hooks/:
+    summary: tests of snapcraft hook functionality
+    systems:
+      - ubuntu-20.04*
+      - ubuntu-22.04*
 
   # 'build-base: devel' fails due to an issue with the 24.10 buildd image (#4921)
   # tests/spread/core-devel/:
