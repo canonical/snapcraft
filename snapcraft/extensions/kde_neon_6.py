@@ -289,12 +289,12 @@ class KDENeon6(Extension):
                         "LD_LIBRARY_PATH": prepend_to_env(
                             "LD_LIBRARY_PATH",
                             [
-                                # Qt5 arch specific libs
+                                # Qt6 arch specific libs
                                 f"/snap/{qt6_sdk_snap}/current/usr/lib/"
                                 "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                                # Qt5 libs
+                                # Qt6 libs
                                 f"/snap/{qt6_sdk_snap}/current/usr/lib",
-                                # kf5 arch specific libs
+                                # kf6 arch specific libs
                                 f"/snap/{kf6_sdk_snap}/current/usr/lib/"
                                 "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
                                 # Mesa libs
@@ -306,7 +306,10 @@ class KDENeon6(Extension):
                                 # lapack
                                 f"/snap/{kf6_sdk_snap}/current/usr/lib/"
                                 "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
-                                # kf5 libs
+                                # libproxy
+                                f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy",
+                                # kf6 libs
                                 f"/snap/{kf6_sdk_snap}/current/usr/lib",
                                 # Staged libs
                                 "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
