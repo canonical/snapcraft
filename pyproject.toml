@@ -15,7 +15,7 @@ dependencies = [
     "craft-platforms~=0.6",
     "craft-providers~=2.1",
     "craft-store>=3.0.2,<4.0.0",
-    "cryptography==43.0.3", # Pinned due to https://github.com/canonical/snapcraft/issues/5217
+    "cryptography==44.0.1", # Pinned due to https://github.com/canonical/snapcraft/issues/5217
     "gnupg",
     "jsonschema==2.5.1",
     "launchpadlib",
