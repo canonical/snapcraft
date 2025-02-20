@@ -252,12 +252,102 @@ class KDENeon6(Extension):
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
         kf6_sdk_snap = self.kde_snaps.kf6_sdk_snap
 
+        if self.yaml_data["base"] == "core24":
+            return {
+                "build-environment": [
+                    {
+                        "PATH": prepend_to_env(
+                            "PATH",
+                            [
+                                "$CRAFT_STAGE/usr/bin",
+                                f"/snap/{qt6_sdk_snap}/current/usr/bin",
+                                f"/snap/{kf6_sdk_snap}/current/usr/bin",
+                            ],
+                        ),
+                    },
+                    {
+                        "XDG_DATA_DIRS": prepend_to_env(
+                            "XDG_DATA_DIRS",
+                            [
+                                "$CRAFT_STAGE/usr/share",
+                                f"/snap/{qt6_sdk_snap}/current/usr/share",
+                                f"/snap/{kf6_sdk_snap}/current/usr/share",
+                            ],
+                        ),
+                    },
+                    {
+                        "XDG_CONFIG_HOME": prepend_to_env(
+                            "XDG_CONFIG_HOME",
+                            [
+                                "$CRAFT_STAGE/etc/xdg",
+                                f"/snap/{qt6_sdk_snap}/current/etc/xdg",
+                                f"/snap/{kf6_sdk_snap}/current/etc/xdg",
+                            ],
+                        ),
+                    },
+                    {
+                        "LD_LIBRARY_PATH": prepend_to_env(
+                            "LD_LIBRARY_PATH",
+                            [
+                                # Qt5 arch specific libs
+                                f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                                # Qt5 libs
+                                f"/snap/{qt6_sdk_snap}/current/usr/lib",
+                                # kf5 arch specific libs
+                                f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                                # Mesa libs
+                                "/snap/mesa-2404/current/usr/lib/"
+                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                                # blas
+                                f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
+                                # lapack
+                                f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
+                                # kf5 libs
+                                f"/snap/{kf6_sdk_snap}/current/usr/lib",
+                                # Staged libs
+                                "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                                "$CRAFT_STAGE/usr/lib",
+                                "$CRAFT_STAGE/lib/",
+                            ],
+                        ),
+                    },
+                    {
+                        "CMAKE_PREFIX_PATH": prepend_to_env(
+                            "CMAKE_PREFIX_PATH",
+                            [
+                                "$CRAFT_STAGE",
+                                f"/snap/{qt6_sdk_snap}/current",
+                                f"/snap/{kf6_sdk_snap}/current",
+                                "/usr",
+                            ],
+                            separator=";",
+                        ),
+                    },
+                    {
+                        "CMAKE_FIND_ROOT_PATH": prepend_to_env(
+                            "CMAKE_FIND_ROOT_PATH",
+                            [
+                                "$CRAFT_STAGE",
+                                f"/snap/{qt6_sdk_snap}/current",
+                                f"/snap/{kf6_sdk_snap}/current",
+                                "/usr",
+                            ],
+                            separator=";",
+                        ),
+                    },
+                ],
+            }
         return {
             "build-environment": [
                 {
                     "PATH": prepend_to_env(
                         "PATH",
                         [
+                            "$CRAFT_STAGE/usr/bin",
                             f"/snap/{qt6_sdk_snap}/current/usr/bin",
                             f"/snap/{kf6_sdk_snap}/current/usr/bin",
                         ],
@@ -270,7 +360,6 @@ class KDENeon6(Extension):
                             "$CRAFT_STAGE/usr/share",
                             f"/snap/{qt6_sdk_snap}/current/usr/share",
                             f"/snap/{kf6_sdk_snap}/current/usr/share",
-                            "/usr/share",
                         ],
                     ),
                 },
@@ -281,7 +370,6 @@ class KDENeon6(Extension):
                             "$CRAFT_STAGE/etc/xdg",
                             f"/snap/{qt6_sdk_snap}/current/etc/xdg",
                             f"/snap/{kf6_sdk_snap}/current/etc/xdg",
-                            "/etc/xdg",
                         ],
                     ),
                 },
@@ -304,7 +392,7 @@ class KDENeon6(Extension):
                             f"/snap/{kf6_sdk_snap}/current/usr/lib/"
                             "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
                             # libproxy
-                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib/"
                             "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy",
                             # kf6 libs
                             f"/snap/{kf6_sdk_snap}/current/usr/lib",
@@ -352,7 +440,14 @@ class KDENeon6(Extension):
 
         gpu_opts = {}
         if self.yaml_data["base"] == "core24":
-            gpu_opts["make-parameters"] = ["GPU_WRAPPER=gpu-2404-wrapper"]
+            gpu_opts["make-parameters"] = [
+                "GPU_WRAPPER=gpu-2404-wrapper",
+                "PLATFORM_PLUG=kf6-core24",
+            ]
+        else:
+            gpu_opts["make-parameters"] = [
+                "PLATFORM_PLUG=kf6-core22",
+            ]
 
         if self.kde_snaps.kf6_builtin:
             return {
