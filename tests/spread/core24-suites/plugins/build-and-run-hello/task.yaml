@@ -3,7 +3,6 @@ summary: >-
   with different plugin configurations
 
 environment:
-  SNAPCRAFT_BUILD_ENVIRONMENT: ""
   # ros extensions for core24 are still experimental
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
   SNAP/conda: conda-hello

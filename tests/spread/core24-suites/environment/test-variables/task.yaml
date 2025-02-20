@@ -10,19 +10,10 @@ environment:
   SNAP/test_variables: test-variables
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 5
 
-prepare: |
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  # set_base "../snaps/$SNAP/snap/snapcraft.yaml"
-
 restore: |
   cd "../snaps/$SNAP"
   rm -f ./*.snap
   rm -Rf work
-
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  restore_yaml "snap/snapcraft.yaml"
 
 execute: |
   cd "../snaps/$SNAP"
@@ -62,7 +53,7 @@ execute: |
       grep -q "$exp" < "$file"
     done
   }
-  
+
   # exercise lifecycle commands with and without `--platform` and `--build-for`
 
   snapcraft pull --platform s390x
