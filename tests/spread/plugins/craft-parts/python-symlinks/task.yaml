@@ -26,18 +26,24 @@ environment:
   SNAP/strict_gnome_extension: strict-gnome-extension
 
 restore: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   cd "${SNAP}"
   snapcraft clean
   rm -f ./*.snap
+  rm -rf ./squashfs-root
 
 execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   cd "${SNAP}"
 
   if [ -f expected-symlink ]; then
-    snapcraft prime
-    ls -l prime/bin
-    [ -x prime/bin/hello ]
-    [ "$(readlink prime/bin/python3)" == "$(cat expected-symlink)" ]
+    snapcraft pack
+    unsquashfs ${SNAP}_1.0_amd64.snap
+    ls -l squashfs-root/bin
+    [ -x squashfs-root/bin/hello ]
+    [ "$(readlink squashfs-root/bin/python3)" == "$(cat expected-symlink)" ]
   else
-    snapcraft prime 2>&1 | MATCH "No suitable Python interpreter found, giving up."
-  fi 
+    snapcraft prime -v 2>&1 | MATCH "No suitable Python interpreter found, giving up."
+  fi
