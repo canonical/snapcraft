@@ -182,6 +182,8 @@ parts:
       bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
       # Also install the compatibility wrapper for core22+.
       bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
+      # Put sitecustomize in site-packages
+      lib/python3.12/site-packages/snapcraft/sitecustomize.py: lib/python3.12/site-packages/sitecustomize.py
       # Include general data in the share directory
       "**/site-packages/extensions": share/snapcraft/extensions
       "**/site-packages/keyrings": share/snapcraft/keyrings
