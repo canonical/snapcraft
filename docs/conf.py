@@ -41,6 +41,10 @@ html_context = {
     "display_contributors": False,
 }
 
+html_theme_options = {
+    "top_of_page_buttons": ["edit"],
+}
+
 extensions = [
     "canonical_sphinx",
 ]
