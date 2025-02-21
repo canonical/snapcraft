@@ -1,13 +1,14 @@
 summary: Execute empty scriptlets
 
 restore: |
-  snapcraft clean --destructive-mode 
+  snapcraft clean
+  rm -rf squashfs-root
 
 execute: |
-  snapcraft prime --destructive-mode
-  test -d prime
+  snapcraft pack
+  unsquashfs test-snap_0.1_amd64.snap
 
-  if [ -f prime/foo.bar ]; then
-      echo "prime directory should be empty"
+  if [ -f squashfs-root/foo.bar ]; then
+      echo "prime directory should've been empty"
       false
   fi
