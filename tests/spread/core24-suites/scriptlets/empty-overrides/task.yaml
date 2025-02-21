@@ -1,14 +1,18 @@
 summary: Execute empty scriptlets
 
+systems:
+  - ubuntu-24.04*
+
+environment:
+  SNAPCRAFT_BUILD_ENVIRONMENT: host
+
 restore: |
   snapcraft clean
-  rm -rf squashfs-root
 
 execute: |
-  snapcraft pack
-  unsquashfs test-snap_0.1_amd64.snap
+  snapcraft prime
 
-  if [ -f squashfs-root/foo.bar ]; then
-      echo "prime directory should've been empty"
+  if [ -f prime/foo.bar ]; then
+      echo "prime directory should be empty"
       false
   fi
