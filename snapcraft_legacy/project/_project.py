@@ -16,7 +16,7 @@
 
 import hashlib
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import List, Set
 
@@ -66,7 +66,7 @@ class Project(ProjectOptions):
         self._work_dir = work_dir
 
         self.local_plugins_dir = self._get_local_plugins_dir()
-        self._start_time = datetime.utcnow()
+        self._start_time = datetime.now(UTC)
 
         # XXX: (Re)set by Config because it mangles source data.
         # Ideally everywhere wold converge to operating on snap_meta, and ww
