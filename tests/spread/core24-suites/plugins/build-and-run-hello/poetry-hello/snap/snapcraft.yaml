@@ -1,0 +1,15 @@
+name: poetry-hello
+version: "1.0"
+summary: simple python application
+description: build a python application using core24
+base: core24
+confinement: strict
+
+apps:
+  poetry-hello:
+    command: bin/hello
+
+parts:
+  hello:
+    plugin: poetry
+    source: src
