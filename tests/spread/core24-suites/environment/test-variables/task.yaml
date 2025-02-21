@@ -9,11 +9,12 @@ systems:
 environment:
   SNAP/test_variables: test-variables
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 5
+  SNAPCRAFT_BUILD_ENVIRONMENT: host
 
 restore: |
   cd "../snaps/$SNAP"
   rm -f ./*.snap
-  rm -Rf work
+  snapcraft clean
 
 execute: |
   cd "../snaps/$SNAP"
