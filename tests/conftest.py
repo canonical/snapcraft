@@ -22,6 +22,13 @@ import xdg.BaseDirectory
 from craft_store.auth import MemoryKeyring
 
 
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Use collection hook to mark all legacy tests as slow"""
+    for item in items:
+        if "tests/legacy" in str(item.path):
+            item.add_marker(pytest.mark.slow)
+
+
 @pytest.fixture(autouse=True)
 def temp_xdg(tmpdir, mocker):
     """Use a temporary locaction for XDG directories."""
