@@ -12,7 +12,7 @@ apps:
   colcon-msg-package:
     command: opt/ros/humble/bin/rosidl
     plugs: [network, network-bind]
-    extensions: [ros2-humble]
+    extensions: [ros2-jazzy]
 
 parts:
   test-part:
@@ -21,4 +21,3 @@ parts:
     source-branch: humble
     source-subdir: pendulum_msgs
     build-packages: [g++, make]
-

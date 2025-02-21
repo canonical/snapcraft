@@ -12,7 +12,7 @@ apps:
   colcon-packages-ignore:
     command: opt/ros/snap/lib/package1/package1
     plugs: [network, network-bind]
-    extensions: [ros2-humble]
+    extensions: [ros2-jazzy]
 
 parts:
   test-part:

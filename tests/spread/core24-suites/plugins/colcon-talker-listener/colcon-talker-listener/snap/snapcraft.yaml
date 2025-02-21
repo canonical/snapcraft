@@ -12,7 +12,7 @@ apps:
   colcon-talker-listener:
     command: ros2 launch colcon-ros2-talker-listener talker_listener.launch.py
     plugs: [network, network-bind]
-    extensions: [ros2-humble]
+    extensions: [ros2-jazzy]
 
 parts:
   hello:
