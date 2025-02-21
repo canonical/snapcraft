@@ -6,6 +6,9 @@ environment:
   SNAP/paths_user_defined: paths-user-defined
   SNAP/staged_common_library: staged-common-library
 
+systems:
+  - ubuntu-24.04*
+
 restore: |
   cd "../snaps/$SNAP"
   snapcraft clean
