@@ -36,7 +36,9 @@ ogp_site_url = "https://canonical-snapcraft.readthedocs-hosted.com/"
 ogp_site_name = project
 
 html_context = {
-    "product_page": "github.com/canonical/snapcraft",
+    "product_page": "snapcraft.io",
+    "discourse": "https://forum.snapcraft.io",
+    "matrix": "https://matrix.to/#/#snapcraft:ubuntu.com",
     "github_url": "https://github.com/canonical/snapcraft",
     "display_contributors": False,
 }
