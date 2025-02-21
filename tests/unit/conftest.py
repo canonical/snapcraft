@@ -427,6 +427,14 @@ def default_factory(default_project):
 
 
 @pytest.fixture()
+def app_config(default_factory) -> dict[str, Any]:
+    from snapcraft.application import APP_METADATA, Snapcraft
+
+    app = Snapcraft(app=APP_METADATA, services=default_factory)
+    return app.app_config
+
+
+@pytest.fixture()
 def default_build_plan():
     from craft_application import util
     from craft_application.models import BuildInfo
