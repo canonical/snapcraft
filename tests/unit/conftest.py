@@ -418,6 +418,7 @@ def default_factory(default_project):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import SnapcraftServiceFactory
 
+    SnapcraftServiceFactory.register_snapcraft_plugins()
     factory = SnapcraftServiceFactory(
         app=APP_METADATA,
         project=default_project,

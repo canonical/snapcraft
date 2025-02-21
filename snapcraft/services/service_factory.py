@@ -21,9 +21,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from craft_application import ServiceFactory
+from craft_application import AppService, ServiceFactory
 
 from snapcraft import models, services
+
+# Add new services to this mapping to add them to the service factory
+_SERVICES: dict[str, type[AppService]] = {
+    "init": services.Init,
+    "provider": services.Provider,
+    "lifecycle": services.Lifecycle,
+    "package": services.Package,
+    "remote_build": services.RemoteBuild,
+    "confdbs": services.Confdbs,
+}
 
 
 @dataclass
@@ -32,26 +42,12 @@ class SnapcraftServiceFactory(ServiceFactory):
 
     project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
 
-    # These are overrides of default ServiceFactory services
-    InitClass: type[services.Init] = (  # type: ignore[reportIncompatibleVariableOverride]
-        services.Init
-    )
-    LifecycleClass: type[services.Lifecycle] = (  # type: ignore[reportIncompatibleVariableOverride]
-        services.Lifecycle
-    )
-    ProviderClass: type[services.Provider] = (  # type: ignore[reportIncompatibleVariableOverride]
-        services.Provider
-    )
-    PackageClass: type[services.Package] = (  # type: ignore[reportIncompatibleVariableOverride]
-        services.Package
-    )
-    RemoteBuildClass: type[  # type: ignore[reportIncompatibleVariableOverride]
-        services.RemoteBuild
-    ] = services.RemoteBuild
-    ConfdbsClass: type[  # type: ignore[reportIncompatibleVariableOverride]
-        services.Confdbs
-    ] = services.Confdbs
-
     if TYPE_CHECKING:
         # Allow static type check to report correct types for Snapcraft services
         confdbs: services.Confdbs = None  # type: ignore[assignment]
+
+    @classmethod
+    def register_snapcraft_plugins(cls) -> None:
+        """Register Snapcraft-specific services."""
+        for name, service in _SERVICES.items():
+            cls.register(name, service)

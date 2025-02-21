@@ -84,6 +84,7 @@ def test_application_map_build_on_env_var(monkeypatch, env_vars):
     monkeypatch.setenv(snapcraft_var, env_val)
     assert os.getenv(craft_var) is None
 
+    services.SnapcraftServiceFactory.register_snapcraft_plugins()
     snapcraft_services = services.SnapcraftServiceFactory(app=application.APP_METADATA)
     application.Snapcraft(app=application.APP_METADATA, services=snapcraft_services)
 
