@@ -39,11 +39,11 @@ html_context = {
     "product_page": "github.com/canonical/snapcraft",
     "github_url": "https://github.com/canonical/snapcraft",
     "display_contributors": False,
-    "top_of_page_buttons": ["edit"],
 }
 
-html_copy_source = False
-html_show_sourcelink = False
+html_theme_options = {
+    "top_of_page_buttons": ["edit"],
+}
 
 extensions = [
     "canonical_sphinx",
