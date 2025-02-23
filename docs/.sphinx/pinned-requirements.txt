@@ -26,7 +26,7 @@ sphinx-basic-ng==1.0.0b2
 sphinx_design==0.5.0
 sphinxcontrib-applehelp==1.0.8
 sphinxcontrib-devhelp==1.0.6
-sphinxcontrib-htmlhelp==2.0.5
+sphinxcontrib-htmlhelp==2.1.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.8
 sphinxcontrib-serializinghtml==1.1.10
