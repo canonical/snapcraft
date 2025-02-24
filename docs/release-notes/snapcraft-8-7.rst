@@ -130,7 +130,7 @@ this release.
 :literalref:`@mr-cal<https://github.com/mr-cal>`,
 and :literalref:`@sergio-costas<https://github.com/sergio-costas>`
 
-.. _#4996: https://github.com/canonical/snapcraft/pull/4996
+.. _#4996: https://github.com/canonical/snapcraft/issues/4996
 .. _#5250: https://github.com/canonical/snapcraft/pull/5250
 .. _#5258: https://github.com/canonical/snapcraft/pull/5258
 .. _craft-application#600: https://github.com/canonical/craft-application/issues/600

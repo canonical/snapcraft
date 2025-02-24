@@ -147,6 +147,7 @@ class RemoteBuildCommand(RemoteBuild):
             # if the project has platforms, then `--build-for` acts as a filter
             if build_fors:
                 emit.debug("Filtering the build plan using the '--build-for' argument.")
+                # loop through each `build-for` to create a list of architectures where the snaps can build on
                 for build_for in build_fors:
                     filtered_build_plan = filter_plan(
                         build_plan,
@@ -166,11 +167,11 @@ class RemoteBuildCommand(RemoteBuild):
                 emit.debug("Using the project's build plan")
                 archs = [build_info.build_on for build_info in build_plan]
         # No architectures in the project means '--build-for' no longer acts as a filter.
-        # Instead, it defines the architectures to build for.
+        # Instead, it defines the architectures to build on, and for.
         elif build_fors:
             emit.debug("Using '--build-for' as the list of architectures to build for")
             archs = build_fors
-        # default is to build for the host architecture
+        # default is to build on, and for, the host architecture
         else:
             archs = [str(DebianArchitecture.from_host())]
             emit.debug(
