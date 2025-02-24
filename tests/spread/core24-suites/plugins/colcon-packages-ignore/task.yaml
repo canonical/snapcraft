@@ -6,12 +6,10 @@ kill-timeout: 180m
 environment:
   SNAP/colcon_packages_ignore: colcon-packages-ignore
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+  SNAPCRAFT_BUILD_ENVIRONMENT: host
 
 systems:
-  - ubuntu-22.04
-  - ubuntu-22.04-64
-  - ubuntu-22.04-amd64
-  - ubuntu-22.04-arm64
+  - ubuntu-24.04*
 
 prepare: |
   #shellcheck source=tests/spread/tools/package-utils.sh
