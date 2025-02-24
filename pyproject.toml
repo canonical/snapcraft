@@ -6,7 +6,7 @@ dynamic = ["version"]
 dependencies = [
     "attrs",
     "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
-    "click==8.1.7",
+    "click==8.1.8",
     "craft-application[remote]~=4.9",
     "craft-archives~=2.0",
     "craft-cli~=2.15.0",
@@ -142,6 +142,10 @@ conflicts = [
 [[tool.uv.index]]
 name = "python-apt-wheels"
 url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"  # workaround to get python-apt to install across multiple platforms
+explicit = true
+
+[tool.uv.sources]
+python-apt = { index = "python-apt-wheels" }
 
 [project.scripts]
 snapcraft = "snapcraft.application:main"
