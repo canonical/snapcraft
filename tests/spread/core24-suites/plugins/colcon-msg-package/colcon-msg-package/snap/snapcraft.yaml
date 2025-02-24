@@ -10,7 +10,7 @@ base: core24
 
 apps:
   colcon-msg-package:
-    command: opt/ros/humble/bin/rosidl
+    command: opt/ros/jazzy/bin/rosidl
     plugs: [network, network-bind]
     extensions: [ros2-jazzy]
 
@@ -18,6 +18,6 @@ parts:
   test-part:
     plugin: colcon
     source: https://github.com/ros2/demos.git
-    source-branch: humble
+    source-branch: jazzy
     source-subdir: pendulum_msgs
     build-packages: [g++, make]
