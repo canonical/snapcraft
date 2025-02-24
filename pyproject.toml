@@ -142,6 +142,10 @@ conflicts = [
 [[tool.uv.index]]
 name = "python-apt-wheels"
 url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"  # workaround to get python-apt to install across multiple platforms
+explicit = true
+
+[tool.uv.sources]
+python-apt = { index = "python-apt-wheels" }
 
 [project.scripts]
 snapcraft = "snapcraft.application:main"
