@@ -417,7 +417,7 @@ remote = [
 
 [[package]]
 name = "craft-archives"
-version = "2.0.2"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "distro" },
@@ -428,9 +428,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-debian" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8b/8e/efd531838ceb591d4aaa4d032807131082bf20e39112472be33346cc9267/craft-archives-2.0.2.tar.gz", hash = "sha256:8dfc0a78ba0bf1e63891975463e2a15c0028b9697b2282d6e9fe05bd6477960d", size = 74887 }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/b2/40c6f0fc84c87be9fe93aafbc0e98d0d5529aad351e9261fbab9ed1955fa/craft_archives-2.1.0.tar.gz", hash = "sha256:1796ddbdd841443884b4820a9d95ea96639ae8d776c4f0c4a287346e2ccc8e94", size = 150604 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6f/6f/930785e102111ded8acbbcb399de25fc74799ada41b56526d9aa8e980db5/craft_archives-2.0.2-py3-none-any.whl", hash = "sha256:8598e70b1228ce6cd2d73cab3c7bae5947ef329434d1ef865999c0a2a2c629b1", size = 32160 },
+    { url = "https://files.pythonhosted.org/packages/c9/2c/4e9e626b203cada0598b685e5c81d272eace1da7d867e42584ec1221b73f/craft_archives-2.1.0-py3-none-any.whl", hash = "sha256:e0fd2d3243ac2e11a92b6f1761dcdff03815897ea7c293ab73d6dac2e4b4d949", size = 32961 },
 ]
 
 [[package]]
@@ -2264,7 +2264,7 @@ requires-dist = [
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.0.0" },
     { name = "click", specifier = "==8.1.8" },
     { name = "craft-application", extras = ["remote"], specifier = "~=4.9" },
-    { name = "craft-archives", specifier = "~=2.0" },
+    { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = "~=2.15.0" },
     { name = "craft-grammar", specifier = ">=2.0.1,<3.0.0" },
     { name = "craft-parts", specifier = "==2.4.1" },
