@@ -101,3 +101,28 @@ jobs:
       - name: matter-sdk test
         run: |
           spread google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
+
+  colcon-plugins:
+    runs-on: [spread-installed]
+    needs: [snap-build]
+    steps:
+      - name: Cleanup job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout snapcraft
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Download snap artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snap
+          path: tests
+      - name: colcon plugin test
+        run: |
+          spread google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello \
+            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-msg-package \
+            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-packages-ignore \
+            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener

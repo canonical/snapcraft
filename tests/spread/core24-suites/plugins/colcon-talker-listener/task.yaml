@@ -1,6 +1,7 @@
 summary: Build and run a basic colcon snap
 
 kill-timeout: 180m
+manual: true
 
 environment:
   SNAP/catkin_ros2_run: colcon-talker-listener

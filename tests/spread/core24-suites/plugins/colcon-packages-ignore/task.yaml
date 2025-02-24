@@ -2,6 +2,7 @@ summary: >-
   Exercise the colcon-packages/colcon-packages-ignore options of colcon plugin
 
 kill-timeout: 180m
+manual: true
 
 environment:
   SNAP/colcon_packages_ignore: colcon-packages-ignore

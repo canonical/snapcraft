@@ -2,6 +2,7 @@ summary: >-
   Make sure ROS downloaded packages are properly sourced
 
 kill-timeout: 180m
+manual: true
 
 environment:
   SNAP/colcon_msg_package: colcon-msg-package
