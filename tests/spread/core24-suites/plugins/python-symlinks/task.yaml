@@ -2,7 +2,13 @@ summary: >-
   Verify python symlinks with different base and confinement
   configurations
 
+systems:
+  - ubuntu-24.04*
+
 environment:
+  # Build in destructive mode to investigate output
+  SNAPCRAFT_BUILD_ENVIRONMENT: host
+
   # base core24, strict confinement: use provisioned if available
   SNAP/strict_not_provisioned: strict-not-provisioned
   SNAP/strict_provisioned: strict-provisioned
@@ -28,18 +34,15 @@ environment:
 restore: |
   cd "${SNAP}"
   snapcraft clean
-  rm -f ./*.snap
-  rm -rf ./squashfs-root
 
 execute: |
   cd "${SNAP}"
 
   if [ -f expected-symlink ]; then
-    snapcraft pack
-    unsquashfs ${SNAP}_1.0_amd64.snap
-    ls -l squashfs-root/bin
-    [ -x squashfs-root/bin/hello ]
-    [ "$(readlink squashfs-root/bin/python3)" == "$(cat expected-symlink)" ]
+    snapcraft prime
+    ls -l prime/bin
+    [ -x prime/bin/hello ]
+    [ "$(readlink prime/bin/python3)" == "$(cat expected-symlink)" ]
   else
     snapcraft prime 2>&1 | MATCH "No suitable Python interpreter found, giving up."
   fi
