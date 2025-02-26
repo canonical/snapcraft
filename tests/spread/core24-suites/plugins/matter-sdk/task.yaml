@@ -6,16 +6,13 @@ systems:
   - ubuntu-22.04-64
 
 restore: |
-  cd "$SNAP"
   snapcraft clean
   rm -f ./*.snap
 
 execute: |
-  cd "$SNAP"
-
   # Build and install the snap
   snapcraft
-  snap install "${SNAP}*.snap" --dangerous
+  snap install "matter-lighting_1.0_amd64.snap" --dangerous
 
   start_time=$(date +"%Y-%m-%d %H:%M:%S")
   snap start matter-lighting
