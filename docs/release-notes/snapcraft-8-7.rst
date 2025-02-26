@@ -29,14 +29,18 @@ it had to be manually updated.
 
 We've updated the completion file to be generated dynamically, which means it will
 always autocomplete the latest commands and options in Bash-compatible shells.
-Try it out in by typing ``snapcraft`` and pressing :kbd:`Tab` in your terminal.
+Try it out by typing ``snapcraft`` and pressing :kbd:`Tab` in your terminal.
 
 
 Improved remote builder
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Remote builds can now use the ``--build-for`` option to filter entries in an
-``architectures`` or ``platforms`` key in a project file.
+Previously, the remote builder only supported natively built snaps and failed to
+build cross-compiled snaps with an unhelpful error. Now, the remote builder supports
+both natively and cross-compiled snaps.
+
+Additionally, remote builds can now use the ``--build-for`` option to filter entries in
+an ``architectures`` or ``platforms`` key in a project file.
 
 
 Support for confdbs
@@ -92,24 +96,15 @@ builds, due to Launchpad's handling of the ``platforms`` key in project files.
 ``--build-for`` is the recommended alternative until Launchpad has comprehensive
 support for platforms.
 
-Known issues
-------------
-
-The following issues were reported and are scheduled to be fixed in upcoming
-patch releases.
-
-See individual issue links for any mitigations.
-
-- `#4996`_ Remote build gives an unfriendly error when attempting to cross-compile.
-- `#5258`_ The Flutter plugin fails to install Flutter for ``core22`` and ``core24``
-  snaps.
-
 
 Fixed bugs and issues
 ---------------------
 
 The following issues have been resolved in Snapcraft 8.7:
 
+- `#4996`_ Remote build gives an unfriendly error when attempting to cross-compile.
+- `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
+  snaps.
 - `#5250`_ Resources path for ``QtWebEngineProcess`` wasn't exported for snaps
   using the KDE Neon 6 extension.
 - `craft-parts#978`_ The ``source-subdir`` field was ignored for the

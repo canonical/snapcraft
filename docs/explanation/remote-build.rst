@@ -145,10 +145,6 @@ Snapcraft will request a build for each unique ``build-for`` architecture.
 
 .. note::
 
-   Launchpad does not support cross-compiling (`[13]`_).
-
-.. note::
-
     Launchpad does not support building multiple snaps on the same
     ``build-on`` architecture (`[14]`_).
 
@@ -217,5 +213,4 @@ Launchpad is not able to parse this notation (`[9]`_).
 .. _`[8]`: https://bugs.launchpad.net/snapcraft/+bug/2007789
 .. _`[9]`: https://bugs.launchpad.net/snapcraft/+bug/2042167
 .. _`[10]`: https://github.com/canonical/snapcraft/issues/4885
-.. _`[13]`: https://github.com/canonical/snapcraft/issues/4996
 .. _`[14]`: https://github.com/canonical/snapcraft/issues/4995

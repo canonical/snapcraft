@@ -201,11 +201,11 @@ def test_platform_build_for_all(
     base,
     mock_remote_start_builds,
 ):
-    """Use 'build-for: all' from the project metadata with the platforms keyword."""
+    """Use the 'build-on' archs when building for all architectures."""
     snapcraft_yaml_dict = {
         "base": base,
         "platforms": {
-            "test-platform": {"build-on": "arm64", "build-for": "all"},
+            "test-platform": {"build-on": ["arm64", "riscv64"], "build-for": "all"},
         },
     }
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -213,7 +213,10 @@ def test_platform_build_for_all(
     app.run()
 
     mock_remote_start_builds.assert_called_once()
-    assert mock_remote_start_builds.call_args[1]["architectures"] == ["all"]
+    # launchpad decides which build-on to use
+    assert sorted(mock_remote_start_builds.call_args[1]["architectures"]) == sorted(
+        ["arm64", "riscv64"]
+    )
 
 
 @pytest.mark.parametrize(
@@ -223,11 +226,11 @@ def test_platform_build_for_all(
 )
 @pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
 def test_platform_build_for_all_core22(snapcraft_yaml, mock_remote_start_builds):
-    """Use 'build-for: all' from the project metadata with the architectures keyword."""
+    """Use the 'build-on' archs when building for all architectures."""
     snapcraft_yaml_dict = {
         "base": "core22",
         "architectures": [
-            {"build-on": ["arm64"], "build-for": ["all"]},
+            {"build-on": ["amd64", "riscv64"], "build-for": ["all"]},
         ],
     }
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -235,7 +238,10 @@ def test_platform_build_for_all_core22(snapcraft_yaml, mock_remote_start_builds)
     app.run()
 
     mock_remote_start_builds.assert_called_once()
-    assert mock_remote_start_builds.call_args[1]["architectures"] == ["all"]
+    # launchpad decides which build-on to use
+    assert sorted(mock_remote_start_builds.call_args[1]["architectures"]) == sorted(
+        ["amd64", "riscv64"]
+    )
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
@@ -255,11 +261,8 @@ def test_platform_in_project_metadata(snapcraft_yaml, base, mock_remote_start_bu
     app.run()
 
     mock_remote_start_builds.assert_called_once()
-    assert (
-        const.SnapArch.arm64 in mock_remote_start_builds.call_args[1]["architectures"]
-    )
-    assert (
-        const.SnapArch.amd64 in mock_remote_start_builds.call_args[1]["architectures"]
+    assert sorted(mock_remote_start_builds.call_args[1]["architectures"]) == sorted(
+        ["arm64", "amd64", "riscv64"]
     )
 
 
@@ -269,7 +272,7 @@ def test_architecture_in_project_metadata(snapcraft_yaml, mock_remote_start_buil
     snapcraft_yaml_dict = {
         "base": "core22",
         "architectures": [
-            {"build-on": ["arm64"], "build-for": ["arm64"]},
+            {"build-on": ["arm64", "s390x"], "build-for": ["arm64"]},
             {"build-on": ["riscv64"], "build-for": ["riscv64"]},
         ],
     }
@@ -279,7 +282,7 @@ def test_architecture_in_project_metadata(snapcraft_yaml, mock_remote_start_buil
 
     mock_remote_start_builds.assert_called_once()
     assert sorted(mock_remote_start_builds.call_args[1]["architectures"]) == sorted(
-        ["arm64", "riscv64"]
+        ["arm64", "s390x", "riscv64"]
     )
 
 
@@ -323,9 +326,9 @@ def test_build_for_argument(
 @pytest.mark.parametrize(
     ("mock_argv", "expected_archs"),
     [
-        pytest.param("amd64", ["amd64"], id="amd64"),
+        pytest.param("amd64", ["amd64", "s390x"], id="amd64"),
         pytest.param("riscv64", ["riscv64"], id="riscv64"),
-        pytest.param("amd64,riscv64", ["amd64", "riscv64"], id="both"),
+        pytest.param("amd64,riscv64", ["amd64", "s390x", "riscv64"], id="both"),
     ],
     indirect=["mock_argv"],
 )
@@ -335,7 +338,7 @@ def test_architectures_filter(snapcraft_yaml, expected_archs, mock_remote_start_
     snapcraft_yaml_dict = {
         "base": "core22",
         "architectures": [
-            {"build-on": ["amd64"], "build-for": ["amd64"]},
+            {"build-on": ["amd64", "s390x"], "build-for": ["amd64"]},
             {"build-on": ["riscv64"], "build-for": ["riscv64"]},
         ],
     }
@@ -373,9 +376,9 @@ def test_architectures_filter_error(
 @pytest.mark.parametrize(
     ("mock_argv", "expected_archs"),
     [
-        pytest.param("amd64", ["amd64"], id="amd64"),
+        pytest.param("amd64", ["amd64", "s390x"], id="amd64"),
         pytest.param("riscv64", ["riscv64"], id="riscv64"),
-        pytest.param("amd64,riscv64", ["amd64", "riscv64"], id="both"),
+        pytest.param("amd64,riscv64", ["amd64", "s390x", "riscv64"], id="both"),
     ],
     indirect=["mock_argv"],
 )
@@ -385,7 +388,7 @@ def test_platforms_filter(snapcraft_yaml, expected_archs, mock_remote_start_buil
     snapcraft_yaml_dict = {
         "base": "core24",
         "platforms": {
-            "amd64": {"build-on": "amd64", "build-for": "amd64"},
+            "amd64": {"build-on": ["amd64", "s390x"], "build-for": "amd64"},
             "riscv64": {"build-on": "riscv64", "build-for": "riscv64"},
         },
     }
