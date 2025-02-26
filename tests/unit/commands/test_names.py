@@ -58,10 +58,12 @@ def fake_store_get_names(mocker):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_register_default(emitter, fake_confirmation_prompt, fake_store_register):
+def test_register_default(
+    emitter, fake_confirmation_prompt, fake_store_register, app_config
+):
     fake_confirmation_prompt.return_value = True
 
-    cmd = commands.StoreRegisterCommand(None)
+    cmd = commands.StoreRegisterCommand(app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -95,8 +97,8 @@ def test_register_default(emitter, fake_confirmation_prompt, fake_store_register
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_register_yes(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+def test_register_yes(emitter, fake_store_register, app_config):
+    cmd = commands.StoreRegisterCommand(app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -111,8 +113,10 @@ def test_register_yes(emitter, fake_store_register):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_register_no(emitter, fake_confirmation_prompt, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+def test_register_no(
+    emitter, fake_confirmation_prompt, fake_store_register, app_config
+):
+    cmd = commands.StoreRegisterCommand(app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -144,8 +148,8 @@ def test_register_no(emitter, fake_confirmation_prompt, fake_store_register):
 
 
 @pytest.mark.usefixtures("memory_keyring", "fake_confirmation_prompt")
-def test_register_private(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+def test_register_private(emitter, fake_store_register, app_config):
+    cmd = commands.StoreRegisterCommand(app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -171,8 +175,8 @@ def test_register_private(emitter, fake_store_register):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_register_store_id(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+def test_register_store_id(emitter, fake_store_register, app_config):
+    cmd = commands.StoreRegisterCommand(app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -203,8 +207,8 @@ def test_register_store_id(emitter, fake_store_register):
 class TestNames:
     """Tests for the names command."""
 
-    def test_table(self, emitter, fake_store_get_names, command_class):
-        cmd = command_class(None)
+    def test_table(self, emitter, fake_store_get_names, command_class, app_config):
+        cmd = command_class(app_config)
 
         cmd.run(
             argparse.Namespace(
@@ -227,8 +231,8 @@ class TestNames:
             )
         )
 
-    def test_json(self, emitter, fake_store_get_names, command_class):
-        cmd = command_class(None)
+    def test_json(self, emitter, fake_store_get_names, command_class, app_config):
+        cmd = command_class(app_config)
 
         cmd.run(
             argparse.Namespace(
@@ -265,8 +269,10 @@ class TestNames:
             )
         )
 
-    def test_format_error(self, emitter, fake_store_get_names, command_class):
-        cmd = command_class(None)
+    def test_format_error(
+        self, emitter, fake_store_get_names, command_class, app_config
+    ):
+        cmd = command_class(app_config)
 
         with pytest.raises(NotImplementedError) as exc_info:
             cmd.run(

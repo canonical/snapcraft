@@ -253,13 +253,14 @@ def test_edit_validation_sets_with_no_changes_to_existing_set(
     edit_return_value,
     fake_edit_validation_sets,
     emitter,
+    app_config,
 ):
     # Make it look like there were no edits.
     edit_return_value.sequence = 9
     edit_return_value.snaps[0].presence = "optional"
     fake_edit_validation_sets.return_value = edit_return_value
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.StoreEditValidationSetsCommand(app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -289,8 +290,9 @@ def test_edit_validation_sets_with_changes_to_existing_set(
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
     key_name,
+    app_config,
 ):
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.StoreEditValidationSetsCommand(app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -331,6 +333,7 @@ def test_edit_validation_sets_with_errors_to_amend(
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
     mocker,
+    app_config,
 ):
     fake_dashboard_post_validation_sets_build_assertion.side_effect = [
         StoreValidationSetsError(
@@ -345,7 +348,7 @@ def test_edit_validation_sets_with_errors_to_amend(
     ]
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=True)
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.StoreEditValidationSetsCommand(app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -387,6 +390,7 @@ def test_edit_validation_sets_with_errors_not_amended(
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
     mocker,
+    app_config,
 ):
     fake_dashboard_post_validation_sets_build_assertion.side_effect = (
         StoreValidationSetsError(
@@ -400,7 +404,7 @@ def test_edit_validation_sets_with_errors_not_amended(
     )
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.StoreEditValidationSetsCommand(app_config)
 
     with pytest.raises(errors.SnapcraftError):
         cmd.run(
