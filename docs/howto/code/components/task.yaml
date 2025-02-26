@@ -1,7 +1,6 @@
 summary: test the "How to package and upload a snap with components"
 
-restore:
-  rm -r *.snap *.comp
+restore: rm -r *.snap *.comp
 
 execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
@@ -10,7 +9,7 @@ execute: |
   snapcraft pack
   # [docs:pack-end]
 
-  # assert artefacts were packed
+  # assert artifacts were packed
   if [ ! -e "hello-components_1.0_amd64.snap" ] || [ ! -e "hello-components+translations_1.0.comp" ]; then
     echo "snap and components were not packed"
     exit 1

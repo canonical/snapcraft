@@ -22,11 +22,12 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 
 import craft_parts
 from craft_cli import emit
 from craft_parts import Features, ProjectInfo, Step, StepInfo, callbacks
+from craft_platforms import DebianArchitecture
 from craft_providers import Executor
 
 from snapcraft import errors, linters, models, pack, providers, ua_manager, utils
@@ -34,7 +35,7 @@ from snapcraft.elf import Patcher, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import component_yaml, manifest, snap_yaml
-from snapcraft.utils import get_host_architecture, process_version
+from snapcraft.utils import process_version
 
 from . import yaml_utils
 from .parts import PartsLifecycle, launch_shell
@@ -54,7 +55,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     :raises SnapcraftError: if the step name is invalid, or the project
         yaml file cannot be loaded.
-    :raises LegacyFallback: if the project's base is not core22.
+    :raises LegacyFallback: if the project's base is core20 or below.
     """
     emit.debug(f"command: {command_name}, arguments: {parsed_args}")
 
@@ -211,7 +212,8 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
         if parsed_args.debug:
             emit.progress(str(err), permanent=True)
             launch_shell()
-        raise errors.FilePermissionError(err.filename, reason=err.strerror)
+        # Casting as a str as OSError should always contain an error message
+        raise errors.FilePermissionError(err.filename, reason=cast(str, err.strerror))
     except OSError as err:
         msg = err.strerror
         if err.filename:
@@ -219,7 +221,8 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
         if parsed_args.debug:
             emit.progress(msg, permanent=True)
             launch_shell()
-        raise errors.SnapcraftError(msg) from err
+        # Casting as a str as OSError should always contain an error message
+        raise errors.SnapcraftError(cast(str, msg)) from err
     except errors.SnapcraftError as err:
         if parsed_args.debug:
             emit.progress(str(err), permanent=True)
@@ -742,7 +745,7 @@ def _expand_environment(
     }
 
     if target_arch == "all":
-        target_arch = get_host_architecture()
+        target_arch = str(DebianArchitecture.from_host())
 
     dirs = craft_parts.ProjectDirs(work_dir=work_dir, partitions=partitions)
     info = craft_parts.ProjectInfo(
@@ -778,7 +781,7 @@ def get_build_plan(
     """
     archs = models.ArchitectureProject.unmarshal(yaml_data).architectures
 
-    host_arch = get_host_architecture()
+    host_arch = str(DebianArchitecture.from_host())
     build_plan: List[Tuple[str, str]] = []
 
     # `isinstance()` calls are for mypy type checking and should not change logic

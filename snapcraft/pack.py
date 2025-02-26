@@ -100,8 +100,8 @@ def _pack(
     """Pack a directory with `snap pack` as a snap or component.
 
     :param directory: Directory to pack.
-    :param output_dir: Directory to output the artefact to.
-    :param output_file: Name of the artefact.
+    :param output_dir: Directory to output the artifact to.
+    :param output_file: Name of the artifact.
     :param compression: Compression type to use, None for default.
 
     :returns: The filename of the packed snap or component.
@@ -122,17 +122,12 @@ def _pack(
             command, capture_output=True, check=True, universal_newlines=True
         )
     except subprocess.CalledProcessError as err:
-        msg = str(err)
-        details = None
-        if err.stderr:
-            details = err.stderr.strip()
-        raise errors.SnapcraftError(msg, details=details) from err
+        raise errors.SnapPackError(err) from err
 
     return Path(str(proc.stdout).partition(":")[2].strip()).name
 
 
 def _retry_with_newer_snapd(func):
-
     @wraps(func)
     def retry_with_edge_snapd(
         directory: Path, output_dir: Path, compression: Optional[str] = None

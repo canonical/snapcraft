@@ -33,7 +33,6 @@ StateDict = TypedDict(
 
 
 class GlobalState(State):
-
     yaml_tag = "!GlobalState"
 
     @classmethod

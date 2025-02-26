@@ -6,13 +6,14 @@ Bases
 How to use a base
 -----------------
 
-The base a snap will use is defined in the snap's `snapcraft.yaml`_.
+The base a snap will use is defined in the snap's project file.
 
 To use the ``core24`` base for a snap:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-   base: core24
+    base: core24
 
 
 How to migrate to a newer base
@@ -39,7 +40,7 @@ See `Snapcraft and ESM`_ for details on support for deprecated bases.
 
 To build ``core18`` snaps, install snapcraft 7 from the *7.x* track:
 
-.. code-block:: shell
+.. code-block:: bash
 
    snap install snapcraft --channel 7.x
 
@@ -48,13 +49,13 @@ To build ``core18`` snaps, install snapcraft 7 from the *7.x* track:
 
 To build ``core`` snaps, install snapcraft 4 from the *4.x* track:
 
-.. code-block:: shell
+.. code-block:: bash
 
    snap install snapcraft --channel 4.x
 
 
 The base snap mounts itself as the root filesystem within your snap such that
-when your application runs, the base’s library paths are searched directly
+when your application runs, the base's library paths are searched directly
 after the paths for your specific snap.
 
 How to develop supported and deprecated bases
@@ -70,7 +71,7 @@ Switch between Snapcraft releases by refreshing channels. ``snapd`` retains the
 previously installed snap, so refreshing between two channels should not
 require re-downloading Snapcraft.
 
-.. code-block:: shell
+.. code-block:: bash
 
    snap refresh snapcraft --channel 7.x
    snap refresh snapcraft --channel 8.x
@@ -82,7 +83,7 @@ Multiple instances of Snapcraft can be installed via ``snapd``'s experimental
 parallel install feature. See the `Parallel installs`_ documentation for
 details.
 
-.. code-block:: shell
+.. code-block:: bash
 
    snap install snapcraft snapcraft_7 --channel 7.x
    snap install snapcraft snapcraft_8 --channel 8.x
@@ -100,16 +101,17 @@ simultaneously.
 How to bootstrap a base snap
 ----------------------------
 
-The ``build-base`` keyword is used to bootstrap and create new bases.
+The ``build-base`` key is used to bootstrap and create new bases.
 
-To bootstrap the ``core26`` base snap, use the following ``snapcraft.yaml``
+To bootstrap the ``core26`` base snap, use the following project file
 snippet:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-   name: core26
-   type: base
-   build-base: core24
+    name: core26
+    type: base
+    build-base: core24
 
 This snippet will do the following:
 
@@ -117,7 +119,7 @@ This snippet will do the following:
 * ``type: base`` creates a base snap.
 * ``build-base: core24`` builds the snap inside an Ubuntu 24.04 build
   environment.
-* ``base`` cannot be set in the ``snapcraft.yaml`` file
+* ``base`` cannot be set in the project file
 
 
 .. _kernel-snap-how-to:
@@ -125,17 +127,18 @@ This snippet will do the following:
 How to build a kernel snap
 --------------------------
 
-The ``build-base`` keyword is used to build kernel snaps for Ubuntu LTS
+The ``build-base`` key is used to build kernel snaps for Ubuntu LTS
 releases.
 
 To build a kernel snap targeting the Ubuntu 22.04 release, use the following
-``snapcraft.yaml`` snippet:
+project file snippet:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-   name: pc-kernel
-   type: kernel
-   build-base: core22
+    name: pc-kernel
+    type: kernel
+    build-base: core22
 
 This snippet will do the following:
 
@@ -149,13 +152,14 @@ How to build a bare base snap
 Bare base snaps are useful for fully statically linked applications and will
 not have access to a base snap at runtime.
 
-To build a bare base snap, use the following ``snapcraft.yaml`` snippet:
+To build a bare base snap, use the following project file snippet:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-   name: my-snap
-   base: bare
-   build-base: core24
+    name: my-snap
+    base: bare
+    build-base: core24
 
 This snippet will build a bare base snap inside an Ubuntu 24.04 build
 environment.

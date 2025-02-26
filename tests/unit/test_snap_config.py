@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Unit tests for SnapConfig class."""
+
 from unittest.mock import MagicMock, patch
 
 import pytest

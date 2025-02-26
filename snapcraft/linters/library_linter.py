@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Library linter implementation."""
+
 import re
 import subprocess
 from pathlib import Path

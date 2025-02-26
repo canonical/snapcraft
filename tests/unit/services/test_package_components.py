@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Tests for Components in Snapcraft's Package service."""
+
 import shutil
 from pathlib import Path
 from textwrap import dedent

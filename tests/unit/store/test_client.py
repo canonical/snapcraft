@@ -28,7 +28,6 @@ from craft_store.models import RevisionsResponseModel
 from snapcraft import errors, models
 from snapcraft.store import LegacyUbuntuOne, client, constants
 from snapcraft.store.channel_map import ChannelMap
-from snapcraft.utils import OSPlatform
 from snapcraft_legacy.storeapi.v2.releases import Releases
 
 from .utils import FakeResponse
@@ -172,7 +171,7 @@ def list_revisions_payload():
 
 
 @pytest.fixture
-def list_registries_payload():
+def list_confdbs_payload():
     return {
         "assertions": [
             {
@@ -180,11 +179,11 @@ def list_registries_payload():
                     "account-id": "test-account-id",
                     "authority-id": "test-authority-id",
                     "body-length": "92",
-                    "name": "test-registries",
+                    "name": "test-confdbs",
                     "revision": "9",
                     "sign-key-sha3-384": "test-sign-key",
                     "timestamp": "2024-01-01T10:20:30Z",
-                    "type": "registry",
+                    "type": "confdb",
                     "views": {
                         "wifi-setup": {
                             "rules": [
@@ -204,11 +203,11 @@ def list_registries_payload():
 
 
 @pytest.fixture
-def build_registries_payload():
+def build_confdbs_payload():
     return {
         "account_id": "test-account-id",
         "authority_id": "test-authority-id",
-        "name": "test-registries",
+        "name": "test-confdbs",
         "revision": "10",
         "views": {
             "wifi-setup": {
@@ -222,13 +221,13 @@ def build_registries_payload():
             }
         },
         "body": '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        "values": "any"\n      }\n    }\n  }\n}',
-        "type": "registry",
+        "type": "confdb",
         "timestamp": "2024-01-01T10:20:30Z",
     }
 
 
 @pytest.fixture
-def post_registries_payload():
+def post_confdbs_payload():
     return {
         "assertions": [
             {
@@ -236,11 +235,11 @@ def post_registries_payload():
                     "account-id": "test-account-id",
                     "authority-id": "test-authority-id",
                     "body-length": "92",
-                    "name": "test-registries",
+                    "name": "test-confdbs",
                     "revision": "10",
                     "sign-key-sha3-384": "test-key",
                     "timestamp": "2024-01-01T10:20:30Z",
-                    "type": "registry",
+                    "type": "confdb",
                     "views": {
                         "wifi-setup": {
                             "rules": [
@@ -264,13 +263,15 @@ def post_registries_payload():
 ####################
 
 
-def test_useragent_linux():
+def test_useragent_linux(mocker):
     """Construct a user-agent as a patched Linux machine"""
-    os_platform = OSPlatform(
-        system="Arch Linux", release="5.10.10-arch1-1", machine="x86_64"
+    mocker.patch("distro.id", return_value="Arch Linux")
+    mocker.patch("distro.version", return_value="5.10.10-arch1-1")
+    mocker.patch(
+        "craft_platforms.DebianArchitecture.to_platform_arch", return_value="x86_64"
     )
 
-    assert client.build_user_agent(version="7.1.0", os_platform=os_platform) == (
+    assert client.build_user_agent(version="7.1.0") == (
         "snapcraft/7.1.0 Arch Linux/5.10.10-arch1-1 (x86_64)"
     )
 
@@ -1116,25 +1117,25 @@ def test_list_revisions(fake_client, list_revisions_payload):
     ]
 
 
-###################
-# List Registries #
-###################
+################
+# List Confdbs #
+################
 
 
-@pytest.mark.parametrize("name", [None, "test-registry"])
-def test_list_registries(name, fake_client, list_registries_payload, check):
-    """Test the list registries endpoint."""
+@pytest.mark.parametrize("name", [None, "test-confdb"])
+def test_list_confdbs(name, fake_client, list_confdbs_payload, check):
+    """Test the list confdbs endpoint."""
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_registries_payload).encode()
+        status_code=200, content=json.dumps(list_confdbs_payload).encode()
     )
 
-    registries = client.StoreClientCLI().list_registries(name=name)
+    confdbs = client.StoreClientCLI().list_confdbs(name=name)
 
-    check.is_instance(registries, list)
-    for registry in registries:
-        check.is_instance(registry, models.RegistryAssertion)
+    check.is_instance(confdbs, list)
+    for confdb in confdbs:
+        check.is_instance(confdb, models.ConfdbAssertion)
         check.equal(
-            registry.body,
+            confdb.body,
             '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        '
             '"values": "any"\n      }\n    }\n  }\n}',
         )
@@ -1143,7 +1144,7 @@ def test_list_registries(name, fake_client, list_registries_payload, check):
         [
             call(
                 "GET",
-                f"https://dashboard.snapcraft.io/api/v2/registries{f'/{name}' if name else ''}",
+                f"https://dashboard.snapcraft.io/api/v2/confdbs{f'/{name}' if name else ''}",
                 headers={
                     "Content-Type": "application/json",
                     "Accept": "application/json",
@@ -1153,21 +1154,21 @@ def test_list_registries(name, fake_client, list_registries_payload, check):
     )
 
 
-def test_list_registries_empty(fake_client, check):
-    """Test the list registries endpoint with no registries returned."""
+def test_list_confdbs_empty(fake_client, check):
+    """Test the list confdbs endpoint with no confdbs returned."""
     fake_client.request.return_value = FakeResponse(
         status_code=200, content=json.dumps({"assertions": []}).encode()
     )
 
-    registries = client.StoreClientCLI().list_registries()
+    confdbs = client.StoreClientCLI().list_confdbs()
 
-    check.equal(registries, [])
+    check.equal(confdbs, [])
     check.equal(
         fake_client.request.mock_calls,
         [
             call(
                 "GET",
-                "https://dashboard.snapcraft.io/api/v2/registries",
+                "https://dashboard.snapcraft.io/api/v2/confdbs",
                 headers={
                     "Content-Type": "application/json",
                     "Accept": "application/json",
@@ -1177,96 +1178,90 @@ def test_list_registries_empty(fake_client, check):
     )
 
 
-def test_list_registries_unmarshal_error(fake_client, list_registries_payload):
+def test_list_confdbs_unmarshal_error(fake_client, list_confdbs_payload):
     """Raise an error if the response cannot be unmarshalled."""
-    list_registries_payload["assertions"][0]["headers"].pop("name")
+    list_confdbs_payload["assertions"][0]["headers"].pop("name")
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_registries_payload).encode()
+        status_code=200, content=json.dumps(list_confdbs_payload).encode()
     )
 
     with pytest.raises(errors.SnapcraftAssertionError) as raised:
-        client.StoreClientCLI().list_registries()
+        client.StoreClientCLI().list_confdbs()
 
-    assert str(raised.value) == "Received invalid registries set from the store"
+    assert str(raised.value) == "Received invalid confdbs set from the store"
     assert raised.value.details == (
-        "Bad registries set content:\n"
-        "- field 'name' required in top-level configuration"
+        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
     )
 
 
-####################
-# Build Registries #
-####################
+#################
+# Build Confdbs #
+#################
 
 
-def test_build_registries(fake_client, build_registries_payload):
-    """Test the build registries endpoint."""
-    mock_registries = Mock(spec=models.RegistryAssertion)
-    expected_registries = models.RegistryAssertion(**build_registries_payload)
+def test_build_confdbs(fake_client, build_confdbs_payload):
+    """Test the build confdbs endpoint."""
+    mock_confdbs = Mock(spec=models.ConfdbAssertion)
+    expected_confdbs = models.ConfdbAssertion(**build_confdbs_payload)
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(build_registries_payload).encode()
+        status_code=200, content=json.dumps(build_confdbs_payload).encode()
     )
 
-    registries_set = client.StoreClientCLI().build_registries(
-        registries=mock_registries
-    )
+    confdbs_set = client.StoreClientCLI().build_confdbs(confdbs=mock_confdbs)
 
-    assert registries_set == expected_registries
+    assert confdbs_set == expected_confdbs
     assert fake_client.request.mock_calls == [
         call(
             "POST",
-            "https://dashboard.snapcraft.io/api/v2/registries/build-assertion",
+            "https://dashboard.snapcraft.io/api/v2/confdbs/build-assertion",
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
-            json=mock_registries.marshal(),
+            json=mock_confdbs.marshal(),
         )
     ]
 
 
-def test_build_registries_unmarshal_error(fake_client, build_registries_payload):
+def test_build_confdbs_unmarshal_error(fake_client, build_confdbs_payload):
     """Raise an error if the response cannot be unmarshalled."""
-    mock_registries = Mock(spec=models.RegistryAssertion)
-    build_registries_payload.pop("name")
+    mock_confdbs = Mock(spec=models.ConfdbAssertion)
+    build_confdbs_payload.pop("name")
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(build_registries_payload).encode()
+        status_code=200, content=json.dumps(build_confdbs_payload).encode()
     )
 
     with pytest.raises(errors.SnapcraftAssertionError) as raised:
-        client.StoreClientCLI().build_registries(registries=mock_registries)
+        client.StoreClientCLI().build_confdbs(confdbs=mock_confdbs)
 
-    assert str(raised.value) == "Received invalid registries set from the store"
+    assert str(raised.value) == "Received invalid confdbs set from the store"
     assert raised.value.details == (
-        "Bad registries set content:\n"
-        "- field 'name' required in top-level configuration"
+        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
     )
 
 
-###################
-# Post Registries #
-###################
+################
+# Post Confdbs #
+################
 
 
-def test_post_registries(fake_client, post_registries_payload):
-    """Test the post registries endpoint."""
-    expected_registries = models.RegistryAssertion(
-        **post_registries_payload["assertions"][0]["headers"],
-        body=post_registries_payload["assertions"][0]["body"],
+def test_post_confdbs(fake_client, post_confdbs_payload):
+    """Test the post confdbs endpoint."""
+    expected_confdbs = models.ConfdbAssertion(
+        **post_confdbs_payload["assertions"][0]["headers"],
+        body=post_confdbs_payload["assertions"][0]["body"],
     )
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(post_registries_payload).encode()
+        status_code=200, content=json.dumps(post_confdbs_payload).encode()
     )
 
-    registries_set = client.StoreClientCLI().post_registries(
-        registries_data=b"test-data"
-    )
+    confdbs_set = client.StoreClientCLI().post_confdbs(confdbs_data=b"test-data")
 
-    assert registries_set == expected_registries
+    assert confdbs_set == expected_confdbs
     assert fake_client.request.mock_calls == [
         call(
             "POST",
-            "https://dashboard.snapcraft.io/api/v2/registries",
+            "https://dashboard.snapcraft.io/api/v2/confdbs",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/x.ubuntu.assertion",
@@ -1277,37 +1272,36 @@ def test_post_registries(fake_client, post_registries_payload):
 
 
 @pytest.mark.parametrize("num_assertions", [0, 2])
-def test_post_registries_wrong_payload_error(
-    num_assertions, fake_client, post_registries_payload
+def test_post_confdbs_wrong_payload_error(
+    num_assertions, fake_client, post_confdbs_payload
 ):
     """Error if the wrong number of assertions are returned."""
-    post_registries_payload["assertions"] = (
-        post_registries_payload["assertions"] * num_assertions
+    post_confdbs_payload["assertions"] = (
+        post_confdbs_payload["assertions"] * num_assertions
     )
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(post_registries_payload).encode()
+        status_code=200, content=json.dumps(post_confdbs_payload).encode()
     )
 
     with pytest.raises(errors.SnapcraftAssertionError) as raised:
-        client.StoreClientCLI().post_registries(registries_data=b"test-data")
+        client.StoreClientCLI().post_confdbs(confdbs_data=b"test-data")
 
-    assert str(raised.value) == "Received invalid registries set from the store"
+    assert str(raised.value) == "Received invalid confdbs set from the store"
 
 
-def test_post_registries_unmarshal_error(fake_client, post_registries_payload):
+def test_post_confdbs_unmarshal_error(fake_client, post_confdbs_payload):
     """Raise an error if the response cannot be unmarshalled."""
-    post_registries_payload["assertions"][0]["headers"].pop("name")
+    post_confdbs_payload["assertions"][0]["headers"].pop("name")
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(post_registries_payload).encode()
+        status_code=200, content=json.dumps(post_confdbs_payload).encode()
     )
 
     with pytest.raises(errors.SnapcraftAssertionError) as raised:
-        client.StoreClientCLI().post_registries(registries_data=b"test-data")
+        client.StoreClientCLI().post_confdbs(confdbs_data=b"test-data")
 
-    assert str(raised.value) == "Received invalid registries set from the store"
+    assert str(raised.value) == "Received invalid confdbs set from the store"
     assert raised.value.details == (
-        "Bad registries set content:\n"
-        "- field 'name' required in top-level configuration"
+        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
     )
 
 

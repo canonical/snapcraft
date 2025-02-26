@@ -45,7 +45,6 @@ def _get_platform() -> str:
 
 
 class Provider(abc.ABC):
-
     _INSTANCE_PROJECT_DIR = "~/project"
 
     def __init__(

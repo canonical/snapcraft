@@ -84,7 +84,8 @@ class TestPluginColconPlugin:
 
         with pytest.raises(ValidationError):
             colcon.ColconPlugin.properties_class(  # noqa F841
-                source=".", foo="bar"  # type: ignore
+                source=".",
+                foo="bar",  # type: ignore
             )
 
     def test_property_all(self):
@@ -323,7 +324,6 @@ class TestPluginColconPlugin:
     def test_get_build_commands_with_all_properties_core22(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-
         plugin = setup_method_fixture(
             "core22",
             new_dir,
@@ -604,7 +604,6 @@ class TestPluginColconPlugin:
     def test_get_build_commands_with_cmake_debug(
         self, setup_method_fixture, new_dir, monkeypatch
     ):
-
         plugin = setup_method_fixture(
             "core22",
             new_dir,

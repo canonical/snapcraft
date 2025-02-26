@@ -10,7 +10,7 @@ on:
     inputs:
       enable_ssh_access:
         type: boolean
-        description: 'Enable ssh access'
+        description: "Enable ssh access"
         required: false
         default: false
 
@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: 22
       - name: Install renovate
-        run: npm install --global renovate
+        run: npm install --global re2 renovate
       - name: Enable ssh access
         uses: mxschmitt/action-tmate@v3
         if: ${{ inputs.enable_ssh_access }}
@@ -34,7 +34,7 @@ jobs:
       - name: Check renovate config
         run: renovate-config-validator .github/renovate.json5
       - name: Renovate dry-run
-        run: renovate --dry-run --autodiscover
+        run: renovate --dry-run=full --autodiscover --print-config
         env:
           RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RENOVATE_USE_BASE_BRANCH_CONFIG: ${{ github.ref }}

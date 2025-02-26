@@ -11,6 +11,7 @@ Snapcraft
    howto/index
    reference/index
    explanation/index
+   release-notes/index
 
 .. list-table::
 

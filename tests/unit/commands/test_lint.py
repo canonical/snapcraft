@@ -808,7 +808,7 @@ def test_load_project_complex(mocker, tmp_path):
     This includes lint, parse-info, architectures, and advanced grammar.
     """
     # mock for advanced grammar parsing (i.e. `on amd64:`)
-    mocker.patch("snapcraft.commands.lint.get_host_architecture", return_value="amd64")
+    mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="amd64")
 
     # create a snap file
     (tmp_path / "snap").mkdir()

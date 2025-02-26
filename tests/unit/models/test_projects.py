@@ -21,10 +21,11 @@ import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, UniqueStrList, VersionStr
+from craft_platforms import DebianArchitecture
 from craft_providers.bases import BaseName
 
 import snapcraft.models
-from snapcraft import const, errors, providers, utils
+from snapcraft import const, errors, providers
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
@@ -36,7 +37,6 @@ from snapcraft.models import (
     Project,
 )
 from snapcraft.models.project import apply_root_packages
-from snapcraft.utils import get_host_architecture
 
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
@@ -149,8 +149,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=cast(UniqueStrList, [get_host_architecture()]),
-                build_for=cast(UniqueStrList, [get_host_architecture()]),
+                build_on=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
+                build_for=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
             )
         ]
         assert project.ua_services is None
@@ -964,24 +964,6 @@ class TestAppValidation:
         assert project.apps is not None
         assert project.apps["app1"].common_id == "test-common-id"
 
-    @pytest.mark.parametrize(
-        "bus_name",
-        ["test-bus-name", "_invalid!"],
-    )
-    def test_app_bus_name(self, bus_name, app_yaml_data):
-        data = app_yaml_data(bus_name=bus_name)
-
-        if bus_name != "_invalid!":
-            project = Project.unmarshal(data)
-            assert project.apps is not None
-            assert project.apps["app1"].bus_name == bus_name
-        else:
-            error = (
-                "apps.app1.bus_name\n  Value error, '_invalid!' is not a valid bus name"
-            )
-            with pytest.raises(pydantic.ValidationError, match=error):
-                Project.unmarshal(data)
-
     def test_app_completer(self, app_yaml_data):
         data = app_yaml_data(completer="test-completer")
         project = Project.unmarshal(data)
@@ -1445,6 +1427,62 @@ class TestAppValidation:
         error = "provenance must consist of alphanumeric characters and/or hyphens."
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(project_yaml_data(provenance=provenance))
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "command",
+            "stop_command",
+            "post_stop_command",
+            "reload_command",
+            "bus_name",
+        ],
+    )
+    def test_app_command_lexicon_good(
+        self,
+        app_yaml_data,
+        key: str,
+    ):
+        """Verify that command validation lets in a valid command."""
+        command = {key: "mkbird --chirps 5"}
+        data = app_yaml_data(**command)
+        proj = Project.unmarshal(data)
+
+        # Ensure the happy path
+        assert proj.apps is not None
+        assert getattr(proj.apps["app1"], key) == "mkbird --chirps 5"
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "command",
+            "stop_command",
+            "post_stop_command",
+            "reload_command",
+            "bus_name",
+        ],
+    )
+    @pytest.mark.parametrize(
+        "value",
+        [
+            pytest.param(
+                "bin/mkbird --chirps=5",
+                id="has_bad_char",
+            ),
+            pytest.param('mkbird --chirps=1337 --name="81U3J@Y"', id="many_bad"),
+        ],
+    )
+    def test_app_command_lexicon_bad(self, app_yaml_data, key: str, value: str):
+        """Verify that invalid characters in command fields raise an error."""
+        command = {key: value}
+        data = app_yaml_data(**command)
+
+        err_msg = "App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
+
+        with pytest.raises(pydantic.ValidationError) as val_err:
+            Project.unmarshal(data)
+
+        assert err_msg in str(val_err.value)
 
 
 class TestGrammarValidation:
@@ -2310,10 +2348,10 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
             None,
             [
                 BuildInfo(
-                    build_on=utils.get_host_architecture(),
-                    build_for=utils.get_host_architecture(),
+                    build_on=str(DebianArchitecture.from_host()),
+                    build_for=str(DebianArchitecture.from_host()),
                     base=BaseName(name="ubuntu", version="22.04"),
-                    platform=utils.get_host_architecture(),
+                    platform=str(DebianArchitecture.from_host()),
                 )
             ],
             id="no_arch",
@@ -2478,10 +2516,10 @@ def test_platform_default():
 
     assert actual_build_infos == [
         BuildInfo(
-            build_on=get_host_architecture(),
-            build_for=get_host_architecture(),
+            build_on=str(DebianArchitecture.from_host()),
+            build_for=str(DebianArchitecture.from_host()),
             base=BaseName(name="ubuntu", version="24.04"),
-            platform=get_host_architecture(),
+            platform=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -2523,7 +2561,7 @@ def test_project_platform_mismatch():
 
 def test_project_platform_unknown_name():
     """Raise an error if an empty platform is not a valid architecture."""
-    with pytest.raises(CraftValidationError) as raised:
+    with pytest.raises(pydantic.ValidationError) as raised:
         snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
             {
                 "name": "test-snap",
@@ -2534,10 +2572,7 @@ def test_project_platform_unknown_name():
             }
         )
 
-    assert (
-        "Invalid architecture: 'unknown' must be a valid debian architecture."
-        in str(raised.value)
-    )
+    assert "'unknown' is not a valid Debian architecture." in str(raised.value)
 
 
 @pytest.mark.parametrize("project", [ComponentProject, Project])

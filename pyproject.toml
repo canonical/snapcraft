@@ -1,17 +1,204 @@
-[tool.black]
-extend-exclude = '''
-/(
-  | snapcraft_legacy
-  | tools
-  | docs/sphinx-resources
-)/
-'''
-# Targeting future versions as well so we don't have black reformatting code
-# en masse later.
-target_version = ["py310", "py311"]
+[project]
+name = "snapcraft"
+description = "Create snaps"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    "attrs",
+    "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
+    "click==8.1.8",
+    "craft-application[remote]~=4.9",
+    "craft-archives~=2.1",
+    "craft-cli~=2.15.0",
+    "craft-grammar>=2.0.1,<3.0.0",
+    "craft-parts==2.4.1",
+    "craft-platforms~=0.6",
+    "craft-providers~=2.1",
+    "craft-store>=3.0.2,<4.0.0",
+    "cryptography==43.0.3", # Pinned due to https://github.com/canonical/snapcraft/issues/5217
+    "gnupg",
+    "jsonschema==2.5.1",
+    "launchpadlib",
+    "lazr.restfulclient",
+    "lxml",
+    "macaroonbakery",
+    "mypy-extensions",
+    "overrides",
+    "packaging",
+    "progressbar",
+    "pydantic~=2.8",
+    "pyelftools",
+    # Pygit2 and libgit2 need to match versions.
+    # Further info: https://www.pygit2.org/install.html#version-numbers
+    "pygit2~=1.13.0",
+    "pylxd ; sys_platform == 'linux'",
+    "pymacaroons",
+    "python-debian ; sys_platform == 'linux'",
+    "pyxdg",
+    "pyyaml",
+    "raven",
+    "requests-toolbelt",
+    "requests-unixsocket2",
+    "requests",
+    "simplejson",
+    "snap-helpers",
+    "tabulate",
+    "toml",
+    "tinydb",
+    "typing-extensions",
+    "validators>=0.28.3",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Natural Language :: English",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Software Distribution",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "coverage[toml]",
+    "pyflakes",
+    "fixtures",
+    # For Tiobe TiCS
+    "flake8",
+    "mccabe",
+    "testscenarios",
+    "pexpect",
+    "pip",
+    "pycodestyle",
+    "pyftpdlib",
+    "pyinstaller ; sys_platform == 'win32'",
+    # For Tiobe TiCS
+    "pylint",
+    "pyramid",
+    "pytest",
+    "pytest-cov",
+    "pytest-check",
+    "pytest-mock",
+    "pytest-subprocess",
+]
+docs = [
+    "canonical-sphinx[full]>=0.2.0",
+    "docutils<0.20", # Frozen until we can update sphinx dependencies.
+    "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+    "sphinxcontrib-details-directive",
+    "sphinx-lint",
+    "sphinx-toolbox",
+    "sphinxext-rediraffe==0.2.7",
+    "pyspelling",
+]
+lint = [
+    "yamllint~=1.34",
+    "codespell[toml]",
+    { include-group = "types" },
+]
+types = [
+    "mypy",
+    "types-PyYAML",
+    # Pinned because any higher requires urllib3>=2
+    "types-requests==2.31.0.6",
+    "types-setuptools",
+    "types-simplejson",
+    "types-tabulate",
+    "types-toml",
+]
+dev-jammy = [
+    # Stay on 2.4 for Jammy
+    "python-apt~=2.4.0;sys_platform=='linux'",
+]
+dev-noble = [
+    # 2.7 for Noble
+    "python-apt~=2.7.0;sys_platform=='linux'",
+]
+dev-oracular = [
+    # 2.9 for Oracular+
+    "python-apt>=2.9.0;sys_platform=='linux'",
+]
+dev-plucky = [
+    # 2.9 for Oracular+
+    "python-apt>=2.9.0;sys_platform=='linux'",
+]
+
+[tool.uv]
+conflicts = [
+    [
+        { group = "dev-jammy" },
+        { group = "dev-noble" },
+        { group = "dev-oracular" },
+        { group = "dev-plucky" },
+    ]
+]
+
+[[tool.uv.index]]
+name = "python-apt-wheels"
+url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"  # workaround to get python-apt to install across multiple platforms
+explicit = true
+
+[tool.uv.sources]
+python-apt = { index = "python-apt-wheels" }
+
+[project.scripts]
+snapcraft = "snapcraft.application:main"
+snapcraft_legacy = "snapcraft_legacy.cli.__main__:run"
+
+[build-system]
+requires = [
+    "setuptools>=69.0",
+    "setuptools_scm[toml]>=7.1",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+script-files = ["bin/snapcraftctl", "bin/snapcraftctl-compat"]
+
+[tool.setuptools_scm]
+write_to = "snapcraft/_version.py"
+# the version comes from the latest annotated git tag formatted as 'X.Y.Z'
+# version scheme:
+#   - X.Y.Z.post<commits since tag>+g<hash>.d<%Y%m%d>
+# parts of scheme:
+#   - X.Y.Z - most recent git tag
+#   - post<commits since tag>+g<hash> - present when current commit is not tagged
+#   - +dirty - present when working dir is dirty
+# version scheme when no tags exist:
+#   - 0.0.post<total commits>+g<hash>
+version_scheme = "post-release"
+# deviations from the default 'git describe' command:
+# - only match annotated tags
+# - only match tags formatted as 'X.Y.Z'
+git_describe_command = [
+    "git",
+    "describe",
+    "--dirty",
+    "--long",
+    "--match",
+    "[0-9]*.[0-9]*.[0-9]*",
+    "--exclude",
+    "*[^0-9.]*",
+]
+# Appends "+dirty" to the version when working dir is dirty
+# Necessary to avoid version numbers being too long
+local_scheme = "dirty-tag"
+
+[tool.setuptools.packages.find]
+include = ["snapcraft", "extensions", "keyrings", "schema", "snapcraft_legacy"]
+namespaces = true
+
+[tool.setuptools.package-data]
+snapcraft = ["templates/*"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 ignore_missing_imports = true
 follow_imports = "silent"
 exclude = [
@@ -29,22 +216,18 @@ plugins = [
 [tool.pyright]
 include = ["snapcraft", "tests"]
 exclude = ["build", "tests/legacy", "tests/spread"]
-pythonVersion = "3.10"
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.10", "pytest-subprocess>=1.4"]
-addopts = ["--cov=snapcraft"]
+pythonVersion = "3.12"
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 line-length = 88
 extend-exclude = [
     "docs",
     "__pycache__",
     "legacy",
     "tests/legacy",
+    "snapcraft/_version.py",  # setuptools_scm generates old-style type annotations and single quotes
 ]
 lint.select = [
     "E", "F",  # The rules built into Flake8
@@ -81,7 +264,6 @@ lint.ignore = [
     "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
     "N818",  # Exception names ending with suffix `Error`
     "ANN002",  "ANN003",  # Missing type annotation for *args and **kwargs
-    "ANN101", "ANN102",  # Type annotations for `self` and `cls` in methods
     "ANN204",  # Missing type annotations for magic methods
     "ANN401",  # Disallowing `typing.Any`
     "B904",  # Within an except clause, always explicitly `raise` an exception `from` something.
@@ -130,5 +312,47 @@ max-branches = 16
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
 
-[tool.ruff.lint.flake8-annotations]
-suppress-none-returning = true  # We don't need to explicitly point out that a function doesn't return anything
+[tool.ruff.lint.pydocstyle]
+ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
+    "typing.overload", # Default configuration
+    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
+    "overrides.override",
+    "overrides.overrides",
+    "typing.override",
+    "typing_extensions.override",
+]
+
+[tool.ruff.lint.pep8-naming]
+# Allow Pydantic's `@validator` decorator to trigger class method treatment.
+classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = "tests"
+xfail_strict = true
+markers = ["slow: slow tests"]
+
+[tool.coverage.run]
+branch = true
+omit = ["test/**"]
+
+[tool.coverage.report]
+skip_empty = true
+exclude_also = [
+    "if (typing\\.)?TYPE_CHECKING:",
+]
+
+[tool.codespell]
+ignore-words-list = [
+    "buildd",
+    "crate",
+    "assertIn",
+    "socio-economic",
+]
+skip = [
+    # Keyrings aren't code
+    "*.asc",
+    # These tests include some non-English text
+    "*/test_appstream.py",
+    "*/test_update_metadata.py",
+]

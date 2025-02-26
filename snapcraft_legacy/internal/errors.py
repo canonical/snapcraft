@@ -253,7 +253,6 @@ class IncompatibleBaseError(SnapcraftError):
 
 
 class PrimeFileConflictError(SnapcraftError):
-
     fmt = (
         "Failed to filter files: "
         "The following files have been excluded by the `stage` keyword, "
@@ -264,10 +263,8 @@ class PrimeFileConflictError(SnapcraftError):
 
 
 class PluginError(SnapcraftError):
-
     fmt = (
-        "Failed to load plugin: "
-        "{message}"
+        "Failed to load plugin: {message}"
         # FIXME include how to fix each of the possible plugin errors.
         # https://bugs.launchpad.net/snapcraft/+bug/1727484
         # --elopio - 2017-10-25
@@ -295,7 +292,6 @@ class PluginBaseError(SnapcraftError):
 
 
 class SnapcraftPartConflictError(SnapcraftError):
-
     fmt = (
         "Failed to stage: "
         "Parts {other_part_name!r} and {part_name!r} have the following "
@@ -321,7 +317,6 @@ class SnapcraftPartConflictError(SnapcraftError):
 
 
 class SnapcraftOrganizeError(SnapcraftError):
-
     fmt = "Failed to organize part {part_name!r}: {message}"
 
     def __init__(self, part_name, message):
@@ -329,10 +324,8 @@ class SnapcraftOrganizeError(SnapcraftError):
 
 
 class InvalidWikiEntryError(SnapcraftError):
-
     fmt = (
-        "Invalid wiki entry: "
-        "{error!r}"
+        "Invalid wiki entry: {error!r}"
         # FIXME include how to fix each of the possible wiki errors.
         # https://bugs.launchpad.net/snapcraft/+bug/1727490
         # --elopio - 2017-10-25
@@ -343,7 +336,6 @@ class InvalidWikiEntryError(SnapcraftError):
 
 
 class MissingGadgetError(SnapcraftError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "Missing gadget.yaml file.\n"
@@ -356,7 +348,6 @@ class MissingGadgetError(SnapcraftError):
 
 
 class PluginOutdatedError(SnapcraftError):
-
     fmt = "This plugin is outdated: {message}"
 
     def __init__(self, message):
@@ -364,7 +355,6 @@ class PluginOutdatedError(SnapcraftError):
 
 
 class ToolMissingError(SnapcraftReportableError):
-
     fmt = (
         "A tool snapcraft depends on could not be found: {command_name!r}.\n"
         "Ensure the tool is installed and available, and try again."
@@ -375,22 +365,18 @@ class ToolMissingError(SnapcraftReportableError):
 
 
 class RequiredCommandFailure(SnapcraftError):
-
     fmt = "{command!r} failed."
 
 
 class RequiredCommandNotFound(SnapcraftError):
-
     fmt = "{cmd_list[0]!r} not found."
 
 
 class RequiredPathDoesNotExist(SnapcraftError):
-
     fmt = "Required path does not exist: {path!r}"
 
 
 class SnapcraftPathEntryError(SnapcraftError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "The path {value!r} set for {key!r} in {app!r} does not exist. "
@@ -399,7 +385,6 @@ class SnapcraftPathEntryError(SnapcraftError):
 
 
 class InvalidPullPropertiesError(SnapcraftError):
-
     fmt = (
         "Failed to load plugin: "
         "Invalid pull properties specified by {plugin_name!r} plugin: "
@@ -413,7 +398,6 @@ class InvalidPullPropertiesError(SnapcraftError):
 
 
 class InvalidBuildPropertiesError(SnapcraftError):
-
     fmt = (
         "Failed to load plugin: "
         "Invalid build properties specified by {plugin_name!r} plugin: "
@@ -427,7 +411,6 @@ class InvalidBuildPropertiesError(SnapcraftError):
 
 
 class StagePackageDownloadError(SnapcraftError):
-
     fmt = (
         "Failed to fetch stage packages: "
         "Error downloading packages for part {part_name!r}: {message}."
@@ -438,27 +421,22 @@ class StagePackageDownloadError(SnapcraftError):
 
 
 class OsReleaseIdError(SnapcraftError):
-
     fmt = "Unable to determine host OS ID"
 
 
 class OsReleaseNameError(SnapcraftError):
-
     fmt = "Unable to determine host OS name"
 
 
 class OsReleaseVersionIdError(SnapcraftError):
-
     fmt = "Unable to determine host OS version ID"
 
 
 class OsReleaseCodenameError(SnapcraftError):
-
     fmt = "Unable to determine host OS version codename"
 
 
 class InvalidContainerImageInfoError(SnapcraftError):
-
     fmt = (
         "Failed to parse container image info: "
         "SNAPCRAFT_IMAGE_INFO is not a valid JSON string: {image_info}"
@@ -473,7 +451,6 @@ class PatcherError(SnapcraftError):
 
 
 class PatcherGenericError(PatcherError):
-
     fmt = (
         "{elf_file!r} cannot be patched to function properly in a classic "
         "confined snap: {message}"
@@ -487,7 +464,6 @@ class PatcherGenericError(PatcherError):
 
 
 class PatcherNewerPatchelfError(PatcherError):
-
     fmt = (
         "{elf_file!r} cannot be patched to function properly in a classic "
         "confined snap: {message}.\n"
@@ -509,7 +485,6 @@ class PatcherNewerPatchelfError(PatcherError):
 
 
 class StagePackageMissingError(SnapcraftError):
-
     fmt = (
         "{package!r} is required inside the snap for this part to work "
         "properly.\n"
@@ -525,7 +500,6 @@ class MetadataExtractionError(SnapcraftError):
 
 
 class MissingMetadataFileError(MetadataExtractionError):
-
     fmt = (
         "Failed to generate snap metadata: "
         "Part {part_name!r} has a 'parse-info' referring to metadata file "
@@ -537,7 +511,6 @@ class MissingMetadataFileError(MetadataExtractionError):
 
 
 class UnhandledMetadataFileTypeError(MetadataExtractionError):
-
     fmt = (
         "Failed to extract metadata from {path!r}: "
         "This type of file is not supported for supplying metadata."
@@ -548,7 +521,6 @@ class UnhandledMetadataFileTypeError(MetadataExtractionError):
 
 
 class InvalidExtractorValueError(MetadataExtractionError):
-
     fmt = (
         "Failed to extract metadata from {path!r}: "
         "Extractor {extractor_name!r} didn't return ExtractedMetadata as "
@@ -645,7 +617,6 @@ class SnapcraftctlError(ScriptletBaseError):
 
 
 class SnapcraftInvalidCLIConfigError(SnapcraftError):
-
     fmt = "The cli configuration file {config_file!r} has invalid data: {error!r}."
 
     def __init__(self, *, config_file: str, error: str) -> None:

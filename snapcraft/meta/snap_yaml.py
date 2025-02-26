@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Create snap.yaml metadata file."""
+
 from __future__ import annotations
 
 import re
@@ -26,11 +27,11 @@ import yaml
 from craft_application.models import BaseMetadata, SummaryStr, base, constraints
 from craft_application.models.constraints import SingleEntryDict
 from craft_cli import emit
+from craft_platforms import DebianArchitecture
 
 from snapcraft import errors, models
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.utils import (
-    convert_architecture_deb_to_platform,
     get_ld_library_paths,
     process_version,
 )
@@ -443,7 +444,9 @@ def get_metadata_from_project(
     elif effective_base == "core22":
         arch_triplet = project.get_build_for_arch_triplet()
     else:
-        arch_triplet = get_arch_triplet(convert_architecture_deb_to_platform(arch))
+        arch_triplet = get_arch_triplet(
+            DebianArchitecture.from_machine(arch).to_platform_arch()
+        )
 
     environment = _populate_environment(
         project.environment, prime_dir, arch_triplet, project.confinement
@@ -558,7 +561,7 @@ def _populate_environment(
 
 
 def _process_components(
-    components: dict[str, models.Component] | None
+    components: dict[str, models.Component] | None,
 ) -> dict[str, ComponentMetadata] | None:
     """Convert Components from a project to ComponentMetadata for a snap.yaml.
 

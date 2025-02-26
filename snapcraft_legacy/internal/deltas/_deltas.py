@@ -49,7 +49,7 @@ class BaseDeltasGenerator:
         target_path: str,
         delta_tool: str,
         delta_format: str,
-        delta_file_extname: str = "delta"
+        delta_file_extname: str = "delta",
     ) -> None:
         self.source_path = source_path
         self.target_path = target_path

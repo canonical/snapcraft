@@ -1,0 +1,10 @@
+# Client-side page redirects. Each mapping takes the format:
+#     "<old path>" "<current path>"
+# Paths must be represented as source files relative to the root of the `docs` dir.
+# The old path must be a file that _doesn't exist_ in the source. The current path
+# must be a file that _does exist_ in the source.
+
+"howto/install-snapcraft.rst" "howto/set-up-snapcraft.rst"
+"howto/install.rst" "howto/set-up-snapcraft.rst"
+"reference/anatomy-of-a-recipe.rst" "reference/anatomy-of-a-project-file.rst"
+"reference/changelog.rst" "release-notes/changelog.rst"

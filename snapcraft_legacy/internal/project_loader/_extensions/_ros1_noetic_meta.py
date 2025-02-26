@@ -53,20 +53,21 @@ class RosNoeticMetaBase(RosNoeticExtension):
         self.part_snippet_extra = dict()
 
         self.root_snippet["plugs"] = {
-            self.ros_noetic_snaps.content:
-                {
-                    "interface": "content",
-                    "content": self.ros_noetic_snaps.content,
-                    "target": "$SNAP/opt/ros/underlay_ws",
-                    "default-provider": self.ros_noetic_snaps.content,
-                }
+            self.ros_noetic_snaps.content: {
+                "interface": "content",
+                "content": self.ros_noetic_snaps.content,
+                "target": "$SNAP/opt/ros/underlay_ws",
+                "default-provider": self.ros_noetic_snaps.content,
+            }
         }
 
         self.part_snippet_extra["ros-content-sharing-extension-cmake-args"] = [
             f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros_noetic_snaps.sdk}/current/usr"'
         ]
 
-        self.part_snippet_extra["stage-packages"] = [f"ros-{self.ROS_DISTRO}-ros-environment"]
+        self.part_snippet_extra["stage-packages"] = [
+            f"ros-{self.ROS_DISTRO}-ros-environment"
+        ]
 
         self.part_snippet_extra["ros-build-snaps"] = [self.ros_noetic_snaps.sdk]
 
@@ -76,12 +77,14 @@ class RosNoeticMetaBase(RosNoeticExtension):
             "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
 
-        self.app_snippet["environment"]["PYTHONPATH"] = f'{python_paths}:{":".join(new_python_paths)}'
+        self.app_snippet["environment"]["PYTHONPATH"] = (
+            f"{python_paths}:{':'.join(new_python_paths)}"
+        )
 
     @overrides
     def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
         # If the part uses a ROS plugin, return the extra bits containing ROS plugin specifics entries
         # If not, still return the base ROS plugin entries.
         if plugin_name in ["catkin", "catkin-tools", "colcon"]:
-            return {**self.part_snippet,**self.part_snippet_extra}
+            return {**self.part_snippet, **self.part_snippet_extra}
         return self.part_snippet

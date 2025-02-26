@@ -12,6 +12,7 @@ environment:
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
   SNAP/dotnet: dotnet-hello
+  SNAP/uv: uv-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

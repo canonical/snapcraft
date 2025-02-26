@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snapcraft-specific code to interface with craft-providers."""
+
 import io
 import os
 import sys
