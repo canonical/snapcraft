@@ -51,8 +51,12 @@ parts:
     plugin: dump
     organize:
       craft.git: libexec/snapcraft/craft.git
+      # Put sitecustomize in site-packages
+      sitecustomize.py: lib/python3.12/site-packages/sitecustomize.py
+
     stage:
       - "libexec/"
+      - "lib/"
 
   git:
     plugin: nil
@@ -182,8 +186,6 @@ parts:
       bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
       # Also install the compatibility wrapper for core22+.
       bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
-      # Put sitecustomize in site-packages
-      lib/python3.12/site-packages/snapcraft/sitecustomize.py: lib/python3.12/site-packages/sitecustomize.py
       # Include general data in the share directory
       "**/site-packages/extensions": share/snapcraft/extensions
       "**/site-packages/keyrings": share/snapcraft/keyrings
