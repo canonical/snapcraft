@@ -31,6 +31,11 @@ execute: |
   snap install neon-hello-6_*.snap --dangerous
   snap connect neon-hello-6:kf6-core22 kf6-core22:kf6-core22
 
+  # kde-neon-6 is broken on core22 (#5288)
+  if [[ $(date +%Y%m%d) -lt 20250401 ]]; then
+    neon-hello-6 | MATCH "version `Qt_6.8' not found"
+    exit 0
+
   [ "$(neon-hello-6)" = "hello world" ]
 
   # Verify that the extension command chain went through the proper setup procedure
