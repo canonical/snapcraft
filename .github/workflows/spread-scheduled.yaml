@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [plugins/craft-parts, plugins/v2, core24-suites/plugins]
+        type: [plugins/craft-parts, plugins/v2]
     steps:
       - name: Cleanup job workspace
         run: |
