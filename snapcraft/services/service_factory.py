@@ -21,18 +21,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from craft_application import AppService, ServiceFactory
+from craft_application import ServiceFactory
 
-from snapcraft import models, services
+from snapcraft import models
 
 # Add new services to this mapping to add them to the service factory
-_SERVICES: dict[str, type[AppService]] = {
-    "init": services.Init,
-    "provider": services.Provider,
-    "lifecycle": services.Lifecycle,
-    "package": services.Package,
-    "remote_build": services.RemoteBuild,
-    "confdbs": services.Confdbs,
+# Internal service name : Stringified service class name
+_SERVICES: dict[str, str] = {
+    "init": "Init",
+    "provider": "Provider",
+    "lifecycle": "Lifecycle",
+    "package": "Package",
+    "remote_build": "RemoteBuild",
+    "confdbs": "Confdbs",
 }
 
 
@@ -43,11 +44,16 @@ class SnapcraftServiceFactory(ServiceFactory):
     project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
 
     if TYPE_CHECKING:
-        # Allow static type check to report correct types for Snapcraft services
-        confdbs: services.Confdbs = None  # type: ignore[assignment]
+        from services import Confdbs
 
-    @classmethod
-    def register_snapcraft_plugins(cls) -> None:
-        """Register Snapcraft-specific services."""
-        for name, service in _SERVICES.items():
-            cls.register(name, service)
+        # Allow static type check to report correct types for Snapcraft services
+        confdbs: Confdbs = None  # type: ignore[assignment]
+
+
+def register_snapcraft_services() -> None:
+    """Register Snapcraft-specific services."""
+    for name, service in _SERVICES.items():
+        module_name = name.replace("_", "")
+        SnapcraftServiceFactory.register(
+            name, service, module=f"snapcraft.services.{module_name}"
+        )
