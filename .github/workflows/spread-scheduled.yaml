@@ -78,7 +78,6 @@ jobs:
             google:ubuntu-22.04-64:tests/spread/core22/remote-build \
             google:ubuntu-24.04-64:tests/spread/core24/remote-build \
             google:fedora-39-64:tests/spread/core24/remote-build:no_platforms
-            google:ubuntu-22.04-64:tests/spread/core24-suites/remote-build
 
   matter-sdk:
     runs-on: [spread-installed]
