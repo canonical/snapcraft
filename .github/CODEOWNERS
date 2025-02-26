@@ -2,13 +2,33 @@
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 # Remember, the last match takes precedence.
 
-# Replace the Starcraft team with your appropriate code owners.
-
 # Global owner, used as a last resort.
-*       @mr-cal
+* @mr-cal
 
 # Documentation owners
-/docs/  @medubelko @mr-cal
+/docs/ @medubelko @mr-cal
+
+# Robotics
+/extensions/ros*                          @canonical/robotics
+/snapcraft/extensions/*ros*.py            @canonical/robotics
+/snapcraft/parts/plugins/colcon_plugin.py @canonical/robotics
+/snapcraft/parts/plugins/_ros.py          @canonical/robotics
+
+# Industrial
+/snapcraft/extensions/env_injector.py         @canonical/industrial
+/snapcraft/parts/plugins/matter_sdk_plugin.py @canonical/industrial
+
+# Kernel
+/snapcraft/parts/plugins/kernel_plugin.py @kubiko
+/snapcraft_legacy/plugins/v2/*kernel*.py  @kubiko
+
+# GNOME
+/extensions/desktop/*          @seb128
+/snapcraft/extensions/gnome.py @seb128
+
+# KDE
+/extensions/desktop/*kde*     @ScarlettGatelyMoore
+/snapcraft/extensions/kde*.py @ScarlettGatelyMoore
 
 # Finally, all CODEOWNERS changes need to be approved by The Man, Himself.
-/.github/CODEOWNERS     @sergiusens
+/.github/CODEOWNERS @sergiusens
