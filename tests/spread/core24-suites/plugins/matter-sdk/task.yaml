@@ -25,8 +25,8 @@ execute: |
     fi
   done
 
-  if [ ! -e "${SNAP_COMMON/mnt/chip_*}" ]; then
-    echo "Error: ${SNAP_COMMON}/mnt/chip_* does not exist."
+  if [ ! -e "/var/snap/matter-lighting/common/mnt/chip_*" ]; then
+    echo "Error: /var/snap/matter-lighting/common/mnt/chip_* does not exist."
     exit 1
   fi
 
