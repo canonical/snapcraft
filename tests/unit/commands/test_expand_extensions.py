@@ -45,7 +45,7 @@ def valid_core_data(request) -> CoreData:
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_expand_extensions_simple_core22(new_dir, emitter):
+def test_expand_extensions_simple_core22(new_dir, emitter, app_config):
     """Expand an extension for a simple snapcraft.yaml file."""
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
@@ -73,7 +73,7 @@ def test_expand_extensions_simple_core22(new_dir, emitter):
             file=yaml_file,
         )
 
-    cmd = commands.ExpandExtensionsCommand(None)
+    cmd = commands.ExpandExtensionsCommand(app_config)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
@@ -110,7 +110,7 @@ def test_expand_extensions_simple_core22(new_dir, emitter):
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_expand_extensions_simple(new_dir, emitter, valid_core_data):
+def test_expand_extensions_simple(new_dir, emitter, valid_core_data, app_config):
     """Expand an extension for a simple snapcraft.yaml file."""
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
@@ -139,7 +139,7 @@ def test_expand_extensions_simple(new_dir, emitter, valid_core_data):
             file=yaml_file,
         )
 
-    cmd = commands.ExpandExtensionsCommand(None)
+    cmd = commands.ExpandExtensionsCommand(app_config)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
@@ -172,7 +172,7 @@ def test_expand_extensions_simple(new_dir, emitter, valid_core_data):
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_expand_extensions_complex_core22(new_dir, emitter, mocker):
+def test_expand_extensions_complex_core22(new_dir, emitter, mocker, app_config):
     """Expand an extension for a complex snapcraft.yaml file.
 
     This includes parse-info, architectures, and advanced grammar.
@@ -216,7 +216,7 @@ def test_expand_extensions_complex_core22(new_dir, emitter, mocker):
             file=yaml_file,
         )
 
-    cmd = commands.ExpandExtensionsCommand(None)
+    cmd = commands.ExpandExtensionsCommand(app_config)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
@@ -257,7 +257,9 @@ def test_expand_extensions_complex_core22(new_dir, emitter, mocker):
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
+def test_expand_extensions_complex(
+    new_dir, emitter, mocker, valid_core_data, app_config
+):
     """Expand an extension for a complex snapcraft.yaml file.
 
     This includes parse-info, architectures, and advanced grammar.
@@ -302,7 +304,7 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
             file=yaml_file,
         )
 
-    cmd = commands.ExpandExtensionsCommand(None)
+    cmd = commands.ExpandExtensionsCommand(app_config)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(

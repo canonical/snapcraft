@@ -416,13 +416,22 @@ def default_project(extra_project_params):
 @pytest.fixture()
 def default_factory(default_project):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import SnapcraftServiceFactory
+    from snapcraft.services import SnapcraftServiceFactory, register_snapcraft_services
 
+    register_snapcraft_services()
     factory = SnapcraftServiceFactory(
         app=APP_METADATA,
         project=default_project,
     )
     return factory
+
+
+@pytest.fixture()
+def app_config(default_factory) -> dict[str, Any]:
+    from snapcraft.application import APP_METADATA, Snapcraft
+
+    app = Snapcraft(app=APP_METADATA, services=default_factory)
+    return app.app_config
 
 
 @pytest.fixture()
