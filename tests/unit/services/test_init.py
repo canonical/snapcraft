@@ -36,8 +36,9 @@ def init_service(default_factory):
 
 
 def template_dir():
-    with importlib.resources.path("snapcraft", "templates") as _template_dir:
-        return _template_dir / "simple"
+    resource = importlib.resources.files("snapcraft") / "templates" / "simple"
+    with importlib.resources.as_file(resource) as resource_file:
+        return resource_file
 
 
 @pytest.mark.parametrize(

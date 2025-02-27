@@ -23,7 +23,10 @@ from snapcraft.services.package import Package
 from snapcraft.services.provider import Provider
 from snapcraft.services.confdbs import Confdbs
 from snapcraft.services.remotebuild import RemoteBuild
-from snapcraft.services.service_factory import SnapcraftServiceFactory
+from snapcraft.services.service_factory import (
+    SnapcraftServiceFactory,
+    register_snapcraft_services,
+)
 
 __all__ = [
     "Assertion",
@@ -32,6 +35,7 @@ __all__ = [
     "Package",
     "Provider",
     "Confdbs",
+    "register_snapcraft_services",
     "RemoteBuild",
     "SnapcraftServiceFactory",
 ]
