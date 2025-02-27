@@ -459,6 +459,7 @@ class Snapcraft(Application):
 
 def create_app() -> Snapcraft:
     """Create a Snapcraft application with the proper commands."""
+    services.register_snapcraft_services()
     snapcraft_services = services.SnapcraftServiceFactory(app=APP_METADATA)
 
     app = Snapcraft(
