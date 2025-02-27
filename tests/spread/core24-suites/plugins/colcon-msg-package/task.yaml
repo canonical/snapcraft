@@ -1,0 +1,35 @@
+summary: >-
+  Make sure ROS downloaded packages are properly sourced
+
+kill-timeout: 180m
+manual: true
+
+environment:
+  SNAP/colcon_msg_package: colcon-msg-package
+  SNAPCRAFT_BUILD_ENVIRONMENT: host
+
+systems:
+  - ubuntu-24.04*
+
+prepare: |
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
+restore: |
+  cd "$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
+execute: |
+  cd "$SNAP"
+
+  # Build the snap and verify that a message only package could be build
+  snapcraft
+  [ -d parts/test-part/install/opt/ros/snap/share/pendulum_msgs ]
+
+  snap install "${SNAP}"_1.0_*.snap --dangerous
