@@ -51,8 +51,12 @@ parts:
     plugin: dump
     organize:
       craft.git: libexec/snapcraft/craft.git
+      # Put sitecustomize in site-packages
+      sitecustomize.py: lib/python3.12/site-packages/sitecustomize.py
+
     stage:
       - "libexec/"
+      - "lib/"
 
   git:
     plugin: nil

@@ -1,5 +1,8 @@
 summary: Test manifest file creation
 
+systems:
+  - ubuntu-24.04*
+
 prepare: |
   snap install review-tools
 
