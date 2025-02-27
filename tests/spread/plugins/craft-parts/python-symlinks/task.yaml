@@ -25,6 +25,11 @@ environment:
   # using the gnome extension
   SNAP/strict_gnome_extension: strict-gnome-extension
 
+prepare: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+
 restore: |
   cd "${SNAP}"
   snapcraft clean
@@ -40,4 +45,4 @@ execute: |
     [ "$(readlink prime/bin/python3)" == "$(cat expected-symlink)" ]
   else
     snapcraft prime 2>&1 | MATCH "No suitable Python interpreter found, giving up."
-  fi 
+  fi
