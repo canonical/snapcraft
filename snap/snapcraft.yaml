@@ -6,7 +6,7 @@ description: |
   a single toolset, but instead is a collection of tools that enable the
   natural workflow of an upstream to be extended with a simple release step
   into Snappy.
-adopt-info: snapcraft
+adopt-info: snapcraft-metadata
 confinement: classic
 license: GPL-3.0
 assumes:
@@ -111,10 +111,6 @@ parts:
       - libpython3-stdlib
       - libpython3.12-stdlib
       - libpython3.12-minimal
-      - python3-pip
-      - python3-setuptools
-      - python3-wheel
-      - python3-venv
       - python3-minimal
       - python3-pkg-resources
       - python3.12-minimal
@@ -152,6 +148,12 @@ parts:
       sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.12/site.py" \
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
 
+  python-apt:
+    plugin: nil
+    stage-packages: [python3-apt]
+    organize:
+      usr/lib/python3/dist-packages/apt*: lib/python3.12/site-packages/
+
   libgit2:
     source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.2.tar.gz
     source-checksum: sha256/de384e29d7efc9330c6cdb126ebf88342b5025d920dcb7c645defad85195ea7f
@@ -166,15 +168,16 @@ parts:
 
   snapcraft:
     source: .
-    plugin: python
-    python-packages:
-      - wheel
-      - pip
-    python-constraints:
-      - constraints.txt
-    python-requirements:
-      - uv-requirements.txt
-      - requirements-noble.txt
+    plugin: uv
+    build-environment:
+      - UV_NO_BINARY: "1"
+      - UV_COMPILE_BYTECODE: "1"
+      - SODIUM_INSTALL: "system"
+      - CFLAGS: "$(pkg-config python-3.12 yaml-0.1 --cflags)"
+    build-attributes:
+      - enable-patchelf
+    build-snaps:
+      - astral-uv
     organize:
       # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
       # without including other binaries.
@@ -186,31 +189,27 @@ parts:
       "**/site-packages/extensions": share/snapcraft/extensions
       "**/site-packages/keyrings": share/snapcraft/keyrings
       "**/site-packages/schema": share/snapcraft/schema
-    build-attributes:
-      - enable-patchelf
-    build-environment:
-      # Build PyNaCl from source since the wheel files interact
-      # strangely with classic snaps. Well, build it all from source.
-      - "PIP_NO_BINARY": ":all:"
-      # Use base image's libsodium for PyNaCl.
-      - "SODIUM_INSTALL": "system"
-      - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
-    build-snaps:
-      - astral-uv
     override-build: |
-      uv export --no-dev --no-emit-workspace --output-file uv-requirements.txt
       ${SNAP}/libexec/snapcraft/craftctl default
+      ln -sf python3 $CRAFT_PART_INSTALL/bin/python
+    after: [snapcraft-libs, libgit2, python-apt]
 
-      version=$(PYTHONPATH=$CRAFT_PART_INSTALL/lib/python3.12/site-packages python3 -c "import snapcraft;print(snapcraft.__version__)")
-      ${SNAP}/libexec/snapcraft/craftctl set version="$version"
+  snapcraft-metadata:
+    plugin: nil
+    build-environment:
+      - UV_PROJECT_ENVIRONMENT: $CRAFT_STAGE/
+    override-build: |
+      # Just to avoid repetition of a long-ish path
+      OB_CRAFTCTL=${SNAP}/libexec/${CRAFT_PROJECT_NAME}/craftctl
 
-      [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
-      sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
-      ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
+      # Set the snap package version
+      version=$($CRAFT_STAGE/bin/snapcraft version | cut -d ' ' -f 2)
+      $OB_CRAFTCTL set version="$version"
 
-      # The new implementation still requires this.
-      ln -sf ../usr/bin/python3.12 $SNAPCRAFT_PART_INSTALL/bin/python3
-    after: [snapcraft-libs, libgit2]
+      # Set the snap package grade - "devel" if ".post" is in the version number
+      [[ $version =~ ".post" ]] && grade=devel || grade=stable
+      $OB_CRAFTCTL set grade="$grade"
+    after: [snapcraft]
 
   chisel:
     plugin: nil
