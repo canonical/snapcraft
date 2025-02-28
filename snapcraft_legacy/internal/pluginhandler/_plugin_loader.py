@@ -39,10 +39,10 @@ def load_plugin(
     definitions_schema,
 ) -> plugins.v2.PluginV2:
     local_plugins_dir = project._get_local_plugins_dir()
-    if local_plugins_dir is not None:
-        plugin_class = _get_local_plugin_class(
-            plugin_name=plugin_name, local_plugins_dir=local_plugins_dir
-        )
+
+    plugin_class = _get_local_plugin_class(
+        plugin_name=plugin_name, local_plugins_dir=Path(local_plugins_dir)
+    )
     if plugin_class is None:
         plugin_class = plugins.get_plugin_for_base(
             plugin_name, build_base=project._get_build_base()
@@ -57,57 +57,46 @@ def load_plugin(
     return plugin
 
 
-def _load_compat_x_prefix(plugin_name: str, module_name: str, local_plugin_dir: str):
-    compat_path = Path(local_plugin_dir, f"x-{plugin_name}.py")
-    if not compat_path.exists():
-        return None
-
-    preferred_name = f"{module_name}.py"
-    logger.warning(
-        f"Legacy plugin name detected, please rename the plugin's file name {compat_path.name!r} to {preferred_name!r}."
+def _load_local(plugin_name: str, local_plugin_dir: Path):
+    # The legacy module path is for the case when we allowed the plugin
+    # file name to have '-', this is the first entry
+    module_names = (
+        Path(f"x-{plugin_name}.py"),
+        Path(f"{plugin_name.replace('-', '_')}.py"),
     )
-
-    spec = importlib.util.spec_from_file_location(plugin_name, compat_path)
-    if spec.loader is None:
+    module_paths = (local_plugin_dir / m for m in module_names)
+    valid_paths = [m for m in module_paths if m.exists()]
+    # No valid paths means no local plugin to load
+    if not valid_paths:
         return None
+
+    module_path = valid_paths[0]
+    spec = importlib.util.spec_from_file_location(plugin_name, module_path)
+    if spec.loader is None:
+        raise errors.PluginError(f"unknown plugin: {plugin_name!r}")
 
     # Prevent mypy type complaints by asserting type.
     assert isinstance(spec.loader, importlib.abc.Loader)
 
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module
-
-
-def _load_local(plugin_name: str, local_plugin_dir: str):
-    module_name = plugin_name.replace("-", "_")
-
-    module = _load_compat_x_prefix(plugin_name, module_name, local_plugin_dir)
-    if module is None:
-        sys.path = [local_plugin_dir] + sys.path
-        logger.debug(
-            f"Loading plugin module {module_name!r} with sys.path {sys.path!r}"
-        )
-        try:
-            module = importlib.import_module(module_name)
-        finally:
-            sys.path.pop(0)
 
     return module
 
 
-def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: str):
-    with contextlib.suppress(ImportError):
-        module = _load_local(plugin_name, local_plugins_dir)
-        logger.info(f"Loaded local plugin for {plugin_name}")
+def _get_local_plugin_class(*, plugin_name: str, local_plugins_dir: Path):
+    module = _load_local(plugin_name, local_plugins_dir)
+    if not module:
+        return
+    logger.info(f"Loaded local plugin for {plugin_name}")
 
-        # v2 requires plugin implementation to be named "PluginImpl".
-        if hasattr(module, "PluginImpl") and issubclass(
-            module.PluginImpl, plugins.v2.PluginV2
-        ):
-            return module.PluginImpl
+    # v2 requires plugin implementation to be named "PluginImpl".
+    if hasattr(module, "PluginImpl") and issubclass(
+        module.PluginImpl, plugins.v2.PluginV2
+    ):
+        return module.PluginImpl
 
-        raise errors.PluginError(f"unknown plugin: {plugin_name!r}")
+    raise errors.PluginError(f"unknown plugin: {plugin_name!r}")
 
 
 def _validate_pull_and_build_properties(

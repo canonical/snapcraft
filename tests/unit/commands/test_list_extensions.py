@@ -30,8 +30,8 @@ import snapcraft.commands
         snapcraft.commands.ExtensionsCommand,
     ],
 )
-def test_command(emitter, command):
-    cmd = command(None)
+def test_command(emitter, command, app_config):
+    cmd = command(app_config)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
@@ -80,8 +80,8 @@ def test_command(emitter, command):
         snapcraft.commands.ExtensionsCommand,
     ],
 )
-def test_command_extension_dups(emitter, command):
-    cmd = command(None)
+def test_command_extension_dups(emitter, command, app_config):
+    cmd = command(app_config)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
