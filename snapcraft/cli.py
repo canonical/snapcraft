@@ -221,7 +221,10 @@ def _run_dispatcher(
         )
         emit.set_mode(EmitterMode.DEBUG)
 
-    dispatcher.load_command(None)
+    # Load the command with a dummy app config to silence deprecation warnings.
+    # This config should not actually get used down the line, so its content
+    # shouldn't matter
+    dispatcher.load_command({"app": "snapcraft_legacy", "services": {}})
     dispatcher.run()
     emit.ended_ok()
 

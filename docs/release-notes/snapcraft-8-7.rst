@@ -29,7 +29,7 @@ it had to be manually updated.
 
 We've updated the completion file to be generated dynamically, which means it will
 always autocomplete the latest commands and options in Bash-compatible shells.
-Try it out in by typing ``snapcraft`` and pressing :kbd:`Tab` in your terminal.
+Try it out by typing ``snapcraft`` and pressing :kbd:`Tab` in your terminal.
 
 
 Improved remote builder
@@ -92,16 +92,6 @@ builds, due to Launchpad's handling of the ``platforms`` key in project files.
 ``--build-for`` is the recommended alternative until Launchpad has comprehensive
 support for platforms.
 
-Known issues
-------------
-
-The following issues were reported and are scheduled to be fixed in upcoming
-patch releases.
-
-See individual issue links for any mitigations.
-
-- `#4996`_ Remote build gives an unfriendly error when attempting to cross-compile.
-
 
 Fixed bugs and issues
 ---------------------
@@ -135,7 +125,6 @@ this release.
 :literalref:`@mr-cal<https://github.com/mr-cal>`,
 and :literalref:`@sergio-costas<https://github.com/sergio-costas>`
 
-.. _#4996: https://github.com/canonical/snapcraft/issues/4996
 .. _#5250: https://github.com/canonical/snapcraft/pull/5250
 .. _#5258: https://github.com/canonical/snapcraft/pull/5258
 .. _craft-application#600: https://github.com/canonical/craft-application/issues/600

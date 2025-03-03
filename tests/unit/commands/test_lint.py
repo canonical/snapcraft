@@ -767,7 +767,7 @@ def test_lint_managed_mode_with_lint_config(
     emitter.assert_verbose("Collected lint config from 'snapcraft.yaml'.")
 
 
-def test_load_project(fake_snapcraft_project, tmp_path):
+def test_load_project(fake_snapcraft_project, tmp_path, app_config):
     """Load a simple snapcraft.yaml project.
 
     To simplify the unit tests, the `_load_project()` method is mocked out of the other
@@ -796,13 +796,13 @@ def test_load_project(fake_snapcraft_project, tmp_path):
             file=yaml_file,
         )
 
-    result = LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
+    result = LintCommand(app_config)._load_project(snapcraft_yaml_file=snap_file)
 
     assert result == fake_snapcraft_project
 
 
 @pytest.mark.usefixtures("fake_extension")
-def test_load_project_complex(mocker, tmp_path):
+def test_load_project_complex(mocker, tmp_path, app_config):
     """Load a complex snapcraft file.
 
     This includes lint, parse-info, architectures, and advanced grammar.
@@ -847,7 +847,7 @@ def test_load_project_complex(mocker, tmp_path):
             file=yaml_file,
         )
 
-    result = LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
+    result = LintCommand(app_config)._load_project(snapcraft_yaml_file=snap_file)
     assert result == models.Project.unmarshal(
         {
             "name": "test-name",
@@ -882,18 +882,20 @@ def test_load_project_complex(mocker, tmp_path):
     )
 
 
-def test_load_project_no_file(emitter, tmp_path):
+def test_load_project_no_file(emitter, tmp_path, app_config):
     """Return None if there is no snapcraft.yaml file."""
     snapcraft_yaml_file = tmp_path / "snap/snapcraft.yaml"
 
-    result = LintCommand(None)._load_project(snapcraft_yaml_file=snapcraft_yaml_file)
+    result = LintCommand(app_config)._load_project(
+        snapcraft_yaml_file=snapcraft_yaml_file
+    )
 
     assert not result
     emitter.assert_debug(f"Could not find {snapcraft_yaml_file.name!r}.")
 
 
 @pytest.mark.parametrize("base", ["core", "core18", "core20"])
-def test_load_project_unsupported_core_error(base, tmp_path):
+def test_load_project_unsupported_core_error(base, tmp_path, app_config):
     """Raise an error if for snaps with core, core18, and core20 bases."""
     # create a simple snapcraft.yaml
     (tmp_path / "snap").mkdir()
@@ -917,6 +919,6 @@ def test_load_project_unsupported_core_error(base, tmp_path):
     )
 
     with pytest.raises(SnapcraftError) as raised:
-        LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
+        LintCommand(app_config)._load_project(snapcraft_yaml_file=snap_file)
 
     assert str(raised.value) == "can not lint snap using a base older than core22"

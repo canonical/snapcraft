@@ -67,16 +67,10 @@ backends:
     type: adhoc
     allocate: |
       multipass_count=$(flock -x .spread_multipass -c 'COUNT=$(cat .spread_multipass); echo $(($COUNT + 1)) | tee .spread_multipass')
-      if [ "$SPREAD_SYSTEM" = "ubuntu-24.04-64" ]; then
-          image="daily:devel"
-          instance_name="spread-devel-${multipass_count}"
-      else
-          # SPREAD_SYSTEM has the following format here 'ubuntu-XX.YY-64' and gets
-          # translated to an image XX.YY.
-          image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
-          spread_name=$(echo ${image} | sed -e 's/\.//g')
-          instance_name="spread-${spread_name}-${multipass_count}"
-      fi
+
+      image=$(echo $SPREAD_SYSTEM | sed -e 's/ubuntu-\(.*\)-64/\1/')
+      spread_name=$(echo ${image} | sed -e 's/\.//g')
+      instance_name="spread-${spread_name}-${multipass_count}"
 
       if [ -z "${image}" ]; then
         FATAL "$SPREAD_SYSTEM is not supported!"
@@ -246,22 +240,37 @@ suites:
   tests/spread/core24-suites/environment/:
     summary: core24 environment tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/scriptlets/:
     summary: core24 scriptlet tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/manifest/:
     summary: core24 manifest tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/patchelf/:
     summary: core24 patchelf tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+  tests/spread/core24-suites/plugins/:
+    summary: core24 plugin tests
+    systems:
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   # General, core suite
   tests/spread/general/:
