@@ -1,0 +1,60 @@
+summary: >-
+  Build, clean, build, modify and rebuild, and run hello
+  with different plugin configurations
+
+kill-timeout: 180m
+manual: true
+
+environment:
+  # ros extensions for core24 are still experimental
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+  SNAP/colcon_ros2_jazzy: colcon-ros2-jazzy-hello
+  SNAP/colcon_ros2_wrapper: colcon-ros2-wrapper
+
+prepare: |
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+
+  # Undo changes to hello
+  git checkout src/hello.cpp
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
+execute: |
+  cd "${SNAP}"
+
+  # Make sure expand-extensions works
+  snapcraft expand-extensions
+
+  # Ensure we can run individual plugin steps
+  snapcraft pull
+  snapcraft build
+
+  # Build what we have and verify the snap runs as expected.
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  [ "$($SNAP)" = "hello world" ]
+
+  # Clean the hello part, then build and run again.
+  snapcraft clean hello
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  [ "$($SNAP)" = "hello world" ]
+
+  # Make sure that what we built runs with the changes applied.
+  sed -i "src/hello.cpp" -e 's/hello world/hello rebuilt world/'
+
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  [ "$($SNAP)" = "hello rebuilt world" ]

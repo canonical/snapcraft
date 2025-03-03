@@ -240,22 +240,37 @@ suites:
   tests/spread/core24-suites/environment/:
     summary: core24 environment tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/scriptlets/:
     summary: core24 scriptlet tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/manifest/:
     summary: core24 manifest tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/patchelf/:
     summary: core24 patchelf tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+  tests/spread/core24-suites/plugins/:
+    summary: core24 plugin tests
+    systems:
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   # General, core suite
   tests/spread/general/:
