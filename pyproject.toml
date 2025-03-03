@@ -270,7 +270,6 @@ select = [  # Base linting rule selections.
     "RUF200",  # If ruff fails to parse pyproject.toml...
 ]
 ignore = [
-    "ANN10",  # Type annotations for `self` and `cls`
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
     "E501",  # Line too long (reason: black will automatically fix this for us)
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
