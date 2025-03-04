@@ -114,6 +114,9 @@ The following issues have been resolved in Snapcraft 8.7:
   using the KDE Neon 6 extension.
 - `craft-parts#978`_ The ``source-subdir`` field was ignored for the
   :ref:`Go Use plugin<craft_parts_go_use_plugin>`.
+- `craft-parts#991`_ Classic snaps using the
+  :ref:`uv plugin<craft_parts_uv_plugin>` would fail to find the Python
+  interpreter included in the snap itself.
 - `craft-application#600`_ The same build environment may be re-used for platforms with
   the same ``build-on`` and ``build-for`` architectures.
 - `craft-application#618`_ The remote builder would clean up projects after
@@ -143,4 +146,5 @@ and :literalref:`@sergio-costas<https://github.com/sergio-costas>`
 .. _craft-application#619: https://github.com/canonical/craft-application/issues/619
 .. _craft-application#620: https://github.com/canonical/craft-application/issues/620
 .. _craft-parts#978: https://github.com/canonical/craft-parts/issues/978
+.. _craft-parts#991: https://github.com/canonical/craft-parts/issues/991
 .. _pkg-config: https://www.freedesktop.org/wiki/Software/pkg-config/
