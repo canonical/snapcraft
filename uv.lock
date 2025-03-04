@@ -385,7 +385,7 @@ wheels = [
 
 [[package]]
 name = "craft-application"
-version = "4.9.1"
+version = "4.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
@@ -405,9 +405,9 @@ dependencies = [
     { name = "snap-helpers" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d8/c5/0e7e7f712e5024c106641ef7b0b77e40964a3f79747ea0d5308e0e97d3f2/craft_application-4.9.1.tar.gz", hash = "sha256:71e674c89cb492e16011741ee9d423dde9d851aa895c8073a2925c583a2d505b", size = 314097 }
+sdist = { url = "https://files.pythonhosted.org/packages/86/86/20bac2f1a4e45097c01040328ff8ffd5313533d03231db08435559c684c3/craft_application-4.10.0.tar.gz", hash = "sha256:7a9cda0e854877fb80464e03274e69b97540a618e0c53cbc500b6fce25b9b8c4", size = 315299 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/4d/811a0a81a8e7f24797ce478a81262156ccae79c3583af996a77ea08c54ce/craft_application-4.9.1-py3-none-any.whl", hash = "sha256:e59e21a2ab4c3d91cba98a6a53e635b267946d4abbe8af45e99b32e8a2c38339", size = 146733 },
+    { url = "https://files.pythonhosted.org/packages/35/83/36b7a98d2cccae4f70c5edc73572ba44d6ab12eac2997924ac69394b7658/craft_application-4.10.0-py3-none-any.whl", hash = "sha256:7e6a595cf6855868332bd7cb19585fe8e8678440d9d604888599903fe36a0b8c", size = 147019 },
 ]
 
 [package.optional-dependencies]
