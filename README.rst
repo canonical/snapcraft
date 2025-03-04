@@ -93,7 +93,6 @@ Migrate existing projects
    - .pre-commit-config.yaml
    - .shellcheckrc
    - tox.ini
-   - .yamllint.yaml
 
 #. If you're rebasing a library, add the integrations tests structure.
    Applications should use spread for integration tests.

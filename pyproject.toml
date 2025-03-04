@@ -19,7 +19,7 @@ starcraft-hello = "starcraft:hello"
 
 [dependency-groups]
 lint = [
-    "yamllint~=1.34",
+    # Left empty for scaffolding and Makefile compatibility
 ]
 types = [
     "mypy[reports]~=1.15.0",
