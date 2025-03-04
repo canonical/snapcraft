@@ -42,6 +42,9 @@ Remote builds can now use the ``--build-for`` option to filter entries in an
 Support for confdbs
 ~~~~~~~~~~~~~~~~~~~
 
+Confdbs define the configuration of devices, including schemas, storage, access
+permission, granularity, and sharing between snaps.
+
 Snapcraft now supports listing and editing ``confdbs`` with the commands
 ``list-confdbs`` and ``edit-confdbs``. These new commands replace the previous
 ``list-registries`` and ``edit-registries`` commands, respectively.
