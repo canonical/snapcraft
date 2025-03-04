@@ -1,4 +1,4 @@
-name: neon-hello-6
+name: neon-hello-qt6
 version: "1.0"
 summary: Test the kde-neon extension
 description: It simply prints a hello world
@@ -8,9 +8,9 @@ confinement: strict
 base: core24
 
 apps:
-  neon-hello-6:
+  neon-hello-qt6:
     command: usr/local/bin/hello
-    extensions: [kde-neon-6]
+    extensions: [kde-neon-qt6]
 
 parts:
   hello:
