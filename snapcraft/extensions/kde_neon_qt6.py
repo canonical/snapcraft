@@ -368,17 +368,7 @@ class KDENeonQt6(Extension):
                             "$CRAFT_STAGE",
                             f"/snap/{qt6_sdk_snap}/current",
                         ],
-                        separator=";",
-                    ),
-                },
-                {
-                    "CMAKE_FIND_ROOT_PATH": prepend_to_env(
-                        "CMAKE_FIND_ROOT_PATH",
-                        [
-                            "$CRAFT_STAGE",
-                            f"/snap/{qt6_sdk_snap}/current",
-                        ],
-                        separator=";",
+                        separator=":",
                     ),
                 },
             ],

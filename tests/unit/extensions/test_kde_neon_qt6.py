@@ -466,16 +466,9 @@ class TestGetPartSnippet:
                 },
                 {
                     "CMAKE_PREFIX_PATH": (
-                        "$CRAFT_STAGE;"
+                        "$CRAFT_STAGE:"
                         "/snap/kde-qt6-core22-sdk/current"
                         "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                    )
-                },
-                {
-                    "CMAKE_FIND_ROOT_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt6-core22-sdk/current"
-                        "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
                     )
                 },
             ]
@@ -526,16 +519,9 @@ def test_get_part_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_sn
             },
             {
                 "CMAKE_PREFIX_PATH": (
-                    "$CRAFT_STAGE;"
+                    "$CRAFT_STAGE:"
                     "/snap/kde-qt6-core22-sdk/current"
                     "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                )
-            },
-            {
-                "CMAKE_FIND_ROOT_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core22-sdk/current"
-                    "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
                 )
             },
         ]
@@ -588,16 +574,9 @@ def assert_get_part_snippet(kde_neon_qt6_instance):
             },
             {
                 "CMAKE_PREFIX_PATH": (
-                    "$CRAFT_STAGE;"
+                    "$CRAFT_STAGE:"
                     "/snap/kde-qt6-core24-sdk/current"
                     "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                )
-            },
-            {
-                "CMAKE_FIND_ROOT_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core24-sdk/current"
-                    "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
                 )
             },
         ]
