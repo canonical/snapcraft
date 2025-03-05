@@ -168,7 +168,7 @@ def test_get_root_snippet(kde_neon_extension):
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "5",
+            "PLATFORM_PLUG": "kf5-core22",
         },
         "hooks": {
             "configure": {
@@ -220,7 +220,7 @@ def test_get_root_snippet_core24(kde_neon_extension_core24):
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "5",
+            "PLATFORM_PLUG": "kf5-core24",
         },
         "hooks": {
             "configure": {
@@ -305,7 +305,7 @@ def test_get_root_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "5",
+            "PLATFORM_PLUG": "kf5-core22",
         },
         "hooks": {
             "configure": {
@@ -359,7 +359,7 @@ def test_get_root_snippet_with_external_sdk_core24(
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "5",
+            "PLATFORM_PLUG": "kf5-core24",
         },
         "hooks": {
             "configure": {

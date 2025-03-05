@@ -28,7 +28,6 @@ from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
 _QT6_SDK_SNAP = {"core22": "kde-qt6-core22-sdk", "core24": "kde-qt6-core24-sdk"}
 _KF6_SDK_SNAP = {"core22": "kf6-core22-sdk", "core24": "kf6-core24-sdk"}
-_QT_VERSION = "6"
 
 
 @dataclasses.dataclass
@@ -39,7 +38,6 @@ class KDESnaps6:
     :cvar kf6_sdk_snap: The name of the kf6 SDK snap to use.
     :cvar content_qt6: The name of the qt6 content snap to use.
     :cvar content_kf6: The name of the kf6 content snap to use.
-    :cvar qt_version: The major version of qt to use.
     :cvar gpu_plugs: The gpu plugs to use with gpu-2404.
     :cvar gpu_layouts: The gpu layouts to use with gpu-2404.
     :cvar qt6_builtin: True if the SDK is built into the qt6 content snap.
@@ -50,7 +48,6 @@ class KDESnaps6:
     kf6_sdk_snap: str
     content_qt6: str
     content_kf6: str
-    qt_version: str
     gpu_plugs: Dict[str, Any]
     gpu_layouts: Dict[str, Any]
     qt6_builtin: bool = True
@@ -130,7 +127,6 @@ class KDENeon6(Extension):
         base = self.yaml_data["base"]
         qt6_sdk_snap = _QT6_SDK_SNAP[base]
         kf6_sdk_snap = _KF6_SDK_SNAP[base]
-        qt_version = _QT_VERSION
 
         match base:
             case "core22":
@@ -185,7 +181,6 @@ class KDENeon6(Extension):
             kf6_builtin=kf6_builtin,
             gpu_layouts=gpu_layouts,
             gpu_plugs=gpu_plugs,
-            qt_version=qt_version,
         )
 
     @overrides
@@ -194,7 +189,6 @@ class KDENeon6(Extension):
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
         gpu_plugs = self.kde_snaps.gpu_plugs
         gpu_layouts = self.kde_snaps.gpu_layouts
-        qt_version = self.kde_snaps.qt_version
 
         return {
             "assumes": ["snapd2.58.3"],  # for cups support
@@ -232,7 +226,7 @@ class KDENeon6(Extension):
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
                 "GTK_USE_PORTAL": "1",
-                "QT_VERSION": qt_version,
+                "PLATFORM_PLUG": platform_kf6_snap,
             },
             "hooks": {
                 "configure": {
