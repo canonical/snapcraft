@@ -19,7 +19,6 @@
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Set
 
 from craft_cli import emit
 from overrides import overrides
@@ -38,12 +37,12 @@ class LibraryLinter(Linter):
         self._ld_config_cache: dict[str, Path] = {}
 
     @staticmethod
-    def get_categories() -> List[str]:
+    def get_categories() -> list[str]:
         """Get the specific sub-categories that can be filtered against."""
         return ["unused-library", "missing-library"]
 
     @overrides
-    def run(self) -> List[LinterIssue]:
+    def run(self) -> list[LinterIssue]:
         if self._snap_metadata.type not in ("app", None):
             return []
 
@@ -53,11 +52,11 @@ class LibraryLinter(Linter):
         else:
             installed_base_path = None
 
-        issues: List[LinterIssue] = []
+        issues: list[LinterIssue] = []
         elf_files = elf_utils.get_elf_files(current_path)
         soname_cache = SonameCache()
-        all_libraries: Set[Path] = set()
-        used_libraries: Set[Path] = set()
+        all_libraries: set[Path] = set()
+        used_libraries: set[Path] = set()
 
         self._generate_ld_config_cache()
 
@@ -162,9 +161,9 @@ class LibraryLinter(Linter):
         self,
         elf_file: ElfFile,
         *,
-        search_paths: List[Path],
-        dependencies: List[Path],
-        issues: List[LinterIssue],
+        search_paths: list[Path],
+        dependencies: list[Path],
+        issues: list[LinterIssue],
     ) -> None:
         """Check if ELF executable dependencies are satisfied by snap files.
 
@@ -203,8 +202,8 @@ class LibraryLinter(Linter):
                 issues.append(issue)
 
     def _get_unused_library_issues(
-        self, all_libraries: Set[Path], used_libraries: Set[Path]
-    ) -> List[LinterIssue]:
+        self, all_libraries: set[Path], used_libraries: set[Path]
+    ) -> list[LinterIssue]:
         """Get a list of unused library issues.
 
         :param all_libraries: a set of paths to all libraries
@@ -212,7 +211,7 @@ class LibraryLinter(Linter):
 
         :returns: list of LinterIssues for unused libraries
         """
-        issues: List[LinterIssue] = []
+        issues: list[LinterIssue] = []
         unused_libraries = all_libraries - used_libraries
 
         # sort libraries so the results are ordered in a deterministic way

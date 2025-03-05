@@ -28,7 +28,7 @@ from snapcraft_legacy.project import Project
 
 class FakePart:
     def __init__(
-        self, name: str = "part1", build_attributes: Optional[Sequence] = None
+        self, name: str = "part1", build_attributes: Sequence | None = None
     ) -> None:
         self.name = name
 

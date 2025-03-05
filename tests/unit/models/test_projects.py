@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 import pydantic
 import pytest
@@ -46,7 +46,7 @@ CORE24_DATA = {"base": "core24", "grade": "devel"}
 def project_yaml_data():
     def _project_yaml_data(
         *, name: str = "name", version: str = "0.1", summary: str = "summary", **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "name": name,
             "version": version,
@@ -64,7 +64,7 @@ def project_yaml_data():
 
 @pytest.fixture
 def app_yaml_data(project_yaml_data):
-    def _app_yaml_data(**kwargs) -> Dict[str, Any]:
+    def _app_yaml_data(**kwargs) -> dict[str, Any]:
         data = project_yaml_data()
         data["apps"] = {"app1": {"command": "/bin/true", **kwargs}}
         return data
@@ -74,7 +74,7 @@ def app_yaml_data(project_yaml_data):
 
 @pytest.fixture
 def socket_yaml_data(app_yaml_data):
-    def _socket_yaml_data(**kwargs) -> Dict[str, Any]:
+    def _socket_yaml_data(**kwargs) -> dict[str, Any]:
         data = app_yaml_data()
         data["apps"]["app1"]["sockets"] = {"socket1": {**kwargs}}
         return data

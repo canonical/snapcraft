@@ -27,7 +27,7 @@ from . import LifecycleCommandsBaseTestCase
 
 class TestSnap(LifecycleCommandsBaseTestCase):
     def assert_build_provider_calls(
-        self, shell: bool = False, output: Optional[str] = None
+        self, shell: bool = False, output: str | None = None
     ):
         self.fake_lifecycle_execute.mock.assert_not_called()
 

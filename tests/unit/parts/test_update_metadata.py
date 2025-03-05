@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -63,7 +63,7 @@ def appstream_file(new_dir):
 
 @pytest.fixture
 def project_yaml_data():
-    def yaml_data(extra_args: Dict[str, Any]):
+    def yaml_data(extra_args: dict[str, Any]):
         return {
             "name": "name",
             "summary": "summary",
@@ -82,7 +82,7 @@ def project_yaml_data():
     yield yaml_data
 
 
-def _project_app(data: Dict[str, Any]) -> App:
+def _project_app(data: dict[str, Any]) -> App:
     return App(**data)
 
 

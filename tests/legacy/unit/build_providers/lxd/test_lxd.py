@@ -63,7 +63,7 @@ class FakeContainer:
     def status(self) -> str:
         return self._status
 
-    def __init__(self, config: Dict[str, Any], wait: bool) -> None:
+    def __init__(self, config: dict[str, Any], wait: bool) -> None:
         self._status = "STOPPED"
         self.config = config
         self.devices = dict()  # type: Dict[str, Any]
@@ -149,7 +149,7 @@ class FakeContainers:
         self.get_mock(container_name)
         return self._containers[container_name]
 
-    def create(self, config: Dict[str, Any], wait: bool) -> FakeContainer:
+    def create(self, config: dict[str, Any], wait: bool) -> FakeContainer:
         self.create_mock(config=config, wait=wait)
         self._containers[config["name"]] = FakeContainer(config, wait)
         return self._containers[config["name"]]

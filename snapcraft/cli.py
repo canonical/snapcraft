@@ -20,7 +20,7 @@ import argparse
 import contextlib
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import craft_application.commands
 import craft_cli
@@ -213,7 +213,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
 
 
 def _run_dispatcher(
-    dispatcher: craft_cli.Dispatcher, global_args: Dict[str, Any]
+    dispatcher: craft_cli.Dispatcher, global_args: dict[str, Any]
 ) -> None:
     if global_args.get("trace"):
         emit.message(

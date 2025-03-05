@@ -22,7 +22,6 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List, Set
 
 from craft_cli import emit
 
@@ -101,7 +100,7 @@ class Patcher:
                 elf_file_path=elf_file.path,
             )
 
-    def _run_patchelf(self, *, patchelf_args: List[str], elf_file_path: Path) -> None:
+    def _run_patchelf(self, *, patchelf_args: list[str], elf_file_path: Path) -> None:
         # Run patchelf on a copy of the primed file and replace it
         # after it is successful. This allows us to break the potential
         # hard link created when migrating the file across the steps of
@@ -126,7 +125,7 @@ class Patcher:
             shutil.copy2(temp_file.name, elf_file_path)
 
     @functools.lru_cache(maxsize=1024)  # noqa: B019 Possible memory leaks in lru_cache
-    def get_current_rpath(self, elf_file: ElfFile) -> List[str]:
+    def get_current_rpath(self, elf_file: ElfFile) -> list[str]:
         """Obtain the current rpath from the ELF file dynamic section."""
         output = subprocess.check_output(
             [self._patchelf_cmd, "--print-rpath", str(elf_file.path)]
@@ -134,10 +133,10 @@ class Patcher:
         return [x for x in output.decode().strip().split(":") if x]
 
     @functools.lru_cache(maxsize=1024)  # noqa: B019 Possible memory leaks in lru_cache
-    def get_proposed_rpath(self, elf_file: ElfFile) -> List[str]:
+    def get_proposed_rpath(self, elf_file: ElfFile) -> list[str]:
         """Obtain the proposed rpath pointing to the base or application snaps."""
-        origin_rpaths: List[str] = []
-        base_rpaths: Set[str] = set()
+        origin_rpaths: list[str] = []
+        base_rpaths: set[str] = set()
         existing_rpaths = self.get_current_rpath(elf_file)
 
         for dependency in elf_file.dependencies:

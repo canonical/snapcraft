@@ -16,7 +16,6 @@
 
 import os
 from pathlib import Path
-from typing import List
 from unittest.mock import call, patch
 
 import pytest
@@ -229,7 +228,7 @@ def fake_exists(mocker):
     class _FileCheck:
         def __init__(self) -> None:
             self._original_exists = os.path.exists
-            self.paths: List[str] = []
+            self.paths: list[str] = []
 
         def exists(self, path: str) -> bool:
             if Path(path) in self.paths:
