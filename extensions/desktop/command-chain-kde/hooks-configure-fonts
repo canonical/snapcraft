@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if [ "$PLATFORM_PLUG" == "kf6-core24" ]
+if [ "${PLATFORM_PLUG}" == "kf6-core24" ]
 then
     set -- "${SNAP}/kf6/command-chain/hooks-configure-fonts" "$@"
     # shellcheck source=/dev/null
     source "${SNAP}/snap/command-chain/run"
-elif [ "$PLATFORM_PLUG" == "kde-qt6-core24" ]
+elif [ "${PLATFORM_PLUG}" == "kde-qt6-core24" ]
 then
     set -- "${SNAP}/qt6/command-chain/hooks-configure-fonts" "$@"
     # shellcheck source=/dev/null
