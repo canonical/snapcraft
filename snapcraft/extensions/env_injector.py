@@ -16,7 +16,7 @@
 
 """Extension to automatically set environment variables on snaps."""
 
-from typing import Any, Optional
+from typing import Any
 
 from overrides import overrides
 
@@ -65,7 +65,7 @@ class EnvInjector(Extension):
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return True
 
     @overrides

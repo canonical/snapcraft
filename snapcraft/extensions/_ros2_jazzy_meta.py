@@ -20,7 +20,7 @@
 
 import dataclasses
 from abc import abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 from overrides import overrides
 
@@ -47,7 +47,7 @@ class ROS2JazzyMetaBase(ROS2JazzyExtension):
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return True
 
     @overrides

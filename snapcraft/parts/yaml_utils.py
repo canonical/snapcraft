@@ -18,7 +18,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, TextIO, cast
+from typing import Any, TextIO, cast
 
 import yaml
 import yaml.error
@@ -108,7 +108,7 @@ def safe_load(filestream: TextIO) -> dict[str, Any]:
         raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
 
 
-def get_base(filestream: TextIO) -> Optional[str]:
+def get_base(filestream: TextIO) -> str | None:
     """Get the effective base from a snapcraft.yaml file.
 
     :param filename: The YAML file to load.

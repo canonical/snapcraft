@@ -26,7 +26,7 @@ import shutil
 import sys
 from getpass import getpass
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable
 
 from craft_application.util import strtobool
 from craft_cli import emit
@@ -64,7 +64,7 @@ def get_managed_environment_log_path():
     )
 
 
-def get_managed_environment_snap_channel() -> Optional[str]:
+def get_managed_environment_snap_channel() -> str | None:
     """User-specified channel to use when installing Snapcraft snap from Snap Store.
 
     :returns: Channel string if specified, else None.
@@ -74,12 +74,12 @@ def get_managed_environment_snap_channel() -> Optional[str]:
 
 def get_effective_base(
     *,
-    base: Optional[str],
-    build_base: Optional[str],
-    project_type: Optional[str],
-    name: Optional[str],
+    base: str | None,
+    build_base: str | None,
+    project_type: str | None,
+    name: str | None,
     translate_devel: bool = True,
-) -> Optional[str]:
+) -> str | None:
     """Return the base to use to create the snap.
 
     Return the build-base if set.
@@ -222,9 +222,7 @@ def humanize_list(
     return f"{humanized} {conjunction} {quoted_items[-1]}"
 
 
-def get_common_ld_library_paths(
-    prime_dir: Path, arch_triplet: Optional[str]
-) -> list[str]:
+def get_common_ld_library_paths(prime_dir: Path, arch_triplet: str | None) -> list[str]:
     """Return common existing PATH entries for a snap.
 
     :param prime_dir: Path to the prime directory.
@@ -249,7 +247,7 @@ def get_common_ld_library_paths(
     return [str(p) for p in paths if p.exists()]
 
 
-def get_ld_library_paths(prime_dir: Path, arch_triplet: Optional[str]) -> str:
+def get_ld_library_paths(prime_dir: Path, arch_triplet: str | None) -> str:
     """Return a usable in-snap LD_LIBRARY_PATH variable.
 
     :param prime_dir: Path to the prime directory.
@@ -315,7 +313,7 @@ def get_snap_tool(command_name: str) -> str:
     return command_path
 
 
-def _find_command_path_in_root(root: str, command_name: str) -> Optional[str]:
+def _find_command_path_in_root(root: str, command_name: str) -> str | None:
     for bin_directory in (
         "usr/local/sbin",
         "usr/local/bin",
@@ -331,7 +329,7 @@ def _find_command_path_in_root(root: str, command_name: str) -> Optional[str]:
     return None
 
 
-def process_version(version: Optional[str]) -> str:
+def process_version(version: str | None) -> str:
     """Handle special version strings."""
     if version is None:
         raise ValueError("version cannot be None")

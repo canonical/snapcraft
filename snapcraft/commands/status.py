@@ -20,7 +20,7 @@ import itertools
 import operator
 import textwrap
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Sequence, cast
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -152,8 +152,8 @@ def _get_channel_order(snap_channels, tracks: Sequence[str]) -> OrderedDict:
 
 def _get_channel_line(
     *,
-    mapped_channel: Optional[MappedChannel],
-    revision: Optional[Revision],
+    mapped_channel: MappedChannel | None,
+    revision: Revision | None,
     channel_info: SnapChannel,
     hint: str,
     progress_string: str,
@@ -195,7 +195,7 @@ def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
     channel_info = snap_channel_map.get_channel_info(channel_name)
 
     try:
-        progressive_mapped_channel: Optional[MappedChannel] = (
+        progressive_mapped_channel: MappedChannel | None = (
             snap_channel_map.get_mapped_channel(
                 channel_name=channel_name, architecture=architecture, progressive=True
             )
@@ -239,7 +239,7 @@ def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
         progress_string = _HINTS.NO_PROGRESS
 
     try:
-        mapped_channel: Optional[MappedChannel] = snap_channel_map.get_mapped_channel(
+        mapped_channel: MappedChannel | None = snap_channel_map.get_mapped_channel(
             channel_name=channel_name, architecture=architecture, progressive=False
         )
     except ValueError:

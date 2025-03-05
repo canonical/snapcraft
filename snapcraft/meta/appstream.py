@@ -20,7 +20,7 @@ import contextlib
 import operator
 import os
 from io import StringIO
-from typing import Optional, cast
+from typing import cast
 
 import lxml.etree
 import validators
@@ -84,7 +84,7 @@ _XSLT = """\
 """
 
 
-def extract(relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
+def extract(relpath: str, *, workdir: str) -> ExtractedMetadata | None:
     """Extract appstream metadata.
 
     :param file_relpath: Relative path to the file containing metadata.
@@ -174,7 +174,7 @@ def _get_xslt():
     return lxml.etree.XSLT(xslt)
 
 
-def _get_value_from_xml_element(tree, key) -> Optional[str]:
+def _get_value_from_xml_element(tree, key) -> str | None:
     node = tree.find(key)
     if node is not None and node.text:
         # Lines that should be empty end up with empty space after the
@@ -186,7 +186,7 @@ def _get_value_from_xml_element(tree, key) -> Optional[str]:
     return None
 
 
-def _get_urls_from_xml_element(nodes, url_type) -> Optional[list[str]]:
+def _get_urls_from_xml_element(nodes, url_type) -> list[str] | None:
     urls: list[str] = []
     for node in nodes:
         if (
@@ -207,7 +207,7 @@ def _get_urls_from_xml_element(nodes, url_type) -> Optional[list[str]]:
     return None
 
 
-def _get_latest_release_from_nodes(nodes) -> Optional[str]:
+def _get_latest_release_from_nodes(nodes) -> str | None:
     for node in nodes:
         if "version" in node.attrib:
             return node.attrib["version"]
@@ -222,7 +222,7 @@ def _get_desktop_file_ids_from_nodes(nodes) -> list[str]:
     return desktop_file_ids
 
 
-def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> Optional[str]:
+def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> str | None:
     # For details about desktop file ids and their corresponding paths, see
     # https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
     for xdg_data_dir in ("usr/local/share", "usr/share"):
@@ -237,7 +237,7 @@ def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> Optional[
     return None
 
 
-def _extract_icon(dom, workdir: str, desktop_file_paths: list[str]) -> Optional[str]:
+def _extract_icon(dom, workdir: str, desktop_file_paths: list[str]) -> str | None:
     icon_node = dom.find("icon")
     if icon_node is not None and "type" in icon_node.attrib:
         icon_node_type = icon_node.attrib["type"]
@@ -265,7 +265,7 @@ def _extract_icon(dom, workdir: str, desktop_file_paths: list[str]) -> Optional[
 
 def _get_icon_from_desktop_file(
     workdir: str, desktop_file_paths: list[str]
-) -> Optional[str]:
+) -> str | None:
     # Icons in the desktop file can be either a full path to the icon file, or a name
     # to be searched in the standard locations. If the path is specified, use that,
     # otherwise look for the icon in the hicolor theme (also covers icon type="stock").
@@ -285,7 +285,7 @@ def _get_icon_from_desktop_file(
     return None
 
 
-def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> Optional[str]:
+def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> str | None:
     # Icon themes can carry icons in different pre-rendered sizes or scalable. Scalable
     # implementation is optional, so we'll try the largest pixmap and then scalable if
     # no other sizes are available.

@@ -16,7 +16,7 @@
 
 """Snap config file definitions and helpers."""
 
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal
 
 import craft_application.models
 import pydantic
@@ -39,7 +39,7 @@ class SnapConfig(craft_application.models.CraftBaseModel):
     provider: ProviderName | None = None
 
 
-def get_snap_config() -> Optional[SnapConfig]:
+def get_snap_config() -> SnapConfig | None:
     """Get validated snap configuration.
 
     :return: SnapConfig. If not running as a snap, return None.
