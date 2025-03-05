@@ -285,11 +285,12 @@ suites:
       - ubuntu-20.04*
       - ubuntu-22.04*
 
-  # 'build-base: devel' fails due to an issue with the 24.10 buildd image (#4921)
-  # tests/spread/core-devel/:
-  #   summary: tests of devel base snaps
-  #   environment:
-  #     SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  tests/spread/core-devel/:
+    summary: tests of devel base snaps
+    systems:
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   # General, core suite
   tests/spread/cross-compile/:
