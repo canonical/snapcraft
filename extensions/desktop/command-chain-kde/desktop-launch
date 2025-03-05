@@ -1,32 +1,15 @@
 #!/bin/bash
 
-if [[ "$PLATFORM_PLUG" == "kf6-core24" ]]
-then
-    echo "$PLATFORM_PLUG"
-    set -- "${SNAP}/kf6/command-chain/desktop-launch6" "$@"
+if [[ "$PLATFORM_PLUG" =~ "kf5" ]]; then
+    set -- "${SNAP}/kf5/snap/command-chain/desktop-launch" "$@"
     # shellcheck source=/dev/null
     source "${SNAP}/snap/command-chain/run"
-elif [[ "$PLATFORM_PLUG" == "kf6-core22" ]]
-then
-    echo "$PLATFORM_PLUG"
-    set -- "${SNAP}/kf6/command-chain/desktop-launch6" "$@"
-    # shellcheck source=/dev/null
-    source "${SNAP}/snap/command-chain/run"
-elif [[ "$PLATFORM_PLUG" == "kde-qt6-core22" ]]
-then
-    echo "$PLATFORM_PLUG"
-    set -- "${SNAP}/qt6/command-chain/desktop-launch6" "$@"
-    # shellcheck source=/dev/null
-    source "${SNAP}/snap/command-chain/run"
-elif [[ "$PLATFORM_PLUG" == "kde-qt6-core24" ]]
-then
-    echo "$PLATFORM_PLUG"
-    set -- "${SNAP}/qt6/command-chain/desktop-launch6" "$@"
+elif [[ "$PLATFORM_PLUG" =~ "qt6" ]]; then
+    set -- "${SNAP}/qt6/snap/command-chain/desktop-launch6" "$@"
     # shellcheck source=/dev/null
     source "${SNAP}/snap/command-chain/run"
 else
-    echo "$PLATFORM_PLUG"
-    set -- "${SNAP}/kf5/command-chain/desktop-launch" "$@"
+    set -- "${SNAP}/kf6/snap/command-chain/desktop-launch6" "$@"
     # shellcheck source=/dev/null
     source "${SNAP}/snap/command-chain/run"
 fi
