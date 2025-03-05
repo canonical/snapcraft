@@ -21,7 +21,7 @@ from __future__ import annotations
 import copy
 import re
 import textwrap
-from typing import Any, Literal, Mapping, Tuple, cast
+from typing import Any, Literal, Mapping, cast
 
 import pydantic
 from craft_application import models
@@ -1449,7 +1449,7 @@ def _format_pydantic_error_message(msg):
     return msg
 
 
-def _printable_field_location_split(location: str) -> Tuple[str, str]:
+def _printable_field_location_split(location: str) -> tuple[str, str]:
     """Return split field location.
 
     If top-level, location is returned as unquoted "top-level".

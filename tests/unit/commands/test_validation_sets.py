@@ -16,7 +16,7 @@
 
 import argparse
 import json
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import call
 
 import pytest
@@ -124,7 +124,7 @@ def fake_dashboard_get_validation_sets(fake_validation_sets, mocker):
 
 @pytest.fixture
 def fake_snap_sign(mocker):
-    def sign(assertion: Dict[str, Any], *, key_name: str) -> bytes:
+    def sign(assertion: dict[str, Any], *, key_name: str) -> bytes:
         return (json.dumps(assertion) + f"\n\nSIGNED{key_name}").encode()
 
     return mocker.patch(

@@ -17,7 +17,7 @@
 """External metadata definition."""
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 
 
 @dataclass
@@ -45,23 +45,23 @@ class ExtractedMetadata:
     icon: Optional[str] = None
     """The extracted application icon."""
 
-    desktop_file_paths: List[str] = field(default_factory=list)
+    desktop_file_paths: list[str] = field(default_factory=list)
     """The extracted application desktop file paths."""
 
     license: Optional[str] = None
     """The extracted package license"""
 
-    contact: Optional[List[str]] = None
+    contact: Optional[list[str]] = None
     """The extracted package contact"""
 
-    donation: Optional[List[str]] = None
+    donation: Optional[list[str]] = None
     """The extracted package donation"""
 
-    issues: Optional[List[str]] = None
+    issues: Optional[list[str]] = None
     """The extracted package issues"""
 
-    source_code: Optional[List[str]] = None
+    source_code: Optional[list[str]] = None
     """The extracted package source code"""
 
-    website: Optional[List[str]] = None
+    website: Optional[list[str]] = None
     """The extracted package website"""

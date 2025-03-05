@@ -20,7 +20,7 @@ import abc
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple, final
+from typing import Any, Optional, Sequence, final
 
 from craft_cli import emit
 
@@ -39,7 +39,7 @@ class Extension(abc.ABC):
     """
 
     def __init__(
-        self, *, yaml_data: Dict[str, Any], arch: str, target_arch: str
+        self, *, yaml_data: dict[str, Any], arch: str, target_arch: str
     ) -> None:
         """Create a new Extension."""
         self.yaml_data = yaml_data
@@ -48,12 +48,12 @@ class Extension(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         """Return a tuple of supported bases."""
 
     @staticmethod
     @abc.abstractmethod
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         """Return a tuple of supported confinement settings."""
 
     @staticmethod
@@ -62,22 +62,22 @@ class Extension(abc.ABC):
         """Return whether or not this extension is unstable for given base."""
 
     @abc.abstractmethod
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         """Return the root snippet to apply."""
 
     @abc.abstractmethod
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         """Return the app snippet to apply.
 
         :param app_name: the name of the app where the snippet will be applied
         """
 
     @abc.abstractmethod
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         """Return the part snippet to apply to existing parts."""
 
     @abc.abstractmethod
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         """Return the parts to add to parts."""
 
     @final
