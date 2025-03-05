@@ -20,7 +20,7 @@ import contextlib
 import operator
 import os
 from io import StringIO
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 import lxml.etree
 import validators
@@ -186,7 +186,7 @@ def _get_value_from_xml_element(tree, key) -> Optional[str]:
     return None
 
 
-def _get_urls_from_xml_element(nodes, url_type) -> Optional[List[str]]:
+def _get_urls_from_xml_element(nodes, url_type) -> Optional[list[str]]:
     urls = []  # type: List[str]
     for node in nodes:
         if (
@@ -214,7 +214,7 @@ def _get_latest_release_from_nodes(nodes) -> Optional[str]:
     return None
 
 
-def _get_desktop_file_ids_from_nodes(nodes) -> List[str]:
+def _get_desktop_file_ids_from_nodes(nodes) -> list[str]:
     desktop_file_ids = []  # type: List[str]
     for node in nodes:
         if "type" in node.attrib and node.attrib["type"] == "desktop-id":
@@ -237,7 +237,7 @@ def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> Optional[
     return None
 
 
-def _extract_icon(dom, workdir: str, desktop_file_paths: List[str]) -> Optional[str]:
+def _extract_icon(dom, workdir: str, desktop_file_paths: list[str]) -> Optional[str]:
     icon_node = dom.find("icon")
     if icon_node is not None and "type" in icon_node.attrib:
         icon_node_type = icon_node.attrib["type"]
@@ -264,7 +264,7 @@ def _extract_icon(dom, workdir: str, desktop_file_paths: List[str]) -> Optional[
 
 
 def _get_icon_from_desktop_file(
-    workdir: str, desktop_file_paths: List[str]
+    workdir: str, desktop_file_paths: list[str]
 ) -> Optional[str]:
     # Icons in the desktop file can be either a full path to the icon file, or a name
     # to be searched in the standard locations. If the path is specified, use that,

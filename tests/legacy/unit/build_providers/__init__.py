@@ -47,9 +47,9 @@ class ProviderImpl(Provider):
         self.clean_project_mock = mock.Mock()
         self.shell_mock = mock.Mock()
         self.save_info_mock = mock.Mock()
-        self.loaded_info: Optional[Dict[str, str]] = None
+        self.loaded_info: Optional[dict[str, str]] = None
 
-    def _load_info(self) -> Dict[str, str]:
+    def _load_info(self) -> dict[str, str]:
         if self.loaded_info is None:
             return super()._load_info()
         return self.loaded_info

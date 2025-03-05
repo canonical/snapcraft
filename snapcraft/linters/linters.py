@@ -22,7 +22,7 @@ import json
 import os
 from functools import partial
 from pathlib import Path
-from typing import Dict, List, Optional, Type
+from typing import Optional
 
 from craft_cli import emit
 
@@ -33,10 +33,10 @@ from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
 from .library_linter import LibraryLinter
 
-LinterType = Type[Linter]
+LinterType = type[Linter]
 
 
-LINTERS: Dict[str, LinterType] = {
+LINTERS: dict[str, LinterType] = {
     "classic": ClassicLinter,
     "library": LibraryLinter,
 }
@@ -52,7 +52,7 @@ class LinterStatus(enum.IntEnum):
     WARNINGS = 3
 
 
-_lint_reports: Dict[LinterResult, str] = {
+_lint_reports: dict[LinterResult, str] = {
     LinterResult.OK: "Lint OK",
     LinterResult.WARNING: "Lint warnings",
     LinterResult.ERROR: "Lint errors",
@@ -60,7 +60,7 @@ _lint_reports: Dict[LinterResult, str] = {
 
 
 def report(
-    issues: List[LinterIssue], *, json_output: bool = False, intermediate: bool = False
+    issues: list[LinterIssue], *, json_output: bool = False, intermediate: bool = False
 ) -> LinterStatus:
     """Display the linter report in textual or json formats.
 
@@ -77,7 +77,7 @@ def report(
     status = LinterStatus.OK
 
     # split dictionary based on result
-    issues_by_result: Dict[LinterResult, List[LinterIssue]] = {}
+    issues_by_result: dict[LinterResult, list[LinterIssue]] = {}
     for issue in issues:
         status = _update_status(status, issue.result)
         if status == LinterStatus.FATAL:
@@ -111,14 +111,14 @@ def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
     return status
 
 
-def run_linters(location: Path, *, lint: Optional[models.Lint]) -> List[LinterIssue]:
+def run_linters(location: Path, *, lint: Optional[models.Lint]) -> list[LinterIssue]:
     """Run all the defined linters.
 
     :param location: The root of the snap payload subtree to run linters on.
     :param lint: The linter configuration defined for this project.
     :return: A list of linter issues.
     """
-    all_issues: List[LinterIssue] = []
+    all_issues: list[LinterIssue] = []
     previous_dir = os.getcwd()
     try:
         os.chdir(location)
@@ -149,7 +149,7 @@ def run_linters(location: Path, *, lint: Optional[models.Lint]) -> List[LinterIs
 
 
 def _ignore_matching_filenames(
-    issues: List[LinterIssue], *, lint: Optional[models.Lint]
+    issues: list[LinterIssue], *, lint: Optional[models.Lint]
 ) -> None:
     """Mark any remaining filename match as ignored."""
     if lint is None:

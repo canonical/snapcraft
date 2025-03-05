@@ -17,7 +17,7 @@
 import shutil
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import call
 
 import pytest
@@ -53,7 +53,7 @@ def desktop_file():
 
 @pytest.fixture
 def yaml_data():
-    def _yaml_data(extra_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _yaml_data(extra_data: dict[str, Any]) -> dict[str, Any]:
         return {
             "name": "test-project",
             "base": "core22",

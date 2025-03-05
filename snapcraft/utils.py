@@ -26,7 +26,7 @@ import shutil
 import sys
 from getpass import getpass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 
 from craft_application.util import strtobool
 from craft_cli import emit
@@ -224,7 +224,7 @@ def humanize_list(
 
 def get_common_ld_library_paths(
     prime_dir: Path, arch_triplet: Optional[str]
-) -> List[str]:
+) -> list[str]:
     """Return common existing PATH entries for a snap.
 
     :param prime_dir: Path to the prime directory.

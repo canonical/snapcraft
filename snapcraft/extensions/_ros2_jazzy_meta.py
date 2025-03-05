@@ -20,7 +20,7 @@
 
 import dataclasses
 from abc import abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from overrides import overrides
 
@@ -51,7 +51,7 @@ class ROS2JazzyMetaBase(ROS2JazzyExtension):
         return True
 
     @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         root_snippet = super().get_root_snippet()
         root_snippet["plugs"] = {
             self.ros2_jazzy_snaps.content: {
@@ -64,7 +64,7 @@ class ROS2JazzyMetaBase(ROS2JazzyExtension):
         return root_snippet
 
     @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         app_snippet = super().get_app_snippet(app_name=app_name)
         python_paths = app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
@@ -79,7 +79,7 @@ class ROS2JazzyMetaBase(ROS2JazzyExtension):
         return app_snippet
 
     @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         part_snippet = super().get_part_snippet(plugin_name=plugin_name)
 
         # These are colcon-plugin specific entries
@@ -92,7 +92,7 @@ class ROS2JazzyMetaBase(ROS2JazzyExtension):
         return part_snippet
 
     @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         parts_snippet = super().get_parts_snippet()
         # Very unlikely but it may happen that the snapped application doesn't
         # even pull those deps. In that case, there is no valid ROS 2 ws to source.

@@ -21,7 +21,7 @@ import os
 import sys
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Optional
+from typing import Optional
 
 from craft_cli import emit
 from craft_providers import Provider, ProviderError, bases, executor
@@ -214,7 +214,7 @@ def get_base_configuration(
 
 def get_command_environment(
     http_proxy: Optional[str] = None, https_proxy: Optional[str] = None
-) -> Dict[str, Optional[str]]:
+) -> dict[str, Optional[str]]:
     """Construct an environment needed to execute a command.
 
     :param http_proxy: http proxy to add to environment

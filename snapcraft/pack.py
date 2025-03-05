@@ -19,7 +19,7 @@
 import subprocess
 from functools import wraps
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 from craft_cli import emit
 
@@ -108,7 +108,7 @@ def _pack(
 
     :raises SnapcraftError: If the directory cannot be packed.
     """
-    command: List[Union[str, Path]] = ["snap", "pack"]
+    command: list[Union[str, Path]] = ["snap", "pack"]
 
     if output_file:
         command.extend(["--filename", output_file])

@@ -21,7 +21,7 @@ import configparser
 import json
 import os
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 import craft_store
 import pymacaroons
@@ -66,7 +66,7 @@ def _deserialize_macaroon(value) -> pymacaroons.Macaroon:
         raise errors.LegacyCredentialsParseError("Failed to deserialize macaroon")
 
 
-def _get_macaroons_from_conf(conf) -> Dict[str, str]:
+def _get_macaroons_from_conf(conf) -> dict[str, str]:
     """Format a macaroon and its associated discharge.
 
     :return: A string suitable to use in an Authorization header.

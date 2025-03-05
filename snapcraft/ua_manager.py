@@ -19,7 +19,7 @@
 import contextlib
 import json
 import subprocess
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Iterator, Optional
 
 from craft_cli import emit
 from craft_parts.packages import Repository
@@ -134,7 +134,7 @@ def _is_attached() -> bool:
     return _status()["attached"]
 
 
-def _is_service_enabled(service_name: str, service_data: List[Dict[str, str]]) -> bool:
+def _is_service_enabled(service_name: str, service_data: list[dict[str, str]]) -> bool:
     """Check if a service is enabled.
 
     :param service_name: name of service to check
@@ -152,7 +152,7 @@ def _is_service_enabled(service_name: str, service_data: List[Dict[str, str]]) -
     return False
 
 
-def _status() -> Dict[str, Any]:
+def _status() -> dict[str, Any]:
     stdout = subprocess.check_output(["ua", "status", "--all", "--format", "json"])
     return json.loads(stdout)
 
