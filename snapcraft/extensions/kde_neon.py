@@ -28,7 +28,6 @@ from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
 _QT5_SDK_SNAP = {"core22": "kde-qt5-core22-sdk", "core24": "kde-qt5-core24-sdk"}
 _KF5_SDK_SNAP = {"core22": "kf5-core22-sdk", "core24": "kf5-core24-sdk"}
-_QT_VERSION = "5"
 
 
 @dataclasses.dataclass
@@ -39,7 +38,6 @@ class KDESnaps:
     :cvar kf5_sdk_snap: The name of the kf5 SDK snap to use.
     :cvar content_qt5: The name of the qt5 content snap to use.
     :cvar content_kf5: The name of the kf5 content snap to use.
-    :cvar qt_version: The major version of qt to use.
     :cvar gpu_plugs: The gpu plugs to use with gpu-2404.
     :cvar gpu_layouts: The gpu layouts to use with gpu-2404.
     :cvar qt5_builtin: True if the SDK is built into the qt5 content snap.
@@ -50,7 +48,6 @@ class KDESnaps:
     kf5_sdk_snap: str
     content_qt5: str
     content_kf5: str
-    qt_version: str
     gpu_plugs: Dict[str, Any]
     gpu_layouts: Dict[str, Any]
     qt5_builtin: bool = True
@@ -122,7 +119,6 @@ class KDENeon(Extension):
         base = self.yaml_data["base"]
         qt5_sdk_snap = _QT5_SDK_SNAP[base]
         kf5_sdk_snap = _KF5_SDK_SNAP[base]
-        qt_version = _QT_VERSION
 
         match base:
             case "core22":
@@ -177,7 +173,6 @@ class KDENeon(Extension):
             kf5_builtin=kf5_builtin,
             gpu_layouts=gpu_layouts,
             gpu_plugs=gpu_plugs,
-            qt_version=qt_version,
         )
 
     @overrides
@@ -186,7 +181,6 @@ class KDENeon(Extension):
         content_kf5_snap = self.kde_snaps.content_kf5 + "-all"
         gpu_plugs = self.kde_snaps.gpu_plugs
         gpu_layouts = self.kde_snaps.gpu_layouts
-        qt_version = self.kde_snaps.qt_version
 
         return {
             "assumes": ["snapd2.58.3"],  # for cups support
@@ -224,7 +218,7 @@ class KDENeon(Extension):
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
                 "GTK_USE_PORTAL": "1",
-                "QT_VERSION": qt_version,
+                "PLATFORM_PLUG": platform_kf5_snap,
             },
             "hooks": {
                 "configure": {

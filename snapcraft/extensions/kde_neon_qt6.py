@@ -209,6 +209,7 @@ class KDENeonQt6(Extension):
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/qt6",
                 "GTK_USE_PORTAL": "1",
+                "PLATFORM_PLUG": platform_qt6_snap,
             },
             "hooks": {
                 "configure": {
