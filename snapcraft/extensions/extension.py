@@ -20,7 +20,7 @@ import abc
 import os
 import sys
 from pathlib import Path
-from typing import Any, Optional, Sequence, final
+from typing import Any, Sequence, final
 
 from craft_cli import emit
 
@@ -58,7 +58,7 @@ class Extension(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         """Return whether or not this extension is unstable for given base."""
 
     @abc.abstractmethod
@@ -88,7 +88,7 @@ class Extension(abc.ABC):
         :raises errors.ExtensionError: if the extension is incompatible with the project.
         """
         base: str = self.yaml_data["base"]
-        confinement: Optional[str] = self.yaml_data.get("confinement")
+        confinement: str | None = self.yaml_data.get("confinement")
 
         if self.is_experimental(base) and not os.getenv(
             "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"

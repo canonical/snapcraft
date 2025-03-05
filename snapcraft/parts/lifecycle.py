@@ -22,7 +22,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import craft_parts
 from craft_cli import emit
@@ -293,7 +293,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
 
 
 def _pack_components(
-    lifecycle: PartsLifecycle, project: models.Project, output: Optional[str]
+    lifecycle: PartsLifecycle, project: models.Project, output: str | None
 ) -> None:
     """Pack components.
 
@@ -552,9 +552,7 @@ def _run_in_provider(  # noqa PLR0915
             providers.capture_logs_from_instance(instance)
 
 
-def _expose_prime(
-    project_path: Path, instance: Executor, partitions: Optional[list[str]]
-):
+def _expose_prime(project_path: Path, instance: Executor, partitions: list[str] | None):
     """Expose the instance's prime directory in ``project_path`` on the host.
 
     :param project_path: path of the project
@@ -724,7 +722,7 @@ def _expand_environment(
     *,
     parallel_build_count: int,
     target_arch: str,
-    partitions: Optional[list[str]],
+    partitions: list[str] | None,
 ) -> None:
     """Expand global variables in the provided dictionary values.
 
@@ -815,7 +813,7 @@ def get_build_plan(
     return build_plan
 
 
-def _validate_and_get_partitions(yaml_data: dict[str, Any]) -> Optional[list[str]]:
+def _validate_and_get_partitions(yaml_data: dict[str, Any]) -> list[str] | None:
     """Validate partitions support, enable the feature, and get a list of partitions.
 
     :param yaml_data: The project's YAML data.

@@ -18,7 +18,7 @@ import base64
 import contextlib
 import textwrap
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -92,7 +92,7 @@ def fake_extension():
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
         def get_root_snippet(self) -> dict[str, Any]:
@@ -131,7 +131,7 @@ def fake_extension_extra():
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
         def get_root_snippet(self) -> dict[str, Any]:
@@ -165,7 +165,7 @@ def fake_extension_invalid_parts():
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
         def get_root_snippet(self) -> dict[str, Any]:
@@ -201,7 +201,7 @@ def fake_extension_experimental():
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return True
 
         def get_root_snippet(self) -> dict[str, Any]:
@@ -237,7 +237,7 @@ def fake_extension_name_from_legacy():
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
         def get_root_snippet(self) -> dict[str, Any]:
@@ -374,7 +374,7 @@ def fake_provider(mock_instance):
             project_name: str,
             project_path: Path,
             base_configuration: Base,
-            build_base: Optional[str] = None,
+            build_base: str | None = None,
             instance_name: str,
             allow_unstable: bool = False,
         ):

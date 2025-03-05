@@ -20,7 +20,7 @@ import os
 import platform
 import time
 from datetime import timedelta
-from typing import Any, Optional, Sequence, cast
+from typing import Any, Sequence, cast
 
 import craft_store
 import distro
@@ -99,7 +99,7 @@ def _prompt_login() -> tuple[str, str]:
 
 
 def _get_hostname(
-    hostname: Optional[str] = platform.node(),  # noqa: B008 Function call in arg defaults
+    hostname: str | None = platform.node(),  # noqa: B008 Function call in arg defaults
 ) -> str:
     """Return the computer's network name or UNNKOWN if it cannot be determined."""
     if not hostname:
@@ -179,9 +179,9 @@ class LegacyStoreClientCLI:
         self,
         *,
         ttl: int = int(timedelta(days=365).total_seconds()),  # noqa: B008
-        acls: Optional[Sequence[str]] = None,
-        packages: Optional[Sequence[str]] = None,
-        channels: Optional[Sequence[str]] = None,
+        acls: Sequence[str] | None = None,
+        packages: Sequence[str] | None = None,
+        channels: Sequence[str] | None = None,
         **kwargs,
     ) -> str:
         """Log in to the Snap Store and prompt if required."""
@@ -280,7 +280,7 @@ class LegacyStoreClientCLI:
         snap_name: str,
         *,
         is_private: bool = False,
-        store_id: Optional[str] = None,
+        store_id: str | None = None,
     ) -> None:
         """Register snap_name with the Snap Store.
 
@@ -350,7 +350,7 @@ class LegacyStoreClientCLI:
         *,
         revision: int,
         channels: Sequence[str],
-        progressive_percentage: Optional[int] = None,
+        progressive_percentage: int | None = None,
     ) -> None:
         """Register snap_name with the Snap Store.
 
@@ -424,9 +424,9 @@ class LegacyStoreClientCLI:
         snap_name: str,
         upload_id: str,
         snap_file_size: int,
-        built_at: Optional[str],
-        channels: Optional[Sequence[str]],
-        components: Optional[dict[str, str]],
+        built_at: str | None,
+        channels: Sequence[str] | None,
+        components: dict[str, str] | None,
     ) -> int:
         """Notify an upload to the Snap Store.
 
@@ -628,9 +628,9 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         snap_name: str,
         upload_id: str,
         snap_file_size: int,
-        built_at: Optional[str],
-        channels: Optional[Sequence[str]],
-        components: Optional[dict[str, str]],
+        built_at: str | None,
+        channels: Sequence[str] | None,
+        components: dict[str, str] | None,
     ) -> int:
         if channels:
             raise errors.SnapcraftError("Releasing during currently unsupported")
@@ -676,9 +676,9 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         self,
         snap_name: str,
         *,
-        revision: Optional[int],
+        revision: int | None,
         channels: Sequence[str],
-        progressive_percentage: Optional[int] = None,
+        progressive_percentage: int | None = None,
     ) -> None:
         if progressive_percentage is not None:
             raise errors.SnapcraftError("Progressive percentage currently unsupported")

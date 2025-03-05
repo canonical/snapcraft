@@ -27,9 +27,9 @@ class FakeOsRelease(fixtures.Fixture):
     def __init__(
         self,
         id: str = "ubuntu",
-        version_id: Optional[str] = "18.04",
-        version_codename: Optional[str] = None,
-        name: Optional[str] = "Ubuntu",
+        version_id: str | None = "18.04",
+        version_codename: str | None = None,
+        name: str | None = "Ubuntu",
     ) -> None:
         self._id = id
         self._version_id = version_id
