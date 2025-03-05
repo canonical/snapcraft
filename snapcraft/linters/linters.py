@@ -22,7 +22,6 @@ import json
 import os
 from functools import partial
 from pathlib import Path
-from typing import Optional
 
 from craft_cli import emit
 
@@ -111,7 +110,7 @@ def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
     return status
 
 
-def run_linters(location: Path, *, lint: Optional[models.Lint]) -> list[LinterIssue]:
+def run_linters(location: Path, *, lint: models.Lint | None) -> list[LinterIssue]:
     """Run all the defined linters.
 
     :param location: The root of the snap payload subtree to run linters on.
@@ -149,7 +148,7 @@ def run_linters(location: Path, *, lint: Optional[models.Lint]) -> list[LinterIs
 
 
 def _ignore_matching_filenames(
-    issues: list[LinterIssue], *, lint: Optional[models.Lint]
+    issues: list[LinterIssue], *, lint: models.Lint | None
 ) -> None:
     """Mark any remaining filename match as ignored."""
     if lint is None:

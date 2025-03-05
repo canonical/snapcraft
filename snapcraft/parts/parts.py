@@ -19,7 +19,7 @@
 import pathlib
 import subprocess
 import types
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import craft_parts
 from craft_archives import repo
@@ -67,15 +67,15 @@ class PartsLifecycle:
         confinement: str,
         package_repositories: list[dict[str, Any]],
         parallel_build_count: int,
-        part_names: Optional[list[str]],
-        adopt_info: Optional[str],
+        part_names: list[str] | None,
+        adopt_info: str | None,
         parse_info: dict[str, list[str]],
         project_name: str,
         project_vars: dict[str, str],
-        extra_build_snaps: Optional[list[str]] = None,
+        extra_build_snaps: list[str] | None = None,
         target_arch: str,
         track_stage_packages: bool,
-        partitions: Optional[list[str]],
+        partitions: list[str] | None,
     ):
         self._work_dir = work_dir
         self._assets_dir = assets_dir
@@ -255,7 +255,7 @@ class PartsLifecycle:
             self._lcm.refresh_packages_list()
         emit.progress("Installed package repositories", permanent=True)
 
-    def clean(self, *, part_names: Optional[list[str]] = None) -> None:
+    def clean(self, *, part_names: list[str] | None = None) -> None:
         """Remove lifecycle artifacts.
 
         :param part_names: The names of the parts to clean. If not
@@ -286,12 +286,12 @@ class PartsLifecycle:
         package_list.sort()
         return package_list
 
-    def get_part_pull_assets(self, *, part_name: str) -> Optional[dict[str, Any]]:
+    def get_part_pull_assets(self, *, part_name: str) -> dict[str, Any] | None:
         """Obtain the pull state assets."""
         return self._lcm.get_pull_assets(part_name=part_name)
 
 
-def launch_shell(*, cwd: Optional[pathlib.Path] = None) -> None:
+def launch_shell(*, cwd: pathlib.Path | None = None) -> None:
     """Launch a user shell for debugging environment.
 
     :param cwd: Working directory to start user in.

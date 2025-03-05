@@ -23,7 +23,7 @@ The full API is documented on
 https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
 """
 
-from typing import Any, Optional
+from typing import Any
 
 import jsonschema
 from craft_store.models import SnapListReleasesModel
@@ -62,9 +62,9 @@ class Progressive:
     def __init__(
         self,
         *,
-        paused: Optional[bool],
-        percentage: Optional[float],
-        current_percentage: Optional[float],
+        paused: bool | None,
+        percentage: float | None,
+        current_percentage: float | None,
     ) -> None:
         self.paused = paused
         self.percentage = percentage
@@ -112,7 +112,7 @@ class MappedChannel:
         channel: str,
         revision: int,
         architecture: str,
-        expiration_date: Optional[str],
+        expiration_date: str | None,
         progressive: Progressive,
     ) -> None:
         self.channel = channel
@@ -200,8 +200,8 @@ class SnapChannel:
         name: str,
         track: str,
         risk: str,
-        branch: Optional[str],
-        fallback: Optional[str],
+        branch: str | None,
+        fallback: str | None,
     ) -> None:
         self.name = name
         self.track = track
@@ -247,8 +247,8 @@ class SnapTrack:
         *,
         name: str,
         status: str,
-        creation_date: Optional[str],
-        version_pattern: Optional[str],
+        creation_date: str | None,
+        version_pattern: str | None,
     ) -> None:
         self.name = name
         self.status = status
@@ -284,7 +284,7 @@ class Snap:
     def __init__(
         self,
         *,
-        name: Optional[str],
+        name: str | None,
         channels: list[SnapChannel],
         tracks: list[SnapTrack],
     ) -> None:

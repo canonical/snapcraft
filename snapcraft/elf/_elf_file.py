@@ -21,7 +21,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 from craft_cli import emit
 from elftools.construct import ConstructError
@@ -115,7 +115,7 @@ class _Library:
         soname: str,
         soname_path: Path,
         search_paths: list[Path],
-        base_path: Optional[Path],
+        base_path: Path | None,
         arch_tuple: _ElfArchitectureTuple,
         soname_cache: SonameCache,
     ) -> None:
@@ -197,7 +197,7 @@ class ElfFile:
         self.path = path
         self.dependencies: set[_Library] = set()
 
-        self.arch_tuple: Optional[_ElfArchitectureTuple] = None
+        self.arch_tuple: _ElfArchitectureTuple | None = None
         self.interp = ""
         self.soname = ""
         self.versions: set[str] = set()
@@ -352,10 +352,10 @@ class ElfFile:
     def load_dependencies(
         self,
         root_path: Path,
-        base_path: Optional[Path],
+        base_path: Path | None,
         content_dirs: list[Path],
         arch_triplet: str,
-        soname_cache: Optional[SonameCache] = None,
+        soname_cache: SonameCache | None = None,
     ) -> set[Path]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
@@ -442,7 +442,7 @@ def _determine_libraries(
 
 
 def _ldd(
-    path: Path, ld_library_paths: list[str], *, ld_preload: Optional[str] = None
+    path: Path, ld_library_paths: list[str], *, ld_preload: str | None = None
 ) -> dict[str, str]:
     """Use host ldd to determine library dependencies."""
     ldd = utils.get_host_tool("ldd")  # TODO: use `ld` from the base snap (#4751)

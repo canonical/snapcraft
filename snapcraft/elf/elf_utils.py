@@ -21,7 +21,7 @@ import os
 import platform
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable
 
 from craft_cli import emit
 from elftools.common.exceptions import ELFError
@@ -131,7 +131,7 @@ def get_dynamic_linker(*, root_path: Path, snap_path: Path) -> str:
     raise errors.DynamicLinkerNotFound(root_path / arch_config.dynamic_linker)
 
 
-def get_arch_triplet(arch: Optional[str] = None) -> str:
+def get_arch_triplet(arch: str | None = None) -> str:
     """Get the arch triplet string for an architecture.
 
     :param arch: Architecture to get the triplet of. If None, then get the arch triplet

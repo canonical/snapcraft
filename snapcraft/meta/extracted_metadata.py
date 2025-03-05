@@ -17,51 +17,50 @@
 """External metadata definition."""
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
 class ExtractedMetadata:
     """Collection of metadata extracted from a part."""
 
-    common_id: Optional[str] = None
+    common_id: str | None = None
     """The common identifier across multiple packaging formats."""
 
-    title: Optional[str] = None
+    title: str | None = None
     """The extracted package title."""
 
-    summary: Optional[str] = None
+    summary: str | None = None
     """The extracted package summary."""
 
-    description: Optional[str] = None
+    description: str | None = None
     """The extracted package description."""
 
-    version: Optional[str] = None
+    version: str | None = None
     """The extracted package version."""
 
-    grade: Optional[str] = None
+    grade: str | None = None
     """The extracted package version."""
 
-    icon: Optional[str] = None
+    icon: str | None = None
     """The extracted application icon."""
 
     desktop_file_paths: list[str] = field(default_factory=list)
     """The extracted application desktop file paths."""
 
-    license: Optional[str] = None
+    license: str | None = None
     """The extracted package license"""
 
-    contact: Optional[list[str]] = None
+    contact: list[str] | None = None
     """The extracted package contact"""
 
-    donation: Optional[list[str]] = None
+    donation: list[str] | None = None
     """The extracted package donation"""
 
-    issues: Optional[list[str]] = None
+    issues: list[str] | None = None
     """The extracted package issues"""
 
-    source_code: Optional[list[str]] = None
+    source_code: list[str] | None = None
     """The extracted package source code"""
 
-    website: Optional[list[str]] = None
+    website: list[str] | None = None
     """The extracted package website"""

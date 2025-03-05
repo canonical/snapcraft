@@ -19,7 +19,7 @@
 import contextlib
 import json
 import subprocess
-from typing import Any, Iterator, Optional
+from typing import Any, Iterator
 
 from craft_cli import emit
 from craft_parts.packages import Repository
@@ -158,9 +158,7 @@ def _status() -> dict[str, Any]:
 
 
 @contextlib.contextmanager
-def ua_manager(
-    ua_token: Optional[str], *, services: Optional[set[str]]
-) -> Iterator[None]:
+def ua_manager(ua_token: str | None, *, services: set[str] | None) -> Iterator[None]:
     """Attach and detach UA token as required.
 
     Uses try/finally to ensure that token is detached on error.

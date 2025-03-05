@@ -19,7 +19,7 @@
 import dataclasses
 import functools
 import re
-from typing import Any, Optional
+from typing import Any
 
 from overrides import overrides
 
@@ -82,7 +82,7 @@ class GNOME(Extension):
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return False
 
     @overrides

@@ -18,7 +18,7 @@
 
 """Extension to the Colcon plugin for ROS 2 Humble."""
 
-from typing import Any, Optional
+from typing import Any
 
 from overrides import overrides
 from typing_extensions import Final
@@ -44,7 +44,7 @@ class ROS2HumbleExtension(Extension):
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return False
 
     @overrides

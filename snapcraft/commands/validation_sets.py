@@ -22,7 +22,7 @@ import subprocess
 import tempfile
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import craft_application.util
 import yaml
@@ -139,7 +139,7 @@ class StoreEditValidationSetsCommand(AppCommand):
 
 def _submit_validation_set(
     edited_validation_sets: validation_sets.EditableBuildAssertion,
-    key_name: Optional[str],
+    key_name: str | None,
     store_client: StoreClientCLI,
 ) -> None:
     emit.debug(
@@ -225,7 +225,7 @@ def edit_validation_sets(
                 raise errors.SnapcraftError("operation aborted") from err
 
 
-def _sign_assertion(assertion: dict[str, Any], *, key_name: Optional[str]) -> bytes:
+def _sign_assertion(assertion: dict[str, Any], *, key_name: str | None) -> bytes:
     emit.debug("Signing assertion.")
     cmdline = ["snap", "sign"]
     if key_name:
