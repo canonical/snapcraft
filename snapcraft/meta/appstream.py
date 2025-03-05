@@ -187,7 +187,7 @@ def _get_value_from_xml_element(tree, key) -> Optional[str]:
 
 
 def _get_urls_from_xml_element(nodes, url_type) -> Optional[list[str]]:
-    urls = []  # type: List[str]
+    urls: list[str] = []
     for node in nodes:
         if (
             node is not None
@@ -215,7 +215,7 @@ def _get_latest_release_from_nodes(nodes) -> Optional[str]:
 
 
 def _get_desktop_file_ids_from_nodes(nodes) -> list[str]:
-    desktop_file_ids = []  # type: List[str]
+    desktop_file_ids: list[str] = []
     for node in nodes:
         if "type" in node.attrib and node.attrib["type"] == "desktop-id":
             desktop_file_ids.append(node.text.strip())
