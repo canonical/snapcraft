@@ -114,9 +114,6 @@ git_describe_command = [
 include = ["*craft*"]
 namespaces = false
 
-[tool.black]
-target-version = ["py310"]
-
 [tool.codespell]
 ignore-words-list = "buildd,crate,keyserver,comandos,ro,dedent,dedented"
 skip = ".tox,.git,build,.*_cache,__pycache__,*.tar,*.snap,*.png,./node_modules,./docs/_build,.direnv,.venv,venv,.vscode"
@@ -271,7 +268,7 @@ select = [  # Base linting rule selections.
 ]
 ignore = [
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
-    "E501",  # Line too long (reason: black will automatically fix this for us)
+    "E501",  # Line too long (reason: ruff will automatically fix this for us)
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
     "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
     "D203",  # 1 blank line required before class docstring (reason: pep257 default)
