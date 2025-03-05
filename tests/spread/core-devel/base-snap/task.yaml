@@ -1,4 +1,4 @@
-summary: Build a snap using the 'devel' build base
+summary: Build a base snap using the 'devel' build base
 
 restore: |
   snapcraft clean
