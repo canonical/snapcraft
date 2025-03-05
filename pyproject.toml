@@ -247,6 +247,7 @@ lint.select = [
     "ICN",  # Unconventional import aliases.
     "Q",  # Consistent quotations
     "RET",  # Return values
+    "UP006", # PEP 585 - type hinting generics
 ]
 lint.ignore = [
     # These following copy the flake8 configuration

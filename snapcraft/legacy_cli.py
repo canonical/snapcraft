@@ -17,7 +17,7 @@
 """Handle re-execution into legacy code."""
 
 import logging
-from typing import Dict, Optional
+from typing import Optional
 
 from craft_cli import emit
 
@@ -26,7 +26,7 @@ import snapcraft_legacy
 from snapcraft_legacy.cli import legacy
 
 _LIB_NAMES = ("craft_parts", "craft_providers", "craft_store", "snapcraft.remote")
-_ORIGINAL_LIB_NAME_LOG_LEVEL: Dict[str, int] = {}
+_ORIGINAL_LIB_NAME_LOG_LEVEL: dict[str, int] = {}
 
 
 def run_legacy(err: Optional[Exception] = None):

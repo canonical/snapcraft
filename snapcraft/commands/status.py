@@ -20,7 +20,7 @@ import itertools
 import operator
 import textwrap
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, Tuple, cast
+from typing import TYPE_CHECKING, Optional, Sequence, cast
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -95,7 +95,7 @@ class StoreStatusCommand(AppCommand):
             if not architectures:
                 return
 
-        tracks: List[str] = []
+        tracks: list[str] = []
         if parsed_args.track:
             tracks = cast(list, parsed_args.track)
             existing_tracks = {
@@ -157,7 +157,7 @@ def _get_channel_line(
     channel_info: SnapChannel,
     hint: str,
     progress_string: str,
-) -> List[str]:
+) -> list[str]:
     version_string = hint
     revision_string = hint
     expiration_date_string = ""
@@ -189,8 +189,8 @@ def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
     channel_name: str,
     architecture: str,
     current_tick: str,
-) -> Tuple[str, List[List[str]]]:
-    channel_lines: List[List[str]] = []
+) -> tuple[str, list[list[str]]]:
+    channel_lines: list[list[str]] = []
 
     channel_info = snap_channel_map.get_channel_info(channel_name)
 
@@ -285,7 +285,7 @@ def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
 
 
 def _has_channels_for_architecture(
-    snap_channel_map, architecture: str, channels: List[str]
+    snap_channel_map, architecture: str, channels: list[str]
 ) -> bool:
     progressive = (False, True)
     # channel_query = (channel_name, progressive)
@@ -398,7 +398,7 @@ class StoreListTracksCommand(AppCommand):
         )
 
         # Iterate over the entries, replace None with - for consistent presentation
-        track_table: List[List[str]] = [
+        track_table: list[list[str]] = [
             [
                 track.name,
                 track.status,
@@ -503,13 +503,13 @@ class StoreListRevisionsCommand(AppCommand):
 
         emit.message(tabulated_revisions)
 
-    def _get_channels_for_revision(self, releases, revision: int) -> List[str]:
+    def _get_channels_for_revision(self, releases, revision: int) -> list[str]:
         # channels: the set of channels revision was released to, active or not.
-        channels: Set[str] = set()
+        channels: set[str] = set()
         # seen_channel: applies to channels regardless of revision.
         # The first channel that shows up for each architecture is to
         # be marked as the active channel, all others are historic.
-        seen_channel: Dict[str, Set[str]] = {}
+        seen_channel: dict[str, set[str]] = {}
 
         for release in releases.releases:
             if release.architecture not in seen_channel:

@@ -21,7 +21,7 @@ import os
 import platform
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional, Set
+from typing import Iterable, Optional
 
 from craft_cli import emit
 from elftools.common.exceptions import ELFError
@@ -30,13 +30,13 @@ from . import ElfFile, errors
 
 
 @functools.lru_cache(maxsize=1)
-def get_elf_files(root_path: Path) -> List[ElfFile]:
+def get_elf_files(root_path: Path) -> list[ElfFile]:
     """Obtain a set of all ELF files in a subtree.
 
     :param root_path: The root of the subtree to list ELF files from.
     :return: A set of ELF files found in the given subtree.
     """
-    file_list: List[str] = []
+    file_list: list[str] = []
     for root, _, files in os.walk(str(root_path)):
         for file_name in files:
             # Filter out object files
@@ -50,14 +50,14 @@ def get_elf_files(root_path: Path) -> List[ElfFile]:
     return get_elf_files_from_list(root_path, file_list)
 
 
-def get_elf_files_from_list(root: Path, file_list: Iterable[str]) -> List[ElfFile]:
+def get_elf_files_from_list(root: Path, file_list: Iterable[str]) -> list[ElfFile]:
     """Return a list of ELF files from file_list prepended with root.
 
     :param str root: the root directory from where the file_list is generated.
     :param file_list: a list of file in root.
     :returns: a list of ElfFile objects.
     """
-    elf_files: Set[ElfFile] = set()
+    elf_files: set[ElfFile] = set()
 
     for part_file in file_list:
         # Filter out object (*.o) files-- we only care about binaries.
@@ -149,6 +149,6 @@ def get_arch_triplet(arch: Optional[str] = None) -> str:
     return arch_config.arch_triplet
 
 
-def get_all_arch_triplets() -> List[str]:
+def get_all_arch_triplets() -> list[str]:
     """Get a list of all architecture triplets."""
     return [architecture.arch_triplet for architecture in _ARCH_CONFIG.values()]

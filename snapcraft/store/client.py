@@ -20,7 +20,7 @@ import os
 import platform
 import time
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, Optional, Sequence, cast
 
 import craft_store
 import distro
@@ -86,7 +86,7 @@ def get_store_login_url() -> str:
     return os.getenv("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL)
 
 
-def _prompt_login() -> Tuple[str, str]:
+def _prompt_login() -> tuple[str, str]:
     emit.message("Enter your Ubuntu One e-mail address and password.")
     emit.message(
         "If you do not have an Ubuntu One account, you can create one "
@@ -316,7 +316,7 @@ class LegacyStoreClientCLI:
 
     def get_account_info(
         self,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return account information."""
         return self.request(
             "GET",
@@ -324,11 +324,11 @@ class LegacyStoreClientCLI:
             headers={"Accept": "application/json"},
         ).json()
 
-    def get_names(self) -> List[Tuple[str, str, str, str]]:
+    def get_names(self) -> list[tuple[str, str, str, str]]:
         """Return a table with the registered names and status."""
         account_info = self.get_account_info()
 
-        snaps: List[Tuple[str, str, str, str]] = [
+        snaps: list[tuple[str, str, str, str]] = [
             (
                 name,
                 info["since"],
@@ -359,7 +359,7 @@ class LegacyStoreClientCLI:
         :param channels: the channels to release to
         :param progressive_percentage: enable progressive releases up to a given percentage
         """
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "name": snap_name,
             "revision": str(revision),
             "channels": channels,
@@ -426,7 +426,7 @@ class LegacyStoreClientCLI:
         snap_file_size: int,
         built_at: Optional[str],
         channels: Optional[Sequence[str]],
-        components: Optional[Dict[str, str]],
+        components: Optional[dict[str, str]],
     ) -> int:
         """Notify an upload to the Snap Store.
 
@@ -630,7 +630,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         snap_file_size: int,
         built_at: Optional[str],
         channels: Optional[Sequence[str]],
-        components: Optional[Dict[str, str]],
+        components: Optional[dict[str, str]],
     ) -> int:
         if channels:
             raise errors.SnapcraftError("Releasing during currently unsupported")
