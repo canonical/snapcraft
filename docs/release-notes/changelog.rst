@@ -70,6 +70,23 @@ Changelog
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+8.6.3 (2025-Feb-20)
+-------------------
+
+Core
+====
+
+Plugins
+#######
+
+Flutter
+"""""""
+
+* Fix a bug where the Flutter plugin would fail to install Flutter for
+  ``core22`` and ``core24`` snaps.
+
+For a complete list of commits, check out the `8.6.3`_ release on GitHub.
+
 8.6.2 (2025-Feb-14)
 -------------------
 
@@ -1658,3 +1675,4 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _8.6.0: https://github.com/canonical/snapcraft/releases/tag/8.6.0
 .. _8.6.1: https://github.com/canonical/snapcraft/releases/tag/8.6.1
 .. _8.6.2: https://github.com/canonical/snapcraft/releases/tag/8.6.2
+.. _8.6.3: https://github.com/canonical/snapcraft/releases/tag/8.6.3

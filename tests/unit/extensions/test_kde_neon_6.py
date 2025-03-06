@@ -479,20 +479,11 @@ class TestGetPartSnippet:
                 },
                 {
                     "CMAKE_PREFIX_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt6-core22-sdk/current;"
-                        "/snap/kf6-core22-sdk/current;"
+                        "$CRAFT_STAGE:"
+                        "/snap/kde-qt6-core22-sdk/current:"
+                        "/snap/kf6-core22-sdk/current:"
                         "/usr"
-                        "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                    )
-                },
-                {
-                    "CMAKE_FIND_ROOT_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt6-core22-sdk/current;"
-                        "/snap/kf6-core22-sdk/current;"
-                        "/usr"
-                        "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                        "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                     )
                 },
             ]
@@ -557,20 +548,11 @@ class TestGetPartSnippet:
                 },
                 {
                     "CMAKE_PREFIX_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt6-core24-sdk/current;"
-                        "/snap/kf6-core24-sdk/current;"
+                        "$CRAFT_STAGE:"
+                        "/snap/kde-qt6-core24-sdk/current:"
+                        "/snap/kf6-core24-sdk/current:"
                         "/usr"
-                        "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                    )
-                },
-                {
-                    "CMAKE_FIND_ROOT_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt6-core24-sdk/current;"
-                        "/snap/kf6-core24-sdk/current;"
-                        "/usr"
-                        "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                        "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                     )
                 },
             ]
@@ -623,20 +605,11 @@ def test_get_part_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             },
             {
                 "CMAKE_PREFIX_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core22-sdk/current;"
-                    "/snap/kf6-core22-sdk/current;"
+                    "$CRAFT_STAGE:"
+                    "/snap/kde-qt6-core22-sdk/current:"
+                    "/snap/kf6-core22-sdk/current:"
                     "/usr"
-                    "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                )
-            },
-            {
-                "CMAKE_FIND_ROOT_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core22-sdk/current;"
-                    "/snap/kf6-core22-sdk/current;"
-                    "/usr"
-                    "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                    "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                 )
             },
         ]
@@ -695,20 +668,11 @@ def test_get_part_snippet_with_external_sdk_core24(
             },
             {
                 "CMAKE_PREFIX_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core24-sdk/current;"
-                    "/snap/kf6-core24-sdk/current;"
+                    "$CRAFT_STAGE:"
+                    "/snap/kde-qt6-core24-sdk/current:"
+                    "/snap/kf6-core24-sdk/current:"
                     "/usr"
-                    "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                )
-            },
-            {
-                "CMAKE_FIND_ROOT_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt6-core24-sdk/current;"
-                    "/snap/kf6-core24-sdk/current;"
-                    "/usr"
-                    "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                    "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                 )
             },
         ]
