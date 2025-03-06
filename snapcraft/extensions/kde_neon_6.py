@@ -20,7 +20,7 @@
 import dataclasses
 import functools
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from overrides import overrides
 
@@ -48,8 +48,8 @@ class KDESnaps6:
     kf6_sdk_snap: str
     content_qt6: str
     content_kf6: str
-    gpu_plugs: Dict[str, Any]
-    gpu_layouts: Dict[str, Any]
+    gpu_plugs: dict[str, Any]
+    gpu_layouts: dict[str, Any]
     qt6_builtin: bool = True
     kf6_builtin: bool = True
 
@@ -88,21 +88,21 @@ class KDENeon6(Extension):
 
     @staticmethod
     @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
     @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return False
 
     @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
             command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
@@ -149,7 +149,7 @@ class KDENeon6(Extension):
             case _:
                 raise AssertionError(f"Unsupported base: {base}")
 
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
@@ -184,7 +184,7 @@ class KDENeon6(Extension):
         )
 
     @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         platform_kf6_snap = self.kde_snaps.content_kf6
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
         gpu_plugs = self.kde_snaps.gpu_plugs
@@ -242,7 +242,7 @@ class KDENeon6(Extension):
         }
 
     @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
         kf6_sdk_snap = self.kde_snaps.kf6_sdk_snap
 
@@ -404,7 +404,7 @@ class KDENeon6(Extension):
         }
 
     @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
         # https://github.com/canonical/snapcraft-desktop-integration

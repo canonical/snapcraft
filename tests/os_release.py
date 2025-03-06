@@ -25,7 +25,7 @@ _ID_TO_UBUNTU_CODENAME = {
 }
 
 
-def get_version_codename() -> Optional[str]:
+def get_version_codename() -> str | None:
     """Return the OS version codename
 
     This first tries to use the VERSION_CODENAME. If that's missing, it

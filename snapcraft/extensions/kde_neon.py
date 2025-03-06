@@ -20,7 +20,7 @@
 import dataclasses
 import functools
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from overrides import overrides
 
@@ -48,8 +48,8 @@ class KDESnaps:
     kf5_sdk_snap: str
     content_qt5: str
     content_kf5: str
-    gpu_plugs: Dict[str, Any]
-    gpu_layouts: Dict[str, Any]
+    gpu_plugs: dict[str, Any]
+    gpu_layouts: dict[str, Any]
     qt5_builtin: bool = True
     kf5_builtin: bool = True
 
@@ -80,21 +80,21 @@ class KDENeon(Extension):
 
     @staticmethod
     @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
     @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return False
 
     @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
             command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
@@ -141,7 +141,7 @@ class KDENeon(Extension):
             case _:
                 raise AssertionError(f"Unsupported base: {base}")
 
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
@@ -176,7 +176,7 @@ class KDENeon(Extension):
         )
 
     @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         platform_kf5_snap = self.kde_snaps.content_kf5
         content_kf5_snap = self.kde_snaps.content_kf5 + "-all"
         gpu_plugs = self.kde_snaps.gpu_plugs
@@ -234,7 +234,7 @@ class KDENeon(Extension):
         }
 
     @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         qt5_sdk_snap = self.kde_snaps.qt5_sdk_snap
         kf5_sdk_snap = self.kde_snaps.kf5_sdk_snap
 
@@ -388,7 +388,7 @@ class KDENeon(Extension):
         }
 
     @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         """Get the parts snippet for the KDE extension.
 
         If the KDE Neon SDK is not built into the content snap, the add the
