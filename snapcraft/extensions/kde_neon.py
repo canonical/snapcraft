@@ -309,19 +309,7 @@ class KDENeon(Extension):
                                 f"/snap/{kf5_sdk_snap}/current",
                                 "/usr",
                             ],
-                            separator=";",
-                        ),
-                    },
-                    {
-                        "CMAKE_FIND_ROOT_PATH": prepend_to_env(
-                            "CMAKE_FIND_ROOT_PATH",
-                            [
-                                "$CRAFT_STAGE",
-                                f"/snap/{qt5_sdk_snap}/current",
-                                f"/snap/{kf5_sdk_snap}/current",
-                                "/usr",
-                            ],
-                            separator=";",
+                            separator=":",
                         ),
                     },
                 ],
@@ -393,19 +381,7 @@ class KDENeon(Extension):
                             f"/snap/{kf5_sdk_snap}/current",
                             "/usr",
                         ],
-                        separator=";",
-                    ),
-                },
-                {
-                    "CMAKE_FIND_ROOT_PATH": prepend_to_env(
-                        "CMAKE_FIND_ROOT_PATH",
-                        [
-                            "$CRAFT_STAGE",
-                            f"/snap/{qt5_sdk_snap}/current",
-                            f"/snap/{kf5_sdk_snap}/current",
-                            "/usr",
-                        ],
-                        separator=";",
+                        separator=":",
                     ),
                 },
             ],
