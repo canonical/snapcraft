@@ -47,7 +47,7 @@ def _to_string(data: Any) -> Any:
     if isinstance(data, abc.Collection):
         return [_to_string(i) for i in data]
 
-    if isinstance(data, (numbers.Number, bool)):
+    if isinstance(data, numbers.Number | bool):
         return str(data)
 
     return data
