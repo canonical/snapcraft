@@ -117,7 +117,7 @@ def capture_logs_from_instance(instance: executor.Executor) -> None:
     ) as log_path:
         if log_path:
             emit.debug("Logs retrieved from managed instance:")
-            with open(log_path, "r", encoding="utf8") as log_file:
+            with open(log_path, encoding="utf8") as log_file:
                 for line in log_file:
                     emit.debug(":: " + line.rstrip())
         else:
