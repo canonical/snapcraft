@@ -3,26 +3,25 @@
 Snap build process
 ==================
 
-This page describes at a high level the workflow between a snap recipe and its
-resulting artefact.
+This page describes at a high level the workflow between a snap project file and its
+resulting artifact.
 
 
-The recipe file
----------------
+The project file
+----------------
 
-Snaps are created using a build configuration -- called from here on a *recipe*
--- defined in a file named ``snapcraft.yaml``. The recipe is written in a
-declarative style in YAML, with keys and values defining the snap's structure
-and behavior. When Snapcraft runs, it parses this file and uses the declared
-information to build the snap. For developers more familiar with the
-traditional Linux build systems, the process is somewhat similar a Makefiles
-and RPM SPEC files.
+Snaps are created using a build configuration -- called from here on the *project file*
+-- defined in a file named ``snapcraft.yaml``. The file is written in a declarative
+style in YAML, with keys and values defining the snap's structure and behavior. When
+Snapcraft runs, it parses this file and uses the declared information to build the snap.
+For developers more familiar with the traditional Linux build systems, the process is
+somewhat similar a Makefiles and RPM SPEC files.
 
-The recipe is a plaintext file encoded in UTF-8, can be composed manually or
+The project file is a plaintext file encoded in UTF-8, can be composed manually or
 generated from a template. The template contains enough boilerplate keys to
 build the snap with little effort.
 
-Designing a snap is an open-ended craft. However, most snap recipes have some
+Designing a snap is an open-ended craft. However, most project files have some
 common elements with special names in the Snapcraft world.
 
 * The snap's *metadata* provides identifiers and descriptions by which the snap
@@ -40,7 +39,7 @@ common elements with special names in the Snapcraft world.
 * *Apps* describes the apps and their commands that are to run inside
   the snap.
 
-It's important to note several details about snaps and their recipes:
+It's important to note several details about snaps and their project files:
 
 * A snap can contain one or more parts.
 * A snap can contain one or more app.
@@ -57,7 +56,7 @@ It's important to note several details about snaps and their recipes:
 The build
 ---------
 
-When Snapcraft is executed, it looks for the recipe in the current working
+When Snapcraft is executed, it looks for the project file in the current working
 directory, either at the root or in a ``snap`` sub-directory. If the file is
 found, Snapcraft will then parse its contents and begin the build.
 
@@ -100,7 +99,7 @@ The result
 The result of a successful Snapcraft build is a snap file, which is itself a
 compressed Squashfs archive with a ``.snap`` extension.
 
-After the build is complete, the resulting artefact is placed in the current
+After the build is complete, the resulting artifact is placed in the current
 working directory. Snapcraft then halts the VM or container and preserves it
 for reuse in any re-builds of the snap, to reduce processing time.
 
@@ -127,6 +126,6 @@ this:
 
 The contents of a snap can be examined directly by extracting it as an archive:
 
-.. code:: yaml
+.. code:: bash
 
   unsquashfs <file>.snap

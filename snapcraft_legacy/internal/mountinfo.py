@@ -58,9 +58,7 @@ class MountInfo:
         # Maintain two dicts pointing to the same underlying objects:
         # a dict of mount points to Mounts, and a dict of roots to Mounts.
         self._mount_point_mounts = {}  # type: Dict[str, Mount]
-        root_mounts = collections.defaultdict(
-            list
-        )  # type: Dict[str, List[Mount]]  # noqa
+        root_mounts = collections.defaultdict(list)  # type: Dict[str, List[Mount]]  # noqa
 
         with contextlib.suppress(FileNotFoundError):
             with open(mountinfo_file) as f:

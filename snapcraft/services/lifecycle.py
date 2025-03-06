@@ -26,6 +26,7 @@ from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_application.models import BuildInfo
 from craft_parts import ProjectInfo, StepInfo, callbacks
 from craft_parts.packages import Repository as Repo
+from craft_platforms import DebianArchitecture
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, os_release, parts, utils
@@ -94,7 +95,7 @@ class Lifecycle(LifecycleService):
         plugin_name = project.parts[part_name]["plugin"]
 
         # Handle plugin-specific prime fixes
-        if plugin_name in ("python", "poetry"):
+        if plugin_name in python_common.get_python_plugins().keys():
             python_common.post_prime(step_info)
 
         # Handle patch-elf
@@ -158,7 +159,7 @@ class Lifecycle(LifecycleService):
 
         osrel = os_release.OsRelease()
         version = utils.process_version(project.version)
-        host_arch = utils.get_host_architecture()
+        host_arch = str(DebianArchitecture.from_host())
         build_for = self._build_plan[0].build_for if self._build_plan else host_arch
 
         return models.Manifest(

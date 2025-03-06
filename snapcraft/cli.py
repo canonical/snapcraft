@@ -20,7 +20,7 @@ import argparse
 import contextlib
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
 import craft_application.commands
 import craft_cli
@@ -141,6 +141,13 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
+        "Store Confdbs",
+        [
+            commands.StoreEditConfdbsCommand,
+            commands.StoreListConfdbsCommand,
+        ],
+    ),
+    craft_cli.CommandGroup(
         "Other",
         [
             commands.LintCommand,
@@ -206,7 +213,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
 
 
 def _run_dispatcher(
-    dispatcher: craft_cli.Dispatcher, global_args: Dict[str, Any]
+    dispatcher: craft_cli.Dispatcher, global_args: dict[str, Any]
 ) -> None:
     if global_args.get("trace"):
         emit.message(
@@ -214,7 +221,10 @@ def _run_dispatcher(
         )
         emit.set_mode(EmitterMode.DEBUG)
 
-    dispatcher.load_command(None)
+    # Load the command with a dummy app config to silence deprecation warnings.
+    # This config should not actually get used down the line, so its content
+    # shouldn't matter
+    dispatcher.load_command({"app": "snapcraft_legacy", "services": {}})
     dispatcher.run()
     emit.ended_ok()
 

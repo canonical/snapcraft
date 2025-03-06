@@ -59,3 +59,8 @@ Store validation sets
 ---------------------
 
 .. include:: commands/store-validation-sets-commands.rst
+
+Store confdbs
+----------------
+
+.. include:: commands/store-confdbs-commands.rst

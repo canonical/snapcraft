@@ -18,12 +18,13 @@ import base64
 import contextlib
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
 import yaml
 from craft_parts import Features, callbacks, plugins
+from craft_platforms import DebianArchitecture
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
 from overrides import override
@@ -50,7 +51,7 @@ def snapcraft_yaml(new_dir):
 
     def write_file(
         *, filename: str = "snap/snapcraft.yaml", **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         content = {
             "name": "mytest",
             "version": "0.1",
@@ -83,30 +84,30 @@ def fake_extension():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core22", "core24")
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {"grade": "fake-grade"}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             if plugin_name == "catkin":
                 return {}
 
             return {"after": ["fake-extension/fake-part"]}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {"fake-extension/fake-part": {"plugin": "nil"}}
 
     register("fake-extension", ExtensionImpl)
@@ -122,27 +123,27 @@ def fake_extension_extra():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core22",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             return {"after": ["fake-extension-extra/fake-part"]}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
 
     register("fake-extension-extra", ExtensionImpl)
@@ -156,27 +157,27 @@ def fake_extension_invalid_parts():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core22",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {"grade": "fake-grade"}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             return {"after": ["fake-extension/fake-part"]}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {"fake-part": {"plugin": "nil"}, "fake-part-2": {"plugin": "nil"}}
 
     register("fake-extension-invalid-parts", ExtensionImpl)
@@ -192,27 +193,27 @@ def fake_extension_experimental():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core22",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return True
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             return {}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {}
 
     register("fake-extension-experimental", ExtensionImpl)
@@ -228,27 +229,27 @@ def fake_extension_name_from_legacy():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core22",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             return {"after": ["fake-extension-extra/fake-part"]}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
 
     yield ExtensionImpl
@@ -373,7 +374,7 @@ def fake_provider(mock_instance):
             project_name: str,
             project_path: Path,
             base_configuration: Base,
-            build_base: Optional[str] = None,
+            build_base: str | None = None,
             instance_name: str,
             allow_unstable: bool = False,
         ):
@@ -415,13 +416,22 @@ def default_project(extra_project_params):
 @pytest.fixture()
 def default_factory(default_project):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import SnapcraftServiceFactory
+    from snapcraft.services import SnapcraftServiceFactory, register_snapcraft_services
 
+    register_snapcraft_services()
     factory = SnapcraftServiceFactory(
         app=APP_METADATA,
         project=default_project,
     )
     return factory
+
+
+@pytest.fixture()
+def app_config(default_factory) -> dict[str, Any]:
+    from snapcraft.application import APP_METADATA, Snapcraft
+
+    app = Snapcraft(app=APP_METADATA, services=default_factory)
+    return app.app_config
 
 
 @pytest.fixture()
@@ -431,7 +441,7 @@ def default_build_plan():
 
     # Set the build info base to match the host's, so we can test in destructive
     # mode with no issues.
-    arch = util.get_host_architecture()
+    arch = str(DebianArchitecture.from_host())
     base = util.get_host_base()
 
     return [
@@ -531,11 +541,11 @@ def remote_build_service(default_factory, mocker):
 
 
 @pytest.fixture()
-def registries_service(default_factory, mocker):
+def confdbs_service(default_factory, mocker):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import Registries
+    from snapcraft.services import Confdbs
 
-    service = Registries(app=APP_METADATA, services=default_factory)
+    service = Confdbs(app=APP_METADATA, services=default_factory)
     service._store_client = mocker.patch(
         "snapcraft.store.StoreClientCLI", autospec=True
     )
@@ -544,18 +554,18 @@ def registries_service(default_factory, mocker):
 
 
 @pytest.fixture()
-def fake_registry_assertion():
-    """Returns a fake registry assertion with required fields."""
-    from snapcraft.models import RegistryAssertion
+def fake_confdb_assertion():
+    """Returns a fake confdb assertion with required fields."""
+    from snapcraft.models import ConfdbAssertion
 
-    def _fake_registry_assertion(**kwargs) -> RegistryAssertion:
-        return RegistryAssertion.unmarshal(
+    def _fake_confdb_assertion(**kwargs) -> ConfdbAssertion:
+        return ConfdbAssertion.unmarshal(
             {
                 "account_id": "test-account-id",
                 "authority_id": "test-authority-id",
-                "name": "test-registry",
+                "name": "test-confdb",
                 "timestamp": "2024-01-01T10:20:30Z",
-                "type": "registry",
+                "type": "confdb",
                 "views": {
                     "wifi-setup": {
                         "rules": [
@@ -571,7 +581,7 @@ def fake_registry_assertion():
             }
         )
 
-    return _fake_registry_assertion
+    return _fake_confdb_assertion
 
 
 @pytest.fixture()

@@ -21,6 +21,7 @@ from pathlib import Path
 from unittest import mock
 
 import fixtures
+import pytest
 from testtools.matchers import (
     Contains,
     DirExists,
@@ -45,6 +46,7 @@ from tests.legacy import fixture_setup, unit
 from . import LifecycleTestBase
 
 
+@pytest.mark.slow
 class ExecutionTestCase(LifecycleTestBase):
     def test_replace_in_parts(self):
         class Options:
@@ -409,6 +411,7 @@ class ExecutionTestCase(LifecycleTestBase):
         lifecycle.execute(steps.PULL, project_config)
 
 
+@pytest.mark.slow
 class CleanTestCase(LifecycleTestBase):
     def test_clean_removes_global_state(self):
         project_config = self.make_snapcraft_project(
@@ -444,6 +447,7 @@ class CleanTestCase(LifecycleTestBase):
         )
 
 
+@pytest.mark.slow
 class RecordSnapcraftYamlTestCase(LifecycleTestBase):
     def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO", None))

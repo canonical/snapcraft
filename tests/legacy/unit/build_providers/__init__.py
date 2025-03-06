@@ -47,14 +47,14 @@ class ProviderImpl(Provider):
         self.clean_project_mock = mock.Mock()
         self.shell_mock = mock.Mock()
         self.save_info_mock = mock.Mock()
-        self.loaded_info: Optional[Dict[str, str]] = None
+        self.loaded_info: dict[str, str] | None = None
 
-    def _load_info(self) -> Dict[str, str]:
+    def _load_info(self) -> dict[str, str]:
         if self.loaded_info is None:
             return super()._load_info()
         return self.loaded_info
 
-    def _run(self, command, hide_output=False) -> Optional[bytes]:
+    def _run(self, command, hide_output=False) -> bytes | None:
         return self.run_mock(command)
 
     def _launch(self) -> None:

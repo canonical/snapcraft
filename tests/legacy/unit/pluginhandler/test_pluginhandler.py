@@ -789,6 +789,7 @@ class TestOrganize:
         )
 
 
+@pytest.mark.slow
 class RealStageTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
@@ -1435,6 +1436,7 @@ class FilesetsTestCase(unit.TestCase):
 
 
 class SourcesTestCase(unit.TestCase):
+    @pytest.mark.slow
     def test_do_not_follow_links(self):
         properties = dict(source=".")
         handler = self.load_part("test-part", part_properties=properties)

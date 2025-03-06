@@ -19,7 +19,7 @@
 
 import pytest
 
-from snapcraft.models import EditableRegistryAssertion, Registry, RegistryAssertion
+from snapcraft.models import Confdb, ConfdbAssertion, EditableConfdbAssertion
 from snapcraft.models.assertions import cast_dict_scalars_to_strings
 
 
@@ -55,18 +55,18 @@ def test_cast_dict_scalars_to_strings(input_dict, expected_dict):
     assert actual == expected_dict
 
 
-def test_registry_defaults(check):
-    """Test default values of the Registry model."""
-    registry = Registry.unmarshal({"storage": "test-storage"})
+def test_confdb_defaults(check):
+    """Test default values of the Confdb model."""
+    confdb = Confdb.unmarshal({"storage": "test-storage"})
 
-    check.is_none(registry.request)
-    check.is_none(registry.access)
-    check.is_none(registry.content)
+    check.is_none(confdb.request)
+    check.is_none(confdb.access)
+    check.is_none(confdb.content)
 
 
-def test_registry_nested(check):
-    """Test that nested registries are supported."""
-    registry = Registry.unmarshal(
+def test_confdb_nested(check):
+    """Test that nested confdbs are supported."""
+    confdb = Confdb.unmarshal(
         {
             "request": "test-request",
             "storage": "test-storage",
@@ -81,21 +81,21 @@ def test_registry_nested(check):
         }
     )
 
-    check.equal(registry.request, "test-request")
-    check.equal(registry.storage, "test-storage")
-    check.equal(registry.access, "read")
+    check.equal(confdb.request, "test-request")
+    check.equal(confdb.storage, "test-storage")
+    check.equal(confdb.access, "read")
     check.equal(
-        registry.content,
-        [Registry(request="nested-request", storage="nested-storage", access="write")],
+        confdb.content,
+        [Confdb(request="nested-request", storage="nested-storage", access="write")],
     )
 
 
-def test_editable_registry_assertion_defaults(check):
-    """Test default values of the EditableRegistryAssertion model."""
-    assertion = EditableRegistryAssertion.unmarshal(
+def test_editable_confdb_assertion_defaults(check):
+    """Test default values of the EditableConfdbAssertion model."""
+    assertion = EditableConfdbAssertion.unmarshal(
         {
             "account_id": "test-account-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -112,12 +112,12 @@ def test_editable_registry_assertion_defaults(check):
     check.is_none(assertion.body)
 
 
-def test_editable_registry_assertion_marshal_as_str():
+def test_editable_confdb_assertion_marshal_as_str():
     """Cast all scalars to string when marshalling."""
-    assertion = EditableRegistryAssertion.unmarshal(
+    assertion = EditableConfdbAssertion.unmarshal(
         {
             "account_id": "test-account-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "revision": 10,
             "views": {
                 "wifi-setup": {
@@ -136,15 +136,15 @@ def test_editable_registry_assertion_marshal_as_str():
     assert assertion_dict["revision"] == "10"
 
 
-def test_registry_assertion_defaults(check):
-    """Test default values of the RegistryAssertion model."""
-    assertion = RegistryAssertion.unmarshal(
+def test_confdb_assertion_defaults(check):
+    """Test default values of the ConfdbAssertion model."""
+    assertion = ConfdbAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "timestamp": "2024-01-01T10:20:30Z",
-            "type": "registry",
+            "type": "confdb",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -165,16 +165,16 @@ def test_registry_assertion_defaults(check):
     check.equal(assertion.revision, 0)
 
 
-def test_registry_assertion_marshal_as_str():
+def test_confdb_assertion_marshal_as_str():
     """Cast all scalars to strings when marshalling."""
-    assertion = RegistryAssertion.unmarshal(
+    assertion = ConfdbAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "revision": 10,
             "timestamp": "2024-01-01T10:20:30Z",
-            "type": "registry",
+            "type": "confdb",
             "views": {
                 "wifi-setup": {
                     "rules": [

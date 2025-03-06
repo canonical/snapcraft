@@ -18,7 +18,6 @@ from snapcraft_legacy.internal.errors import MetadataExtractionError
 
 
 class UnhandledFileError(MetadataExtractionError):
-
     fmt = (
         "Failed to extract metadata from {path!r}: "
         "This file is not handled by {extractor_name!r}."
@@ -29,7 +28,6 @@ class UnhandledFileError(MetadataExtractionError):
 
 
 class AppstreamFileParseError(MetadataExtractionError):
-
     fmt = "Failed to extract metadata from {path!r}: it's not a valid XML file."
 
     def __init__(self, path: str) -> None:
@@ -37,7 +35,6 @@ class AppstreamFileParseError(MetadataExtractionError):
 
 
 class SetupPyFileParseError(MetadataExtractionError):
-
     fmt = (
         "Failed to extract metadata from {path!r}: "
         "the logic in setup.py is currently not handled."
@@ -48,7 +45,6 @@ class SetupPyFileParseError(MetadataExtractionError):
 
 
 class SetupPyImportError(MetadataExtractionError):
-
     fmt = (
         "Failed to extract metadata from {path!r}: "
         "some packages or modules used could not be imported: "

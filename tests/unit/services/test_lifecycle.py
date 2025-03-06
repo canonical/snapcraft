@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Tests for the Snapcraft Lifecycle service."""
+
 import json
 import platform
 import shutil
@@ -25,9 +26,10 @@ from unittest import mock
 import pytest
 import pytest_subprocess
 from craft_parts.packages import Repository
+from craft_platforms import DebianArchitecture
 
 import snapcraft.parts
-from snapcraft import __version__, models, os_release, utils
+from snapcraft import __version__, models, os_release
 
 
 def test_lifecycle_installs_base(lifecycle_service, mocker):
@@ -172,7 +174,7 @@ def test_generate_manifest(
         grade=default_project.grade,
         confinement=default_project.confinement,
         parts=parts,
-        architectures=[utils.get_host_architecture()],
+        architectures=[str(DebianArchitecture.from_host())],
         image_info=image_info,
         build_packages=default_project.build_packages or [],
         build_snaps=default_project.build_snaps or [],

@@ -107,7 +107,9 @@ def _execute(  # noqa: C901
 
         # validate experimental plugins
         plugins = [part.plugin for part in project_config.parts.all_parts]
-        if not kwargs.get("enable_experimental_plugins") and any(isinstance(plugin, KernelPlugin) for plugin in plugins):
+        if not kwargs.get("enable_experimental_plugins") and any(
+            isinstance(plugin, KernelPlugin) for plugin in plugins
+        ):
             raise SnapcraftEnvironmentError(
                 "*EXPERIMENTAL* 'kernel' plugin used, but not enabled. "
                 "Enable with '--enable-experimental-plugins' flag."

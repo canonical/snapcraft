@@ -111,17 +111,14 @@ class TestDesktopIcon:
         expected_desktop_file = new_dir / f"{app_name}.desktop"
         assert expected_desktop_file.exists()
         with expected_desktop_file.open() as desktop_file:
-            assert (
-                desktop_file.read()
-                == dedent(
-                    """\
+            assert desktop_file.read() == dedent(
+                """\
             [Desktop Entry]
             Exec=foo
             Icon={}
 
         """
-                ).format(expected_icon)
-            )
+            ).format(expected_icon)
 
     @pytest.mark.parametrize(
         "icon,icon_path,expected_icon",

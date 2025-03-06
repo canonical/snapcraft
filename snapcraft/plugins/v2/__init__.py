@@ -16,7 +16,6 @@
 
 """Legacy support for v2 plugins."""
 
-
 from snapcraft_legacy.plugins.v2 import (
     AutotoolsPlugin,
     CatkinPlugin,

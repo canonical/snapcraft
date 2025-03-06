@@ -23,7 +23,7 @@ import pathlib
 import stat
 import textwrap
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -186,14 +186,14 @@ class StoreExportLoginCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args) -> None:
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
                 "--experimental-login no longer supported. "
                 f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead",
             )
 
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, Any] = {}
         if parsed_args.snaps:
             kwargs["packages"] = parsed_args.snaps.split(",")
         if parsed_args.channels:

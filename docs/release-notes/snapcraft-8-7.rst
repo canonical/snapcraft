@@ -1,0 +1,135 @@
+.. _release-8.7:
+
+Snapcraft 8.7 release notes
+=============================
+
+03 March 2025
+
+Learn about the new features, changes, and fixes introduced in Snapcraft 8.7.
+
+
+Requirements and compatibility
+------------------------------
+
+See :ref:`System requirements<system-requirements>` for information on the minimum
+hardware and installed software.
+
+
+What's new
+----------
+
+Snapcraft 8.7 brings the following features, integrations, and improvements.
+
+
+Bash completion
+~~~~~~~~~~~~~~~
+
+Previously, the completion file for Snapcraft was outdated or incorrect because
+it had to be manually updated.
+
+We've updated the completion file to be generated dynamically, which means it will
+always autocomplete the latest commands and options in Bash-compatible shells.
+Try it out by typing ``snapcraft`` and pressing :kbd:`Tab` in your terminal.
+
+
+Improved remote builder
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Remote builds can now use the ``--build-for`` option to filter entries in an
+``architectures`` or ``platforms`` key in a project file.
+
+
+Support for confdbs
+~~~~~~~~~~~~~~~~~~~
+
+Snapcraft now supports listing and editing ``confdbs`` with the commands
+``list-confdbs`` and ``edit-confdbs``. These new commands replace the previous
+``list-registries`` and ``edit-registries`` commands, respectively.
+
+
+Support for relocatable pkgconfig files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Snapcraft now checks if `pkg-config`_ (``.pc``) files are relocatable. If the file is
+relocatable, Snapcraft will no longer modify its ``prefix`` field.
+
+
+Documentation improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following how-to guides have been integrated:
+
+* :ref:`Use an extension <use-an-extension>`
+* :ref:`List extensions <list-extensions>`
+* :ref:`Enable experimental extensions <enable-experimental-extensions>`
+* :ref:`Use the env-injector extension <use-the-env-injector-extension>`
+* :ref:`Use the GNOME extension <use-the-gnome-extension>`
+
+
+The following references have been integrated:
+
+* :ref:`env-injector extension <env-injector-extension>`
+* :ref:`GNOME extension <gnome-extension>`
+* :ref:`KDE neon extensions <kde-neon-extensions>`
+* :ref:`Flutter extension <flutter-extension>`
+* :ref:`ROS 1 extension <ros-1-extension>`
+* :ref:`ROS 1 content extensions <ros-1-content-extensions>`
+* :ref:`ROS 2 extensions <ros-2-foxy-extension>`
+* :ref:`ROS 2 content extensions <ros-2-content-extensions>`
+
+
+Backwards-incompatible changes
+------------------------------
+
+Removed platform option for remote builds
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``--platform`` option has been removed from the ``remote-build`` command.
+
+This option was dropped because it doesn't provide predictable results for remote
+builds, due to Launchpad's handling of the ``platforms`` key in project files.
+
+``--build-for`` is the recommended alternative until Launchpad has comprehensive
+support for platforms.
+
+
+Fixed bugs and issues
+---------------------
+
+The following issues have been resolved in Snapcraft 8.7:
+
+- `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
+  snaps.
+- `#5250`_ Resources path for ``QtWebEngineProcess`` wasn't exported for snaps
+  using the KDE Neon 6 extension.
+- `craft-parts#978`_ The ``source-subdir`` field was ignored for the
+  :ref:`Go Use plugin<craft_parts_go_use_plugin>`.
+- `craft-application#600`_ The same build environment may be re-used for platforms with
+  the same ``build-on`` and ``build-for`` architectures.
+- `craft-application#618`_ The remote builder would clean up projects after
+  they timed out.
+- `craft-application#619`_ The remote builder suggested using a nonextistent
+  ``--build-id`` option if the build timed out.
+- `craft-application#620`_ The remote builder help suggested using a nonextistent
+  ``--status`` option.
+
+
+Contributors
+------------
+
+We would like to express a big thank you to all the people who contributed to
+this release.
+
+:literalref:`@bepri<https://github.com/bepri>`,
+:literalref:`@medubelko<https://github.com/medubelko>`,
+:literalref:`@mr-cal<https://github.com/mr-cal>`,
+and :literalref:`@sergio-costas<https://github.com/sergio-costas>`
+
+.. _#5250: https://github.com/canonical/snapcraft/pull/5250
+.. _#5258: https://github.com/canonical/snapcraft/pull/5258
+.. _craft-application#600: https://github.com/canonical/craft-application/issues/600
+.. _craft-application#618: https://github.com/canonical/craft-application/issues/618
+.. _craft-application#619: https://github.com/canonical/craft-application/issues/619
+.. _craft-application#620: https://github.com/canonical/craft-application/issues/620
+.. _craft-parts#978: https://github.com/canonical/craft-parts/issues/978
+.. _pkg-config: https://www.freedesktop.org/wiki/Software/pkg-config/

@@ -30,8 +30,8 @@ import snapcraft.commands
         snapcraft.commands.ExtensionsCommand,
     ],
 )
-def test_command(emitter, command):
-    cmd = command(None)
+def test_command(emitter, command, app_config):
+    cmd = command(app_config)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
@@ -50,6 +50,7 @@ def test_command(emitter, command):
         gnome-3-38              core20
         kde-neon                core18, core20, core22, core24
         kde-neon-6              core22, core24
+        kde-neon-qt6            core22, core24
         ros1-noetic             core20
         ros1-noetic-desktop     core20
         ros1-noetic-perception  core20
@@ -80,8 +81,8 @@ def test_command(emitter, command):
         snapcraft.commands.ExtensionsCommand,
     ],
 )
-def test_command_extension_dups(emitter, command):
-    cmd = command(None)
+def test_command_extension_dups(emitter, command, app_config):
+    cmd = command(app_config)
     cmd.run(Namespace())
     emitter.assert_message(
         dedent(
@@ -99,6 +100,7 @@ def test_command_extension_dups(emitter, command):
         gnome-3-38              core20
         kde-neon                core18, core20, core22, core24
         kde-neon-6              core22, core24
+        kde-neon-qt6            core22, core24
         ros1-noetic             core20
         ros1-noetic-desktop     core20
         ros1-noetic-perception  core20

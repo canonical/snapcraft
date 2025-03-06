@@ -17,11 +17,11 @@
 """Snapcraft extension commands."""
 
 import textwrap
-from typing import Dict, List
 
 import tabulate
 from craft_application.commands import AppCommand
 from craft_cli import emit
+from craft_platforms import DebianArchitecture
 from overrides import overrides
 from pydantic import BaseModel
 
@@ -32,7 +32,6 @@ from snapcraft.parts.yaml_utils import (
     get_snap_project,
     process_yaml,
 )
-from snapcraft.utils import get_host_architecture
 from snapcraft_legacy.internal.project_loader import (
     find_extension,
     supported_extension_names,
@@ -43,9 +42,9 @@ class ExtensionModel(BaseModel):
     """Extension model for presentation."""
 
     name: str
-    bases: List[str]
+    bases: list[str]
 
-    def marshal(self) -> Dict[str, str]:
+    def marshal(self) -> dict[str, str]:
         """Marshal model into a dictionary for presentation."""
         return {
             "Extension name": self.name,
@@ -65,8 +64,8 @@ class ListExtensionsCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
-        extension_presentation: Dict[str, ExtensionModel] = {}
+    def run(self, parsed_args) -> None:
+        extension_presentation: dict[str, ExtensionModel] = {}
 
         # New extensions.
         for extension_name in extensions.registry.get_extension_names():
@@ -78,7 +77,9 @@ class ListExtensionsCommand(AppCommand):
 
         # Extensions from snapcraft_legacy.
         for _extension_name in supported_extension_names():
-            extension_class = find_extension(_extension_name)
+            # Ignore assignment type error as the conversion from legacy to modern Snapcraft `Extension`
+            # should be trivial
+            extension_class = find_extension(_extension_name)  # type: ignore[assignment]
             extension_name = _extension_name.replace("_", "-")
             extension_bases = list(extension_class.get_supported_bases())
             if extension_name in extension_presentation:
@@ -122,7 +123,7 @@ class ExpandExtensionsCommand(AppCommand):
         yaml_data = process_yaml(snap_project.project_file)
 
         # process yaml before unmarshalling the data
-        arch = get_host_architecture()
+        arch = str(DebianArchitecture.from_host())
         yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
 
         # `apply_yaml()` adds or replaces the architectures keyword with an Architecture

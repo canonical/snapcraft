@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """The matter SDK plugin."""
+
 import os
 from typing import Literal, cast
 

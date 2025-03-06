@@ -161,8 +161,7 @@ class PartsConfig:
         for part_name in part_names:
             if part_name not in self._part_names:
                 raise snapcraft_legacy.internal.errors.SnapcraftEnvironmentError(
-                    "The part named {!r} is not defined in "
-                    "{!r}".format(
+                    "The part named {!r} is not defined in {!r}".format(
                         part_name, self._project.info.snapcraft_yaml_file_path
                     )
                 )
@@ -178,8 +177,9 @@ class PartsConfig:
         )
 
         logger.debug(
-            "Setting up part {!r} with plugin {!r} and "
-            "properties {!r}.".format(part_name, plugin_name, part_properties)
+            "Setting up part {!r} with plugin {!r} and properties {!r}.".format(
+                part_name, plugin_name, part_properties
+            )
         )
 
         stage_packages_repo = repo.Repo

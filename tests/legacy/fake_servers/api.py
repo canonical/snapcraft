@@ -1633,7 +1633,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             [("Content-Type", "application/json")],
         )
 
-    def _save_validation_sets_assertion(self, assertion: Dict[str, Any]) -> None:
+    def _save_validation_sets_assertion(self, assertion: dict[str, Any]) -> None:
         self.validation_set_assertions[assertion["name"]] = assertion
 
     def post_validation_sets(self, request):

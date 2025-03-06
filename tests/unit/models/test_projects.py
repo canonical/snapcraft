@@ -15,16 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
 from craft_application.models import BuildInfo, UniqueStrList, VersionStr
+from craft_platforms import DebianArchitecture
 from craft_providers.bases import BaseName
 
 import snapcraft.models
-from snapcraft import const, errors, providers, utils
+from snapcraft import const, errors, providers
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
@@ -36,7 +37,6 @@ from snapcraft.models import (
     Project,
 )
 from snapcraft.models.project import apply_root_packages
-from snapcraft.utils import get_host_architecture
 
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
@@ -46,7 +46,7 @@ CORE24_DATA = {"base": "core24", "grade": "devel"}
 def project_yaml_data():
     def _project_yaml_data(
         *, name: str = "name", version: str = "0.1", summary: str = "summary", **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "name": name,
             "version": version,
@@ -64,7 +64,7 @@ def project_yaml_data():
 
 @pytest.fixture
 def app_yaml_data(project_yaml_data):
-    def _app_yaml_data(**kwargs) -> Dict[str, Any]:
+    def _app_yaml_data(**kwargs) -> dict[str, Any]:
         data = project_yaml_data()
         data["apps"] = {"app1": {"command": "/bin/true", **kwargs}}
         return data
@@ -74,7 +74,7 @@ def app_yaml_data(project_yaml_data):
 
 @pytest.fixture
 def socket_yaml_data(app_yaml_data):
-    def _socket_yaml_data(**kwargs) -> Dict[str, Any]:
+    def _socket_yaml_data(**kwargs) -> dict[str, Any]:
         data = app_yaml_data()
         data["apps"]["app1"]["sockets"] = {"socket1": {**kwargs}}
         return data
@@ -149,8 +149,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=cast(UniqueStrList, [get_host_architecture()]),
-                build_for=cast(UniqueStrList, [get_host_architecture()]),
+                build_on=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
+                build_for=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
             )
         ]
         assert project.ua_services is None
@@ -2348,10 +2348,10 @@ def test_build_planner_get_build_plan(platforms, expected_build_infos):
             None,
             [
                 BuildInfo(
-                    build_on=utils.get_host_architecture(),
-                    build_for=utils.get_host_architecture(),
+                    build_on=str(DebianArchitecture.from_host()),
+                    build_for=str(DebianArchitecture.from_host()),
                     base=BaseName(name="ubuntu", version="22.04"),
-                    platform=utils.get_host_architecture(),
+                    platform=str(DebianArchitecture.from_host()),
                 )
             ],
             id="no_arch",
@@ -2516,10 +2516,10 @@ def test_platform_default():
 
     assert actual_build_infos == [
         BuildInfo(
-            build_on=get_host_architecture(),
-            build_for=get_host_architecture(),
+            build_on=str(DebianArchitecture.from_host()),
+            build_for=str(DebianArchitecture.from_host()),
             base=BaseName(name="ubuntu", version="24.04"),
-            platform=get_host_architecture(),
+            platform=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -2561,7 +2561,7 @@ def test_project_platform_mismatch():
 
 def test_project_platform_unknown_name():
     """Raise an error if an empty platform is not a valid architecture."""
-    with pytest.raises(CraftValidationError) as raised:
+    with pytest.raises(pydantic.ValidationError) as raised:
         snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
             {
                 "name": "test-snap",
@@ -2572,10 +2572,7 @@ def test_project_platform_unknown_name():
             }
         )
 
-    assert (
-        "Invalid architecture: 'unknown' must be a valid debian architecture."
-        in str(raised.value)
-    )
+    assert "'unknown' is not a valid Debian architecture." in str(raised.value)
 
 
 @pytest.mark.parametrize("project", [ComponentProject, Project])

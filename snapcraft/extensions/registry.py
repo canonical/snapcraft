@@ -16,7 +16,7 @@
 
 """Extension registry."""
 
-from typing import TYPE_CHECKING, Dict, List, Type
+from typing import TYPE_CHECKING
 
 from snapcraft import errors
 
@@ -24,6 +24,7 @@ from .env_injector import EnvInjector
 from .gnome import GNOME
 from .kde_neon import KDENeon
 from .kde_neon_6 import KDENeon6
+from .kde_neon_qt6 import KDENeonQt6
 from .ros2_humble import ROS2HumbleExtension
 from .ros2_humble_desktop import ROS2HumbleDesktopExtension
 from .ros2_humble_ros_base import ROS2HumbleRosBaseExtension
@@ -36,9 +37,9 @@ from .ros2_jazzy_ros_core import ROS2JazzyRosCoreExtension
 if TYPE_CHECKING:
     from .extension import Extension
 
-    ExtensionType = Type[Extension]
+    ExtensionType = type[Extension]
 
-_EXTENSIONS: Dict[str, "ExtensionType"] = {
+_EXTENSIONS: dict[str, "ExtensionType"] = {
     "env-injector": EnvInjector,
     "gnome": GNOME,
     "ros2-humble": ROS2HumbleExtension,
@@ -51,10 +52,11 @@ _EXTENSIONS: Dict[str, "ExtensionType"] = {
     "ros2-jazzy-desktop": ROS2JazzyDesktopExtension,
     "kde-neon": KDENeon,
     "kde-neon-6": KDENeon6,
+    "kde-neon-qt6": KDENeonQt6,
 }
 
 
-def get_extension_names() -> List[str]:
+def get_extension_names() -> list[str]:
     """Obtain a extension class given the name.
 
     :param name: The extension name.

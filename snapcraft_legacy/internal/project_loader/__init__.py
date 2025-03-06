@@ -88,7 +88,7 @@ def _validate_replacement(attr: str, variable: str, value: Optional[str]) -> Non
 
     # expand to shell syntax for variables (`$item` and `${item}`)
     expanded_variables_to_validate = (
-        *(f"${item}" for item in variables_to_validate ),
+        *(f"${item}" for item in variables_to_validate),
         *(f"${{{item}}}" for item in variables_to_validate),
     )
 

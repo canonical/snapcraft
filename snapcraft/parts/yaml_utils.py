@@ -18,7 +18,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, TextIO, cast
 
 import yaml
 import yaml.error
@@ -95,7 +95,7 @@ class _SafeLoader(yaml.SafeLoader):
         )
 
 
-def safe_load(filestream: TextIO) -> Dict[str, Any]:
+def safe_load(filestream: TextIO) -> dict[str, Any]:
     """Safe load and parse YAML-formatted file to a dictionary.
 
     :returns: A dictionary containing the yaml data.
@@ -108,7 +108,7 @@ def safe_load(filestream: TextIO) -> Dict[str, Any]:
         raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
 
 
-def get_base(filestream: TextIO) -> Optional[str]:
+def get_base(filestream: TextIO) -> str | None:
     """Get the effective base from a snapcraft.yaml file.
 
     :param filename: The YAML file to load.
@@ -138,7 +138,7 @@ def get_base_from_yaml(data: dict[str, Any]) -> str | None:
     )
 
 
-def load(filestream: TextIO) -> Dict[str, Any]:
+def load(filestream: TextIO) -> dict[str, Any]:
     """Load and parse a YAML-formatted file.
 
     :param filename: The YAML file to load.
@@ -170,8 +170,8 @@ def load(filestream: TextIO) -> Dict[str, Any]:
 
 
 def apply_yaml(
-    yaml_data: Dict[str, Any], build_on: str, build_for: str
-) -> Dict[str, Any]:
+    yaml_data: dict[str, Any], build_on: str, build_for: str
+) -> dict[str, Any]:
     """Apply Snapcraft logic to yaml_data.
 
     Extensions are applied and advanced grammar is processed.
@@ -238,14 +238,14 @@ def get_snap_project(project_dir: Path | None = None) -> _SnapProject:
     raise errors.ProjectMissing()
 
 
-def extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
+def extract_parse_info(yaml_data: dict[str, Any]) -> dict[str, list[str]]:
     """Remove parse-info data from parts.
 
     :param yaml_data: The project YAML data.
 
     :return: The extracted parse info for each part.
     """
-    parse_info: Dict[str, List[str]] = {}
+    parse_info: dict[str, list[str]] = {}
 
     if "parts" in yaml_data:
         for name, data in yaml_data["parts"].items():
@@ -255,7 +255,7 @@ def extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
     return parse_info
 
 
-def process_yaml(project_file: Path) -> Dict[str, Any]:
+def process_yaml(project_file: Path) -> dict[str, Any]:
     """Process yaml data from file into a dictionary.
 
     :param project_file: Path to project.
@@ -271,6 +271,7 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
         msg = err.strerror
         if err.filename:
             msg = f"{msg}: {err.filename!r}."
-        raise errors.SnapcraftError(msg) from err
+        # Casting as a str as OSError should always contain an error message
+        raise errors.SnapcraftError(cast(str, msg)) from err
 
     return yaml_data
