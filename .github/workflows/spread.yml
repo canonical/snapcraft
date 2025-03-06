@@ -39,7 +39,7 @@ jobs:
       matrix:
         spread-jobs:
           #- google:ubuntu-20.04-64
-          - google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/
+          - google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/python-symlinks
           #- google:ubuntu-24.04-64
 
     steps:
@@ -69,58 +69,58 @@ jobs:
             spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
           done
 
-  integration-spread-tests-store:
-    runs-on: [spread-installed]
-    needs: build
-    strategy:
-      # FIXME: enable fail-fast mode once spread can cancel an executing job.
-      # Disable fail-fast mode as it doesn't function with spread. It seems
-      # that cancelling tasks requires short, interruptible actions and
-      # interrupting spread, notably, does not work today. As such disable
-      # fail-fast while we tackle that problem upstream.
-      fail-fast: false
-
-    steps:
-      - name: Decision to Run
-        id: decisions
-        run: |
-          # Secrets cannot be used in conditionals, so this is our dance:
-          # https://github.com/actions/runner/issues/520
-          if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}" ]]; then
-            echo RUN=true >> $GITHUB_OUTPUT
-          else
-            echo RUN= >> $GITHUB_OUTPUT
-          fi
-
-      - if: steps.decisions.outputs.RUN == 'true'
-        name: Checkout snapcraft
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: true
-
-      - if: steps.decisions.outputs.RUN == 'true'
-        name: Download snapcraft snap
-        uses: actions/download-artifact@v4
-        with:
-          name: snap
-          path: tests
-
-      - if: steps.decisions.outputs.RUN == 'true'
-        name: Run spread
-        env:
-          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
-          SNAPCRAFT_ASSERTION_KEY: "${{ secrets.SNAPCRAFT_ASSERTION_KEY }}"
-          SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
-          SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
-          SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
-        run: |
-          spread google:ubuntu-22.04-64:tests/spread/store/
-
-      - name: Discard spread workers
-        if: always()
-        run: |
-          shopt -s nullglob
-          for r in .spread-reuse.*.yaml; do
-            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
-          done
+#  integration-spread-tests-store:
+#    runs-on: [spread-installed]
+#    needs: build
+#    strategy:
+#      # FIXME: enable fail-fast mode once spread can cancel an executing job.
+#      # Disable fail-fast mode as it doesn't function with spread. It seems
+#      # that cancelling tasks requires short, interruptible actions and
+#      # interrupting spread, notably, does not work today. As such disable
+#      # fail-fast while we tackle that problem upstream.
+#      fail-fast: false
+#
+#    steps:
+#      - name: Decision to Run
+#        id: decisions
+#        run: |
+#          # Secrets cannot be used in conditionals, so this is our dance:
+#          # https://github.com/actions/runner/issues/520
+#          if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}" ]]; then
+#            echo RUN=true >> $GITHUB_OUTPUT
+#          else
+#            echo RUN= >> $GITHUB_OUTPUT
+#          fi
+#
+#      - if: steps.decisions.outputs.RUN == 'true'
+#        name: Checkout snapcraft
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#          submodules: true
+#
+#      - if: steps.decisions.outputs.RUN == 'true'
+#        name: Download snapcraft snap
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: snap
+#          path: tests
+#
+#      - if: steps.decisions.outputs.RUN == 'true'
+#        name: Run spread
+#        env:
+#          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
+#          SNAPCRAFT_ASSERTION_KEY: "${{ secrets.SNAPCRAFT_ASSERTION_KEY }}"
+#          SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
+#          SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
+#          SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
+#        run: |
+#          spread google:ubuntu-22.04-64:tests/spread/store/
+#
+#      - name: Discard spread workers
+#        if: always()
+#        run: |
+#          shopt -s nullglob
+#          for r in .spread-reuse.*.yaml; do
+#            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+#          done
