@@ -19,9 +19,9 @@
 import functools
 import os
 import platform
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 from craft_cli import emit
 from elftools.common.exceptions import ELFError

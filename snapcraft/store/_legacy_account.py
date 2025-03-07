@@ -20,8 +20,8 @@ import base64
 import configparser
 import json
 import os
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import craft_store
 import pymacaroons

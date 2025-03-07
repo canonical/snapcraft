@@ -20,13 +20,13 @@ import itertools
 import operator
 import textwrap
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Sequence, cast
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Final, cast
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
-from typing_extensions import Final
 
 from snapcraft import store
 from snapcraft.store.channel_map import ChannelMap, MappedChannel, Revision, SnapChannel

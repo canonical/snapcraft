@@ -21,8 +21,8 @@ import os
 import shutil
 import stat
 import urllib.parse
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import requests
 from craft_cli import emit

@@ -21,7 +21,8 @@ from __future__ import annotations
 import copy
 import re
 import textwrap
-from typing import Any, Literal, Mapping, cast
+from collections.abc import Mapping
+from typing import Annotated, Any, Literal, Self, cast, override
 
 import pydantic
 from craft_application import models
@@ -37,7 +38,6 @@ from craft_grammar.models import Grammar  # type: ignore[import-untyped]
 from craft_platforms import DebianArchitecture, Platforms, snap
 from craft_providers import bases
 from pydantic import ConfigDict, PrivateAttr, StringConstraints
-from typing_extensions import Annotated, Self, override
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS, SnapArch

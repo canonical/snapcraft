@@ -16,10 +16,9 @@
 
 """Extension to the Colcon plugin for ROS 2 Jazzy."""
 
-from typing import Any
+from typing import Any, Final
 
 from overrides import overrides
-from typing_extensions import Final
 
 from .extension import Extension, get_extensions_data_dir
 

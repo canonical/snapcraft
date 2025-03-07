@@ -22,8 +22,9 @@ import pathlib
 import re
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, cast
+from typing import cast
 
 import catkin_pkg.package
 import click

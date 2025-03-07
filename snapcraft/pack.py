@@ -32,7 +32,7 @@ def _verify_snap(directory: Path) -> None:
             ["snap", "pack", "--check-skeleton", directory],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         )
     except subprocess.CalledProcessError as err:
         stderr = None
@@ -117,9 +117,7 @@ def _pack(
 
     emit.debug(f"Pack command: {command}")
     try:
-        proc = subprocess.run(
-            command, capture_output=True, check=True, universal_newlines=True
-        )
+        proc = subprocess.run(command, capture_output=True, check=True, text=True)
     except subprocess.CalledProcessError as err:
         raise errors.SnapPackError(err) from err
 

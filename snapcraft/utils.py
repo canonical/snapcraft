@@ -24,9 +24,9 @@ import pathlib
 import re
 import shutil
 import sys
+from collections.abc import Iterable
 from getpass import getpass
 from pathlib import Path
-from typing import Iterable
 
 from craft_application.util import strtobool
 from craft_cli import emit

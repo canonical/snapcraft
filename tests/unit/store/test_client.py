@@ -556,7 +556,7 @@ def test_login_from_401_request(fake_client):
                 ).encode(),
             )
         ),
-        FakeResponse(status_code=200, content="text".encode()),
+        FakeResponse(status_code=200, content=b"text"),
     ]
 
     client.StoreClientCLI().request("GET", "http://url.com/path")

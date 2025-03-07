@@ -19,7 +19,8 @@
 import contextlib
 import json
 import subprocess
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 from craft_cli import emit
 from craft_parts.packages import Repository
