@@ -59,7 +59,11 @@ jobs:
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UA_TOKEN: ${{ secrets.UA_TOKEN }}
-        run: spread ${{ matrix.spread-jobs }}
+        run: |
+          for i in `seq 1 10`; do
+             echo ========================== RUN $i ==============================
+             spread ${{ matrix.spread-jobs }}
+          done
 
       - name: Discard spread workers
         if: always()
