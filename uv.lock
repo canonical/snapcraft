@@ -161,7 +161,7 @@ filecache = [
 
 [[package]]
 name = "canonical-sphinx"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "furo" },
@@ -169,9 +169,9 @@ dependencies = [
     { name = "myst-parser" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/54/19/b2101265969ba6bfacbb9b3355a32a22abdcccceba61542813f07fe0e965/canonical_sphinx-0.3.0.tar.gz", hash = "sha256:7914a1281e7520a032058e7a511d019fee25a152c032499a7bf9e15852f9d9e7", size = 1051001 }
+sdist = { url = "https://files.pythonhosted.org/packages/7a/17/b5db416b095aeb34a706630564020a19f62ea043d594a067c40c6a20991f/canonical_sphinx-0.4.0.tar.gz", hash = "sha256:00101e7f172ad9d481e4474e0e88ae09b94bcfcfbe353473f1f7e5f37d0001eb", size = 1051897 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/ba/ab2e2113841f88a9725c6c55f4918a3031ef3efad6afd154d9444cd40c8e/canonical_sphinx-0.3.0-py3-none-any.whl", hash = "sha256:55dc07c54038ea7016a5a6a12fafa1bde8558a00009237f5224db1c65e919b0f", size = 1027670 },
+    { url = "https://files.pythonhosted.org/packages/c9/20/264fea36a671347136d3e1b70f52723acb9d6fac116ea863ccf965ce6f6e/canonical_sphinx-0.4.0-py3-none-any.whl", hash = "sha256:97bc68e2be0bcb794d3d8d7048175564f4ce819c26372079d2790c38d48189c9", size = 1028858 },
 ]
 
 [[package]]
@@ -1518,7 +1518,7 @@ dev = [
     { name = "types-setuptools" },
 ]
 docs = [
-    { name = "canonical-sphinx", specifier = "~=0.3.0" },
+    { name = "canonical-sphinx", specifier = "~=0.4.0" },
     { name = "sphinx-autobuild", specifier = "~=2024.2" },
     { name = "sphinx-lint", specifier = "~=1.0" },
     { name = "sphinx-pydantic", specifier = "==0.1.1" },
