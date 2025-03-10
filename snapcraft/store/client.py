@@ -19,8 +19,9 @@
 import os
 import platform
 import time
+from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any, Sequence, cast
+from typing import Any, cast
 
 import craft_store
 import distro

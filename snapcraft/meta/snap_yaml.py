@@ -192,7 +192,7 @@ class Links(SnapcraftMetadata):
         return result
 
     @classmethod
-    def from_project(cls, project: models.Project) -> "Links":
+    def from_project(cls, project: models.Project) -> Links:
         """Create Links from a Project."""
         return cls(
             contact=cls._normalize_value(project.contact),
@@ -231,7 +231,7 @@ class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin i
     )
 
     @classmethod
-    def from_component(cls, component: models.Component) -> "ComponentMetadata":
+    def from_component(cls, component: models.Component) -> ComponentMetadata:
         """Create a ComponentMetadata model from a Component model."""
         return cls.unmarshal(component.marshal())
 
