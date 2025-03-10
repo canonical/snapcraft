@@ -19,10 +19,9 @@
 from __future__ import annotations
 
 import textwrap
-from typing import Any
+from typing import Any, override
 
 from craft_application.util import dump_yaml
-from typing_extensions import override
 
 from snapcraft import models
 from snapcraft.services import Assertion
