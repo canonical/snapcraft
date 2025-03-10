@@ -32,7 +32,6 @@ dependencies = [
     # Further info: https://www.pygit2.org/install.html#version-numbers
     "pygit2~=1.13.0",
     "pylxd ; sys_platform == 'linux'",
-    "pymacaroons",
     "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
@@ -79,6 +78,7 @@ dev = [
     "pyinstaller ; sys_platform == 'win32'",
     # For Tiobe TiCS
     "pylint",
+    "pymacaroons",
     "pyramid",
     "pytest",
     "pytest-cov",

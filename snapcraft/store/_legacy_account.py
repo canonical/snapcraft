@@ -24,7 +24,6 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import craft_store
-import pymacaroons
 from craft_cli import emit
 from overrides import overrides
 from urllib3.util import parse_url
@@ -57,13 +56,6 @@ def _load_potentially_base64_config(config_content: str) -> configparser.ConfigP
             ) from new_parser_error
 
     return parser
-
-
-def _deserialize_macaroon(value) -> pymacaroons.Macaroon:
-    try:
-        return pymacaroons.Macaroon.deserialize(value)
-    except:  # noqa LP: #1733004
-        raise errors.LegacyCredentialsParseError("Failed to deserialize macaroon")
 
 
 def _get_macaroons_from_conf(conf) -> dict[str, str]:
