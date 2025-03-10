@@ -18,11 +18,10 @@
 
 import argparse
 import textwrap
-from typing import Any
+from typing import Any, override
 
 import craft_application.commands
 from craft_cli import emit
-from typing_extensions import override
 
 import snapcraft.errors
 import snapcraft.pack
