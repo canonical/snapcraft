@@ -355,7 +355,7 @@ suites:
       STORE_UPLOAD_URL: https://storage.staging.snapcraftcontent.com
       UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com
 
-  docs/howto/code/:
+  docs/how-to/code/:
     summary: tests how-to guides from the docs
     systems:
       - ubuntu-24.04-64

@@ -21,7 +21,7 @@ How to migrate to a newer base
 
 See `migrating bases`_ for details on migrating to a newer base.
 
-.. _howto-deprecated-base:
+.. _how-to-deprecated-base:
 
 How to use a deprecated base
 ----------------------------
