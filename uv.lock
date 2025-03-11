@@ -465,7 +465,7 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.4.2"
+version = "2.4.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "overrides" },
@@ -475,10 +475,7 @@ dependencies = [
     { name = "requests" },
     { name = "requests-unixsocket2" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f9/88/555880586147563d72fb507d5d3248b1cbc2c95e0333bb9520fc503a16b4/craft_parts-2.4.2.tar.gz", hash = "sha256:1bf610eba2257eecabd9bf9a3a19cb6835b4d2bd00fe7804727e07f27026f471", size = 640367 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/5b/a8289b4f9297683a7cebb4318805187669fc90c971d4dfcd97ff1fec7c93/craft_parts-2.4.2-py3-none-any.whl", hash = "sha256:092dfa0fe3be6c78fa9f2cae70725eb4dd2348b69ad74828584446b50e1fa9f7", size = 449931 },
-]
+sdist = { url = "https://files.pythonhosted.org/packages/96/62/cc1b98031f7689e4a4568ddce82f4d803ae6cc1446a8df99ce284de19959/craft_parts-2.4.3.tar.gz", hash = "sha256:bf52392b51d34215dca8eb43ca0e40bf617005b821ff4c4cdb841390919ad29a", size = 641227 }
 
 [[package]]
 name = "craft-platforms"
@@ -2273,7 +2270,7 @@ requires-dist = [
     { name = "craft-archives", specifier = "~=2.0" },
     { name = "craft-cli", specifier = "~=2.15.0" },
     { name = "craft-grammar", specifier = ">=2.0.1,<3.0.0" },
-    { name = "craft-parts", specifier = "==2.4.2" },
+    { name = "craft-parts", specifier = "==2.4.3" },
     { name = "craft-platforms", specifier = "~=0.6" },
     { name = "craft-providers", specifier = "~=2.1" },
     { name = "craft-store", specifier = ">=3.0.2,<4.0.0" },
