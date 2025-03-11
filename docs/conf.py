@@ -90,6 +90,8 @@ exclude_patterns = [
     "common/craft-parts/reference/plugins/maven_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
+    # Staged files for Discourse migration
+    "tutorials/create-a-snap.rst",
 ]
 
 
