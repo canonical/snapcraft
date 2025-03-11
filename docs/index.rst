@@ -8,7 +8,7 @@ Snapcraft
    :hidden:
 
    tutorials/index
-   howto/index
+   how-to/index
    reference/index
    explanation/index
    release-notes/index

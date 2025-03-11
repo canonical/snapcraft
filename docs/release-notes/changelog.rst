@@ -628,11 +628,11 @@ Documentation
 
 * Add :doc:`reference</reference/components>`,
   :doc:`explanation</explanation/components>`, and
-  :doc:`how-to</howto/components>` for components.
+  :doc:`how-to</how-to/components>` for components.
 
 * Add :doc:`reference</reference/bases>`,
   :doc:`explanation</explanation/bases>`, and
-  :doc:`how-to</howto/bases>` for bases.
+  :doc:`how-to</how-to/bases>` for bases.
 
 For a complete list of commits, check out the `8.4.0`_ release on GitHub.
 
@@ -766,7 +766,7 @@ Documentation
   (`#4842`_).
 
 * Update :doc:`reference</reference/architectures>`,
-  :doc:`how-to</howto/architectures>`, and
+  :doc:`how-to</how-to/architectures>`, and
   :doc:`explanation</explanation/architectures>` for platforms and
   architectures.
 
@@ -1281,7 +1281,7 @@ Components
 
 For more information, see the :doc:`reference</reference/components>`,
 :doc:`explanation</explanation/components>`, and
-:doc:`how-to</howto/components>` documentation pages.
+:doc:`how-to</how-to/components>` documentation pages.
 
 Remote build
 ============
@@ -1443,7 +1443,7 @@ core18
 * Deprecate building snaps using the ``core18`` base.
 
 For more information on how to continue building snaps with the ``core18``
-base, see :ref:`this page<howto-deprecated-base>`.
+base, see :ref:`this page<how-to-deprecated-base>`.
 
 Stage packages
 ##############
