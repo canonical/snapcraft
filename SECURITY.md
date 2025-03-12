@@ -29,5 +29,5 @@ The [Ubuntu Security disclosure and embargo policy] contains more information ab
 what you can expect when you contact us and what we expect from you.
 
 [Bases]: https://canonical-snapcraft.readthedocs-hosted.com/en/latest/reference/bases.html#base-snaps
-[Private Security Report]: https://github.com/canonical/craft-parts/security/advisories/new
+[Private Security Report]: https://github.com/canonical/snapcraft/security/advisories/new
 [Ubuntu Security disclosure and embargo policy]: https://ubuntu.com/security/disclosure-policy
