@@ -8,14 +8,14 @@ Snapcraft
    :hidden:
 
    tutorials/index
-   howto/index
+   how-to/index
    reference/index
    explanation/index
    release-notes/index
 
 .. list-table::
 
-    * - | :ref:`Tutorial <tutorial>`
+    * - | :ref:`Tutorial <tutorials>`
         | **Get started** with a hands-on introduction to Snapcraft
       - | :ref:`How-to guides <how-to-guides>`
         | **Step-by-step guides** covering key operations and common tasks
