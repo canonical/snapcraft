@@ -21,7 +21,7 @@ for Markdown files.
 
 .. collapse:: Markdown lint tool project file
 
-    .. literalinclude:: ../code/craft-a-snap/example-ruby-recipe.yaml
+    .. literalinclude:: ../code/craft/example-ruby-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -30,7 +30,7 @@ for Markdown files.
 Add a part written in Ruby
 --------------------------
 
-.. literalinclude:: ../code/craft-a-snap/example-ruby-recipe.yaml
+.. literalinclude:: ../code/craft/example-ruby-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:

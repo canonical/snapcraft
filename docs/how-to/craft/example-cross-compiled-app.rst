@@ -16,7 +16,7 @@ complete code can be found in `this repository
 
 .. collapse:: hello-curl project
 
-  .. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
+  .. literalinclude:: ../code/craft/example-cross-compiled-app-recipe.yaml
       :caption: snapcraft.yaml
       :language: yaml
 
@@ -42,7 +42,7 @@ and it will only build it for the armhf architecture.
 In the ``hello-curl`` project, the ``platforms`` key to lists several cross-compilation
 targets:
 
-.. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
+.. literalinclude:: ../code/craft/example-cross-compiled-app-recipe.yaml
    :caption: snapcraft.yaml of hello-curl
    :language: yaml
    :start-at: platforms:
@@ -61,7 +61,7 @@ A project building with the Autotools plugin can adjust the options passed to th
 ``configure`` script for a given part with the plugin's
 ``autotools-configure-parameters`` key.
 
-.. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
+.. literalinclude:: ../code/craft/example-cross-compiled-app-recipe.yaml
    :caption: snapcraft.yaml of hello-curl
    :language: yaml
    :start-at: autotools-configure-parameters:
@@ -72,7 +72,7 @@ Satisfy the dependencies
 The ``build-packages`` key specifies which packages will supply the toolchain and
 libraries necessary for cross-compilation.
 
-.. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
+.. literalinclude:: ../code/craft/example-cross-compiled-app-recipe.yaml
    :caption: snapcraft.yaml of hello-curl
    :language: yaml
    :start-at: build-packages:
@@ -82,7 +82,7 @@ libraries necessary for cross-compilation.
 specified for the target platform using the ``package-repositories`` key and the
 ``CRAFT_ARCH_BUILD_FOR`` environment variable.
 
-.. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
+.. literalinclude:: ../code/craft/example-cross-compiled-app-recipe.yaml
    :caption: snapcraft.yaml of hello-curl
    :language: yaml
    :start-at: package-repositories:
@@ -91,7 +91,7 @@ specified for the target platform using the ``package-repositories`` key and the
 To select the correct library for the target platform, include these packages in the
 ``stage-packages`` key with the ``package:repo`` syntax.
 
-.. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
+.. literalinclude:: ../code/craft/example-cross-compiled-app-recipe.yaml
    :caption: snapcraft.yaml of hello-curl
    :language: yaml
    :start-at: stage-packages:
@@ -127,7 +127,7 @@ Since the :file:`/lib/ld-linux-armhf.so.3` library will be present in the base o
 target system, these warnings can be suppressed for this case by including a ``lint``
 section in the project file:
 
-.. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
+.. literalinclude:: ../code/craft/example-cross-compiled-app-recipe.yaml
    :caption: snapcraft.yaml of hello-curl
    :language: yaml
    :start-at: lint:
