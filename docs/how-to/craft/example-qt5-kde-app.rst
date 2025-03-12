@@ -16,7 +16,7 @@ The following code comprises the project file of a Qt5 KDE app, `KCalc
 
 .. collapse:: KCalc project file
 
-    .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
+    .. literalinclude:: ../code/craft/example-qt5-kde-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -25,7 +25,7 @@ The following code comprises the project file of a Qt5 KDE app, `KCalc
 Add an app that uses KDE
 ------------------------
 
-.. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
+.. literalinclude:: ../code/craft/example-qt5-kde-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: apps:
@@ -49,7 +49,7 @@ To add a GTK4 app:
 Add a part written for Qt5 KDE
 ------------------------------
 
-.. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
+.. literalinclude:: ../code/craft/example-qt5-kde-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:
@@ -71,7 +71,7 @@ To add a Qt5 KDE part:
    technical details about how this works.
 #. For ``build-snaps``, list the following dependencies:
 
-   .. literalinclude:: ../code/craft-a-snap/example-qt5-kde-recipe.yaml
+   .. literalinclude:: ../code/craft/example-qt5-kde-recipe.yaml
        :caption: snapcraft.yaml
        :language: yaml
        :dedent: 6

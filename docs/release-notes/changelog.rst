@@ -229,7 +229,7 @@ Documentation
 * Add a :ref:`how-to guide <select-a-build-provider>` for selecting a build
   provider.
 
-* Add :ref:`how-to guides <craft-a-snap>` for crafting snaps for common
+* Add :ref:`how-to guides <how-to-craft>` for crafting snaps for common
   languages, frameworks, and meta build systems.
 
 * Update the :doc:`component documentation </reference/components>` to include

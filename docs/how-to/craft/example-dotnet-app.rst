@@ -18,7 +18,7 @@ returning the current time in cities across the globe.
 
 .. collapse:: whatime project file
 
-    .. literalinclude:: ../code/craft-a-snap/example-dotnet-recipe.yaml
+    .. literalinclude:: ../code/craft/example-dotnet-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -27,7 +27,7 @@ returning the current time in cities across the globe.
 Add a part written for .NET
 ---------------------------
 
-.. literalinclude:: ../code/craft-a-snap/example-dotnet-recipe.yaml
+.. literalinclude:: ../code/craft/example-dotnet-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:
