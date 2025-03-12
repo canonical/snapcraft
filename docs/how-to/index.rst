@@ -8,7 +8,7 @@ How-to guides
 
    set-up-snapcraft
    select-a-build-provider
-   Craft a snap <craft-a-snap/index>
+   Craft a snap <craft/index>
    architectures
    bases
    components

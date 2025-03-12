@@ -1,4 +1,4 @@
-.. _craft-a-snap:
+.. _how-to-craft:
 
 Craft a snap
 ============

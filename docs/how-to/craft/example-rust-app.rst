@@ -20,7 +20,7 @@ The following code comprises the project file of a Rust app, `XSV
 
 .. collapse:: XSV project file
 
-    .. literalinclude:: ../code/craft-a-snap/example-rust-recipe.yaml
+    .. literalinclude:: ../code/craft/example-rust-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -29,7 +29,7 @@ The following code comprises the project file of a Rust app, `XSV
 Add a part written in Rust
 --------------------------
 
-.. literalinclude:: ../code/craft-a-snap/example-rust-recipe.yaml
+.. literalinclude:: ../code/craft/example-rust-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:
