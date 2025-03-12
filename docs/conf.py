@@ -121,6 +121,9 @@ exclude_patterns = [
     "reference/part-environment-variables.rst",
     "reference/project-file.rst",
     "reference/snapcraft-yaml.rst",
+    "explanation/classic-confinement.rst",
+    "explanation/interfaces.rst",
+    "explanation/parts-lifecycle.rst",
 ]
 
 
