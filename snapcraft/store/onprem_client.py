@@ -17,7 +17,7 @@
 """On premises Store Client implementation."""
 
 import os
-from typing import Any, Dict, Final
+from typing import Any, Final
 
 import craft_store.creds
 from craft_store import BaseClient, endpoints, models
@@ -41,7 +41,7 @@ class OnPremClient(BaseClient):
     """On Premises Snapcraft Store Client."""
 
     @overrides
-    def _get_macaroon(self, token_request: Dict[str, Any]) -> str:
+    def _get_macaroon(self, token_request: dict[str, Any]) -> str:
         macaroon_env = os.getenv(constants.ENVIRONMENT_ADMIN_MACAROON)
         if macaroon_env is None:
             raise errors.SnapcraftError(

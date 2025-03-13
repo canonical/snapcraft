@@ -819,11 +819,11 @@ class InvalidExtensionTest(ExtensionTestBase):
 def _environment_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -839,11 +839,11 @@ def _environment_extension_fixture():
 def _build_environment_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -865,11 +865,11 @@ def _build_environment_extension_fixture():
 def _build_environment2_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -891,11 +891,11 @@ def _build_environment2_extension_fixture():
 def _plugin_aware_part_snippet_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -910,7 +910,7 @@ def _plugin_aware_part_snippet_extension_fixture():
             self.parts = {}
 
         @overrides
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             if plugin_name == "catkin":
                 return {}
             return self.part_snippet
@@ -921,11 +921,11 @@ def _plugin_aware_part_snippet_extension_fixture():
 def _plug_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -938,11 +938,11 @@ def _plug_extension_fixture():
 def _plug2_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -955,11 +955,11 @@ def _plug2_extension_fixture():
 def _daemon_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -972,11 +972,11 @@ def _daemon_extension_fixture():
 def _adopt_info_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -989,11 +989,11 @@ def _adopt_info_extension_fixture():
 def _invalid_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):

@@ -1,10 +1,10 @@
 name: build-base-devel
 version: '1.0'
 summary: build-base-devel
-description: Build a base snap with a build-base of devel
+description: Build a snap with a devel build-base
 confinement: strict
 
-type: base
+base: core24
 build-base: devel
 
 # grade must be devel when build-base is devel

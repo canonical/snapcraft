@@ -190,11 +190,11 @@ def _test1_extension_fixture():
         """
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -214,11 +214,11 @@ def _test2_extension_fixture():
         """
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -232,11 +232,11 @@ def _test2_extension_fixture():
 def _test3_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core18", "core20")
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):
@@ -249,11 +249,11 @@ def _test3_extension_fixture():
 def _test4_extension_fixture():
     class ExtensionImpl(Extension):
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core20", "core18")
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         def __init__(self, extension_name, yaml_data):

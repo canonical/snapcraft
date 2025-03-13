@@ -286,7 +286,7 @@ class BuildProviderDebugCommandTestCase(LifecycleCommandsBaseTestCase):
 
         class Provider(ProviderImpl):
             def execute_step(
-                self, step: steps.Step, part_names: Optional[Sequence[str]] = None
+                self, step: steps.Step, part_names: Sequence[str] | None = None
             ) -> None:
                 if part_names is None:
                     part_names = []
@@ -344,11 +344,11 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         execute_step_mock = mock.Mock()
 
         class Provider(ProviderImpl):
-            def pack_project(self, *, output: Optional[str] = None) -> None:
+            def pack_project(self, *, output: str | None = None) -> None:
                 pack_project_mock(output)
 
             def execute_step(
-                self, step: steps.Step, part_names: Optional[Sequence[str]] = None
+                self, step: steps.Step, part_names: Sequence[str] | None = None
             ) -> None:
                 execute_step_mock(step, part_names=part_names)
 
@@ -491,7 +491,7 @@ class BuildProviderCleanCommandTestCase(LifecycleCommandsBaseTestCase):
 
         class Provider(ProviderImpl):
             def execute_step(
-                self, step: steps.Step, part_names: Optional[Sequence[str]] = None
+                self, step: steps.Step, part_names: Sequence[str] | None = None
             ) -> None:
                 if part_names is None:
                     part_names = []

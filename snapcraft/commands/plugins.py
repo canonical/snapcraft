@@ -17,7 +17,7 @@
 """Snapcraft discovery commands."""
 
 import textwrap
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -64,7 +64,7 @@ class ListPluginsCommand(AppCommand):
             raise errors.LegacyFallback()
 
         base = parsed_args.base
-        message: Optional[str] = None
+        message: str | None = None
 
         if base is None:
             try:

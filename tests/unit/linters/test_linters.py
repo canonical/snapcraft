@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import List
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -130,7 +129,7 @@ class TestLinterStatus:
 
 class _TestLinter(Linter):
     @overrides
-    def run(self) -> List[linters.LinterIssue]:
+    def run(self) -> list[linters.LinterIssue]:
         assert self._snap_metadata.name == "mytest"
         return [
             linters.LinterIssue(
@@ -142,7 +141,7 @@ class _TestLinter(Linter):
         ]
 
     @staticmethod
-    def get_categories() -> List[str]:
+    def get_categories() -> list[str]:
         return ["test-1", "test-2"]
 
     def is_file_ignored(self, filepath: Path, category: str = "") -> bool:

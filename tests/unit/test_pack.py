@@ -29,13 +29,13 @@ def test_pack_snap(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", new_dir, new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -49,13 +49,13 @@ def test_pack_snap_compression_none(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", new_dir, new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -69,13 +69,13 @@ def test_pack_snap_compression(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", "--compression", "zz", new_dir, new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -89,13 +89,13 @@ def test_pack_snap_output_file_output_directory_cwd(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", "--filename", "test.snap", new_dir, new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -114,13 +114,13 @@ def test_pack_snap_output_file_output_directory_existing(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", "--filename", "test.snap", new_dir, output_directory],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -138,7 +138,7 @@ def test_pack_snap_output_file_output_directory_non_existant(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             [
@@ -151,7 +151,7 @@ def test_pack_snap_output_file_output_directory_non_existant(mocker, new_dir):
             ],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -165,13 +165,13 @@ def test_pack_snap_output_directory_cwd_no_filename(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", new_dir, new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -190,13 +190,13 @@ def test_pack_snap_output_file_output_directory_existing_no_filename(mocker, new
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", new_dir, output_directory],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -219,13 +219,13 @@ def test_pack_snap_file_name_missing_parameters(mocker, new_dir, parameters):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", new_dir, new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -245,13 +245,13 @@ def test_pack_snap_file_name_valid(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", "--filename", "hello_1.0_armhf.snap", new_dir, new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 
@@ -271,13 +271,13 @@ def test_pack_snap_use_output_name_over_name_version_arch(mocker, new_dir):
             ["snap", "pack", "--check-skeleton", new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
         call(
             ["snap", "pack", "--filename", "test.snap", new_dir, new_dir],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         ),
     ]
 

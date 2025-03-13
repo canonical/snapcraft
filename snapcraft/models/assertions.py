@@ -18,11 +18,10 @@
 
 import numbers
 from collections import abc
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 import pydantic
 from craft_application import models
-from typing_extensions import Self
 
 
 def cast_dict_scalars_to_strings(data: dict) -> dict:
@@ -48,7 +47,7 @@ def _to_string(data: Any) -> Any:
     if isinstance(data, abc.Collection):
         return [_to_string(i) for i in data]
 
-    if isinstance(data, (numbers.Number, bool)):
+    if isinstance(data, numbers.Number | bool):
         return str(data)
 
     return data

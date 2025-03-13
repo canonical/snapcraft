@@ -16,13 +16,11 @@
 
 """External metadata helpers."""
 
-from typing import Optional
-
 from . import appstream
 from .extracted_metadata import ExtractedMetadata
 
 
-def extract_metadata(file_relpath: str, *, workdir: str) -> Optional[ExtractedMetadata]:
+def extract_metadata(file_relpath: str, *, workdir: str) -> ExtractedMetadata | None:
     """Retrieve external metadata from part files.
 
     :param file_relpath: Relative path to the file containing metadata.

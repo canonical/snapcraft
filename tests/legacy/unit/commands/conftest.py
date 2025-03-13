@@ -27,7 +27,7 @@ def click_run():
     """Run commands using Click's testing backend."""
     cli = CliRunner()
 
-    def runner(args: List[str]):
+    def runner(args: list[str]):
         return cli.invoke(run, args)
 
     return runner

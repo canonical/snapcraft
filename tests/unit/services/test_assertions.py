@@ -19,13 +19,12 @@
 import json
 import tempfile
 import textwrap
-from typing import Any
+from typing import Any, override
 from unittest import mock
 
 import craft_store.errors
 import pytest
 from craft_application.models import CraftBaseModel
-from typing_extensions import override
 
 from snapcraft import const, errors
 from tests.unit.store.utils import FakeResponse

@@ -8,6 +8,8 @@ bug fixes and backwards-incompatible changes in each version. It also contains t
 release and support policies for Snapcraft.
 
 
+.. _current-releases:
+
 Current releases
 ----------------
 
