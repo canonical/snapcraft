@@ -53,6 +53,7 @@ sphinx_tabs_disable_tab_closing = True
 extensions.extend(
     (
         "sphinx.ext.ifconfig",
+        "sphinx.ext.intersphinx",
         "sphinxcontrib.details.directive",
         "sphinx_toolbox.collapse",
         "sphinxext.rediraffe",
@@ -71,6 +72,7 @@ exclude_patterns = [
     # documents (so they generate "duplicate label" errors) or they aren't
     # used in this documentation at all (so they generate "unreferenced"
     # errors).
+    "common/craft-parts/explanation/lifecycle.rst",
     "common/craft-parts/explanation/overlay_parameters.rst",
     "common/craft-parts/explanation/overlays.rst",
     "common/craft-parts/explanation/how_parts_are_built.rst",
@@ -117,8 +119,12 @@ exclude_patterns = [
     "reference/snapcraft-yaml.rst",
     "explanation/classic-confinement.rst",
     "explanation/interfaces.rst",
-    "explanation/parts-lifecycle.rst",
 ]
+
+
+intersphinx_mapping = {
+    "craft-parts": ("https://canonical-craft-parts.readthedocs-hosted.com/en/latest/", None),
+}
 
 
 def generate_cli_docs(nil):
