@@ -65,32 +65,12 @@ with Multipass or container instance with LXD, download the necessary packages
 and begin building the snap.
 
 
-The build lifecycle
+The parts lifecycle
 -------------------
 
-During building, Snapcraft loops through several steps, collectively known as
-the :ref:`build lifecycle <lifecycle>`. Snapcraft inherits much of the build
-DNA from other craft tools authored by Canonical, and the specific actions are:
-
-#. During the **pull** step, Snapcraft downloads or retrieves the components
-   needed to build the relevant part. For instance, if source points to a Git
-   repository, the pull step will clone that repository.
-#. During the **build** step, Snapcraft constructs the part from the previously
-   pulled components. Since apps are compiled from multiple languages (C, Java,
-   Go, Rust, Python, and so on), the build definition also needs to include a
-   specification on how to construct the part. This is done by declaring a
-   :ref:`plugin <plugins>`. Parts are processed linearly, unless there is a
-   dependency order declared.
-#. During the **stage** step, Snapcraft copies the built parts into the staging
-   area. Parts aren't ordered at this point, and there might be an additional
-   level of processing to ensure the snap contains the required files, and that
-   there are no conflicts between parts.
-#. During the **prime** step, Snapcraft copies the staged components into the
-   priming area, where the files are placed in their final paths for the
-   resulting snap. The prime step is similar to the stage step, but it may
-   exclude certain components from the latter.
-#. During the **pack** step, Snapcraft bundles the assembled components in the
-   priming area into a single archive.
+During build, Snapcraft loops through several steps, collectively known as the
+:ref:`parts lifecycle <explanation-parts-lifecycle>`. Snapcraft inherits much of the
+build DNA from other craft tools authored by Canonical.
 
 
 The result
