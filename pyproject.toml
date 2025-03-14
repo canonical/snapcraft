@@ -98,7 +98,6 @@ docs = [
     "pyspelling",
 ]
 lint = [
-    "yamllint~=1.34",
     "codespell[toml]",
     { include-group = "types" },
 ]
@@ -252,7 +251,7 @@ lint.select = [
 lint.ignore = [
     # These following copy the flake8 configuration
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
-    "E501",  # Line too long
+    "E501",  # Line too long (reason: ruff will automatically fix this for us)
     # The following copy our pydocstyle configuration
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
     "D107",  # Missing docstring in __init__ (reason: documented in class docstring)

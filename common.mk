@@ -16,6 +16,9 @@ endif
 PRETTIER=npm exec --package=prettier -- prettier --log-level warn
 PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 
+# Cutoff (in seconds) before a test is considered slow by pytest
+SLOW_CUTOFF_TIME ?= 1
+
 # By default we should not update the uv lock file here.
 export UV_FROZEN := true
 
@@ -196,6 +199,10 @@ test-coverage:  ## Generate coverage report
 	uv run coverage xml -o coverage.xml
 	uv run coverage report -m
 	uv run coverage html
+
+.PHONY: test-find-slow
+test-find-slow:  ##- Identify slow tests. Set cutoff time in seconds with SLOW_CUTOFF_TIME
+	uv run pytest --durations 0 --durations-min $(SLOW_CUTOFF_TIME)
 
 .PHONY: docs
 docs:  ## Build documentation
