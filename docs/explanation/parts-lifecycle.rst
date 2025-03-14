@@ -43,7 +43,7 @@ During build, a part goes through five steps:
 3. **Stage**. Copies the built components into the staging area.
 
    This is the first time all the different parts that make up the snap are actually
-   placed in the same directory. It's pososible for multiple parts to provide clashing
+   placed in the same directory. It's possible for multiple parts to provide clashing
    file names. The
    :literalref:`stage<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-stage-97>`
    key allows or blocks files coming from the part to circumvent such conflicts. It's
