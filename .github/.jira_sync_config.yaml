@@ -2,7 +2,7 @@ settings:
   components:
     - Starbase
   labels:
-    - Triaged
+    - "Status: Triaged"
   # Adds a comment with the JIRA ID
   add_gh_comment: true
   # Reflect changes on JIRA
@@ -16,7 +16,11 @@ settings:
     opened: Triaged
     closed: done
   label_mapping:
-    enhancement: Story
-    bug: Bug
-    spike: Spike
-    epic: Epic
+    "Type: Bug": Bug
+    "Type: Cleanup": Task
+    "Type: Documentation": Task
+    "Type: Enhancement": Task
+    "Type: Invalid": Task
+    "Type: Question": Spike
+    "Type: Refactor": Task
+    "Type: Research": Spike
