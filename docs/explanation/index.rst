@@ -12,5 +12,5 @@ Explanation
    remote-build
    /common/craft-parts/explanation/filesets
    parts
-   /common/craft-parts/explanation/lifecycle
+   parts-lifecycle
    /common/craft-parts/explanation/dump_plugin
