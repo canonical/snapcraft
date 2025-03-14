@@ -184,25 +184,25 @@ each step the parts are processed in alphabetical order.
     :caption: snapcraft.yaml
 
     parts:
-        A:
-            plugin: go
-        C:
-            plugin: go
-        B:
-            plugin: go
+      Alex:
+        plugin: go
+      Cam:
+        plugin: go
+      Blair:
+        plugin: go
 
 
 .. terminal::
 
-    Pulling A
-    Pulling B
-    Pulling C
-    Building A
-    Building B
-    Building C
-    Staging A
-    Staging B
-    Staging C
+    Pulling Alex
+    Pulling Blair
+    Pulling Cam
+    Building Alex
+    Building Blair
+    Building Cam
+    Staging Alex
+    Staging Blair
+    Staging Cam
     ...
 
 
@@ -213,30 +213,30 @@ Example 2 -- Order override
     :caption: snapcraft.yaml
 
     parts:
-        A:
-            plugin: go
-            after:
-                - C
-        C:
-            plugin: go
-        B:
-            plugin: go
+      Alex:
+        plugin: go
+        after:
+          - Cam
+      Blair:
+        plugin: go
+      Cam:
+        plugin: go
 
 
 .. terminal::
 
-    Pulling C
-    Pulling A
-    Pulling B
-    Building C
-    Skipping pull for C (already ran)
-    Skipping build for C (already ran)
-    Staging C (required to build 'A')
-    Building A
-    Building B
-    Skipping stage for C (already ran)
-    Staging A
-    Staging B
+    Pulling Cam
+    Pulling Alex
+    Pulling Blair
+    Building Cam
+    Skipping pull for Cam (already ran)
+    Skipping build for Cam (already ran)
+    Staging Cam (required to build 'A')
+    Building Alex
+    Building Blair
+    Skipping stage for Cam (already ran)
+    Staging Alex
+    Staging Blair
     ...
 
 In the above example, the part named ``A`` is built after the part named ``C`` has been
