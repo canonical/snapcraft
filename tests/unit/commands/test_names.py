@@ -217,7 +217,9 @@ class TestNames:
         )
 
         if command_class.hidden:
-            emitter.assert_progress("This command is deprecated: use 'names' instead")
+            emitter.assert_progress(
+                "This command is deprecated: use 'names' instead", permanent=True
+            )
         emitter.assert_message(
             dedent(
                 """\
@@ -241,7 +243,10 @@ class TestNames:
         )
 
         if command_class.hidden:
-            emitter.assert_progress("This command is deprecated: use 'names' instead")
+            emitter.assert_progress(
+                "This command is deprecated: use 'names' instead",
+                permanent=True,
+            )
 
         emitter.assert_message(
             json.dumps(
