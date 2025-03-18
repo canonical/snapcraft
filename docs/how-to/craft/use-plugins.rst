@@ -1,12 +1,7 @@
-.. _how-to-craft:
+.. _how-to-use-plugins:
 
-Craft a snap
-============
-
-Snapcraft can package apps and programs from multiple languages, frameworks,
-and meta build systems. You can create snaps from apps you've already built and
-zipped, or directly from source. No matter their underlying code, all apps gain
-the same benefits from being packed into snaps.
+Use plugins
+-----------
 
 Snapcraft uses special :ref:`plugins` and extensions to hook into and manage
 the different languages and frameworks.
@@ -17,14 +12,13 @@ to learn how to craft a snap with a given plugin.
 
 
 Platform-agnostic
------------------
+~~~~~~~~~~~~~~~~~
 
 :ref:`example-pre-built-app`
-:ref:`example-cross-compiled-app`
 
 
 Languages
----------
+~~~~~~~~~
 
 - :ref:`example-python-app`
 - :ref:`example-c-or-cpp-app`
@@ -48,30 +42,3 @@ Frameworks
 - :ref:`example-moos-app`
 - :ref:`example-ros-2-app`
 - :ref:`example-ros-1-app`
-
-
-.. toctree::
-  :maxdepth: 1
-  :hidden:
-
-  enable-classic-confinement
-  use-plugins
-  example-pre-built-app
-  example-python-app
-  example-c-or-cpp-app
-  example-java-app
-  example-go-app
-  example-rust-app
-  example-node-app
-  example-ruby-app
-  example-gtk4-app
-  example-gtk3-app
-  example-gtk2-app
-  example-qt5-kde-app
-  example-cross-compiled-app
-  example-flutter-app
-  example-electron-apps
-  example-dotnet-app
-  example-moos-app
-  example-ros-2-app
-  example-ros-1-app

@@ -18,7 +18,7 @@ demonstration of a clicker window for GNOME.
 
 .. collapse:: Flutter app project file
 
-    .. literalinclude:: ../code/craft/example-flutter-recipe.yaml
+    .. literalinclude:: code/example-flutter-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -27,7 +27,7 @@ demonstration of a clicker window for GNOME.
 Add an app written for Flutter
 ------------------------------
 
-.. literalinclude:: ../code/craft/example-flutter-recipe.yaml
+.. literalinclude:: code/example-flutter-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:
