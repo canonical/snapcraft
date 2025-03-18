@@ -17,7 +17,7 @@ The following code comprises the project file of a GTK3 app, `foliate
 
 .. collapse:: foliate project file
 
-    .. literalinclude:: ../code/craft/example-gtk3-recipe.yaml
+    .. literalinclude:: code/example-gtk3-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -26,7 +26,7 @@ The following code comprises the project file of a GTK3 app, `foliate
 Add an app that uses GNOME
 --------------------------
 
-.. literalinclude:: ../code/craft/example-gtk3-recipe.yaml
+.. literalinclude:: code/example-gtk3-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: apps:
@@ -51,7 +51,7 @@ To add a GTK4 app:
 Add a part written for GTK3
 ---------------------------
 
-.. literalinclude:: ../code/craft/example-gtk3-recipe.yaml
+.. literalinclude:: code/example-gtk3-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:
@@ -78,7 +78,7 @@ To add a GTK4 part:
 Add required slots
 ------------------
 
-.. literalinclude:: ../code/craft/example-gtk3-recipe.yaml
+.. literalinclude:: code/example-gtk3-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :lines: 39-
