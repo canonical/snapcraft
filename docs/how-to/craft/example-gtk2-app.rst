@@ -17,7 +17,7 @@ The following code comprises the project file of a GTK2 app, the legacy `Arduino
 
 .. collapse:: Arduino IDE project file
 
-    .. literalinclude:: ../code/craft/example-gtk2-recipe.yaml
+    .. literalinclude:: code/example-gtk2-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -26,7 +26,7 @@ The following code comprises the project file of a GTK2 app, the legacy `Arduino
 Add an app that uses GNOME
 --------------------------
 
-.. literalinclude:: ../code/craft/example-gtk2-recipe.yaml
+.. literalinclude:: code/example-gtk2-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: apps:
@@ -49,7 +49,7 @@ To add a GTK2 app:
 Add a part written for GTK2
 ---------------------------
 
-.. literalinclude:: ../code/craft/example-gtk2-recipe.yaml
+.. literalinclude:: code/example-gtk2-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :dedent: 2
@@ -69,7 +69,7 @@ example.
 Add required plugs
 ------------------
 
-.. literalinclude:: ../code/craft/example-gtk2-recipe.yaml
+.. literalinclude:: code/example-gtk2-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :lines: 98-

@@ -21,7 +21,7 @@ power and cooling components in PCs.
 
 .. collapse:: liquidctl project file
 
-    .. literalinclude:: ../code/craft/example-python-recipe.yaml
+    .. literalinclude:: code/example-python-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -30,7 +30,7 @@ power and cooling components in PCs.
 Add a part written in Python
 ----------------------------
 
-.. literalinclude:: ../code/craft/example-python-recipe.yaml
+.. literalinclude:: code/example-python-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:
