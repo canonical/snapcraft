@@ -22,7 +22,7 @@ local weather information.
 
 .. collapse:: wethr project file
 
-    .. literalinclude:: ../code/craft/example-node-recipe.yaml
+    .. literalinclude:: code/example-node-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -31,7 +31,7 @@ local weather information.
 Add a part written in Node
 --------------------------
 
-.. literalinclude:: ../code/craft/example-node-recipe.yaml
+.. literalinclude:: code/example-node-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:

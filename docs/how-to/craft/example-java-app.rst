@@ -21,7 +21,7 @@ power and cooling components in PCs.
 
 .. collapse:: Cal project file
 
-    .. literalinclude:: ../code/craft/example-java-recipe.yaml
+    .. literalinclude:: code/example-java-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -30,7 +30,7 @@ power and cooling components in PCs.
 Add a part written in Java
 --------------------------
 
-.. literalinclude:: ../code/craft/example-java-recipe.yaml
+.. literalinclude:: code/example-java-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :dedent: 2
@@ -47,7 +47,7 @@ To declare a Java part:
 #. Set ``plugin: maven``.
 #. For ``build-packages``, list the following dependencies:
 
-   .. literalinclude:: ../code/craft/example-java-recipe.yaml
+   .. literalinclude:: code/example-java-recipe.yaml
        :caption: snapcraft.yaml
        :language: yaml
        :start-at: - maven
