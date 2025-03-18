@@ -8,11 +8,30 @@ the command-line. This guide highlights commands for checking the status of a sn
 releases as well as its visibility on the Snap Store.
 
 
+Log in to the Snap Store
+------------------------
+
+First, you must log in to the Snap Store with your Ubuntu One account. If you do not
+already have an account, create one `here <https://login.ubuntu.com/>`_.
+
+To log in to an existing account with Snapcraft, run:
+
+.. code-block:: yaml
+
+    snapcraft login
+
+
 Check the status of releases
 ----------------------------
 
-Run the ``snapcraft status`` command followed by a snap's name to check the status of
-its releases.
+To check the status of a snap's releases, run:
+
+.. code-block:: yaml
+
+    snapcraft status <snap-name>
+
+Assuming you are the owner or a collaborator of the provided snap, ``snapcraft status``
+will display output similar to the following example.
 
 .. terminal::
     :input: snapcraft status <snap-name>
@@ -46,8 +65,14 @@ deployment target of 30% would result in output similar to:
 Check the visibility of the snap
 --------------------------------
 
-Run the ``snapcraft names`` command to check the visibility status of all snaps
-associated with your developer account.
+To check the visibility of a snap, run:
+
+.. code-block:: yaml
+
+    snapcraft names
+
+This will display the name, registration date, and visibility status of all snaps
+associated with the current account.
 
 .. terminal::
     :input: snapcraft names
