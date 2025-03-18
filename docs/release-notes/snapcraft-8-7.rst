@@ -115,11 +115,15 @@ The following issues have been resolved in Snapcraft 8.7:
   snaps.
 - `#5250`_ Resources path for ``QtWebEngineProcess`` wasn't exported for snaps
   using the KDE Neon 6 extension.
+- `#5340`_ Always show deprecation warnings for ``snapcraft list`` and
+  ``snapcraft list-registered`` commands.
 - `craft-parts#978`_ The ``source-subdir`` field was ignored for the
   :ref:`Go Use plugin<craft_parts_go_use_plugin>`.
 - `craft-parts#991`_ Classic snaps using the
   :ref:`uv plugin<craft_parts_uv_plugin>` would fail to find the Python
   interpreter included in the snap itself.
+- `craft-parts#1025`_ The final lines of stdout or stderr when building a part
+  may not be logged.
 - `craft-application#600`_ The same build environment may be re-used for platforms with
   the same ``build-on`` and ``build-for`` architectures.
 - `craft-application#618`_ The remote builder would clean up projects after
@@ -144,10 +148,12 @@ and :literalref:`@sergio-costas<https://github.com/sergio-costas>`
 .. _#4996: https://github.com/canonical/snapcraft/issues/4996
 .. _#5250: https://github.com/canonical/snapcraft/pull/5250
 .. _#5258: https://github.com/canonical/snapcraft/pull/5258
+.. _#5340: https://github.com/canonical/snapcraft/pull/5340
 .. _craft-application#600: https://github.com/canonical/craft-application/issues/600
 .. _craft-application#618: https://github.com/canonical/craft-application/issues/618
 .. _craft-application#619: https://github.com/canonical/craft-application/issues/619
 .. _craft-application#620: https://github.com/canonical/craft-application/issues/620
 .. _craft-parts#978: https://github.com/canonical/craft-parts/issues/978
 .. _craft-parts#991: https://github.com/canonical/craft-parts/issues/991
+.. _craft-parts#1025: https://github.com/canonical/craft-parts/issues/1025
 .. _pkg-config: https://www.freedesktop.org/wiki/Software/pkg-config/
