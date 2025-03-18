@@ -7,6 +7,7 @@ version: 2
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
+  builder: dirhtml
   configuration: docs/conf.py
 
 # Optionally build your docs in additional formats such as PDF
