@@ -418,7 +418,7 @@ class LegacyStoreClientCLI:
             },
         )
 
-    def notify_upload(  # noqa: PLR0913[too-many-arguments]
+    def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
         snap_name: str,
@@ -622,7 +622,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         emit.debug(f"Skipping verification for {snap_name!r}")
 
     @overrides
-    def notify_upload(  # noqa: PLR0913[too-many-arguments]
+    def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
         snap_name: str,
