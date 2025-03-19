@@ -3,10 +3,11 @@
 Check a snap's status
 =====================
 
-With Snapcraft, snap authors can easily monitor the status of their published snaps from
-the command-line. This guide highlights commands for checking the status of a snap's
-releases as well as its visibility on the Snap Store.
+From the terminal, you can check the status of your published snap, its releases, and
+its visibility.
 
+.. If you prefer to monitor your snaps in a web browser, you can `check your snap's
+   status on the Snap Store <>`_.
 
 Log in to the Snap Store
 ------------------------
@@ -14,7 +15,7 @@ Log in to the Snap Store
 First, you must log in to the Snap Store with your Ubuntu One account. If you do not
 already have an account, create one `here <https://login.ubuntu.com/>`_.
 
-To log in to an existing account with Snapcraft, run:
+To log in to your account in the terminal, run:
 
 .. code-block:: yaml
 
@@ -24,14 +25,17 @@ To log in to an existing account with Snapcraft, run:
 Check the status of releases
 ----------------------------
 
-To check the status of a snap's releases, run:
+A snap's status is comprised of all its releases. When you check the status, the store
+returns the state of all channels, tracks, and architectures that you've published for.
+
+To check the status of a snap, run:
 
 .. code-block:: yaml
 
     snapcraft status <snap-name>
 
-Assuming you are the owner or a collaborator of the provided snap, ``snapcraft status``
-will display output similar to the following example.
+If your account is the author of the selected snap, the output contains details similar
+to the following example.
 
 .. terminal::
     :input: snapcraft status <snap-name>
@@ -46,10 +50,9 @@ will display output similar to the following example.
                       beta       46dbf20    95
                       edge       61d336a    128
 
-If a progressive release is in progress, ``snapcraft status`` will also display the
-current deployment progress towards the percentages provided when the progressive
-release was created. For example, a progressive release into the stable channel with a
-deployment target of 30% would result in output similar to:
+If a progressive release is in progress, the output also contains the current progress
+toward its target deployment percentage. For example, a progressive release of the
+stable channel with a deployment target of 30% would produce output similar to:
 
 .. terminal::
     :input: snapcraft status <snap-name>
@@ -62,17 +65,17 @@ deployment target of 30% would result in output similar to:
                       edge       -          -           -
 
 
-Check the visibility of the snap
---------------------------------
+Check the public visibility of your snaps
+-----------------------------------------
 
-To check the visibility of a snap, run:
+To check the public visibility of all the snaps you registered on the store, run:
 
 .. code-block:: yaml
 
     snapcraft names
 
-This will display the name, registration date, and visibility status of all snaps
-associated with the current account.
+This returns the name, registration date, and visibility of all snaps associated with
+the current account.
 
 .. terminal::
     :input: snapcraft names
