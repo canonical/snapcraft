@@ -8,8 +8,8 @@ How-to guides
 
    set-up-snapcraft
    select-a-build-provider
-   Craft a snap <craft/index>
-   publish/check-a-snaps-status
+   Craft <craft/index>
+   Publish <publish/index>
    architectures
    bases
    components
