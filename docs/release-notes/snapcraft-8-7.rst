@@ -117,6 +117,7 @@ The following issues have been resolved in Snapcraft 8.7:
   using the KDE Neon 6 extension.
 - `#5340`_ Always show deprecation warnings for ``snapcraft list`` and
   ``snapcraft list-registered`` commands.
+- `#5330`_ Properly quote environment variables when using the Crystal plugin.
 - `craft-parts#978`_ The ``source-subdir`` field was ignored for the
   :ref:`Go Use plugin<craft_parts_go_use_plugin>`.
 - `craft-parts#991`_ Classic snaps using the
@@ -149,6 +150,7 @@ and :literalref:`@sergio-costas<https://github.com/sergio-costas>`
 .. _#5250: https://github.com/canonical/snapcraft/pull/5250
 .. _#5258: https://github.com/canonical/snapcraft/pull/5258
 .. _#5340: https://github.com/canonical/snapcraft/pull/5340
+.. _#5330: https://github.com/canonical/snapcraft/issues/5330
 .. _craft-application#600: https://github.com/canonical/craft-application/issues/600
 .. _craft-application#618: https://github.com/canonical/craft-application/issues/618
 .. _craft-application#619: https://github.com/canonical/craft-application/issues/619
