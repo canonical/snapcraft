@@ -104,7 +104,6 @@ exclude_patterns = [
     "how-to/debug/use-the-classic-linter.rst",
     "how-to/debug/use-the-library-linter.rst",
     "how-to/publish/build-snaps-remotely.rst",
-    "how-to/publish/check-a-snaps-status.rst",
     "how-to/publish/gather-snap-metrics-and-statistics.rst",
     "how-to/publish/manage-releases.rst",
     "how-to/publish/manage-snaps-on-the-snap-store.rst",
