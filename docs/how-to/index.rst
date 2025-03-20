@@ -10,6 +10,7 @@ How-to guides
    select-a-build-provider
    Craft <craft/index>
    Publish <publish/index>
+   Debug <debug/index>
    architectures
    bases
    components
