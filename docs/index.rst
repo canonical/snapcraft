@@ -36,11 +36,3 @@ and constructive feedback.
 * `Ubuntu Code of Conduct <https://ubuntu.com/community/code-of-conduct>`_.
 * `Canonical contributor licenses agreement
   <https://ubuntu.com/legal/contributors>`_.
-
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
