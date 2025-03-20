@@ -5,3 +5,5 @@ Debug a snap
 
 .. toctree::
     :hidden:
+
+    disable-a-linter
