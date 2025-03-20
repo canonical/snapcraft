@@ -12,6 +12,7 @@ the same benefits from being packed into snaps.
   :maxdepth: 1
   :hidden:
 
+  configure-distribution-information
   enable-classic-confinement
   use-plugins
   example-pre-built-app
