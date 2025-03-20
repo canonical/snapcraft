@@ -290,6 +290,9 @@ ignore = [
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
 
+[tool.ruff.lint.flake8-builtins]
+strict-checking = true
+
 [tool.ruff.lint.pydocstyle]
 ignore-decorators = [  # Functions with these decorators don't have to have docstrings.
     "typing.overload",  # Default configuration
