@@ -131,8 +131,6 @@ def extension_source(default_project):
 
 @pytest.mark.usefixtures("fake_extension")
 def test_application_expand_extensions(emitter, monkeypatch, extension_source, new_dir):
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
-
     (new_dir / "snap").mkdir()
     (new_dir / "snap/snapcraft.yaml").write_text(json.dumps(extension_source))
 
@@ -167,7 +165,6 @@ def test_application_extra_yaml_transforms(
     monkeypatch, extension_source, new_dir, emitter
 ):
     """Test that extra_yaml_transforms applies root keywords and expands extensions."""
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
     extension_source["build-packages"] = [{"to s390x": "test-package"}]
     extension_source["build-snaps"] = [{"to s390x": "test-snap"}]
 
@@ -191,7 +188,6 @@ def test_application_extra_yaml_transforms(
 
 
 def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
     monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
 
     (new_dir / "snap").mkdir()

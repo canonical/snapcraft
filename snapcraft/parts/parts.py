@@ -32,7 +32,7 @@ from xdg import BaseDirectory  # type: ignore
 from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts.extract_metadata import extract_lifecycle_metadata
-from snapcraft.services.lifecycle import get_prime_dirs_from_project
+from snapcraft.utils import get_prime_dirs_from_project
 
 _LIFECYCLE_STEPS = {
     "pull": Step.PULL,
