@@ -2,13 +2,11 @@
 
 # Snapcraft
 
-[![snapcraft](https://snapcraft.io/snapcraft/badge.svg)](https://snapcraft.io/snapcraft)
-[![Documentation
-Status](https://readthedocs.com/projects/canonical-snapcraft/badge/?version=latest)](https://canonical-snapcraft.readthedocs-hosted.com/en/latest/?badge=latest)
-[![Scheduled spread
-tests](https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml/badge.svg?branch=main)](https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml)
-[![Coverage Status][codecov-image]][codecov-url] [![Code style:
-ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Snapcraft][snapcraft-badge]][snapcraft-site]
+[![Documentation Status][rtd-badge]][rtd-latest]
+[![Spread tests][gha-spread-badge]][gha-spread]
+[![Codecov Status][codecov-badge]][codecov-status]
+[![Ruff status][ruff-badge]][ruff-site]
 
 **Snapcraft** is the command-line build tool for packaging and distributing software and
 apps in the snap container format. It solves the problems of dependency management and
@@ -111,5 +109,13 @@ Snapcraft is released under the [GPL-3.0 license](LICENSE).
 
 © 2015-2025 Canonical Ltd.
 
-[codecov-image]: https://codecov.io/github/canonical/snapcraft/coverage.svg?branch=master
-[codecov-url]: https://codecov.io/github/canonical/snapcraft?branch=master
+[snapcraft-badge]: https://snapcraft.io/snapcraft/badge.svg
+[snapcraft-site]: https://snapcraft.io/snapcraft
+[rtd-badge]: https://readthedocs.com/projects/canonical-snapcraft/badge/?version=latest
+[rtd-latest]: https://canonical-snapcraft.readthedocs-hosted.com/en/latest/?badge=latest
+[gha-spread-badge]: https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml/badge.svg?branch=main
+[gha-spread]: https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml
+[ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+[ruff-site]: https://github.com/astral-sh/ruff
+[codecov-badge]: https://codecov.io/github/canonical/snapcraft/coverage.svg?branch=master
+[codecov-status]: https://codecov.io/github/canonical/snapcraft?branch=master
