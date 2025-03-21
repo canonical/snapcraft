@@ -33,7 +33,7 @@ After you add all your project's build and runtime details to the project file, 
 your project into a snap with:
 
 ```bash
-snapcraft
+snapcraft pack
 ```
 
 Your project can be registered on public and private app stores, including the Snap
