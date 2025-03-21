@@ -30,8 +30,9 @@ import pytest
         (True, True, pathlib.Path("launchpad-credentials")),
     ],
 )
+@pytest.mark.usefixtures("emitter")
 def test_credentials_filepaths(
-    new_exists, legacy_exists, expected, remote_build_service, mocker, new_dir
+    new_exists, legacy_exists, expected, fake_services, mocker, new_dir
 ):
     """Load legacy credentials only when they exist and the new ones do not."""
     mocker.patch("platformdirs.user_data_path", return_value=new_dir)
@@ -40,6 +41,7 @@ def test_credentials_filepaths(
     if legacy_exists:
         (new_dir / "provider/launchpad/credentials").mkdir(parents=True)
         (new_dir / "provider/launchpad/credentials").touch()
+    remote_build_service = fake_services.get("remote_build")
 
     credentials_filepath = remote_build_service.credentials_filepath
 
