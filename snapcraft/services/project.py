@@ -1,0 +1,109 @@
+# Copyright 2025 Canonical Ltd.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""Snapcraft Project service."""
+
+import pathlib
+from typing import Any, cast
+
+import craft_cli
+import craft_platforms
+from craft_application import ProjectService
+from overrides import override
+
+from snapcraft.extensions import apply_extensions
+from snapcraft.models.project import ComponentProject, Platform, apply_root_packages
+from snapcraft.parts.yaml_utils import extract_parse_info, get_snap_project
+from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
+from snapcraft.utils import get_effective_base
+
+
+class Project(ProjectService):
+    """Snapcraft-specific project service."""
+
+    __project_file_path: pathlib.Path | None = None
+    parse_info: dict[str, list[str]] = {}
+
+    @override
+    def _app_preprocess_project(
+        self,
+        project: dict[str, Any],
+        *,
+        build_on: str,
+        build_for: str,
+        platform: str,
+    ) -> None:
+        apply_extensions(project, arch=build_on, target_arch=build_for)
+        self.parse_info = extract_parse_info(project)
+        apply_root_packages(project)
+
+    @override
+    def resolve_project_file_path(self) -> pathlib.Path:
+        """Overridden to handle all locations for a snapcraft.yaml (craft-application#583)"""
+        if self.__project_file_path:
+            return self.__project_file_path
+
+        self.__project_file_path = get_snap_project(
+            project_dir=self._project_dir
+        ).project_file
+        craft_cli.emit.trace(f"Project file found at {str(self.__project_file_path)!r}")
+        return self.__project_file_path
+
+    @override
+    def get_partitions_for(
+        self,
+        *,
+        platform: str,
+        build_for: str,
+        build_on: craft_platforms.DebianArchitecture,
+    ) -> list[str] | None:
+        project = self._preprocess(
+            build_for=build_for, build_on=cast(str, build_on), platform=platform
+        )
+        components = ComponentProject.unmarshal(project)
+        return components.get_partitions()
+
+    @override
+    def _app_render_legacy_platforms(self) -> dict[str, craft_platforms.PlatformDict]:
+        project = self.get_raw()
+        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+            str(
+                get_effective_base(
+                    base=project.get("base"),
+                    build_base=project.get("build_base"),
+                    project_type=project.get("project_type"),
+                    name=project.get("name"),
+                    translate_devel=False,  # we want actual "devel" if set
+                )
+            )
+        ].value
+
+        # For backwards compatibility with core22, convert the platforms.
+        if effective_base == "22.04" and project.get("architectures"):
+            platforms: dict[str, craft_platforms.PlatformDict] = {
+                key: cast(craft_platforms.PlatformDict, value.marshal())
+                for key, value in Platform.from_architectures(
+                    project["architectures"]
+                ).items()
+            }
+        else:
+            host_arch = str(craft_platforms.DebianArchitecture.from_host())
+            platforms = {
+                host_arch: {
+                    "build-on": [host_arch],
+                    "build-for": [host_arch],
+                }
+            }
+
+        return platforms

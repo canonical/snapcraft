@@ -24,12 +24,13 @@ from unittest.mock import Mock
 import pytest
 import yaml
 from craft_parts import Features, callbacks, plugins
-from craft_platforms import DebianArchitecture
+from craft_platforms import BuildInfo, DebianArchitecture
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
 from overrides import override
 from pymacaroons import Caveat, Macaroon
 
+from snapcraft import models, services
 from snapcraft.extensions import extension, register, unregister
 
 
@@ -414,15 +415,43 @@ def default_project(extra_project_params):
 
 
 @pytest.fixture()
-def default_factory(default_project):
+def default_factory(request: pytest.FixtureRequest, snapcraft_yaml, new_dir):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import SnapcraftServiceFactory, register_snapcraft_services
 
     register_snapcraft_services()
     factory = SnapcraftServiceFactory(
         app=APP_METADATA,
-        project=default_project,
     )
+    factory.update_kwargs("project", project_dir=new_dir)
+
+    platform = (
+        request.getfixturevalue("fake_platform")
+        if "fake_platform" in request.fixturenames
+        else None
+    )
+    build_for = (
+        str(request.getfixturevalue("build_for"))
+        if "build_for" in request.fixturenames
+        else None
+    )
+    snapcraft_yaml_data = (
+        request.getfixturevalue("snapcraft_yaml_data")
+        if "snapcraft_yaml_data" in request.fixturenames
+        and request.getfixturevalue("snapcraft_yaml_data")
+        else {}
+    )
+
+    file_path = new_dir / "snap" / "snapcraft.yaml"
+    data = {"base": "core24"}
+    data.update(**snapcraft_yaml_data)
+    snapcraft_yaml(filename=file_path, **data)
+
+    try:
+        factory.get("project").configure(platform=platform, build_for=build_for)
+    except RuntimeError as exc:
+        pytest.skip(str(exc))
+
     return factory
 
 
@@ -434,28 +463,19 @@ def app_config(default_factory) -> dict[str, Any]:
     return app.app_config
 
 
-@pytest.fixture()
-def default_build_plan():
-    from craft_application import util
-    from craft_application.models import BuildInfo
-
-    # Set the build info base to match the host's, so we can test in destructive
-    # mode with no issues.
-    arch = str(DebianArchitecture.from_host())
-    base = util.get_host_base()
-
-    return [
-        BuildInfo(
-            platform="generic-x86-64",
-            build_on=arch,
-            build_for=arch,
-            base=base,
-        )
-    ]
+# XXX: rename to fake_build_info
+def default_build_plan(fake_base):
+    arch = DebianArchitecture.from_host()
+    return BuildInfo(
+        platform=str(arch),
+        build_on=arch,
+        build_for=arch,
+        build_base=fake_base,
+    )
 
 
 @pytest.fixture()
-def lifecycle_service(default_project, default_factory, default_build_plan, tmp_path):
+def lifecycle_service(default_project, default_factory, tmp_path):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Lifecycle
 
@@ -465,43 +485,59 @@ def lifecycle_service(default_project, default_factory, default_build_plan, tmp_
         services=default_factory,
         work_dir=tmp_path / "work",
         cache_dir=tmp_path / "cache",
-        build_plan=default_build_plan,
-        partitions=default_project.get_partitions(),
     )
 
 
 @pytest.fixture()
-def provider_service(default_project, default_factory, default_build_plan, tmp_path):
+def provider_service(default_factory, tmp_path):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Provider as ProviderSvc
 
     return ProviderSvc(
         app=APP_METADATA,
         services=default_factory,
-        project=default_project,
         work_dir=tmp_path / "work",
-        build_plan=default_build_plan,
         install_snap=False,
     )
 
 
+@pytest.fixture
+def project_service(snapcraft_yaml, tmp_path) -> type[services.Project]:
+    class FakeProjectService(services.Project):
+        # This is a final method, but we're overriding it here for convenience when
+        # doing internal testing.
+        def _load_raw_project(self):  # type: ignore[reportIncompatibleMethodOverride]
+            file_path = tmp_path / "snap" / "snapcraft.yaml"
+            return snapcraft_yaml(filename=file_path)
+
+        # Don't care if the project file exists during this testing.
+        # Silencing B019 because we're replicating an inherited method.
+        @override
+        def resolve_project_file_path(self) -> Path:
+            return (self._project_dir / f"{self._app.name}.yaml").resolve()
+
+        def set(self, value: models.Project) -> None:
+            """Set the project model. Only for use during testing!"""
+            self._project_model = value
+            # this is from craft-application, why does pyright only flag this in snapcraft?
+            self._platform = next(iter(value.platforms))  # type: ignore[reportCallIssue, reportArgumentType]
+            self._build_for = value.platforms[self._platform].build_for[0]  # type: ignore[reportOptionalSubscript]
+
+    return FakeProjectService
+
+
 @pytest.fixture()
-def package_service(
-    default_build_plan, default_project, default_factory, snapcraft_yaml, tmp_path
-):
+def package_service(default_project, default_factory, snapcraft_yaml, tmp_path):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Package
 
+    # XXX: can I drop this?
     file_path = tmp_path / "snap" / "snapcraft.yaml"
     snapcraft_yaml(filename=file_path)
 
     return Package(
         app=APP_METADATA,
-        project=default_project,
         services=default_factory,
-        snapcraft_yaml_path=file_path,
-        build_plan=default_build_plan,
-        parse_info={},
     )
 
 
@@ -586,8 +622,16 @@ def fake_confdb_assertion():
 
 @pytest.fixture()
 def fake_services(
-    default_factory, lifecycle_service, package_service, remote_build_service
+    default_factory,
+    lifecycle_service,
+    package_service,
+    remote_build_service,
+    project_service,
 ):
+    default_factory.config.setup()
+
+    default_factory.project = project_service
+
     lifecycle_service.setup()
     default_factory.lifecycle = lifecycle_service
 
@@ -598,6 +642,11 @@ def fake_services(
     default_factory.remote_build = remote_build_service
 
     return default_factory
+
+
+@pytest.fixture
+def build_plan_service(fake_services):
+    return fake_services.get("build_plan")
 
 
 @pytest.fixture()

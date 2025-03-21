@@ -20,8 +20,8 @@ from typing import Any, cast
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
-from craft_application.models import BuildInfo, UniqueStrList, VersionStr
-from craft_platforms import DebianArchitecture
+from craft_application.models import UniqueStrList, VersionStr
+from craft_platforms import BuildInfo, DebianArchitecture
 from craft_providers.bases import BaseName
 
 import snapcraft.models
@@ -2129,10 +2129,9 @@ class TestApplyRootPackages:
         data = project_yaml_data()
         data["build-packages"] = ["pkg1", "pkg2"]
         data["build-snaps"] = ["snap3", "snap4"]
+        apply_root_packages(data)
 
-        data_transformed = apply_root_packages(data)
-
-        project = Project.unmarshal(data_transformed)
+        project = Project.unmarshal(data)
 
         assert project.parts["snapcraft/core"]["build-packages"] == ["pkg1", "pkg2"]
         assert project.parts["snapcraft/core"]["build-snaps"] == ["snap3", "snap4"]
@@ -2140,267 +2139,13 @@ class TestApplyRootPackages:
     def test_root_packages_transform_no_affect(self, project_yaml_data):
         """Test that nothing is applied if there are not build-packages or build-snaps."""
         data = project_yaml_data()
+        apply_root_packages(data)
 
-        data_transformed = apply_root_packages(data)
-
-        project = Project.unmarshal(data_transformed)
+        project = Project.unmarshal(data)
 
         assert project.build_packages is None
         assert project.build_snaps is None
         assert "snapcraft/core" not in project.parts
-
-
-@pytest.mark.parametrize(
-    ("platforms", "expected_build_infos"),
-    [
-        pytest.param(
-            {"amd64": None},
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="amd64",
-                )
-            ],
-            id="single_platform_as_arch",
-        ),
-        pytest.param(
-            {
-                "s390x": {
-                    "build-on": "s390x",
-                },
-                "riscv64": {
-                    "build-on": ["amd64", "riscv64"],
-                },
-            },
-            [
-                BuildInfo(
-                    build_on="s390x",
-                    build_for="s390x",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="s390x",
-                ),
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="riscv64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="riscv64",
-                ),
-                BuildInfo(
-                    build_on="riscv64",
-                    build_for="riscv64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="riscv64",
-                ),
-            ],
-            id="implicit_build_for",
-        ),
-        pytest.param(
-            {
-                "arm64": {
-                    "build-on": ["arm64", "armhf"],
-                    "build-for": ["arm64"],
-                },
-            },
-            [
-                BuildInfo(
-                    build_on="arm64",
-                    build_for="arm64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="arm64",
-                ),
-                BuildInfo(
-                    build_on="armhf",
-                    build_for="arm64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="arm64",
-                ),
-            ],
-            id="multiple_build_on",
-        ),
-        pytest.param(
-            {
-                "amd64v2": {
-                    "build-on": ["amd64"],
-                    "build-for": "amd64",
-                },
-            },
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="amd64v2",
-                )
-            ],
-            id="custom_platform_name",
-        ),
-        pytest.param(
-            {
-                "platform1": {
-                    "build-on": ["arm64", "armhf"],
-                    "build-for": ["all"],
-                },
-            },
-            [
-                BuildInfo(
-                    build_on="arm64",
-                    build_for="all",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="platform1",
-                ),
-                BuildInfo(
-                    build_on="armhf",
-                    build_for="all",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="platform1",
-                ),
-            ],
-            id="all",
-        ),
-    ],
-)
-def test_build_planner_get_build_plan(platforms, expected_build_infos):
-    """Test `get_build_plan()` function with different platforms."""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {"name": "test-snap", "base": "core24", "platforms": platforms}
-    )
-
-    actual_build_infos = planner.get_build_plan()
-
-    assert actual_build_infos == expected_build_infos
-
-
-@pytest.mark.parametrize(
-    ("architectures", "expected_build_infos"),
-    [
-        pytest.param(
-            ["amd64"],
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="amd64",
-                )
-            ],
-            id="single_platform_as_arch",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": ["arm64", "armhf"],
-                    "build-for": ["arm64"],
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="arm64",
-                    build_for="arm64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="arm64",
-                ),
-                BuildInfo(
-                    build_on="armhf",
-                    build_for="arm64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="arm64",
-                ),
-            ],
-            id="multiple_build_on",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": ["amd64"],
-                    "build-for": ["amd64"],
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="amd64",
-                )
-            ],
-            id="fully_defined_arch",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": "amd64",
-                    "build-for": "amd64",
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="amd64",
-                )
-            ],
-            id="fully_defined_arch_as_string",
-        ),
-        pytest.param(
-            None,
-            [
-                BuildInfo(
-                    build_on=str(DebianArchitecture.from_host()),
-                    build_for=str(DebianArchitecture.from_host()),
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform=str(DebianArchitecture.from_host()),
-                )
-            ],
-            id="no_arch",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": ["s390x"],
-                    "build-for": ["all"],
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="s390x",
-                    build_for="all",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="all",
-                )
-            ],
-            id="all",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": "s390x",
-                    "build-for": "all",
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="s390x",
-                    build_for="all",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="all",
-                )
-            ],
-            id="all_as_string",
-        ),
-    ],
-)
-def test_build_planner_get_build_plan_core22(architectures, expected_build_infos):
-    """Test `get_build_plan()` function with different platforms."""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {"name": "test-snap", "base": "core22", "architectures": architectures}
-    )
-
-    actual_build_infos = planner.get_build_plan()
-
-    assert actual_build_infos == expected_build_infos
 
 
 @pytest.mark.parametrize(
@@ -2426,9 +2171,11 @@ def test_build_planner_all_as_platform_invalid(platforms, message):
         "name": "test-snap",
         "base": "core24",
         "platforms": platforms,
+        "parts": {},
+        "confinement": "strict",
     }
     with pytest.raises(pydantic.ValidationError, match=message):
-        snapcraft.models.project.SnapcraftBuildPlanner(**build_plan_data)
+        snapcraft.models.project.Project(**build_plan_data)
 
 
 def test_build_planner_all_with_other_builds():

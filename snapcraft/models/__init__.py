@@ -36,7 +36,6 @@ from .project import (
     Lint,
     Platform,
     Project,
-    SnapcraftBuildPlanner,
     Socket,
 )
 
@@ -59,6 +58,5 @@ __all__ = [
     "Project",
     "Confdb",
     "ConfdbAssertion",
-    "SnapcraftBuildPlanner",
     "Socket",
 ]
