@@ -1,3 +1,5 @@
+.. _architectures-howto:
+
 Architectures
 =============
 
