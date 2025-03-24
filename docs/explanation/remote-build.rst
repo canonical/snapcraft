@@ -109,7 +109,7 @@ The second mode of operation is when there isn't a ``platforms`` or
 ``architectures`` key in the project file. In this scenario, ``--build-for``
 defines the architectures to build for.
 
-Launchpad can't parse shorthand :docs:`platforms </reference/architectures>` in
+Launchpad can't parse shorthand :doc:`platforms </reference/architectures>` in
 the project file when ``--build-for`` is provided (`LP#2077005`_,
 `LP#2098811`_). For example, ``--build-for`` can't be used with the following
 project file can't be used:

@@ -111,6 +111,9 @@ Fixed bugs and issues
 
 The following issues have been resolved in Snapcraft 8.7:
 
+- `#5270`_ The remote-builder gave an unfriendly error when using the
+  ``--build-for`` argument and shorthand :doc:`platforms </reference/architectures>`
+  entries in the project file.
 - `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
   snaps.
 - `#5250`_ Resources path for ``QtWebEngineProcess`` wasn't exported for snaps
@@ -148,6 +151,7 @@ and :literalref:`@sergio-costas<https://github.com/sergio-costas>`
 
 .. _#4996: https://github.com/canonical/snapcraft/issues/4996
 .. _#5250: https://github.com/canonical/snapcraft/pull/5250
+.. _#5270: https://github.com/canonical/snapcraft/pull/5270
 .. _#5258: https://github.com/canonical/snapcraft/pull/5258
 .. _#5340: https://github.com/canonical/snapcraft/pull/5340
 .. _#5330: https://github.com/canonical/snapcraft/issues/5330
