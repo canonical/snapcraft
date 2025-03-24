@@ -63,10 +63,9 @@ sudo snap install snapcraft --classic
 ```
 
 For complete installation, you need an additional Linux container tool. Snapcraft can
-also be installed as a traditional package on many popular Linux repositories. For help
-with both, we cover how to [set up
-Snapcraft](https://canonical-snapcraft.readthedocs-hosted.com/en/stable/howto/set-up-snapcraft)
-in the docs.
+also be installed as a traditional package on many popular Linux repositories. If you
+need help with either, the documentation covers how to [set up
+Snapcraft](https://canonical-snapcraft.readthedocs-hosted.com/en/stable/howto/set-up-snapcraft).
 
 ## Documentation
 
@@ -86,9 +85,8 @@ Ask your questions about Snapcraft and what's on the horizon, and see who's work
 what in the [Snapcraft Forum](https://forum.snapcraft.io) and on the [Snapcraft Matrix
 channel](https://matrix.to/#/#snapcraft:ubuntu.com).
 
-You can report any issues or bugs you find on
-[GitHub](https://github.com/canonical/snapcraft/issues) or
-[Launchpad](https://bugs.launchpad.net/snapcraft/+filebug).
+You can report any issues or bugs on the project's [GitHub
+repository](https://github.com/canonical/snapcraft/issues).
 
 Snapcraft is covered by the [Ubuntu Code of
 Conduct](https://ubuntu.com/community/ethos/code-of-conduct).
