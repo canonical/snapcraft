@@ -120,7 +120,6 @@ project file can't be used:
     platforms:
       amd64:
       riscv64:
-```
 
 To use ``--build-for``, expand the platforms entries so that the project file
 can be parsed by Launchpad:
@@ -135,7 +134,6 @@ can be parsed by Launchpad:
       riscv64:
         build-on: [riscv64]
         build-for: [riscv64]
-```
 
 ``--launchpad-accept-public-upload``
 ************************************
