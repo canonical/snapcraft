@@ -238,28 +238,39 @@ def test_platform_build_for_all_core22(snapcraft_yaml, mock_remote_start_builds)
     assert mock_remote_start_builds.call_args[1]["architectures"] == ["all"]
 
 
+@pytest.mark.parametrize(
+    ("platforms", "expected_archs"),
+    [
+        pytest.param(
+            {"amd64": None, "riscv64": None},
+            {const.SnapArch.amd64, const.SnapArch.riscv64},
+            id="shorthand",
+        ),
+        pytest.param(
+            {
+                "rpi4": {"build-on": "arm64", "build-for": "arm64"},
+                "x86-64": {"build-on": "amd64", "build-for": "amd64"},
+                "same-build-for-x86-64": {"build-on": "riscv64", "build-for": "amd64"},
+            },
+            {const.SnapArch.amd64, const.SnapArch.arm64},
+            id="standard",
+        ),
+    ],
+)
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
 @pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_platform_in_project_metadata(snapcraft_yaml, base, mock_remote_start_builds):
+def test_platform_in_project_metadata(
+    platforms, expected_archs, snapcraft_yaml, base, mock_remote_start_builds
+):
     """Use the platform's build-for architectures from the project metadata."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-            "same-build-for-x86-64": {"build-on": "riscv64", "build-for": "amd64"},
-        },
-    }
+    snapcraft_yaml_dict = {"base": base, "platforms": platforms}
     snapcraft_yaml(**snapcraft_yaml_dict)
     app = application.create_app()
     app.run()
 
     mock_remote_start_builds.assert_called_once()
-    assert (
-        const.SnapArch.arm64 in mock_remote_start_builds.call_args[1]["architectures"]
-    )
-    assert (
-        const.SnapArch.amd64 in mock_remote_start_builds.call_args[1]["architectures"]
+    assert expected_archs.issubset(
+        mock_remote_start_builds.call_args[1]["architectures"]
     )
 
 
@@ -419,6 +430,30 @@ def test_platforms_filter_error(
     assert (
         "Check the project's 'platforms' declaration, and the "
         "'--platform' and '--build-for' parameters."
+    ) in err
+
+
+@pytest.mark.parametrize("mock_argv", ["amd64"], indirect=True)
+@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
+def test_platforms_shorthand_error(capsys, snapcraft_yaml):
+    """Error if '--build-for' entirely filters the build plan."""
+    snapcraft_yaml_dict = {
+        "base": "core24",
+        "platforms": {"amd64": None, "riscv64": None},
+    }
+    snapcraft_yaml(**snapcraft_yaml_dict)
+    app = application.create_app()
+    app.run()
+
+    _, err = capsys.readouterr()
+
+    assert (
+        "Launchpad can't build snaps when using '--build-for' with a shorthand "
+        "platforms entry in the project's snapcraft.yaml."
+    ) in err
+    assert (
+        "Recommended resolution: Use full platform entries or remove the "
+        "'--build-for' argument."
     ) in err
 
 
