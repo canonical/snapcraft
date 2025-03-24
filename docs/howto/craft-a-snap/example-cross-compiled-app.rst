@@ -29,16 +29,16 @@ complete code can be found in `this repository <https://github.com/mr-cal/hello-
       :caption: snapcraft.yaml
       :language: yaml
 
-The ``architectures`` key
+The ``platforms`` key
 -------------------------
 
-The :ref:`architectures <architectures-howto>` key is normally used to specify which
+The :ref:`platforms <architectures-howto>` key is normally used to specify which
 architectures should be used when building a snap. For example, in the following case
 the build architecture is the same as the target architecture:
 
 .. code:: yaml
 
-    architectures:
+    platforms:
       - amd64
 
 It is also possible to specify different architectures for the build process and the
@@ -47,18 +47,27 @@ target system. This enables cross-compilation to be managed by Snapcraft.
 Enable cross-compilation
 ------------------------
 
-The ``architectures`` key can also be used to specify sets of architectures using the
+The ``platforms`` key can also be used to specify sets of architectures using the
 ``build-on`` and ``build-for`` sets. In the simplest case, this can be used to
 cross-compile on one architecture for a single, different architecture:
 
 .. code:: yaml
 
-    architectures:
+    platforms:
       - build-on: amd64
         build-for: armhf
 
 In this example, Snapcraft will only build the project on the ``amd64`` architecture,
 and it will only build it for the ``armhf`` architecture.
+
+The ``hello-curl`` project uses the ``platforms`` key to list many cross-compilation
+targets:
+
+.. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
+   :caption: platforms
+   :language: yaml
+   :start-at: platforms:
+   :end-before: lint:
 
 Adjust the autotools configuration
 ----------------------------------
