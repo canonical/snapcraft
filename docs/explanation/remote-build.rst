@@ -112,7 +112,7 @@ defines the architectures to build for.
 Launchpad can't parse shorthand :doc:`platforms </reference/architectures>` in
 the project file when ``--build-for`` is provided (`LP#2077005`_,
 `LP#2098811`_). For example, ``--build-for`` can't be used with the following
-project file can't be used:
+project file:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
