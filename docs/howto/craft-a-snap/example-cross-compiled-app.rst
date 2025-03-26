@@ -21,7 +21,8 @@ Example project file for example-curl
 -------------------------------------
 
 The following code comprises the project file for a project that uses ``libcurl``. The
-complete code can be found in `this repository <https://github.com/mr-cal/hello-curl>`_.
+complete code can be found in `this repository
+<https://github.com/snapcraft-docs/hello-curl>`_.
 
 .. collapse:: hello-curl project
 
