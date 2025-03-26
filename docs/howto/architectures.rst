@@ -1,4 +1,4 @@
-.. _architectures-howto:
+.. _how-to-architectures:
 
 Architectures
 =============
