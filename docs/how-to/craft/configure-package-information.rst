@@ -1,15 +1,15 @@
-.. _how-to-configure-distribution-information:
+.. _how-to-configure-package-information:
 
-Configure distribution information
-==================================
+Configure package information
+=============================
 
-Many of the basic properties in a snap's project file define information for the snap's
-distribution, such as identity, authors, version, desktop data, and store data. This
-information is also known as *metadata* and the snap's *manifest*.
+Many of the top-level properties in a project file define packaging and manifest
+information for the snap, such as its identity, authors, version, desktop entry, and
+store profile. This information is sometimes referred to as *metadata*.
 
-Distribution information is a mixture of required and optional keys. This guide covers
-the required information first. For the non-essential keys, review the Top-level
-directives in the `snapcraft.yaml reference
+Package information is declared through a mixture of required and optional keys. Most of
+this guide focuses on the required keys. For a list of all the keys, review the
+top-level directives in the `snapcraft.yaml reference
 <https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-top-level-directives>`_.
 
 
@@ -91,17 +91,17 @@ When crafting a snap, fill these keys as follows:
 Reuse information
 -----------------
 
-When you're crafting a snap for existing software, it's easier to import its
-distribution information from an external source instead of manually copying it. There
+When you're crafting a snap for existing software, it's easier to import the
+package information from an external source instead of manually copying it. There
 are three sets of data available. You can:
 
-- Copy the main distribution information from a standard `AppStream`_ metadata file.
+- Copy the main package information from a standard `AppStream`_ metadata file.
 - Copy the app's existing ``.desktop`` file by reading its component ID from the
   AppStream metadata.
 - Set the snap's version and grade through a script.
 
 
-.. _how-to-configure-distribution-information-appstream-metadata:
+.. _how-to-configure-package-information-appstream-metadata:
 
 Reuse the AppStream package information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,14 +137,14 @@ The following sample is a typical AppStream metadata file for a software project
       <url type="donation">https://example.com/donate</url>
     </component>
 
-If you were packaging this project as a snap, you're better served by copying this
-distribution data rather than replicating it manually.
+If you were packing this project as a snap, you're better served by copying this
+package information rather than replicating it manually.
 
 The keys that copy this information are ``adopt-info`` at the start of the project file
 and ``parse-info`` in the definition for the main part -- typically the main app.
 
-To copy the info, first remove the distribution keys that you're replacing with the
-metadata file. These could be, among others, ``title``, ``description``, ``summary``,
+To copy the info, first remove the package keys that you're replacing with the metadata
+file. These could be, among others, ``title``, ``description``, ``summary``,
 ``license``, ``contact``, ``donation``, ``issues``, ``source-code``, ``license``, and
 ``website``.
 
@@ -155,7 +155,7 @@ file. The path is relative to one of the part's internal directories in the snap
 filesystem, being one of ``source`` (``CRAFT_PART_SRC``), ``build``
 (``CRAFT_PART_BUILD``), or ``install`` (``CRAFT_PART_INSTALL``).
 
-During build, Snapcraft will now reuse all compatible distribution information from the
+During build, Snapcraft will now reuse all compatible package information from the
 metadata file.
 
 This setup is demonstrated here:
@@ -275,7 +275,7 @@ There are three methods to provide the desktop menu entry:
 - Copy the desktop entry file from the app's files.
 - Add the desktop entry file to the snap.
 - `Copy the desktop entry file
-  <how-to-configure-distribution-information-appstream-metadata>`_ through the app's
+  <how-to-configure-package-information-appstream-metadata>`_ through the app's
   AppStream metadata.
 
 .. important::
