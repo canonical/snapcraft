@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   source-wheel:
-    runs-on: [self-hosted, jammy]
+    runs-on: [self-hosted]
     steps:
       - name: Install uv
         run: sudo snap install --classic astral-uv
@@ -23,9 +23,6 @@ jobs:
           # because of https://github.com/actions/checkout/issues/1467
           git fetch --force --tags --depth 1
           git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'
-      - name: Set up uv with caching
-        id: setup-uv
-        uses: astral-sh/setup-uv@v5
       - name: Build packages
         run: |
           uv venv --no-managed-python
@@ -39,7 +36,7 @@ jobs:
           path: dist/
   pypi:
     needs: ["source-wheel"]
-    runs-on: [self-hosted, jammy, amd64]
+    runs-on: [self-hosted, amd64]
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
@@ -56,7 +53,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
   github-release:
     needs: ["source-wheel"]
-    runs-on: [self-hosted, jammy]
+    runs-on: [self-hosted]
     steps:
       - name: Get pypi artifacts
         uses: actions/download-artifact@v4
