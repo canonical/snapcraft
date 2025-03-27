@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Service class for confdbs."""
+"""Service class for confdb schemas."""
 
 from __future__ import annotations
 
@@ -26,11 +26,11 @@ from craft_application.util import dump_yaml
 from snapcraft import models
 from snapcraft.services import Assertion
 
-_REGISTRY_SETS_TEMPLATE = textwrap.dedent(
+_CONFDB_SCHEMA_TEMPLATE = textwrap.dedent(
     """\
     account-id: {account_id}
-    name: {set_name}
-    # The revision for this confdbs set
+    name: {name}
+    # The revision for this confdb-schema
     # revision: {revision}
     {views}
     {body}
@@ -38,7 +38,7 @@ _REGISTRY_SETS_TEMPLATE = textwrap.dedent(
 )
 
 
-_REGISTRY_SETS_VIEWS_TEMPLATE = textwrap.dedent(
+_CONFDB_SCHEMA_VIEWS_TEMPLATE = textwrap.dedent(
     """\
     views:
       wifi-setup:
@@ -50,7 +50,7 @@ _REGISTRY_SETS_VIEWS_TEMPLATE = textwrap.dedent(
 )
 
 
-_REGISTRY_SETS_BODY_TEMPLATE = textwrap.dedent(
+_CONFDB_SCHEMA_BODY_TEMPLATE = textwrap.dedent(
     """\
     body: |-
       {
@@ -66,37 +66,37 @@ _REGISTRY_SETS_BODY_TEMPLATE = textwrap.dedent(
 )
 
 
-class Confdbs(Assertion):
-    """Service for interacting with confdbs."""
+class ConfdbSchemas(Assertion):
+    """Service for interacting with confdb schemas."""
 
     @property
     @override
     def _assertion_name(self) -> str:
-        return "confdbs set"
+        return "confdb-schema"
 
     @property
     @override
     def _editable_assertion_class(self) -> type[models.EditableAssertion]:
-        return models.EditableConfdbAssertion
+        return models.EditableConfdbSchemaAssertion
 
     @override
     def _get_assertions(self, name: str | None = None) -> list[models.Assertion]:
-        return self._store_client.list_confdbs(name=name)
+        return self._store_client.list_confdb_schemas(name=name)
 
     @override
     def _build_assertion(self, assertion: models.EditableAssertion) -> models.Assertion:
-        return self._store_client.build_confdbs(confdbs=assertion)
+        return self._store_client.build_confdb_schema(confdb_schema=assertion)
 
     @override
     def _post_assertion(self, assertion_data: bytes) -> models.Assertion:
-        return self._store_client.post_confdbs(confdbs_data=assertion_data)
+        return self._store_client.post_confdb_schema(confdb_schema_data=assertion_data)
 
     @override
     def _normalize_assertions(
         self, assertions: list[models.Assertion]
     ) -> tuple[list[str], list[list[Any]]]:
         headers = ["Account ID", "Name", "Revision", "When"]
-        confdbs = [
+        confdb_schema = [
             [
                 assertion.account_id,
                 assertion.name,
@@ -106,27 +106,27 @@ class Confdbs(Assertion):
             for assertion in assertions
         ]
 
-        return headers, confdbs
+        return headers, confdb_schema
 
     @override
     def _generate_yaml_from_model(self, assertion: models.Assertion) -> str:
-        return _REGISTRY_SETS_TEMPLATE.format(
+        return _CONFDB_SCHEMA_TEMPLATE.format(
             account_id=assertion.account_id,
             views=dump_yaml(
                 {"views": assertion.marshal().get("views")}, default_flow_style=False
             ),
             body=dump_yaml({"body": assertion.body}, default_flow_style=False),
-            set_name=assertion.name,
+            name=assertion.name,
             revision=assertion.revision,
         )
 
     @override
     def _generate_yaml_from_template(self, name: str, account_id: str) -> str:
-        return _REGISTRY_SETS_TEMPLATE.format(
+        return _CONFDB_SCHEMA_TEMPLATE.format(
             account_id=account_id,
-            views=_REGISTRY_SETS_VIEWS_TEMPLATE,
-            body=_REGISTRY_SETS_BODY_TEMPLATE,
-            set_name=name,
+            views=_CONFDB_SCHEMA_VIEWS_TEMPLATE,
+            body=_CONFDB_SCHEMA_BODY_TEMPLATE,
+            name=name,
             revision=1,
         )
 
