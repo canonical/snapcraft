@@ -93,20 +93,16 @@ Reuse information
 
 When you're crafting a snap for existing software, it's easier to import the
 package information from an external source instead of manually copying it. There
-are three sets of data available. You can:
+are two sets of data available:
 
-- Copy the main package information from a standard `AppStream`_ metadata file.
-- Copy the app's existing ``.desktop`` file by reading its component ID from the
-  AppStream metadata.
-- Set the snap's version and grade through a script.
+- The main package information from a standard `AppStream`_ metadata file
+- The snap's version and grade through a script
 
 
-.. _how-to-configure-package-information-appstream-metadata:
+From AppStream
+~~~~~~~~~~~~~~
 
-Reuse the AppStream package information
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Snapcraft can parse AppsStream metadata files to provide the title, version, summary,
+Snapcraft can parse AppStream metadata files to provide the title, version, summary,
 description, and icon for a snap, along with the location of an app's ``.desktop`` file.
 
 The following sample is a typical AppStream metadata file for a software project.
@@ -151,14 +147,14 @@ file. These could be, among others, ``title``, ``description``, ``summary``,
 Then, set ``adopt-info`` to the name of part that contains the metadata file.
 
 Lastly, in the main part definition, set ``parse-info`` to the path of the metadata
-file. The path is relative to one of the part's internal directories in the snap
-filesystem, being one of ``source`` (``CRAFT_PART_SRC``), ``build``
-(``CRAFT_PART_BUILD``), or ``install`` (``CRAFT_PART_INSTALL``).
+file. The path is relative to one of the part's internal directories in the snap file
+system, being one of ``source`` (``CRAFT_PART_SRC``), ``build`` (``CRAFT_PART_BUILD``),
+or ``install`` (``CRAFT_PART_INSTALL``).
 
 During build, Snapcraft will now reuse all compatible package information from the
 metadata file.
 
-This setup is demonstrated here:
+For example:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -174,33 +170,147 @@ This setup is demonstrated here:
     parts:
       bravo-part:
         plugin: dump
-        source: http://github.com/alex/bravo.git
+        source: https://github.com/alex/bravo.git
         parse-info:
           - usr/share/metainfo/com.alex.bravo.appdata.xml
 
 
-Copy the ``.desktop`` file from AppStream
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+With a script
+~~~~~~~~~~~~~
 
-For backward compatibility, component IDs in the AppStream metadata can have a
+If you need to procedurally define the snap's ``version`` and ``grade`` keys, you can
+set them at build time with the ``craftctl`` command, invoked by a script in a part.
+
+Start by setting ``adopt-info`` to the name of an important part, typically the snap's
+main part.
+
+Then, set ``override-pull`` to an inline series of ``craftctl`` commands. The
+variables ``version`` and ``grade`` map to the keys with the same names. You can set
+them like environment variables with the ``set`` verb. Here, use any external source you
+prefer that's accessible through commands in the host environment, such as environment
+variables or an API endpoint.
+
+During build, Snapcraft will set the snap's version and grade based on the values
+from the source you provided.
+
+Here's an example:
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+    :emphasize-lines: 2, 9-12
+
+    name: bravo
+    adopt-info: bravo-part
+
+    ...
+
+    parts:
+      bravo-part:
+        plugin: dump
+        source: https://github.com/alex/bravo.git
+        override-pull: |
+          craftctl default
+          craftctl set version="1.5.3"
+          craftctl set grade="stable"
+
+
+Configure the desktop entry
+---------------------------
+
+Snaps can use standard `desktop entry
+<https://specifications.freedesktop.org/desktop-entry-spec/latest>`_ files for their
+entries in the host's menus and launchers. The file controls the look of the entries and
+how the snap launches in the desktop environment. If configured, the snap will
+automatically insert these entries into the desktop environment during installation.
+
+There are three methods to provide a desktop menu entry:
+
+- Copy the desktop entry from the app's files
+- Copy the desktop entry through the app's AppStream metadata
+- Add a desktop entry to the snap
+
+.. important::
+
+    The icon in the desktop entry is separate from the ``icon`` key. The latter is used
+    in graphical front ends, like the snap's profile in the Snap Store.
+
+
+Copy the desktop entry from the app's files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some apps generate desktop files as part of the build process. If that's the case, it's
+easier to read the desktop entry file already in the app.
+
+First, in the main app's definition, set the ``desktop`` key to the path of the
+``.desktop`` file. The key accepts a path relative to the ``prime`` directory during the
+prime step of the build, so it must match the file's location during that step.
+
+While you're still in the main app, connect the `desktop interface
+<https://snapcraft.io/docs/desktop-interface>`_.
+
+Lastly, make sure that the ``Icon`` path in the desktop entry is available in the
+``prime`` folder. During build, Snapcraft will attempt to automatically resolve the
+``Icon`` path. If the final path is incorrect, correct it by adding the
+``override-pull`` key on the main part and listing commands that would correct the path.
+
+In the following example, the desktop file is generated by the build system and placed
+in the ``usr/share/apps/`` directory at the root of the snap filesystem. It specifies
+``usr/share/apps/com.alex.bravo.desktop`` as the path to the desktop file. During the
+pull step, it corrects the ``Icon`` path in the desktop entry with ``override-pull``.
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    ...
+
+    apps:
+      bravo:
+        command: desktop-launch $SNAP/usr/bin/com.alex.bravo
+        desktop: usr/share/apps/com.alex.bravo.desktop
+        plugs:
+          - desktop
+          - desktop-legacy
+
+    parts:
+      bravo:
+        plugin: meson
+        meson-parameters: [--prefix=/snap/bravo/current/usr]
+        override-pull: |
+          craftctl pull
+
+          # Point icon to the correct location
+          sed -i.bak -e \
+          's|Icon=com.alex.bravo|Icon=/usr/share/icons/hicolor/scalable/apps/com.alex.bravo.svg|g' \
+          data/com.alex.bravo.desktop.in
+
+
+Copy the desktop entry from AppStream
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For backward compatibility, component identifiers in the AppStream metadata can have a
 ``.desktop`` suffix. If this is the case for the app you're packaging, you can reuse the
-file by sourcing it with a special key in the app's definition in your project file.
+file by sourcing it with a special key in the project file.
 
-First, find the component ID in the metadata file. It should be in a ``launchable`` tag,
-contain the same ID as the app itself, and end in ``.desktop``. In our metadata file
-example, it was:
+.. important::
+
+    You can simultaneously source information from both the ``common-id`` key described
+    in this section and the ``parse-info`` key. However, the desktop entry from
+    ``parse-info`` takes precedence.
+
+First, find the component identifier in the metadata file. It should be in a
+``launchable`` tag, contain the same identifier as the app itself, and end in
+``.desktop``. In the metadata file from earlier in this guide, the tag is:
 
 .. code-block:: xml
-    :caption: sampleapp.metainfo.xml
+    :caption: bravo.metainfo.xml
 
-    <launchable type="desktop-id">com.example.sampleapp.desktop</launchable>
+    <launchable type="desktop-id">com.alex.bravo.desktop</launchable>
 
 Then, in the app's definition in the project file, set the ``common-id`` key to the
-app's component ID, *without* the ``.desktop`` extension.
+app's component identifier, *without* the ``.desktop`` extension. During build,
+Snapcraft will copy the ``.desktop`` file into the app from the part.
 
-During build, Snapcraft will now copy the ``.desktop`` file into the app from the part.
-
-See this configuration here:
+This configuration looks like:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -217,124 +327,14 @@ See this configuration here:
     parts:
       bravo-part:
         plugin: dump
-        source: http://github.com/alex/bravo.git
-        parse-info:
-          - usr/share/metainfo/com.alex.bravo.appdata.xml
+        source: https://github.com/alex/bravo.git
 
 
-From a script in a part
-~~~~~~~~~~~~~~~~~~~~~~~
+Add a desktop entry
+~~~~~~~~~~~~~~~~~~~
 
-If you need to procedurally define the snap's ``version`` and ``grade`` keys, you can
-set them at build time with the ``craftctl`` command, invoked by a script.
-
-Start by setting ``adopt-info`` to the name of an important part, typically the snap's
-main part.
-
-After that, set ``override-pull`` to an inline series of ``craftctl`` commands. The
-variables ``version`` and ``grade`` map to the keys with the same names. You can set
-them like environment variables with the ``set`` verb. Here, use any external source you
-prefer that's accessible through commands in the host environment, such as environment
-variables or an API endpoint.
-
-During build, Snapcraft will set the snap's version and grade based on the values
-from the source you provided.
-
-Here's an example of that configuration:
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-    :emphasize-lines: 2, 9-12
-
-    name: bravo
-    adopt-info: bravo-part
-    ...
-
-    parts:
-      bravo-part:
-        plugin: dump
-        source: http://github.com/alex/bravo.git
-        override-pull: |
-          craftctl default
-          craftctl set version="1.5.3"
-          craftctl set grade="stable"
-
-
-Configure the desktop entry
----------------------------
-
-Snaps support the Linux `desktop entry
-<https://specifications.freedesktop.org/desktop-entry-spec/latest>`_ standard. You can
-use desktop entry files to define your snap's entry in the desktop environment's various
-app menus and launchers. The file controls the entry's presentation and how it launches.
-If configured, snapd will automatically add your snap to the app launcher and menus
-during installation.
-
-There are three methods to provide the desktop menu entry:
-
-- Copy the desktop entry file from the app's files.
-- Add the desktop entry file to the snap.
-- `Copy the desktop entry file
-  <how-to-configure-package-information-appstream-metadata>`_ through the app's
-  AppStream metadata.
-
-.. important::
-
-    The icon in the desktop entry is separate from the ``icon`` key. The latter is used
-    in graphical front ends, like the snap's profile in the Snap Store.
-
-
-Read a desktop entry file
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Some apps generate desktop files as part of the build process. If that's the case, it's
-easier to read the desktop entry file already in the app.
-
-First, in the main app's definition, set the ``desktop`` key to the path of the
-``.desktop`` file. The key accepts a path relative to the ``prime`` directory during the
-prime step of the build, so it must match the file's location during that step.
-
-Still in the main app, connect the `desktop interface
-<https://snapcraft.io/docs/desktop-interface>`_.
-
-Lastly, make sure that the ``Icon`` path in the desktop entry is accessible from the
-``prime`` folder. During build, Snapcraft will attempt to automatically resolve the
-``Icon`` path. If the final path is incorrect, correct it by adding the
-``override-pull`` key on the main part and listing commands that would correct the path.
-
-In the following example, the desktop file is generated by the build system and placed
-in the ``usr/share/apps/`` directory at the root of the snap filesystem. It specifies
-``usr/share/apps/com.alex.bravo.desktop`` as the path to the desktop file. During the
-pull step, it corrects the ``Icon`` path in the desktop entry with ``override-pull``.
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    apps:
-      bravo:
-        command: desktop-launch $SNAP/usr/bin/com.alex.bravo
-        desktop: usr/share/apps/com.alex.bravo.desktop
-        plugs:
-          - desktop
-          - desktop-legacy
-
-    parts:
-      bravo:
-        plugin: meson
-        meson-parameters: [--prefix=/snap/bravo/current/usr]
-        override-pull: |
-          snapcraftctl pull
-
-          # Point icon to the correct location
-          sed -i.bak -e \
-          's|Icon=com.alex.bravo|Icon=/usr/share/icons/hicolor/scalable/apps/com.alex.bravo.svg|g' \
-          data/com.alex.bravo.desktop.in
-
-
-Add a desktop entry file
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-With this basic method, you manually add a desktop entry file to the snap.
+If the app in your snap has no pre-existing desktop entry, or you want to override it,
+you can add a new one.
 
 To start, create files named ``<snap-name>.desktop`` and ``<snap-name>.png`` in the
 ``snap/gui/`` directory in your project's source. Replace ``<snap-name>`` with the same
@@ -353,6 +353,6 @@ Replace ``<app-name>`` with the same name you gave the app in the project file. 
 name is case-sensitive.
 
 Assign ``Icon`` to the absolute path of the image file. This path must be the location
-of the icon after the snap is installed. Since snapcraft copies all the contents of the
+of the icon after the snap is installed. Since Snapcraft copies all the contents of the
 ``snap/gui/`` folder to ``meta/gui`` during installation, the absolute path of the icon
-in this arrangement is ``${SNAP}/meta/gui/snapname.png``.
+in this arrangement is ``${SNAP}/meta/gui/<snap-name>.png``.
