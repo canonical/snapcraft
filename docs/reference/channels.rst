@@ -75,5 +75,8 @@ replacement snap will then be chosen from the next most conservative risk-level 
 same track. For example, after the ``beta/fix-bug123`` branch closes, its name will
 redirect to the latest revision in ``beta``.
 
-If a revision is a branch and is promoted to a different track and risk, it will undergo
-the same lifecycle.
+Branch revisions can also be promoted or demoted to other channels, such as a
+``latest/edge/bugfix-123`` branch being promoted to the snap's ``latest/stable``
+channel. When this happens, the revision's lifecycle will match the channel schema. If
+promoted to a stable channel, it would be a long-lived revision. If promoted to a new
+branch, the new branch would start its own 30-day lifecycle.
