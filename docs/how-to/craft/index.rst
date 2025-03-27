@@ -54,6 +54,7 @@ Frameworks
   :maxdepth: 1
   :hidden:
 
+  configure-package-information
   enable-classic-confinement
   use-plugins
   example-pre-built-app
