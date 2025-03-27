@@ -43,7 +43,7 @@ Current
 
 The current remote builder is available for ``core22``, ``core24``,
 and newer snaps.  It is not available for ``core20`` snaps because it cannot
-parse ``core20``'s ``snapcraft.yaml`` schema (`[10]`_).
+parse ``core20``'s ``snapcraft.yaml`` schema (`#4885`_).
 
 It does not modify the project or project metadata.
 
@@ -109,6 +109,32 @@ The second mode of operation is when there isn't a ``platforms`` or
 ``architectures`` key in the project file. In this scenario, ``--build-for``
 defines the architectures to build for.
 
+Launchpad can't parse shorthand :doc:`platforms </reference/architectures>` in
+the project file when ``--build-for`` is provided (`LP#2077005`_,
+`LP#2098811`_). For example, ``--build-for`` can't be used with the following
+project file:
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    platforms:
+      amd64:
+      riscv64:
+
+To use ``--build-for``, expand the platforms entries so that the project file
+can be parsed by Launchpad:
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    platforms:
+      amd64:
+        build-on: [amd64]
+        build-for: [amd64]
+      riscv64:
+        build-on: [riscv64]
+        build-for: [riscv64]
+
 ``--launchpad-accept-public-upload``
 ************************************
 
@@ -145,19 +171,19 @@ Snapcraft will request a build for each unique ``build-for`` architecture.
 
 .. note::
 
-   Launchpad does not support cross-compiling (`[13]`_).
+   Launchpad does not support cross-compiling (`#4996`_).
 
 .. note::
 
     Launchpad does not support building multiple snaps on the same
-    ``build-on`` architecture (`[14]`_).
+    ``build-on`` architecture (`#4995`_).
 
 If the project metadata does not contain a ``platforms`` or ``architectures``
 entry and ``--build-for`` is not provided, Snapcraft will request a build on,
 and for, the host's architecture.
 
 The remote builder does not work for ``core20`` snaps because it cannot parse
-the ``run-on`` key in a ``core20`` architecture entry (`[2]`_).
+the ``run-on`` key in a ``core20`` architecture entry (`#4842`_).
 
 Legacy
 ^^^^^^
@@ -186,7 +212,7 @@ key, snapcraft will request a build for each ``build-on`` architecture.
 
 An architecture can only be listed once across all ``build-on`` keys in the
 ``architectures`` key, otherwise Snapcraft will fail to parse the
-project (`[4]`_).
+project (`#4341`_).
 
 If no architectures are defined in the project metadata, snapcraft will
 request a build for the host's architecture.
@@ -194,28 +220,30 @@ request a build for the host's architecture.
 ``--build-for`` and ``--build-on`` cannot be provided when the
 ``architectures`` key is defined in the project metadata. This is because
 Launchpad will ignore the requested architectures and prefer those defined
-in the project file (`[5]`_).
+in the project file (`LP#1885150`_).
 
 The legacy remote builder can be used for ``core20`` and ``core22`` snaps but
 the project is parsed using ``core20``'s ``snapcraft.yaml`` schema. This
 means that snaps using keys introduced in ``core22`` cannot be built with
-the remote builder (`[6]`_ `[7]`_ `[8]`_). This includes the ``core22``
+the remote builder (`#4144`_ `LP#1992557`_ `LP#2007789`_). This includes the ``core22``
 ``architectures`` key change of ``run-on`` to ``build-for``.
 
 Similarly, ``core22`` supports a shorthand notation for ``architectures`` but
-Launchpad is not able to parse this notation (`[9]`_).
+Launchpad is not able to parse this notation (`LP#2042167`_).
 
 .. _`Launchpad account`: https://launchpad.net/+login
 .. _`Launchpad project`: https://launchpad.net/projects/+new
 .. _`Launchpad`: https://launchpad.net/
 .. _`build farm`: https://launchpad.net/builders
-.. _`[2]`: https://github.com/canonical/snapcraft/issues/4842
-.. _`[4]`: https://github.com/canonical/snapcraft/issues/4341
-.. _`[5]`: https://bugs.launchpad.net/snapcraft/+bug/1885150
-.. _`[6]`: https://github.com/canonical/snapcraft/issues/4144
-.. _`[7]`: https://bugs.launchpad.net/snapcraft/+bug/1992557
-.. _`[8]`: https://bugs.launchpad.net/snapcraft/+bug/2007789
-.. _`[9]`: https://bugs.launchpad.net/snapcraft/+bug/2042167
-.. _`[10]`: https://github.com/canonical/snapcraft/issues/4885
-.. _`[13]`: https://github.com/canonical/snapcraft/issues/4996
-.. _`[14]`: https://github.com/canonical/snapcraft/issues/4995
+.. _`#4842`: https://github.com/canonical/snapcraft/issues/4842
+.. _`#4341`: https://github.com/canonical/snapcraft/issues/4341
+.. _`LP#1885150`: https://bugs.launchpad.net/snapcraft/+bug/1885150
+.. _`#4144`: https://github.com/canonical/snapcraft/issues/4144
+.. _`LP#1992557`: https://bugs.launchpad.net/snapcraft/+bug/1992557
+.. _`LP#2007789`: https://bugs.launchpad.net/snapcraft/+bug/2007789
+.. _`LP#2042167`: https://bugs.launchpad.net/snapcraft/+bug/2042167
+.. _`#4885`: https://github.com/canonical/snapcraft/issues/4885
+.. _`#4996`: https://github.com/canonical/snapcraft/issues/4996
+.. _`#4995`: https://github.com/canonical/snapcraft/issues/4995
+.. _`LP#2077005`: https://bugs.launchpad.net/snapcraft/+bug/2077005
+.. _`LP#2098811`: https://bugs.launchpad.net/snapcraft/+bug/2098811
