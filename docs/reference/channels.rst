@@ -1,4 +1,4 @@
-.. _channels:
+.. _reference-channels:
 
 Channels
 ========
@@ -19,6 +19,8 @@ In Snapcraft commands, a typical channel without a branch looks like this:
   --channel=latest/edge
 
 
+.. _reference-channels-track:
+
 Track
 -----
 
@@ -38,6 +40,8 @@ could, for examples, encompass minor updates, major updates, or long-term
 support releases. Or, it could signify something else entirely.
 
 
+.. _reference-channels-risk:
+
 Risk
 ----
 
@@ -53,14 +57,26 @@ released to either the stable or candidate channels.
 Snaps are installed to a user's system with the stable risk level by default.
 
 
+.. _reference-channels-branch:
+
 Branch
 ------
 
-The *branch* represents the smallest meaningful unit of history in the
-project's development. It's an optional component intended to distinguish
-short-lived or on-demand releases for bug-fixing, one-off testing, and other irregular work.
+The *branch* represents the smallest meaningful unit of history in the project's
+development. It's an optional component intended to distinguish short-lived or on-demand
+releases for bug-fixing, one-off testing, and other irregular work.
 
-Branch names convey their purpose, such as ``fix-for-bug123``. Branch names are
-not, however, discoverable in the Snap Store. Instead, they must be shared by
-authors to users and referenced by their exact name. If a snap branch has no
-new publications for 30 days, the Snap Store closes its branch.
+Good branch names convey their purpose, such as ``fix-bug123``. Branch names are not,
+however, discoverable in the Snap Store. Instead, they must be shared by authors to
+users and referenced by their exact name.
+
+If a branch has no new revisions for 30 days, the Snap Store closes the branch. The
+replacement snap will then be chosen from the next most conservative risk-level from the
+same track. For example, after the ``beta/fix-bug123`` branch closes, its name will
+redirect to the latest revision in ``beta``.
+
+Branch revisions can also be promoted or demoted to other channels, such as a
+``latest/edge/bugfix-123`` branch being promoted to the snap's ``latest/stable``
+channel. When this happens, the revision's lifecycle will match the channel schema. If
+promoted to a stable channel, it would be a long-lived revision. If promoted to a new
+branch, the new branch would start its own 30-day lifecycle.

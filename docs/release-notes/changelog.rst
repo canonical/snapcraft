@@ -240,7 +240,7 @@ Documentation
   * :ref:`anatomy-of-a-project-file`
   * :ref:`snap-build-process`
   * :ref:`snap-publishing-process`
-  * :ref:`channels`
+  * :ref:`reference-channels`
   * :ref:`system-requirements`
   * :ref:`uv plugin<craft_parts_uv_plugin>`
   * :ref:`Go Use plugin<craft_parts_go_use_plugin>`
