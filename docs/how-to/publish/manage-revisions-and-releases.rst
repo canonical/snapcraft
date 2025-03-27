@@ -5,8 +5,8 @@ Manage revisions and releases
 
 Snapcraft and snap stores offer ways to maintain and control the history of your snap's
 revisions and releases. Snaps can have multiple concurrent releases on different
-:ref:`channels <reference-channels>`, and stores have features for promoting revisions,
-launching progressive and temporary revisions, and promoting revisions between channels.
+:ref:`channels <reference-channels>`, and stores provide capabilities for progressive
+releases, interim revisions, and moving revisions between channels.
 
 
 Publish a revision
@@ -45,14 +45,14 @@ they upload and publish it simultaneously. To do so, run:
 
 .. code-block:: bash
 
-    snapcraft upload <snap-revision>.snap --release channel
+    snapcraft upload <snap-revision>.snap --release <channel>
 
 If you need to publish the same revision to multiple channels, list multiple channel
 names in the argument, separated by commas (,):
 
 .. code-block:: bash
 
-    snapcraft upload <snap-revision>.snap --release channel1,channel2
+    snapcraft upload <snap-revision>.snap --release <channel-a>,<channel-b>
 
 
 Publish a branch
@@ -82,7 +82,7 @@ Promote a revision
 After a revision is published, you can move it to another channel.
 
 Moving a snap revision between channels helps manage user expectations and the trade-off
-between stability and cutting-edge features. The two default chnanels, stable and edge,
+between stability and cutting-edge features. The two default channels, stable and edge,
 are reflections of these two expectations. In fact, promoting from edge to stable is the
 recommended and most common lifecycle for a snap revision.
 
@@ -145,7 +145,7 @@ are two ways you can complete the release:
 
    .. code-block:: bash
 
-        snapcraft release <snap-name> <revision> 356 stable --progressive 40
+        snapcraft release <snap-name> 356 stable --progressive 40
 
    You can continue continue to do so manually, until the release reaches 100%
    coverage. These manual cycles provide you with openings to solicit user feedback and
@@ -160,7 +160,7 @@ are two ways you can complete the release:
 
    .. code-block:: bash
 
-        snapcraft release <snap-name> <revision> 356 stable
+        snapcraft release <snap-name> 356 stable
 
 After a non-progressive release, a snap will revert to standard release lifecycle.
 
@@ -169,7 +169,7 @@ Change the default track
 ------------------------
 
 All snaps have a default :ref:`track <reference-channels-track>` called **latest**.
-Unless otherwise specified, users install the latest release on the default track.
+Unless otherwise specified, users install the most recent release on the default track.
 
 If you've received `approval for a new track
 <https://forum.snapcraft.io/t/simplified-track-request-process-for-snaps-with-predictable-cadence/3136>`_,
