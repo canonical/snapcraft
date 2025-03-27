@@ -14,6 +14,7 @@ the same benefits from being packed into snaps.
 
   enable-classic-confinement
   use-plugins
+  manage-data-compatibility
   example-pre-built-app
   example-python-app
   example-c-or-cpp-app
