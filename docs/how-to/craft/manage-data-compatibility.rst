@@ -3,7 +3,7 @@
 Manage data compatibility
 =========================
 
-By defining an *epoch* in a snap's project file, snap authors can control how users
+By defining an epoch in a snap's project file, snap authors can control how users
 receive a snap release when its data format is incompatible with older versions.
 
 
@@ -30,9 +30,10 @@ transitioned to the newer epoch.
 Update a specific epoch
 -----------------------
 
-To push updates to users of a specific epoch, edit the value of the update's ``epoch``
-key to reflect the target epoch. For example, if you wanted to push an update to users
-of epoch 0 after releasing epoch 1, you would edit the update's project file to include:
+To push updates to users of a specific epoch, edit the value of the project's ``epoch``
+key to reflect the target epoch. For example, if you want to push an update to users
+of epoch 0 after releasing epoch 1, add the following to the projecet file in the
+revision:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
