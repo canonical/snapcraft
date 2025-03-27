@@ -1,7 +1,7 @@
 .. _how-to-use-plugins:
 
 Use plugins
------------
+===========
 
 Snapcraft uses special :ref:`plugins` and extensions to hook into and manage
 the different languages and frameworks.
@@ -12,13 +12,13 @@ to learn how to craft a snap with a given plugin.
 
 
 Platform-agnostic
-~~~~~~~~~~~~~~~~~
+-----------------
 
 :ref:`example-pre-built-app`
 
 
 Languages
-~~~~~~~~~
+---------
 
 - :ref:`example-python-app`
 - :ref:`example-c-or-cpp-app`
