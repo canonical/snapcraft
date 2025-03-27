@@ -200,7 +200,7 @@ def fake_assertion_service(default_factory):
 def test_list_assertions_table(fake_assertion_service, emitter):
     """List assertions as a table."""
     fake_assertion_service.list_assertions(
-        output_format=const.OutputFormat.table, name="test-registry"
+        output_format=const.OutputFormat.table, name="test-confb"
     )
 
     emitter.assert_message(
@@ -216,7 +216,7 @@ def test_list_assertions_table(fake_assertion_service, emitter):
 def test_list_assertions_json(fake_assertion_service, emitter):
     """List assertions as json."""
     fake_assertion_service.list_assertions(
-        output_format=const.OutputFormat.json, name="test-registry"
+        output_format=const.OutputFormat.json, name="test-confb"
     )
 
     emitter.assert_message(
@@ -244,7 +244,7 @@ def test_list_assertions_unknown_format(fake_assertion_service):
 
     with pytest.raises(errors.FeatureNotImplemented, match=expected):
         fake_assertion_service.list_assertions(
-            output_format="unknown", name="test-registry"
+            output_format="unknown", name="test-confb"
         )
 
 
@@ -269,7 +269,7 @@ def test_edit_assertions_changes_made(
 
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id", key_name="test-key"
+        name="test-confb", account_id="test-account-id", key_name="test-key"
     )
 
     mock_post_assertion.assert_called_once_with(expected_assertion)
@@ -288,7 +288,7 @@ def test_edit_assertions_no_changes_made(
     """Edit an assertion but make no changes to the data."""
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id"
+        name="test-confb", account_id="test-account-id"
     )
 
     emitter.assert_message("No changes made.")
@@ -335,7 +335,7 @@ def test_edit_assertions_build_assertion_error(
 
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id", key_name="test-key"
+        name="test-confb", account_id="test-account-id", key_name="test-key"
     )
 
     assert mock_confirm_with_user.mock_calls == [
@@ -381,7 +381,7 @@ def test_edit_assertions_sign_assertion_error(
 
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id", key_name="test-key"
+        name="test-confb", account_id="test-account-id", key_name="test-key"
     )
 
     assert mock_confirm_with_user.mock_calls == [
@@ -427,7 +427,7 @@ def test_edit_assertions_post_assertion_error(
 
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id", key_name="test-key"
+        name="test-confb", account_id="test-account-id", key_name="test-key"
     )
 
     assert mock_confirm_with_user.mock_calls == [

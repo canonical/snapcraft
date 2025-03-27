@@ -21,7 +21,7 @@ from snapcraft.services.init import Init
 from snapcraft.services.lifecycle import Lifecycle
 from snapcraft.services.package import Package
 from snapcraft.services.provider import Provider
-from snapcraft.services.confdbs import Confdbs
+from snapcraft.services.confdbschemas import ConfdbSchemas
 from snapcraft.services.remotebuild import RemoteBuild
 from snapcraft.services.service_factory import (
     SnapcraftServiceFactory,
@@ -34,7 +34,7 @@ __all__ = [
     "Lifecycle",
     "Package",
     "Provider",
-    "Confdbs",
+    "ConfdbSchemas",
     "register_snapcraft_services",
     "RemoteBuild",
     "SnapcraftServiceFactory",
