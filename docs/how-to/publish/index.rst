@@ -8,3 +8,4 @@ Publish a snap
     :hidden:
 
     check-a-snaps-status
+    manage-revisions-and-releases
