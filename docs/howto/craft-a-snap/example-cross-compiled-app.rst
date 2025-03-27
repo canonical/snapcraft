@@ -23,10 +23,10 @@ complete code can be found in `this repository
 Enable cross-compilation
 ------------------------
 
-The :ref:`platforms <how-to-architectures>` key is used to specify which architectures
-should be used when building a snap. The ``platforms`` key can also be used to specify
-sets of architectures using the ``build-on`` and ``build-for`` keys. In the simplest
-case, this can be used to cross-compile on one architecture for a single, different
+The :ref:`platforms <how-to-architectures>` key specifies which architectures should
+be used when building a snap. The ``platforms`` key can also be used to specify sets
+of architectures with the ``build-on`` and ``build-for`` keys. In the simplest case,
+this can be used to cross-compile on one architecture for a single, different
 architecture:
 
 .. code-block:: yaml
@@ -39,7 +39,7 @@ architecture:
 In this example, Snapcraft will only build the project on the AMD64 architecture,
 and it will only build it for the armhf architecture.
 
-The ``hello-curl`` project uses the ``platforms`` key to list many cross-compilation
+In the ``hello-curl`` project, the ``platforms`` key to lists several cross-compilation
 targets:
 
 .. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
@@ -52,8 +52,8 @@ Adjust the Autotools configuration
 ----------------------------------
 
 When building for a particular architecture, Snapcraft will initialise the
-``CRAFT_ARCH_TRIPLET_BUILD_FOR`` environment variable in the build environment. This variable
-describes the platform and architecture that Autotools uses to configure
+``CRAFT_ARCH_TRIPLET_BUILD_FOR`` environment variable in the build environment. This
+variable describes the platform and architecture that Autotools uses to configure
 cross-compilation. For more information on environment variables, see `environment
 variables <https://snapcraft.io/docs/parts-environment-variables>`_.
 
@@ -79,9 +79,8 @@ libraries necessary for cross-compilation.
    :end-before: stage-packages:
 
 `Package repositories <https://snapcraft.io/docs/package-repositories>`_ can also be
-specified for the target platform. The hello-curl project defines additional
-repositories for target platforms using the ``package-repositories`` key and the
-``CRAFT_ARCH_BUILD_FOR`` environment variables:
+specified for the target platform using the ``package-repositories`` key and the
+``CRAFT_ARCH_BUILD_FOR`` environment variable.
 
 .. literalinclude:: ../code/craft-a-snap/example-cross-compiled-app-recipe.yaml
    :caption: snapcraft.yaml of hello-curl
@@ -105,7 +104,7 @@ further customisation of packages installed per-platform.
 Build the snap
 --------------
 
-The snap is built in the usual way, by running ``snapcraft`` in the project directory:
+To build the snap, navigate to the project directory and run:
 
 .. code-block::
 
