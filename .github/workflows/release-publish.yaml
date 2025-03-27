@@ -13,6 +13,8 @@ jobs:
   source-wheel:
     runs-on: [self-hosted, jammy]
     steps:
+      - name: Install uv
+        run: sudo snap install --classic astral-uv
       - name: Checkout
         uses: actions/checkout@v4
       - name: Fetch tag annotations
@@ -21,16 +23,15 @@ jobs:
           # because of https://github.com/actions/checkout/issues/1467
           git fetch --force --tags --depth 1
           git describe --dirty --long --match '[0-9]*.[0-9]*.[0-9]*' --exclude '*[^0-9.]*'
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-          check-latest: true
+      - name: Set up uv with caching
+        id: setup-uv
+        uses: astral-sh/setup-uv@v5
       - name: Build packages
         run: |
-          pip install build twine
-          python3 -m build
-          twine check dist/*
+          uv venv --no-managed-python
+          uv pip install build twine
+          uv run -m build
+          uv run twine check dist/*
       - name: Upload pypi packages artifact
         uses: actions/upload-artifact@v4
         with:
