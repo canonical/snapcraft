@@ -20,6 +20,7 @@ Platform-agnostic
 -----------------
 
 :ref:`example-pre-built-app`
+:ref:`example-cross-compiled-app`
 
 
 Languages
@@ -65,6 +66,7 @@ Frameworks
   example-gtk3-app
   example-gtk2-app
   example-qt5-kde-app
+  example-cross-compiled-app
   example-flutter-app
   example-electron-apps
   example-dotnet-app
