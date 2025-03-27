@@ -196,7 +196,7 @@ test-slow:  ##- Run slow tests
 .PHONY: test-coverage
 test-coverage:  ## Generate coverage report
 	uv run coverage run --source $(PROJECT) -m pytest
-	uv run coverage xml -o coverage.xml
+	uv run coverage xml -o results/coverage.xml
 	uv run coverage report -m
 	uv run coverage html
 
