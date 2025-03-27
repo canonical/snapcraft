@@ -43,44 +43,49 @@ The placeholder values looks similar to this:
 
 When crafting a snap, fill these keys as follows:
 
-- For ``name``, give your snap a unique name to distinguish it from all others. The
-  name can only contain lowercase letters, numbers, and hyphens. It must start with an
-  ASCII character, and can't end with a hyphen. If you plan on publishing the snap to a
-  store like the Snap Store, the name must also be unique in that store.
+.. For help on choosing a name and registering it on the Snap Store, see `Registering your app name <>`_.
 
-  .. For help on choosing a name and registering it on the Snap Store, see `Registering
-     your app name <>`_.
+.. list-table::
 
-- For ``base``, set the version of Ubuntu that the snap will use for its runtime
-  environment. :ref:`how-to-bases` are a complex topic that is out of scope for this
-  guide. Unless you're building a snap compatible with older code, leave this as
-  ``core24``.
+    * - Key
+      - Action
+    * - ``name``
+      - Give your snap a unique name. The name can only contain lowercase letters,
+        numbers, and hyphens. It must start with an ASCII character, and can't end with
+        a hyphen. If you plan on publishing your snap, it must be globally unique among
+        all public and private stores.
+    * - ``base``
+      - Set the version of Ubuntu that the snap will use for its runtime environment.
+        :ref:`how-to-bases` are a complex topic that is out of scope for this guide.
+        Unless you're building a snap compatible with older code, leave this as
+        ``core24``.
+    * - ``version``
+      - Set the initial version of your snap. This key is a simple string, so you can
+        use any version schema. You can later replace this with a different version, or
+        fill this string automatically with a script.
+    * - ``summary``
+      - Provide a short sentence to tell prospective users about your snap's purpose. It
+        must be in fewer than 80 characters.
+    * - ``description``
+      - Describe your snap in as much detail and space as you need. Notice the pipe (|)
+        on the first line, which splits the description across multiple lines. The text
+        is processed as Markdown, so most Markdown syntax is supported.
 
-- For ``version``, set the initial version of your snap. This key is a simple string, so
-  you can use any version schema. You can later replace this with a different version,
-  or fill this string automatically with a script.
-
-- For ``summary``, provide a short sentence to tell prospective users about your
-  snap's purpose. It must be in fewer than 80 characters.
-
-- For ``description``, describe your snap in as much detail and space as you need.
-  Notice the pipe (|) on the first line, which splits the description across multiple
-  lines. The text is processed as Markdown, so most Markdown syntax is supported.
-
-  You should keep the length reasonable, but the more details you provide, the more
-  likely people are to discover and use your snap. Feature lists, update descriptions,
-  and a brief *Getting started* guide are legitimate uses for the description.
-
-- For ``grade``, specify the production readiness of your snap. While developing, leave
-  this set to ``devel`` to disable the snapd guardrails. When your snap is ready for
-  release, set it to ``stable``.
-
-- For ``confinement``, set how strong the sandboxing of the snap is. A snap's
-  confinement level is the degree of isolation it has from the host system. When first
-  crafting, leave this as ``devmode`` to disable sandboxing until you have a working
-  snap. In the rare case where your snap needs higher levels of system access, like a
-  traditional unsandboxed package, you can :ref:`enable classic confinement
-  <how-to-enable-classic-confinement>`.
+        You should keep the length reasonable, but the more details you provide, the
+        more likely people are to discover and use your snap. Feature lists, update
+        descriptions, and a brief *Getting started* guide are legitimate uses for the
+        description.
+    * - ``grade``
+      - Specify the production readiness of your snap. While developing, leave this set
+        to ``devel`` to disable the snapd guardrails. When your snap is ready for
+        release, set it to ``stable``.
+    * - ``confinement``
+      - Set how strong the sandboxing of the snap is. A snap's confinement level is the
+        degree of isolation it has from the host system. When first crafting, leave this
+        as ``devmode`` to disable sandboxing until you have a working snap. In the rare
+        case where your snap needs higher levels of system access, like a traditional
+        unsandboxed package, you can :ref:`enable classic confinement
+        <how-to-enable-classic-confinement>`.
 
 
 Reuse information
@@ -88,17 +93,18 @@ Reuse information
 
 When you're crafting a snap for existing software, it's easier to import its
 distribution information from an external source instead of manually copying it. There
-are two ways to map this data in the ``snapcraft.yaml`` project file. You can:
+are three sets of data available. You can:
 
 - Copy the main distribution information from a standard `AppStream`_ metadata file.
-- Copy the ``.desktop`` file into an app by reading its component ID.
+- Copy the app's existing ``.desktop`` file by reading its component ID from the
+  AppStream metadata.
 - Set the snap's version and grade through a script.
 
 
 .. _how-to-configure-distribution-information-appstream-metadata:
 
-From AppStream metadata
-~~~~~~~~~~~~~~~~~~~~~~~
+Reuse the AppStream package information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Snapcraft can parse AppsStream metadata files to provide the title, version, summary,
 description, and icon for a snap, along with the location of an app's ``.desktop`` file.
@@ -131,8 +137,8 @@ The following sample is a typical AppStream metadata file for a software project
       <url type="donation">https://example.com/donate</url>
     </component>
 
-If you were packaging this project as a snap, this is the distribution data you'd be
-better served by copying, not replicating manually.
+If you were packaging this project as a snap, you're better served by copying this
+distribution data rather than replicating it manually.
 
 The keys that copy this information are ``adopt-info`` at the start of the project file
 and ``parse-info`` in the definition for the main part -- typically the main app.
@@ -145,7 +151,7 @@ metadata file. These could be, among others, ``title``, ``description``, ``summa
 Then, set ``adopt-info`` to the name of part that contains the metadata file.
 
 Lastly, in the main part definition, set ``parse-info`` to the path of the metadata
-file. The path is a relative to one of the part's internal directories in the snap
+file. The path is relative to one of the part's internal directories in the snap
 filesystem, being one of ``source`` (``CRAFT_PART_SRC``), ``build``
 (``CRAFT_PART_BUILD``), or ``install`` (``CRAFT_PART_INSTALL``).
 
@@ -173,8 +179,8 @@ This setup is demonstrated here:
           - usr/share/metainfo/com.alex.bravo.appdata.xml
 
 
-From AppStream component IDs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Copy the ``.desktop`` file from AppStream
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For backward compatibility, component IDs in the AppStream metadata can have a
 ``.desktop`` suffix. If this is the case for the app you're packaging, you can reuse the
@@ -227,12 +233,12 @@ main part.
 
 After that, set ``override-pull`` to an inline series of ``craftctl`` commands. The
 variables ``version`` and ``grade`` map to the keys with the same names. You can set
-them like environment variables with the ``set`` verb. Here you can use any external
-source that's accessible through terminal commands from the host's environment, such as an environment variable
-variable or an API endpoint.
+them like environment variables with the ``set`` verb. Here, use any external source you
+prefer that's accessible through commands in the host environment, such as environment
+variables or an API endpoint.
 
-During build, Snapcraft will now set the snap's version and grade based on the values
-from any source you like.
+During build, Snapcraft will set the snap's version and grade based on the values
+from the source you provided.
 
 Here's an example of that configuration:
 
@@ -258,20 +264,19 @@ Configure the desktop entry
 ---------------------------
 
 Snaps support the Linux `desktop entry
-<https://specifications.freedesktop.org/desktop-entry-spec/latest>` standard. You can
+<https://specifications.freedesktop.org/desktop-entry-spec/latest>`_ standard. You can
 use desktop entry files to define your snap's entry in the desktop environment's various
 app menus and launchers. The file controls the entry's presentation and how it launches.
 If configured, snapd will automatically add your snap to the app launcher and menus
 during installation.
 
-There are three methods to configure the desktop menu entry:
+There are three methods to provide the desktop menu entry:
 
-- Copy the desktop entry file to the ``snap/gui`` directory.
-- Point the ``desktop`` key in the app definition to a desktop file in the ``prime``
-  directory.
-- `Use the desktop entry file
-  <how-to-configure-distribution-information-appstream-metadata>`_ from the AppStream
-  metadata of your app.
+- Copy the desktop entry file from the app's files.
+- Add the desktop entry file to the snap.
+- `Copy the desktop entry file
+  <how-to-configure-distribution-information-appstream-metadata>`_ through the app's
+  AppStream metadata.
 
 .. important::
 
@@ -279,36 +284,11 @@ There are three methods to configure the desktop menu entry:
     in graphical front ends, like the snap's profile in the Snap Store.
 
 
-Add a desktop entry file
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-To start, create files named ``<snap-name>.desktop`` and ``<snap-name>.png`` in the
-``snap/gui/`` directory in your project's source. Replace ``<snap-name>`` with the same
-value as the ``name`` key in the project file.
-
-For the desktop entry file, enter:
-
-.. code-block:: desktop
-    :caption: .desktop file
-
-    [Desktop Entry]
-    Exec=<app-name>
-    Icon=${SNAP}/meta/gui/<snap-name>.png
-
-Replace ``<app-name>`` with the same name you gave the app in the project file. The
-name is case-sensitive.
-
-Assign ``Icon`` to the absolute path of the image file. This path must be the location
-of the icon after the snap is installed. Since snapcraft copies all the contents of the
-``snap/gui/`` folder to ``meta/gui`` in the installation, the absolute path of the icon
-in this arrangement is ``${SNAP}/meta/gui/snapname.png``.
-
-
 Read a desktop entry file
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some apps generate desktop files as part of the build process. If that's the case, it's
-easier to read the desktop entry file with the ``desktop`` key of the app.
+easier to read the desktop entry file already in the app.
 
 First, in the main app's definition, set the ``desktop`` key to the path of the
 ``.desktop`` file. The key accepts a path relative to the ``prime`` directory during the
@@ -349,3 +329,30 @@ pull step, it corrects the ``Icon`` path in the desktop entry with ``override-pu
           sed -i.bak -e \
           's|Icon=com.alex.bravo|Icon=/usr/share/icons/hicolor/scalable/apps/com.alex.bravo.svg|g' \
           data/com.alex.bravo.desktop.in
+
+
+Add a desktop entry file
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+With this basic method, you manually add a desktop entry file to the snap.
+
+To start, create files named ``<snap-name>.desktop`` and ``<snap-name>.png`` in the
+``snap/gui/`` directory in your project's source. Replace ``<snap-name>`` with the same
+value as the ``name`` key in the project file.
+
+For the desktop entry file, enter:
+
+.. code-block:: desktop
+    :caption: .desktop file
+
+    [Desktop Entry]
+    Exec=<app-name>
+    Icon=${SNAP}/meta/gui/<snap-name>.png
+
+Replace ``<app-name>`` with the same name you gave the app in the project file. The
+name is case-sensitive.
+
+Assign ``Icon`` to the absolute path of the image file. This path must be the location
+of the icon after the snap is installed. Since snapcraft copies all the contents of the
+``snap/gui/`` folder to ``meta/gui`` during installation, the absolute path of the icon
+in this arrangement is ``${SNAP}/meta/gui/snapname.png``.
