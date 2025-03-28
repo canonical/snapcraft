@@ -101,6 +101,10 @@ lint = [
     "codespell[toml]",
     { include-group = "types" },
 ]
+tics = [
+    "flake8",
+    "pylint",
+]
 types = [
     "mypy",
     "types-PyYAML",

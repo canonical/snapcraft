@@ -2261,6 +2261,10 @@ lint = [
     { name = "types-tabulate" },
     { name = "types-toml" },
 ]
+tics = [
+    { name = "flake8" },
+    { name = "pylint" },
+]
 types = [
     { name = "mypy" },
     { name = "types-pyyaml" },
@@ -2361,6 +2365,10 @@ lint = [
     { name = "types-simplejson" },
     { name = "types-tabulate" },
     { name = "types-toml" },
+]
+tics = [
+    { name = "flake8" },
+    { name = "pylint" },
 ]
 types = [
     { name = "mypy" },
