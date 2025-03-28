@@ -1,3 +1,5 @@
+.. _explanation-remote-build:
+
 Remote build
 ============
 

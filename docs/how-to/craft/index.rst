@@ -12,6 +12,7 @@ the same benefits from being packed into snaps.
   :maxdepth: 1
   :hidden:
 
+  configure-package-information
   enable-classic-confinement
   use-plugins
   manage-data-compatibility
