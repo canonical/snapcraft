@@ -57,6 +57,7 @@ Frameworks
   configure-package-information
   enable-classic-confinement
   use-plugins
+  manage-data-compatibility
   example-pre-built-app
   example-python-app
   example-c-or-cpp-app

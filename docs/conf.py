@@ -95,7 +95,6 @@ exclude_patterns = [
     # Staged files for Discourse migration
     "tutorials/create-a-snap.rst",
     "how-to/craft/add-a-part.rst",
-    "how-to/craft/manage-data-compatibility.rst",
     "how-to/craft/manage-dependencies.rst",
     "how-to/craft/manage-files.rst",
     "how-to/craft/override-the-build-step-with-craftctl.rst",
