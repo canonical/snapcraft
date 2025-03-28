@@ -116,7 +116,7 @@ The following issues have been resolved in Snapcraft 8.7:
 - `craft-application#620`_ The remote builder help suggested using a nonextistent
   ``--status`` option.
 
-.. _release-8.7.1:
+.. _release-notes-fixes-8.7.1:
 
 8.7.1
 ~~~~~
@@ -124,7 +124,7 @@ The following issues have been resolved in Snapcraft 8.7:
 - `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
   snaps.
 
-.. _release-8.7.2:
+.. _release-notes-fixes-8.7.2:
 
 8.7.2
 ~~~~~
@@ -133,7 +133,7 @@ The following issues have been resolved in Snapcraft 8.7:
   :ref:`uv plugin<craft_parts_uv_plugin>` would fail to find the Python
   interpreter included in the snap itself.
 
-.. _release-8.7.3:
+.. _release-notes-fixes-8.7.3:
 
 8.7.3
 ~~~~~
@@ -143,7 +143,7 @@ The following issues have been resolved in Snapcraft 8.7:
 - `craft-parts#1025`_ The final lines of stdout or stderr when building a part
   may not be logged.
 
-.. _release-8.7.4:
+.. _release-notes-fixes-8.7.4:
 
 8.7.4
 ~~~~~
