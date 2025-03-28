@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import ANY, Mock, PropertyMock, call
 
+import craft_application.errors
 import pydantic
 import pytest
 from craft_cli import EmitterMode, emit
@@ -101,14 +102,13 @@ def stub_component_data():
 
 def test_config_not_found(new_dir):
     """If snapcraft.yaml is not found, raise an error."""
-    with pytest.raises(errors.SnapcraftError) as raised:
+    with pytest.raises(craft_application.errors.ProjectFileMissingError) as raised:
         parts_lifecycle.run("pull", argparse.Namespace())
 
     assert str(raised.value) == (
-        "Could not find snap/snapcraft.yaml. Are you sure you are in the right "
-        "directory?"
+        f"Project file 'snapcraft.yaml' not found in {str(new_dir)!r}."
     )
-    assert raised.value.resolution == "To start a new project, use `snapcraft init`"
+    assert raised.value.resolution == "Ensure the project file exists."
 
 
 def test_config_loading_error(new_dir, mocker, snapcraft_yaml):

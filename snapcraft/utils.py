@@ -30,6 +30,7 @@ from pathlib import Path
 
 from craft_application.util import strtobool
 from craft_cli import emit
+from craft_parts import ProjectInfo
 from craft_parts.sources.git_source import GitSource
 from craft_platforms import DebianArchitecture
 
@@ -348,3 +349,22 @@ def process_version(version: str | None) -> str:
 def is_snapcraft_running_from_snap() -> bool:
     """Check if snapcraft is running from the snap."""
     return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
+
+
+def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:
+    """Get a mapping of component names to prime directories from a ProjectInfo.
+
+    'None' maps to the default prime directory.
+
+    :param project_info: The ProjectInfo to get the prime directory mapping from.
+    """
+    partition_prime_dirs = project_info.prime_dirs
+    component_prime_dirs: dict[str | None, Path] = {None: project_info.prime_dir}
+
+    # strip 'component/' prefix so that the component name is the key
+    for partition, prime_dir in partition_prime_dirs.items():
+        if partition and partition.startswith("component/"):
+            component = partition.split("/", 1)[1]
+            component_prime_dirs[component] = prime_dir
+
+    return component_prime_dirs

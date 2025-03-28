@@ -44,7 +44,9 @@ def process_part(
         if key in _SCALAR_VALUES and isinstance(unprocessed_grammar, str):
             unprocessed_grammar = [unprocessed_grammar]
 
-        processed_grammar = processor.process(grammar=unprocessed_grammar)
+        processed_grammar: list[Any] | None = processor.process(
+            grammar=unprocessed_grammar
+        )
 
         if key in _SCALAR_VALUES and isinstance(processed_grammar, list):
             if processed_grammar:

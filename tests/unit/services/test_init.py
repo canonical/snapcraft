@@ -26,11 +26,11 @@ from snapcraft.parts.yaml_utils import _SNAP_PROJECT_FILES
 
 
 @pytest.fixture()
-def init_service(default_factory):
+def init_service(fake_services):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Init
 
-    service = Init(app=APP_METADATA, services=default_factory)
+    service = Init(app=APP_METADATA, services=fake_services)
 
     return service
 
@@ -114,9 +114,9 @@ def test_init_snap_dir_exists(init_service, new_dir, emitter):
 @pytest.mark.parametrize(
     "project_file", [project.project_file for project in _SNAP_PROJECT_FILES]
 )
-def test_init_exists(init_service, new_dir, project_file):
+def test_init_exists(init_service, project_file, in_project_path):
     """Raise an error if a snapcraft.yaml file already exists."""
-    snapcraft_yaml = pathlib.Path(new_dir) / project_file
+    snapcraft_yaml = pathlib.Path(in_project_path) / project_file
     snapcraft_yaml.parent.mkdir(parents=True, exist_ok=True)
     snapcraft_yaml.touch()
     expected = (
@@ -126,5 +126,5 @@ def test_init_exists(init_service, new_dir, project_file):
 
     with pytest.raises(errors.SnapcraftError, match=expected):
         init_service.check_for_existing_files(
-            project_dir=new_dir, template_dir=template_dir()
+            project_dir=in_project_path, template_dir=template_dir()
         )

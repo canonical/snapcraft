@@ -113,7 +113,7 @@ class FakeAssertion(CraftBaseModel):
 
 
 @pytest.fixture
-def fake_assertion_service(default_factory):
+def fake_assertion_service(fake_services):
     from snapcraft.application import APP_METADATA
     from snapcraft.services import Assertion
 
@@ -194,7 +194,7 @@ def fake_assertion_service(default_factory):
         ) -> str:
             return "Success."
 
-    return FakeAssertionService(app=APP_METADATA, services=default_factory)
+    return FakeAssertionService(app=APP_METADATA, services=fake_services)
 
 
 def test_list_assertions_table(fake_assertion_service, emitter):

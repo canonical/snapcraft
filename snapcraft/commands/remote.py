@@ -19,18 +19,18 @@
 import argparse
 import os
 import textwrap
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import craft_application.errors
+import craft_platforms
 from craft_application import errors
-from craft_application.application import filter_plan
 from craft_application.commands import RemoteBuild
 from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
 from overrides import override
 
-from snapcraft import models
+import snapcraft.models
 from snapcraft.const import SUPPORTED_ARCHS
 
 
@@ -102,10 +102,9 @@ class RemoteBuildCommand(RemoteBuild):
                     retcode=os.EX_CONFIG,
                 )
 
-        project = cast(models.Project, self._services.project)
-        build_plan = self._app.BuildPlannerClass.unmarshal(
-            project.marshal()
-        ).get_build_plan()
+        build_plan = self._services.get("build_plan").create_build_plan(
+            platforms=None, build_for=None, build_on=None
+        )
 
         # mapping of `build-on` to `build-for` architectures
         build_map: dict[str, list[str]] = {}
@@ -137,32 +136,37 @@ class RemoteBuildCommand(RemoteBuild):
 
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
-        project = cast(models.Project, self._services.project)
-        build_plan = self._app.BuildPlannerClass.unmarshal(
-            project.marshal()
-        ).get_build_plan()
-        build_fors = cast(list[str], parsed_args.remote_build_build_fors)
-        archs: list[str] = []
+        project = cast(snapcraft.models.Project, self._services.get("project").get())
+        build_plan = self._services.get("build_plan").create_build_plan(
+            platforms=None, build_for=None, build_on=None
+        )
+        if parsed_args.remote_build_build_fors:
+            build_fors: list[DebianArchitecture | Literal["all"]] | None = [
+                "all" if arch == "all" else craft_platforms.DebianArchitecture(arch)
+                for arch in parsed_args.remote_build_build_fors
+            ]
+        else:
+            build_fors = None
+
+        archs: list[DebianArchitecture | Literal["all"]] = []
         if project.platforms or project._architectures_in_yaml:
             # if the project has platforms, then `--build-for` acts as a filter
             if build_fors:
                 emit.debug("Filtering the build plan using the '--build-for' argument.")
-                # loop through each `build-for` to create a list of architectures where the snaps can build on
-                for build_for in build_fors:
-                    filtered_build_plan = filter_plan(
-                        build_plan,
-                        platform=None,
-                        build_for=build_for,
-                        host_arch=None,
-                    )
-                    # Launchpad's API only accepts a list of architectures but doesn't
-                    # have a concept of 'build-on' vs 'build-for'.
-                    # Passing the build-on archs is safe because:
-                    # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
-                    # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
-                    archs.extend([info.build_on for info in filtered_build_plan])
-                    if not archs:
-                        raise craft_application.errors.EmptyBuildPlanError()
+                filtered_build_plan = self._services.get("build_plan")._filter_plan(
+                    build_plan,
+                    platforms=None,
+                    build_for=build_fors or None,
+                    build_on=None,
+                )
+                # Launchpad's API only accepts a list of architectures but doesn't
+                # have a concept of 'build-on' vs 'build-for'.
+                # Passing the build-on archs is safe because:
+                # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
+                # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
+                archs.extend([info.build_on for info in filtered_build_plan])
+                if not archs:
+                    raise craft_application.errors.EmptyBuildPlanError()
             else:
                 emit.debug("Using the project's build plan")
                 archs = [build_info.build_on for build_info in build_plan]
@@ -173,7 +177,7 @@ class RemoteBuildCommand(RemoteBuild):
             archs = build_fors
         # default is to build on, and for, the host architecture
         else:
-            archs = [str(DebianArchitecture.from_host())]
+            archs = [DebianArchitecture.from_host()]
             emit.debug(
                 f"Using host architecture {archs[0]} because no architectures were "
                 "defined in the project or as a command-line argument."

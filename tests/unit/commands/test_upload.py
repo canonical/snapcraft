@@ -90,9 +90,9 @@ def test_default(
     fake_store_verify_upload,
     snap_file,
     command_class,
-    app_config,
+    fake_app_config,
 ):
-    cmd = command_class(app_config)
+    cmd = command_class(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -128,9 +128,9 @@ def test_built_at(
     fake_store_verify_upload,
     snap_file_with_started_at,
     command_class,
-    app_config,
+    fake_app_config,
 ):
-    cmd = command_class(app_config)
+    cmd = command_class(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -157,9 +157,13 @@ def test_built_at(
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_default_channels(
-    emitter, fake_store_notify_upload, fake_store_verify_upload, snap_file, app_config
+    emitter,
+    fake_store_notify_upload,
+    fake_store_verify_upload,
+    snap_file,
+    fake_app_config,
 ):
-    cmd = commands.StoreUploadCommand(app_config)
+    cmd = commands.StoreUploadCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -186,8 +190,8 @@ def test_default_channels(
     )
 
 
-def test_invalid_file(app_config):
-    cmd = commands.StoreUploadCommand(app_config)
+def test_invalid_file(fake_app_config):
+    cmd = commands.StoreUploadCommand(fake_app_config)
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
         cmd.run(

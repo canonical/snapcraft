@@ -49,9 +49,9 @@ def fake_registered_plugins(mocker):
     "command", [commands.ListPluginsCommand, commands.PluginsCommand]
 )
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_default(command, emitter, app_config):
+def test_registered_plugins_default(command, emitter, fake_app_config):
     """Default to core24."""
-    command(app_config).run(argparse.Namespace(base=None))
+    command(fake_app_config).run(argparse.Namespace(base=None))
 
     emitter.assert_message(
         textwrap.dedent(
@@ -68,14 +68,16 @@ def test_registered_plugins_default(command, emitter, app_config):
 )
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_project(command, base, emitter, snapcraft_yaml, app_config):
+def test_registered_plugins_project(
+    command, base, emitter, snapcraft_yaml, fake_app_config
+):
     """Use the project's base."""
     if base == "devel":
         snapcraft_yaml(base=base, grade="devel")
     else:
         snapcraft_yaml(base=base)
 
-    command(app_config).run(argparse.Namespace(base=None))
+    command(fake_app_config).run(argparse.Namespace(base=None))
 
     emitter.assert_message(
         textwrap.dedent(
@@ -93,12 +95,12 @@ def test_registered_plugins_project(command, base, emitter, snapcraft_yaml, app_
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("new_dir")
 def test_registered_plugins_base_option(
-    command, base, emitter, snapcraft_yaml, app_config
+    command, base, emitter, snapcraft_yaml, fake_app_config
 ):
     """The base cli option should override the project's base."""
     snapcraft_yaml(base="core20")
 
-    command(app_config).run(argparse.Namespace(base=base))
+    command(fake_app_config).run(argparse.Namespace(base=base))
 
     emitter.assert_message(
         textwrap.dedent(
@@ -115,9 +117,11 @@ def test_registered_plugins_base_option(
 )
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_legacy_project(command, base, snapcraft_yaml, app_config):
+def test_registered_plugins_legacy_project(
+    command, base, snapcraft_yaml, fake_app_config
+):
     """Legacy bases should fallback to the legacy handler."""
     snapcraft_yaml(base=base)
 
     with pytest.raises(errors.LegacyFallback):
-        command(app_config).run(argparse.Namespace(base=None))
+        command(fake_app_config).run(argparse.Namespace(base=None))
