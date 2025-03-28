@@ -1,5 +1,6 @@
 .. _how-to-manage-data-compatibility:
 
+
 Manage data compatibility
 =========================
 
@@ -27,13 +28,13 @@ This will preserve the functionality of older versions until they can be safely
 transitioned to the newer epoch.
 
 
-Update a specific epoch
+Update a previous epoch
 -----------------------
 
-To push updates to users of a specific epoch, edit the value of the project's ``epoch``
-key to reflect the target epoch. For example, if you want to push an update to users
-of epoch 0 after releasing epoch 1, add the following to the project file in the
-revision:
+Once a new epoch is defined, you can still push updates to users of a prevous epoch by
+editing the value of the project's ``epoch`` key to reflect the target epoch. For
+example, if you want to push an update to users of epoch 0 after releasing epoch 1,
+update your project file to include:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
