@@ -57,6 +57,20 @@ setup: install-uv setup-precommit install-build-deps ## Set up a development env
 setup-tests: install-uv install-build-deps ##- Set up a testing environment without linters
 	uv sync $(UV_TEST_GROUPS)
 
+TIOBE_TICS_APT_PACKAGES :=
+ifeq ($(wildcard /usr/share/doc/flake8/copyright),)
+	TIOBE_TICS_APT_PACKAGES += flake8
+endif
+ifeq ($(wildcard /usr/share/doc/pylint/copyright),)
+	TIOBE_TICS_APT_PACKAGES += pylint
+endif
+
+.PHONY: setup-tiobe-tics
+setup-tiobe-tics: setup-tests ##- Set up a testing environment for Tiobe TICS
+ifneq ($(TIOBE_TICS_APT_PACKAGES),)
+	sudo $(APT) install $(TIOBE_TICS_APT_PACKAGES)
+endif
+
 .PHONY: setup-lint
 setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps  ##- Set up a linting-only environment
 	uv sync $(UV_LINT_GROUPS)
