@@ -195,7 +195,11 @@ test-slow:  ##- Run slow tests
 
 .PHONY: test-coverage
 test-coverage:  ## Generate coverage report
-	uv run coverage run --source $(PROJECT) -m pytest
+ifeq ($(COVERAGE_SOURCE),)
+	uv run coverage run --source $(PROJECT),tests -m pytest
+else
+	uv run coverage run --source $(COVERAGE_SOURCE),tests -m pytest
+endif
 	uv run coverage xml -o results/coverage.xml
 	# for backwards compatibility
 	# https://github.com/canonical/starflow/blob/main/.github/workflows/test-python.yaml#L109
