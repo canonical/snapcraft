@@ -32,7 +32,7 @@ Update a specific epoch
 
 To push updates to users of a specific epoch, edit the value of the project's ``epoch``
 key to reflect the target epoch. For example, if you want to push an update to users
-of epoch 0 after releasing epoch 1, add the following to the projecet file in the
+of epoch 0 after releasing epoch 1, add the following to the project file in the
 revision:
 
 .. code-block:: yaml
