@@ -147,11 +147,7 @@ class Snapcraft(Application):
         :raises SnapcraftError: If the project uses a base that is not supported by the
           current version of Snapcraft.
         """
-        try:
-            project = self.services.get("project").get_raw()
-        except craft_application.errors.ProjectFileError:
-            pass
-        else:
+        if project := self._get_project_raw():
             # if the project metadata is incomplete, assume core24 so craft application
             # can present user-friendly errors when unmarshalling the model
             effective_base = (
@@ -209,13 +205,9 @@ class Snapcraft(Application):
     @override
     def _enable_craft_parts_features(self) -> None:
         """Enable partitions if components are defined."""
-        try:
-            project = self.services.get("project").get_raw()
-        except craft_application.errors.ProjectFileError:
-            return
-
-        if project.get("components"):
-            craft_parts.Features(enable_partitions=True)
+        if project := self._get_project_raw():
+            if project.get("components"):
+                craft_parts.Features(enable_partitions=True)
 
     @staticmethod
     def _get_argv_command() -> str | None:
@@ -263,11 +255,7 @@ class Snapcraft(Application):
         if {"--version", "-V"}.intersection(sys.argv):
             return
 
-        try:
-            project = self.services.get("project").get_raw()
-        except craft_application.errors.ProjectFileError:
-            pass
-        else:
+        if project := self._get_project_raw():
             # if the project metadata is incomplete, assume core24 so craft application
             # can present user-friendly errors when unmarshalling the model
             effective_base = (
@@ -417,6 +405,13 @@ class Snapcraft(Application):
         """Set global environment variables."""
         super()._set_global_environment(info)
         set_global_environment(info)
+
+    def _get_project_raw(self) -> dict[str, Any] | None:
+        """Get raw project data from the project service."""
+        try:
+            return self.services.get("project").get_raw()
+        except craft_application.errors.ProjectFileError:
+            return None
 
 
 def create_app() -> Snapcraft:

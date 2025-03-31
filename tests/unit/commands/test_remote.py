@@ -16,7 +16,6 @@
 
 """Remote-build command tests."""
 
-import argparse
 import os
 import shutil
 import subprocess
@@ -43,17 +42,6 @@ def mock_argv(mocker, request):
     if getattr(request, "param", None) is not None:
         args.extend(["--build-for", str(request.param)])
     return mocker.patch.object(sys, "argv", args)
-
-
-@pytest.fixture
-def fake_args():
-    return argparse.Namespace(
-        remote_build_build_fors=[],
-        launchpad_accept_public_upload=True,
-        launchpad_timeout=None,
-        recover=False,
-        project=None,
-    )
 
 
 @pytest.fixture()

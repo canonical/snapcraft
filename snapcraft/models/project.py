@@ -743,21 +743,17 @@ class Platform(models.Platform):
             if isinstance(architecture, str):
                 build_on = build_for = cast(UniqueList[str], [architecture])
             else:
-                if isinstance(architecture.get("build-on"), str):
-                    build_on = build_for = cast(
-                        UniqueList[str], [architecture.get("build-on")]
-                    )
+                build_on_val = architecture.get("build-on")
+                build_for_val = architecture.get("build-for")
+                if isinstance(build_on_val, str):
+                    build_on = build_for = cast(UniqueList[str], [build_on_val])
                 else:
-                    build_on = build_for = cast(
-                        UniqueList[str], architecture.get("build-on")
-                    )
-                if architecture.get("build-for"):
-                    if isinstance(architecture.get("build-for"), str):
-                        build_for = cast(
-                            UniqueList[str], [architecture.get("build-for")]
-                        )
+                    build_on = build_for = cast(UniqueList[str], build_on_val)
+                if build_for_val:
+                    if isinstance(build_for_val, str):
+                        build_for = cast(UniqueList[str], [build_for_val])
                     else:
-                        build_for = cast(UniqueList[str], architecture.get("build-for"))
+                        build_for = cast(UniqueList[str], build_for_val)
 
             platforms[build_for[0]] = cls(build_for=build_for, build_on=build_on)
 

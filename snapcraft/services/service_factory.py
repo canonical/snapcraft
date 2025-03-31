@@ -42,10 +42,10 @@ class SnapcraftServiceFactory(ServiceFactory):
 
     project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
 
+    # Allow static type check to report correct types for Snapcraft services
     if TYPE_CHECKING:
         from . import Confdbs
 
-        # Allow static type check to report correct types for Snapcraft services
         confdbs: Confdbs = None  # type: ignore[assignment]
 
 

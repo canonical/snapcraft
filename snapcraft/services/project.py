@@ -60,7 +60,9 @@ class Project(ProjectService):
         self.__project_file_path = get_snap_project(
             project_dir=self._project_dir
         ).project_file
-        craft_cli.emit.trace(f"Project file found at {str(self.__project_file_path)!r}")
+        craft_cli.emit.debug(
+            f"Project file found at {str(self.__project_file_path.resolve())!r}"
+        )
         return self.__project_file_path
 
     @override
