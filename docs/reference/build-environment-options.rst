@@ -8,6 +8,7 @@ Snapcraft can optionally use the following arguments to modify the build environ
 
 .. list-table::
    :header-rows: 1
+   :widths: 2 1 1
 
    * - Snapcraft Argument
      - Description
