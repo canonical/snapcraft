@@ -95,39 +95,18 @@ builds, due to Launchpad's handling of the ``platforms`` key in project files.
 ``--build-for`` is the recommended alternative until Launchpad has comprehensive
 support for platforms.
 
-Known issues
-------------
-
-The following issues were reported and are scheduled to be fixed in upcoming
-patch releases.
-
-See individual issue links for any mitigations.
-
-- `#4996`_ Remote build gives an unfriendly error when attempting to cross-compile.
-
-
 Fixed bugs and issues
 ---------------------
 
 The following issues have been resolved in Snapcraft 8.7:
 
-- `#5270`_ The remote-builder gave an unfriendly error when using the
-  ``--build-for`` argument and shorthand :doc:`platforms </reference/architectures>`
-  entries in the project file.
-- `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
-  snaps.
+8.7.0
+~~~~~
+
 - `#5250`_ Resources path for ``QtWebEngineProcess`` wasn't exported for snaps
   using the KDE Neon 6 extension.
-- `#5340`_ Always show deprecation warnings for ``snapcraft list`` and
-  ``snapcraft list-registered`` commands.
-- `#5330`_ Properly quote environment variables when using the Crystal plugin.
 - `craft-parts#978`_ The ``source-subdir`` field was ignored for the
   :ref:`Go Use plugin<craft_parts_go_use_plugin>`.
-- `craft-parts#991`_ Classic snaps using the
-  :ref:`uv plugin<craft_parts_uv_plugin>` would fail to find the Python
-  interpreter included in the snap itself.
-- `craft-parts#1025`_ The final lines of stdout or stderr when building a part
-  may not be logged.
 - `craft-application#600`_ The same build environment may be re-used for platforms with
   the same ``build-on`` and ``build-for`` architectures.
 - `craft-application#618`_ The remote builder would clean up projects after
@@ -137,6 +116,42 @@ The following issues have been resolved in Snapcraft 8.7:
 - `craft-application#620`_ The remote builder help suggested using a nonextistent
   ``--status`` option.
 
+.. _release-notes-fixes-8.7.1:
+
+8.7.1
+~~~~~
+
+- `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
+  snaps.
+
+.. _release-notes-fixes-8.7.2:
+
+8.7.2
+~~~~~
+
+- `craft-parts#991`_ Classic snaps using the
+  :ref:`uv plugin<craft_parts_uv_plugin>` would fail to find the Python
+  interpreter included in the snap itself.
+
+.. _release-notes-fixes-8.7.3:
+
+8.7.3
+~~~~~
+
+- `#5340`_ Always show deprecation warnings for ``snapcraft list`` and
+  ``snapcraft list-registered`` commands.
+- `craft-parts#1025`_ The final lines of stdout or stderr when building a part
+  may not be logged.
+
+.. _release-notes-fixes-8.7.4:
+
+8.7.4
+~~~~~
+
+- `#5270`_ The remote-builder gave an unfriendly error when using the
+  ``--build-for`` argument and shorthand :doc:`platforms </reference/architectures>`
+  entries in the project file.
+- `#5330`_ The Crystal plugin would fail to properly quote environment variables.
 
 Contributors
 ------------
