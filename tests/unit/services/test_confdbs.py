@@ -22,15 +22,21 @@ from unittest import mock
 from snapcraft.models import ConfdbAssertion, EditableConfdbAssertion
 
 
-def test_confdbs_service_type(confdbs_service):
+def test_confdbs_service_type(fake_services):
+    confdbs_service = fake_services.get("confdbs")
+
     assert confdbs_service._assertion_name == "confdbs set"
 
 
-def test_editable_assertion_class(confdbs_service):
+def test_editable_assertion_class(fake_services):
+    confdbs_service = fake_services.get("confdbs")
+
     assert confdbs_service._editable_assertion_class == EditableConfdbAssertion
 
 
-def test_get_assertions(confdbs_service):
+def test_get_assertions(fake_services):
+    confdbs_service = fake_services.get("confdbs")
+
     confdbs_service._get_assertions("test-confdb")
 
     confdbs_service._store_client.list_confdbs.assert_called_once_with(
@@ -38,7 +44,8 @@ def test_get_assertions(confdbs_service):
     )
 
 
-def test_build_assertion(confdbs_service):
+def test_build_assertion(fake_services):
+    confdbs_service = fake_services.get("confdbs")
     mock_assertion = mock.Mock(spec=ConfdbAssertion)
 
     confdbs_service._build_assertion(mock_assertion)
@@ -48,7 +55,8 @@ def test_build_assertion(confdbs_service):
     )
 
 
-def test_post_assertions(confdbs_service):
+def test_post_assertions(fake_services):
+    confdbs_service = fake_services.get("confdbs")
     confdbs_service._post_assertion(b"test-assertion-data")
 
     confdbs_service._store_client.post_confdbs.assert_called_once_with(
@@ -56,14 +64,16 @@ def test_post_assertions(confdbs_service):
     )
 
 
-def test_normalize_assertions_empty(confdbs_service, check):
+def test_normalize_assertions_empty(fake_services, check):
+    confdbs_service = fake_services.get("confdbs")
     headers, confdbs = confdbs_service._normalize_assertions([])
 
     check.equal(headers, ["Account ID", "Name", "Revision", "When"])
     check.equal(confdbs, [])
 
 
-def test_normalize_assertions(fake_confdb_assertion, confdbs_service, check):
+def test_normalize_assertions(fake_confdb_assertion, fake_services, check):
+    confdbs_service = fake_services.get("confdbs")
     confdbs = [
         fake_confdb_assertion(),
         fake_confdb_assertion(
@@ -86,7 +96,8 @@ def test_normalize_assertions(fake_confdb_assertion, confdbs_service, check):
     )
 
 
-def test_generate_yaml_from_model(fake_confdb_assertion, confdbs_service):
+def test_generate_yaml_from_model(fake_confdb_assertion, fake_services):
+    confdbs_service = fake_services.get("confdbs")
     assertion = fake_confdb_assertion(
         revision="10",
         views={
@@ -146,7 +157,8 @@ def test_generate_yaml_from_model(fake_confdb_assertion, confdbs_service):
     )
 
 
-def test_get_success_message(fake_confdb_assertion, confdbs_service):
+def test_get_success_message(fake_confdb_assertion, fake_services):
+    confdbs_service = fake_services.get("confdbs")
     message = confdbs_service._get_success_message(fake_confdb_assertion(revision=10))
 
     assert message == "Successfully created revision 10 for 'test-confdb'."

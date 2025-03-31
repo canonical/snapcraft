@@ -20,10 +20,10 @@ from __future__ import annotations
 
 import logging
 import os
-import pathlib
 import sys
 from typing import Any
 
+import craft_application.errors
 import craft_cli
 import craft_parts
 import craft_store
@@ -31,27 +31,23 @@ from craft_application import Application, AppMetadata, launchpad, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
 from craft_parts.plugins.plugins import PluginType
-from craft_platforms import DebianArchitecture
 from overrides import override
 
 import snapcraft
 import snapcraft_legacy
 from snapcraft import cli, commands, errors, models, services, store
-from snapcraft.extensions import apply_extensions
-from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
 from snapcraft.parts import set_global_environment
 from snapcraft.utils import get_effective_base
 from snapcraft_legacy.cli import legacy
 
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
 from .parts import plugins
-from .parts.yaml_utils import extract_parse_info
+from .parts.yaml_utils import get_snap_project
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
     summary="Package, distribute, and update snaps for Linux and IoT",
     ProjectClass=models.Project,
-    BuildPlannerClass=SnapcraftBuildPlanner,
     source_ignore_patterns=["*.snap"],
     project_variables=["version", "grade"],
     mandatory_adoptable_fields=["version", "summary", "description"],
@@ -95,21 +91,11 @@ class Snapcraft(Application):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._parse_info: dict[str, list[str]] = {}
 
         # Locate the project file. It's used in early execution to determine
         # compatibility with previous versions of the snapcraft codebase, and in
         # the package service to copy the project file into the snap payload if
         # manifest generation is enabled.
-        try:
-            self._snapcraft_yaml_path: pathlib.Path | None = self._resolve_project_path(
-                None
-            )
-            with self._snapcraft_yaml_path.open() as file:
-                self._snapcraft_yaml_data = util.safe_yaml_load(file)
-        except FileNotFoundError:
-            self._snapcraft_yaml_path = self._snapcraft_yaml_data = None
-
         self._known_core24 = self._get_known_core24()
 
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
@@ -118,13 +104,19 @@ class Snapcraft(Application):
 
     def _get_known_core24(self) -> bool:
         """Return true if the project is known to be core24."""
-        if self._snapcraft_yaml_data:
-            base = self._snapcraft_yaml_data.get("base")
-            build_base = self._snapcraft_yaml_data.get("build-base")
+        try:
+            snapcraft_yaml_path = get_snap_project(self.project_dir).project_file
+            with snapcraft_yaml_path.open() as file:
+                _snapcraft_yaml_data = util.safe_yaml_load(file)
+        except craft_application.errors.ProjectFileError:
+            return False
 
-            # We know for sure that we're handling a core24 project
-            if "core24" in (base, build_base) or build_base == "devel":
-                return True
+        base = _snapcraft_yaml_data.get("base")
+        build_base = _snapcraft_yaml_data.get("build-base")
+
+        # We know for sure that we're handling a core24 project
+        if "core24" in (base, build_base) or build_base == "devel":
+            return True
 
         return False
 
@@ -139,31 +131,6 @@ class Snapcraft(Application):
         if self._known_core24:
             # dotnet is disabled for core24 and newer because it is pending a rewrite
             craft_parts.plugins.unregister("dotnet")
-
-    @override
-    def _configure_services(self, provider_name: str | None) -> None:
-        self.services.update_kwargs(
-            "package",
-            build_plan=self._build_plan,
-            snapcraft_yaml_path=self._snapcraft_yaml_path,
-            parse_info=self._parse_info,
-        )
-
-        super()._configure_services(provider_name)
-
-    @override
-    def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
-        """Overridden to handle the two possible locations for snapcraft.yaml."""
-        if project_dir is None:
-            project_dir = pathlib.Path.cwd()
-
-        try:
-            return super()._resolve_project_path(project_dir / "snap")
-        except FileNotFoundError:
-            try:
-                return super()._resolve_project_path(project_dir)
-            except FileNotFoundError:
-                return super()._resolve_project_path(project_dir / "build-aux" / "snap")
 
     @property
     def app_config(self) -> dict[str, Any]:
@@ -180,15 +147,15 @@ class Snapcraft(Application):
         :raises SnapcraftError: If the project uses a base that is not supported by the
           current version of Snapcraft.
         """
-        if self._snapcraft_yaml_data:
+        if project := self._get_project_raw():
             # if the project metadata is incomplete, assume core24 so craft application
             # can present user-friendly errors when unmarshalling the model
             effective_base = (
                 get_effective_base(
-                    base=self._snapcraft_yaml_data.get("base"),
-                    build_base=self._snapcraft_yaml_data.get("build-base"),
-                    project_type=self._snapcraft_yaml_data.get("type"),
-                    name=self._snapcraft_yaml_data.get("name"),
+                    base=project.get("base"),
+                    build_base=project.get("build-base"),
+                    project_type=project.get("type"),
+                    name=project.get("name"),
                 )
                 or "core24"
             )
@@ -238,26 +205,9 @@ class Snapcraft(Application):
     @override
     def _enable_craft_parts_features(self) -> None:
         """Enable partitions if components are defined."""
-        if self._snapcraft_yaml_data and self._snapcraft_yaml_data.get("components"):
-            craft_parts.Features(enable_partitions=True)
-
-    @override
-    def _setup_partitions(self, yaml_data: dict[str, Any]) -> list[str] | None:
-        components = models.ComponentProject.unmarshal(yaml_data)
-        if components.components is None:
-            return None
-
-        return components.get_partitions()
-
-    @override
-    def _extra_yaml_transform(
-        self, yaml_data: dict[str, Any], *, build_on: str, build_for: str | None
-    ) -> dict[str, Any]:
-        arch = build_on
-        target_arch = build_for if build_for else str(DebianArchitecture.from_host())
-        new_yaml_data = apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
-        self._parse_info = extract_parse_info(new_yaml_data)
-        return apply_root_packages(new_yaml_data)
+        if project := self._get_project_raw():
+            if project.get("components"):
+                craft_parts.Features(enable_partitions=True)
 
     @staticmethod
     def _get_argv_command() -> str | None:
@@ -305,15 +255,15 @@ class Snapcraft(Application):
         if {"--version", "-V"}.intersection(sys.argv):
             return
 
-        if self._snapcraft_yaml_data:
+        if project := self._get_project_raw():
             # if the project metadata is incomplete, assume core24 so craft application
             # can present user-friendly errors when unmarshalling the model
             effective_base = (
                 get_effective_base(
-                    base=self._snapcraft_yaml_data.get("base"),
-                    build_base=self._snapcraft_yaml_data.get("build-base"),
-                    project_type=self._snapcraft_yaml_data.get("type"),
-                    name=self._snapcraft_yaml_data.get("name"),
+                    base=project.get("base"),
+                    build_base=project.get("build-base"),
+                    project_type=project.get("type"),
+                    name=project.get("name"),
                 )
                 or "core24"
             )
@@ -455,6 +405,13 @@ class Snapcraft(Application):
         """Set global environment variables."""
         super()._set_global_environment(info)
         set_global_environment(info)
+
+    def _get_project_raw(self) -> dict[str, Any] | None:
+        """Get raw project data from the project service."""
+        try:
+            return self.services.get("project").get_raw()
+        except craft_application.errors.ProjectFileError:
+            return None
 
 
 def create_app() -> Snapcraft:

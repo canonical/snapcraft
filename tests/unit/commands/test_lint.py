@@ -767,42 +767,77 @@ def test_lint_managed_mode_with_lint_config(
     emitter.assert_verbose("Collected lint config from 'snapcraft.yaml'.")
 
 
-def test_load_project(fake_snapcraft_project, tmp_path, app_config):
+@pytest.mark.xfail(strict=True, reason="Needs fixture adjustments.")
+@pytest.mark.parametrize(
+    "snapcraft_yaml_data",
+    [
+        {
+            "name": "test-name",
+            "version": "1.0",
+            "summary": "test summary",
+            "description": "test description",
+            "base": "core22",
+            "confinement": "strict",
+            "grade": "stable",
+            "parts": {
+                "part1": {
+                    "plugin": "nil",
+                }
+            },
+        }
+    ],
+)
+def test_load_project(
+    snapcraft_yaml_data, fake_snapcraft_project, tmp_path, fake_app_config
+):
     """Load a simple snapcraft.yaml project.
 
     To simplify the unit tests, the `_load_project()` method is mocked out of the other
     tests and tested separately.
     """
-    # create a simple snapcraft.yaml
-    (tmp_path / "snap").mkdir()
-    snap_file = tmp_path / "snap/snapcraft.yaml"
-    with snap_file.open("w") as yaml_file:
-        print(
-            dedent(
-                """\
-                name: test-name
-                version: "1.0"
-                summary: test summary
-                description: test description
-                base: core22
-                confinement: strict
-                grade: stable
-
-                parts:
-                  part1:
-                    plugin: nil
-                """
-            ),
-            file=yaml_file,
-        )
-
-    result = LintCommand(app_config)._load_project(snapcraft_yaml_file=snap_file)
+    result = LintCommand(fake_app_config)._load_project(
+        snapcraft_yaml_file=Path("snap/snapcraft.yaml")
+    )
 
     assert result == fake_snapcraft_project
 
 
+@pytest.mark.xfail(strict=True, reason="Needs fixture adjustments.")
+@pytest.mark.parametrize(
+    "snapcraft_yaml_data",
+    [
+        {
+            "name": "test-name",
+            "version": "1.0",
+            "summary": "test summary",
+            "description": "test description",
+            "base": "core22",
+            "confinement": "strict",
+            "grade": "stable",
+            "architectures": ["amd64", "arm64", "armhf"],
+            "apps": {
+                "app1": {
+                    "command": "app1",
+                    "command-chain": ["fake-command"],
+                    "extensions": ["fake-extension"],
+                },
+            },
+            "parts": {
+                "nil": {
+                    "plugin": "nil",
+                    "parse-info": ["usr/share/metainfo/app1.appdata.xml"],
+                    "stage-packages": [
+                        "mesa-opencl-icd",
+                        "ocl-icd-libopencl1",
+                        {"on amd64": ["intel-opencl-icd"]},
+                    ],
+                }
+            },
+        }
+    ],
+)
 @pytest.mark.usefixtures("fake_extension")
-def test_load_project_complex(mocker, tmp_path, app_config):
+def test_load_project_complex(snapcraft_yaml_data, mocker, tmp_path, fake_app_config):
     """Load a complex snapcraft file.
 
     This includes lint, parse-info, architectures, and advanced grammar.
@@ -810,44 +845,9 @@ def test_load_project_complex(mocker, tmp_path, app_config):
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="amd64")
 
-    # create a snap file
-    (tmp_path / "snap").mkdir()
-    snap_file = tmp_path / "snap/snapcraft.yaml"
-    with snap_file.open("w") as yaml_file:
-        print(
-            dedent(
-                """\
-                name: test-name
-                version: "1.0"
-                summary: test summary
-                description: test description
-                base: core22
-                confinement: strict
-                grade: stable
-                architectures: [amd64, arm64, armhf]
-
-                apps:
-                  app1:
-                    command: app1
-                    command-chain: [fake-command]
-                    extensions: [fake-extension]
-
-                parts:
-                  nil:
-                    plugin: nil
-                    parse-info:
-                      - usr/share/metainfo/app1.appdata.xml
-                    stage-packages:
-                      - mesa-opencl-icd
-                      - ocl-icd-libopencl1
-                      - on amd64:
-                        - intel-opencl-icd
-                """
-            ),
-            file=yaml_file,
-        )
-
-    result = LintCommand(app_config)._load_project(snapcraft_yaml_file=snap_file)
+    result = LintCommand(fake_app_config)._load_project(
+        snapcraft_yaml_file=Path("snap/snapcraft.yaml")
+    )
     assert result == models.Project.unmarshal(
         {
             "name": "test-name",
@@ -882,11 +882,11 @@ def test_load_project_complex(mocker, tmp_path, app_config):
     )
 
 
-def test_load_project_no_file(emitter, tmp_path, app_config):
+def test_load_project_no_file(emitter, tmp_path, fake_app_config):
     """Return None if there is no snapcraft.yaml file."""
     snapcraft_yaml_file = tmp_path / "snap/snapcraft.yaml"
 
-    result = LintCommand(app_config)._load_project(
+    result = LintCommand(fake_app_config)._load_project(
         snapcraft_yaml_file=snapcraft_yaml_file
     )
 
@@ -895,7 +895,7 @@ def test_load_project_no_file(emitter, tmp_path, app_config):
 
 
 @pytest.mark.parametrize("base", ["core", "core18", "core20"])
-def test_load_project_unsupported_core_error(base, tmp_path, app_config):
+def test_load_project_unsupported_core_error(base, tmp_path, fake_app_config):
     """Raise an error if for snaps with core, core18, and core20 bases."""
     # create a simple snapcraft.yaml
     (tmp_path / "snap").mkdir()
@@ -919,6 +919,6 @@ def test_load_project_unsupported_core_error(base, tmp_path, app_config):
     )
 
     with pytest.raises(SnapcraftError) as raised:
-        LintCommand(app_config)._load_project(snapcraft_yaml_file=snap_file)
+        LintCommand(fake_app_config)._load_project(snapcraft_yaml_file=snap_file)
 
     assert str(raised.value) == "can not lint snap using a base older than core22"

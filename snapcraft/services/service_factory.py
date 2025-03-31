@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from craft_application import ServiceFactory
@@ -28,25 +27,25 @@ from snapcraft import models
 # Add new services to this mapping to add them to the service factory
 # Internal service name : Stringified service class name
 _SERVICES: dict[str, str] = {
+    "confdbs": "Confdbs",
     "init": "Init",
-    "provider": "Provider",
     "lifecycle": "Lifecycle",
     "package": "Package",
+    "provider": "Provider",
+    "project": "Project",
     "remote_build": "RemoteBuild",
-    "confdbs": "Confdbs",
 }
 
 
-@dataclass
 class SnapcraftServiceFactory(ServiceFactory):
     """Snapcraft-specific Service Factory."""
 
     project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
 
+    # Allow static type check to report correct types for Snapcraft services
     if TYPE_CHECKING:
-        from services import Confdbs
+        from . import Confdbs
 
-        # Allow static type check to report correct types for Snapcraft services
         confdbs: Confdbs = None  # type: ignore[assignment]
 
 
