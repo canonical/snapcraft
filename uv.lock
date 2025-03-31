@@ -386,8 +386,8 @@ wheels = [
 
 [[package]]
 name = "craft-application"
-version = "5.0.0.post1+g1f12046"
-source = { git = "https://github.com/canonical/craft-application?rev=main#1f120464141bddc97e182b1e7fa23df3acae9eea" }
+version = "4.10.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
     { name = "craft-archives" },
@@ -405,6 +405,10 @@ dependencies = [
     { name = "requests" },
     { name = "snap-helpers" },
     { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/86/86/20bac2f1a4e45097c01040328ff8ffd5313533d03231db08435559c684c3/craft_application-4.10.0.tar.gz", hash = "sha256:7a9cda0e854877fb80464e03274e69b97540a618e0c53cbc500b6fce25b9b8c4", size = 315299 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/83/36b7a98d2cccae4f70c5edc73572ba44d6ab12eac2997924ac69394b7658/craft_application-4.10.0-py3-none-any.whl", hash = "sha256:7e6a595cf6855868332bd7cb19585fe8e8678440d9d604888599903fe36a0b8c", size = 147019 },
 ]
 
 [package.optional-dependencies]
@@ -2252,7 +2256,7 @@ requires-dist = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.0.0" },
     { name = "click", specifier = "==8.1.8" },
-    { name = "craft-application", extras = ["remote"], git = "https://github.com/canonical/craft-application?rev=main" },
+    { name = "craft-application", extras = ["remote"], specifier = "~=4.10" },
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = "~=3.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
