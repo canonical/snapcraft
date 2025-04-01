@@ -87,7 +87,7 @@ dev = [
     "pytest-subprocess",
 ]
 docs = [
-    "canonical-sphinx[full]>=0.2.0",
+    "canonical-sphinx[full]>=0.4.0",
     "docutils<0.20", # Frozen until we can update sphinx dependencies.
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
@@ -311,6 +311,9 @@ max-branches = 16
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
+
+[tool.ruff.lint.flake8-builtins]
+strict-checking = true
 
 [tool.ruff.lint.pydocstyle]
 ignore-decorators = [ # Functions with these decorators don't have to have docstrings.

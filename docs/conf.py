@@ -43,6 +43,11 @@ html_context = {
     "display_contributors": False,
 }
 
+# Target repository for the edit button on pages
+html_theme_options = {
+    "source_edit_link": "https://github.com/canonical/snapcraft",
+}
+
 extensions = [
     "canonical_sphinx",
 ]
