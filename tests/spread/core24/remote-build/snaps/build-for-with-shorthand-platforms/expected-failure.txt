@@ -1,0 +1,1 @@
+Launchpad can't build snaps when using '--build-for' with a shorthand platforms entry in the project's snapcraft.yaml.
