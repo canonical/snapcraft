@@ -98,9 +98,11 @@ class CrystalPlugin(PluginV2):
 
         # Make sure snap-related environment variables survive through the shell call
         # Filter environment variables for only the ones beginning with "SNAP"
-        snap_dict = {key: os.environ[key] for key in os.environ if key.startswith("SNAP")}
+        snap_dict = {
+            key: os.environ[key] for key in os.environ if key.startswith("SNAP")
+        }
         env = dict(LANG="C.UTF-8", LC_ALL="C.UTF-8", **snap_dict)
-        env_flags = [f"{key}={value}" for key, value in env.items()]
+        env_flags = [f"{key}={shlex.quote(value)}" for key, value in env.items()]
 
         return [
             f"shards build --without-development {build_options}",

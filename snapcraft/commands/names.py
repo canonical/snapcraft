@@ -186,17 +186,12 @@ class StoreLegacyListCommand(StoreNamesCommand):
 
     @overrides
     def run(self, parsed_args):
-        emit.progress("This command is deprecated: use 'names' instead")
+        emit.progress("This command is deprecated: use 'names' instead", permanent=True)
         super().run(parsed_args)
 
 
-class StoreLegacyListRegisteredCommand(StoreNamesCommand):
+class StoreLegacyListRegisteredCommand(StoreLegacyListCommand):
     """Legacy command to list the snap names registered with the current account."""
 
     name = "list-registered"
     hidden = True
-
-    @overrides
-    def run(self, parsed_args):
-        emit.progress("This command is deprecated: use 'names' instead")
-        super().run(parsed_args)

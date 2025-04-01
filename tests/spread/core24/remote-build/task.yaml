@@ -13,6 +13,7 @@ environment:
   SNAP/no_platforms: no-platforms
   SNAP/build_for: build-for
   SNAP/build_for_with_platforms: build-for-with-platforms
+  SNAP/build_for_with_shorthand_platforms: build-for-with-shorthand-platforms
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/old_credentials: "$HOME/.local/share/snapcraft/provider/launchpad/credentials"
@@ -55,24 +56,30 @@ execute: |
   if [[ -e "arguments.txt" ]]; then
     call_args=$(cat "arguments.txt")
   fi
-  
-  # shellcheck disable=SC2086
-  snapcraft remote-build --launchpad-accept-public-upload $call_args
 
-  find . -maxdepth 1 -name "*.snap" | MATCH ".snap"
+  if [[ -e "expected-failure.txt" ]]; then
+    # shellcheck disable=SC2086
+    snapcraft remote-build --launchpad-accept-public-upload $call_args 2>&1 | MATCH -f expected-failure.txt
 
-  # confirm the snaps with the expected architectures were built
-  while read -r expected_snap; do
-    if [[ ! -e $expected_snap ]]; then
-      echo "Could not find snap '$expected_snap'"
+  else
+    # shellcheck disable=SC2086
+    snapcraft remote-build --launchpad-accept-public-upload $call_args
+
+    find . -maxdepth 1 -name "*.snap" | MATCH ".snap"
+
+    # confirm the snaps with the expected architectures were built
+    while read -r expected_snap; do
+      if [[ ! -e $expected_snap ]]; then
+        echo "Could not find snap '$expected_snap'"
+        exit 1
+      fi
+    done < "expected-snaps.txt"
+
+    # confirm no other snaps were built
+    expected_number_of_snaps=$(wc -l < "expected-snaps.txt")
+    actual_number_of_snaps=$(find . -wholename "./*.snap" | wc -l)
+    if [[ $expected_number_of_snaps -ne $actual_number_of_snaps ]]; then
+      echo "Expected $expected_number_of_snaps to be built, but $actual_number_of_snaps were built."
       exit 1
     fi
-  done < "expected-snaps.txt"
-
-  # confirm no other snaps were built
-  expected_number_of_snaps=$(wc -l < "expected-snaps.txt")
-  actual_number_of_snaps=$(find . -wholename "./*.snap" | wc -l)
-  if [[ $expected_number_of_snaps -ne $actual_number_of_snaps ]]; then
-    echo "Expected $expected_number_of_snaps to be built, but $actual_number_of_snaps were built."
-    exit 1
   fi
