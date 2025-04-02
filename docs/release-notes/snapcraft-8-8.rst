@@ -23,8 +23,8 @@ Snapcraft 8.8 brings the following features, integrations, and improvements.
 Cross-compiling for core24
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Previously, cross-compiling for ``core24`` snaps only worked for compatible
-architectures: building on AMD64 for I386 and building on ARM64 for ARMHF.
+Previously, cross-compiling for ``core24`` snaps only worked when building on
+AMD64 for I386 or on ARM64 for ARMHF.
 
 This restriction has been dropped, so ``package-repositories`` and ``build-packages``
 keys can now define entries for any :ref:`supported architecture
@@ -46,8 +46,8 @@ the ``build-on`` architectures listed in the project file.
 KDE Neon
 ~~~~~~~~
 
-A new KDE extension, ``kde-neon-qt6``, has been added for for standalone Qt 6
-applications using the KDE neon 6 stack.
+A new KDE extension, ``kde-neon-qt6``, has been added for standalone Qt 6 applications
+using the KDE neon 6 stack.
 
 Additionally, many improvements and fixes have been made to the build environments for
 KDE neon extensions:
@@ -79,8 +79,8 @@ and how to report vulnerabilities.
 Support for short hashes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Previously, the ``source-commit`` key for parts could only accept full length (40
-character) hashes. Now, ``source-commit`` can accept short hashes.
+Previously, the ``source-commit`` key for parts only accepted full length (40
+character) hashes. Now, ``source-commit`` also accepts short hashes.
 
 
 Contributors

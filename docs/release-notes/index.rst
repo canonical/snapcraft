@@ -84,8 +84,8 @@ development keeps pace with the OS's new releases and support lifecycle.
    :maxdepth: 1
    :hidden:
 
-   Snapcraft 8.7 <snapcraft-8-7>
    Snapcraft 8.8 <snapcraft-8-8>
+   Snapcraft 8.7 <snapcraft-8-7>
    changelog
 
 
