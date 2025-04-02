@@ -15,3 +15,4 @@ How-to guides
    use-extensions/index
    /common/craft-parts/how-to/include_files
    /common/craft-parts/how-to/override_build
+   /common/craft-parts/how-to/use_parts

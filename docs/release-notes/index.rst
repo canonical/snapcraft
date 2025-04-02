@@ -16,6 +16,7 @@ Current releases
 Snapcraft 8
 ~~~~~~~~~~~
 
+- :ref:`Snapcraft 8.8 <release-8.8>`
 - :ref:`Snapcraft 8.7 <release-8.7>`
 
 
@@ -84,6 +85,7 @@ development keeps pace with the OS's new releases and support lifecycle.
    :hidden:
 
    Snapcraft 8.7 <snapcraft-8-7>
+   Snapcraft 8.8 <snapcraft-8-8>
    changelog
 
 
@@ -93,31 +95,25 @@ development keeps pace with the OS's new releases and support lifecycle.
 
 .. release note template:
 
-  Starcraft 2.0 release notes
+  Snapcraft 2.0 release notes
   ===========================
 
   15 October 2024
 
-  Learn about the new features, changes, and fixes introduced in Starcraft 2.0.
+  Learn about the new features, changes, and fixes introduced in Snapcraft 2.0.
 
 
   Requirements and compatibility
   ------------------------------
 
-  Starcraft 2.0 requires Python 3.11 or higher.
-
-  <If there are multiple requirements, remove "Python 3.11 or higher" in the
-  previous paragraph and add a separate list here, with the same format of
-  "<package> or higher".>
-
-  For development and testing, Starcraft requires a <architecture> system or VM
-  with a minimum of <number>GB RAM.
+  See :ref:`System requirements<system-requirements>` for information on the minimum
+  hardware and installed software.
 
 
   What's new
   ----------
 
-  Starcraft 2.0 brings the following features, integrations, and improvements.
+  Snapcraft 2.0 brings the following features, integrations, and improvements.
 
 
   <Important change>
@@ -159,7 +155,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   their locations more predictable.">
 
   <Paragraph 3, optional: Provide a call to action. This could take several
-  forms, such as a call to immediately perform a relevant action in Starcraft,
+  forms, such as a call to immediately perform a relevant action in Snapcraft,
   solicititation of the reader's feedback on a form or forum, or a link to
   documentation, demo, blog post, and so on. For example, "See ``:ref:`Manage
   store profile``` to configure how the public can engage with your snap on the
@@ -169,7 +165,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   Minor features
   --------------
 
-  Starcraft 2.0 brings the following minor changes.
+  Snapcraft 2.0 brings the following minor changes.
 
 
   <Feature A>
@@ -186,7 +182,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   Backwards-incompatible changes
   ------------------------------
 
-  The following changes are incompatible with previous versions of Starcraft.
+  The following changes are incompatible with previous versions of Snapcraft.
 
 
   <"Removed" or "Disabled"> <feature B>
@@ -201,7 +197,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   alternative solution, or state if no alternative exists. If necessary,
   describe the consequences of the reader's inaction. Link to relevant
   documentation, standards, or public discussion. For example, "In accordance
-  with the report, Starcraft 2.0 no longer supports encryption algorithm X. As
+  with the report, Snapcraft 2.0 no longer supports encryption algorithm X. As
   of this release, if you haven't already we highly recommend you immediately
   switch to encryption algorithm Y to ensure your data stays protected. For
   more details about this decision and our policy, see ```Security notice on
@@ -211,7 +207,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   Feature deprecations
   --------------------
 
-  The following features are deprecated in Starcraft 2.0:
+  The following features are deprecated in Snapcraft 2.0:
 
   Deprecated <feature C>
   ~~~~~~~~~~~~~~~~~~~~~~
@@ -235,7 +231,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   <Iterate on the following paragraph+items if you're covering multiple
   versions in this section.>
 
-  The following features will be deprecated in Starcraft <planned version>:
+  The following features will be deprecated in Snapcraft <planned version>:
 
 
   <Feature D>
@@ -251,7 +247,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   working on", or "we have scheduled development of". End by linking to
   relevant documentation, standards, or public discussion. For example, "In
   October 2024, the NIST published SP ABC-123, urging software publishers to
-  cease the use of encryption algorithm X. We plan to deprecate it in Starcraft
+  cease the use of encryption algorithm X. We plan to deprecate it in Snapcraft
   1.2. For more details about this decision and our policy, see `Security
   notice on encryption X <>`_ on the Ubuntu blog.">
 
@@ -271,7 +267,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   Fixed bugs and issues
   ---------------------
 
-  The following issues have been resolved in Starcraft 2.0:
+  The following issues have been resolved in Snapcraft 2.0:
 
   - `ID <link>`_ <Title>
   - `ID <link>`_ <Title>
