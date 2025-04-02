@@ -25,6 +25,9 @@ import snapcraft
 
 project_dir = pathlib.Path("..").resolve()
 sys.path.insert(0, str(project_dir.absolute()))
+sys.path.append(str(pathlib.Path('_ext').resolve()))
+sys.path.append(os.path.abspath('../.venv/lib/python3.12/site-packages/'))
+
 
 project = "Snapcraft"
 author = "Canonical Group Ltd"
@@ -45,6 +48,7 @@ html_context = {
 
 extensions = [
     "canonical_sphinx",
+    "documodels",
 ]
 
 sphinx_tabs_disable_tab_closing = True
@@ -113,7 +117,6 @@ exclude_patterns = [
     "reference/package-repositories.rst",
     "reference/part-environment-variables.rst",
     "reference/project-file.rst",
-    "reference/snapcraft-yaml.rst",
     "explanation/classic-confinement.rst",
     "explanation/interfaces.rst",
 ]
