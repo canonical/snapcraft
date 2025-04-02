@@ -15,11 +15,11 @@ Reference
    commands
    components
    linters
-   snapshots
    plugins
    extensions/index
    /common/craft-parts/reference/part_properties
    parts_steps
+   snapshots
    system-requirements
 
 

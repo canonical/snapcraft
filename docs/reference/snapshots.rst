@@ -25,18 +25,13 @@ These wildcard patterns must start with a system or user data `environment varia
 <https://snapcraft.io/docs/parts-environment-variables>`_. Only the asterisk wildcard is
 supported.
 
-The following example excludes cached files in ``.cache``, files beginning with
-``excl-``, temporary files stored in ``/tmp``, and files manually stored in a
-``large-files`` directory.
-
 .. code-block:: yaml
     :caption: snapshots.yaml
 
     exclude:
-      - $SNAP_COMMON/.cache
-      - $SNAP_DATA/excl-*
-      - $SNAP_USER_COMMON/tmp
-      - $SNAP_USER_DATA/large-files/*-not-used.*
+      - <environment-variable>/<path>
+      ...
+      - <environment-variable>/<path>
 
 
 Including ``snapshots.yaml`` in a snap
@@ -44,5 +39,6 @@ Including ``snapshots.yaml`` in a snap
 
 The ``snapshots.yaml`` file must be located within a snap's ``meta`` directory. This is
 typically done by `creating a part <https://snapcraft.io/docs/adding-parts>`_ that uses
-either the dump plugin or a build step override to copy ``snapshots.yaml`` from another
+either the :ref:`dump plugin <craft_parts_dump_plugin>` or a :doc:`build step override
+</common/craft-parts/how-to/override_build>` to copy ``snapshots.yaml`` from another
 directory.
