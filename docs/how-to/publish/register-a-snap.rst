@@ -27,17 +27,36 @@ Name your snap
 --------------
 
 When deciding on a name for your snap, it's important to follow the best naming
-practices, as a snap's name is unique and cannot be changed after registration.
+practices, as a snap's name is universally unique among all public and private snap
+stores and can't be changed after registration.
 
 The name you register should:
 
 * accurately represent your application
-* consist of lowercase letters
-* be free of prefixes or suffixes (e.g., "username-" or "-snap").
+* contain at least one letter
+* contain no more than 40 characters
+* consist of only lowercase letters, numbers, and hyphens
+* not start or end with a hyphen
 
-Lastly, ensure that the value of the ``name`` key in your snap's project file matches
-the name you wish to register. If you need to update your project file, be sure to
-rebuild the snap before registration.
+Generally, a snap's name should also be free of prefixes or suffixes (e.g., "username-"
+or "-snap"). However, if you are registering an unofficial snap that has no chance of
+being handed over to the official project, your username should be appended to the app
+name. For example, if you were creating an unofficial fork of Firefox, you would name it
+"firefox-<username>".
+
+Ensure that the value of the ``name`` key in your snap's project file matches the name
+you wish to register. You can also include the optional ``title`` key to define a more
+human-friendly name. This will be displayed in certain graphical frontends, such as the
+App Center.
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    name: my-new-snap
+    title: My New Snap
+
+If you need to make any changes to your project file, be sure to rebuild the snap before
+registration.
 
 
 Register your snap
