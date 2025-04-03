@@ -23,9 +23,8 @@ Snapcraft can optionally use the following arguments to modify the build environ
    * - ``--use-lxd``
      - Builds the snap using `LXD <https://linuxcontainers.org/lxd/introduction/>`_
        rather than Multipass. This can potentially reduce resource usage, especially
-       from a VM. You can also set ``SNAPCRAFT_BUILD_ENVIRONMENT=lxd`` to use LXD by
-       default.
-     - Requires LXD.
+       from a VM.
+     - Requires LXD. For more information, see :ref:`select-a-build-provider`.
 
    * - ``--http-proxy <http-proxy>``
      - Configures HTTP proxy. Snapcraft will honor the ``http_proxy`` environment
@@ -33,14 +32,9 @@ Snapcraft can optionally use the following arguments to modify the build environ
      - None.
 
    * - ``--https-proxy <https-proxy>``
-     - Configures HTTPS proxy. Snapcraft will honor the ``https-proxy`` environment
+     - Configures HTTPS proxy. Snapcraft will honor the ``https_proxy`` environment
        variable as well.
      - None.
-
-   * - ``--add-ca-certificates <path>``
-     - Adds trusted CAs in Snapcraft-created build environments. May be a CA certificate
-       file or directory containing certificate files.
-     - Requires LXD or Multipass.
 
    * - ``--bind-ssh``
      - Bind the :file:`~/.ssh` directory to the local build instance.
@@ -48,7 +42,7 @@ Snapcraft can optionally use the following arguments to modify the build environ
 
    * - ``--ua-token <token>``
      - Configure the build environment with ESM using specified UA token.
-     - Requires LXD or Multipass.
+     - Requires LXD or Multipass. Only works for snaps built on core22.
 
    * - ``--enable-manifest``
      - Add the build manifest to the snap package in :file:`snap/manifest.yaml`. This
