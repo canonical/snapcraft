@@ -23,10 +23,10 @@ import snapcraft.models
 
 
 @pytest.mark.parametrize(
-    ("project_data", "expected_build_infos"),
+    ("platforms", "expected_build_infos"),
     [
         pytest.param(
-            {"platforms": {"amd64": None}},
+            {"amd64": None},
             [
                 BuildInfo(
                     build_on=DebianArchitecture("amd64"),
@@ -39,13 +39,11 @@ import snapcraft.models
         ),
         pytest.param(
             {
-                "platforms": {
-                    "s390x": {
-                        "build-on": "s390x",
-                    },
-                    "riscv64": {
-                        "build-on": ["amd64", "riscv64"],
-                    },
+                "s390x": {
+                    "build-on": "s390x",
+                },
+                "riscv64": {
+                    "build-on": ["amd64", "riscv64"],
                 },
             },
             [
@@ -69,17 +67,12 @@ import snapcraft.models
                 ),
             ],
             id="implicit_build_for",
-            marks=pytest.mark.xfail(
-                strict=True, reason="NoneType is not subscriptable"
-            ),
         ),
         pytest.param(
             {
-                "platforms": {
-                    "arm64": {
-                        "build-on": ["arm64", "armhf"],
-                        "build-for": ["arm64"],
-                    },
+                "arm64": {
+                    "build-on": ["arm64", "armhf"],
+                    "build-for": ["arm64"],
                 },
             },
             [
@@ -97,17 +90,12 @@ import snapcraft.models
                 ),
             ],
             id="multiple_build_on",
-            marks=pytest.mark.xfail(
-                strict=True, reason="needs investigation, produces only one build item"
-            ),
         ),
         pytest.param(
             {
-                "platforms": {
-                    "amd64v2": {
-                        "build-on": ["amd64"],
-                        "build-for": "amd64",
-                    },
+                "amd64v2": {
+                    "build-on": ["amd64"],
+                    "build-for": "amd64",
                 },
             },
             [
@@ -119,17 +107,12 @@ import snapcraft.models
                 )
             ],
             id="custom_platform_name",
-            marks=pytest.mark.xfail(
-                strict=True, reason="scalar build-on and build-fors are failing"
-            ),
         ),
         pytest.param(
             {
-                "platforms": {
-                    "platform1": {
-                        "build-on": ["arm64", "armhf"],
-                        "build-for": ["all"],
-                    },
+                "platform1": {
+                    "build-on": ["arm64", "armhf"],
+                    "build-for": ["all"],
                 },
             },
             [
@@ -147,35 +130,25 @@ import snapcraft.models
                 ),
             ],
             id="all",
-            marks=pytest.mark.xfail(
-                strict=True, reason="needs investigation, produces only one build item"
-            ),
         ),
     ],
 )
-def test_build_planner_get_build_plan(
-    project_data,
-    expected_build_infos,
-    default_project,
-    fake_services,
-    mocker,
+def test_build_planner_create_unfiltered_build_plan(
+    platforms, expected_build_infos, default_project, fake_services, setup_project
 ):
-    """Test `get_build_plan()` function with different platforms."""
-    project = {**default_project.marshal(), **project_data}
-    mocker.patch.object(fake_services.get("project"), "get_raw", return_value=project)
+    """Test `create_unfiltered_build_plan()` function with different platforms."""
+    setup_project(fake_services, {**default_project.marshal(), "platforms": platforms})
 
-    actual_build_infos = fake_services.get("build_plan").create_build_plan(
-        platforms=None, build_for=None, build_on=None
-    )
+    actual_build_infos = fake_services.get("build_plan").create_unfiltered_build_plan()
 
     assert actual_build_infos == expected_build_infos
 
 
 @pytest.mark.parametrize(
-    ("project_data", "expected_build_infos"),
+    ("architectures", "expected_build_infos"),
     [
         pytest.param(
-            {"architectures": ["amd64"], "base": "core22"},
+            ["amd64"],
             [
                 BuildInfo(
                     build_on=DebianArchitecture("amd64"),
@@ -187,15 +160,12 @@ def test_build_planner_get_build_plan(
             id="single_platform_as_arch",
         ),
         pytest.param(
-            {
-                "architectures": [
-                    {
-                        "build-on": ["arm64", "armhf"],
-                        "build-for": ["arm64"],
-                    },
-                ],
-                "base": "core22",
-            },
+            [
+                {
+                    "build-on": ["arm64", "armhf"],
+                    "build-for": ["arm64"],
+                },
+            ],
             [
                 BuildInfo(
                     build_on=DebianArchitecture("arm64"),
@@ -211,20 +181,14 @@ def test_build_planner_get_build_plan(
                 ),
             ],
             id="multiple_build_on",
-            marks=pytest.mark.xfail(
-                strict=True, reason="dict object has to attribute build_on"
-            ),
         ),
         pytest.param(
-            {
-                "architectures": [
-                    {
-                        "build-on": ["amd64"],
-                        "build-for": ["amd64"],
-                    },
-                ],
-                "base": "core22",
-            },
+            [
+                {
+                    "build-on": ["amd64"],
+                    "build-for": ["amd64"],
+                },
+            ],
             [
                 BuildInfo(
                     build_on=DebianArchitecture("amd64"),
@@ -236,15 +200,12 @@ def test_build_planner_get_build_plan(
             id="fully_defined_arch",
         ),
         pytest.param(
-            {
-                "architectures": [
-                    {
-                        "build-on": "amd64",
-                        "build-for": "amd64",
-                    },
-                ],
-                "base": "core22",
-            },
+            [
+                {
+                    "build-on": "amd64",
+                    "build-for": "amd64",
+                },
+            ],
             [
                 BuildInfo(
                     build_on=DebianArchitecture("amd64"),
@@ -256,7 +217,7 @@ def test_build_planner_get_build_plan(
             id="fully_defined_arch_as_string",
         ),
         pytest.param(
-            None,
+            [],
             [
                 BuildInfo(
                     build_on=DebianArchitecture.from_host(),
@@ -266,18 +227,14 @@ def test_build_planner_get_build_plan(
                 )
             ],
             id="no_arch",
-            marks=pytest.mark.xfail(strict=True, reason="NoneType is not a mapping"),
         ),
         pytest.param(
-            {
-                "architectures": [
-                    {
-                        "build-on": ["s390x"],
-                        "build-for": ["all"],
-                    },
-                ],
-                "base": "core22",
-            },
+            [
+                {
+                    "build-on": ["s390x"],
+                    "build-for": ["all"],
+                },
+            ],
             [
                 BuildInfo(
                     build_on=DebianArchitecture("s390x"),
@@ -289,15 +246,12 @@ def test_build_planner_get_build_plan(
             id="all",
         ),
         pytest.param(
-            {
-                "architectures": [
-                    {
-                        "build-on": "s390x",
-                        "build-for": "all",
-                    },
-                ],
-                "base": "core22",
-            },
+            [
+                {
+                    "build-on": "s390x",
+                    "build-for": "all",
+                },
+            ],
             [
                 BuildInfo(
                     build_on=DebianArchitecture("s390x"),
@@ -310,45 +264,37 @@ def test_build_planner_get_build_plan(
         ),
     ],
 )
-def test_build_planner_get_build_plan_core22(
-    project_data,
+def test_build_planner_create_unfiltered_build_plan_core22(
+    architectures,
     expected_build_infos,
     default_project,
     fake_services,
-    mocker,
+    setup_project,
 ):
-    """Test `get_build_plan()` function with different architectures."""
+    """Test `create_unfiltered_build_plan()` function with different architectures."""
+    # creating a project model will convert architectures to platforms
     project = snapcraft.models.Project.model_validate(
-        {**default_project.marshal(), **project_data}
+        {**default_project.marshal(), "base": "core22", "architectures": architectures}
     )
-    mocker.patch.object(
-        fake_services.get("project"), "get_raw", return_value=project.marshal()
-    )
+    setup_project(fake_services, project.marshal())
 
-    actual_build_infos = fake_services.get("build_plan").create_build_plan(
-        platforms=None, build_for=None, build_on=None
-    )
+    actual_build_infos = fake_services.get("build_plan").create_unfiltered_build_plan()
 
     assert actual_build_infos == expected_build_infos
 
 
-def test_get_build_plan_devel(default_project, fake_services, mocker):
+def test_get_build_plan_devel(default_project, fake_services, setup_project):
     """Test that "devel" build-bases are correctly reflected on the build plan."""
-    project = snapcraft.models.Project.model_validate(
+    setup_project(
+        fake_services,
         {
             **default_project.marshal(),
-            "base": "core24",
             "build-base": "devel",
             "platforms": {"amd64": None},
-        }
-    )
-    mocker.patch.object(
-        fake_services.get("project"), "get_raw", return_value=project.marshal()
+        },
     )
 
-    actual_build_infos = fake_services.get("build_plan").create_build_plan(
-        platforms=None, build_for=None, build_on=None
-    )
+    actual_build_infos = fake_services.get("build_plan").create_unfiltered_build_plan()
 
     assert actual_build_infos == [
         BuildInfo(
@@ -360,17 +306,19 @@ def test_get_build_plan_devel(default_project, fake_services, mocker):
     ]
 
 
-def test_platform_default(default_project, fake_services):
+def test_platform_default(
+    fake_host_architecture, default_project, fake_services, setup_project
+):
     """Default value for platforms is the host architecture."""
-    actual_build_infos = fake_services.get("build_plan").create_build_plan(
-        platforms=None, build_for=None, build_on=None
-    )
+    setup_project(fake_services, default_project.marshal())
+
+    actual_build_infos = fake_services.get("build_plan").create_unfiltered_build_plan()
 
     assert actual_build_infos == [
         BuildInfo(
-            build_on=DebianArchitecture.from_host(),
-            build_for=DebianArchitecture.from_host(),
+            build_on=fake_host_architecture,
+            build_for=fake_host_architecture,
             build_base=DistroBase("ubuntu", "24.04"),
-            platform=str(DebianArchitecture.from_host()),
+            platform=str(fake_host_architecture),
         )
     ]

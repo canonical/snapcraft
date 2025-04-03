@@ -17,6 +17,7 @@
 """Snapcraft services."""
 
 from .assertions import Assertion
+from .buildplan import BuildPlan
 from .init import Init
 from .lifecycle import Lifecycle
 from .package import Package
@@ -31,6 +32,7 @@ from .service_factory import (
 
 __all__ = [
     "Assertion",
+    "BuildPlan",
     "Confdbs",
     "Init",
     "Lifecycle",
