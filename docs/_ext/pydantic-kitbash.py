@@ -23,7 +23,7 @@ import warnings
 import yaml
 
 
-class IncludeFieldDirective(SphinxDirective):
+class KitbashFieldDirective(SphinxDirective):
   required_arguments = 2
   has_content = False
   final_argument_whitespace = True
@@ -116,7 +116,7 @@ class IncludeFieldDirective(SphinxDirective):
     return [create_key_node(field_alias, deprecation_warning, field_type, description_str, enum_values, examples)]
 
 
-class IncludeModelDirective(SphinxDirective):
+class KitbashModelDirective(SphinxDirective):
   required_arguments = 1
   has_content = True
   final_argument_whitespace = True
@@ -433,8 +433,8 @@ def format_type_string(type_str: str) -> str:
 
 
 def setup(app: Sphinx) -> ExtensionMetadata:
-  app.add_directive('include-field', IncludeFieldDirective)
-  app.add_directive('include-model', IncludeModelDirective)
+  app.add_directive('kitbash-field', KitbashFieldDirective)
+  app.add_directive('kitbash-model', KitbashModelDirective)
 
   return {
     'version': '0.1',
