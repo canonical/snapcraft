@@ -541,11 +541,11 @@ def remote_build_service(default_factory, mocker):
 
 
 @pytest.fixture()
-def confdbs_service(default_factory, mocker):
+def confdb_schemas_service(default_factory, mocker):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import Confdbs
+    from snapcraft.services import ConfdbSchemas
 
-    service = Confdbs(app=APP_METADATA, services=default_factory)
+    service = ConfdbSchemas(app=APP_METADATA, services=default_factory)
     service._store_client = mocker.patch(
         "snapcraft.store.StoreClientCLI", autospec=True
     )
@@ -554,18 +554,18 @@ def confdbs_service(default_factory, mocker):
 
 
 @pytest.fixture()
-def fake_confdb_assertion():
-    """Returns a fake confdb assertion with required fields."""
-    from snapcraft.models import ConfdbAssertion
+def fake_confdb_schema_assertion():
+    """Returns a fake confdb-schema assertion with required fields."""
+    from snapcraft.models import ConfdbSchemaAssertion
 
-    def _fake_confdb_assertion(**kwargs) -> ConfdbAssertion:
-        return ConfdbAssertion.unmarshal(
+    def _fake_confdb_schema_assertion(**kwargs) -> ConfdbSchemaAssertion:
+        return ConfdbSchemaAssertion.unmarshal(
             {
                 "account_id": "test-account-id",
                 "authority_id": "test-authority-id",
                 "name": "test-confdb",
                 "timestamp": "2024-01-01T10:20:30Z",
-                "type": "confdb",
+                "type": "confdb-schema",
                 "views": {
                     "wifi-setup": {
                         "rules": [
@@ -581,7 +581,7 @@ def fake_confdb_assertion():
             }
         )
 
-    return _fake_confdb_assertion
+    return _fake_confdb_schema_assertion
 
 
 @pytest.fixture()
