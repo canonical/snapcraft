@@ -1,4 +1,4 @@
-.. _how-to-publish-a-snap.rst:
+.. _how-to-publish-a-snap:
 
 Publish a snap
 ==============
