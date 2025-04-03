@@ -31,9 +31,9 @@ class KitbashFieldDirective(SphinxDirective):
   option_spec = {
     'hide-examples': bool,
     'hide-type': bool,
-    'name-override': str,
-    'name-prepend': str,
-    'name-append': str,
+    'override-name': str,
+    'prepend-name': str,
+    'append-name': str,
   }
 
   def run(self) -> list[nodes.Node]:
@@ -101,11 +101,11 @@ class KitbashFieldDirective(SphinxDirective):
     if 'hide-examples' in self.options:
       examples = None
 
-    field_alias = self.options.get('name-override', field_alias)
+    field_alias = self.options.get('override-name', field_alias)
 
     # Get strings to concatenate with `field_alias`
-    name_prefix = self.options.get('name-prepend', '')
-    name_suffix = self.options.get('name-append', '')
+    name_prefix = self.options.get('prepend-name', '')
+    name_suffix = self.options.get('append-name', '')
 
     # Concatenate option values in the form <prefix>.{field_alias}.<suffix>
     if name_prefix:
@@ -123,8 +123,8 @@ class KitbashModelDirective(SphinxDirective):
 
   option_spec = {
     'include-deprecated': str,
-    'name-prepend': str,
-    'name-append': str,
+    'prepend-name': str,
+    'append-name': str,
   }
 
   def run(self) -> list[nodes.Node]:
@@ -199,8 +199,8 @@ class KitbashModelDirective(SphinxDirective):
             enum_values = get_enum_values(field_params.annotation)
 
         # Get strings to concatenate with `field_alias`
-        name_prefix = self.options.get('name-prepend', '')
-        name_suffix = self.options.get('name-append', '')
+        name_prefix = self.options.get('prepend-name', '')
+        name_suffix = self.options.get('append-name', '')
 
         # Concatenate option values in the form <prefix>.{field_alias}.<suffix>
         if name_prefix:

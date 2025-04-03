@@ -12,7 +12,7 @@ Top-level keys
 .. kitbash-field:: snapcraft.models.project.Project version
 
 .. kitbash-field:: snapcraft.models.project.Project build_base
-    :name-override: base
+    :override-name: base
 
 .. kitbash-field:: snapcraft.models.project.Project compression
 
@@ -73,4 +73,4 @@ App keys
 --------
 
 .. kitbash-model:: snapcraft.models.project.App
-    :name-prepend: apps.<app-name>
+    :prepend-name: apps.<app-name>
