@@ -12,14 +12,13 @@ Top-level keys
 .. include-field:: snapcraft.models.project.Project version
 
 .. include-field:: snapcraft.models.project.Project build_base
-    :override-name: base
+    :name-override: base
 
 .. include-field:: snapcraft.models.project.Project compression
 
 .. include-field:: snapcraft.models.project.Project donation
 
 .. include-field:: snapcraft.models.project.Project source_code
-    :override-name: source-code
 
 .. include-field:: snapcraft.models.project.Project contact
 
@@ -54,18 +53,14 @@ Top-level keys
 .. include-field:: snapcraft.models.project.Project adopt_info
 
 .. include-field:: snapcraft.models.project.Project system_usernames
-    :override-name: system-usernames
 
 .. include-field:: snapcraft.models.project.Project environment
 
 .. include-field:: snapcraft.models.project.Project build_packages
-    :override-name: build-packages
 
 .. include-field:: snapcraft.models.project.Project build_snaps
-    :override-name: build-snaps
 
 .. include-field:: snapcraft.models.project.Project ua_services
-    :override-name: ua-services
 
 .. include-field:: snapcraft.models.project.Project provenance
 
@@ -79,10 +74,3 @@ App keys
 
 .. include-model:: snapcraft.models.project.App
     :name-prepend: apps.<app name>
-
-
-Part keys
----------
-
-.. include-model:: craft_parts.parts.PartSpec
-    :name-prepend: <part name>

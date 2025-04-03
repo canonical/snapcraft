@@ -48,7 +48,7 @@ html_context = {
 
 extensions = [
     "canonical_sphinx",
-    "documodels",
+    "ext-prototype",
 ]
 
 sphinx_tabs_disable_tab_closing = True

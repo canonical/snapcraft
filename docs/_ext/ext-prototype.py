@@ -19,6 +19,8 @@ import re
 import textwrap
 import types
 import typing
+import warnings
+import yaml
 
 
 class IncludeFieldDirective(SphinxDirective):
@@ -29,7 +31,7 @@ class IncludeFieldDirective(SphinxDirective):
   option_spec = {
     'hide-examples': bool,
     'hide-type': bool,
-    'override-name': str,
+    'name-override': str,
     'name-prepend': str,
     'name-append': str,
   }
@@ -43,12 +45,17 @@ class IncludeFieldDirective(SphinxDirective):
     if not self.arguments[1] in pydantic_class.__annotations__:
       raise ValueError(f'Could not find field {self.arguments[1]}')
 
-    key_name = self.arguments[1]
+    field_name = self.arguments[1]
 
     # grab pydantic field data
-    field_params = pydantic_class.__fields__[key_name]
+    field_params = pydantic_class.__fields__[field_name]
 
-    description_str = get_annotation_docstring(pydantic_class, key_name)
+    if field_params.alias:
+      field_alias = field_params.alias
+    else:
+      field_alias = field_name
+
+    description_str = get_annotation_docstring(pydantic_class, field_name)
     if description_str is None:
       description_str = field_params.description # use JSON description value
 
@@ -84,7 +91,7 @@ class IncludeFieldDirective(SphinxDirective):
           description_str = field_params.annotation.__doc__
         enum_values = get_enum_values(field_params.annotation)
 
-    deprecation_warning = is_deprecated(pydantic_class, key_name)
+    deprecation_warning = is_deprecated(pydantic_class, field_name)
 
     # Remove type if :hide-type: directive option was used
     if 'hide-type' in self.options:
@@ -94,20 +101,19 @@ class IncludeFieldDirective(SphinxDirective):
     if 'hide-examples' in self.options:
       examples = None
 
-    # Override field name if option was provided
-    key_name = self.options.get('override-name', key_name)
+    field_alias = self.options.get('name-override', field_alias)
 
-    # Get strings to concatenate with `key_name`
+    # Get strings to concatenate with `field_alias`
     name_prefix = self.options.get('name-prepend', '')
     name_suffix = self.options.get('name-append', '')
 
-    # Concatenate option values in the form <prefix>.key_name.<suffix>
+    # Concatenate option values in the form <prefix>.{field_alias}.<suffix>
     if name_prefix:
-      key_name = f'{name_prefix}.{key_name}'
+      field_alias = f'{name_prefix}.{field_alias}'
     if name_suffix:
-      key_name = f'{key_name}.{name_suffix}'
+      field_alias = f'{field_alias}.{name_suffix}'
 
-    return [create_key_node(key_name, deprecation_warning, field_type, description_str, enum_values, examples)]
+    return [create_key_node(field_alias, deprecation_warning, field_type, description_str, enum_values, examples)]
 
 
 class IncludeModelDirective(SphinxDirective):
@@ -116,7 +122,7 @@ class IncludeModelDirective(SphinxDirective):
   final_argument_whitespace = True
 
   option_spec = {
-    'deprecated': str,
+    'include-deprecated': str,
     'name-prepend': str,
     'name-append': str,
   }
@@ -138,7 +144,7 @@ class IncludeModelDirective(SphinxDirective):
       class_node += parse_rst_description(pydantic_class.__doc__)
 
     # Check if user provided a list of deprecated fields to include
-    deprecated_option = self.options.get('deprecated', '')
+    deprecated_option = self.options.get('include-deprecated', '')
     include_deprecated = [field.strip() for field in deprecated_option.split(',')]
 
     for field in pydantic_class.__annotations__:
@@ -150,6 +156,11 @@ class IncludeModelDirective(SphinxDirective):
       if not is_auto_generated and deprecation_warning is None or field in include_deprecated:
         # grab pydantic field data (need desc and examples)
         field_params = pydantic_class.__fields__[field]
+
+        if field_params.alias:
+          field_alias = field_params.alias
+        else:
+          field_alias = field
 
         description_str = get_annotation_docstring(pydantic_class, field)
         if description_str is None:
@@ -187,17 +198,17 @@ class IncludeModelDirective(SphinxDirective):
               description_str = field_params.annotation.__doc__
             enum_values = get_enum_values(field_params.annotation)
 
-        # Get strings to concatenate with `key_name`
+        # Get strings to concatenate with `field_alias`
         name_prefix = self.options.get('name-prepend', '')
         name_suffix = self.options.get('name-append', '')
 
-        # Concatenate option values in the form <prefix>.key_name.<suffix>
+        # Concatenate option values in the form <prefix>.{field_alias}.<suffix>
         if name_prefix:
-          field = f'{name_prefix}.{field}'
+          field_alias = f'{name_prefix}.{field_alias}'
         if name_suffix:
-          field = f'{key_name}.{field}'
+          field_alias = f'{field_alias}.{field_alias}'
 
-        class_node.append(create_key_node(field, deprecation_warning, field_type, description_str, enum_values, examples))
+        class_node.append(create_key_node(field_alias, deprecation_warning, field_type, description_str, enum_values, examples))
 
     return class_node
 
@@ -269,10 +280,18 @@ def create_key_node(key_name, deprecated_message, key_type, key_desc, key_values
 
 def build_examples_block(key_name, example):
   examples_block = nodes.literal_block()
-  example_str = json.dumps(example, indent=2)
-  examples_block += nodes.Text(f'{key_name.rsplit('.', maxsplit=1)[-1]}: ')
-  yaml_string = example_str.replace('"', '').replace('{', '').replace('}', '').rstrip()
-  examples_block += nodes.Text(yaml_string)
+  examples_block['classes'] = ['yaml']
+
+  try:
+    yaml_str = yaml.dump(yaml.safe_load(example), default_flow_style=False)
+    yaml_str = yaml_str.replace('- ', '  - ')
+    # yaml_str = textwrap.indent(yaml_string, "  ")
+  except yaml.YAMLError as e:
+    warnings.warn(f'Invalid YAML for key {key_name}: {e}', category=UserWarning)
+    yaml_str = example
+
+  # examples_block += nodes.Text(f'{key_name.rsplit(".", maxsplit=1)[-1]}: \n')
+  examples_block += nodes.Text(yaml_str)
 
   return examples_block
 
@@ -334,14 +353,14 @@ def get_annotation_docstring(cls, annotation_name: str) -> str:
   docstring = None
 
   for node in ast.walk(tree):
-    if isinstance(node, ast.AnnAssign):
-      if found:
-        return None
-      if node.target.id == annotation_name:
-        found = True
-    elif found and isinstance(node, ast.Expr):
-      docstring = node.value.value
+    if found:
+      if isinstance(node, ast.Expr):
+        docstring = node.value.value
       break
+    else:
+      if isinstance(node, ast.AnnAssign):
+        if node.target.id == annotation_name:
+          found = True
 
   return docstring
 
