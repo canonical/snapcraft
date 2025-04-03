@@ -54,7 +54,7 @@ KDE neon extensions:
 
 - The ``mesa`` directories have been added to the ``LD_LIBRARY_PATH``.
 - Duplicate paths to ``X11`` directories have been removed.
-- The seperator for ``CMAKE_PREFIX_PATH`` has been fixed.
+- The separator for ``CMAKE_PREFIX_PATH`` has been fixed.
 - ``CMAKE_FIND_ROOT_PATH`` has been removed.
 
 JLink plugin
