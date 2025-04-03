@@ -30,24 +30,23 @@ When deciding on a name for your snap, it's important to follow the best naming
 practices, as a snap's name is universally unique among all public and private snap
 stores and can't be changed after registration.
 
-The name you register should:
+The name you register should accurately represent your software, and must:
 
-* accurately represent your application
-* contain at least one letter
-* contain no more than 40 characters
-* consist of only lowercase letters, numbers, and hyphens
-* not start or end with a hyphen
+- Contain no more than 40 characters
+- Consist of only lowercase letters, numbers, and hyphens
+- Contain at least one letter
+- Not start or end with a hyphen
 
-Generally, a snap's name should also be free of prefixes or suffixes (e.g., "username-"
-or "-snap"). However, if you are registering an unofficial snap that has no chance of
-being handed over to the official project, your username should be appended to the app
-name. For example, if you were creating an unofficial fork of Firefox, you would name it
-"firefox-<username>".
+Generally, a snap's name should also be free of prefixes or suffixes (for example,
+``<username>-`` or ``-snap``). However, if you are registering an unofficial snap that
+has no chance of being handed over to the official project, your username should be
+appended to the app name. For example, if you were creating an unofficial fork of
+Firefox, you would name it ``firefox-<username>``.
 
 Ensure that the value of the ``name`` key in your snap's project file matches the name
-you wish to register. You can also include the optional ``title`` key to define a more
-human-friendly name. This will be displayed in certain graphical frontends, such as the
-App Center.
+you wish to register. You can also include the optional ``title`` key to define a
+human-friendly name for use in in graphical frontends, such as the Snap Store and the
+Ubuntu App Center.
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -62,16 +61,15 @@ registration.
 Register your snap
 ------------------
 
-Once you have logged in and decided on a name for your snap, you can register your snap
-by running:
+Once you have logged in and decided on a name for your snap, you can register it by
+running:
 
 .. code-block:: bash
 
     snapcraft register <snap-name>
 
-By default, this newly registered snap is published as a public snap. If you instead
-wish to register a private snap, you can append the ``--private`` command option as
-follows:
+By default, a newly registered snap is published as a public snap. If you instead
+wish to make it private, append the ``--private`` command option:
 
 .. code-block:: bash
 
