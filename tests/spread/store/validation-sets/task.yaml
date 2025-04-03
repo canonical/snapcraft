@@ -29,7 +29,7 @@ execute: |
   # snapcraft will use a fake file editor
   export EDITOR="$PWD/editor.sh"
 
-  snapcraft edit-validation-sets "$(snapcraft whoami | yq .id)" testset 1 --key-name testspreadkey
+  snapcraft edit-validation-sets "$(snapcraft whoami | yq .id)" testset 1 --key-name test-staging-key
 
   snapcraft list-validation-sets | MATCH testset
 

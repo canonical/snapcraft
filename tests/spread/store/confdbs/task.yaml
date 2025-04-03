@@ -31,7 +31,7 @@ execute: |
   # snapcraft will use a fake file editor
   export EDITOR="$PWD/editor.sh"
 
-  snapcraft edit-confdb-schema "$(snapcraft whoami | yq .id)" testset --key-name testspreadkey
+  snapcraft edit-confdb-schema "$(snapcraft whoami | yq .id)" testset --key-name test-staging-key
 
   snapcraft list-confdb-schemas | MATCH testset
 
