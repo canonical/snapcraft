@@ -7,5 +7,6 @@ Publish a snap
     :maxdepth: 1
     :hidden:
 
+    register-a-snap
     check-a-snaps-status
     manage-revisions-and-releases
