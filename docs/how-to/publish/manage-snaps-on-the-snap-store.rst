@@ -1,4 +1,4 @@
-.. _how-to-manage-snaps-on-the-snap-store.rst:
+.. _how-to-manage-snaps-on-the-snap-store:
 
 Manage snaps on the Snap Store
 ==============================
