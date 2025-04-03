@@ -73,4 +73,4 @@ App keys
 --------
 
 .. include-model:: snapcraft.models.project.App
-    :name-prepend: apps.<app name>
+    :name-prepend: apps.<app-name>
