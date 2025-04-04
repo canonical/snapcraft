@@ -6,7 +6,7 @@ Metrics
 This page lists all supported statistics that stores gather about snaps.
 
 All metrics are generated daily. Those with seven-day windows provide daily figures, but
-these are not raw values, but the daily average.
+these are not raw values for each day. Rather, they are the weekly average.
 
 .. list-table::
     :header-rows: 1
@@ -15,10 +15,10 @@ these are not raw values, but the daily average.
     * - Metric
       - Data
     * - ``daily_device_change``
-      - Contains the 3 series representing the number of new, continued and lost devices with the given snap installed compared to the previous day.
+      - Contains the three series representing the number of new, continued and lost devices with the given snap installed compared to the previous day.
     * - ``installed_base_by_channel``
       - Contains one series per channel representing the number of devices with the
-        given snap installed, channels with no data across the entire interval are
+        given snap installed. Channels with no data across the entire interval are
         omitted.
     * - ``installed_base_by_country``
       - Contains one series per country representing the number of devices with the
@@ -28,7 +28,7 @@ these are not raw values, but the daily average.
         the given snap installed.
     * - ``installed_base_by_version``
       - Contains one series per version representing the number of devices with the
-        given snap installed.
+        given snap version installed.
     * - ``installed_base_by_architecture``
       - Contains one series per architecture representing the number of devices with the
         given snap installed.

@@ -12,9 +12,11 @@ For a complete list of available snap metrics, see :ref:`reference-metrics`.
 Prerequisites
 -------------
 
-As snap metrics are confidential, and only a snap's author can access them.
+As snap metrics are confidential, only a snap's author can access them.
 
 Before you begin, log in to your Snapcraft account.
+
+.. link to :ref:`log-in-to-a-store`
 
 
 Get all data for a metric
@@ -122,7 +124,7 @@ The `Snap Store metrics API
 called by the ``snapcraft metrics`` command, requires your account to have the
 package_metrics permission.
 
-If this is your first time querying a snap metric after you registered your Snapcraft
+If this is your first time querying a snap metric after you've registered your Snapcraft
 account, start by logging in and out of Snapcraft to refresh your session permissions.
 Otherwise, you might get this error:
 
