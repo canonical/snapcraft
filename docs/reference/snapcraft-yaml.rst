@@ -66,6 +66,12 @@ Top-level keys
 
 .. kitbash-field:: snapcraft.models.project.Project components
 
+
+Example nested field
+~~~~~~~~~~~~~~~~~~~~
+
+The following field should be an h4 now.
+
 .. kitbash-field:: snapcraft.models.project.Project apps
 
 
