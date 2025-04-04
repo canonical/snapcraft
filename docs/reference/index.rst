@@ -11,6 +11,7 @@ Reference
    snap-publishing-process
    channels
    architectures
+   build-environment-options
    bases
    commands
    components
