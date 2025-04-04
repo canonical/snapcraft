@@ -20,6 +20,7 @@ Reference
    extensions/index
    /common/craft-parts/reference/part_properties
    parts_steps
+   metrics
    snapshots
    system-requirements
 
