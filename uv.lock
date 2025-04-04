@@ -2322,7 +2322,7 @@ dev-noble = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifie
 dev-oracular = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = ">=2.9.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
 dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = ">=2.9.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
 docs = [
-    { name = "canonical-sphinx", extras = ["full"], specifier = ">=0.2.0" },
+    { name = "canonical-sphinx", extras = ["full"], specifier = ">=0.4.0" },
     { name = "docutils", specifier = "<0.20" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
