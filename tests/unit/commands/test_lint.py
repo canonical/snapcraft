@@ -767,7 +767,6 @@ def test_lint_managed_mode_with_lint_config(
     emitter.assert_verbose("Collected lint config from 'snapcraft.yaml'.")
 
 
-@pytest.mark.xfail(strict=True, reason="Needs fixture adjustments.")
 @pytest.mark.parametrize(
     "snapcraft_yaml_data",
     [
@@ -788,21 +787,27 @@ def test_lint_managed_mode_with_lint_config(
     ],
 )
 def test_load_project(
-    snapcraft_yaml_data, fake_snapcraft_project, tmp_path, fake_app_config
+    snapcraft_yaml_data,
+    snapcraft_yaml,
+    fake_snapcraft_project,
+    tmp_path,
+    fake_app_config,
 ):
     """Load a simple snapcraft.yaml project.
 
     To simplify the unit tests, the `_load_project()` method is mocked out of the other
     tests and tested separately.
     """
+    filename = "snap/snapcraft.yaml"
+    snapcraft_yaml(filename=filename, **snapcraft_yaml_data)
+
     result = LintCommand(fake_app_config)._load_project(
-        snapcraft_yaml_file=Path("snap/snapcraft.yaml")
+        snapcraft_yaml_file=Path(filename)
     )
 
     assert result == fake_snapcraft_project
 
 
-@pytest.mark.xfail(strict=True, reason="Needs fixture adjustments.")
 @pytest.mark.parametrize(
     "snapcraft_yaml_data",
     [
@@ -837,16 +842,20 @@ def test_load_project(
     ],
 )
 @pytest.mark.usefixtures("fake_extension")
-def test_load_project_complex(snapcraft_yaml_data, mocker, tmp_path, fake_app_config):
+def test_load_project_complex(
+    snapcraft_yaml_data, snapcraft_yaml, mocker, tmp_path, fake_app_config
+):
     """Load a complex snapcraft file.
 
     This includes lint, parse-info, architectures, and advanced grammar.
     """
+    filename = "snap/snapcraft.yaml"
+    snapcraft_yaml(filename=filename, **snapcraft_yaml_data)
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="amd64")
 
     result = LintCommand(fake_app_config)._load_project(
-        snapcraft_yaml_file=Path("snap/snapcraft.yaml")
+        snapcraft_yaml_file=Path(filename)
     )
     assert result == models.Project.unmarshal(
         {

@@ -118,8 +118,7 @@ def test_export_login(emitter, fake_store_login, fake_app_config):
     )
 
 
-@pytest.mark.xfail(strict=True, reason="File isn't generated, needs investigation.")
-def test_export_login_file(new_dir, emitter, fake_store_login, fake_app_config):
+def test_export_login_file(project_path, emitter, fake_store_login, fake_app_config):
     cmd = commands.StoreExportLoginCommand(fake_app_config)
 
     cmd.run(
@@ -142,7 +141,7 @@ def test_export_login_file(new_dir, emitter, fake_store_login, fake_app_config):
         "Exported login credentials to 'target_file'"
         "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
     )
-    login_file = new_dir / "target_file"
+    login_file = project_path / "target_file"
     assert login_file.exists()
     assert login_file.read_text() == "secret"
 
