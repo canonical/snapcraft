@@ -571,7 +571,7 @@ class LegacyStoreClientCLI:
         )
 
         assertion = self._unmarshal_confdb_schema(response.json())
-        emit.debug(f"Built confdfb schema: {assertion.model_dump_json()}")
+        emit.debug(f"Built confdb schema: {assertion.model_dump_json()}")
         return assertion
 
     def post_confdb_schema(
