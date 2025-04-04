@@ -75,7 +75,7 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
     """Edit a confdb schema."""
 
     name = "edit-confdb-schema"
-    help_msg = "Edit or create a confb-schema"
+    help_msg = "Edit or create a confdb-schema"
     overview = textwrap.dedent(
         """
         Edit a confdb schema.
