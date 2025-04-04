@@ -5,8 +5,8 @@ Metrics
 
 This page lists all supported statistics that stores gather about snaps.
 
-All metrics are generated daily. Those with seven-day windows provide the average
-averages.
+All metrics are generated daily. Those with seven-day windows provide daily figures, but
+these are not raw values, but the daily average.
 
 .. list-table::
     :header-rows: 1
@@ -24,7 +24,7 @@ averages.
       - Contains one series per country representing the number of devices with the
         given snap installed.
     * - ``installed_base_by_operating_system``
-      - Contains one series per operating_system representing the number of devices with
+      - Contains one series per operating system representing the number of devices with
         the given snap installed.
     * - ``installed_base_by_version``
       - Contains one series per version representing the number of devices with the
@@ -50,4 +50,4 @@ averages.
         window.
     * - ``weekly_installed_base_by_architecture``
       - Similar to the ``installed_base_by_architecture`` metric but operates in a
-        seven- ay window.
+        seven-day window.
