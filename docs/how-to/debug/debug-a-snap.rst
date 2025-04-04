@@ -23,8 +23,8 @@ Build environment
 ~~~~~~~~~~~~~~~~~
 
 Snaps are built to run on top of a :ref:`base snap <explanation-bases>` runtime. This
-base is provided by an automatically-installed snap. Currently the most widely used core
-image is based on Ubuntu 22.04 LTS.
+base is provided by an automatically-installed snap. Currently, the most widely-used
+core image are based on Ubuntu 22.04 LTS and Ubuntu 24.04 LTS.
 
 
 Missing libraries

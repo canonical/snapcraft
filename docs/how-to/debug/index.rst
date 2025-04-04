@@ -4,7 +4,7 @@ Debug a snap
 ============
 
 .. toctree::
-    :hidden:
+    :maxdepth: 1
 
     debug-a-snap
     disable-a-linter
