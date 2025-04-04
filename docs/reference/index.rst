@@ -20,6 +20,7 @@ Reference
    extensions/index
    /common/craft-parts/reference/part_properties
    parts_steps
+   snapcraft-yaml
    snapshots
    system-requirements
 
