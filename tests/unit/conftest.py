@@ -450,7 +450,7 @@ def fake_services(
     project_path,
 ):
     from snapcraft.application import APP_METADATA
-    from snapcraft.services import SnapcraftServiceFactory
+    from snapcraft.services import BuildPlan, SnapcraftServiceFactory
 
     services.SnapcraftServiceFactory.register("package", fake_package_service_class)
     services.SnapcraftServiceFactory.register("lifecycle", fake_lifecycle_service_class)
@@ -460,6 +460,7 @@ def fake_services(
     services.SnapcraftServiceFactory.register("project", fake_project_service_class)
     services.SnapcraftServiceFactory.register("confdbs", fake_confdbs_service_class)
     services.SnapcraftServiceFactory.register("provider", fake_provider_service_class)
+    services.SnapcraftServiceFactory.register("build_plan", BuildPlan)
 
     factory = SnapcraftServiceFactory(app=APP_METADATA)
 
