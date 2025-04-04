@@ -59,9 +59,9 @@ Individual libraries
 ^^^^^^^^^^^^^^^^^^^^
 
 Some app developers already have vendored libraries that they've tested well with their
-app. Such libraries can be bundled with the snap. Place the libraries in the snap's
-``/lib`` directory. The directory is added to the ``LD_LIBRARY_PATH`` and as such should
-be found successfully by your app when the snap is installed on a device.
+app. To bundle these libraries into a snap, add them to its ``/lib`` directory. The
+directory is included in ``LD_LIBRARY_PATH`` and should be found successfully by your
+app when the snap is installed on a device.
 
 
 Interfaces
