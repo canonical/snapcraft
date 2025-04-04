@@ -7,3 +7,4 @@ Debug a snap
     :hidden:
 
     disable-a-linter
+    use-the-library-linter
