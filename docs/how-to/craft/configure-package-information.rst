@@ -99,6 +99,8 @@ are two sets of data available:
 - The snap's version and grade through a script
 
 
+.. _how-to-configure-package-information-from-appstream:
+
 From AppStream
 ~~~~~~~~~~~~~~
 
