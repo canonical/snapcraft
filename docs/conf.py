@@ -96,7 +96,6 @@ exclude_patterns = [
     "how-to/change-bases/index.rst",
     "how-to/change-bases/change-from-core20-to-core22.rst",
     "how-to/change-bases/change-from-core22-to-core24.rst",
-    "how-to/debug/debug-a-snap.rst",
     "how-to/debug/debug-with-gdb.rst",
     "how-to/debug/use-the-classic-linter.rst",
     "how-to/debug/use-the-library-linter.rst",
