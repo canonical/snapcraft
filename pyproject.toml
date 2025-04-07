@@ -12,7 +12,7 @@ dependencies = [
     "craft-cli~=3.0",
     "craft-grammar>=2.0.3,<3.0.0",
     "craft-parts==2.7.0",
-    "craft-platforms~=0.6",
+    "craft-platforms~=0.7",
     "craft-providers~=2.2",
     "craft-store~=3.2",
     "cryptography",
