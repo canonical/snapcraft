@@ -33,9 +33,7 @@ def apply_extensions(yaml_data: dict[str, Any], *, arch: str, target_arch: str) 
     :param dict yaml_data: Loaded, unprocessed snapcraft.yaml
     :param arch: the host architecture.
     :param target_arch: the target architecture.
-    :returns: Modified snapcraft.yaml data with extensions applied
     """
-
     # Mapping of extension names to set of app names to which the extension needs to be
     # applied.
     declared_extensions: dict[str, set[str]] = collections.defaultdict(set)
@@ -66,6 +64,12 @@ def _apply_extension(
     app_names: set[str],
     extension: "Extension",
 ) -> None:
+    """Apply an extension to the YAML data, in place.
+
+    :param yaml_data: Loaded, unprocessed snapcraft.yaml.
+    :param app_names: The app names to which the extension should be applied.
+    :param extension: The extension to apply.
+    """
     # Apply the root components of the extension (if any)
     root_extension = extension.get_root_snippet()
     for property_name, property_value in root_extension.items():

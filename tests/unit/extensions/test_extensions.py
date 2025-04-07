@@ -21,7 +21,6 @@ from snapcraft import errors, extensions
 from snapcraft.extensions.extension import append_to_env, prepend_to_env
 
 
-@pytest.mark.xfail(strict=True, reason="returns None, needs investigation")
 @pytest.mark.usefixtures("fake_extension")
 def test_apply_extension():
     yaml_data = {
@@ -39,9 +38,9 @@ def test_apply_extension():
         "parts": {"fake-part": {"source": ".", "plugin": "dump"}},
     }
 
-    assert extensions.apply_extensions(
-        yaml_data, arch="amd64", target_arch="amd64"
-    ) == {
+    extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
+
+    assert yaml_data == {
         "name": "fake-snap",
         "summary": "fake summary",
         "description": "fake description",
@@ -64,7 +63,6 @@ def test_apply_extension():
     }
 
 
-@pytest.mark.xfail(strict=True, reason="Returns None, needs investigation")
 @pytest.mark.usefixtures("fake_extension")
 def test_apply_extension_plugin_dependent():
     yaml_data = {
@@ -85,9 +83,9 @@ def test_apply_extension_plugin_dependent():
         },
     }
 
-    assert extensions.apply_extensions(
-        yaml_data, arch="amd64", target_arch="amd64"
-    ) == {
+    extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
+
+    assert yaml_data == {
         "name": "fake-snap",
         "summary": "fake summary",
         "description": "fake description",
@@ -111,7 +109,6 @@ def test_apply_extension_plugin_dependent():
     }
 
 
-@pytest.mark.xfail(strict=True, reason="returns None, needs investigation")
 @pytest.mark.usefixtures("fake_extension")
 @pytest.mark.usefixtures("fake_extension_extra")
 def test_apply_multiple_extensions():
@@ -130,9 +127,9 @@ def test_apply_multiple_extensions():
         "parts": {"fake-part": {"source": ".", "plugin": "dump"}},
     }
 
-    assert extensions.apply_extensions(
-        yaml_data, arch="amd64", target_arch="amd64"
-    ) == {
+    extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
+
+    assert yaml_data == {
         "name": "fake-snap",
         "summary": "fake summary",
         "description": "fake description",
