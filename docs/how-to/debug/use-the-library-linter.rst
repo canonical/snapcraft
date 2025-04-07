@@ -12,6 +12,7 @@ To resolve an unused library:
 
 .. list-table::
    :header-rows: 1
+   :widths: 1 3
 
    * - Library type
      - Resolution
