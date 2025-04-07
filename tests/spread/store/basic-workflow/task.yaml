@@ -24,7 +24,7 @@ prepare: |
 
   # Do not change the test-snapcraft- prefix. Ensure that you
   # notify the store team if you need to use a different value when
-  # working with the production store.     
+  # working with the production store.
   name="test-snapcraft-$(shuf -i 1-1000000000 -n 1)"
   set_name "$SNAP/snapcraft.yaml" "${name}"
   set_grade "$SNAP/snapcraft.yaml" stable
@@ -76,7 +76,7 @@ execute: |
   # Status
   snapcraft status "${snap_name}"
   snapcraft status "${snap_name}" --track latest --arch amd64
-  
+
   # Progressive Release
   snapcraft release --progressive 50 "${snap_name}" 1 candidate
 
@@ -86,6 +86,6 @@ execute: |
   # List tracks
   snapcraft list-tracks "${snap_name}"
 
-  # Show metrics for a snap that we have registered in the past (empty metrics as no users!).
-  snapcraft metrics fun --format json --name installed_base_by_operating_system
-  snapcraft metrics fun --format table --name installed_base_by_operating_system
+  # Show metrics (empty metrics as no users!).
+  snapcraft metrics "${snap_name}" --format json --name installed_base_by_operating_system
+  snapcraft metrics "${snap_name}" --format table --name installed_base_by_operating_system
