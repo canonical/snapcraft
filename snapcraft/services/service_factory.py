@@ -33,7 +33,7 @@ _SERVICES: dict[str, str] = {
     "lifecycle": "Lifecycle",
     "package": "Package",
     "remote_build": "RemoteBuild",
-    "confdbs": "Confdbs",
+    "confdb_schemas": "ConfdbSchemas",
 }
 
 
@@ -44,10 +44,10 @@ class SnapcraftServiceFactory(ServiceFactory):
     project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
 
     if TYPE_CHECKING:
-        from services import Confdbs
+        from services import ConfdbSchemas
 
         # Allow static type check to report correct types for Snapcraft services
-        confdbs: Confdbs = None  # type: ignore[assignment]
+        confdb_schemas: ConfdbSchemas = None  # type: ignore[assignment]
 
 
 def register_snapcraft_services() -> None:
