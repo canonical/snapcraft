@@ -121,7 +121,7 @@ dev-noble = [
 ]
 dev-oracular = [
     # 2.9 for Oracular+
-    "python-apt>=2.9.0;sys_platform=='linux'",
+    "python-apt>=2.9.0,<2.9.9;sys_platform=='linux'",
 ]
 dev-plucky = [
     # 2.9 for Oracular+
