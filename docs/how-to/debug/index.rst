@@ -8,3 +8,4 @@ Debug a snap
 
     debug-a-snap
     disable-a-linter
+    use-the-library-linter
