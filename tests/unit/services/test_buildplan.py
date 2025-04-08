@@ -19,12 +19,41 @@
 import collections
 from collections.abc import Collection
 from typing import Literal
+from unittest import mock
 
 import pytest
 import pytest_check
 from craft_platforms import BuildInfo, DebianArchitecture, DistroBase
 
 import snapcraft.models
+
+
+@pytest.fixture(
+    params=[
+        "64-bit-pc",
+        "some-phone",
+        "risky",
+    ]
+)
+def fake_platform(request: pytest.FixtureRequest) -> str:
+    return request.param
+
+
+@pytest.fixture
+def platform_independent_project_data(default_project):
+    return {
+        **default_project.marshal(),
+        "platforms": {
+            "platform-independent": {
+                "build-on": [
+                    str(arch)
+                    for arch in DebianArchitecture
+                    if arch is not DebianArchitecture.I386
+                ],
+                "build-for": ["all"],
+            }
+        },
+    }
 
 
 @pytest.mark.parametrize(
@@ -709,17 +738,13 @@ def check_plan(
         if platform:
             pytest_check.equal(item.platform, platform)
 
-    # Each platform must contain either 0 or 1 builds.
-    for name, items in platform_items.items():
-        assert len(items) == 1, f"Too many builds for platform {name!r}: {items}"
-
 
 @pytest.mark.usefixtures("fake_host_architecture")
 def test_create_build_plan_no_filter(default_project, fake_services, setup_project):
     setup_project(fake_services, default_project.marshal())
     build_plan_service = fake_services.get("build_plan")
 
-    plan = build_plan_service.create_build_plan(
+    plan = build_plan_service.create_launchpad_build_plan(
         platforms=None,
         build_for=None,
         build_on=None,
@@ -730,30 +755,223 @@ def test_create_build_plan_no_filter(default_project, fake_services, setup_proje
 
 @pytest.mark.usefixtures("fake_host_architecture")
 def test_create_build_plan_no_filter_platform_independent(
-    default_project, fake_services, setup_project
+    default_project, fake_services, setup_project, platform_independent_project_data
 ):
-    setup_project(
-        fake_services,
-        {
-            **default_project.marshal(),
-            "platforms": {
-                "platform-independent": {
-                    "build-on": [
-                        str(arch)
-                        for arch in DebianArchitecture
-                        if arch is not DebianArchitecture.I386
-                    ],
-                    "build-for": ["all"],
-                }
-            },
-        },
-    )
+    setup_project(fake_services, platform_independent_project_data)
     build_plan_service = fake_services.get("build_plan")
 
-    plan = build_plan_service.create_build_plan(
+    plan = build_plan_service.create_launchpad_build_plan(
         platforms=None,
         build_for=None,
         build_on=None,
     )
 
     check_plan(plan)
+
+
+def test_create_build_plan_platform_filter(
+    default_project,
+    fake_services,
+    setup_project,
+    fake_host_architecture,
+    fake_platform,
+):
+    if fake_host_architecture == DebianArchitecture.I386:
+        pytest.skip("i386 isn't supported")
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "platforms": {
+                fake_platform: {
+                    "build-on": [str(fake_host_architecture)],
+                    "build-for": [str(fake_host_architecture)],
+                }
+            },
+        },
+    )
+    build_plan_service = fake_services.get("build_plan")
+
+    plan = build_plan_service.create_launchpad_build_plan(
+        platforms=[fake_platform],
+        build_for=None,
+        build_on=None,
+    )
+
+    check_plan(
+        plan,
+        min_length=0,  # Not all platforms in our project can be built on all archs
+        platform=fake_platform,
+    )
+
+
+@pytest.mark.usefixtures("fake_host_architecture")
+def test_create_build_plan_platform_filter_all(
+    default_project, fake_services, setup_project, platform_independent_project_data
+):
+    setup_project(fake_services, platform_independent_project_data)
+    build_plan_service = fake_services.get("build_plan")
+
+    plan = build_plan_service.create_launchpad_build_plan(
+        platforms=["platform-independent"],
+        build_for=None,
+        build_on=None,
+    )
+
+    expected_length = len(DebianArchitecture) - 1  # All but i386
+    check_plan(
+        plan,
+        min_length=expected_length,
+        max_length=expected_length,
+        platform="platform-independent",
+    )
+
+
+@pytest.mark.usefixtures("fake_host_architecture")
+@pytest.mark.parametrize("build_for", DebianArchitecture)
+def test_create_build_plan_build_for_filter(
+    default_project, fake_services, setup_project, build_for
+):
+    setup_project(fake_services, default_project.marshal())
+    build_plan_service = fake_services.get("build_plan")
+
+    plan = build_plan_service.create_launchpad_build_plan(
+        platforms=None,
+        build_for=[str(build_for)],
+        build_on=None,
+    )
+
+    check_plan(
+        plan,
+        min_length=0,  # Not all build-on/build-for combos exist.
+        build_for=build_for,
+    )
+
+
+@pytest.mark.usefixtures("fake_host_architecture")
+def test_create_build_plan_build_for_filter_platform_independent(
+    default_project, fake_services, setup_project, platform_independent_project_data
+):
+    setup_project(fake_services, platform_independent_project_data)
+    build_plan_service = fake_services.get("build_plan")
+
+    plan = build_plan_service.create_launchpad_build_plan(
+        platforms=None,
+        build_for=["all"],
+        build_on=None,
+    )
+
+    expected_length = len(DebianArchitecture) - 1  # All but i386
+    check_plan(
+        plan,
+        min_length=expected_length,
+        max_length=expected_length,
+        build_for="all",
+    )
+
+
+@pytest.mark.parametrize("build_on", DebianArchitecture)
+def test_create_build_plan_build_on_filter(
+    default_project,
+    fake_services,
+    setup_project,
+    emitter,
+    fake_host_architecture,
+    build_on,
+):
+    build_plan_service = fake_services.get("build_plan")
+    plan = build_plan_service.create_launchpad_build_plan(
+        platforms=None,
+        build_for=None,
+        build_on=[build_on],
+    )
+
+    assert (
+        mock.call(
+            "trace",
+            f"No build-on filter set, using the default of {[fake_host_architecture.value]}",
+        )
+        not in emitter.interactions
+    )
+
+    check_plan(
+        plan,
+        min_length=0,  # Not all build-on/build-for combos exist.
+        build_on=build_on,
+    )
+
+
+@pytest.mark.parametrize(
+    "build_on", [arch for arch in DebianArchitecture if arch != DebianArchitecture.I386]
+)
+def test_create_build_plan_build_on_filter_platform_independent(
+    default_project,
+    fake_services,
+    setup_project,
+    emitter,
+    fake_host_architecture,
+    platform_independent_project_data,
+    build_on,
+):
+    setup_project(fake_services, platform_independent_project_data)
+    build_plan_service = fake_services.get("build_plan")
+
+    plan = build_plan_service.create_launchpad_build_plan(
+        platforms=None,
+        build_for=None,
+        build_on=[build_on],
+    )
+
+    assert (
+        mock.call(
+            "trace",
+            f"No build-on filter set, using the default of {[fake_host_architecture.value]}",
+        )
+        not in emitter.interactions
+    )
+
+    check_plan(
+        plan,
+        max_length=1,
+        build_on=build_on,
+    )
+
+
+@pytest.mark.parametrize("build_for", DebianArchitecture)
+def test_create_build_plan_multiple_filters(
+    default_project,
+    fake_services,
+    setup_project,
+    fake_platform,
+    fake_host_architecture,
+    build_for,
+):
+    build_plan_service = fake_services.get("build_plan")
+    plan = build_plan_service.create_launchpad_build_plan(
+        platforms=[fake_platform],
+        build_for=[build_for],
+        build_on=[fake_host_architecture],
+    )
+
+    check_plan(
+        plan,
+        min_length=0,
+        max_length=1,
+        platform=fake_platform,
+        build_for=build_for,
+        build_on=fake_host_architecture,
+    )
+
+
+def test_create_build_plan_filters_to_empty(
+    default_project, fake_services, setup_project
+):
+    build_plan_service = fake_services.get("build_plan")
+    assert (
+        build_plan_service.create_launchpad_build_plan(
+            platforms=["not-a-platform"],
+            build_for=None,
+            build_on=None,
+        )
+        == []
+    )
