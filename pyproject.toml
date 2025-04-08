@@ -12,7 +12,7 @@ dependencies = [
     "craft-cli~=3.0",
     "craft-grammar>=2.0.3,<3.0.0",
     "craft-parts==2.7.0",
-    "craft-platforms~=0.6",
+    "craft-platforms~=0.7",
     "craft-providers~=2.2",
     "craft-store~=3.2",
     "cryptography",
@@ -121,7 +121,7 @@ dev-noble = [
 ]
 dev-oracular = [
     # 2.9 for Oracular+
-    "python-apt>=2.9.0;sys_platform=='linux'",
+    "python-apt>=2.9.0,<2.9.9;sys_platform=='linux'",
 ]
 dev-plucky = [
     # 2.9 for Oracular+
