@@ -77,12 +77,13 @@ class BuildPlan(BuildPlanService):
         for each platform.
 
         :param platforms: A collection of platform names to select, or None to not
-            filter on platform names
+            filter on platform names.
         :param build_for: A collection of build-for architecture names to select, or
-            None to not filter on build-for architectures.
+            None to not filter on build-for architectures. Defaults to None.
         :param build_on: A collection of build-on architecture names to select.
-            Defaults to the current architecture.
-        :returns: A build plan for the given
+            Defaults to None.
+
+        :returns: A build plan for the given platforms, build-fors and build-ons.
         """
         project_service = self._services.get("project")
         raw_project = project_service.get_raw()
