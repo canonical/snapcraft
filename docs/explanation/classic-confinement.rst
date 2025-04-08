@@ -55,13 +55,16 @@ There are multiple ways dynamic linking parameters can be manipulated:
   interpreter is provided by the base, but it can also be provided by the snap. This
   happens before any library resolution takes place.
 
-To execute as expected, binaries in a classic snap app must be configured to look for
-shared libraries provided by the base snap or bundled as part of the app snap. This is
-achieved by setting the runtime path to shared libraries in all ELF binaries (except
-relocatable object files) that are present in the package payload.
+To execute as expected, binaries in a classic snap must be configured to look for shared
+libraries provided by the base or bundled in the snap. This is achieved by setting the
+runtime path to shared libraries in all ELF binaries (except relocatable object files)
+that are present in the package payload.
 
-- The ``$RPATH`` value must be set to reach all needed entries in the dynamic section of
-  the ELF binary.
+`PatchELF <https://snapcraft.io/patchelf>`_ is a recommended companion tool that helps
+automatically configure shared libraries in snaps. It ensures that:
+
+- The ``$RPATH`` value is set to reach all needed entries in the dynamic section of the
+  ELF binary.
 - If the binary already contains an ``$RPATH``, only those that mention ``$ORIGIN`` are
   kept.
 - ``$RPATH`` entries that point to locations inside the payload are changed to be relative to ``$ORIGIN``.
@@ -85,20 +88,19 @@ runtime, classic snaps may load dynamic library dependencies in a way that could
 a possible error or conflict, leading to app instability, unknown behavior or crash.
 
 A classic snap created with Snapcraft using one of the Ubuntu bases with dynamically
-linked binaries will try to load the required dependencies at runtime.
+linked binaries will try to load the required dependencies at runtime:
 
-- It will try to load the dependencies, including stage packages and any other libraries
-  inside the snap.
-- If not found, it will try to find the dependencies in the base snap under
-  ``/snap/<base>``, where base can be something like core20, core22, and so on. The
-  libraries will need to match the name and version of libraries as provided by the
-  Ubuntu repository archives for the specific base. In other words, snaps built with
-  core20 will need to use the relevant libraries (by name or version) the way they are
-  defined for Ubuntu 20.04 LTS.
-- If not found, it will try to find the dependencies on the host system.
-- If found, the libraries will be used.
-- The loaded host libraries might not match the expected snap/core version, which could
-  result in app instability, unknown behavior, or crashing.
+- It tries to load the dependencies, including stage packages and any other
+  libraries, inside the snap.
+- (core24) If not found, it looks for the dependencies in the base snap under
+  ``/snap/<base>``. The libraries must match the name and version of libraries as
+  provided by the Ubuntu package archives for the specific base. In other words, snaps
+  built with core24 must use the relevant libraries by name or version, the way they are
+  defined for Ubuntu 24.04 LTS.
+- (core22) If not found, it looks for the dependencies on the host system. If found
+  there, the snap daemon can't guarantee that the dependencies will match the expected
+  snap and core version. They might result in app instability, unknown behavior, or
+  crashing.
 
 
 With pre-built binaries
