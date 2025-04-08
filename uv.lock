@@ -482,16 +482,16 @@ wheels = [
 
 [[package]]
 name = "craft-platforms"
-version = "0.6.0"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
     { name = "distro" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ab/7e/a9a54ac2025f5399689027fd317273f477c7c15478b2c59791aa48f34262/craft_platforms-0.6.0.tar.gz", hash = "sha256:7aa153bfff5a28cf4f8c8a7b3da29c259da3a9d9a2f9a2e7c52e118e5735a927", size = 173964 }
+sdist = { url = "https://files.pythonhosted.org/packages/98/49/af60741a1af23cbc2ded820cc965dc126e0cbdebe6d984f20b20c1788df2/craft_platforms-0.7.0.tar.gz", hash = "sha256:94c2f615d82f9d4a6d707f6762894ee6e70bb480641eaa1f6307efcaf1d8f9fc", size = 182155 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/a8/8a11759a28f90b8461ffb0651e21f2b677b4b0547d475a605772858449c4/craft_platforms-0.6.0-py3-none-any.whl", hash = "sha256:ebb1dc6bd1d8c4cbcdab573b9966b20844a9c32aea755ca51de64d4b2a1e646e", size = 24476 },
+    { url = "https://files.pythonhosted.org/packages/a0/15/2c5642bc414cc26d7eb77c503f5636df0713046426e012277fe7401bd323/craft_platforms-0.7.0-py3-none-any.whl", hash = "sha256:e5c3579cd656369ed1dd9b167b90ed393833afdb1e05a6ec53c5bb17383f621f", size = 28355 },
 ]
 
 [[package]]
@@ -2281,7 +2281,7 @@ requires-dist = [
     { name = "craft-cli", specifier = "~=3.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
     { name = "craft-parts", specifier = "==2.7.0" },
-    { name = "craft-platforms", specifier = "~=0.6" },
+    { name = "craft-platforms", specifier = "~=0.7" },
     { name = "craft-providers", specifier = "~=2.2" },
     { name = "craft-store", specifier = "~=3.2" },
     { name = "cryptography" },
