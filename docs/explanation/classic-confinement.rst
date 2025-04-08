@@ -73,7 +73,7 @@ Potential conflicts
 When crafting a classic snap, the snap author must consider the following conflicts that
 can arise.
 
-A guide for apply remedies to these conflicts can be found in
+A guide for applying remedies to these conflicts can be found in
 :ref:`how-to-debug-classic-confinement`.
 
 
@@ -105,5 +105,5 @@ With pre-built binaries
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Since there's no isolation between classic snaps and the underlying host system,
-special care needs to be taken care of any pre-built binaries with hard-coded library
+special care must be taken for any pre-built binaries with hard-coded library
 dependency paths, as they will skip the normal loading order of libraries at runtime.
