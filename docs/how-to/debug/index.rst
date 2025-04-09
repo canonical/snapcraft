@@ -6,7 +6,8 @@ Debug a snap
 .. toctree::
     :maxdepth: 1
 
-    debug-a-snap
-    debug-with-gdb
+    Snaps <debug-a-snap>
     disable-a-linter
     use-the-library-linter
+    debug-with-gdb
+    Classic confinement <debug-classic-confinement>

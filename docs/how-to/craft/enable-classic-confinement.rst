@@ -32,13 +32,13 @@ Lastly, you may also need to :ref:`provide extra configuration for the main part
 plugin <how-to-enable-classic-confinment-example-project-files>`.
 
 
+.. _how-to-enable-classic-confinement-request-snap-store:
+
 Request classic confinement on the Snap Store
 ---------------------------------------------
 
-A clasically-confined snap requires approval before you can distribute it on the Snap
-Store. If a user obtains your snap through other channels and they understand the risks,
-they can manually install it. Without approval, there's no way for them to obtain it
-from the Snap Store.
+A classically-confined snap requires approval from the Store team before you can
+distribute it on the Snap Store.
 
 `Submit your snap for review
 <https://snapcraft.io/docs/reviewing-classic-confinement-snaps>`_ to get approval for
