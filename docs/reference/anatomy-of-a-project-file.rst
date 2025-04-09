@@ -86,8 +86,6 @@ found in the Ubuntu 24.04 LTS general release. For most practical purposes, the
 use of either core24 and core22 is recommended, depending on the `supported
 plugins <https://snapcraft.io/docs/supported-plugins>`_ the snap uses.
 
-.. _reference-confinement:
-
 Confinement
 ^^^^^^^^^^^
 
