@@ -4,8 +4,12 @@ Debug with GDB
 ==============
 
 The `GNU Debugger`_ (GDB) is used by developers to introspect the execution environment
-of an application, revealing both its code and data state at any point. Developers can
+of an app, revealing both its code and data state at any point. Developers can
 use GDB to debug snaps locally and remotely.
+
+This guide covers how to set up and start a GDB session for snap debugging. For specific
+guidance on the tool's debugging features, see the `GDB documentation`_.
+
 
 Generate debug symbols
 ----------------------
@@ -19,13 +23,14 @@ For example, to enable debug symbols for a typical C-based project using the
 :ref:`CMake plugin <craft_parts_cmake_plugin>`, add ``set(CMAKE_BUILD_TYPE Debug)``
 to the project's ``CMakeLists.txt``, then rebuild and install the snap.
 
+
 Locally debug a snap
 --------------------
 
 Snaps are run within a `confined environment`_, so running GDB directly against a snap
-app would introspect both the snapd runtime environment and the application
-itself, making the identification of any issues specific to the snap application
-difficult. For this reason, snapd encapsulates GDB within its own runtime.
+app would introspect both the snapd runtime environment and the app itself, making the
+identification of any issues specific to the snap app difficult. For this reason, snapd
+encapsulates GDB within its own runtime.
 
 Run GDB directly against an installed snap with:
 
@@ -65,9 +70,6 @@ code can be referenced, as demonstrated below:
 
 When GDB is instantiated by snapd, it behaves just as it would if it was called against
 the same app outside of the snapd runtime environment.
-
-For general advice on fixing potential issues in running snaps, see :ref:`Debug a snap
-<how-to-debug-a-snap>`. For guidance on using GDB itself, see the `GDB documentation`_.
 
 
 Locally debug with gdbserver
