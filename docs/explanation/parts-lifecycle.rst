@@ -103,6 +103,7 @@ When running through its lifecycle steps, a part will use different working dire
 The directories' names closely follow the steps' names.
 
 .. list-table::
+    :header-rows: 1
     :widths: 2 1 3
 
     * - Directory

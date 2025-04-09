@@ -14,3 +14,4 @@ Explanation
    parts
    parts-lifecycle
    /common/craft-parts/explanation/dump_plugin
+   classic-confinement
