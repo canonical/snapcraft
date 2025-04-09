@@ -9,4 +9,5 @@ Debug a snap
     Snaps <debug-a-snap>
     disable-a-linter
     use-the-library-linter
+    debug-with-gdb
     Classic confinement <debug-classic-confinement>
