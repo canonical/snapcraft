@@ -7,5 +7,6 @@ Debug a snap
     :maxdepth: 1
 
     debug-a-snap
+    debug-with-gdb
     disable-a-linter
     use-the-library-linter
