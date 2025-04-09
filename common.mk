@@ -61,6 +61,7 @@ setup-tests: install-uv install-build-deps ##- Set up a testing environment with
 setup-tics: setup-tests ##- Set up a testing environment for Tiobe TICS
 	uv sync $(UV_TICS_GROUPS)
 ifneq ($(CI),)
+	env
 	cat /bin/pylint << 'EOF'
 	#!/bin/sh
 
