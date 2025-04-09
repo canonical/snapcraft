@@ -27,6 +27,7 @@ from snapcraft import models
 # Add new services to this mapping to add them to the service factory
 # Internal service name : Stringified service class name
 _SERVICES: dict[str, str] = {
+    "build_plan": "BuildPlan",
     "confdbs": "Confdbs",
     "init": "Init",
     "lifecycle": "Lifecycle",
