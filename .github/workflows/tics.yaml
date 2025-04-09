@@ -16,12 +16,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up uv with caching
-        id: setup-uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
       - name: Setup project
         run: make setup-tics
 
@@ -37,6 +31,8 @@ jobs:
 
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
+        env:
+           PATH: "/snap/bin:/home/runner/.local/bin:/home/runner/.cargo/bin:/bin:/usr/bin:/usr/local/bin:"
         with:
           mode: qserver
           project: snapcraft

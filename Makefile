@@ -3,7 +3,7 @@ COVERAGE_SOURCE="snapcraft,snapcraft_legacy"
 UV_TEST_GROUPS := "--group=dev"
 UV_DOCS_GROUPS := "--group=docs"
 UV_LINT_GROUPS := "--group=lint" "--group=types"
-UV_TICS_GROUPS := "--group=tics" "--group=lint" "--group=types"
+UV_TICS_GROUPS := "--group=tics"
 
 ifneq ($(wildcard /etc/os-release),)
 include /etc/os-release
@@ -12,6 +12,7 @@ ifdef VERSION_CODENAME
 UV_TEST_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 UV_DOCS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 UV_LINT_GROUPS += "--group=dev-$(VERSION_CODENAME)"
+UV_TICS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 endif
 
 include common.mk

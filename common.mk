@@ -58,19 +58,11 @@ setup-tests: install-uv install-build-deps ##- Set up a testing environment with
 	uv sync $(UV_TEST_GROUPS)
 
 .PHONY: setup-tics
-setup-tics: setup-tests ##- Set up a testing environment for Tiobe TICS
-	uv sync $(UV_TICS_GROUPS)
+setup-tics: install-uv install-build-deps ##- Set up a testing environment for Tiobe TICS
+	uv venv
+	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_TICS_GROUPS)
 ifneq ($(CI),)
-	env
-	cat /bin/pylint << 'EOF'
-	#!/bin/sh
-
-	exec uv run pylint "$@"
-	cat /bin/flake8 << 'EOF'
-	#!/bin/sh
-
-	exec uv run flake8 "$@"
-	chmod +x /bin/flake8 /bin/pylint
+	echo $(PWD)/.venv/bin >> $(GITHUB_PATH)
 endif
 
 .PHONY: setup-lint

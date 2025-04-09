@@ -67,8 +67,6 @@ dev = [
     "coverage[toml]",
     "pyflakes",
     "fixtures",
-    # For Tiobe TiCS
-    "flake8",
     "mccabe",
     "testscenarios",
     "pexpect",
@@ -76,8 +74,6 @@ dev = [
     "pycodestyle",
     "pyftpdlib",
     "pyinstaller ; sys_platform == 'win32'",
-    # For Tiobe TiCS
-    "pylint",
     "pymacaroons",
     "pyramid",
     "pytest",
