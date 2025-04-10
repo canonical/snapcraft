@@ -1,40 +1,14 @@
 name: TICS
-
 on:
   push:
     branches:
-      - main
+      - "main"
       # to easy test changes to the workflow
-      - tiobe
+      - "tiobe"
 
 jobs:
-  CI:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup project
-        run: make setup-tics
-
-      - name: Run coverage
-        run: make test-coverage
-
-      - name: Upload test results
-        if: success() || failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-ubuntu-24.04
-          path: results/
-
-      - name: Run TICS analysis
-        uses: tiobe/tics-github-action@v3
-        with:
-          mode: qserver
-          project: snapcraft
-          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
-          branchdir: ${{ github.workspace }}
-          ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
-          installTics: true
+  TICS:
+    uses: canonical/starflow/.github/workflows/tics.yaml@CRAFT-4322-migrate-tics-workflow-to-starflow
+    with:
+      project: "snapcraft"
+    secrets: inherit
