@@ -373,20 +373,7 @@ def test_default_command_integrated(monkeypatch, mocker, new_dir):
     assert mocked_pack_run.called
 
 
-# TODO: replace {"core", "core18"} with const.ESM_BASES
-@pytest.mark.parametrize(
-    "base",
-    [
-        pytest.param(
-            "core",
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason="needs error handling in snapcraft.services.project.Project._app_render_legacy_platforms",
-            ),
-        ),
-        "core18",
-    ],
-)
+@pytest.mark.parametrize("base", const.ESM_BASES)
 def test_esm_error(snapcraft_yaml, base, monkeypatch, capsys):
     """Test that an error is raised when using an ESM base."""
     snapcraft_yaml_dict = {"base": base}

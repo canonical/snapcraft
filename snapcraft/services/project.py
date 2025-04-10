@@ -19,6 +19,7 @@ from typing import Any, cast
 
 import craft_cli
 import craft_platforms
+import craft_providers.bases
 from craft_application import ProjectService
 from overrides import override
 
@@ -82,7 +83,7 @@ class Project(ProjectService):
     @override
     def _app_render_legacy_platforms(self) -> dict[str, craft_platforms.PlatformDict]:
         project = self.get_raw()
-        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE.get(
             str(
                 get_effective_base(
                     base=project.get("base"),
@@ -92,10 +93,13 @@ class Project(ProjectService):
                     translate_devel=False,
                 )
             )
-        ].value
+        )
 
         # For backwards compatibility with core22, convert the platforms.
-        if effective_base == "22.04" and project.get("architectures"):
+        if (
+            effective_base == craft_providers.bases.BuilddBaseAlias.JAMMY
+            and project.get("architectures")
+        ):
             platforms: dict[str, craft_platforms.PlatformDict] = {
                 key: cast(craft_platforms.PlatformDict, value.marshal())
                 for key, value in Platform.from_architectures(

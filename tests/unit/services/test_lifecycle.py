@@ -215,19 +215,7 @@ def test_generate_manifest(
     ]
 
 
-@pytest.mark.parametrize(
-    "base",
-    [
-        "core24",
-        pytest.param(
-            None,
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason="needs error handling in snapcraft.services.project.Project._app_render_legacy_platforms",
-            ),
-        ),
-    ],
-)
+@pytest.mark.parametrize("base", ["core24", None])
 @pytest.mark.parametrize("confinement", ["strict", "devmode", "classic"])
 def test_lifecycle_custom_arguments(
     default_project, fake_services, setup_project, base, confinement
@@ -240,6 +228,7 @@ def test_lifecycle_custom_arguments(
     new_attrs = {"base": base, "confinement": confinement}
     if base is None:
         new_attrs["type"] = "base"
+        new_attrs["build-base"] = "core24"
     setup_project(fake_services, {**default_project.marshal(), **new_attrs})
     lifecycle_service = fake_services.get("lifecycle")
 
