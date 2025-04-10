@@ -21,6 +21,7 @@ Reference
    /common/craft-parts/reference/part_properties
    parts_steps
    metrics
+   layouts
    snapshots
    system-requirements
 
