@@ -30,8 +30,8 @@ from craft_cli import emit
 from craft_platforms import DebianArchitecture
 from overrides import override
 
-import snapcraft.models
 from snapcraft.const import SUPPORTED_ARCHS
+from snapcraft.services import BuildPlan
 
 
 class RemoteBuildCommand(RemoteBuild):
@@ -102,7 +102,8 @@ class RemoteBuildCommand(RemoteBuild):
                     retcode=os.EX_CONFIG,
                 )
 
-        build_plan = self._services.get("build_plan").create_build_plan(
+        build_plan_service = cast(BuildPlan, self._services.get("build_plan"))
+        build_plan = build_plan_service.create_launchpad_build_plan(
             platforms=None, build_for=None, build_on=None
         )
 
@@ -116,8 +117,8 @@ class RemoteBuildCommand(RemoteBuild):
         for build_on, build_fors in build_map.items():
             if len(build_fors) > 1:
                 build_on_errors.append(
-                    f"\n  - Building on {build_on!r} will create snaps for "
-                    f"{humanize_list(build_fors, 'and')}."
+                    f"\n  - Building on {build_on} will create snaps for "
+                    f"{humanize_list(build_fors, 'and', item_format='{!s}')}."
                 )
 
         if build_on_errors:
@@ -136,10 +137,7 @@ class RemoteBuildCommand(RemoteBuild):
 
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
-        project = cast(snapcraft.models.Project, self._services.get("project").get())
-        build_plan = self._services.get("build_plan").create_build_plan(
-            platforms=None, build_for=None, build_on=None
-        )
+        project = self._services.get("project").get_raw()
         if parsed_args.remote_build_build_fors:
             build_fors: list[DebianArchitecture | Literal["all"]] | None = [
                 "all" if arch == "all" else craft_platforms.DebianArchitecture(arch)
@@ -149,22 +147,20 @@ class RemoteBuildCommand(RemoteBuild):
             build_fors = None
 
         archs: list[DebianArchitecture | Literal["all"]] = []
-        if project.platforms or project._architectures_in_yaml:
+        if project.get("platforms") or project.get("architectures"):
+            build_plan_service = cast(BuildPlan, self._services.get("build_plan"))
+            build_plan = build_plan_service.create_launchpad_build_plan(
+                platforms=None, build_for=build_fors or None, build_on=None
+            )
             # if the project has platforms, then `--build-for` acts as a filter
             if build_fors:
                 emit.debug("Filtering the build plan using the '--build-for' argument.")
-                filtered_build_plan = self._services.get("build_plan")._filter_plan(
-                    build_plan,
-                    platforms=None,
-                    build_for=build_fors or None,
-                    build_on=None,
-                )
                 # Launchpad's API only accepts a list of architectures but doesn't
                 # have a concept of 'build-on' vs 'build-for'.
                 # Passing the build-on archs is safe because:
                 # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
                 # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
-                archs.extend([info.build_on for info in filtered_build_plan])
+                archs.extend([info.build_on for info in build_plan])
                 if not archs:
                     raise craft_application.errors.EmptyBuildPlanError()
             else:

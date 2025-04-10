@@ -301,7 +301,7 @@ def test_write_metadata_with_project_gui(
 def test_update_project_parse_info(
     default_project, fake_services, setup_project, in_project_path, tmp_path, mocker
 ):
-    setup_project(fake_services, default_project, write_project=True)
+    setup_project(fake_services, default_project.marshal(), write_project=True)
     package_service = fake_services.get("package")
     project_service = fake_services.get("project")
     lifecycle = fake_services.lifecycle
