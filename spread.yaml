@@ -223,6 +223,8 @@ suites:
     summary: core22 linter tests
     environment:
       SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
+      # We're checking the output text, so override the normal trace output.
+      CRAFT_VERBOSITY_LEVEL: brief
 
     systems:
       - ubuntu-22.04*
