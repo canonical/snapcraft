@@ -50,6 +50,14 @@ def reset_plugins():
     plugins.unregister_all()
 
 
+def _write_yaml(file_path: Path, content: dict[str, Any]) -> None:
+    """Write a YAML file from a dict."""
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(
+        yaml.safe_dump(content, indent=2, sort_keys=False), encoding="utf-8"
+    )
+
+
 @pytest.fixture
 def snapcraft_yaml(new_dir):
     """Return a fixture that can write a snapcraft.yaml."""
@@ -71,11 +79,7 @@ def snapcraft_yaml(new_dir):
             },
             **kwargs,
         }
-        yaml_path = Path(filename)
-        yaml_path.parent.mkdir(parents=True, exist_ok=True)
-        yaml_path.write_text(
-            yaml.safe_dump(content, indent=2, sort_keys=False), encoding="utf-8"
-        )
+        _write_yaml(Path(filename), content)
         return content
 
     yield write_file
@@ -508,19 +512,20 @@ def setup_project(mocker, project_path):
     def _setup_services(project_services, project_data, *, write_project: bool = False):
         from snapcraft import models
 
-        project = models.Project.model_validate(project_data)
-
         if write_project:
-            project.to_yaml_file(project_path / "snapcraft.yaml")
+            _write_yaml(
+                file_path=project_path / "snapcraft.yaml",
+                content=project_data,
+            )
 
         mocker.patch.object(
             project_services.get("project"),
             "_load_raw_project",
-            return_value=project.marshal(),
+            return_value=project_data,
         )
         project_services.get("project").configure(platform=None, build_for=None)
 
-        return project
+        return models.Project.model_validate(project_data)
 
     return _setup_services
 
