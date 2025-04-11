@@ -1,0 +1,13 @@
+name: TICS
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  TICS:
+    uses: canonical/starflow/.github/workflows/tics.yaml@main
+    # Uncomment this and add your project's name on Tiobe TICS
+    # with:
+    #   project: "starcraft"
+    secrets: inherit

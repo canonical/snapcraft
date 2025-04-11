@@ -46,6 +46,10 @@ dev = [
     "types-colorama",
     "types-setuptools",
 ]
+tics = [
+    "flake8",
+    "pylint",
+]
 
 [tool.uv]
 constraint-dependencies = [
