@@ -22,18 +22,24 @@ from unittest import mock
 from snapcraft.models import ConfdbSchemaAssertion, EditableConfdbSchemaAssertion
 
 
-def test_confdb_schemas_service_type(confdb_schemas_service):
+def test_confdb_schemas_service_type(fake_services):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
+
     assert confdb_schemas_service._assertion_name == "confdb-schema"
 
 
-def test_editable_assertion_class(confdb_schemas_service):
+def test_editable_assertion_class(fake_services):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
+
     assert (
         confdb_schemas_service._editable_assertion_class
         == EditableConfdbSchemaAssertion
     )
 
 
-def test_get_assertions(confdb_schemas_service):
+def test_get_assertions(fake_services):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
+
     confdb_schemas_service._get_assertions("test-confdb")
 
     confdb_schemas_service._store_client.list_confdb_schemas.assert_called_once_with(
@@ -41,7 +47,8 @@ def test_get_assertions(confdb_schemas_service):
     )
 
 
-def test_build_assertion(confdb_schemas_service):
+def test_build_assertion(fake_services):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
     mock_assertion = mock.Mock(spec=ConfdbSchemaAssertion)
 
     confdb_schemas_service._build_assertion(mock_assertion)
@@ -51,7 +58,8 @@ def test_build_assertion(confdb_schemas_service):
     )
 
 
-def test_post_assertions(confdb_schemas_service):
+def test_post_assertions(fake_services):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
     confdb_schemas_service._post_assertion(b"test-assertion-data")
 
     confdb_schemas_service._store_client.post_confdb_schema.assert_called_once_with(
@@ -59,16 +67,16 @@ def test_post_assertions(confdb_schemas_service):
     )
 
 
-def test_normalize_assertions_empty(confdb_schemas_service, check):
+def test_normalize_assertions_empty(fake_services, check):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
     headers, confdb_schemas = confdb_schemas_service._normalize_assertions([])
 
     check.equal(headers, ["Account ID", "Name", "Revision", "When"])
     check.equal(confdb_schemas, [])
 
 
-def test_normalize_assertions(
-    fake_confdb_schema_assertion, confdb_schemas_service, check
-):
+def test_normalize_assertions(fake_confdb_schema_assertion, fake_services, check):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
     confdb_schemas = [
         fake_confdb_schema_assertion(),
         fake_confdb_schema_assertion(
@@ -93,7 +101,8 @@ def test_normalize_assertions(
     )
 
 
-def test_generate_yaml_from_model(fake_confdb_schema_assertion, confdb_schemas_service):
+def test_generate_yaml_from_model(fake_confdb_schema_assertion, fake_services):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
     assertion = fake_confdb_schema_assertion(
         revision="10",
         views={
@@ -153,7 +162,8 @@ def test_generate_yaml_from_model(fake_confdb_schema_assertion, confdb_schemas_s
     )
 
 
-def test_get_success_message(fake_confdb_schema_assertion, confdb_schemas_service):
+def test_get_success_message(fake_confdb_schema_assertion, fake_services):
+    confdb_schemas_service = fake_services.get("confdb_schemas")
     message = confdb_schemas_service._get_success_message(
         fake_confdb_schema_assertion(revision=10)
     )
