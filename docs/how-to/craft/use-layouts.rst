@@ -6,8 +6,8 @@ Use layouts
 A :ref:`layout <reference-layouts>` exposes elements inside the snap filesystem to the
 host system at runtime. They can make files, folders, and links in ``$SNAP``,
 ``$SNAP_DATA``, ``$SNAP_COMMON`` accessible to host locations such as ``/usr``,
-``/var``, and ``/etc``. These alterations to the filesystem aren't visible to other
-snaps.
+``/var``, and ``/etc``. These connections between the snap and host aren't routed for
+other snaps.
 
 Layouts can help `hooks <https://snapcraft.io/docs/supported-snap-hooks>`_ access any
 executables they may require.
@@ -28,25 +28,25 @@ shape of a layout definition.
       <target-path>:
         <layout>
 
-Set the target path to the . Consult the
+Set the target path to the file or directory to exposed to the snap. Layouts can't
+target every path on the host filesystem, so consult the :ref:`target path restrictions
+<reference-layouts-limitations>` to check if the destination isn't supported.
 
-Layout definitions use special syntax. Select one of the layout types, then fill it in
-for ``<layout>``:
+Select the appropriate layout type for the target and replace ``<layout>`` with the
+matching syntax:
 
 - ``symlink: <source-path>`` creates a symbolic link
 - ``bind: <source-path>`` bind-mounts a directory
 - ``bind-file: <source-path>`` bind-mounts a file
-- ``tmpfs: <source-path>`` mounts a private temporary in-memory filesystem
+- ``tmpfs: <source-path>`` mounts a private, temporary, in-memory filesystem
 
-Set ``<source-path>`` to ``$SNAP``, ``$SNAP_DATA`` or ``$SNAP_COMMON``.
+Set the root of the source path to the appropriate location in the filesystem, being one
+of ``$SNAP``, ``$SNAP_DATA``, or ``$SNAP_COMMON``.
 
 The ``symlink`` layout type is recommended because it's the fastest. The ``bind*`` and
 ``tmpfs`` types *significantly* increase the startup time of the app. Some apps,
 however, treat symlinks differently than regular files or directories, so you might
-need to use a bind mount for them.
-
-Some apps might treat symlinks differently than regular files or directories, so you may
-need to use a bind mount.
+need a bind mount for them.
 
 As ``/lib`` and ``/run`` directories in Linux are symbolic links to ``/usr/lib`` and
 ``/var/run`` respectively, they require separate exceptions to ensure certain locations,
@@ -76,8 +76,8 @@ would look like:
       /etc/foo.conf:
         bind-file: $SNAP_DATA/etc/foo.conf
 
-Here's a realistic example of a layout map that make the glibc library available to the
-snap at runtime:
+Here's a realistic example of a layout map that makes the OpenGL library available to
+the snap at runtime:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
