@@ -16,23 +16,28 @@
 
 """Snapcraft services."""
 
-from snapcraft.services.assertions import Assertion
-from snapcraft.services.init import Init
-from snapcraft.services.lifecycle import Lifecycle
-from snapcraft.services.package import Package
-from snapcraft.services.provider import Provider
-from snapcraft.services.confdbschemas import ConfdbSchemas
-from snapcraft.services.remotebuild import RemoteBuild
-from snapcraft.services.service_factory import (
+from .assertions import Assertion
+from .buildplan import BuildPlan
+from .init import Init
+from .lifecycle import Lifecycle
+from .package import Package
+from .project import Project
+from .provider import Provider
+from .confdbschemas import ConfdbSchemas
+from .remotebuild import RemoteBuild
+from .service_factory import (
     SnapcraftServiceFactory,
     register_snapcraft_services,
 )
 
 __all__ = [
     "Assertion",
+    "BuildPlan",
+    "Confdbs",
     "Init",
     "Lifecycle",
     "Package",
+    "Project",
     "Provider",
     "ConfdbSchemas",
     "register_snapcraft_services",

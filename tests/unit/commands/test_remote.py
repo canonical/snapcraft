@@ -71,27 +71,24 @@ def mock_run_legacy(mocker):
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_run_core22_and_later(snapcraft_yaml, base, mock_remote_build_run):
+@pytest.mark.usefixtures("emitter", "mock_argv")
+def test_run_core22_and_later(snapcraft_yaml, base, mock_remote_build_run, fake_app):
     """Bases that are core22 and later will use craft-application remote-build."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
-    application.main()
+
+    fake_app.run()
 
     mock_remote_build_run.assert_called_once()
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
 @pytest.mark.usefixtures("mock_argv")
-def test_run_core20(
-    snapcraft_yaml,
-    base,
-    mock_run_legacy,
-    mock_remote_build_run,
-):
+def test_run_core20(snapcraft_yaml, base, mock_run_legacy, mock_remote_build_run):
     """core20 base use fallback remote-build."""
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
+
     application.main()
 
     mock_run_legacy.assert_called_once()
@@ -99,9 +96,9 @@ def test_run_core20(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
+@pytest.mark.usefixtures("emitter", "mock_argv")
 def test_run_in_repo_newer_than_core22(
-    snapcraft_yaml, base, new_dir, mock_remote_start_builds
+    snapcraft_yaml, base, new_dir, mock_remote_start_builds, fake_app
 ):
     """Bases newer than core22 run craft-application remote-build regardless of being in a repo."""
     # initialize a git repo
@@ -109,7 +106,7 @@ def test_run_in_repo_newer_than_core22(
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
 
-    application.main()
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once()
 
@@ -177,12 +174,21 @@ def test_run_in_shallow_repo_unsupported(capsys, new_dir, snapcraft_yaml, base):
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_default_architecture(snapcraft_yaml, base, mock_remote_start_builds):
+@pytest.mark.usefixtures("emitter", "mock_argv")
+def test_default_architecture(
+    default_project,
+    fake_services,
+    setup_project,
+    base,
+    mock_remote_start_builds,
+    fake_app,
+):
     """Default to the host architecture if not defined elsewhere."""
-    snapcraft_yaml(base=base)
-    app = application.create_app()
-    app.run()
+    setup_project(
+        fake_services, {**default_project.marshal(), "base": base}, write_project=True
+    )
+
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once_with(
         ANY, architectures=[str(DebianArchitecture.from_host())]
@@ -195,22 +201,29 @@ def test_default_architecture(snapcraft_yaml, base, mock_remote_start_builds):
     [pytest.param(None, id="implicit"), pytest.param("all", id="explicit")],
     indirect=True,
 )
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
+@pytest.mark.usefixtures("emitter", "mock_argv")
 def test_platform_build_for_all(
-    snapcraft_yaml,
+    default_project,
+    fake_services,
+    setup_project,
     base,
     mock_remote_start_builds,
+    fake_app,
 ):
     """Use the 'build-on' archs when building for all architectures."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "platforms": {
-            "test-platform": {"build-on": ["arm64", "riscv64"], "build-for": "all"},
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": base,
+            "platforms": {
+                "test-platform": {"build-on": ["arm64", "riscv64"], "build-for": "all"},
+            },
         },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
+        write_project=True,
+    )
+
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once()
     # launchpad decides which build-on to use
@@ -224,18 +237,24 @@ def test_platform_build_for_all(
     [pytest.param(None, id="implicit"), pytest.param("all", id="explicit")],
     indirect=True,
 )
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_platform_build_for_all_core22(snapcraft_yaml, mock_remote_start_builds):
+@pytest.mark.usefixtures("emitter", "mock_argv")
+def test_platform_build_for_all_core22(
+    default_project, fake_services, setup_project, mock_remote_start_builds, fake_app
+):
     """Use the 'build-on' archs when building for all architectures."""
-    snapcraft_yaml_dict = {
-        "base": "core22",
-        "architectures": [
-            {"build-on": ["amd64", "riscv64"], "build-for": ["all"]},
-        ],
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core22",
+            "architectures": [
+                {"build-on": ["amd64", "riscv64"], "build-for": ["all"]},
+            ],
+        },
+        write_project=True,
+    )
+
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once()
     # launchpad decides which build-on to use
@@ -245,20 +264,31 @@ def test_platform_build_for_all_core22(snapcraft_yaml, mock_remote_start_builds)
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_platform_in_project_metadata(snapcraft_yaml, base, mock_remote_start_builds):
+@pytest.mark.usefixtures("emitter", "mock_argv")
+def test_platform_in_project_metadata(
+    default_project,
+    fake_services,
+    setup_project,
+    base,
+    mock_remote_start_builds,
+    fake_app,
+):
     """Use the platform's build-for architectures from the project metadata."""
-    snapcraft_yaml_dict = {
-        "base": base,
-        "platforms": {
-            "rpi4": {"build-on": "arm64", "build-for": "arm64"},
-            "x86-64": {"build-on": "amd64", "build-for": "amd64"},
-            "same-build-for-x86-64": {"build-on": "riscv64", "build-for": "amd64"},
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": base,
+            "platforms": {
+                "rpi4": {"build-on": "arm64", "build-for": "arm64"},
+                "x86-64": {"build-on": "amd64", "build-for": "amd64"},
+                "same-build-for-x86-64": {"build-on": "riscv64", "build-for": "amd64"},
+            },
         },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
+        write_project=True,
+    )
+
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once()
     assert sorted(mock_remote_start_builds.call_args[1]["architectures"]) == sorted(
@@ -266,19 +296,25 @@ def test_platform_in_project_metadata(snapcraft_yaml, base, mock_remote_start_bu
     )
 
 
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_architecture_in_project_metadata(snapcraft_yaml, mock_remote_start_builds):
+@pytest.mark.usefixtures("emitter", "mock_argv")
+def test_architecture_in_project_metadata(
+    default_project, fake_services, setup_project, mock_remote_start_builds, fake_app
+):
     """Use the build-for architectures from the project metadata."""
-    snapcraft_yaml_dict = {
-        "base": "core22",
-        "architectures": [
-            {"build-on": ["arm64", "s390x"], "build-for": ["arm64"]},
-            {"build-on": ["riscv64"], "build-for": ["riscv64"]},
-        ],
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core22",
+            "architectures": [
+                {"build-on": ["arm64", "s390x"], "build-for": ["arm64"]},
+                {"build-on": ["riscv64"], "build-for": ["riscv64"]},
+            ],
+        },
+        write_project=True,
+    )
+
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once()
     assert sorted(mock_remote_start_builds.call_args[1]["architectures"]) == sorted(
@@ -309,14 +345,22 @@ def test_architecture_in_project_metadata(snapcraft_yaml, mock_remote_start_buil
     ],
     indirect=["mock_argv"],
 )
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
+@pytest.mark.usefixtures("emitter", "mock_argv")
 def test_build_for_argument(
-    snapcraft_yaml, base, expected_build_fors, mock_remote_start_builds
+    default_project,
+    fake_services,
+    setup_project,
+    base,
+    expected_build_fors,
+    mock_remote_start_builds,
+    fake_app,
 ):
     """Use architectures provided by the `--build-for` argument."""
-    snapcraft_yaml(base=base)
-    app = application.create_app()
-    app.run()
+    setup_project(
+        fake_services, {**default_project.marshal(), "base": base}, write_project=True
+    )
+
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once_with(
         ANY, architectures=expected_build_fors
@@ -326,43 +370,65 @@ def test_build_for_argument(
 @pytest.mark.parametrize(
     ("mock_argv", "expected_archs"),
     [
-        pytest.param("amd64", ["amd64", "s390x"], id="amd64"),
+        pytest.param(
+            "amd64",
+            ["amd64", "s390x"],
+            id="amd64",
+        ),
         pytest.param("riscv64", ["riscv64"], id="riscv64"),
-        pytest.param("amd64,riscv64", ["amd64", "s390x", "riscv64"], id="both"),
+        pytest.param(
+            "amd64,riscv64",
+            ["amd64", "s390x", "riscv64"],
+            id="both",
+        ),
     ],
     indirect=["mock_argv"],
 )
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_architectures_filter(snapcraft_yaml, expected_archs, mock_remote_start_builds):
+@pytest.mark.usefixtures("emitter", "mock_argv")
+def test_architectures_filter(
+    default_project,
+    fake_services,
+    setup_project,
+    expected_archs,
+    mock_remote_start_builds,
+    fake_app,
+):
     """Filter an 'architectures' key with '--build-for'."""
-    snapcraft_yaml_dict = {
-        "base": "core22",
-        "architectures": [
-            {"build-on": ["amd64", "s390x"], "build-for": ["amd64"]},
-            {"build-on": ["riscv64"], "build-for": ["riscv64"]},
-        ],
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core22",
+            "architectures": [
+                {"build-on": ["amd64", "s390x"], "build-for": ["amd64"]},
+                {"build-on": ["riscv64"], "build-for": ["riscv64"]},
+            ],
+        },
+        write_project=True,
+    )
+
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once_with(ANY, architectures=expected_archs)
 
 
 @pytest.mark.parametrize("mock_argv", ["amd64"], indirect=True)
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
+@pytest.mark.usefixtures("emitter", "mock_argv")
 def test_architectures_filter_error(
-    capsys,
-    snapcraft_yaml,
+    default_project, fake_services, setup_project, capsys, fake_app
 ):
     """Error if '--build-for' entirely filters the build plan."""
-    snapcraft_yaml_dict = {
-        "base": "core22",
-        "architectures": [{"build-on": ["riscv64"], "build-for": ["riscv64"]}],
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core22",
+            "architectures": [{"build-on": ["riscv64"], "build-for": ["riscv64"]}],
+        },
+        write_project=True,
+    )
+
+    fake_app.run()
 
     _, err = capsys.readouterr()
 
@@ -376,45 +442,67 @@ def test_architectures_filter_error(
 @pytest.mark.parametrize(
     ("mock_argv", "expected_archs"),
     [
-        pytest.param("amd64", ["amd64", "s390x"], id="amd64"),
+        pytest.param(
+            "amd64",
+            ["amd64", "s390x"],
+            id="amd64",
+        ),
         pytest.param("riscv64", ["riscv64"], id="riscv64"),
-        pytest.param("amd64,riscv64", ["amd64", "s390x", "riscv64"], id="both"),
+        pytest.param(
+            "amd64,riscv64",
+            ["amd64", "s390x", "riscv64"],
+            id="both",
+        ),
     ],
     indirect=["mock_argv"],
 )
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_platforms_filter(snapcraft_yaml, expected_archs, mock_remote_start_builds):
+@pytest.mark.usefixtures("emitter", "mock_argv")
+def test_platforms_filter(
+    default_project,
+    fake_services,
+    setup_project,
+    expected_archs,
+    mock_remote_start_builds,
+    fake_app,
+):
     """Filter a 'platforms' key with '--build-for'."""
-    snapcraft_yaml_dict = {
-        "base": "core24",
-        "platforms": {
-            "amd64": {"build-on": ["amd64", "s390x"], "build-for": "amd64"},
-            "riscv64": {"build-on": "riscv64", "build-for": "riscv64"},
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core24",
+            "platforms": {
+                "amd64": {"build-on": ["amd64", "s390x"], "build-for": "amd64"},
+                "riscv64": {"build-on": "riscv64", "build-for": "riscv64"},
+            },
         },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
+        write_project=True,
+    )
+
+    fake_app.run()
 
     mock_remote_start_builds.assert_called_once_with(ANY, architectures=expected_archs)
 
 
 @pytest.mark.parametrize("mock_argv", ["arm64"], indirect=True)
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
+@pytest.mark.usefixtures("emitter", "mock_argv")
 def test_platforms_filter_error(
-    capsys,
-    snapcraft_yaml,
+    default_project, fake_services, setup_project, capsys, fake_app, new_dir
 ):
     """Error if '--build-for' entirely filters the build plan."""
-    snapcraft_yaml_dict = {
-        "base": "core24",
-        "platforms": {
-            "riscv64": {"build-on": "riscv64", "build-for": "riscv64"},
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core24",
+            "platforms": {
+                "riscv64": {"build-on": "riscv64", "build-for": "riscv64"},
+            },
         },
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
+        write_project=True,
+    )
+
+    fake_app.run()
 
     _, err = capsys.readouterr()
 
@@ -460,18 +548,14 @@ def test_platforms_shorthand_error(capsys, snapcraft_yaml):
     indirect=True,
 )
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "devel"})
-@pytest.mark.usefixtures(
-    "emitter", "mock_argv", "fake_services", "mock_remote_start_builds"
-)
+@pytest.mark.usefixtures("emitter", "mock_argv", "mock_remote_start_builds")
 def test_unknown_build_for_error(
-    capsys,
-    snapcraft_yaml,
-    base,
+    default_project, fake_services, setup_project, capsys, base, fake_app
 ):
     """Error if `--build-for` is not a valid debian architecture."""
-    snapcraft_yaml(base=base)
-    app = application.create_app()
-    assert app.run() == os.EX_CONFIG
+    setup_project(fake_services, {**default_project.marshal(), "base": base})
+
+    assert fake_app.run() == os.EX_CONFIG
 
     _, err = capsys.readouterr()
 
@@ -493,7 +577,7 @@ def test_unknown_build_for_error(
                     {"build-on": ["amd64", "riscv64"], "build-for": "riscv64"},
                 ],
             },
-            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            ["Building on amd64 will create snaps for amd64 and riscv64."],
             id="core22-simple",
         ),
         pytest.param(
@@ -507,8 +591,8 @@ def test_unknown_build_for_error(
                 ],
             },
             [
-                "Building on 'amd64' will create snaps for 'amd64' and 'riscv64'.",
-                "Building on 's390x' will create snaps for 'ppc64el' and 's390x'.",
+                "Building on amd64 will create snaps for amd64 and riscv64.",
+                "Building on s390x will create snaps for ppc64el and s390x.",
             ],
             id="core22-complex",
         ),
@@ -523,7 +607,7 @@ def test_unknown_build_for_error(
                     },
                 },
             },
-            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            ["Building on amd64 will create snaps for amd64 and riscv64."],
             id="core24-simple",
         ),
         pytest.param(
@@ -534,8 +618,8 @@ def test_unknown_build_for_error(
                     "identical-platform": {"build-on": "amd64", "build-for": "riscv64"},
                 },
             },
-            # this will show 'riscv64' twice because the platform name is different
-            ["Building on 'amd64' will create snaps for 'riscv64' and 'riscv64'."],
+            # this will show riscv64 twice because the platform name is different
+            ["Building on amd64 will create snaps for riscv64 and riscv64."],
             id="core24-same-architectures-different-platform-name",
         ),
         pytest.param(
@@ -546,7 +630,7 @@ def test_unknown_build_for_error(
                     "riscv64": {"build-on": "amd64", "build-for": "riscv64"},
                 },
             },
-            ["Building on 'amd64' will create snaps for 'amd64' and 'riscv64'."],
+            ["Building on amd64 will create snaps for amd64 and riscv64."],
             id="core24-shorthand",
         ),
         pytest.param(
@@ -563,28 +647,36 @@ def test_unknown_build_for_error(
                 },
             },
             [
-                "Building on 'amd64' will create snaps for 'amd64' and 'riscv64'.",
-                "Building on 's390x' will create snaps for 'riscv64', 'riscv64', and 's390x'.",
+                "Building on amd64 will create snaps for amd64 and riscv64.",
+                "Building on s390x will create snaps for riscv64, riscv64, and s390x.",
             ],
             id="core24-complex",
         ),
     ],
 )
-@pytest.mark.usefixtures(
-    "emitter", "mock_argv", "fake_services", "mock_remote_start_builds"
-)
+@pytest.mark.usefixtures("emitter", "mock_argv", "mock_remote_start_builds")
 def test_multiple_artifacts_per_build_on(
+    default_project,
+    fake_services,
+    setup_project,
     check,
     base,
     build_info,
     error_messages,
     capsys,
-    snapcraft_yaml,
+    fake_app,
 ):
     """Error when multiple artifacts will be produced on one build-on architecture."""
-    snapcraft_yaml(**{"base": base, **build_info})
-    app = application.create_app()
-    assert app.run() == os.EX_CONFIG
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": base,
+            **build_info,
+        },
+    )
+
+    assert fake_app.run() == os.EX_CONFIG
 
     _, err = capsys.readouterr()
 

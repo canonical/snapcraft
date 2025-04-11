@@ -32,10 +32,18 @@ import snapcraft.parts
 from snapcraft import __version__, models, os_release
 
 
+@pytest.fixture
+def lifecycle_service(default_project, fake_services, setup_project):
+    setup_project(
+        fake_services,
+        {**default_project.marshal(), "parts": {"my-part": {"plugin": "nil"}}},
+    )
+    return fake_services.get("lifecycle")
+
+
 def test_lifecycle_installs_base(lifecycle_service, mocker):
     install_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
 
-    lifecycle_service.setup()
     lifecycle_service.run("pull")
 
     info = lifecycle_service.project_info
@@ -46,9 +54,6 @@ def test_lifecycle_installs_base(lifecycle_service, mocker):
 
 
 def test_post_prime_no_patchelf(fp, tmp_path, lifecycle_service, default_project):
-    new_attrs = {"parts": {"my-part": {"plugin": "nil"}}}
-    default_project.__dict__.update(**new_attrs)
-
     mock_step_info = mock.Mock()
     mock_step_info.configure_mock(
         **{
@@ -81,15 +86,23 @@ def test_post_prime_no_patchelf(fp, tmp_path, lifecycle_service, default_project
 def test_post_prime_patchelf(
     fp: pytest_subprocess.FakeProcess,
     tmp_path,
-    lifecycle_service,
     default_project,
+    fake_services,
+    setup_project,
     mocker,
     confinement,
     use_system_libs,
 ):
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "confinement": confinement,
+            "parts": {"my-part": {"plugin": "nil"}},
+        },
+    )
+    lifecycle_service = fake_services.get("lifecycle")
     patchelf_spy = mocker.spy(snapcraft.parts, "patch_elf")
-    new_attrs = {"confinement": confinement, "parts": {"my-part": {"plugin": "nil"}}}
-    default_project.__dict__.update(**new_attrs)
 
     mock_step_info = mock.Mock()
     mock_step_info.configure_mock(
@@ -150,12 +163,24 @@ def test_post_prime_patchelf(
 )
 @pytest.mark.parametrize("image_info", [{}, {"custom_image": True}])
 def test_generate_manifest(
-    monkeypatch, lifecycle_service, default_project, image_info, parts, stage_packages
+    monkeypatch,
+    default_project,
+    fake_services,
+    setup_project,
+    image_info,
+    parts,
+    stage_packages,
 ):
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "parts": parts,
+        },
+    )
+    lifecycle_service = fake_services.get("lifecycle")
     monkeypatch.setenv("SNAPCRAFT_IMAGE_INFO", json.dumps(image_info))
     osrel = os_release.OsRelease()
-    default_project.parts = parts
-    lifecycle_service.setup()
     lifecycle_service.get_pull_assets = mock.Mock(return_value={})
     lifecycle_service.get_primed_stage_packages = mock.Mock(return_value=stage_packages)
 
@@ -193,7 +218,7 @@ def test_generate_manifest(
 @pytest.mark.parametrize("base", ["core24", None])
 @pytest.mark.parametrize("confinement", ["strict", "devmode", "classic"])
 def test_lifecycle_custom_arguments(
-    lifecycle_service, default_project, base, confinement
+    default_project, fake_services, setup_project, base, confinement
 ):
     """Test that the lifecycle project has the correct project base and confinement."""
 
@@ -203,9 +228,9 @@ def test_lifecycle_custom_arguments(
     new_attrs = {"base": base, "confinement": confinement}
     if base is None:
         new_attrs["type"] = "base"
-    default_project.__dict__.update(**new_attrs)
-
-    lifecycle_service.setup()
+        new_attrs["build-base"] = "core24"
+    setup_project(fake_services, {**default_project.marshal(), **new_attrs})
+    lifecycle_service = fake_services.get("lifecycle")
 
     info = lifecycle_service.project_info
 
@@ -219,15 +244,11 @@ def test_lifecycle_custom_arguments(
 
 @pytest.mark.usefixtures("default_project")
 def test_lifecycle_get_prime_dir(lifecycle_service):
-    lifecycle_service.setup()
-
     assert lifecycle_service.get_prime_dir() == lifecycle_service._work_dir / "prime"
 
 
 @pytest.mark.usefixtures("default_project")
 def test_lifecycle_prime_dirs(lifecycle_service):
-    lifecycle_service.setup()
-
     assert lifecycle_service.prime_dirs == {None: lifecycle_service._work_dir / "prime"}
 
 
@@ -238,13 +259,16 @@ def package_repositories_params(extra_project_params):
 
 
 @pytest.mark.usefixtures("package_repositories_params", "default_project")
-def test_lifecycle_installs_gpg_dirmngr(lifecycle_service, mocker):
+def test_lifecycle_installs_gpg_dirmngr(
+    default_project, fake_services, setup_project, mocker
+):
     mock_is_installed = mocker.patch.object(
         Repository, "is_package_installed", return_value=False
     )
     mock_install = mocker.patch.object(Repository, "install_packages")
+    setup_project(fake_services, default_project.marshal())
 
-    lifecycle_service.setup()
+    fake_services.get("lifecycle")
 
     assert mock_is_installed.called
     mock_install.assert_called_once_with(
@@ -265,17 +289,16 @@ def test_lifecycle_installs_gpg_dirmngr(lifecycle_service, mocker):
     ],
 )
 def test_local_keys_path(
-    new_dir, lifecycle_service, project_location, assets_dir, expected_keys_path
+    lifecycle_service, project_location, assets_dir, expected_keys_path, in_project_path
 ):
     """Check that _get_local_keys_path() is correct given the location of snapcraft.yaml."""
-    snap_dir = new_dir / Path(project_location).parent
+    snap_dir = in_project_path / Path(project_location).parent
     snap_dir.mkdir(exist_ok=True, parents=True)
 
     # The project file itself doesn't really matter, but must exist
     project_yaml = snap_dir / "snapcraft.yaml"
     project_yaml.touch()
 
-    # app = application.create_app()
     keys_dir = Path(assets_dir) / "keys"
 
     # If the keys dir doesn't exist the method should return None
