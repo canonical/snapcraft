@@ -55,9 +55,10 @@ Frameworks
   :hidden:
 
   configure-package-information
-  enable-classic-confinement
   use-plugins
   manage-data-compatibility
+  use-layouts
+  enable-classic-confinement
   example-pre-built-app
   example-python-app
   example-c-or-cpp-app
