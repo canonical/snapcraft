@@ -9,6 +9,8 @@ environment:
   SNAP/library_ignored_mixed: library-ignored-mixed
   SNAP/library_missing: library-missing
   SNAP/library_unused: library-unused
+  # We're checking the output text, so override the normal trace output.
+  CRAFT_VERBOSITY_LEVEL: brief
 
 restore: |
   cd "${SNAP}"
