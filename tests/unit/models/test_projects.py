@@ -2143,10 +2143,6 @@ class TestApplyRootPackages:
             {"all": None},
             "'all' cannot be used for 'build-on'",
             id="no-build-for-no-build-on",
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason="craft-application#691",
-            ),
         ),
     ],
 )
@@ -2161,32 +2157,6 @@ def test_build_planner_all_as_platform_invalid(platforms, message):
     }
     with pytest.raises(pydantic.ValidationError, match=message):
         snapcraft.models.project.Project(**build_plan_data)
-
-
-@pytest.mark.xfail(strict=True, reason="craft-application#693")
-def test_build_planner_all_with_other_builds():
-    """'build-for: all' cannot be combined with other builds."""
-    build_plan_data = {
-        "name": "test-snap",
-        "base": "core24",
-        "platforms": {
-            "platform1": {
-                "build-on": ["arm64", "armhf"],
-                "build-for": ["arm64"],
-            },
-            "platform2": {
-                "build-on": ["s390x"],
-                "build-for": ["all"],
-            },
-        },
-    }
-
-    with pytest.raises(pydantic.ValidationError) as raised:
-        snapcraft.models.project.Project(**build_plan_data)
-
-    assert (
-        "one of the platforms has 'all' in 'build-for', but there are 2 platforms"
-    ) in str(raised.value)
 
 
 def test_build_planner_all_with_other_builds_core22():

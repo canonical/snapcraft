@@ -21,6 +21,7 @@ from collections.abc import Collection
 from typing import Literal
 from unittest import mock
 
+import craft_platforms
 import pytest
 import pytest_check
 from craft_platforms import BuildInfo, DebianArchitecture, DistroBase
@@ -364,6 +365,34 @@ def test_platform_default(
             platform=str(fake_host_architecture),
         )
     ]
+
+
+def test_build_planner_all_with_other_builds(
+    default_project, fake_services, setup_project
+):
+    """'build-for: all' cannot be combined with other builds."""
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core24",
+            "platforms": {
+                "platform1": {
+                    "build-on": ["arm64", "armhf"],
+                    "build-for": ["arm64"],
+                },
+                "platform2": {
+                    "build-on": ["s390x"],
+                    "build-for": ["all"],
+                },
+            },
+        },
+    )
+
+    with pytest.raises(craft_platforms.AllOnlyBuildError):
+        fake_services.get("build_plan").create_build_plan(
+            platforms=None, build_on=None, build_for=None
+        )
 
 
 _base = DistroBase("", "")

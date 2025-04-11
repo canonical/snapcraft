@@ -699,12 +699,12 @@ class ContentPlug(models.CraftBaseModel):
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
-    build_on: UniqueList[str] | None = pydantic.Field(
+    build_on: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
         description="The architectures on which the snap can be built.",
         examples=["build-on: amd64, riscv64"],
         min_length=1,
     )
-    build_for: SingleEntryList | None = pydantic.Field(
+    build_for: SingleEntryList | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
         description="The single element list of the architecture the snap is built for.",
         examples=["build-on: amd64, riscv64"],
