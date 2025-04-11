@@ -20,6 +20,7 @@ import os
 import re
 import sys
 from textwrap import dedent
+from typing import cast
 
 import craft_application.launchpad
 import craft_application.remote
@@ -31,6 +32,7 @@ import yaml
 from craft_application import util
 from craft_application.commands import get_other_command_group
 from craft_parts.packages import snaps
+from craft_platforms import DebianArchitecture
 from craft_providers import bases
 
 from snapcraft import application, cli, const, services
@@ -131,8 +133,6 @@ def extension_source(default_project):
 
 @pytest.mark.usefixtures("fake_extension")
 def test_application_expand_extensions(emitter, monkeypatch, extension_source, new_dir):
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
-
     (new_dir / "snap").mkdir()
     (new_dir / "snap/snapcraft.yaml").write_text(json.dumps(extension_source))
 
@@ -167,9 +167,14 @@ def test_application_extra_yaml_transforms(
     monkeypatch, extension_source, new_dir, emitter
 ):
     """Test that extra_yaml_transforms applies root keywords and expands extensions."""
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
     extension_source["build-packages"] = [{"to s390x": "test-package"}]
     extension_source["build-snaps"] = [{"to s390x": "test-snap"}]
+    extension_source["platforms"] = {
+        "s390x": {
+            "build-on": str(DebianArchitecture.from_host()),
+            "build-for": "s390x",
+        },
+    }
 
     project_path = new_dir / "snap/snapcraft.yaml"
     (new_dir / "snap").mkdir()
@@ -191,7 +196,6 @@ def test_application_extra_yaml_transforms(
 
 
 def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
     monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
 
     (new_dir / "snap").mkdir()
@@ -228,21 +232,20 @@ PARSE_INFO_PROJECT = dedent(
 )
 
 
-def test_get_project_parse_info(new_dir):
+def test_get_project_parse_info(in_project_path):
     """Test that parse-info data is correctly extracted and stored when loading
     the project from a YAML file."""
-    snap_dir = new_dir / "snap"
+    snap_dir = in_project_path / "snap"
     snap_dir.mkdir()
     project_yaml = snap_dir / "snapcraft.yaml"
     project_yaml.write_text(PARSE_INFO_PROJECT)
 
     app = application.create_app()
-    assert app._parse_info == {}
+    app.services.update_kwargs("project", project_dir=in_project_path)
+    project_service = cast(services.Project, app.services.get("project"))
+    parse_info = project_service.get_parse_info()
 
-    _project = app.get_project()
-    assert app._parse_info == {
-        "parse-info-part": ["usr/share/metainfo/app.metainfo.xml"]
-    }
+    assert parse_info == {"parse-info-part": ["usr/share/metainfo/app.metainfo.xml"]}
 
 
 APPSTREAM_CONTENTS = dedent(

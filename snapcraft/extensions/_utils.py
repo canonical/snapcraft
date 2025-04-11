@@ -27,19 +27,13 @@ if TYPE_CHECKING:
     from .extension import Extension
 
 
-def apply_extensions(
-    yaml_data: dict[str, Any], *, arch: str, target_arch: str
-) -> dict[str, Any]:
-    """Apply all extensions.
+def apply_extensions(yaml_data: dict[str, Any], *, arch: str, target_arch: str) -> None:
+    """Apply all extensions in place.
 
     :param dict yaml_data: Loaded, unprocessed snapcraft.yaml
     :param arch: the host architecture.
     :param target_arch: the target architecture.
-    :returns: Modified snapcraft.yaml data with extensions applied
     """
-    # Don't modify the dict passed in
-    yaml_data = copy.deepcopy(yaml_data)
-
     # Mapping of extension names to set of app names to which the extension needs to be
     # applied.
     declared_extensions: dict[str, set[str]] = collections.defaultdict(set)
@@ -63,7 +57,6 @@ def apply_extensions(
         )
         extension.validate(extension_name=extension_name)
         _apply_extension(yaml_data, declared_extensions[extension_name], extension)
-    return yaml_data
 
 
 def _apply_extension(
@@ -71,6 +64,12 @@ def _apply_extension(
     app_names: set[str],
     extension: "Extension",
 ) -> None:
+    """Apply an extension to the YAML data, in place.
+
+    :param yaml_data: Loaded, unprocessed snapcraft.yaml.
+    :param app_names: The app names to which the extension should be applied.
+    :param extension: The extension to apply.
+    """
     # Apply the root components of the extension (if any)
     root_extension = extension.get_root_snippet()
     for property_name, property_value in root_extension.items():

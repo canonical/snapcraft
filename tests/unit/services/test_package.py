@@ -17,24 +17,23 @@
 """Tests for the Snapcraft Package service."""
 
 import datetime
-import shutil
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
 import yaml
 
-from snapcraft import __version__, linters, meta, models, pack, services
-from snapcraft.application import APP_METADATA
+from snapcraft import __version__, linters, meta, models, pack
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
 
 
-@pytest.mark.usefixtures("default_factory")
-def test_pack(package_service, mocker):
+def test_pack(default_project, fake_services, setup_project, mocker):
+    setup_project(fake_services, default_project.marshal())
     mock_pack_snap = mocker.patch.object(pack, "pack_snap")
     mocker.patch.object(linters, "run_linters")
     mocker.patch.object(linters, "report")
+    package_service = fake_services.get("package")
 
     package_service.pack(prime_dir=Path("prime"), dest=Path())
 
@@ -51,39 +50,29 @@ def test_pack(package_service, mocker):
 
 
 def test_pack_target_arch(
-    default_build_plan, default_project, default_factory, mocker, tmp_path
+    default_project, fake_services, setup_project, mocker, tmp_path
 ):
-    default_build_plan[0].build_for = "s390x"
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core24",
+            "platforms": {"s390x": {"build-on": ["amd64"], "build-for": ["s390x"]}},
+        },
+    )
     mock_pack_snap = mocker.patch.object(pack, "pack_snap")
     mocker.patch.object(linters, "run_linters")
     mocker.patch.object(linters, "report")
-
-    package_service = services.Package(
-        app=APP_METADATA,
-        project=default_project,
-        services=default_factory,
-        build_plan=default_build_plan,
-        snapcraft_yaml_path=tmp_path / "snapcraft.yaml",
-        parse_info={},
-    )
+    package_service = fake_services.get("package")
 
     package_service.pack(prime_dir=tmp_path / "prime", dest=tmp_path)
 
     assert mock_pack_snap.call_args.kwargs["target_arch"] == "s390x"
 
 
-def test_metadata(
-    package_service, default_factory, default_build_plan, snapcraft_yaml, new_dir
-):
-    project_path = new_dir / "snapcraft.yaml"
-    snapcraft_yaml(filename=project_path)
-    default_factory.update_kwargs(
-        "lifecycle",
-        work_dir=Path("work"),
-        cache_dir=new_dir,
-        project_path=project_path,
-        build_plan=default_build_plan,
-    )
+def test_metadata(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
 
     assert package_service.metadata == meta.SnapMetadata.unmarshal(
         {
@@ -117,18 +106,9 @@ def test_metadata(
     )
 
 
-def test_write_metadata(
-    package_service,
-    default_factory,
-    default_build_plan,
-    new_dir,
-):
-    default_factory.update_kwargs(
-        "lifecycle",
-        work_dir=Path("work"),
-        cache_dir=new_dir,
-        build_plan=default_build_plan,
-    )
+def test_write_metadata(default_project, fake_services, setup_project, new_dir):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
 
     prime_dir = new_dir / "prime"
     meta_dir = prime_dir / "meta"
@@ -157,21 +137,13 @@ def test_write_metadata(
 
 
 def test_write_metadata_with_manifest(
-    monkeypatch,
-    package_service,
-    default_factory,
-    default_build_plan,
-    new_dir,
+    monkeypatch, default_project, fake_services, setup_project, tmp_path
 ):
     monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
-    default_factory.update_kwargs(
-        "lifecycle",
-        work_dir=Path("work"),
-        cache_dir=new_dir,
-        build_plan=default_build_plan,
-    )
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
 
-    prime_dir = new_dir / "prime"
+    prime_dir = tmp_path / "prime"
     meta_dir = prime_dir / "meta"
 
     package_service.write_metadata(prime_dir)
@@ -186,7 +158,7 @@ def test_write_metadata_with_manifest(
     assert manifest.snapcraft_version == __version__
     assert (
         datetime.datetime.fromisoformat(manifest.snapcraft_started_at[:-1])
-        == default_factory.lifecycle._start_time
+        == fake_services.lifecycle._start_time
     )
     assert manifest.name == snap_yaml["name"]
     assert manifest.grade == snap_yaml["grade"]
@@ -194,32 +166,22 @@ def test_write_metadata_with_manifest(
 
 
 @pytest.fixture(params=["snap", "build-aux/snap"])
-def project_hooks_dir(new_dir, request):
-    hooks_dir = new_dir / request.param / "hooks"
+def project_hooks_dir(in_project_path, request):
+    hooks_dir = in_project_path / request.param / "hooks"
     hooks_dir.mkdir(parents=True)
     yield hooks_dir
 
 
 def test_write_metadata_with_project_hooks(
-    package_service, default_factory, default_build_plan, new_dir, project_hooks_dir
+    default_project, fake_services, setup_project, project_hooks_dir, tmp_path
 ):
-    work_dir = new_dir / "work"
-    if "build-aux" in str(project_hooks_dir):
-        # /build-aux cannot co-exist with /snap
-        shutil.move(new_dir / "snap" / "snapcraft.yaml", new_dir)
-        shutil.rmtree(new_dir / "snap")
-
-    default_factory.update_kwargs(
-        "lifecycle",
-        work_dir=work_dir,
-        cache_dir=new_dir,
-        build_plan=default_build_plan,
-    )
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
     # Create some hooks
     (project_hooks_dir / "configure").write_text("configure_hook")
     (project_hooks_dir / "install").write_text("install_hook")
 
-    prime_dir = work_dir / "prime"
+    prime_dir = tmp_path / "prime"
     meta_dir = prime_dir / "meta"
 
     package_service.write_metadata(prime_dir)
@@ -252,20 +214,12 @@ def test_write_metadata_with_project_hooks(
 
 
 def test_write_metadata_with_built_hooks(
-    package_service,
-    default_factory,
-    default_build_plan,
-    new_dir,
+    default_project, fake_services, setup_project, tmp_path
 ):
-    work_dir = new_dir / "work"
-    default_factory.update_kwargs(
-        "lifecycle",
-        work_dir=work_dir,
-        cache_dir=new_dir,
-        build_plan=default_build_plan,
-    )
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
     # Create some hooks
-    prime_dir = work_dir / "prime"
+    prime_dir = tmp_path / "prime"
     built_hooks_dir = prime_dir / "snap" / "hooks"
     built_hooks_dir.mkdir(parents=True)
     (built_hooks_dir / "configure").write_text("configure_hook")
@@ -302,25 +256,17 @@ def test_write_metadata_with_built_hooks(
 
 
 def test_write_metadata_with_project_gui(
-    package_service,
-    default_factory,
-    default_build_plan,
-    new_dir,
+    default_project, fake_services, setup_project, in_project_path, tmp_path
 ):
-    work_dir = new_dir / "work"
-    default_factory.update_kwargs(
-        "lifecycle",
-        work_dir=work_dir,
-        cache_dir=new_dir,
-        build_plan=default_build_plan,
-    )
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
     # Create some gui
-    project_gui_dir = new_dir / "snap" / "gui"
+    project_gui_dir = in_project_path / "snap" / "gui"
     project_gui_dir.mkdir(parents=True)
     (project_gui_dir / "default.default.desktop").write_text("desktop_file")
     (project_gui_dir / "icon.png").write_text("package_png_icon")
 
-    prime_dir = work_dir / "prime"
+    prime_dir = tmp_path / "prime"
     meta_dir = prime_dir / "meta"
 
     package_service.write_metadata(prime_dir)
@@ -352,30 +298,13 @@ def test_write_metadata_with_project_gui(
     assert (meta_dir / "gui" / "icon.png").read_text() == "package_png_icon"
 
 
-@pytest.fixture
-def extra_project_params(extra_project_params):
-    #     extra_project_params["version"] = None
-    #     extra_project_params["summary"] = None
-    #     extra_project_params["description"] = None
-    extra_project_params["adopt-info"] = "my-part"
-
-    #     extra_project_params["parts"] = {"my-part": {"plugin": "nil"}}
-    return extra_project_params
-
-
 def test_update_project_parse_info(
-    default_project, default_factory, default_build_plan, new_dir, mocker
+    default_project, fake_services, setup_project, in_project_path, tmp_path, mocker
 ):
-    work_dir = Path("work").resolve()
-
-    default_factory.update_kwargs(
-        "lifecycle",
-        work_dir=work_dir,
-        cache_dir=new_dir,
-        build_plan=default_build_plan,
-    )
-
-    lifecycle = default_factory.lifecycle
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    project_service = fake_services.get("project")
+    lifecycle = fake_services.lifecycle
     project_info = lifecycle.project_info
     project_info.execution_finished = True
 
@@ -386,25 +315,22 @@ def test_update_project_parse_info(
     mocked_update = mocker.patch.object(
         update_metadata, "update_from_extracted_metadata"
     )
-
-    parse_info = {"my-part": ["file.metadata.xml"]}
-    package = services.Package(
-        app=APP_METADATA,
-        project=default_project,
-        services=default_factory,
-        snapcraft_yaml_path=new_dir / "snapcraft.yaml",
-        build_plan=default_build_plan,
-        parse_info=parse_info,
+    mocker.patch.object(
+        project_service,
+        "get_parse_info",
+        return_value={"my-part": ["file.metadata.xml"]},
     )
 
-    package.update_project()
+    parse_info = {"my-part": ["file.metadata.xml"]}
+
+    package_service.update_project()
 
     mocked_extract.assert_called_once_with(
-        default_project.adopt_info, parse_info, work_dir, partitions=None
+        default_project.adopt_info, parse_info, tmp_path, partitions=None
     )
     mocked_update.assert_called_once_with(
         default_project,
         metadata_list=[fake_metadata],
-        assets_dir=new_dir / "snap",
-        prime_dir=work_dir / "prime",
+        assets_dir=in_project_path / "snap",
+        prime_dir=tmp_path / "prime",
     )

@@ -233,3 +233,19 @@ parts:
     override-build: |
       python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.application:get_app_info \
           > $CRAFT_PART_INSTALL/completion.sh
+
+  spread:
+    plugin: go
+    source: https://github.com/canonical/spread.git
+    source-commit: d6447c43754c8ca0741901e9db73d5fdb4d21c93 # 'main' as of 28-March-2025
+    build-snaps:
+      - go
+    build-attributes:
+      - enable-patchelf
+    build-environment:
+      - CGO_ENABLED: 0
+      - GOFLAGS: -trimpath -ldflags=-w -ldflags=-s
+    organize:
+      bin/spread: libexec/snapcraft/spread
+    stage:
+      - libexec/snapcraft/
