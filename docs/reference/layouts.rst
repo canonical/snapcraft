@@ -35,34 +35,40 @@ used for bind mounts as well as symlinks to reconstruct the original ``/usr/shar
 This enables snapd to make ``/usr/share`` writable, and consequently snapd can create app directories, such as ``/usr/share/foo``, and configure it as desired.
 
 
-.. _reference-layouts-limitations:
+.. _reference-layouts-requirements:
 
-Limitations
------------
+Requirements
+------------
 
-- **Target path restrictions**. The target path in a layout definition can't be:
-  - ``/boot``
-  - ``/dev``
-  - ``/home``
-  - ``/lib/firmware``
-  - ``/usr/lib/firmware``
-  - ``/lib/modules``
-  - ``/usr/lib/modules``
-  - ``/lost+found``
-  - ``/media``
-  - ``/proc``
-  - ``/run``
-  - ``/var/run``
-  - ``/sys``
-  - ``/tmp``
-  - ``/var/lib/snapd``
-  - ``/var/snap``
-- **Strict confinement only**. Layouts only work with `strictly-confined
-  <https://snapcraft.io/docs/snap-confinement>`_ snaps, and not with classic
-  confinement.
-- **Root filesystem objects**. Layouts can't create new files or directories at the root
-  of the snap filesystem.
-- **Like for like replacement**. Layouts can't replace an existing but incompatible
-  filesystem object. This means that files can't replace directories or symbolic links,
-  and you can't redirect existing symbolic links to a new target. You can, however,
-  replace a directory with another directory.
+Layouts and their defintitions must satisfy the following requirements.
+
+**Strictly-confined snaps**. Layouts only work with `strictly-confined
+<https://snapcraft.io/docs/snap-confinement>`_ snaps, and not with classic confinement.
+
+
+**Allowed target paths**. The target path in a layout definition can't be any of:
+
+- ``/boot``
+- ``/dev``
+- ``/home``
+- ``/lib/firmware``
+- ``/usr/lib/firmware``
+- ``/lib/modules``
+- ``/usr/lib/modules``
+- ``/lost+found``
+- ``/media``
+- ``/proc``
+- ``/run``
+- ``/var/run``
+- ``/sys``
+- ``/tmp``
+- ``/var/lib/snapd``
+- ``/var/snap``
+
+**Non-root filesystem objects**. The file or directory in a layout definition can't be
+at the root of the snap filesystem.
+
+**Like for like replacement**. Layouts can only replace filesystem objects of the same
+type. This means that, for example, you can route a file to a file, a directory with a
+directory, and so on. You can't, on the other hand, replace directories with symbolic
+links.

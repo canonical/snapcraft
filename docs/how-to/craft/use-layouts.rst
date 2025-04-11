@@ -30,7 +30,7 @@ shape of a layout definition.
 
 Set the target path to the file or directory to exposed to the snap. Layouts can't
 target every path on the host filesystem, so consult the :ref:`target path restrictions
-<reference-layouts-limitations>` to check if the destination isn't supported.
+<reference-layouts-requirements>` to check if the destination isn't supported.
 
 Select the appropriate layout type for the target and replace ``<layout>`` with the
 matching syntax:
