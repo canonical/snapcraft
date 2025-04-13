@@ -1,0 +1,195 @@
+#!/bin/bash
+
+usage() {
+    echo "usage: $(basename "$0") [command]"
+    echo "valid commands:"
+    echo "    allocate              Create a backend instance to run tests on"
+    echo "    discard               Destroy a backend instance used to run tests"
+    echo "    backend-prepare       Set up the system to run tests"
+    echo "    backend-restore       Restore the system after the tests ran"
+    echo "    backend-prepare-each  Prepare the system before each test"
+    echo "    backend-restore-each  Restore the system after each test run"
+}
+
+prepare() {
+    case "$SPREAD_SYSTEM" in
+    fedora*)
+        dnf update -y
+        dnf install -y snapd
+        while ! snap install snapd; do
+            echo "waiting for snapd..."
+            sleep 2
+        done
+        ;;
+    debian*)
+        apt update
+        apt install -y snapd
+        while ! snap install snapd; do
+            echo "waiting for snapd..."
+            sleep 2
+        done
+        ;;
+    ubuntu*)
+        apt update
+        ;;
+    esac
+
+    snap wait system seed.loaded
+    snap refresh --hold
+
+    if systemctl is-enabled unattended-upgades.service; then
+        systemctl stop unattended-upgrades.service
+        systemctl mask unattended-upgrades.service
+    fi
+}
+
+restore() {
+    case "$SPREAD_SYSTEM" in
+    ubuntu* | debian*)
+        apt autoremove -y --purge
+        ;;
+    esac
+
+    rm -Rf "$PROJECT_PATH"
+    mkdir -p "$PROJECT_PATH"
+}
+
+prepare_each() {
+    true
+}
+
+restore_each() {
+    true
+}
+
+allocate_lxdvm() {
+    name=$(echo "$SPREAD_SYSTEM" | tr '[:punct:]' -)
+    system=$(echo "$SPREAD_SYSTEM" | tr / -)
+    if [[ "$system" =~ ^ubuntu- ]]; then
+        image="ubuntu:${system#ubuntu-}"
+    else
+        image="images:$(echo "$system" | tr - /)"
+    fi
+
+    VM_NAME="${VM_NAME:-spread-${name}-${RANDOM}}"
+    DISK="${DISK:-20}"
+    CPU="${CPU:-4}"
+    MEM="${MEM:-8}"
+
+    lxc launch --vm \
+        "${image}" \
+        "${VM_NAME}" \
+        -c limits.cpu="${CPU}" \
+        -c limits.memory="${MEM}GiB" \
+        -d root,size="${DISK}GiB"
+
+    while ! lxc exec "${VM_NAME}" -- true &>/dev/null; do sleep 0.5; done
+    lxc exec "${VM_NAME}" -- sed -i 's/^\s*#\?\s*\(PermitRootLogin\|PasswordAuthentication\)\>.*/\1 yes/' /etc/ssh/sshd_config
+    lxc exec "${VM_NAME}" -- bash -c "if [ -d /etc/ssh/sshd_config.d ]; then echo -e 'PermitRootLogin yes\nPasswordAuthentication yes' > /etc/ssh/sshd_config.d/00-spread.conf; fi"
+    lxc exec "${VM_NAME}" -- bash -c "echo root:${SPREAD_PASSWORD} | sudo chpasswd || true"
+
+    # Print the instance address to stdout
+    ADDR=""
+    while [ -z "$ADDR" ]; do ADDR=$(lxc ls -f csv | grep "^${VM_NAME}" | cut -d"," -f3 | cut -d" " -f1); done
+    echo "$ADDR" 1>&3
+}
+
+discard_lxdvm() {
+    instance_name="$(lxc ls -f csv | grep ",$SPREAD_SYSTEM_ADDRESS " | cut -f1 -d",")"
+    lxc delete -f "$instance_name"
+}
+
+allocate_ci() {
+    if [ -z "$CI" ]; then
+        echo "This backend is intended to be used only in CI systems."
+        exit 1
+    fi
+    sudo sed -i 's/^\s*#\?\s*\(PermitRootLogin\|PasswordAuthentication\)\>.*/\1 yes/' /etc/ssh/sshd_config
+    if [ -d /etc/ssh/sshd_config.d ]; then echo -e 'PermitRootLogin yes\nPasswordAuthentication yes' | sudo tee /etc/ssh/sshd_config.d/00-spread.conf; fi
+    sudo systemctl daemon-reload
+    sudo systemctl restart ssh
+
+    echo "root:${SPREAD_PASSWORD}" | sudo chpasswd || true
+
+    # Print the instance address to stdout
+    echo localhost >&3
+}
+
+discard_ci() {
+    true
+}
+
+allocate() {
+    exec 3>&1
+    exec 1>&2
+
+    case "$1" in
+    lxd-vm)
+        allocate_lxdvm
+        ;;
+    ci)
+        allocate_ci
+        ;;
+    *)
+        echo "unsupported backend $1" 2>&1
+        ;;
+    esac
+}
+
+discard() {
+    case "$1" in
+    lxd-vm)
+        discard_lxdvm
+        ;;
+    ci)
+        discard_ci
+        ;;
+    *)
+        echo "unsupported backend $1" 2>&1
+        ;;
+    esac
+}
+
+set -e
+
+while getopts "" o; do
+    case "${o}" in
+    *)
+        usage
+        exit 1
+        ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+CMD="$1"
+PARM="$2"
+
+if [ -z "$CMD" ]; then
+    usage
+    exit 0
+fi
+
+case "$CMD" in
+allocate)
+    allocate "$PARM"
+    ;;
+discard)
+    discard "$PARM"
+    ;;
+backend-prepare)
+    prepare
+    ;;
+backend-restore)
+    restore
+    ;;
+backend-prepare-each)
+    prepare_each
+    ;;
+backend-restore-each)
+    restore_each
+    ;;
+*)
+    echo "unknown command $CMD" >&2
+    ;;
+esac
