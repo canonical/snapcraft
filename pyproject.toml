@@ -7,14 +7,14 @@ dependencies = [
     "attrs",
     "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
     "click==8.1.8",
-    "craft-application[remote]~=4.10",
+    "craft-application[remote]>=5.0.1,<6.0.0",
     "craft-archives~=2.1",
-    "craft-cli~=2.15.0",
-    "craft-grammar>=2.0.1,<3.0.0",
-    "craft-parts==2.4.1",
-    "craft-platforms~=0.6",
-    "craft-providers~=2.1",
-    "craft-store>=3.0.2,<4.0.0",
+    "craft-cli~=3.0",
+    "craft-grammar>=2.0.3,<3.0.0",
+    "craft-parts~=2.7",
+    "craft-platforms~=0.7",
+    "craft-providers~=2.2",
+    "craft-store~=3.2",
     "cryptography",
     "gnupg",
     "jsonschema==2.5.1",
@@ -87,7 +87,7 @@ dev = [
     "pytest-subprocess",
 ]
 docs = [
-    "canonical-sphinx[full]>=0.2.0",
+    "canonical-sphinx[full]>=0.4.0",
     "docutils<0.20", # Frozen until we can update sphinx dependencies.
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
@@ -121,7 +121,7 @@ dev-noble = [
 ]
 dev-oracular = [
     # 2.9 for Oracular+
-    "python-apt>=2.9.0;sys_platform=='linux'",
+    "python-apt>=2.9.0,<2.9.9;sys_platform=='linux'",
 ]
 dev-plucky = [
     # 2.9 for Oracular+
@@ -311,6 +311,9 @@ max-branches = 16
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
 ]
 "__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
+
+[tool.ruff.lint.flake8-builtins]
+strict-checking = true
 
 [tool.ruff.lint.pydocstyle]
 ignore-decorators = [ # Functions with these decorators don't have to have docstrings.

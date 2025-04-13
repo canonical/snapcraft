@@ -19,7 +19,11 @@
 
 import pytest
 
-from snapcraft.models import Confdb, ConfdbAssertion, EditableConfdbAssertion
+from snapcraft.models import (
+    ConfdbSchema,
+    ConfdbSchemaAssertion,
+    EditableConfdbSchemaAssertion,
+)
 from snapcraft.models.assertions import cast_dict_scalars_to_strings
 
 
@@ -55,18 +59,18 @@ def test_cast_dict_scalars_to_strings(input_dict, expected_dict):
     assert actual == expected_dict
 
 
-def test_confdb_defaults(check):
-    """Test default values of the Confdb model."""
-    confdb = Confdb.unmarshal({"storage": "test-storage"})
+def test_confdb_schema_defaults(check):
+    """Test default values of the ConfdbSchema model."""
+    confdb_schema = ConfdbSchema.unmarshal({"storage": "test-storage"})
 
-    check.is_none(confdb.request)
-    check.is_none(confdb.access)
-    check.is_none(confdb.content)
+    check.is_none(confdb_schema.request)
+    check.is_none(confdb_schema.access)
+    check.is_none(confdb_schema.content)
 
 
-def test_confdb_nested(check):
-    """Test that nested confdbs are supported."""
-    confdb = Confdb.unmarshal(
+def test_confdb_schema_nested(check):
+    """Test that nested confdb schemas are supported."""
+    confdb_schema = ConfdbSchema.unmarshal(
         {
             "request": "test-request",
             "storage": "test-storage",
@@ -81,18 +85,22 @@ def test_confdb_nested(check):
         }
     )
 
-    check.equal(confdb.request, "test-request")
-    check.equal(confdb.storage, "test-storage")
-    check.equal(confdb.access, "read")
+    check.equal(confdb_schema.request, "test-request")
+    check.equal(confdb_schema.storage, "test-storage")
+    check.equal(confdb_schema.access, "read")
     check.equal(
-        confdb.content,
-        [Confdb(request="nested-request", storage="nested-storage", access="write")],
+        confdb_schema.content,
+        [
+            ConfdbSchema(
+                request="nested-request", storage="nested-storage", access="write"
+            )
+        ],
     )
 
 
-def test_editable_confdb_assertion_defaults(check):
-    """Test default values of the EditableConfdbAssertion model."""
-    assertion = EditableConfdbAssertion.unmarshal(
+def test_editable_confdb_schema_assertion_defaults(check):
+    """Test default values of the EditableConfdbSchemaAssertion model."""
+    assertion = EditableConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "name": "test-confdb",
@@ -112,9 +120,9 @@ def test_editable_confdb_assertion_defaults(check):
     check.is_none(assertion.body)
 
 
-def test_editable_confdb_assertion_marshal_as_str():
+def test_editable_confdb_schema_assertion_marshal_as_str():
     """Cast all scalars to string when marshalling."""
-    assertion = EditableConfdbAssertion.unmarshal(
+    assertion = EditableConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "name": "test-confdb",
@@ -136,15 +144,15 @@ def test_editable_confdb_assertion_marshal_as_str():
     assert assertion_dict["revision"] == "10"
 
 
-def test_confdb_assertion_defaults(check):
-    """Test default values of the ConfdbAssertion model."""
-    assertion = ConfdbAssertion.unmarshal(
+def test_confdb_schema_assertion_defaults(check):
+    """Test default values of the ConfdbSchemaAssertion model."""
+    assertion = ConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
             "name": "test-confdb",
             "timestamp": "2024-01-01T10:20:30Z",
-            "type": "confdb",
+            "type": "confdb-schema",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -165,16 +173,16 @@ def test_confdb_assertion_defaults(check):
     check.equal(assertion.revision, 0)
 
 
-def test_confdb_assertion_marshal_as_str():
+def test_confdb_schema_assertion_marshal_as_str():
     """Cast all scalars to strings when marshalling."""
-    assertion = ConfdbAssertion.unmarshal(
+    assertion = ConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
             "name": "test-confdb",
             "revision": 10,
             "timestamp": "2024-01-01T10:20:30Z",
-            "type": "confdb",
+            "type": "confdb-schema",
             "views": {
                 "wifi-setup": {
                     "rules": [

@@ -1,0 +1,13 @@
+project: craft-test
+
+backends:
+  craft:
+    systems:
+      - ubuntu-24.04-64:
+          workers: 1
+
+suites:
+  tests/spread/craft-test/:
+    summary: basic tests
+
+path: /home/spread/craft-test-proj

@@ -1,0 +1,10 @@
+summary: Test 'snapcraft test'
+
+environment:
+  CI: "1"
+
+execute: |
+  # The testing service currently has a bug when discarding the system (#709)
+  snapcraft test -v | MATCH "PROJECT_PATH: unbound variable"
+  # Once that bug is fixed, call this instead:
+  # snapcraft test -v | MATCH "Successful tasks: 1"

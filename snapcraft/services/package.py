@@ -21,10 +21,9 @@ from __future__ import annotations
 import os
 import pathlib
 import shutil
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from craft_application import AppMetadata, PackageService
-from craft_application.models import BuildInfo
+from craft_application import PackageService
 from craft_application.util import strtobool
 from overrides import override
 
@@ -37,31 +36,24 @@ from snapcraft.parts.setup_assets import setup_assets
 from snapcraft.services import Lifecycle
 from snapcraft.utils import process_version
 
-if TYPE_CHECKING:
-    from snapcraft.services import SnapcraftServiceFactory
-
 
 class Package(PackageService):
     """Package service subclass for Snapcraft."""
 
-    _project: models.Project
+    @override
+    def setup(self) -> None:
+        """Application-specific service setup."""
+        from snapcraft.services import Project
 
-    def __init__(  # noqa: PLR0913 (Too many arguments)
-        self,
-        app: AppMetadata,
-        services: SnapcraftServiceFactory,
-        *,
-        project: models.Project,
-        snapcraft_yaml_path: pathlib.Path,
-        build_plan: list[BuildInfo],
-        parse_info: dict[str, list[str]],
-    ) -> None:
-        super().__init__(app, services, project=project)
-        self._snapcraft_yaml_path = snapcraft_yaml_path
-        self._build_plan = build_plan
-        self._platform = build_plan[0].platform
-        self._build_for = build_plan[0].build_for
-        self._parse_info = parse_info
+        super().setup()
+        self._project_service = cast(Project, self._services.get("project"))
+        self._project = cast(models.Project, self._project_service.get())
+        build_plan = self._services.get("build_plan").plan()
+        # The build plan will be empty if the project can't build on the host arch.
+        # This may happen in commands that don't run the lifecycle, so we have to check
+        # if the build plan exists first.
+        if build_plan:
+            self._build_for = build_plan[0].build_for
 
     @override
     def _extra_project_updates(self) -> None:
@@ -69,7 +61,7 @@ class Package(PackageService):
         project_info = self._services.lifecycle.project_info
         extracted_metadata = extract.extract_lifecycle_metadata(
             self._project.adopt_info,
-            self._parse_info,
+            self._project_service.get_parse_info(),
             project_info.work_dir,
             partitions=project_info.partitions,
         )
@@ -114,7 +106,7 @@ class Package(PackageService):
                 compression=self._project.compression,
                 name=self._project.name,
                 version=process_version(self._project.version),
-                target_arch=self._build_plan[0].build_for,
+                target_arch=self._build_for,
             )
         )
         component_files = self._pack_components(dest)
@@ -158,7 +150,8 @@ class Package(PackageService):
             manifest = lifecycle_service.generate_manifest()
             manifest.to_yaml_file(snap_dir / "manifest.yaml")
 
-            shutil.copy(self._snapcraft_yaml_path, snap_dir)
+            project_file = self._services.get("project").resolve_project_file_path()
+            shutil.copy(project_file, snap_dir)
 
         assets_dir = self._get_assets_dir()
         setup_assets(
@@ -182,7 +175,7 @@ class Package(PackageService):
         return snap_yaml.get_metadata_from_project(
             self._project,
             self._services.lifecycle.prime_dir,
-            arch=self._build_plan[0].build_for,
+            arch=self._build_for,
         )
 
 

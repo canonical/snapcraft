@@ -16,10 +16,12 @@
 
 """YAML utilities for Snapcraft."""
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TextIO, cast
 
+import craft_application.errors
 import yaml
 import yaml.error
 
@@ -192,7 +194,7 @@ def apply_yaml(
         core_part["plugin"] = "nil"
         yaml_data["parts"][_CORE_PART_NAME] = core_part
 
-    yaml_data = apply_extensions(yaml_data, arch=build_on, target_arch=build_for)
+    apply_extensions(yaml_data, arch=build_on, target_arch=build_for)
 
     if "parts" in yaml_data:
         yaml_data["parts"] = grammar.process_parts(
@@ -224,18 +226,32 @@ def get_snap_project(project_dir: Path | None = None) -> _SnapProject:
     :param project_dir: The directory to search for the project yaml file. If not
     provided, the current working directory is used.
 
-    :raises SnapcraftError: if the project yaml file cannot be found.
+    :raises ProjectDirectoryMissingError: if the project directory does not exist.
+    :raises ProjectDirectoryTypeError: if the project directory is not a directory.
+    :raises ProjectFileMissingError: if the project file is not found.
     """
+    if project_dir:
+        if not project_dir.exists():
+            raise craft_application.errors.ProjectDirectoryMissingError(project_dir)
+        if not project_dir.is_dir():
+            raise craft_application.errors.ProjectDirectoryTypeError(project_dir)
+    else:
+        project_dir = Path.cwd()
+
     for snap_project in _SNAP_PROJECT_FILES:
-        if project_dir:
-            snap_project_path = project_dir / snap_project.project_file
-        else:
-            snap_project_path = snap_project.project_file
+        try:
+            (project_dir / snap_project.project_file).resolve(strict=True)
+        except FileNotFoundError:
+            continue
 
-        if snap_project_path.exists():
-            return snap_project
+        return snap_project
 
-    raise errors.ProjectMissing()
+    raise craft_application.errors.ProjectFileMissingError(
+        f"Project file 'snapcraft.yaml' not found in '{project_dir}'.",
+        details="The project file could not be found.",
+        resolution="Ensure the project file exists.",
+        retcode=os.EX_NOINPUT,
+    )
 
 
 def extract_parse_info(yaml_data: dict[str, Any]) -> dict[str, list[str]]:
