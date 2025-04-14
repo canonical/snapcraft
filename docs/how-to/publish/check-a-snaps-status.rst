@@ -18,7 +18,7 @@ already have an account, create one `here <https://login.ubuntu.com/>`_.
 
 To log in to your account in the terminal, run:
 
-.. code-block:: yaml
+.. code-block:: bash
 
     snapcraft login
 
@@ -31,7 +31,7 @@ There are multiple status commands, depending on your focus.
 The base status check is oriented on the channels that you've published. To check the
 channel status, run:
 
-.. code-block:: yaml
+.. code-block:: bash
 
     snapcraft status <snap-name>
 
@@ -116,7 +116,7 @@ Check the public visibility of your snaps
 
 To check the public visibility of every snap you registered on the store, run:
 
-.. code-block:: yaml
+.. code-block:: bash
 
     snapcraft names
 
