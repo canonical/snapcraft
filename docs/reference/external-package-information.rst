@@ -86,8 +86,8 @@ The path in ``parse-info`` is a relative path from the `part source, build, or i
 directories <https://snapcraft.io/docs/parts-lifecycle#heading--parts-directories>`_
 (``CRAFT_PART_SRC``, ``CRAFT_PART_BUILD``, ``CRAFT_PART_INSTALL``).
 
-The resulting snap will use the title, version, summary, description, license, contact,
-donation, issues, source-code and website from the AppStream file.
+The resulting snap will set the ``title``, ``version``, ``summary``, ``description``, ``license``, ``contact``,
+``donation``, ``issues``, ``source-code`` and ``website`` from the AppStream file.
 
 You can also link each app in your snap to specific AppStream metadata by pointing the
 ``common-id`` key of that app to the ``component id`` tag in the AppStream metadata.
