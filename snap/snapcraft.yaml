@@ -155,6 +155,8 @@ parts:
       # Disable site packages
       sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.12/site.py" \
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
+    prime:
+      - -usr/share/python-wheels
 
   libgit2:
     source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.2.tar.gz
