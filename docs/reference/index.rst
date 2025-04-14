@@ -16,7 +16,7 @@ Reference
    commands
    components
    linters
-   metadata
+   external-package-information
    plugins
    extensions/index
    /common/craft-parts/reference/part_properties

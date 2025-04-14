@@ -1,42 +1,27 @@
-.. _reference_metadata:
+.. _reference-external-package-information:
 
-Using external metadata
-=======================
+External package information
+============================
 
-To help avoid unnecessary duplication, and for convenience, Snapcraft can process and
-incorporate external metadata from within a project file by using the ``parse-info``
-key within a :ref:`part <parts>` and a corresponding ``adopt-info`` key.
+To help avoid duplication, Snapcraft can process and incorporate external package
+information from within a project file.
 
-For example, the following project file will parse a file called ``metadata-file``.
-Snapcraft will attempt to extract ``version``, ``summary``, and ``description``
-metadata for the snap, all of which are mandatory:
+This reference describes the available external information sources. For a guide on how
+to use them, see  :ref:`how-to-configure-package-information`.
 
-.. code-block:: yaml
-    :caption: metadata in snapcraft.yaml
-
-    name: my-snap-name
-    adopt-info: part-with-metadata
-
-    parts:
-      part-with-metadata:
-        plugin: dump
-        source: .
-        parse-info: [metadata-file]
-
-See `The Snapcraft format <https://snapcraft.io/docs/build-configuration>`_ for further
-details on Snapcraft metadata and how it's used.
 
 Source Types
 ------------
 
 An external metadata source can be one of the following:
 
-- :ref:`AppStream <reference_metadata-appstream>`: a standard for software
+- :ref:`AppStream <reference-external-package-appstream>`: a standard for software
   components
-- :ref:`Scriptlets <reference_metadata-scriptlets>`: a snapcraftctl-driven command to
-  generate ``version`` and ``grade``.
+- :ref:`Scriptlets <reference-external-package-scriptlets>`: a snapcraftctl-driven
+  command to generate ``version`` and ``grade``.
 
-.. _reference_metadata-appstream:
+
+.. _reference-external-package-appstream:
 
 AppStream
 ~~~~~~~~~
@@ -77,35 +62,35 @@ The following is a typical example from an upstream project.
         <url type="donation">example.com</url>
     </component>
 
-We *adopt* the above metadata into the project file with the following:
+A project file can adopt such information with the ``adopt-info`` key. Here's an example
+configuration:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml with metadata adoption
+    :caption: snapcraft.yaml with adopt-info
 
     name: sampleapp-name
     adopt-info: sampleapp
 
     apps:
-    sampleapp:
+      sampleapp:
         command: sampleapp
         common-id: com.example.sampleapp
 
     parts:
-    sampleapp:
+      sampleapp:
         plugin: dump
         source: http://github.com/example/sampleapp.git
         parse-info: [usr/share/metainfo/com.example.sampleapp.appdata.xml]
 
-.. note::
-    The path in ``parse-info`` is a relative pasth from the part source, build or
-    install directory (`CRAFT_PART_SRC, CRAFT_PART_BUILD, CRAFT_PART_INSTALL
-    <https://snapcraft.io/docs/parts-lifecycle#heading--parts-directories>`_)
+The path in ``parse-info`` is a relative path from the `part source, build, or install
+directories <https://snapcraft.io/docs/parts-lifecycle#heading--parts-directories>`_
+(``CRAFT_PART_SRC``, ``CRAFT_PART_BUILD``, ``CRAFT_PART_INSTALL``).
 
 The resulting snap will use the title, version, summary, description, license, contact,
 donation, issues, source-code and website from the AppStream file.
 
 You can also link each app in your snap to specific AppStream metadata by pointing the
-``common-id`` key of that app to the ``component id`` field in the AppStream metadata.
+``common-id`` key of that app to the ``component id`` tag in the AppStream metadata.
 Snapcraft will use the metadata of that component to get the ``.desktop`` entry file
 for that app.
 
@@ -123,7 +108,8 @@ your app should also use that suffix.
     :file:`usr/local/share` and :file:`usr/share` directories relative to the part
     source, and by following the Desktop File ID rules.
 
-.. _reference_metadata-scriptlets:
+
+.. _reference-external-package-scriptlets:
 
 Part Scriptlets
 ~~~~~~~~~~~~~~~
@@ -148,83 +134,5 @@ using ``craftctl``. All you need to do is select which part to adopt using
 
 See `Using the craftctl tool <https://snapcraft.io/docs/using-craftctl>`_ for more
 details on using scripting elements within a project file.
-
-[not recommended] ``setup.py``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-    Using ``parse-info`` with :file:`setup.py` is currently discouraged because it has
-    many issues. For example, it incorrectly `uses the project's summary as the snap's
-    description <https://bugs.launchpad.net/snapcraft/+bug/1813364>`_ and it `might
-    crash the snap build
-    <https://github.com/snapcore/snapcraft/pull/2756#issuecomment-544284814>`_.
-
-A `setup.py <https://docs.python.org/3/distutils/setupscript.html>`_ file is used by
-many Python projects to help with package installation. If your :file:`setup.py` uses
-`setuptools <https://setuptools.readthedocs.io/en/latest/>`_ and defines ``version``
-and ``description``, these can be extracted from :file:`setup.py` and used as the
-``version`` and ``description`` metadata in the resulting snap.
-
-The following is an example of :file:`setup.py` in the root of a hypothetical git tree:
-
-.. code-block:: python
-    :caption: a basic example setup.py
-
-    import setuptools
-
-    setuptools.setup(
-        name='hello-world',
-        version='1.0',
-        author='snapcrafter',
-        author_email='snapcraft@lists.snapcraft.io',
-        description='A simple hello world in python',
-        scripts=['hello'],
-    )
-
-You can *adopt* the relevant metadata in the baove with the following project file:
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml adopting from setup.py
-
-    name: sampleapp-name
-    summary: sampleapp summary
-    adopt-info: sampleapp
-
-    apps:
-      sampleapp:
-        command: sampleapp
-
-    parts:
-      sampleapp:
-        plugin: python
-        source: https://github.com/example/sampleapp.git
-        parse-info: [setup.py]
-
-Snapcraft versions and compatibility
-------------------------------------
-
-.. list-table::
-    :header-rows: 1
-
-    * - Change
-      - Snapcraft version
-
-    * - Initial introduction
-      - 2.39
-
-    * - appstream support
-      - 2.39
-
-    * - ``common-id``
-      - 2.40
-
-    * - :file:`setup.py` support
-      - 2.41
-
-    * - ``snapcraftctl set-version``
-      - 2.41
-
-    * - ``snapcraftctl set-grade``
-      - 2.41
 
 .. _Desktop File ID: https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
