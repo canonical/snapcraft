@@ -4,8 +4,8 @@ Authenticate
 ============
 
 To manage and publish snaps on a snap store, you must be logged in to a Snapcraft
-developer account. Snapcraft account credentials can also be exported for use on systems
-where login is not possible or desired, such as offline systems.
+developer account. File-based authentication is also available for deployments where
+login isn't possible or desired, such as private networks.
 
 
 Log in to your Snapcraft account
@@ -24,6 +24,11 @@ factor authentication code.
 Export Snapcraft account credentials
 ------------------------------------
 
+.. note::
+
+    Credentials exported with Snapcraft 7 can only be used with Snapcraft 7 or
+    greater.
+
 To export Snapcraft account credentials, run the ``export-login`` command followed
 by a name for the resulting credentials file:
 
@@ -34,9 +39,6 @@ by a name for the resulting credentials file:
 Like ``snapcraft login``, this will prompt you to enter your email, password, and second
 factor authentication code. Once entered, your account credentials will be exported to a
 file in your current directory with the name you specified.
-
-Note that credentials exported with Snapcraft 7 can only be used with Snapcraft 7 or
-greater.
 
 
 Authenticate with exported account credentials
@@ -61,7 +63,8 @@ running:
 Verify exported account credentials
 -----------------------------------
 
-To verify that your account credentials are working, run:
+After authenticating with a file, you can verify that your account credentials are
+working with:
 
 .. code-block:: bash
 
