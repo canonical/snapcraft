@@ -3,9 +3,9 @@
 Change from core20 to core22
 ============================
 
-core22 support in Snapcraft 7.0 introduces new underlying layers and concepts that
+core22 support in Snapcraft introduces new underlying layers and concepts that
 require some changes when migrating from core20 to core22. Support for core20 and other
-bases is unaffected by Snapcraft 7.0.
+bases is unaffected.
 
 
 Parts
@@ -22,7 +22,6 @@ Override pull
 ~~~~~~~~~~~~~
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-pull: |
       snapcraftctl pull
@@ -30,7 +29,6 @@ Override pull
 translates to:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-pull: |
       craftctl default
@@ -40,7 +38,6 @@ Override build
 ~~~~~~~~~~~~~~
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-pull: |
       snapcraftctl build
@@ -48,7 +45,6 @@ Override build
 translates to:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-pull: |
       craftctl default
@@ -58,7 +54,6 @@ Override stage
 ~~~~~~~~~~~~~~
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-pull: |
       snapcraftctl stage
@@ -66,7 +61,6 @@ Override stage
 translates to:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-pull: |
       craftctl default
@@ -76,7 +70,6 @@ Override prime
 ~~~~~~~~~~~~~~
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-pull: |
       snapcraftctl prime
@@ -84,7 +77,6 @@ Override prime
 translates to:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-pull: |
       craftctl default
@@ -94,7 +86,6 @@ Set a version
 ~~~~~~~~~~~~~
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-<step>: |
       snapcraftctl set-version 1.0.0
@@ -102,7 +93,6 @@ Set a version
 translates to:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-<step>: |
       craftctl set version=1.0.0
@@ -112,7 +102,6 @@ Set a grade
 ~~~~~~~~~~~
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-<step>: |
       snapcraftctl set-grade stable
@@ -120,7 +109,6 @@ Set a grade
 translates to:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     override-<step>: |
       craftctl set grade=stable
@@ -133,7 +121,6 @@ The ``try`` keyword is no longer available. Instead, use the architecture-specif
 entry. Consider the following example:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     stage-packages:
       - try:
@@ -142,7 +129,6 @@ entry. Consider the following example:
 This is equivalent to using the architecture-specific entry as follows:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     stage-packages:
       - on amd64:
@@ -155,7 +141,6 @@ Architectures
 The keywords for achitectures are now ``build-on`` and ``build-for``.
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     architectures:
       - build-on: [amd64]
@@ -164,7 +149,6 @@ The keywords for achitectures are now ``build-on`` and ``build-for``.
 translates to:
 
 .. code-block:: yaml
-    :caption: snapcraft.yaml
 
     architectures:
       - build-on: [amd64]
