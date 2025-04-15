@@ -156,6 +156,8 @@ parts:
       sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.12/site.py" \
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
     prime:
+      # dist-packages
+      - -usr/lib/python3
       - -usr/share/python-wheels
 
   libgit2:
