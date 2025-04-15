@@ -33,7 +33,9 @@ environment:
   GIT_AUTHOR_NAME: "Test User"
   GIT_AUTHOR_EMAIL: "test-user@email.com"
 
+  # Make log output much easier to get from these tests.
   CRAFT_DEBUG: 1
+  CRAFT_VERBOSITY_LEVEL: trace
 
 backends:
   lxd:
@@ -221,6 +223,8 @@ suites:
     summary: core22 linter tests
     environment:
       SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
+      # We're checking the output text, so override the normal trace output.
+      CRAFT_VERBOSITY_LEVEL: brief
 
     systems:
       - ubuntu-22.04*
