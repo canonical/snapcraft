@@ -3,4 +3,7 @@
 Change bases
 ============
 
-.. migrating-bases from Discourse goes here
+.. toctree::
+    :maxdepth: 1
+
+    change-from-core20-to-core22
