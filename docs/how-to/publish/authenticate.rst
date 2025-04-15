@@ -27,7 +27,7 @@ Export Snapcraft account credentials
 .. note::
 
     Credentials exported with Snapcraft 7 can only be used with Snapcraft 7 or
-    greater.
+    higher.
 
 To export Snapcraft account credentials, run the ``export-login`` command followed
 by a name for the resulting credentials file:
