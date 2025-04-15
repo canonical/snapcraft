@@ -55,7 +55,7 @@ backends:
           storage: 20G
           image: ubuntu-2204-64
       - ubuntu-24.04-64:
-          image: ubuntu-24.04-64
+          image: ubuntu-2404-64
           storage: 20G
           workers: 6
 
