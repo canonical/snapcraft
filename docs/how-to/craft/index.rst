@@ -14,6 +14,7 @@ the same benefits from being packed into snaps.
 
   configure-package-information
   use-plugins
+  add-a-snap-configuration
   manage-data-compatibility
   use-layouts
   enable-classic-confinement

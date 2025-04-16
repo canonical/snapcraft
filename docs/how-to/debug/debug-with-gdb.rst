@@ -43,8 +43,8 @@ code can be referenced, as demonstrated below:
 
 .. terminal::
     :input: snap run --gdb test-gdb.test-gdb
-    :user: dev
-    :host: ubuntu
+    :user: crafter
+    :host: home
 
     [...]
     You are right before your application is execed():
@@ -88,8 +88,8 @@ This enters a gdbserver shell:
 
 .. terminal::
     :input: snap run --gdbserver test-gdb
-    :user: dev
-    :host: ubuntu
+    :user: crafter
+    :host: home
 
     Welcome to "snap run --gdbserver".
     You are right before your application is run.
@@ -108,8 +108,8 @@ The GDB session can now be accessed from an IDE or GDB itself:
 
 .. terminal::
     :input: gdb -ex="target remote :43041"
-    :user: dev
-    :host: ubuntu
+    :user: crafter
+    :host: home
 
     GNU gdb (Ubuntu 12.1-0ubuntu1~22.04) 12.1
     [...]
@@ -137,8 +137,8 @@ For example, to connect to a gdbserver session at 192.168.122.138 on port 43041:
 
 .. terminal::
     :input: gdb -ex="target remote 192.168.122.138:43041"
-    :user: dev
-    :host: ubuntu
+    :user: crafter
+    :host: home
 
     Welcome to `snap run --gdb`.
     You are right before your application is execed():
