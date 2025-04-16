@@ -192,7 +192,7 @@ For applications which play or record audio, the interface names have changed.
 Previously the :literalref:`pulseaudio <https://snapcraft.io/docs/pulseaudio-interface>`
 interface was used for both playback and recording of audio. This has been replaced by
 :literalref:`audio-playback<https://snapcraft.io/docs/audio-playback-interface>` and
-``audio-record``:
+:literalref:`audio-record<https://snapcraft.io/docs/audio-record-interface>`:
 
 .. code-block:: diff
     :caption: snapcraft.yaml of Xonotic
@@ -215,9 +215,10 @@ Snapcraft forum asking for it.
 Version scripts
 ---------------
 
-The top-level ``version-script`` key has been deprecated in favor of ``adopt-info``.
-This requires you to specify ``adopt-info`` with a reference to the part in which the
-version data (and some other metadata) may be set.
+The top-level ``version-script`` key has been `deprecated
+<https://snapcraft.io/docs/deprecation-notices/dn10>`_ in favor of ``adopt-info``. This
+requires you to specify ``adopt-info`` with a reference to the part in which the version
+data (and some other metadata) may be set.
 
 Within the parts section, use ``snapcraftctl set-version`` to define the Snapcraft
 project version number used at build time. For example, the `Cointop snap's core
