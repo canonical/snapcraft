@@ -20,9 +20,9 @@ The standard setup is split across four scripts:
 - A **configure hook script** calls the management functions on installation and changes
 
 In a typical setup, configuration options are mapped to environment variables within the
-snap's runtime. The environment variables are typically ones already established in the
-one or more of the apps' namespaces. When a variable changes because the user sets an
-option, the app picks up the change.
+snap's runtime. The environment variables are typically already established in one or
+more of the apps' namespaces. When a variable changes because the user sets an option,
+the app picks up the change.
 
 Every time the user changes the configuration, the configure hook script executes.
 Through functions in the management script, this hook will typically validate the
@@ -33,9 +33,9 @@ configuration files.
 Interpreting options
 --------------------
 
-Internally, snaps view and change their configuration using `snapctl
-<https://snapcraft.io/docs/using-the-snapctl-tool>`_ and its ``get``, ``set``, and
-``unset`` arguments.
+Internally, snaps view and change their configuration with `snapctl
+<https://snapcraft.io/docs/using-snapctl>`_ and its ``get``, ``set``, and ``unset``
+arguments.
 
 The snapctl command works anywhere within the snap context, during execution of your
 apps and services, and in all the snap's hooks.
@@ -44,14 +44,14 @@ Configuration options are not defined when a snap is created because any valid o
 name is accepted. Instead, any set values need to be interpreted and converted into an
 action by the snap developer.
 
-A snap developer is free to implement this process however they prefer, however it's
-most commonly accomplished with a purpose built script or function for each option, as
+A snap developer is free to implement this process however they prefer, but it's most
+commonly accomplished with a purpose-built script or function for each option, as
 defined by a snap's project file and its associated scripts and `hooks
 <https://snapcraft.io/docs/supported-snap-hooks>`_.
 
-When a hook alters the configuration, if the hook exits with a non-zero status code the
-changes won't apply. This is because the hook context is transactional -- either every
-change is applied, or none are.
+If a hook alters the configuration and exits with a non-zero status code, the changes
+won't apply. This is because the hook context is transactional -- either every change is
+applied, or none are.
 
 Permitted values should then be documented in the snap description so that users know
 which values are supported.
@@ -93,7 +93,7 @@ You can group configuration options using a dotted path:
     snapctl set my-snap server.protocol=tcp server.port=4242
 
 Each configuration option can be retrieved by using the same dotted path, or you can
-retrieve the entire collection as a json document by specifying their common key:
+retrieve the entire collection as a JSON document by specifying their common key:
 
 .. terminal::
     :input: snapctl get server
