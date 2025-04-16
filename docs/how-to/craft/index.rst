@@ -56,6 +56,7 @@ Frameworks
 
   configure-package-information
   use-plugins
+  add-a-snap-configuration
   manage-data-compatibility
   use-layouts
   enable-classic-confinement

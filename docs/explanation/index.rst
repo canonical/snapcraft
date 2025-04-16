@@ -8,6 +8,7 @@ Explanation
 
    architectures
    bases
+   snap-configurations
    components
    remote-build
    /common/craft-parts/explanation/filesets
