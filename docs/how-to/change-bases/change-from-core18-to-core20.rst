@@ -3,8 +3,8 @@
 Change from core18 to core20
 ============================
 
-``core20`` support in Snapcraft introduces new features and changes that necessitate
-some tweaks to your project when transitioning from core18.
+core20 support in Snapcraft introduces new features and changes that necessitate some
+tweaks to your project when transitioning from core18.
 
 
 Package names
@@ -16,8 +16,8 @@ which packages need to be incorporated during the build and stage parts of the
 staging dependencies.
 
 When no base or core is specified, packages from the Ubuntu 16.04 LTS archive are used
-at build and stage time. The ``core18`` base will use packages from the Ubuntu 18.04 LTS
-archive, whereas the ``core20`` base will consume packages from the Ubuntu 20.04 LTS
+at build and stage time. The core18 base will use packages from the Ubuntu 18.04 LTS
+archive, whereas the core20 base will consume packages from the Ubuntu 20.04 LTS
 archive. This is important to note, as package names can change between releases. For
 example, the `Irssi snap's core migration
 <https://github.com/snapcrafters/irssi/pull/9/files>`_ includes:
@@ -47,11 +47,11 @@ The ``architectures`` keyword defines a set of both build and run architectures:
         run-on: amd64
 
 Snaps that produce i386 builds are supportable for the lifetime of Ubuntu 16.04 LTS or
-Ubuntu 18.04 LTS when using the core or ``core18`` snaps as the base, but ``core20`` does
-not support the i386 architecture.
+Ubuntu 18.04 LTS when using the core or core18 snaps as the base, but core20 does not
+support the i386 architecture.
 
-Publishers who want to move to ``core20`` must drop builds for the i386 architecture
-since it isn't supported. Supported ``core20`` architectures are listed below:
+Publishers who want to move to core20 must drop builds for the i386 architecture since
+it isn't supported. Supported core20 architectures are listed below:
 
 .. code-block:: yaml
 
@@ -134,10 +134,9 @@ replaces the functionality of the remote part.
 Extension naming
 ~~~~~~~~~~~~~~~~
 
-Not all extensions work on all bases. For example, ``core18`` requires the
-``gnome-3-34`` extension and ``core20`` requires ``gnome-3-38``. For example, the `Dwarf
-Fortress snap's core migration <https://github.com/ultraviolet-1986/df/pull/3/files>`_
-includes:
+Not all extensions work on all bases. For example, core18 requires the ``gnome-3-34``
+extension and core20 requires ``gnome-3-38``. For example, the `Dwarf Fortress snap's
+core migration <https://github.com/ultraviolet-1986/df/pull/3/files>`_ includes:
 
 .. code-block:: diff
     :caption: snapcraft.yaml of Dwarf Fortress

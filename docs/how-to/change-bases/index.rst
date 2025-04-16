@@ -30,8 +30,8 @@ original base and the packages that are bundled with the application.
 Update from an old or absent base
 ---------------------------------
 
-Migrating a snap from having no base, or ``base: core``, to ``core18`` or ``core20``,
-for example, is a more involved process than going from ``core18`` to ``core20``.
+Migrating a snap from having no base, or ``base: core``, to core18 or core20,
+for example, is a more involved process than going from core18 to core20.
 
 This is because building a snap with an old base causes Snapcraft to operate in
 compatibility mode.
