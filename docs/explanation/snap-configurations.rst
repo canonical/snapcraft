@@ -13,11 +13,13 @@ Implementation in a snap
 
 The standard setup is split across four scripts:
 
-- A **wrapper script** calls the app with the necessary environment variables
-- A **management script** sets values, checks their validity, and restarts the app
-- An optional **default-configure hook script** calls the management functions on first
-  install before services are started
-- A **configure hook script** calls the management functions on installation and changes
+- A **configure hook script** makes calls to change the options on installation and on
+  user input.
+- An optional **default-configure hook script** makes calls to change the options when
+  the snap is first installed, before services are started.
+- A **wrapper script** launches the app with the necessary environment variables.
+- A shared **management script** provides common functions for setting values and
+  checking their validity.
 
 In a typical setup, configuration options are mapped to environment variables within the
 snap's runtime. The environment variables are typically already established in one or
