@@ -15,7 +15,7 @@ packages, extended support, and the latest Snapcraft features, including plugins
 The complexity of the migration process is directly linked to both dependencies in the
 snap's project file and the base snap versions being migrated between.
 
-At its simplest, migrating from one base snap to another requires only that the base
+At its simplest, migrating from one base snap to another requires only that the ``base``
 key is updated:
 
 .. code-block:: diff
