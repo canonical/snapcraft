@@ -12,8 +12,8 @@ Package names
 
 The ``build-packages`` and ``stage-packages`` keys in a snap's project file specify
 which packages need to be incorporated during the build and stage parts of the
-:external+craft-parts:ref:`parts lifecycle <lifecycle>` and described in build and
-staging dependencies.
+:ref:`parts lifecycle <explanation-parts-lifecycle>` and described in build and staging
+dependencies.
 
 When no base or core is specified, packages from the Ubuntu 16.04 LTS archive are used
 at build and stage time. The core18 base will use packages from the Ubuntu 18.04 LTS
@@ -155,10 +155,10 @@ Audio interfaces
 ----------------
 
 For applications which play or record audio, the interface names have changed.
-Previously the :literalref:`pulseaudio <https://snapcraft.io/docs/pulseaudio-interface>`
-interface was used for both playback and recording of audio. This has been replaced by
-:literalref:`audio-playback<https://snapcraft.io/docs/audio-playback-interface>` and
-:literalref:`audio-record<https://snapcraft.io/docs/audio-record-interface>`:
+Previously the `pulseaudio <https://snapcraft.io/docs/pulseaudio-interface>`_ interface
+was used for both playback and recording of audio. This has been replaced by
+`audio-playback <https://snapcraft.io/docs/audio-playback-interface>`_ and
+`audio-record <https://snapcraft.io/docs/audio-record-interface>`_:
 
 .. code-block:: diff
     :caption: snapcraft.yaml of Xonotic

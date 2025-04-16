@@ -3,7 +3,7 @@
 Change bases
 ============
 
-A :ref:`base snap <base-snaps>` is a special kind of snap that provides a run-time
+A :ref:`base snap <base-snaps>` is a special kind of snap that provides a runtime
 environment with a minimal set of libraries common to most applications. They're
 transparent to users, but they need to be carefully considered when building a snap.
 
@@ -16,14 +16,14 @@ The complexity of the migration process is directly linked to both dependencies 
 snap's project file and the base snap versions being migrated between.
 
 At its simplest, migrating from one base snap to another requires only that the base
-keyword is updated:
+key is updated:
 
 .. code-block:: diff
 
     - base: core18
     + base: core20
 
-but further changes will most likely be needed. These will depend on the
+But further changes will most likely be needed. These will depend on the
 original base and the packages that are bundled with the application.
 
 
