@@ -1,0 +1,14 @@
+summary: Test the "Craft a snap" tutorial
+
+# environment:
+
+dont-execute: |
+  sudo snap install snapcraft --classic
+  sudo snap install --channel 5.21/stable lxd
+  sudo usermod -a -G lxd $USER
+  groups $USER
+  lxd init --minimal
+
+# execute:
+
+# restore:
