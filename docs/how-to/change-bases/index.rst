@@ -7,9 +7,9 @@ A :ref:`base snap <base-snaps>` is a special kind of snap that provides a run-ti
 environment with a minimal set of libraries common to most applications. They're
 transparent to users, but they need to be carefully considered when building a snap.
 
-Each base snap is built from a `corresponding Ubuntu LTS <reference-bases>` release.
-Migrating a snap from one base to the next gives the snap access to newer packages,
-extended support, and the latest Snapcraft features, including plugins and
+Each base snap is built from a :ref:`corresponding Ubuntu LTS <reference-bases>`
+release. Migrating a snap from one base to the next gives the snap access to newer
+packages, extended support, and the latest Snapcraft features, including plugins and
 :ref:`extensions <extensions>`.
 
 The complexity of the migration process is directly linked to both dependencies in the
