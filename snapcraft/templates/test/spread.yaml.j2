@@ -14,7 +14,7 @@ suites:
   spread/general/:
     summary: General integration tests
     prepare: |
-      snap install $SNAPCRAFT_PROJECT_DIR/{{ name }}_${SNAPCRAFT_PROJECT_VERSION}_${CRAFT_ARCH_BUILD_FOR}.snap --dangerous
+      snap install "$CRAFT_ARTIFACT" --dangerous
     restore: |
       snap remove {{ name }} --purge
 
