@@ -90,7 +90,6 @@ exclude_patterns = [
     "tutorials/create-a-snap.rst",
     "how-to/craft/add-a-part.rst",
     "how-to/craft/manage-dependencies.rst",
-    "how-to/craft/manage-files.rst",
     "how-to/craft/override-the-build-step-with-craftctl.rst",
     "how-to/craft/use-extensions.rst",
     "how-to/change-bases/change-from-core22-to-core24.rst",
