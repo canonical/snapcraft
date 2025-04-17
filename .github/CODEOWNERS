@@ -1,0 +1,12 @@
+# GitHub CODEOWNERS. See:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Remember, the last match takes precedence.
+
+# Global owner, used as a last resort.
+* @mr-cal
+
+# Documentation owners
+/docs/ @jahn-junior @medubelko @mr-cal
+
+# Finally, all CODEOWNERS changes need to be approved by The Man, Himself.
+/.github/CODEOWNERS @sergiusens
