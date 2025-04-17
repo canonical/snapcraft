@@ -1,3 +1,5 @@
+.. _reference-bases:
+
 Bases
 =====
 

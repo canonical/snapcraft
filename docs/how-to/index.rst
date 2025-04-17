@@ -13,6 +13,7 @@ How-to guides
    Debug <debug/index>
    architectures
    bases
+   change-bases/index
    components
    use-extensions/index
    /common/craft-parts/how-to/include_files
