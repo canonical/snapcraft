@@ -17,10 +17,11 @@
 """Service for initializing a project."""
 
 import pathlib
+from typing import override
 
+import craft_application.errors
 import craft_cli
 from craft_application import services
-from typing_extensions import override
 
 from snapcraft import errors
 from snapcraft.models.project import validate_name
@@ -69,7 +70,7 @@ class Init(services.InitService):
             craft_cli.emit.progress("Checking for an existing 'snapcraft.yaml'.")
             project = get_snap_project(project_dir)
         # the `ProjectMissing` error means a new project can be initialised
-        except errors.ProjectMissing:
+        except craft_application.errors.ProjectFileError:
             craft_cli.emit.debug("Could not find an existing 'snapcraft.yaml'.")
         else:
             raise errors.SnapcraftError(

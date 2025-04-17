@@ -23,10 +23,8 @@ from pathlib import Path
 from typing import Any, cast
 
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
-from craft_application.models import BuildInfo
-from craft_parts import ProjectInfo, StepInfo, callbacks
+from craft_parts import StepInfo, callbacks
 from craft_parts.packages import Repository as Repo
-from craft_platforms import DebianArchitecture
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, os_release, parts, utils
@@ -41,19 +39,15 @@ class Lifecycle(LifecycleService):
         app: AppMetadata,
         services: ServiceFactory,
         *,
-        project: models.Project,
         work_dir: Path | str,
         cache_dir: Path | str,
-        build_plan: list[BuildInfo],
         **lifecycle_kwargs: Any,  # noqa: ANN401 - eventually used in an Any
     ) -> None:
         super().__init__(
             app,
             services,
-            project=project,
             work_dir=work_dir,
             cache_dir=cache_dir,
-            build_plan=build_plan,
             **lifecycle_kwargs,
         )
         self._start_time = datetime.now()
@@ -61,7 +55,7 @@ class Lifecycle(LifecycleService):
 
     @overrides
     def setup(self) -> None:
-        project = cast(models.Project, self._project)
+        project = cast(models.Project, self._services.get("project").get())
 
         if project.package_repositories:
             # Note: we unfortunately need to handle missing gpg/dirmngr binaries
@@ -128,7 +122,7 @@ class Lifecycle(LifecycleService):
 
         'None' maps to the default prime directory.
         """
-        return get_prime_dirs_from_project(self._lcm.project_info)
+        return utils.get_prime_dirs_from_project(self._lcm.project_info)
 
     def generate_manifest(self) -> models.Manifest:
         """Create and populate the manifest file."""
@@ -159,8 +153,7 @@ class Lifecycle(LifecycleService):
 
         osrel = os_release.OsRelease()
         version = utils.process_version(project.version)
-        host_arch = str(DebianArchitecture.from_host())
-        build_for = self._build_plan[0].build_for if self._build_plan else host_arch
+        build_for = self._services.get("build_plan").plan()[0].build_for
 
         return models.Manifest(
             # Snapcraft annotations
@@ -196,22 +189,3 @@ class Lifecycle(LifecycleService):
             return keys_dir
 
         return None
-
-
-def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:
-    """Get a mapping of component names to prime directories from a ProjectInfo.
-
-    'None' maps to the default prime directory.
-
-    :param project_info: The ProjectInfo to get the prime directory mapping from.
-    """
-    partition_prime_dirs = project_info.prime_dirs
-    component_prime_dirs: dict[str | None, Path] = {None: project_info.prime_dir}
-
-    # strip 'component/' prefix so that the component name is the key
-    for partition, prime_dir in partition_prime_dirs.items():
-        if partition and partition.startswith("component/"):
-            component = partition.split("/", 1)[1]
-            component_prime_dirs[component] = prime_dir
-
-    return component_prime_dirs

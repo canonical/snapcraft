@@ -21,8 +21,8 @@ import os
 import shutil
 import stat
 import urllib.parse
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List
 
 import requests
 from craft_cli import emit
@@ -212,7 +212,7 @@ def _find_icon_file(assets_dir: Path) -> Path | None:
 
 
 def _validate_command_chain(
-    command_chain: List[str], *, name: str, prime_dir: Path
+    command_chain: list[str], *, name: str, prime_dir: Path
 ) -> None:
     """Verify if each item in the command chain is executable."""
     for item in command_chain:

@@ -121,7 +121,7 @@ def test_logout(legacy_config_path):
     assert LegacyUbuntuOne.has_legacy_credentials() is True
 
     client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,
@@ -135,7 +135,7 @@ def test_logout(legacy_config_path):
 
 def test_logout_file_missing(legacy_config_path):
     u1_client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,
@@ -149,7 +149,7 @@ def test_logout_file_missing(legacy_config_path):
 
 def test_login():
     client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,
@@ -185,7 +185,7 @@ def test_request(mocker, legacy_config_path, fake_get_auth):
     assert LegacyUbuntuOne.env_has_legacy_credentials() is False
 
     client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,
@@ -227,7 +227,7 @@ def test_request_with_env(
     assert LegacyUbuntuOne.env_has_legacy_credentials() is True
 
     client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,

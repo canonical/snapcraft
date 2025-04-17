@@ -17,7 +17,6 @@
 """Snapcraft extension commands."""
 
 import textwrap
-from typing import Dict, List
 
 import tabulate
 from craft_application.commands import AppCommand
@@ -43,9 +42,9 @@ class ExtensionModel(BaseModel):
     """Extension model for presentation."""
 
     name: str
-    bases: List[str]
+    bases: list[str]
 
-    def marshal(self) -> Dict[str, str]:
+    def marshal(self) -> dict[str, str]:
         """Marshal model into a dictionary for presentation."""
         return {
             "Extension name": self.name,
@@ -66,7 +65,7 @@ class ListExtensionsCommand(AppCommand):
 
     @overrides
     def run(self, parsed_args) -> None:
-        extension_presentation: Dict[str, ExtensionModel] = {}
+        extension_presentation: dict[str, ExtensionModel] = {}
 
         # New extensions.
         for extension_name in extensions.registry.get_extension_names():

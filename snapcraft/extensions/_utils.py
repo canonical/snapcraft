@@ -19,7 +19,7 @@
 import collections
 import contextlib
 import copy
-from typing import TYPE_CHECKING, Any, Dict, List, Set
+from typing import TYPE_CHECKING, Any
 
 from .registry import get_extension_class
 
@@ -27,22 +27,16 @@ if TYPE_CHECKING:
     from .extension import Extension
 
 
-def apply_extensions(
-    yaml_data: Dict[str, Any], *, arch: str, target_arch: str
-) -> Dict[str, Any]:
-    """Apply all extensions.
+def apply_extensions(yaml_data: dict[str, Any], *, arch: str, target_arch: str) -> None:
+    """Apply all extensions in place.
 
     :param dict yaml_data: Loaded, unprocessed snapcraft.yaml
     :param arch: the host architecture.
     :param target_arch: the target architecture.
-    :returns: Modified snapcraft.yaml data with extensions applied
     """
-    # Don't modify the dict passed in
-    yaml_data = copy.deepcopy(yaml_data)
-
     # Mapping of extension names to set of app names to which the extension needs to be
     # applied.
-    declared_extensions: Dict[str, Set[str]] = collections.defaultdict(set)
+    declared_extensions: dict[str, set[str]] = collections.defaultdict(set)
 
     for app_name, app_definition in yaml_data.get("apps", {}).items():
         extension_names = app_definition.get("extensions", [])
@@ -63,14 +57,19 @@ def apply_extensions(
         )
         extension.validate(extension_name=extension_name)
         _apply_extension(yaml_data, declared_extensions[extension_name], extension)
-    return yaml_data
 
 
 def _apply_extension(
-    yaml_data: Dict[str, Any],
-    app_names: Set[str],
+    yaml_data: dict[str, Any],
+    app_names: set[str],
     extension: "Extension",
 ) -> None:
+    """Apply an extension to the YAML data, in place.
+
+    :param yaml_data: Loaded, unprocessed snapcraft.yaml.
+    :param app_names: The app names to which the extension should be applied.
+    :param extension: The extension to apply.
+    """
     # Apply the root components of the extension (if any)
     root_extension = extension.get_root_snippet()
     for property_name, property_value in root_extension.items():
@@ -127,10 +126,10 @@ def _apply_extension_property(existing_property: Any, extension_property: Any) -
     return extension_property
 
 
-def _remove_list_duplicates(seq: List[str]) -> List[str]:
+def _remove_list_duplicates(seq: list[str]) -> list[str]:
     """De-dupe string list maintaining ordering."""
-    seen: Set[str] = set()
-    deduped: List[str] = []
+    seen: set[str] = set()
+    deduped: list[str] = []
 
     for item in seq:
         if item not in seen:

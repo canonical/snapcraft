@@ -17,8 +17,9 @@
 """Snapcraft discovery commands."""
 
 import textwrap
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
+import craft_application.errors
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_parts.plugins import get_registered_plugins
@@ -64,7 +65,7 @@ class ListPluginsCommand(AppCommand):
             raise errors.LegacyFallback()
 
         base = parsed_args.base
-        message: Optional[str] = None
+        message: str | None = None
 
         if base is None:
             try:
@@ -84,7 +85,7 @@ class ListPluginsCommand(AppCommand):
                 message = (
                     f"Displaying plugins available to the current base {base!r} project"
                 )
-            except errors.ProjectMissing:
+            except craft_application.errors.ProjectFileError:
                 emit.trace("Defaulting to core24 because no project was found.")
                 base = "core24"
 

@@ -95,7 +95,7 @@ def fake_exists(monkeypatch):
     class FileCheck:
         def __init__(self) -> None:
             self._original_exists = os.path.exists
-            self.paths: List[str] = list()
+            self.paths: list[str] = list()
 
         def exists(self, path: str) -> bool:
             if pathlib.Path(path) in self.paths:

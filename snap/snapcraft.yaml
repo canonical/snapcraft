@@ -51,8 +51,12 @@ parts:
     plugin: dump
     organize:
       craft.git: libexec/snapcraft/craft.git
+      # Put sitecustomize in site-packages
+      sitecustomize.py: lib/python3.12/site-packages/sitecustomize.py
+
     stage:
       - "libexec/"
+      - "lib/"
 
   git:
     plugin: nil
@@ -151,6 +155,10 @@ parts:
       # Disable site packages
       sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.12/site.py" \
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
+    prime:
+      # dist-packages
+      - -usr/lib/python3
+      - -usr/share/python-wheels
 
   libgit2:
     source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.2.tar.gz
@@ -229,3 +237,19 @@ parts:
     override-build: |
       python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.application:get_app_info \
           > $CRAFT_PART_INSTALL/completion.sh
+
+  spread:
+    plugin: go
+    source: https://github.com/canonical/spread.git
+    source-commit: d6447c43754c8ca0741901e9db73d5fdb4d21c93 # 'main' as of 28-March-2025
+    build-snaps:
+      - go
+    build-attributes:
+      - enable-patchelf
+    build-environment:
+      - CGO_ENABLED: 0
+      - GOFLAGS: -trimpath -ldflags=-w -ldflags=-s
+    organize:
+      bin/spread: libexec/snapcraft/spread
+    stage:
+      - libexec/snapcraft/

@@ -18,15 +18,15 @@
 
 from __future__ import annotations
 
-import copy
 import re
 import textwrap
-from typing import Any, Literal, Mapping, Tuple, cast
+from collections.abc import Mapping
+from typing import Annotated, Any, Literal, Self, cast, override
 
 import pydantic
 from craft_application import models
 from craft_application.errors import CraftValidationError
-from craft_application.models import BuildInfo, SummaryStr, VersionStr
+from craft_application.models import SummaryStr, VersionStr
 from craft_application.models.constraints import (
     SingleEntryDict,
     SingleEntryList,
@@ -34,13 +34,12 @@ from craft_application.models.constraints import (
 )
 from craft_cli import emit
 from craft_grammar.models import Grammar  # type: ignore[import-untyped]
-from craft_platforms import DebianArchitecture, Platforms, snap
+from craft_platforms import DebianArchitecture
 from craft_providers import bases
 from pydantic import ConfigDict, PrivateAttr, StringConstraints
-from typing_extensions import Annotated, Self, override
 
 from snapcraft import utils
-from snapcraft.const import SUPPORTED_ARCHS, SnapArch
+from snapcraft.const import SUPPORTED_ARCHS
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
@@ -172,8 +171,8 @@ def _validate_architectures_all_keyword(architectures):
             )
 
 
-def apply_root_packages(yaml_data: dict[str, Any]) -> dict[str, Any]:
-    """Create a new part with root level attributes.
+def apply_root_packages(yaml_data: dict[str, Any]) -> None:
+    """Create a new part with root level attributes, in place.
 
     Root level attributes such as build-packages and build-snaps
     are known to Snapcraft but not Craft Parts. Create a new part
@@ -181,9 +180,8 @@ def apply_root_packages(yaml_data: dict[str, Any]) -> dict[str, Any]:
     current yaml_data.
     """
     if "build-packages" not in yaml_data and "build-snaps" not in yaml_data:
-        return yaml_data
+        return
 
-    yaml_data = copy.deepcopy(yaml_data)
     yaml_data.setdefault("parts", {})
     yaml_data["parts"]["snapcraft/core"] = {"plugin": "nil"}
 
@@ -196,8 +194,6 @@ def apply_root_packages(yaml_data: dict[str, Any]) -> dict[str, Any]:
         yaml_data["parts"]["snapcraft/core"]["build-snaps"] = yaml_data.pop(
             "build-snaps"
         )
-
-    return yaml_data
 
 
 def _validate_version_name(version: str, model_name: str) -> None:
@@ -703,12 +699,12 @@ class ContentPlug(models.CraftBaseModel):
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
-    build_on: UniqueList[str] | None = pydantic.Field(
+    build_on: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
         description="The architectures on which the snap can be built.",
         examples=["build-on: amd64, riscv64"],
         min_length=1,
     )
-    build_for: SingleEntryList | None = pydantic.Field(
+    build_for: SingleEntryList | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
         description="The single element list of the architecture the snap is built for.",
         examples=["build-on: amd64, riscv64"],
@@ -739,7 +735,7 @@ class Platform(models.Platform):
     @classmethod
     def from_architectures(
         cls,
-        architectures: list[str | Architecture],
+        architectures: list[str | dict[str, Any]],
     ) -> dict[str, Self]:
         """Convert a core22 architectures configuration to core24 platforms."""
         platforms: dict[str, Self] = {}
@@ -747,17 +743,17 @@ class Platform(models.Platform):
             if isinstance(architecture, str):
                 build_on = build_for = cast(UniqueList[str], [architecture])
             else:
-                if isinstance(architecture.build_on, str):
-                    build_on = build_for = cast(
-                        UniqueList[str], [architecture.build_on]
-                    )
+                build_on_val = architecture.get("build-on")
+                build_for_val = architecture.get("build-for")
+                if isinstance(build_on_val, str):
+                    build_on = build_for = cast(UniqueList[str], [build_on_val])
                 else:
-                    build_on = build_for = cast(UniqueList[str], architecture.build_on)
-                if architecture.build_for:
-                    if isinstance(architecture.build_for, str):
-                        build_for = cast(UniqueList[str], [architecture.build_for])
+                    build_on = build_for = cast(UniqueList[str], build_on_val)
+                if build_for_val:
+                    if isinstance(build_for_val, str):
+                        build_for = cast(UniqueList[str], [build_for_val])
                     else:
-                        build_for = cast(UniqueList[str], architecture.build_for)
+                        build_for = cast(UniqueList[str], build_for_val)
 
             platforms[build_for[0]] = cls(build_for=build_for, build_on=build_on)
 
@@ -1137,6 +1133,54 @@ class Project(models.Project):
 
         return self
 
+    @pydantic.field_validator("platforms")
+    @classmethod
+    def _validate_all_platforms(
+        cls, platforms: dict[str, Platform]
+    ) -> dict[str, Platform]:
+        """Validate and convert platform data to a dict of Platforms."""
+        for platform_label, platform in platforms.items():
+            error_prefix = f"Error for platform entry '{platform_label}'"
+            # build_on and build_for are validated
+            # let's also validate the platform label
+            build_on_one_of = platform.build_on or [platform_label]
+
+            # If the label maps to a valid architecture and
+            # `build-for` is present, then both need to have the same value,
+            # otherwise the project is invalid.
+            if platform.build_for:
+                build_target = platform.build_for[0]
+                if platform_label in SUPPORTED_ARCHS and platform_label != build_target:
+                    raise ValueError(
+                        str(
+                            f"{error_prefix}: if 'build_for' is provided and the "
+                            "platform entry label corresponds to a valid architecture, then "
+                            f"both values must match. {platform_label} != {build_target}"
+                        )
+                    )
+            # if no build-for is present, then the platform label needs to be a valid architecture
+            elif platform_label not in SUPPORTED_ARCHS:
+                raise ValueError(
+                    str(
+                        f"{error_prefix}: platform entry label must correspond to a "
+                        "valid architecture if 'build-for' is not provided."
+                    )
+                )
+
+            # Both build and target architectures must be supported
+            if not any(b_o in SUPPORTED_ARCHS for b_o in build_on_one_of):
+                raise ValueError(
+                    str(
+                        f"{error_prefix}: trying to build snap in one of "
+                        f"{build_on_one_of}, but none of these build architectures are supported. "
+                        f"Supported architectures: {SUPPORTED_ARCHS}"
+                    )
+                )
+
+            platforms[platform_label] = platform
+
+        return platforms
+
     @pydantic.model_validator(mode="after")
     def _validate_grade_and_build_base(self) -> Self:
         """If build_base is devel, then grade must be devel."""
@@ -1449,7 +1493,7 @@ def _format_pydantic_error_message(msg):
     return msg
 
 
-def _printable_field_location_split(location: str) -> Tuple[str, str]:
+def _printable_field_location_split(location: str) -> tuple[str, str]:
     """Return split field location.
 
     If top-level, location is returned as unquoted "top-level".
@@ -1489,121 +1533,3 @@ def _format_global_keyword_warning(keyword: str, empty_entries: list[str]) -> st
         "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
         "#heading--plugs-and-slots-for-an-entire-snap)"
     )
-
-
-class SnapcraftBuildPlanner(models.BuildPlanner):
-    """A project model that creates build plans."""
-
-    base: str | None = None
-    build_base: str | None = None
-    name: str
-    type: Literal["app", "base", "gadget", "kernel", "snapd"] | None = None
-    platforms: dict[str, Platform] | None = None  # type: ignore[assignment]
-    architectures: list[str | Architecture] | None = None
-    project_type: str | None = pydantic.Field(default=None, alias="type")
-
-    @pydantic.field_validator("platforms")
-    @classmethod
-    def _validate_all_platforms(
-        cls, platforms: dict[str, Platform]
-    ) -> dict[str, Platform]:
-        """Validate and convert platform data to a dict of Platforms."""
-        for platform_label, platform in platforms.items():
-            error_prefix = f"Error for platform entry '{platform_label}'"
-            # build_on and build_for are validated
-            # let's also validate the platform label
-            build_on_one_of = platform.build_on or [platform_label]
-
-            # If the label maps to a valid architecture and
-            # `build-for` is present, then both need to have the same value,
-            # otherwise the project is invalid.
-            if platform.build_for:
-                build_target = platform.build_for[0]
-                if platform_label in SUPPORTED_ARCHS and platform_label != build_target:
-                    raise ValueError(
-                        str(
-                            f"{error_prefix}: if 'build_for' is provided and the "
-                            "platform entry label corresponds to a valid architecture, then "
-                            f"both values must match. {platform_label} != {build_target}"
-                        )
-                    )
-            # if no build-for is present, then the platform label needs to be a valid architecture
-            elif platform_label not in SUPPORTED_ARCHS:
-                raise ValueError(
-                    str(
-                        f"{error_prefix}: platform entry label must correspond to a "
-                        "valid architecture if 'build-for' is not provided."
-                    )
-                )
-
-            # Both build and target architectures must be supported
-            if not any(b_o in SUPPORTED_ARCHS for b_o in build_on_one_of):
-                raise ValueError(
-                    str(
-                        f"{error_prefix}: trying to build snap in one of "
-                        f"{build_on_one_of}, but none of these build architectures are supported. "
-                        f"Supported architectures: {SUPPORTED_ARCHS}"
-                    )
-                )
-
-            platforms[platform_label] = platform
-
-        return platforms
-
-    def get_build_plan(self) -> list[BuildInfo]:
-        """Get the build plan for this project."""
-        effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE[
-            str(
-                get_effective_base(
-                    base=self.base,
-                    build_base=self.build_base,
-                    project_type=self.project_type,
-                    name=self.name,
-                    translate_devel=False,  # We want actual "devel" if set.
-                )
-            )
-        ].value
-
-        # set default value
-        if self.platforms is None:
-            host_arch = str(DebianArchitecture.from_host())
-            self.platforms = {
-                host_arch: Platform(
-                    build_on=[SnapArch(host_arch).value],
-                    build_for=[SnapArch(host_arch).value],
-                )
-            }
-            # For backwards compatibility with core22, convert the platforms.
-            if effective_base == "22.04" and self.architectures:
-                self.platforms = (  # type: ignore[reportIncompatibleVariableOverride]
-                    Platform.from_architectures(self.architectures)
-                )
-
-        platforms = cast(
-            Platforms,
-            {name: platform.marshal() for name, platform in self.platforms.items()},
-        )
-
-        # In _validate_mandatory_base, we ensure that the possible values of
-        # 'base' and 'snap_type' are narrowed so they'll always match one of
-        # the two overloads of get_platforms_snap_build_plan.  But, pyright and
-        # mypy aren't smart enough to realize this, so we need the type checker
-        # ignores.
-        _validate_mandatory_base(self.base, self.type)
-        return [
-            BuildInfo(
-                platform=buildinfo.platform,
-                build_on=str(buildinfo.build_on),
-                build_for=str(buildinfo.build_for),
-                base=bases.BaseName(
-                    name=buildinfo.build_base.distribution,
-                    version=buildinfo.build_base.series,
-                ),
-            )
-            for buildinfo in snap.get_platforms_snap_build_plan(  # pyright: ignore[reportCallIssue]
-                base=self.base,  # type: ignore[arg-type]
-                build_base=self.build_base,
-                snap_type=self.type,  # type: ignore[arg-type]
-                platforms=platforms,
-            )
-        ]

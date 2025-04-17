@@ -35,16 +35,15 @@ Try it out by typing ``snapcraft`` and pressing :kbd:`Tab` in your terminal.
 Improved remote builder
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Previously, the remote builder only supported natively built snaps and failed to
-build cross-compiled snaps with an unhelpful error. Now, the remote builder supports
-both natively and cross-compiled snaps.
-
-Additionally, remote builds can now use the ``--build-for`` option to filter entries in
-an ``architectures`` or ``platforms`` key in a project file.
+Remote builds can now use the ``--build-for`` option to filter entries in an
+``architectures`` or ``platforms`` key in a project file.
 
 
 Support for confdbs
 ~~~~~~~~~~~~~~~~~~~
+
+A confdb defines the configuration of Linux systems, including schemas, storage,
+access permission, granularity, and sharing between snaps.
 
 Snapcraft now supports listing and editing ``confdbs`` with the commands
 ``list-confdbs`` and ``edit-confdbs``. These new commands replace the previous
@@ -96,15 +95,14 @@ builds, due to Launchpad's handling of the ``platforms`` key in project files.
 ``--build-for`` is the recommended alternative until Launchpad has comprehensive
 support for platforms.
 
-
 Fixed bugs and issues
 ---------------------
 
 The following issues have been resolved in Snapcraft 8.7:
 
-- `#4996`_ Remote build gives an unfriendly error when attempting to cross-compile.
-- `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
-  snaps.
+8.7.0
+~~~~~
+
 - `#5250`_ Resources path for ``QtWebEngineProcess`` wasn't exported for snaps
   using the KDE Neon 6 extension.
 - `craft-parts#978`_ The ``source-subdir`` field was ignored for the
@@ -118,6 +116,42 @@ The following issues have been resolved in Snapcraft 8.7:
 - `craft-application#620`_ The remote builder help suggested using a nonextistent
   ``--status`` option.
 
+.. _release-notes-fixes-8.7.1:
+
+8.7.1
+~~~~~
+
+- `#5258`_ The Flutter plugin failed to install Flutter for ``core22`` and ``core24``
+  snaps.
+
+.. _release-notes-fixes-8.7.2:
+
+8.7.2
+~~~~~
+
+- `craft-parts#991`_ Classic snaps using the
+  :ref:`uv plugin<craft_parts_uv_plugin>` would fail to find the Python
+  interpreter included in the snap itself.
+
+.. _release-notes-fixes-8.7.3:
+
+8.7.3
+~~~~~
+
+- `#5340`_ Always show deprecation warnings for ``snapcraft list`` and
+  ``snapcraft list-registered`` commands.
+- `craft-parts#1025`_ The final lines of stdout or stderr when building a part
+  may not be logged.
+
+.. _release-notes-fixes-8.7.4:
+
+8.7.4
+~~~~~
+
+- `#5270`_ The remote-builder gave an unfriendly error when using the
+  ``--build-for`` argument and shorthand :doc:`platforms </reference/architectures>`
+  entries in the project file.
+- `#5330`_ The Crystal plugin would fail to properly quote environment variables.
 
 Contributors
 ------------
@@ -130,12 +164,16 @@ this release.
 :literalref:`@mr-cal<https://github.com/mr-cal>`,
 and :literalref:`@sergio-costas<https://github.com/sergio-costas>`
 
-.. _#4996: https://github.com/canonical/snapcraft/issues/4996
 .. _#5250: https://github.com/canonical/snapcraft/pull/5250
+.. _#5270: https://github.com/canonical/snapcraft/pull/5270
 .. _#5258: https://github.com/canonical/snapcraft/pull/5258
+.. _#5340: https://github.com/canonical/snapcraft/pull/5340
+.. _#5330: https://github.com/canonical/snapcraft/issues/5330
 .. _craft-application#600: https://github.com/canonical/craft-application/issues/600
 .. _craft-application#618: https://github.com/canonical/craft-application/issues/618
 .. _craft-application#619: https://github.com/canonical/craft-application/issues/619
 .. _craft-application#620: https://github.com/canonical/craft-application/issues/620
 .. _craft-parts#978: https://github.com/canonical/craft-parts/issues/978
+.. _craft-parts#991: https://github.com/canonical/craft-parts/issues/991
+.. _craft-parts#1025: https://github.com/canonical/craft-parts/issues/1025
 .. _pkg-config: https://www.freedesktop.org/wiki/Software/pkg-config/

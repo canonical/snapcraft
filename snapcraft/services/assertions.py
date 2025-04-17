@@ -25,7 +25,7 @@ import os
 import pathlib
 import subprocess
 import tempfile
-from typing import Any
+from typing import Any, override
 
 import craft_cli
 import tabulate
@@ -34,7 +34,6 @@ from craft_application.errors import CraftValidationError
 from craft_application.services import base
 from craft_application.util import safe_yaml_load
 from craft_store.errors import StoreServerError
-from typing_extensions import override
 
 from snapcraft import const, errors, models, store, utils
 
@@ -274,7 +273,7 @@ class Assertion(base.AppService):
          If the assertion does not exist, a new assertion is created from a template.
 
         :param name: The name of the assertion to edit.
-        :param account_id: The account ID associated with the confdbs set.
+        :param account_id: The account ID associated with the confdb schema.
         :param key_name: Name of the key to sign the assertion.
         """
         yaml_data = self._get_yaml_data(name=name, account_id=account_id)

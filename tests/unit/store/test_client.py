@@ -171,7 +171,7 @@ def list_revisions_payload():
 
 
 @pytest.fixture
-def list_confdbs_payload():
+def list_confdb_schemas_payload():
     return {
         "assertions": [
             {
@@ -183,7 +183,7 @@ def list_confdbs_payload():
                     "revision": "9",
                     "sign-key-sha3-384": "test-sign-key",
                     "timestamp": "2024-01-01T10:20:30Z",
-                    "type": "confdb",
+                    "type": "confdb-schema",
                     "views": {
                         "wifi-setup": {
                             "rules": [
@@ -203,7 +203,7 @@ def list_confdbs_payload():
 
 
 @pytest.fixture
-def build_confdbs_payload():
+def build_confdb_schema_payload():
     return {
         "account_id": "test-account-id",
         "authority_id": "test-authority-id",
@@ -221,13 +221,13 @@ def build_confdbs_payload():
             }
         },
         "body": '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        "values": "any"\n      }\n    }\n  }\n}',
-        "type": "confdb",
+        "type": "confdb-schema",
         "timestamp": "2024-01-01T10:20:30Z",
     }
 
 
 @pytest.fixture
-def post_confdbs_payload():
+def post_confdb_schema_payload():
     return {
         "assertions": [
             {
@@ -239,7 +239,7 @@ def post_confdbs_payload():
                     "revision": "10",
                     "sign-key-sha3-384": "test-key",
                     "timestamp": "2024-01-01T10:20:30Z",
-                    "type": "confdb",
+                    "type": "confdb-schema",
                     "views": {
                         "wifi-setup": {
                             "rules": [
@@ -556,7 +556,7 @@ def test_login_from_401_request(fake_client):
                 ).encode(),
             )
         ),
-        FakeResponse(status_code=200, content="text".encode()),
+        FakeResponse(status_code=200, content=b"text"),
     ]
 
     client.StoreClientCLI().request("GET", "http://url.com/path")
@@ -1117,25 +1117,25 @@ def test_list_revisions(fake_client, list_revisions_payload):
     ]
 
 
-################
-# List Confdbs #
-################
+#######################
+# List Confdb Schemas #
+#######################
 
 
 @pytest.mark.parametrize("name", [None, "test-confdb"])
-def test_list_confdbs(name, fake_client, list_confdbs_payload, check):
-    """Test the list confdbs endpoint."""
+def test_list_confdb_schemas(name, fake_client, list_confdb_schemas_payload, check):
+    """Test the list confdb schemas endpoint."""
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_confdbs_payload).encode()
+        status_code=200, content=json.dumps(list_confdb_schemas_payload).encode()
     )
 
-    confdbs = client.StoreClientCLI().list_confdbs(name=name)
+    confdb_schemas = client.StoreClientCLI().list_confdb_schemas(name=name)
 
-    check.is_instance(confdbs, list)
-    for confdb in confdbs:
-        check.is_instance(confdb, models.ConfdbAssertion)
+    check.is_instance(confdb_schemas, list)
+    for confdb_schema in confdb_schemas:
+        check.is_instance(confdb_schema, models.ConfdbSchemaAssertion)
         check.equal(
-            confdb.body,
+            confdb_schema.body,
             '{\n  "storage": {\n    "schema": {\n      "wifi": {\n        '
             '"values": "any"\n      }\n    }\n  }\n}',
         )
@@ -1144,7 +1144,7 @@ def test_list_confdbs(name, fake_client, list_confdbs_payload, check):
         [
             call(
                 "GET",
-                f"https://dashboard.snapcraft.io/api/v2/confdbs{f'/{name}' if name else ''}",
+                f"https://dashboard.snapcraft.io/api/v2/confdb-schemas{f'/{name}' if name else ''}",
                 headers={
                     "Content-Type": "application/json",
                     "Accept": "application/json",
@@ -1154,21 +1154,21 @@ def test_list_confdbs(name, fake_client, list_confdbs_payload, check):
     )
 
 
-def test_list_confdbs_empty(fake_client, check):
-    """Test the list confdbs endpoint with no confdbs returned."""
+def test_list_confdb_schemas_empty(fake_client, check):
+    """Test the list confdb schemas endpoint with nothing returned."""
     fake_client.request.return_value = FakeResponse(
         status_code=200, content=json.dumps({"assertions": []}).encode()
     )
 
-    confdbs = client.StoreClientCLI().list_confdbs()
+    confdb_schemas = client.StoreClientCLI().list_confdb_schemas()
 
-    check.equal(confdbs, [])
+    check.equal(confdb_schemas, [])
     check.equal(
         fake_client.request.mock_calls,
         [
             call(
                 "GET",
-                "https://dashboard.snapcraft.io/api/v2/confdbs",
+                "https://dashboard.snapcraft.io/api/v2/confdb-schemas",
                 headers={
                     "Content-Type": "application/json",
                     "Accept": "application/json",
@@ -1178,90 +1178,94 @@ def test_list_confdbs_empty(fake_client, check):
     )
 
 
-def test_list_confdbs_unmarshal_error(fake_client, list_confdbs_payload):
+def test_list_confdb_schemas_unmarshal_error(fake_client, list_confdb_schemas_payload):
     """Raise an error if the response cannot be unmarshalled."""
-    list_confdbs_payload["assertions"][0]["headers"].pop("name")
+    list_confdb_schemas_payload["assertions"][0]["headers"].pop("name")
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_confdbs_payload).encode()
+        status_code=200, content=json.dumps(list_confdb_schemas_payload).encode()
     )
 
     with pytest.raises(errors.SnapcraftAssertionError) as raised:
-        client.StoreClientCLI().list_confdbs()
+        client.StoreClientCLI().list_confdb_schemas()
 
-    assert str(raised.value) == "Received invalid confdbs set from the store"
+    assert str(raised.value) == "Received invalid confdb schema from the store"
     assert raised.value.details == (
-        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
+        "Bad confdb schema content:\n- field 'name' required in top-level configuration"
     )
 
 
-#################
-# Build Confdbs #
-#################
+#######################
+# Build Confdb Schema #
+#######################
 
 
-def test_build_confdbs(fake_client, build_confdbs_payload):
-    """Test the build confdbs endpoint."""
-    mock_confdbs = Mock(spec=models.ConfdbAssertion)
-    expected_confdbs = models.ConfdbAssertion(**build_confdbs_payload)
+def test_build_confdb_schema(fake_client, build_confdb_schema_payload):
+    """Test the build confdb schema endpoint."""
+    mock_confdb_schema = Mock(spec=models.ConfdbSchemaAssertion)
+    expected_confdb_schema = models.ConfdbSchemaAssertion(**build_confdb_schema_payload)
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(build_confdbs_payload).encode()
+        status_code=200, content=json.dumps(build_confdb_schema_payload).encode()
     )
 
-    confdbs_set = client.StoreClientCLI().build_confdbs(confdbs=mock_confdbs)
+    confdb_schema = client.StoreClientCLI().build_confdb_schema(
+        confdb_schema=mock_confdb_schema
+    )
 
-    assert confdbs_set == expected_confdbs
+    assert confdb_schema == expected_confdb_schema
     assert fake_client.request.mock_calls == [
         call(
             "POST",
-            "https://dashboard.snapcraft.io/api/v2/confdbs/build-assertion",
+            "https://dashboard.snapcraft.io/api/v2/confdb-schemas/build-assertion",
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
-            json=mock_confdbs.marshal(),
+            json=mock_confdb_schema.marshal(),
         )
     ]
 
 
-def test_build_confdbs_unmarshal_error(fake_client, build_confdbs_payload):
+def test_build_confdb_schema_unmarshal_error(fake_client, build_confdb_schema_payload):
     """Raise an error if the response cannot be unmarshalled."""
-    mock_confdbs = Mock(spec=models.ConfdbAssertion)
-    build_confdbs_payload.pop("name")
+    mock_confdb_schema = Mock(spec=models.ConfdbSchemaAssertion)
+    build_confdb_schema_payload.pop("name")
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(build_confdbs_payload).encode()
+        status_code=200, content=json.dumps(build_confdb_schema_payload).encode()
     )
 
     with pytest.raises(errors.SnapcraftAssertionError) as raised:
-        client.StoreClientCLI().build_confdbs(confdbs=mock_confdbs)
+        client.StoreClientCLI().build_confdb_schema(confdb_schema=mock_confdb_schema)
 
-    assert str(raised.value) == "Received invalid confdbs set from the store"
+    assert str(raised.value) == "Received invalid confdb schema from the store"
     assert raised.value.details == (
-        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
+        "Bad confdb schema content:\n- field 'name' required in top-level configuration"
     )
 
 
-################
-# Post Confdbs #
-################
+######################
+# Post Confdb Schema #
+######################
 
 
-def test_post_confdbs(fake_client, post_confdbs_payload):
-    """Test the post confdbs endpoint."""
-    expected_confdbs = models.ConfdbAssertion(
-        **post_confdbs_payload["assertions"][0]["headers"],
-        body=post_confdbs_payload["assertions"][0]["body"],
+def test_post_confdb_schema(fake_client, post_confdb_schema_payload):
+    """Test the post confdb schema endpoint."""
+    expected_confdb_schema = models.ConfdbSchemaAssertion(
+        **post_confdb_schema_payload["assertions"][0]["headers"],
+        body=post_confdb_schema_payload["assertions"][0]["body"],
     )
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(post_confdbs_payload).encode()
+        status_code=200, content=json.dumps(post_confdb_schema_payload).encode()
     )
 
-    confdbs_set = client.StoreClientCLI().post_confdbs(confdbs_data=b"test-data")
+    confdb_schema = client.StoreClientCLI().post_confdb_schema(
+        confdb_schema_data=b"test-data"
+    )
 
-    assert confdbs_set == expected_confdbs
+    assert confdb_schema == expected_confdb_schema
     assert fake_client.request.mock_calls == [
         call(
             "POST",
-            "https://dashboard.snapcraft.io/api/v2/confdbs",
+            "https://dashboard.snapcraft.io/api/v2/confdb-schemas",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/x.ubuntu.assertion",
@@ -1272,36 +1276,36 @@ def test_post_confdbs(fake_client, post_confdbs_payload):
 
 
 @pytest.mark.parametrize("num_assertions", [0, 2])
-def test_post_confdbs_wrong_payload_error(
-    num_assertions, fake_client, post_confdbs_payload
+def test_post_confdb_schema_wrong_payload_error(
+    num_assertions, fake_client, post_confdb_schema_payload
 ):
     """Error if the wrong number of assertions are returned."""
-    post_confdbs_payload["assertions"] = (
-        post_confdbs_payload["assertions"] * num_assertions
+    post_confdb_schema_payload["assertions"] = (
+        post_confdb_schema_payload["assertions"] * num_assertions
     )
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(post_confdbs_payload).encode()
+        status_code=200, content=json.dumps(post_confdb_schema_payload).encode()
     )
 
     with pytest.raises(errors.SnapcraftAssertionError) as raised:
-        client.StoreClientCLI().post_confdbs(confdbs_data=b"test-data")
+        client.StoreClientCLI().post_confdb_schema(confdb_schema_data=b"test-data")
 
-    assert str(raised.value) == "Received invalid confdbs set from the store"
+    assert str(raised.value) == "Received invalid confdb schema from the store"
 
 
-def test_post_confdbs_unmarshal_error(fake_client, post_confdbs_payload):
+def test_post_confdb_schema_unmarshal_error(fake_client, post_confdb_schema_payload):
     """Raise an error if the response cannot be unmarshalled."""
-    post_confdbs_payload["assertions"][0]["headers"].pop("name")
+    post_confdb_schema_payload["assertions"][0]["headers"].pop("name")
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(post_confdbs_payload).encode()
+        status_code=200, content=json.dumps(post_confdb_schema_payload).encode()
     )
 
     with pytest.raises(errors.SnapcraftAssertionError) as raised:
-        client.StoreClientCLI().post_confdbs(confdbs_data=b"test-data")
+        client.StoreClientCLI().post_confdb_schema(confdb_schema_data=b"test-data")
 
-    assert str(raised.value) == "Received invalid confdbs set from the store"
+    assert str(raised.value) == "Received invalid confdb schema from the store"
     assert raised.value.details == (
-        "Bad confdbs set content:\n- field 'name' required in top-level configuration"
+        "Bad confdb schema content:\n- field 'name' required in top-level configuration"
     )
 
 

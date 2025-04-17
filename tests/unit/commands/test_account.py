@@ -44,8 +44,8 @@ def fake_store_login(mocker):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_login(emitter, fake_store_login):
-    cmd = commands.StoreLoginCommand(None)
+def test_login(emitter, fake_store_login, fake_app_config):
+    cmd = commands.StoreLoginCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(login_with=None, experimental_login=False))
 
@@ -57,13 +57,13 @@ def test_login(emitter, fake_store_login):
     emitter.assert_message("Login successful")
 
 
-def test_login_with_file(emitter, mocker, legacy_config_path):
+def test_login_with_file(emitter, mocker, legacy_config_path, fake_app_config):
     store_credentials_mock = mocker.patch(
         "snapcraft.store._legacy_account.LegacyUbuntuOne.store_credentials"
     )
     legacy_config_path.write_text("secretb64")
 
-    cmd = commands.StoreLoginCommand(None)
+    cmd = commands.StoreLoginCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(login_with=str(legacy_config_path), experimental_login=False)
@@ -77,8 +77,8 @@ def test_login_with_file(emitter, mocker, legacy_config_path):
     )
 
 
-def test_login_with_experimental_fails():
-    cmd = commands.StoreLoginCommand(None)
+def test_login_with_experimental_fails(fake_app_config):
+    cmd = commands.StoreLoginCommand(fake_app_config)
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
         cmd.run(argparse.Namespace(login_with=None, experimental_login=True))
@@ -93,8 +93,8 @@ def test_login_with_experimental_fails():
 ########################
 
 
-def test_export_login(emitter, fake_store_login):
-    cmd = commands.StoreExportLoginCommand(None)
+def test_export_login(emitter, fake_store_login, fake_app_config):
+    cmd = commands.StoreExportLoginCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -118,8 +118,8 @@ def test_export_login(emitter, fake_store_login):
     )
 
 
-def test_export_login_file(new_dir, emitter, fake_store_login):
-    cmd = commands.StoreExportLoginCommand(None)
+def test_export_login_file(project_path, emitter, fake_store_login, fake_app_config):
+    cmd = commands.StoreExportLoginCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -141,13 +141,13 @@ def test_export_login_file(new_dir, emitter, fake_store_login):
         "Exported login credentials to 'target_file'"
         "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
     )
-    login_file = new_dir / "target_file"
+    login_file = project_path / "target_file"
     assert login_file.exists()
     assert login_file.read_text() == "secret"
 
 
-def test_export_login_with_params(emitter, fake_store_login):
-    cmd = commands.StoreExportLoginCommand(None)
+def test_export_login_with_params(emitter, fake_store_login, fake_app_config):
+    cmd = commands.StoreExportLoginCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -175,10 +175,12 @@ def test_export_login_with_params(emitter, fake_store_login):
     )
 
 
-def test_export_login_with_candid(emitter, fake_store_login, monkeypatch):
+def test_export_login_with_candid(
+    emitter, fake_store_login, monkeypatch, fake_app_config
+):
     monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
 
-    cmd = commands.StoreExportLoginCommand(None)
+    cmd = commands.StoreExportLoginCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -207,8 +209,8 @@ def test_export_login_with_candid(emitter, fake_store_login, monkeypatch):
     )
 
 
-def test_export_login_with_experimental_fails():
-    cmd = commands.StoreExportLoginCommand(None)
+def test_export_login_with_experimental_fails(fake_app_config):
+    cmd = commands.StoreExportLoginCommand(fake_app_config)
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
         cmd.run(
@@ -232,13 +234,13 @@ def test_export_login_with_experimental_fails():
 ##################
 
 
-def test_who(emitter, fake_client):
+def test_who(emitter, fake_client, fake_app_config):
     fake_client.whoami.return_value = {
         "account": {"email": "user@acme.org", "id": "id", "username": "user"},
         "expires": "2023-04-22T21:48:57.000",
     }
 
-    cmd = commands.StoreWhoAmICommand(None)
+    cmd = commands.StoreWhoAmICommand(fake_app_config)
 
     cmd.run(argparse.Namespace())
 
@@ -255,7 +257,7 @@ def test_who(emitter, fake_client):
     emitter.assert_message(expected_message)
 
 
-def test_who_with_attenuations(emitter, fake_client):
+def test_who_with_attenuations(emitter, fake_client, fake_app_config):
     fake_client.whoami.return_value = {
         "account": {"email": "user@acme.org", "id": "id", "username": "user"},
         "permissions": ["package_manage", "package_access"],
@@ -263,7 +265,7 @@ def test_who_with_attenuations(emitter, fake_client):
         "expires": "2023-04-22T21:48:57.000",
     }
 
-    cmd = commands.StoreWhoAmICommand(None)
+    cmd = commands.StoreWhoAmICommand(fake_app_config)
 
     cmd.run(argparse.Namespace())
 
@@ -280,12 +282,12 @@ def test_who_with_attenuations(emitter, fake_client):
     emitter.assert_message(expected_message)
 
 
-def test_who_no_expires(emitter, fake_client):
+def test_who_no_expires(emitter, fake_client, fake_app_config):
     fake_client.whoami.return_value = {
         "account": {"email": "user@acme.org", "id": "id", "username": "user"},
     }
 
-    cmd = commands.StoreWhoAmICommand(None)
+    cmd = commands.StoreWhoAmICommand(fake_app_config)
 
     cmd.run(argparse.Namespace())
 
@@ -307,8 +309,8 @@ def test_who_no_expires(emitter, fake_client):
 ##################
 
 
-def test_logout(emitter, fake_client):
-    cmd = commands.StoreLogoutCommand(None)
+def test_logout(emitter, fake_client, fake_app_config):
+    cmd = commands.StoreLogoutCommand(fake_app_config)
 
     cmd.run(argparse.Namespace())
 

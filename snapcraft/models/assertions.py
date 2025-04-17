@@ -18,11 +18,10 @@
 
 import numbers
 from collections import abc
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 import pydantic
 from craft_application import models
-from typing_extensions import Self
 
 
 def cast_dict_scalars_to_strings(data: dict) -> dict:
@@ -48,13 +47,13 @@ def _to_string(data: Any) -> Any:
     if isinstance(data, abc.Collection):
         return [_to_string(i) for i in data]
 
-    if isinstance(data, (numbers.Number, bool)):
+    if isinstance(data, numbers.Number | bool):
         return str(data)
 
     return data
 
 
-class Confdb(models.CraftBaseModel):
+class ConfdbSchema(models.CraftBaseModel):
     """Access and data definitions for a specific facet of a snap or system."""
 
     request: str | None = None
@@ -71,16 +70,16 @@ class Confdb(models.CraftBaseModel):
 
 
 class Rules(models.CraftBaseModel):
-    """A list of confdbs for a particular view."""
+    """A list of confdb schemas for a particular view."""
 
-    rules: list[Confdb]
+    rules: list[ConfdbSchema]
 
 
-class EditableConfdbAssertion(models.CraftBaseModel):
-    """Subset of a confdbs assertion that can be edited by the user."""
+class EditableConfdbSchemaAssertion(models.CraftBaseModel):
+    """Subset of a confdb-schema assertion that can be edited by the user."""
 
     account_id: str
-    """Issuer of the confdb assertion and owner of the signing key."""
+    """Issuer of the confdb-schema assertion and owner of the signing key."""
 
     name: str
     revision: int | None = 0
@@ -96,13 +95,13 @@ class EditableConfdbAssertion(models.CraftBaseModel):
         return cast_dict_scalars_to_strings(self.marshal())
 
 
-class ConfdbAssertion(EditableConfdbAssertion):
-    """A full confdbs assertion containing editable and non-editable fields."""
+class ConfdbSchemaAssertion(EditableConfdbSchemaAssertion):
+    """A full confdb-schema assertion containing editable and non-editable fields."""
 
-    type: Literal["confdb"]
+    type: Literal["confdb-schema"]
 
     authority_id: str
-    """Issuer of the confdb assertion and owner of the signing key."""
+    """Issuer of the confdb-schema assertion and owner of the signing key."""
 
     timestamp: str
     """Timestamp of when the assertion was issued."""
@@ -114,16 +113,18 @@ class ConfdbAssertion(EditableConfdbAssertion):
     """Signing key ID."""
 
 
-class ConfdbsList(models.CraftBaseModel):
+class ConfdbSchemasList(models.CraftBaseModel):
     """A list of confdb assertions."""
 
-    confdb_list: list[ConfdbAssertion] = pydantic.Field(default_factory=list)
+    confdb_schema_list: list[ConfdbSchemaAssertion] = pydantic.Field(
+        default_factory=list
+    )
 
 
-# this will be a union for validation sets and confdbs once
+# this will be a union for validation sets and confdb schemas once
 # validation sets are migrated from the legacy codebase
-Assertion = ConfdbAssertion
+Assertion = ConfdbSchemaAssertion
 
-# this will be a union for editable validation sets and editable confdbs once
+# this will be a union for editable validation sets and editable confdb schemas once
 # validation sets are migrated from the legacy codebase
-EditableAssertion = EditableConfdbAssertion
+EditableAssertion = EditableConfdbSchemaAssertion

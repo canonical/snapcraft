@@ -18,9 +18,9 @@
 from .assertions import (
     Assertion,
     EditableAssertion,
-    EditableConfdbAssertion,
-    Confdb,
-    ConfdbAssertion,
+    EditableConfdbSchemaAssertion,
+    ConfdbSchema,
+    ConfdbSchemaAssertion,
 )
 from .manifest import Manifest
 from .project import (
@@ -36,7 +36,6 @@ from .project import (
     Lint,
     Platform,
     Project,
-    SnapcraftBuildPlanner,
     Socket,
 )
 
@@ -50,15 +49,14 @@ __all__ = [
     "ComponentProject",
     "ContentPlug",
     "EditableAssertion",
-    "EditableConfdbAssertion",
+    "EditableConfdbSchemaAssertion",
     "GrammarAwareProject",
     "Hook",
     "Lint",
     "Manifest",
     "Platform",
     "Project",
-    "Confdb",
-    "ConfdbAssertion",
-    "SnapcraftBuildPlanner",
+    "ConfdbSchema",
+    "ConfdbSchemaAssertion",
     "Socket",
 ]

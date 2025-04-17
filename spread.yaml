@@ -33,7 +33,9 @@ environment:
   GIT_AUTHOR_NAME: "Test User"
   GIT_AUTHOR_EMAIL: "test-user@email.com"
 
+  # Make log output much easier to get from these tests.
   CRAFT_DEBUG: 1
+  CRAFT_VERBOSITY_LEVEL: trace
 
 backends:
   lxd:
@@ -55,7 +57,7 @@ backends:
           storage: 20G
           image: ubuntu-2204-64
       - ubuntu-24.04-64:
-          image: ubuntu-24.04-64
+          image: ubuntu-2404-64
           storage: 20G
           workers: 6
 
@@ -221,6 +223,8 @@ suites:
     summary: core22 linter tests
     environment:
       SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
+      # We're checking the output text, so override the normal trace output.
+      CRAFT_VERBOSITY_LEVEL: brief
 
     systems:
       - ubuntu-22.04*
@@ -240,22 +244,37 @@ suites:
   tests/spread/core24-suites/environment/:
     summary: core24 environment tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/scriptlets/:
     summary: core24 scriptlet tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/manifest/:
     summary: core24 manifest tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   tests/spread/core24-suites/patchelf/:
     summary: core24 patchelf tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
+  tests/spread/core24-suites/plugins/:
+    summary: core24 plugin tests
+    systems:
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   # General, core suite
   tests/spread/general/:
@@ -270,11 +289,12 @@ suites:
       - ubuntu-20.04*
       - ubuntu-22.04*
 
-  # 'build-base: devel' fails due to an issue with the 24.10 buildd image (#4921)
-  # tests/spread/core-devel/:
-  #   summary: tests of devel base snaps
-  #   environment:
-  #     SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  tests/spread/core-devel/:
+    summary: tests of devel base snaps
+    systems:
+      - ubuntu-22.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
   # General, core suite
   tests/spread/cross-compile/:

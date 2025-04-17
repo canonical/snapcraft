@@ -168,7 +168,7 @@ def test_get_root_snippet(kde_neon_extension):
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "5",
+            "PLATFORM_PLUG": "kf5-core22",
         },
         "hooks": {
             "configure": {
@@ -220,7 +220,7 @@ def test_get_root_snippet_core24(kde_neon_extension_core24):
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "5",
+            "PLATFORM_PLUG": "kf5-core24",
         },
         "hooks": {
             "configure": {
@@ -305,7 +305,7 @@ def test_get_root_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "5",
+            "PLATFORM_PLUG": "kf5-core22",
         },
         "hooks": {
             "configure": {
@@ -359,7 +359,7 @@ def test_get_root_snippet_with_external_sdk_core24(
         "environment": {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf5",
             "GTK_USE_PORTAL": "1",
-            "QT_VERSION": "5",
+            "PLATFORM_PLUG": "kf5-core24",
         },
         "hooks": {
             "configure": {
@@ -468,20 +468,11 @@ class TestGetPartSnippet:
                 },
                 {
                     "CMAKE_PREFIX_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt5-core22-sdk/current;"
-                        "/snap/kf5-core22-sdk/current;"
+                        "$CRAFT_STAGE:"
+                        "/snap/kde-qt5-core22-sdk/current:"
+                        "/snap/kf5-core22-sdk/current:"
                         "/usr"
-                        "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                    )
-                },
-                {
-                    "CMAKE_FIND_ROOT_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt5-core22-sdk/current;"
-                        "/snap/kf5-core22-sdk/current;"
-                        "/usr"
-                        "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                        "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                     )
                 },
             ]
@@ -543,20 +534,11 @@ class TestGetPartSnippet:
                 },
                 {
                     "CMAKE_PREFIX_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt5-core24-sdk/current;"
-                        "/snap/kf5-core24-sdk/current;"
+                        "$CRAFT_STAGE:"
+                        "/snap/kde-qt5-core24-sdk/current:"
+                        "/snap/kf5-core24-sdk/current:"
                         "/usr"
-                        "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                    )
-                },
-                {
-                    "CMAKE_FIND_ROOT_PATH": (
-                        "$CRAFT_STAGE;"
-                        "/snap/kde-qt5-core24-sdk/current;"
-                        "/snap/kf5-core24-sdk/current;"
-                        "/usr"
-                        "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                        "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                     )
                 },
             ]
@@ -605,20 +587,11 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
             },
             {
                 "CMAKE_PREFIX_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt5-core22-sdk/current;"
-                    "/snap/kf5-core22-sdk/current;"
+                    "$CRAFT_STAGE:"
+                    "/snap/kde-qt5-core22-sdk/current:"
+                    "/snap/kf5-core22-sdk/current:"
                     "/usr"
-                    "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                )
-            },
-            {
-                "CMAKE_FIND_ROOT_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt5-core22-sdk/current;"
-                    "/snap/kf5-core22-sdk/current;"
-                    "/usr"
-                    "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                    "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                 )
             },
         ]
@@ -674,20 +647,11 @@ def test_get_part_snippet_with_external_sdk_core24(
             },
             {
                 "CMAKE_PREFIX_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt5-core24-sdk/current;"
-                    "/snap/kf5-core24-sdk/current;"
+                    "$CRAFT_STAGE:"
+                    "/snap/kde-qt5-core24-sdk/current:"
+                    "/snap/kf5-core24-sdk/current:"
                     "/usr"
-                    "${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}"
-                )
-            },
-            {
-                "CMAKE_FIND_ROOT_PATH": (
-                    "$CRAFT_STAGE;"
-                    "/snap/kde-qt5-core24-sdk/current;"
-                    "/snap/kf5-core24-sdk/current;"
-                    "/usr"
-                    "${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}"
+                    "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                 )
             },
         ]

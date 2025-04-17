@@ -16,7 +16,6 @@
 
 """Tests for Components in Snapcraft's Package service."""
 
-import shutil
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import call
@@ -66,18 +65,15 @@ def project_assets_dir(new_dir, request):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
-@pytest.mark.usefixtures("default_project")
-def test_pack(package_service, lifecycle_service, mocker):
+def test_pack(default_project, fake_services, setup_project, mocker):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
     mock_pack_snap = mocker.patch.object(pack, "pack_snap")
     mock_pack_component = mocker.patch.object(pack, "pack_component")
 
     mocker.patch.object(linters, "run_linters")
     mocker.patch.object(linters, "report")
-
-    # the ServiceFactory will try to start up its own lifecycle if
-    # we do not set it up ourselves
-    lifecycle_service.setup()
-    package_service._services.lifecycle = lifecycle_service
 
     package_service.pack(prime_dir=Path("prime"), dest=Path())
 
@@ -113,17 +109,19 @@ def test_pack(package_service, lifecycle_service, mocker):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
-@pytest.mark.usefixtures("default_project")
 def test_write_metadata(
+    default_project,
+    fake_services,
+    setup_project,
     project_assets_dir,
-    package_service,
-    lifecycle_service,
-    new_dir,
+    tmp_path,
 ):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
     # create an executable to run via the command-chain
     command_chain_exe = (
-        new_dir
-        / "work"
+        tmp_path
         / "partitions"
         / "component"
         / "firstcomponent"
@@ -134,11 +132,6 @@ def test_write_metadata(
     command_chain_exe.touch()
     command_chain_exe.chmod(0o755)
 
-    if "build-aux" in str(project_assets_dir):
-        # /build-aux cannot co-exist with /snap
-        shutil.move(new_dir / "snap" / "snapcraft.yaml", new_dir)
-        shutil.rmtree(new_dir / "snap")
-
     # Create some hooks
     (project_assets_dir / "component/firstcomponent/hooks").mkdir(parents=True)
     (project_assets_dir / "component/firstcomponent/hooks/install").write_text(
@@ -146,12 +139,7 @@ def test_write_metadata(
     )
     (project_assets_dir / "post-refresh").write_text("post-refresh")
 
-    # the ServiceFactory will try to start up its own lifecycle if
-    # we do not set it up ourselves
-    lifecycle_service.setup()
-    package_service._services.lifecycle = lifecycle_service
-
-    prime_dir = new_dir / "prime"
+    prime_dir = tmp_path / "prime"
     meta_dir = prime_dir / "meta"
 
     package_service.write_metadata(prime_dir)

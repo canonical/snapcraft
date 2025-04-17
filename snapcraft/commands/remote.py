@@ -19,19 +19,20 @@
 import argparse
 import os
 import textwrap
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import craft_application.errors
-from craft_application import errors
-from craft_application.application import filter_plan
+import craft_platforms
 from craft_application.commands import RemoteBuild
-from craft_application.util import humanize_list
+from craft_application.util import humanize_list, safe_yaml_load
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
 from overrides import override
 
-from snapcraft import models
+from snapcraft import errors
 from snapcraft.const import SUPPORTED_ARCHS
+from snapcraft.parts import yaml_utils
+from snapcraft.services import BuildPlan
 
 
 class RemoteBuildCommand(RemoteBuild):
@@ -92,7 +93,7 @@ class RemoteBuildCommand(RemoteBuild):
         """
         for build_for in cast(list[str], parsed_args.remote_build_build_fors) or []:
             if build_for not in [*SUPPORTED_ARCHS, "all"]:
-                raise errors.RemoteBuildError(
+                raise craft_application.errors.RemoteBuildError(
                     f"Unsupported build-for architecture {build_for!r}",
                     resolution=(
                         "Use a supported Debian architecture. Supported "
@@ -102,10 +103,10 @@ class RemoteBuildCommand(RemoteBuild):
                     retcode=os.EX_CONFIG,
                 )
 
-        project = cast(models.Project, self._services.project)
-        build_plan = self._app.BuildPlannerClass.unmarshal(
-            project.marshal()
-        ).get_build_plan()
+        build_plan_service = cast(BuildPlan, self._services.get("build_plan"))
+        build_plan = build_plan_service.create_launchpad_build_plan(
+            platforms=None, build_for=None, build_on=None
+        )
 
         # mapping of `build-on` to `build-for` architectures
         build_map: dict[str, list[str]] = {}
@@ -117,12 +118,12 @@ class RemoteBuildCommand(RemoteBuild):
         for build_on, build_fors in build_map.items():
             if len(build_fors) > 1:
                 build_on_errors.append(
-                    f"\n  - Building on {build_on!r} will create snaps for "
-                    f"{humanize_list(build_fors, 'and')}."
+                    f"\n  - Building on {build_on} will create snaps for "
+                    f"{humanize_list(build_fors, 'and', item_format='{!s}')}."
                 )
 
         if build_on_errors:
-            raise errors.RemoteBuildError(
+            raise craft_application.errors.RemoteBuildError(
                 message=(
                     "Remote build does not support building multiple snaps on the "
                     f"same architecture:{''.join(build_on_errors)}"
@@ -135,34 +136,36 @@ class RemoteBuildCommand(RemoteBuild):
                 retcode=os.EX_CONFIG,
             )
 
+        _validate_build_for_and_platforms(parsed_args.remote_build_build_fors)
+
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
-        project = cast(models.Project, self._services.project)
-        build_plan = self._app.BuildPlannerClass.unmarshal(
-            project.marshal()
-        ).get_build_plan()
-        build_fors = cast(list[str], parsed_args.remote_build_build_fors)
-        archs: list[str] = []
-        if project.platforms or project._architectures_in_yaml:
+        project = self._services.get("project").get_raw()
+        if parsed_args.remote_build_build_fors:
+            build_fors: list[DebianArchitecture | Literal["all"]] | None = [
+                "all" if arch == "all" else craft_platforms.DebianArchitecture(arch)
+                for arch in parsed_args.remote_build_build_fors
+            ]
+        else:
+            build_fors = None
+
+        archs: list[DebianArchitecture | Literal["all"]] = []
+        if project.get("platforms") or project.get("architectures"):
+            build_plan_service = cast(BuildPlan, self._services.get("build_plan"))
+            build_plan = build_plan_service.create_launchpad_build_plan(
+                platforms=None, build_for=build_fors or None, build_on=None
+            )
             # if the project has platforms, then `--build-for` acts as a filter
             if build_fors:
                 emit.debug("Filtering the build plan using the '--build-for' argument.")
-                # loop through each `build-for` to create a list of architectures where the snaps can build on
-                for build_for in build_fors:
-                    filtered_build_plan = filter_plan(
-                        build_plan,
-                        platform=None,
-                        build_for=build_for,
-                        host_arch=None,
-                    )
-                    # Launchpad's API only accepts a list of architectures but doesn't
-                    # have a concept of 'build-on' vs 'build-for'.
-                    # Passing the build-on archs is safe because:
-                    # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
-                    # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
-                    archs.extend([info.build_on for info in filtered_build_plan])
-                    if not archs:
-                        raise craft_application.errors.EmptyBuildPlanError()
+                # Launchpad's API only accepts a list of architectures but doesn't
+                # have a concept of 'build-on' vs 'build-for'.
+                # Passing the build-on archs is safe because:
+                # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
+                # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
+                archs.extend([info.build_on for info in build_plan])
+                if not archs:
+                    raise craft_application.errors.EmptyBuildPlanError()
             else:
                 emit.debug("Using the project's build plan")
                 archs = [build_info.build_on for build_info in build_plan]
@@ -173,7 +176,7 @@ class RemoteBuildCommand(RemoteBuild):
             archs = build_fors
         # default is to build on, and for, the host architecture
         else:
-            archs = [str(DebianArchitecture.from_host())]
+            archs = [DebianArchitecture.from_host()]
             emit.debug(
                 f"Using host architecture {archs[0]} because no architectures were "
                 "defined in the project or as a command-line argument."
@@ -181,3 +184,44 @@ class RemoteBuildCommand(RemoteBuild):
 
         emit.debug(f"Architectures to build for: {humanize_list(archs, 'and')}")
         return {"architectures": archs}
+
+
+def _validate_build_for_and_platforms(build_for: list[str]):
+    """Ensure --build-for and shorthand platforms are not used together.
+
+    This combination fails in Launchpad with an unhelpful error, so Snapcraft will
+    fail early with a user-friendly error. See LP#2077005 and LP#2098811 for details.
+
+    This validator can be removed when LP#2077005 and LP#2098811 are resolved or when
+    Launchpad uses craft-platforms to orchestrate snap builds.
+
+    :param build_for: The list of architectures to build for from the command line.
+
+    :raises RemoteBuildError: If --build-for and shorthand platforms are used together.
+    """
+    if not build_for:
+        return
+
+    try:
+        project_file = yaml_utils.get_snap_project().project_file
+        with project_file.open() as file:
+            data = safe_yaml_load(file)
+    except (errors.ProjectMissing, craft_application.errors.YamlError) as err:
+        # the project has to exist by this point, but this is a non-critical
+        # validator so log the problem and move on
+        emit.debug("Couldn't find or parse the project's snapcraft.yaml")
+        emit.debug(f"Error: {err}")
+        return
+
+    if data.get("platforms") and any(not v for v in data["platforms"].values()):
+        raise craft_application.errors.RemoteBuildError(
+            message=(
+                "Launchpad can't build snaps when using '--build-for' with "
+                "a shorthand platforms entry in the project's snapcraft.yaml."
+            ),
+            resolution=(
+                "Use full platform entries or remove the '--build-for' argument."
+            ),
+            doc_slug="/explanation/remote-build.html",
+            retcode=os.EX_CONFIG,
+        )

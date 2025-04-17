@@ -16,8 +16,9 @@
 
 """External metadata helpers."""
 
+from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, Final, List, OrderedDict, cast
+from typing import Final, cast
 
 import pydantic
 from craft_application.models import ProjectTitle, SummaryStr, UniqueStrList, VersionStr
@@ -27,14 +28,14 @@ from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 
-_VALID_ICON_EXTENSIONS: Final[List[str]] = ["png", "svg"]
+_VALID_ICON_EXTENSIONS: Final[list[str]] = ["png", "svg"]
 
 
 def update_project_metadata(
     project: Project,
     *,
-    project_vars: Dict[str, str],
-    metadata_list: List[ExtractedMetadata],
+    project_vars: dict[str, str],
+    metadata_list: list[ExtractedMetadata],
     assets_dir: Path,
     prime_dir: Path,
 ) -> None:
@@ -65,7 +66,7 @@ def update_project_metadata(
 def update_from_extracted_metadata(
     project: Project,
     *,
-    metadata_list: List[ExtractedMetadata],
+    metadata_list: list[ExtractedMetadata],
     assets_dir: Path,
     prime_dir: Path,
 ) -> None:
@@ -108,7 +109,7 @@ def update_from_extracted_metadata(
 
 def _update_project_links(
     project: Project,
-    metadata_list: List[ExtractedMetadata],
+    metadata_list: list[ExtractedMetadata],
 ) -> None:
     """Update project links from metadata.
 
@@ -136,7 +137,7 @@ def _update_project_links(
                 setattr(project, field, cast(UniqueStrList, metadata_values))
 
 
-def _update_project_variables(project: Project, project_vars: Dict[str, str]):
+def _update_project_variables(project: Project, project_vars: dict[str, str]):
     """Update project fields with values set during lifecycle processing."""
     try:
         if project_vars["version"]:
@@ -221,5 +222,5 @@ def _raise_formatted_validation_error(err: pydantic.ValidationError):
     if not (loc and msg) or not isinstance(loc, tuple):
         return
 
-    varname = ".".join((x for x in loc if isinstance(x, str)))
+    varname = ".".join(x for x in loc if isinstance(x, str))
     raise errors.SnapcraftError(f"error setting {varname}: {msg}")

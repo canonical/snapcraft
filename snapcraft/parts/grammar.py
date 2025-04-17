@@ -16,7 +16,7 @@
 
 """Grammar processor."""
 
-from typing import Any, Dict
+from typing import Any
 
 from craft_grammar import GrammarProcessor
 
@@ -33,8 +33,8 @@ _SCALAR_VALUES = ["source"]
 
 
 def process_part(
-    *, part_yaml_data: Dict[str, Any], processor: GrammarProcessor
-) -> Dict[str, Any]:
+    *, part_yaml_data: dict[str, Any], processor: GrammarProcessor
+) -> dict[str, Any]:
     """Process grammar for a given part."""
     existing_keys = (key for key in _KEYS if key in part_yaml_data)
 
@@ -44,7 +44,9 @@ def process_part(
         if key in _SCALAR_VALUES and isinstance(unprocessed_grammar, str):
             unprocessed_grammar = [unprocessed_grammar]
 
-        processed_grammar = processor.process(grammar=unprocessed_grammar)
+        processed_grammar: list[Any] | None = processor.process(
+            grammar=unprocessed_grammar
+        )
 
         if key in _SCALAR_VALUES and isinstance(processed_grammar, list):
             if processed_grammar:
@@ -57,8 +59,8 @@ def process_part(
 
 
 def process_parts(
-    *, parts_yaml_data: Dict[str, Any], arch: str, target_arch: str
-) -> Dict[str, Any]:
+    *, parts_yaml_data: dict[str, Any], arch: str, target_arch: str
+) -> dict[str, Any]:
     """Process grammar for parts.
 
     :param yaml_data: unprocessed snapcraft.yaml.
