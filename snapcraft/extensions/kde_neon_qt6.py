@@ -398,6 +398,7 @@ class KDENeonQt6(Extension):
 
         return {
             "kde-neon-qt6/sdk": {
+                "after": list(self.yaml_data["parts"].keys()),
                 "source": str(source),
                 "plugin": "make",
                 **gpu_opts,

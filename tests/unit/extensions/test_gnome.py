@@ -415,6 +415,7 @@ def test_get_parts_snippet_core24(gnome_extension_core24):
 def test_get_parts_snippet_with_external_sdk(gnome_extension_with_build_snap):
     assert gnome_extension_with_build_snap.get_parts_snippet() == {
         "gnome/sdk": {
+            "after": ["part1"],
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
             "plugin": "make",
         }
@@ -428,6 +429,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
         gnome_extension_with_default_build_snap_from_latest_edge.get_parts_snippet()
         == {
             "gnome/sdk": {
+                "after": ["part1"],
                 "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
                 "plugin": "make",
             }
