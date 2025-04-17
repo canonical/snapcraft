@@ -95,7 +95,6 @@ exclude_patterns = [
     "how-to/change-bases/index.rst",
     "how-to/change-bases/change-from-core20-to-core22.rst",
     "how-to/change-bases/change-from-core22-to-core24.rst",
-    "how-to/debug/use-the-classic-linter.rst",
     "how-to/publish/build-snaps-remotely.rst",
     "how-to/publish/manage-releases.rst",
     "how-to/publish/manage-snaps-on-the-snap-store.rst",
