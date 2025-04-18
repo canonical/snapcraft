@@ -21,6 +21,7 @@ Reference
    extensions/index
    /common/craft-parts/reference/part_properties
    parts_steps
+   part-environment-variables
    metrics
    layouts
    snapshots
