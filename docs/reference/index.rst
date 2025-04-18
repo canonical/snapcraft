@@ -21,6 +21,7 @@ Reference
    extensions/index
    /common/craft-parts/reference/part_properties
    parts_steps
+   execution-environment-for-core20
    metrics
    layouts
    snapshots
