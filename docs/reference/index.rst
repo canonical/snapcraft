@@ -16,11 +16,13 @@ Reference
    commands
    components
    linters
+   external-package-information
    plugins
    extensions/index
    /common/craft-parts/reference/part_properties
    parts_steps
    metrics
+   layouts
    snapshots
    system-requirements
 
