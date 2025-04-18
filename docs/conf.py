@@ -98,7 +98,6 @@ exclude_patterns = [
     "how-to/publish/manage-releases.rst",
     "how-to/publish/manage-snaps-on-the-snap-store.rst",
     "how-to/publish/publish-a-snap.rst",
-    "how-to/publish/publish-a-snap-with-ci.rst",
     "reference/advanced-grammar.rst",
     "reference/hooks.rst",
     "reference/package-repositories.rst",
