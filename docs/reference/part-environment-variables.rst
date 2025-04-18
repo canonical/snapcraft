@@ -114,8 +114,8 @@ core20
       - The Snapcraft project grade set in the project file.
 
 
-core22
-~~~~~~
+core22 | core24
+~~~~~~~~~~~~~~~
 
 .. list-table::
 
@@ -126,28 +126,6 @@ core22
     * - ``CRAFT_PROJECT_NAME``
 
         ``SNAPCRAFT_PROJECT_NAME``
-      - The Snapcraft project name set by the project file's ``name`` key.
-    * - ``SNAPCRAFT_PROJECT_VERSION``
-      - The Snapcraft project version set by the project file's ``version`` key.
-    * - ``SNAPCRAFT_PROJECT_GRADE``
-      - The Snapcraft project grade set in the project file.
-    * - ``CRAFT_PART_NAME``
-      - The part currently being processed, as set by the part's name in the project
-        file.
-    * - ``CRAFT_STEP_NAME``
-      - The step currently being executed.
-
-
-core24
-~~~~~~
-
-.. list-table::
-
-    * - ``CRAFT_PARALLEL_BUILD_COUNT``
-
-        ``SNAPCRAFT_PARALLEL_BUILD_COUNT``
-      - The preferred number of jobs to build the project with.
-    * - ``SNAPCRAFT_PROJECT_NAME``
       - The Snapcraft project name set by the project file's ``name`` key.
     * - ``SNAPCRAFT_PROJECT_VERSION``
       - The Snapcraft project version set by the project file's ``version`` key.
