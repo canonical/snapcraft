@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import datetime
 import logging
 import os
 import pathlib
@@ -38,10 +39,18 @@ from testtools.matchers import (
 
 from snapcraft_legacy import extractors, yaml_utils
 from snapcraft_legacy.internal import errors, project_loader, states
-from snapcraft_legacy.internal.meta import _snap_packaging
+from snapcraft_legacy.internal.meta import _snap_packaging, _manifest
 from snapcraft_legacy.internal.meta import errors as meta_errors
 from snapcraft_legacy.project import Project
 from tests.legacy import fixture_setup, unit
+
+
+def test_format_datetime():
+    dt = datetime.datetime(2025, 1, 2, 3, 4, 5, 123456,tzinfo=datetime.UTC)
+
+    formatted = _manifest._format_datetime(dt)
+
+    assert formatted == "2025-01-02T03:04:05.123456Z"
 
 
 @pytest.mark.slow

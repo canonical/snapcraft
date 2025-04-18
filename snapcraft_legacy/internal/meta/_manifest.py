@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import datetime
 import json
 import os
 from collections import OrderedDict
@@ -28,10 +29,20 @@ if TYPE_CHECKING:
     from snapcraft_legacy.project import Project
 
 
+def _format_datetime(dt: datetime) -> str:
+    """Format a datetime object into a string compatible with the store.
+
+    :param dt: The datetime object to format.
+
+    :return: A string representing the datetime.
+    """
+    return dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
 def annotate_snapcraft(project: "Project", data: Dict[str, Any]) -> Dict[str, Any]:
     manifest = OrderedDict()  # type: Dict[str, Any]
     manifest["snapcraft-version"] = snapcraft_legacy._get_version()
-    manifest["snapcraft-started-at"] = project._get_start_time().isoformat() + "Z"
+    manifest["snapcraft-started-at"] = _format_datetime(project._get_start_time())
 
     release = os_release.OsRelease()
     with contextlib.suppress(errors.OsReleaseIdError):

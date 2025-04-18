@@ -82,6 +82,15 @@ Support for short hashes
 Previously, the ``source-commit`` key for parts only accepted full length (40
 character) hashes. Now, ``source-commit`` also accepts short hashes.
 
+Fixed bugs and issues
+---------------------
+
+The following issues have been resolved in Snapcraft 8.8:
+
+8.8.1
+~~~~~
+
+- `#5413`_ core20 snaps had an improperly formatted timestamp in their manifest.
 
 Contributors
 ------------
@@ -99,3 +108,4 @@ and :literalref:`@sergiusens<https://github.com/sergiusens>`
 
 .. _jlink: https://docs.oracle.com/en/java/javase/21/docs/specs/man/jlink.html
 .. _security policy: https://github.com/canonical/snapcraft/blob/main/SECURITY.md
+.. _#5413: https://github.com/canonical/snapcraft/pull/5413
