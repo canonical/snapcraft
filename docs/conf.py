@@ -26,6 +26,9 @@ import snapcraft
 project_dir = pathlib.Path("..").resolve()
 sys.path.insert(0, str(project_dir.absolute()))
 
+model_dir = pathlib.Path("../snapcraft/models").resolve()
+sys.path.append(str(model_dir.absolute()))
+
 project = "Snapcraft"
 author = "Canonical Group Ltd"
 copyright = "%s, %s" % (datetime.date.today().year, author)
@@ -45,6 +48,7 @@ html_context = {
 
 extensions = [
     "canonical_sphinx",
+    "pydantic_kitbash",
 ]
 
 sphinx_tabs_disable_tab_closing = True
