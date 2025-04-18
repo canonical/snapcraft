@@ -92,7 +92,6 @@ exclude_patterns = [
     "how-to/craft/manage-dependencies.rst",
     "how-to/craft/override-the-build-step-with-craftctl.rst",
     "how-to/craft/use-extensions.rst",
-    "how-to/change-bases/change-from-core20-to-core22.rst",
     "how-to/change-bases/change-from-core22-to-core24.rst",
     "how-to/debug/use-the-classic-linter.rst",
     "how-to/publish/build-snaps-remotely.rst",
