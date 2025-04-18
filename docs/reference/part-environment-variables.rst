@@ -59,9 +59,6 @@ core22 and core24:
 
         ``SNAPCRAFT_STAGE``
       - The absolute path to where files are staged.
-    * - ``CRAFT_OVERLAY``
-      - The absolute path for the part's layer directory during the overlay step if
-        overlays are enabled.
 
 For more details on the Craft Parts step execution environment, see
 :ref:`parts-step-execution-environment`.
