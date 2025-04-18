@@ -23,6 +23,7 @@ Reference
    parts_steps
    metrics
    layouts
+   snapcraft-yaml
    snapshots
    system-requirements
 
