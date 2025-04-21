@@ -289,9 +289,14 @@ class Socket(models.CraftBaseModel):
         description="The socket's abstract name or socket path.",
         examples=["listen-stream: $SNAP_COMMON/lxd/unix.socket", "listen-stream: 80"],
     )
+    """The socket's abstract name or socket path.
+
+    TCP and UNIX sockets are supported.
+    """
+
     socket_mode: int | None = pydantic.Field(
         default=None,
-        description="The socket's mode and permissions.",
+        description="The mode or permissions of the socket in octal.",
         examples=["socket-mode: 0660"],
     )
 
@@ -619,7 +624,7 @@ class App(models.CraftBaseModel):
     after: UniqueList[str] = pydantic.Field(
         default_factory=list,
         description="The ordered list of apps that the service runs after it launches.",
-        examples=["after: [foo-app, bar-app]"],
+        examples=["[foo-app, bar-app]"],
     )
     """The ordered list of apps that the service runs after it launches.
 
@@ -635,7 +640,7 @@ class App(models.CraftBaseModel):
     before: UniqueList[str] = pydantic.Field(
         default_factory=list,
         description="The ordered list of apps that the service runs before it launches.",
-        examples=["before: [baz-app, quz-app]"],
+        examples=["[baz-app, quz-app]"],
     )
     """The ordered list of apps that the service runs before it launches.
 
@@ -665,7 +670,7 @@ class App(models.CraftBaseModel):
     **Values**
 
     .. list-table::
-    :header-rows: 1
+        :header-rows: 1
 
         * - Value
           - Description
@@ -750,7 +755,7 @@ class App(models.CraftBaseModel):
     **Values**
 
     .. list-table::
-       :header-rows: 1
+        :header-rows: 1
 
         * - Value
           - Description
@@ -785,7 +790,7 @@ class App(models.CraftBaseModel):
     plugs: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The interfaces that the app can connect to.",
-        examples=["plugs: [home, removable-media]"],
+        examples=["[home, removable-media]"],
     )
     """The list of interfaces that the app can connect to.
 
@@ -820,7 +825,7 @@ class App(models.CraftBaseModel):
     command_chain: list[str] = pydantic.Field(
         default_factory=list,
         description="The ordered list of commands to run before the app's command runs.",
-        examples=["command-chain: [bin/alsa-launch, bin/desktop-launch]"],
+        examples=["[bin/alsa-launch, bin/desktop-launch]"],
     )
     """The ordered list of commands to run before the app's command
     runs.
@@ -831,7 +836,7 @@ class App(models.CraftBaseModel):
     sockets: dict[str, Socket] | None = pydantic.Field(
         default=None,
         description="The sockets used to activate an app.",
-        examples=["listen-stream: $SNAP_COMMON/lxd/unix.socket, socket-mode: 0660"],
+        examples=["$SNAP_COMMON/lxd/unix.socket, socket-mode: 0660"],
     )
     """The sockets used to activate an app.
 
@@ -861,7 +866,7 @@ class App(models.CraftBaseModel):
     **Values**
 
     .. list-table::
-       :header-rows: 1
+        :header-rows: 1
 
         * - Value
           - Description
@@ -968,26 +973,47 @@ class Hook(models.CraftBaseModel):
 
     command_chain: list[str] = pydantic.Field(
         default_factory=list,
-        description="The sequence of commands to run before the app's command runs. Also applied when running ``snap run --shell``",
-        examples=["command-chain: [bin/alsa-launch, bin/desktop-launch]"],
+        description="The ordered list of commands to run before the hook runs.",
+        examples=["[bin/alsa-launch, bin/desktop-launch]"],
     )
+    """The ordered list of commands to run before the hook runs.
+
+    Command chains are useful to run setup scripts before running a hook.
+    """
+
     environment: dict[str, str | None] | None = pydantic.Field(
         default=None,
-        description="The hook's run-time environment variables.",
-        examples=[
-            "environment: {PYTHONPATH: /custom/path/:$PYTHON_PATH, DISABLE_WAYLAND: 1}"
-        ],
+        description="The environment variables for the hook.",
+        examples=["{PYTHONPATH: /custom/path/:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
     )
+
     plugs: UniqueList[str] | None = pydantic.Field(
         default=None,
-        description="The interfaces that the hook can connect to.",
-        examples=["plugs: [home, removable-media]"],
+        description="The list of interfaces that the hook can connect to.",
+        examples=["[home, removable-media]"],
     )
+    """The list of interfaces that the hook can connect to.
+
+    See the `content interface <https://snapcraft.io/docs/content-interface>`_ for more
+    information about plugs and slots.
+    """
+
     passthrough: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="Attributes to not validate for correctness. Useful for testing experimental snapd features.",
-        examples=["passthrough: {daemon: complex}"],
+        description="The attributes to pass to the snap's metadata file for the hook.",
+        examples=["{daemon: complex}"],
     )
+    """The attributes to pass to the snap's metadata file for the hook.
+
+    Attributes to passthrough to snap.yaml without validation from Snapcraft. This is
+    useful for early testing of a new feature in snapd that isn't supported yet by
+    Snapcraft.
+
+    To pass a value for the entire project, see the top-level ``passthrough`` key.
+
+    See `Using development features in Snapcraft
+    <https://snapcraft.io/docs/using-in-development-features>`_ for more details.
+    """
 
     @pydantic.field_validator("command_chain")
     @classmethod
@@ -1022,18 +1048,46 @@ class ContentPlug(models.CraftBaseModel):
     content: str | None = pydantic.Field(
         default=None,
         description="The name for the content type.",
-        examples=["content: themes"],
+        examples=["themes"],
     )
-    interface: str = pydantic.Field(description="The name of the interface.")
+    """The name for the content type.
+
+    This is an arbitrary identifier for content interfaces. If it is not specified, it
+    will default to the plug's name.
+    """
+
+    interface: str = pydantic.Field(
+        description="The name of the interface.",
+        examples=["network"],
+    )
+    """The name of the interface.
+
+    See `Supported interfaces <https://snapcraft.io/docs/supported-interfaces>`_ for a
+    list of supported interfaces.
+
+    When using the content interface, this should be set to ``content``.
+    """
+
     target: str = pydantic.Field(
-        description="The path to the producer's files in the snap.",
-        examples=["target: $SNAP/data-dir/themes"],
+        description="The path to where the producer's files will be available in the snap.",
+        examples=["$SNAP/data-dir/themes"],
     )
+    """The path to where the producer's files will be available in the snap.
+
+    This is only needed when using the content interface. See the `Content
+    interface <https://snapcraft.io/docs/content-interface>`_ for more information.
+    """
+
     default_provider: str | None = pydantic.Field(
         default=None,
-        description="The default snap install to satisfy the interface.",
-        examples=["default-provider: gtk-common-themes"],
+        description="The name of the producer snap..",
+        examples=["gtk-common-themes"],
     )
+    """The name of the producer snap.
+
+    This is only needed when using the content interface. See the `Content interface
+    <https://snapcraft.io/docs/content-interface>`_ for more information.
+    """
 
     @pydantic.field_validator("default_provider")
     @classmethod
@@ -1115,26 +1169,58 @@ class Component(models.CraftBaseModel):
 
     summary: SummaryStr = pydantic.Field(
         description="The summary of the component.",
-        examples=["summary: Language translations for the app"],
+        examples=["Language translations for the app"],
     )
+    """The summary of the component.
+
+    This is a freeform field used to describe the purpose of the component.
+    """
+
     description: str = pydantic.Field(
         description="The full description of the component.",
         examples=[
-            "description: Contains optional translation packs to allow the user to change the language."
+            "Contains optional translation packs to allow the user to change the language."
         ],
     )
+    """The multi-line description of the component.
+
+    This is a freeform field used to describe the purpose of the component.
+    """
+
     type: Literal["test", "kernel-modules", "standard"] = pydantic.Field(
-        description="The component's type.", examples=["type: standard"]
+        description="The type of the component.", examples=["standard"]
     )
+    """The type of the component.
+
+    Different component types may have special handling by snapd.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Values
+          - Description
+        * - ``standard``
+          - General use type. Use when no specific type applies.
+        * - ``kernel-modules``
+          - For kernel modules in snaps with type ``kernel``.
+    """
+
     version: VersionStr | None = pydantic.Field(
         default=None,
         description="The version of the component.",
-        examples=["version: 1.2.3"],
+        examples=["1.2.3"],
     )
+    """The version of the component.
+
+    If the version is not provided, the component will be unversioned.
+    """
+
     hooks: dict[str, Hook] | None = pydantic.Field(
         default=None,
-        description="Configures the component's hooks.",
-        examples=["hooks: {configure: {plugs: [home]}}"],
+        description="The configuration for the component's hooks.",
+        examples=["{configure: {plugs: [home]}}"],
     )
 
 
@@ -1304,15 +1390,17 @@ class Project(models.Project):
         * - Value
           - Description
         * - ``app``
-          - lorem ipsum
+          - Default. Set the snap as an application.
         * - ``base``
-          - lorem ipsum
+          - Set the snap as a base.
         * - ``gadget``
-          - lorem ipsum
+          - Set the snap as a `gadget
+            <https://snapcraft.io/docs/the-gadget-snap>`_ snap.
         * - ``kernel``
-          - lorem ipsum
+          - Set the snap as a `kernel
+            <https://snapcraft.io/docs/the-kernel-snap>`_ snap.
         * - ``snapd``
-          - lorem ipsum
+          - Set the snap as a snapd snap.
 
     """
 
@@ -1440,15 +1528,15 @@ class Project(models.Project):
         description="The architecture sets where the snap can be built and where the resulting snap can run.",
         examples=[
             "[amd64, riscv64]",
-            "{build-on: [amd64], build-for: [amd64]}",
-            "{build-on: [amd64, riscv64], build-for: [riscv64]}",
+            "[{build-on: [amd64], build-for: [amd64]}]",
+            "[{build-on: [amd64, riscv64], build-for: [riscv64]}]",
         ],
     )
     """The architecture sets where the snap can be built and where the resulting
     snap can run.
 
     The architectures keyword is only used in core22 and older snaps. For
-    core24 and newer snaps, use the 'platforms' key.
+    core24 and newer snaps, use the ``platform`` key.
 
     Architectures may be defined as a shorthand list of architectures or a
     explicit pair of ``build-on``/``build-for`` entries.

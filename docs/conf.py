@@ -26,8 +26,12 @@ import snapcraft
 project_dir = pathlib.Path("..").resolve()
 sys.path.insert(0, str(project_dir.absolute()))
 
+# Add directories to sys path to simplify kitbash arguments
 model_dir = pathlib.Path("../snapcraft/models").resolve()
 sys.path.append(str(model_dir.absolute()))
+
+library_dir = pathlib.Path("../.venv/lib/python3.12/site-packages")
+sys.path.append(str(library_dir.absolute()))
 
 project = "Snapcraft"
 author = "Canonical Group Ltd"
