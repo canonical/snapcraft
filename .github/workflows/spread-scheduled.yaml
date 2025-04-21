@@ -106,7 +106,9 @@ jobs:
           path: tests
       - name: matter-sdk test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
+          spread \
+              google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/matter-sdk \
+              google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
 
   colcon-plugins:
     runs-on: [spread-installed]

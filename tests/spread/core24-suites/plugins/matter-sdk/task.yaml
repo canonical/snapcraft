@@ -1,4 +1,4 @@
-summary: Craft Parts matter SDK plugin test
+summary: Core24 matter SDK plugin test
 manual: true
 kill-timeout: 180m
 
@@ -17,6 +17,9 @@ execute: |
   start_time=$(date +"%Y-%m-%d %H:%M:%S")
   snap start matter-lighting
 
+  # wait for the snap to finish setting up
+  sleep 60
+
   # Check if storage path replacement from /tmp to SNAP_COMMON/mnt works
   for file in /tmp/chip_*; do
     if [ -e "$file" ]; then
@@ -25,7 +28,7 @@ execute: |
     fi
   done
 
-  if [ ! -e "/var/snap/matter-lighting/common/mnt/chip_*" ]; then
+  if ! find /var/snap/matter-lighting/common/mnt/ -maxdepth 1 -name "chip_*" | grep -q .; then
     echo "Error: /var/snap/matter-lighting/common/mnt/chip_* does not exist."
     exit 1
   fi
