@@ -2210,7 +2210,6 @@ dependencies = [
 dev = [
     { name = "coverage" },
     { name = "fixtures" },
-    { name = "flake8" },
     { name = "mccabe" },
     { name = "pexpect" },
     { name = "pip" },
@@ -2218,7 +2217,6 @@ dev = [
     { name = "pyflakes" },
     { name = "pyftpdlib" },
     { name = "pyinstaller", marker = "sys_platform == 'win32' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-oracular' and extra == 'group-9-snapcraft-dev-plucky')" },
-    { name = "pylint" },
     { name = "pymacaroons" },
     { name = "pyramid" },
     { name = "pytest" },
@@ -2260,6 +2258,10 @@ lint = [
     { name = "types-simplejson" },
     { name = "types-tabulate" },
     { name = "types-toml" },
+]
+tics = [
+    { name = "flake8" },
+    { name = "pylint" },
 ]
 types = [
     { name = "mypy" },
@@ -2319,7 +2321,6 @@ requires-dist = [
 dev = [
     { name = "coverage", extras = ["toml"] },
     { name = "fixtures" },
-    { name = "flake8" },
     { name = "mccabe" },
     { name = "pexpect" },
     { name = "pip" },
@@ -2327,7 +2328,6 @@ dev = [
     { name = "pyflakes" },
     { name = "pyftpdlib" },
     { name = "pyinstaller", marker = "sys_platform == 'win32'" },
-    { name = "pylint" },
     { name = "pymacaroons" },
     { name = "pyramid" },
     { name = "pytest" },
@@ -2361,6 +2361,10 @@ lint = [
     { name = "types-simplejson" },
     { name = "types-tabulate" },
     { name = "types-toml" },
+]
+tics = [
+    { name = "flake8" },
+    { name = "pylint" },
 ]
 types = [
     { name = "mypy" },
