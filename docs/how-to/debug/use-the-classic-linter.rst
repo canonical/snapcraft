@@ -25,13 +25,6 @@ The classic linter will issue a warning if the ELF binary it is testing either:
 See :ref:`how-to-disable-a-linter` for details on how to stop this linter from running.
 
 
-Find issues at build time
--------------------------
-
-To address classic linter issues, the appropriate ``rpath`` can be set during build
-time, or existing binaries can be patched to have their rpath changed.
-
-
 Fix Make warnings with linker flags
 -----------------------------------
 
@@ -41,9 +34,9 @@ adding options to the linker:
 - ``-Wl,-dynamic-linker=/snap/core22/current/lib64/ld-linux-x86-64.so.2``
 - ``-Wl,-rpath=/snap/core22/current/lib/x86_64-linux-gnu``
 
-In an Autotools project, if the ``LDFLAGS`` environment variable is used, the project
-file can be updated to pass these options to the Autotools plugin, using the
-``autotools-configure-parameters`` key for projects using the core20 base or newer:
+In an :ref:`Autotools <craft_parts_autotools_plugin>` project, if the ``LDFLAGS``
+environment variable is used, the project file can be updated to pass these options to
+the Autotools plugin. This is done by using the ``autotools-configure-parameters`` key:
 
 .. code-block:: yaml
 
@@ -95,13 +88,11 @@ You may also need to define the following environment variables in the part's
 
 .. code-block:: yaml
 
-    parts:
-      golang-classic-example:
-        plugin: go
-        # ...
-        build-environment:
-          - CGO_ENABLED: 1
-          - CGO_LDFLAGS_ALLOW: ".*"
+    plugin: go
+    # ...
+    build-environment:
+      - CGO_ENABLED: 1
+      - CGO_LDFLAGS_ALLOW: ".*"
 
 For more information on ``cgo``, see the `Go docs <https://pkg.go.dev/cmd/cgo>`_.
 
@@ -111,8 +102,8 @@ Patch ELF binaries
 A snap payload may also contain pre-built ELF binaries installed from arbitrary sources
 (typically from the distribution archive, after installing stage packages).
 
-In these cases, ``rpath`` must be set by modifying the existing binary using a tool
-such as ``patchelf``::
+If other methods aren't available, the ``rpath`` must be set by modifying the existing
+binary using a tool such as ``patchelf``::
 
     patchelf --force-rpath --set-rpath \$ORIGIN/lib foo
 
@@ -121,6 +112,10 @@ Or, to set the ELF interpreter, the following command can be used:
 .. code-block:: text
 
     patchelf --set-interpreter /snap/core22/current/lib64/ld-linux-x86-64.so.2 foo
+
+This can be done using override scripts in order to patch the binaries as part of
+the packaging of the snap. For more information, see `Override build steps
+<https://snapcraft.io/docs/overrides>`_.
 
 Enable automatic ELF file patching
 ----------------------------------
