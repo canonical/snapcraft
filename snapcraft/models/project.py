@@ -589,6 +589,31 @@ class App(models.CraftBaseModel):
 
     See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_ for
     more information.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``simple``
+          - Run as long as the service is active. This is the most common option.
+        * - ``forking``
+          - The app's ``command`` will call ``fork()`` as part of its start-up
+            and the parent process is expected to exit when start-up is
+            complete. This is used to support legacy fork-based Unix daemons.
+        * - ``oneshot``
+          - Run once and exit after completion, notifying systemd. After
+            completion, the daemon is still considered active and running.
+        * - ``notify``
+          - Allows the service to be managed by systemd. Requires the service to
+            send signals to the systemd notification socket by specifying
+            ``daemon-notify`` in the app's ``plugs`` definition.
+        * - ``dbus``
+          - ``Registers a D-Bus name to notify systemd. Requires ``bus-name`` or
+            ``activates-on`` to be specified.
+
     """
 
     after: UniqueList[str] = pydantic.Field(
@@ -623,7 +648,7 @@ class App(models.CraftBaseModel):
     for more information.
     """
 
-    refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
+    refresh_mode: Literal["restart", "endure", "ignore-running"] | None = (
         pydantic.Field(
             default=None,
             description="Determines how the service should restart when the snap refreshes.",
@@ -636,6 +661,21 @@ class App(models.CraftBaseModel):
 
     See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
     for more information.
+
+    **Values**
+
+    .. list-table::
+    :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``restart``
+          - Restart the service when the snap is refreshed. Default.
+        * - ``endure``
+          - Do not restart the service when the snap is refreshed.
+        * - ``ignore-running``
+          - Do not refresh the snap if the service is running.
+
     """
 
     stop_mode: (
@@ -706,6 +746,24 @@ class App(models.CraftBaseModel):
 
     See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
     for more information.
+
+    **Values**
+
+    .. list-table::
+       :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``enable``
+          - The service is started when the snap is installed. Additionally, if
+            the snap was installed without a service, then the snap is refreshed
+            to include a service. This will start the service too.
+        * - ``disable``
+          - The service is not automatically started. Instead, the service will
+            be started with `snapctl <https://snapcraft.io/docs/using-snapctl>`_
+            and another management agent, which is most commonly a `hook
+            <https://snapcraft.io/docs/supported-snap-hooks>`_.
+
     """
 
     slots: UniqueList[str] | None = pydantic.Field(
@@ -799,6 +857,18 @@ class App(models.CraftBaseModel):
 
     See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
     for more information.
+
+    **Values**
+
+    .. list-table::
+       :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``system``
+          - Run the service under the system instance of systemd.
+        * - ``user``
+          - Run the service under a user-session instance of systemd.
     """
 
     activates_on: UniqueList[str] | None = pydantic.Field(
@@ -1301,7 +1371,7 @@ class Project(models.Project):
     ) = pydantic.Field(
         default=None,
         description="The file layouts in the execution environment.",
-        examples=[" /var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}"],
+        examples=["/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}"],
     )
     """The file layouts in the execution environment.
 
