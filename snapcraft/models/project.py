@@ -653,7 +653,7 @@ class App(models.CraftBaseModel):
     for more information.
     """
 
-    refresh_mode: Literal["restart", "endure", "ignore-running"] | None = (
+    refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
         pydantic.Field(
             default=None,
             description="Determines how the service should restart when the snap refreshes.",
