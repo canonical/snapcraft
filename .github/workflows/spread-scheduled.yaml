@@ -1,5 +1,7 @@
 name: Spread (manual - large/flaky)
 on:
+  pull_request:
+    types: [labeled]
   schedule:
     # At 03:00 on Wednesday and Sunday.
     - cron: "0 3 * * WED,SUN"
@@ -7,6 +9,7 @@ on:
 
 jobs:
   snap-build:
+    if: ${{ github.event.label.name == 'run-manual-spread' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
