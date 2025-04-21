@@ -12,6 +12,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # speed up build times by using wheels, when available
+      - name: Use wheels
+        run: |
+          yq eval 'del(.parts.snapcraft.build-environment[] | select(.PIP_NO_BINARY == ":all:"))' -i snap/snapcraft.yaml
+
       - name: Build snapcraft snap
         id: build-snapcraft
         uses: canonical/action-build@v1

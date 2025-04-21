@@ -16,6 +16,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # speed up build times by using wheels, when available
+      - name: Use wheels
+        run: |
+          yq eval 'del(.parts.snapcraft.build-environment[] | select(.PIP_NO_BINARY == ":all:"))' -i snap/snapcraft.yaml
       - name: Build snap
         uses: canonical/action-build@v1
         id: snapcraft
