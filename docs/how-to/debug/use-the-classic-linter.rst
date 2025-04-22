@@ -99,11 +99,9 @@ For more information on ``cgo``, see the `Go docs <https://pkg.go.dev/cmd/cgo>`_
 Patch ELF binaries
 ------------------
 
-A snap payload may also contain pre-built ELF binaries installed from arbitrary sources
-(typically from the distribution archive, after installing stage packages).
-
-If other methods aren't available, the ``rpath`` must be set by modifying the existing
-binary using a tool such as ``patchelf``::
+If the other methods aren't applicable to the build process used by a snap, the
+``rpath`` can instead be set by modifying the existing binary using a tool such as
+``patchelf``::
 
     patchelf --force-rpath --set-rpath \$ORIGIN/lib foo
 
