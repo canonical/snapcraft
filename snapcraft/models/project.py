@@ -287,7 +287,7 @@ class Socket(models.CraftBaseModel):
 
     listen_stream: int | str = pydantic.Field(
         description="The socket's abstract name or socket path.",
-        examples=["listen-stream: $SNAP_COMMON/lxd/unix.socket", "listen-stream: 80"],
+        examples=["$SNAP_COMMON/lxd/unix.socket", "80"],
     )
     """The socket's abstract name or socket path.
 
@@ -297,7 +297,7 @@ class Socket(models.CraftBaseModel):
     socket_mode: int | None = pydantic.Field(
         default=None,
         description="The mode or permissions of the socket in octal.",
-        examples=["socket-mode: 0660"],
+        examples=["0660"],
     )
 
     @pydantic.field_validator("listen_stream")
@@ -334,7 +334,7 @@ class Lint(models.CraftBaseModel):
 
     ignore: list[str | dict[str, list[str]]] = pydantic.Field(
         description="Linters or files to skip when linting.",
-        examples=["lint: {ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"],
+        examples=["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"],
     )
 
     # A private field to simplify lookup.
@@ -395,10 +395,10 @@ class App(models.CraftBaseModel):
     following special characters: ``/, ., _, #, :, $, -``. If other characters are
     required, a wrapper script should be used for the command.
 
-    If the ``daemon`` is set, this will be the command to run the service. Only a
-    snap with classic confinement can use a relative path because PATH isn't
-    modified by a wrapper in classic confinement. See Classic confinement for more
-    details.
+    If the ``daemon`` is set, this will be the command to run the service. Only a snap
+    with classic confinement can use a relative path because PATH isn't modified by a
+    wrapper in classic confinement. See `Classic confinement
+    <https://snapcraft.io/docs/classic-confinement>`_ for more details.
     """
 
     autostart: str | None = pydantic.Field(
@@ -415,7 +415,7 @@ class App(models.CraftBaseModel):
 
     See `Autostart desktop files
     <https://snapcraft.io/docs/the-snap-format#heading--autostart>`_ for an
-    example of both the desktop file and the ``Exec`` file entry."
+    example of both the desktop file and the ``Exec`` file entry.
     """
 
     common_id: str | None = pydantic.Field(
@@ -774,7 +774,7 @@ class App(models.CraftBaseModel):
     slots: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The list of slots that the app provides.",
-        examples=["slots: [dbus-daemon]"],
+        examples=["[dbus-daemon]"],
     )
     """The list of slots that the app provides.
 
@@ -801,7 +801,7 @@ class App(models.CraftBaseModel):
     aliases: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The aliases that can be used to run the app.",
-        examples=["aliases: [my-app]"],
+        examples=["[my-app]"],
     )
     """The aliases that can be used to run the app.
 
@@ -836,7 +836,7 @@ class App(models.CraftBaseModel):
     sockets: dict[str, Socket] | None = pydantic.Field(
         default=None,
         description="The sockets used to activate an app.",
-        examples=["$SNAP_COMMON/lxd/unix.socket, socket-mode: 0660"],
+        examples=["{my-socket: $SNAP_COMMON/lxd/unix.socket, socket-mode: 0660}"],
     )
     """The sockets used to activate an app.
 
@@ -1033,12 +1033,12 @@ class Architecture(models.CraftBaseModel, extra="forbid"):
 
     build_on: str | UniqueList[str] = pydantic.Field(
         description="The architectures on which the snap can be built.",
-        examples=["build-on: amd64, riscv64"],
+        examples=["amd64, riscv64"],
     )
     build_for: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The single element list of the architecture where the snap can be run",
-        examples=["build-for: amd64, riscv64"],
+        examples=["amd64, riscv64"],
     )
 
 
@@ -1105,13 +1105,13 @@ class Platform(models.Platform):
 
     build_on: UniqueList[str] | None = pydantic.Field(
         description="The architectures on which the snap can be built.",
-        examples=["build-on: amd64, riscv64"],
+        examples=["amd64, riscv64"],
         min_length=1,
     )
     build_for: SingleEntryList | None = pydantic.Field(
         default=None,
         description="The single element list of the architecture the snap is built for.",
-        examples=["build-on: amd64, riscv64"],
+        examples=["amd64, riscv64"],
     )
 
     @pydantic.field_validator("build_on", "build_for", mode="before")
@@ -1310,7 +1310,7 @@ class Project(models.Project):
     donation: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The snap's donation links.",
-        examples=["donate@example.com, https://example.com/donate"],
+        examples=["[donate@example.com, https://example.com/donate]"],
     )
     """The snap's donation links.
 
@@ -1325,7 +1325,7 @@ class Project(models.Project):
     source_code: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
         description="The links to the source code of the snap or the original project.",
-        examples=["https://example.com/source-code"],
+        examples=["[https://example.com/source-code]"],
     )
     """The links to the source code of the snap or the original product.
 
@@ -1339,7 +1339,7 @@ class Project(models.Project):
     contact: UniqueList[str] | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
         default=None,
         description="The snap author's contact links and email addresses.",
-        examples=["contact@example.com, https://example.com/contact"],
+        examples=["[contact@example.com, https://example.com/contact]"],
     )
     """The snap author's contact links and email addresses.
 
@@ -1353,7 +1353,7 @@ class Project(models.Project):
     issues: UniqueList[str] | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
         default=None,
         description="The links and email addresses for submitting issues, bugs, and feature requests.",
-        examples=["issues@email.com, https://example.com/issues"],
+        examples=["[issues@email.com, https://example.com/issues]"],
     )
     """The links and email addresses for submitting issues, bugs, and feature
     requests.
@@ -1367,7 +1367,7 @@ class Project(models.Project):
     website: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The links to the original software's web pages.",
-        examples=["https://example.com"],
+        examples=["[https://example.com]"],
     )
     """The links to the original software's web pages.
 
@@ -1459,7 +1459,7 @@ class Project(models.Project):
     ) = pydantic.Field(
         default=None,
         description="The file layouts in the execution environment.",
-        examples=["/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}"],
+        examples=["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
     )
     """The file layouts in the execution environment.
 
@@ -1640,6 +1640,7 @@ class Project(models.Project):
     """The linter configuration settings.
 
     Snapcraft runs the following linters:
+
     - `classic <https://snapcraft.io/docs/linters-classic>`_: Verifies binary
       file parameters for snaps using `classic
       confinement <https://snapcraft.io/docs/snap-confinement>`_.
@@ -1722,7 +1723,7 @@ class Project(models.Project):
     build_packages: Grammar[list[str]] | None = pydantic.Field(
         default=None,
         description="The list of packages to install when building a snap.",
-        examples=["libssl-dev, libyaml-dev"],
+        examples=["[libssl-dev, libyaml-dev]"],
     )
     """The list of packages to install when building a snap.
 
@@ -1735,7 +1736,7 @@ class Project(models.Project):
     build_snaps: Grammar[list[str]] | None = pydantic.Field(
         default=None,
         description="The snaps to install when building a snap.",
-        examples=["go/1.22/stable, yq"],
+        examples=["[go/1.22/stable, yq]"],
     )
     """The snaps to install when building a snap.
 
@@ -1748,7 +1749,7 @@ class Project(models.Project):
     ua_services: set[str] | None = pydantic.Field(
         default=None,
         description="The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
-        examples=["ua_services: [esm-apps]"],
+        examples=["[esm-apps]"],
     )
     """The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when
     building the snap.

@@ -1508,17 +1508,13 @@ wheels = [
 
 [[package]]
 name = "pydantic-kitbash"
-version = "0.0.2"
-source = { registry = "https://pypi.org/simple" }
+version = "0.0.2.post5+ga5ee0ce"
+source = { git = "https://github.com/canonical/pydantic-kitbash#a5ee0cee0ebab80c85d9ab197fa105a85fe6b948" }
 dependencies = [
     { name = "docutils" },
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "sphinx" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/46/35ada26cc23d43680cd1fed3c0fa63a35e45c9901059bcaf284e458a572c/pydantic_kitbash-0.0.2.tar.gz", hash = "sha256:8845c28ac0c778c96fc59dc3c5685ce35c41bb0ff64c4ba1095741f9fc9f432d", size = 113555 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/09/6f/f9fffb9c22734adc50f102ab9bd97fc23ecf0879df6a5bef5f702ab4c30b/pydantic_kitbash-0.0.2-py3-none-any.whl", hash = "sha256:b98828355e1ab93c9be13ea3a10715cdbb78669f836e84aa555d70f89d8a8f87", size = 11770 },
 ]
 
 [[package]]
@@ -2353,7 +2349,7 @@ dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifi
 docs = [
     { name = "canonical-sphinx", extras = ["full"], specifier = ">=0.2.0" },
     { name = "docutils", specifier = "<0.20" },
-    { name = "pydantic-kitbash", specifier = ">=0.0.2" },
+    { name = "pydantic-kitbash", git = "https://github.com/canonical/pydantic-kitbash" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },

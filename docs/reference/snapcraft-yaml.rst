@@ -125,12 +125,14 @@ Hook keys
 ---------
 
 .. kitbash-model:: project.Hook
+    :prepend-name: hooks.<hook-type>
 
 
 Component keys
 --------------
 
 .. kitbash-model:: project.Component
+    :prepend-name: components.<component-name>
 
 
 Content plug keys
