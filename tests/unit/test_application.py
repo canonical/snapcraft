@@ -314,6 +314,7 @@ def test_application_plugins():
     # Just do some sanity checks.
     assert "python" in plugins
     assert "kernel" not in plugins
+    assert "initrd" in plugins
 
 
 @pytest.mark.parametrize(
