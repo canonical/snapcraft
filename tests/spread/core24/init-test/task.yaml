@@ -1,0 +1,14 @@
+summary: Init and execute tests
+
+prepare: |
+  mkdir test-snap
+  cd test-snap
+  snapcraft init
+
+restore: |
+  rm -rf test-snap
+  rm -rf ./*.snap
+
+execute: |
+  snapcraft init --profile=test
+  snapcraft test
