@@ -28,7 +28,7 @@ show you how to:
 - Define the project source files and main program
 - Package the snap
 - Modify the build process to enhance the snap's contents
-- Share system resources with the snap
+- Share root files with the snap
 
 
 What we'll work with
@@ -37,6 +37,9 @@ What we'll work with
 The object of this tutorial is to package `pyfiglet
 <https://github.com/pwaller/pyfiglet>`_ as a personal test snap. It's a lightweight app
 for displaying text as ASCII art, and is simple to build and test.
+
+The snap will be named *ukuzama-pyfiglet*, after a fictional user. Throughout this
+course, feel free to replace that username with your own.
 
 
 What you'll need
@@ -51,6 +54,18 @@ For this tutorial, you'll need:
 
 Install Snapcraft and LXD
 -------------------------
+
+.. admonition:: Before you install
+
+  If you have a Docker installation, you might run into conflicts with LXD over the
+  course of this tutorial. As a remedy, you can let Snapcraft build with Multipass
+  instead. To do so, start a fresh terminal session and run:
+
+  .. code-block:: bash
+
+    SNAPCRAFT_BUILD_ENVIRONMENT=multipass
+
+  Then, proceed to :ref:`tutorial-craft-a-snap-begin-project`.
 
 Snapcraft is itself available as a snap. Let's begin by installing it. In a terminal,
 run:
@@ -98,6 +113,8 @@ Finally, initialise LXD with a lightweight, default configuration:
   :end-at: lxd init --minimal
   :dedent: 2
 
+
+.. _tutorial-craft-a-snap-begin-project:
 
 Begin the project
 -----------------
@@ -158,8 +175,8 @@ Since we're packaging a project authored by someone else, we ought to respect th
 intentions and thinking in the description keys. So, we reused them. The ``summary`` is
 a short description with a hard limit of 79 characters, but nothing like that is present
 in the pyfiglet README. Instead, we sourced one from the upstream project at `figlet.org
-<https://www.figlet.org>`_. The fuller ``description`` key, which has no length limit,
-is taken from pyfiglet. We added a disclaimer about endorsement at the end.
+<http://www.figlet.org>`_. The fuller ``description`` key, which has no length limit, is
+taken from pyfiglet. We added a disclaimer about endorsement at the end.
 
 
 Define the target platforms
@@ -211,8 +228,8 @@ We set ``source-type`` to ``git`` because the project is stored as a Git reposit
 We set ``source`` to the remote location of the project. Some software projects take
 responsibility for their own snaps, and store their own ``snapcraft.yaml`` file in the
 source code. With pyfiglet, we're merely handling the packaging on the project's behalf,
-meaning our project file is downstream and dependent of it. By pointing to a remote URL,
-Snapcraft will download the source before it packs the snap.
+meaning our project file is downstream of and dependent on it. By pointing to a remote
+URL, Snapcraft will download the source before it packs the snap.
 
 
 Pack the snap
@@ -379,6 +396,20 @@ FIGlet can draw with different typeface styles, too. It's a fun little command.
                   /
 
 
+Clean the build container
+-------------------------
+
+Before we continue, we should perform some pre-emptive housekeeping.
+
+As we progress through a build, the contents of the build container can become dirty,
+and eventually cause conflicts or break the build. It's a good idea to periodically
+flush the container for the next build:
+
+.. code-block:: bash
+
+    snapcraft clean
+
+
 Override the main part's build
 ------------------------------
 
@@ -458,8 +489,8 @@ Interfaces are established with the ``plug`` key on apps. Let's connect our
         plugs:
           - home
 
-If we repack and reinstall the snap, can install a font to our local home directories.
-However, before we repack, let's go back to two keys we skipped at the start.
+If we repack and reinstall the snap, we can install a font to our system. However,
+before we repack, let's go back to two keys we skipped at the start.
 
 
 Secure the snap
@@ -500,8 +531,8 @@ Build and reinstall the snap, but this time, install it like a production-ready 
 
 .. note::
 
-    We will continue passing the ``--dangerous`` flag until the snap is published to the
-    Snap Store.
+    We will continue passing the ``--dangerous`` argument during installation until the
+    snap is published to the Snap Store.
 
 Next, let's gather a font that wasn't included with pyfiglet and install it. Download
 `Small Braille <https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf>`_ from
@@ -510,7 +541,7 @@ the figlet-fonts project. Install it and verify it with:
 .. code-block:: bash
 
     ukuzama-pyfiglet -L ~/Downloads/smbraille.tlf
-    ls ~/.local/pyfiglet/fonts # todo: verify
+    ls /usr/share/pyfiglet # todo: verify
 
 It should be listed:
 
@@ -518,24 +549,11 @@ It should be listed:
 
     braille
 
-And you're done! Your snap is functioning normally on your system.
-
-
-Clean up
---------
-
-Snapcraft is quite portable, so there's not much tidying up needed when you're finished.
-
-It's a good idea to reset the contents of the build container so it's fresh for next
-time:
-
-.. code-block:: bash
-
-    snapcraft clean
-
 
 Conclusion and next steps
 -------------------------
+
+And you're done! Your snap is functioning normally on your system.
 
 It would be a good time to start planning for your first public snap. Ask yourself, what
 software would be interesting in packaging? What apps would benefit the most from the

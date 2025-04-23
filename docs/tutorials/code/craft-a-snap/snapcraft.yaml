@@ -16,12 +16,16 @@ parts:
   pyfiglet:
     plugin: python
     source-type: git
-    source: https://github.com/pwaller/pyfiglet
+    source: https://github.com/medubelko/pyfiglet
     override-build: |
       mkdir pyfiglet/fonts
       cp pyfiglet/fonts-contrib/* pyfiglet/fonts
       cp pyfiglet/fonts-standard/* pyfiglet/fonts
       craftctl default
+
+layout:
+  /usr/local/share:
+    bind: $SNAP/usr/local/share
 
 apps:
   ukuzama-pyfiglet:
