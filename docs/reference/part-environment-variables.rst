@@ -7,6 +7,55 @@ When building a part to construct a snap, Snapcraft creates the following sets o
 environment variables that can optionally be used by a part's build mechanism:
 
 
+Configuration
+-------------
+
+For all environment variables related to system architectures, see
+:ref:`architectures-project-variables`.
+
+In addition to architecture-related variables, the following environment variables are
+also set:
+
+
+core22 and core24
+~~~~~~~~~~~~~~~~~
+
+.. list-table::
+
+    * - ``CRAFT_PARALLEL_BUILD_COUNT``
+
+        ``SNAPCRAFT_PARALLEL_BUILD_COUNT``
+      - The preferred number of jobs to build the project with.
+    * - ``CRAFT_PROJECT_NAME``
+
+        ``SNAPCRAFT_PROJECT_NAME``
+      - The Snapcraft project name set by the project file's ``name`` key.
+    * - ``SNAPCRAFT_PROJECT_VERSION``
+      - The Snapcraft project version set by the project file's ``version`` key.
+    * - ``SNAPCRAFT_PROJECT_GRADE``
+      - The Snapcraft project grade set in the project file.
+    * - ``CRAFT_PART_NAME``
+      - The part currently being processed, as set by the part's name in the project
+        file.
+    * - ``CRAFT_STEP_NAME``
+      - The step currently being executed.
+
+
+core20
+~~~~~~
+
+.. list-table::
+
+    * - ``SNAPCRAFT_PARALLEL_BUILD_COUNT``
+      - The preferred number of jobs to build the project with.
+    * - ``SNAPCRAFT_PROJECT_NAME``
+      - The Snapcraft project name set by the project file's ``name`` key.
+    * - ``SNAPCRAFT_PROJECT_VERSION``
+      - The Snapcraft project version set by the project file's ``version`` key.
+    * - ``SNAPCRAFT_PROJECT_GRADE``
+      - The Snapcraft project grade set in the project file.
+
+
 Directories
 -----------
 
@@ -14,8 +63,8 @@ See :ref:`explanation-parts-lifecycle` for details on which directories are crea
 building a part.
 
 
-core22 | core24
-~~~~~~~~~~~~~~~
+core22 and core24
+~~~~~~~~~~~~~~~~~
 
 Snapcraft exposes the following directory-related environment variables when building with
 core22 and core24:
@@ -87,52 +136,3 @@ part with core20:
       - The absolute path to the root of the Snapcraft project.
     * - ``SNAPCRAFT_STAGE``
       - The absolute path to where files are staged.
-
-
-Configuration
--------------
-
-For all environment variables related to system architectures, see
-:ref:`architectures-project-variables`.
-
-In addition to architecture-related variables, the following environment variables are
-also set:
-
-
-core22 | core24
-~~~~~~~~~~~~~~~
-
-.. list-table::
-
-    * - ``CRAFT_PARALLEL_BUILD_COUNT``
-
-        ``SNAPCRAFT_PARALLEL_BUILD_COUNT``
-      - The preferred number of jobs to build the project with.
-    * - ``CRAFT_PROJECT_NAME``
-
-        ``SNAPCRAFT_PROJECT_NAME``
-      - The Snapcraft project name set by the project file's ``name`` key.
-    * - ``SNAPCRAFT_PROJECT_VERSION``
-      - The Snapcraft project version set by the project file's ``version`` key.
-    * - ``SNAPCRAFT_PROJECT_GRADE``
-      - The Snapcraft project grade set in the project file.
-    * - ``CRAFT_PART_NAME``
-      - The part currently being processed, as set by the part's name in the project
-        file.
-    * - ``CRAFT_STEP_NAME``
-      - The step currently being executed.
-
-
-core20
-~~~~~~
-
-.. list-table::
-
-    * - ``SNAPCRAFT_PARALLEL_BUILD_COUNT``
-      - The preferred number of jobs to build the project with.
-    * - ``SNAPCRAFT_PROJECT_NAME``
-      - The Snapcraft project name set by the project file's ``name`` key.
-    * - ``SNAPCRAFT_PROJECT_VERSION``
-      - The Snapcraft project version set by the project file's ``version`` key.
-    * - ``SNAPCRAFT_PROJECT_GRADE``
-      - The Snapcraft project grade set in the project file.
