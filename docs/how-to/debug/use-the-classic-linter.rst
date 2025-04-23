@@ -3,22 +3,15 @@
 Use the classic linter
 ======================
 
-Snapcraft uses :ref:`linters <reference-linters>` to check for issues during builds.
-Linters can only be specified in snaps that use the core22 base or higher. Warnings
-are still reported for snaps that use older bases.
-
-The classic linter is a Snapcraft linter that is used to verify binary file parameters
-to ensure they are set appropriately for snaps using
-:ref:`explanation-classic-confinement`.
-
-The classic linter is only invoked when snap confinement is set to ``classic``, or if
-``libc`` is staged.
+The *classic linter* in Snapcraft verifies binary file parameters to ensure they are set
+appropriately for snaps. The classic linter is only invoked when a snap has
+:ref:`classic confinement <explanation-classic-confinement>` or it stages ``libc``.
 
 The classic linter will issue a warning if the ELF binary it is testing either:
 
-- does not have the correct dynamic linker (either from the base or the staged
-  ``libc``)
-- does not have an ``rpath`` (run-time search path) set to a value needed to load
+- Doesn't have the correct dynamic linker (either from the base or the staged
+  ``libc``), or
+- Doesn't have an ``rpath`` (run-time search path) set to a value needed to load
   shared library dependencies, either from the base or from the snap if the dependency
   is not part of the base.
 
