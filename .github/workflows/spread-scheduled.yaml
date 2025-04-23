@@ -1,5 +1,7 @@
-name: Scheduled spread tests
+name: Spread (manual - large/flaky)
 on:
+  pull_request:
+    types: [labeled]
   schedule:
     # At 03:00 on Wednesday and Sunday.
     - cron: "0 3 * * WED,SUN"
@@ -7,12 +9,17 @@ on:
 
 jobs:
   snap-build:
+    if: ${{ github.event.label.name == 'run-manual-spread' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # speed up build times by using wheels, when available
+      - name: Use wheels
+        run: |
+          yq eval 'del(.parts.snapcraft.build-environment[] | select(.PIP_NO_BINARY == ":all:"))' -i snap/snapcraft.yaml
       - name: Build snap
         uses: canonical/action-build@v1
         id: snapcraft
@@ -99,7 +106,9 @@ jobs:
           path: tests
       - name: matter-sdk test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
+          spread \
+              google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/matter-sdk \
+              google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
 
   colcon-plugins:
     runs-on: [spread-installed]
@@ -124,4 +133,49 @@ jobs:
           spread google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello \
             google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-msg-package \
             google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-packages-ignore \
-            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener
+            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener \
+            google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
+
+  extensions:
+    runs-on: [spread-installed]
+    needs: [snap-build]
+    steps:
+      - name: Cleanup job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout snapcraft
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Download snap artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snap
+          path: tests
+      - name: extensions test
+        run: |
+          spread google.*:tests/spread/extensions/
+
+  core20-plugins:
+    runs-on: [spread-installed]
+    needs: [snap-build]
+    steps:
+      - name: Cleanup job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout snapcraft
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Download snap artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: snap
+          path: tests
+      - name: core20 plugins test
+        run: |
+          spread google:ubuntu-20.04-64:tests/spread/plugins/v2/
