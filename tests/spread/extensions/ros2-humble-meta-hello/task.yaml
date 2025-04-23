@@ -7,7 +7,7 @@ environment:
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
   SNAP: colcon-ros2-wrapper
-  SNAP_DIR: "../../plugins/craft-parts/build-and-run-hello/$SNAP"
+  SNAP_DIR: "../../plugins/craft-parts/colcon-hello/$SNAP"
 
   META_SNAP/colcon_humble_ros_core: ros-humble-ros-core
   EXTENSION/colcon_humble_ros_core: ros2-humble-ros-core

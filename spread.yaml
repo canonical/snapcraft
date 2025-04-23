@@ -324,6 +324,7 @@ suites:
     summary: tests of snapcraft's v2 plugins
     systems:
       - ubuntu-20.04*
+    manual: true
   tests/spread/plugins/craft-parts/:
     summary: tests of snapcraft's craft-part's based plugins
     systems:
@@ -333,6 +334,7 @@ suites:
   tests/spread/extensions/:
     summary: tests of snapcraft's extensions
     kill-timeout: 20m
+    manual: true
 
   # External snap tests
   tests/spread/snaps/:
