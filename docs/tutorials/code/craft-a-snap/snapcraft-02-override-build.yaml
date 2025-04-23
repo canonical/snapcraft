@@ -12,26 +12,25 @@ description: |
 platforms:
   amd64:
 
-grade: stable
-confinement: strict
+grade: devel
+confinement: devmode
 
 parts:
   pyfiglet:
     plugin: python
     source-type: git
     source: https://github.com/medubelko/pyfiglet
+    stage-packages: [python3-minimal, python3.12-minimal]
     override-build: |
       mkdir pyfiglet/fonts
       cp pyfiglet/fonts-contrib/* pyfiglet/fonts
       cp pyfiglet/fonts-standard/* pyfiglet/fonts
       craftctl default
 
-layout:
-  /usr/local/share:
-    bind: $SNAP/usr/local/share
-
 apps:
   ukuzama-pyfiglet:
     command: bin/pyfiglet
     plugs:
       - home
+    environment:
+      PYTHONPATH: /snap/ukuzama-pyfiglet/x2/lib/python3.12/site-packages

@@ -6,7 +6,6 @@ description: |
   pyfiglet is a full port of FIGlet (http://www.figlet.org/) into pure python.
   It takes ASCII text and renders it in ASCII art fonts (like the title above,
   which is the 'block' font).
-
   This snap is not endorsed by the pyfiglet project.
 
 platforms:
@@ -20,6 +19,7 @@ parts:
     plugin: python
     source-type: git
     source: https://github.com/medubelko/pyfiglet
+    stage-packages: [python3-minimal, python3.12-minimal]
     override-build: |
       mkdir pyfiglet/fonts
       cp pyfiglet/fonts-contrib/* pyfiglet/fonts
@@ -35,3 +35,5 @@ apps:
     command: bin/pyfiglet
     plugs:
       - home
+    environment:
+      PYTHONPATH: /snap/ukuzama-pyfiglet/x3/lib/python3.12/site-packages

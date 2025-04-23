@@ -57,61 +57,61 @@ Install Snapcraft and LXD
 
 .. admonition:: Before you install
 
-  If you have a Docker installation, you might run into conflicts with LXD over the
-  course of this tutorial. As a remedy, you can let Snapcraft build with Multipass
-  instead. To do so, start a fresh terminal session and run:
+    If you have a Docker installation, you might run into conflicts with LXD over the
+    course of this tutorial. As a remedy, you can let Snapcraft build with Multipass
+    instead. To do so, start a fresh terminal session and run:
 
-  .. code-block:: bash
+    .. code-block:: bash
 
-    SNAPCRAFT_BUILD_ENVIRONMENT=multipass
+        SNAPCRAFT_BUILD_ENVIRONMENT=multipass
 
-  Then, proceed to :ref:`tutorial-craft-a-snap-begin-project`.
+    Then, proceed to :ref:`tutorial-craft-a-snap-begin-project`.
 
 Snapcraft is itself available as a snap. Let's begin by installing it. In a terminal,
 run:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
-  :language: bash
-  :start-at: sudo snap install snapcraft --classic
-  :end-at: sudo snap install snapcraft --classic
-  :dedent: 2
+    :language: bash
+    :start-at: snap install snapcraft --classic
+    :end-at: snap install snapcraft --classic
+    :dedent: 2
 
 Next, let's add LXD to your system. It functions as the build provider and containerize
 the build environment.
 
 .. literalinclude:: code/craft-a-snap/task.yaml
-  :language: bash
-  :start-at: sudo snap install --channel 5.21/stable lxd
-  :end-at: sudo snap install --channel 5.21/stable lxd
-  :dedent: 2
+    :language: bash
+    :start-at: snap install --channel 5.21/stable lxd
+    :end-at: snap install --channel 5.21/stable lxd
+    :dedent: 2
 
 You also need to add your user account to the ``lxd`` group so you can access the tool's
 resources:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
-  :language: bash
-  :start-at: sudo usermod -a -G lxd $USER
-  :end-at: sudo usermod -a -G lxd $USER
-  :dedent: 2
+    :language: bash
+    :start-at: sudo usermod -a -G lxd $USER
+    :end-at: sudo usermod -a -G lxd $USER
+    :dedent: 2
 
 Log out and back in to your account for the new group to become active. Then, check that
 you're a member of the group by running:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
-  :language: bash
-  :start-at: groups $USER
-  :end-at: groups $USER
-  :dedent: 2
+    :language: bash
+    :start-at: groups $USER
+    :end-at: groups $USER
+    :dedent: 2
 
 Look for ``lxd`` in the output.
 
 Finally, initialise LXD with a lightweight, default configuration:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
-  :language: bash
-  :start-at: lxd init --minimal
-  :end-at: lxd init --minimal
-  :dedent: 2
+    :language: bash
+    :start-at: lxd init --minimal
+    :end-at: lxd init --minimal
+    :dedent: 2
 
 
 .. _tutorial-craft-a-snap-begin-project:
@@ -122,18 +122,21 @@ Begin the project
 Every snap project resides in its own directory. Start by creating one in a development
 space on your system:
 
-.. code-block:: bash
-
-    mkdir ukuzama-pyfiglet
-    cd ukuzama-pyfiglet
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: mkdir ukuzama-pyfiglet
+    :end-at: cd ukuzama-pyfiglet
+    :dedent: 2
 
 A snap is defined in a declarative ``snapcraft.yaml`` file, called the *project file*.
 By constructing the file key by key, we'll be building the snap's particulars. Snapcraft
 has an ``init`` command that spawns a template project file. Let's start with that:
 
-.. code-block:: bash
-
-    snapcraft init
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: snapcraft init
+    :end-at: snapcraft init
+    :dedent: 2
 
 From here onward, we'll be working primarily in the project file. Open
 ``snap/snapcraft.yaml`` in a text editor.
@@ -149,19 +152,11 @@ in the template describe how to use these keys.
 
 Replace the top section with:
 
-.. code-block:: yaml
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
     :caption: snapcraft.yaml
-
-    name: ukuzama-pyfiglet
-    base: core24
-    version: '0.1'
-    summary: pyfiglet is a program for making large letters out of ordinary text
-    description: |
-      pyfiglet is a full port of FIGlet (http://www.figlet.org/) into pure python. It takes
-      ASCII text and renders it in ASCII art fonts (like the title above, which is the
-      'block' font).
-
-      This snap is not endorsed by the pyfiglet project.
+    :start-at: name: ukuzama-pyfiglet
+    :end-at: This snap is not endorsed by the pyfiglet project.
 
 As this is a personal snap, we prepended the project name with a user name. Replace
 ``ukuzama`` with your own user name. You might encounter other snaps in the Snap Store
@@ -189,11 +184,11 @@ the coverage in this configuration.
 
 Add the ``platform`` key after the project information:
 
-.. code-block:: yaml
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
     :caption: snapcraft.yaml
-
-    platforms:
-      amd64:
+    :start-at: platforms:
+    :end-at: amd64:
 
 With this delcaration, Snapcraft will only build the snap on AMD64 machines, for AMD64
 machines. Take care to preserve the colon (:) in ``amd64:``.
@@ -209,14 +204,11 @@ aggregate them from a variety of locations.
 
 For the ``parts`` key, add an entry for our main part, the ``pyfiglet`` source code:
 
-.. code-block:: yaml
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
     :caption: snapcraft.yaml
-
-    parts:
-      pyfiglet:
-        plugin: python
-        source-type: git
-        source: https://github.com/pwaller/pyfiglet
+    :start-at: parts:
+    :end-at: source: https://github.com/medubelko/pyfiglet
 
 Parts have three important keys worth discussing.
 
@@ -238,9 +230,11 @@ Pack the snap
 We have what we need for a basic snap build. Let's see what happens when we pack the
 snap:
 
-.. code-block:: bash
-
-    snapcraft pack
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: snapcraft pack
+    :end-at: snapcraft pack
+    :dedent: 2
 
 After a few seconds, the final result is:
 
@@ -333,12 +327,11 @@ main program -- the ``/bin/pyfiglet`` file we saw earlier.
 
 Add the following after the ``parts`` section:
 
-.. code-block:: yaml
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
     :caption: snapcraft.yaml
-
-    apps:
-      ukuzama-pyfiglet:
-        command: bin/figlet
+    :start-at: apps:
+    :end-at: command: bin/pyfiglet
 
 As this is the *main* app -- in other words, the command we want to run when the user
 calls the snap by name -- it should match the snap name.
@@ -356,9 +349,11 @@ Let's repack the snap and try running it. First, run ``snapcraft pack`` again.
 
 Then, install the snap locally:
 
-.. code-block:: bash
-
-    snap install ukuzama-pyfiglet_0.1_amd64.snap --devmode --dangerous
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: snap install ukuzama-pyfiglet_0.1_amd64.snap --devmode --dangerous
+    :end-at: snap install ukuzama-pyfiglet_0.1_amd64.snap --devmode --dangerous
+    :dedent: 2
 
 Normally, snapd prevents us from installing snaps that aren't vetted or confined. But,
 if we tell it we're comfortable with installing a snap with full system access and that
@@ -368,9 +363,11 @@ these flags.
 
 At long last, let's try running our snap.
 
-.. code-block:: bash
-
-    ukuzama-pyfiglet hello, world!
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: ukuzama-pyfiglet hello, world!
+    :end-at: ukuzama-pyfiglet hello, world!
+    :dedent: 2
 
 You should see the succesful result:
 
@@ -383,7 +380,7 @@ You should see the succesful result:
    |_| |_|\___|_|_|\___( )   \_/\_/ \___/|_|  |_|\__,_(_)
                        |/
 
-FIGlet can draw with different typeface styles, too. It's a fun little command.
+Pyfiglet can draw with different typeface styles, too. It's a fun little command.
 
 .. terminal::
     :input: ukuzama-pyfiglet -f smscript ciao, mondo!
@@ -405,9 +402,11 @@ As we progress through a build, the contents of the build container can become d
 and eventually cause conflicts or break the build. It's a good idea to periodically
 flush the container for the next build:
 
-.. code-block:: bash
-
-    snapcraft clean
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: snapcraft clean
+    :end-at: snapcraft clean
+    :dedent: 2
 
 
 Override the main part's build
@@ -430,19 +429,12 @@ adjustments of that sort to the build, but through the project file.
 
 Add the following ``override-build`` key to the ``pyfiglet`` part:
 
-.. code-block:: yaml
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
     :caption: snapcraft.yaml
-
-    parts:
-      pyfiglet:
-        plugin: python
-        source-type: git
-        source: https://github.com/pwaller/pyfiglet
-        override-build: |
-          mkdir pyfiglet/fonts
-          cp pyfiglet/fonts-contrib/* pyfiglet/fonts
-          cp pyfiglet/fonts-standard/* pyfiglet/fonts
-          craftctl default
+    :start-at: parts:
+    :end-at: craftctl default
+    :emphasize-lines: 6-10
 
 The key does what its name suggests. It replaces the regular build step of the part's
 lifeycle, running whatever shell commands we provide to special effect. In this case,
@@ -479,15 +471,12 @@ To enable writing to the home directory, we must connect the home interface.
 Interfaces are established with the ``plug`` key on apps. Let's connect our
 ``ukuzama-pyfiglet`` app to the home interface:
 
-.. code-block:: yaml
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
     :caption: snapcraft.yaml
+    :start-at: apps:
+    :end-at: - home
     :emphasize-lines: 4-5
-
-    apps:
-      ukuzama-pyfiglet:
-        command: bin/pyfiglet
-        plugs:
-          - home
 
 If we repack and reinstall the snap, we can install a font to our system. However,
 before we repack, let's go back to two keys we skipped at the start.
@@ -500,18 +489,18 @@ Now that we're handling interfaces and sandboxing -- usually the last step in th
 crafting process -- the ``grade`` and ``confinement`` keys are relevant.
 
 These keys account for the security and stability of the snap. The ``grade`` key is a
-self-attestation of how risky the snap is. When set to ``devmode``, snapd and snap
-stores won't treat it as ready for production. The ``confinement`` key determines
-whether the snap needs special classic confinement, which removes all guardrails and
-grants the snap full system access.
+self-attestation of how risky the snap is. When set to ``devel``, snapd and snap stores
+won't treat it as ready for production. The ``confinement`` key determines whether the
+snap needs less confinement to function, where it has fewer guardrails and greater
+access to the system.
 
 We want our snap to be as safe and secure as possible, so let's change these values to:
 
-.. code-block:: yaml
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
     :caption: snapcraft.yaml
-
-    grade: stable
-    confinement: strict
+    :start-at: grade: stable
+    :end-at: confinement: strict
 
 Now, when we build the snap, the snap's access to the host is inverted -- all sensitive
 system resources are blocked unless facilitated by an interface. And when we publish the
@@ -525,9 +514,11 @@ Now that the snap is confined, we can realistically test the home interface conn
 
 Build and reinstall the snap, but this time, install it like a production-ready snap:
 
-.. code-block:: bash
-
-    snap install ukuzama-pyfiglet --dangerous
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: snap install ukuzama-pyfiglet_0.1_amd64.snap --dangerous
+    :end-at: snap install ukuzama-pyfiglet_0.1_amd64.snap --dangerous
+    :dedent: 2
 
 .. note::
 
@@ -548,6 +539,18 @@ It should be listed:
 .. terminal::
 
     braille
+
+
+Review the project file
+-----------------------
+
+Here's the complete code for the ukuzama-pyfiglet project. Yours should look similar to
+it.
+
+.. collapse:: snapcraft.yaml of ukuzama-pyfiglet
+
+    .. literalinclude:: code/craft-a-snap/snapcraft.yaml
+        :language: yaml
 
 
 Conclusion and next steps
