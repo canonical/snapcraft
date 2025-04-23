@@ -33,4 +33,4 @@ apps:
     plugs:
       - home
     environment:
-      PYTHONPATH: /snap/ukuzama-pyfiglet/x2/lib/python3.12/site-packages
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages

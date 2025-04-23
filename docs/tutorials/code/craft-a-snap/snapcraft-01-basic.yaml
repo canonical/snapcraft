@@ -26,4 +26,4 @@ apps:
   ukuzama-pyfiglet:
     command: bin/pyfiglet
     environment:
-      PYTHONPATH: /snap/ukuzama-pyfiglet/x1/lib/python3.12/site-packages
+      PYTHONPATH: $SNAP/lib/python3.12/site-packages
