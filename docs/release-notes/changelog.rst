@@ -3,6 +3,9 @@
 Changelog
 *********
 
+Starting with Snapcraft 8.7.0, information about releases can be found in the
+:ref:`release notes<release-notes>`.
+
 ..
   release template:
 
