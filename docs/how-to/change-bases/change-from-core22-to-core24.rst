@@ -3,10 +3,13 @@
 Change from core22 to core24
 ============================
 
-Support for core24 occurs via the `craft-application
-<https://github.com/canonical/craft-application>`_ library. Craft application
-introduces changes to the lifecycle, adds a new remote builder, and replaces
-the concept of ``architectures`` with ``platforms``.
+This guide describes the process for migrating a snap that uses core22 as its base to
+core24.
+
+Support for core24 is provided by the `Craft Application
+<https://github.com/canonical/craft-application>`_ library. Craft Application introduced
+changes to the lifecycle, added a new remote builder, and replaced the concept of
+``architectures`` with ``platforms``. These updates inform the migration process.
 
 Deprecated features
 -------------------
