@@ -143,9 +143,3 @@ Content plug keys
 
 .. kitbash-model:: project.ContentPlug
     :prepend-name: plugs.<plug-name>
-
-
-Architecture keys
------------------
-
-.. kitbash-model:: project.Architecture
