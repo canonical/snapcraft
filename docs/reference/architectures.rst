@@ -162,6 +162,8 @@ is equivalent to:
 The explicit and shorthand format cannot be mixed.
 
 
+.. _architectures-project-variables:
+
 Project variables
 -----------------
 
