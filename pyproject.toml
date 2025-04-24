@@ -88,7 +88,7 @@ dev = [
 ]
 docs = [
     "canonical-sphinx[full]>=0.4.0",
-    "docutils<0.22", # Frozen until we can update sphinx dependencies.
+    "docutils",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
     "sphinxcontrib-details-directive",
