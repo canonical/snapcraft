@@ -1607,7 +1607,7 @@ class Project(models.Project):
     This is useful for early testing of a new feature in snapd that isn't yet supported
     by Snapcraft.
 
-    To pass a value for a particular app, see the ``passthrough key`` for ``apps``.
+    To pass a value for a particular app, see the ``passthrough`` key for ``apps``.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_.
