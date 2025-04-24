@@ -836,7 +836,9 @@ class App(models.CraftBaseModel):
     sockets: dict[str, Socket] | None = pydantic.Field(
         default=None,
         description="The sockets used to activate an app.",
-        examples=["{my-socket: $SNAP_COMMON/lxd/unix.socket, socket-mode: 0660}"],
+        examples=[
+            "{my-socket: {listen-stream: $SNAP_COMMON/lxd/unix.socket, socket-mode: 0660}}"
+        ],
     )
     """The sockets used to activate an app.
 
@@ -1033,12 +1035,12 @@ class Architecture(models.CraftBaseModel, extra="forbid"):
 
     build_on: str | UniqueList[str] = pydantic.Field(
         description="The architectures on which the snap can be built.",
-        examples=["amd64, riscv64"],
+        examples=["[amd64, riscv64]"],
     )
     build_for: str | UniqueList[str] | None = pydantic.Field(
         default=None,
-        description="The single element list of the architecture where the snap can be run",
-        examples=["amd64, riscv64"],
+        description="The single element list containing the architecture where the snap can be run",
+        examples=["[amd64]", "[riscv64]"],
     )
 
 
@@ -1105,13 +1107,13 @@ class Platform(models.Platform):
 
     build_on: UniqueList[str] | None = pydantic.Field(
         description="The architectures on which the snap can be built.",
-        examples=["amd64, riscv64"],
+        examples=["[amd64, riscv64]"],
         min_length=1,
     )
     build_for: SingleEntryList | None = pydantic.Field(
         default=None,
-        description="The single element list of the architecture the snap is built for.",
-        examples=["amd64, riscv64"],
+        description="The single element list containing the architecture the snap is built for.",
+        examples=["[amd64]", "[riscv64]"],
     )
 
     @pydantic.field_validator("build_on", "build_for", mode="before")
@@ -1596,9 +1598,20 @@ class Project(models.Project):
 
     passthrough: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="Attributes to not validate for correctness. Useful for testing experimental snapd features.",
+        description="The attributes to pass to the snap's metadata file.",
         examples=["{daemon: complex}"],
     )
+    """The attributes to pass to the snap's metadata file.
+
+    These attributes are passed to ``snap.yaml`` without validation from Snapcraft.
+    This is useful for early testing of a new feature in snapd that isn't yet supported
+    by Snapcraft.
+
+    To pass a value for a particular app, see the ``passthrough key`` for ``apps``.
+
+    See `Using development features in Snapcraft
+    <https://snapcraft.io/docs/using-in-development-features>`_.
+    """
 
     apps: dict[str, App] | None = pydantic.Field(
         default=None,

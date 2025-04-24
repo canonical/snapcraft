@@ -86,6 +86,8 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: craft_application.models.project.Project parts
 
+.. kitbash-field:: craft_application.models.project.Project package_repositories
+
 .. kitbash-field:: project.Project hooks
 
 .. kitbash-field:: project.Project components
@@ -119,6 +121,7 @@ Socket keys
 -----------
 
 .. kitbash-model:: project.Socket
+    :prepend-name: sockets.<socket-name>
 
 
 Hook keys
@@ -139,3 +142,10 @@ Content plug keys
 -----------------
 
 .. kitbash-model:: project.ContentPlug
+    :prepend-name: plugs.<plug-name>
+
+
+Architecture keys
+-----------------
+
+.. kitbash-model:: project.Architecture
