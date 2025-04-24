@@ -33,6 +33,7 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.snapcraft.outputs.snap }}
 
   kernel-plugins:
+    if: ${{ github.event.label.name == 'run-manual-spread' || github.event_name == 'schedule' }}
     runs-on: [spread-installed]
     needs: [snap-build]
     strategy:
@@ -59,6 +60,7 @@ jobs:
           spread google:ubuntu-22.04-64:tests/spread/${{ matrix.type }}/kernel
 
   remote-build:
+    if: ${{ github.event.label.name == 'run-manual-spread' || github.event_name == 'schedule' }}
     runs-on: [spread-installed]
     needs: [snap-build]
     steps:
@@ -87,6 +89,7 @@ jobs:
             google:fedora-39-64:tests/spread/core24/remote-build:no_platforms
 
   matter-sdk:
+    if: ${{ github.event.label.name == 'run-manual-spread' || github.event_name == 'schedule' }}
     runs-on: [spread-installed]
     needs: [snap-build]
     steps:
@@ -111,6 +114,7 @@ jobs:
               google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
 
   colcon-plugins:
+    if: ${{ github.event.label.name == 'run-manual-spread' || github.event_name == 'schedule' }}
     runs-on: [spread-installed]
     needs: [snap-build]
     steps:
@@ -137,6 +141,7 @@ jobs:
             google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
 
   extensions:
+    if: ${{ github.event.label.name == 'run-manual-spread' || github.event_name == 'schedule' }}
     runs-on: [spread-installed]
     needs: [snap-build]
     steps:
@@ -159,6 +164,7 @@ jobs:
           spread google.*:tests/spread/extensions/
 
   core20-plugins:
+    if: ${{ github.event.label.name == 'run-manual-spread' || github.event_name == 'schedule' }}
     runs-on: [spread-installed]
     needs: [snap-build]
     steps:
