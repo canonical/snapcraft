@@ -231,11 +231,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2025.4.26"
+version = "2025.1.31"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e8/9e/c05b3920a3b7d20d3d3310465f50348e5b3694f4f88c6daf736eef3024c4/certifi-2025.4.26.tar.gz", hash = "sha256:0a816057ea3cdefcef70270d2c515e4506bbc954f417fa5ade2021213bb8f0c6", size = 160705, upload_time = "2025-04-26T02:12:29.51Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1c/ab/c9f1e32b7b1bf505bf26f0ef697775960db7932abeb7b516de930ba2705f/certifi-2025.1.31.tar.gz", hash = "sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651", size = 167577, upload_time = "2025-01-31T02:16:47.166Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/7e/3db2bd1b1f9e95f7cddca6d6e75e2f2bd9f51b1246e546d88addca0106bd/certifi-2025.4.26-py3-none-any.whl", hash = "sha256:30350364dfe371162649852c63336a15c70c6510c2ad5015b21c2345311805f3", size = 159618, upload_time = "2025-04-26T02:12:27.662Z" },
+    { url = "https://files.pythonhosted.org/packages/38/fc/bce832fd4fd99766c04d1ee0eead6b0ec6486fb100ae5e74c1d91292b982/certifi-2025.1.31-py3-none-any.whl", hash = "sha256:ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe", size = 166393, upload_time = "2025-01-31T02:16:45.015Z" },
 ]
 
 [[package]]
@@ -386,7 +386,7 @@ wheels = [
 
 [[package]]
 name = "craft-application"
-version = "5.2.0"
+version = "5.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
@@ -406,9 +406,9 @@ dependencies = [
     { name = "snap-helpers" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0a/f5/b2f41e857a9e0999a1a279c2464afcdfb8b1af3671b3b3fa18c04c158a74/craft_application-5.2.0.tar.gz", hash = "sha256:9c21b61c9231be56037bdd497f1ea20942de492caaf04958ae852238372a2681", size = 372616, upload_time = "2025-04-25T20:53:41.097Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/92/f4957affd458c68475e1d60b013e0a7934905f14b4a3835f5e7d38c9d770/craft_application-5.1.0.tar.gz", hash = "sha256:d398aed07fb0ae046b3083770383946f72f8b58881894159fccd312107b6f1c5", size = 354680, upload_time = "2025-04-24T20:29:18.315Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/03/07/284ac33400f1ec079b35bf22538199fff9e79a601698b3b4b9b34dd95ceb/craft_application-5.2.0-py3-none-any.whl", hash = "sha256:588611021efa4869e080db11b4694a5197ec33086bb591f903d8fb87b90fc38a", size = 178245, upload_time = "2025-04-25T20:53:39.256Z" },
+    { url = "https://files.pythonhosted.org/packages/55/92/6bd5d4da468ba1f6b88724c8ac07c13e54cb542d712906d6a526c0c6524e/craft_application-5.1.0-py3-none-any.whl", hash = "sha256:9a3595d5a57697e56a56c7c41d06e230d91cac49d12dc7b3ff3442abd7537ef8", size = 174971, upload_time = "2025-04-24T20:29:16.46Z" },
 ]
 
 [package.optional-dependencies]
@@ -465,8 +465,8 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.9.0"
-source = { registry = "https://pypi.org/simple" }
+version = "2.5.0.post92+ga558e32"
+source = { git = "https://github.com/mateusrodrigues/craft-parts?rev=feat%2Fnew-dotnet-plugin#a558e32cca849facba39484988ea20d4ef487502" }
 dependencies = [
     { name = "overrides" },
     { name = "pydantic" },
@@ -474,10 +474,6 @@ dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "requests-unixsocket2" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a3/f2/c1d8395d3876e41152f932ab2c0783c89a416f7541b57ee0417e246b6b3c/craft_parts-2.9.0.tar.gz", hash = "sha256:cc98781a1315507b8b5c8164f6bc63407562b312198253033985463a94bab24a", size = 723428, upload_time = "2025-04-28T19:56:06.103Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/c0/1aa816702a23b6b4a86e1c3f31076b562b526907404fd0463bbd6ec1525b/craft_parts-2.9.0-py3-none-any.whl", hash = "sha256:d3cdc56432027bc29053bf2c762a2482443c4c48909690b69f2841ff872af8cb", size = 466511, upload_time = "2025-04-28T19:56:04.601Z" },
 ]
 
 [[package]]
@@ -1305,11 +1301,11 @@ wheels = [
 
 [[package]]
 name = "pip"
-version = "25.1"
+version = "25.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/79/67/c06f625e2968c417052b3a4a0eef40656d5d4d44033e57b40ec474af1d28/pip-25.1.tar.gz", hash = "sha256:272bdd1289f80165e9070a4f881e8f9e1001bbb50378561d1af20e49bf5a2200", size = 1939624, upload_time = "2025-04-26T09:45:36.149Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/53/b309b4a497b09655cb7e07088966881a57d082f48ac3cb54ea729fd2c6cf/pip-25.0.1.tar.gz", hash = "sha256:88f96547ea48b940a3a385494e181e29fb8637898f88d88737c5049780f196ea", size = 1950850, upload_time = "2025-02-09T17:14:04.423Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/f0/8a2806114cd36e282823fd4d8e88e3b94dc943c2569c350d0c826a49db38/pip-25.1-py3-none-any.whl", hash = "sha256:13b4aa0aaad055020a11bec8a1c2a70a2b2d080e12d89b962266029fff0a16ba", size = 1824948, upload_time = "2025-04-26T09:45:33.871Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/bc/b7db44f5f39f9d0494071bddae6880eb645970366d0a200022a1a93d57f5/pip-25.0.1-py3-none-any.whl", hash = "sha256:c46efd13b6aa8279f33f2864459c8ce587ea6a1a59ee20de055868d8f7688f7f", size = 1841526, upload_time = "2025-02-09T17:14:01.463Z" },
 ]
 
 [[package]]
@@ -2103,11 +2099,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "80.0.0"
+version = "79.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/44/80/97e25f0f1e4067677806084b7382a6ff9979f3d15119375c475c288db9d7/setuptools-80.0.0.tar.gz", hash = "sha256:c40a5b3729d58dd749c0f08f1a07d134fb8a0a3d7f87dc33e7c5e1f762138650", size = 1354221, upload_time = "2025-04-27T17:21:10.806Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bb/71/b6365e6325b3290e14957b2c3a804a529968c77a049b2ed40c095f749707/setuptools-79.0.1.tar.gz", hash = "sha256:128ce7b8f33c3079fd1b067ecbb4051a66e8526e7b65f6cec075dfc650ddfa88", size = 1367909, upload_time = "2025-04-23T22:20:59.241Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/63/5517029d6696ddf2bd378d46f63f479be001c31b462303170a1da57650cb/setuptools-80.0.0-py3-none-any.whl", hash = "sha256:a38f898dcd6e5380f4da4381a87ec90bd0a7eec23d204a5552e80ee3cab6bd27", size = 1240907, upload_time = "2025-04-27T17:21:09.175Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/6d/b4752b044bf94cb802d88a888dc7d288baaf77d7910b7dedda74b5ceea0c/setuptools-79.0.1-py3-none-any.whl", hash = "sha256:e147c0549f27767ba362f9da434eab9c5dc0045d5304feb602a0af001089fc51", size = 1256281, upload_time = "2025-04-23T22:20:56.768Z" },
 ]
 
 [[package]]
@@ -2298,7 +2294,7 @@ requires-dist = [
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = "~=3.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
-    { name = "craft-parts", specifier = "~=2.7" },
+    { name = "craft-parts", git = "https://github.com/mateusrodrigues/craft-parts?rev=feat%2Fnew-dotnet-plugin" },
     { name = "craft-platforms", specifier = "~=0.7" },
     { name = "craft-providers", specifier = "~=2.2" },
     { name = "craft-store", specifier = "~=3.2" },
@@ -2835,14 +2831,14 @@ wheels = [
 
 [[package]]
 name = "types-setuptools"
-version = "80.0.0.20250429"
+version = "79.0.0.20250422"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/49/0b22c24d20759d8594c094ec1c459b245b1a75e7e6bf104ff45c14efdb9f/types_setuptools-80.0.0.20250429.tar.gz", hash = "sha256:a4de44f1110f531e7f9453d72999437a1caa6052609e2c7c859dd6613ab0d593", size = 43353, upload_time = "2025-04-29T03:01:10.355Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ce/61/5b764d556977ab27976f335d7493dc267b0dbcb5fae7fe117547c292c069/types_setuptools-79.0.0.20250422.tar.gz", hash = "sha256:9c9f699a5914d2ed97f02ee749fb2c7bc2898f8dad03b5dd74b74d4f80e29972", size = 43865, upload_time = "2025-04-22T02:57:59.94Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/c3/9e77e86da90bdf9544852188005a7413da7b693813bf493e61dc8714258c/types_setuptools-80.0.0.20250429-py3-none-any.whl", hash = "sha256:9bbcdcea88d1fda4b0f1371488333f606c78a8b10154a42530ed926ecf3242cb", size = 66003, upload_time = "2025-04-29T03:01:09.336Z" },
+    { url = "https://files.pythonhosted.org/packages/08/43/410e2978d4e2f3d8355e80141a64d89616fada864403479477c1058f056d/types_setuptools-79.0.0.20250422-py3-none-any.whl", hash = "sha256:55238c0b18cdc08dd26c32d6d8385ca1ea59b93dde760dae96d15868b7911990", size = 66914, upload_time = "2025-04-22T02:57:58.456Z" },
 ]
 
 [[package]]
