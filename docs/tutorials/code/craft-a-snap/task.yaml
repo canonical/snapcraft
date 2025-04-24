@@ -24,4 +24,12 @@ execute: |
   cp ../snapcraft-03-final.yaml snap/snapcraft.yaml
   snapcraft pack
   snap install ukuzama-pyfiglet_0.1_amd64.snap --dangerous
+  cd ..
   curl -O https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf
+
+# The final two commands that aren't working inside the spread container.
+# The local dot path inside the snap is resolving to `/var/lib/snapd/void/`.
+# Need to find a way around this.
+not-executing: |
+  ukuzama-pyfiglet -L smbraille.tlf
+  ukuzama-pyfiglet -f smbraille hamba kahle

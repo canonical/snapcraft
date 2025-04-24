@@ -18,7 +18,7 @@ parts:
   pyfiglet:
     plugin: python
     source-type: git
-    source: https://github.com/medubelko/pyfiglet
+    source: https://github.com/snapcraft-docs/pyfiglet
     stage-packages: [python3-minimal, python3.12-minimal]
     override-build: |
       mkdir pyfiglet/fonts
@@ -26,14 +26,17 @@ parts:
       cp pyfiglet/fonts-standard/* pyfiglet/fonts
       craftctl default
 
-layout:
-  /usr/local/share:
-    bind: $SNAP/usr/local/share
-
 apps:
   ukuzama-pyfiglet:
     command: bin/pyfiglet
     plugs:
       - home
+      - dot-pyfiglet-fonts
     environment:
       PYTHONPATH: $SNAP/lib/python3.12/site-packages
+
+plugs:
+  dot-pyfiglet-fonts:
+    interface: personal-files
+    write:
+      - $HOME/.local/share/pyfiglet/fonts

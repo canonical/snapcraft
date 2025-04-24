@@ -104,7 +104,7 @@ you're a member of the group by running:
 
 Look for ``lxd`` in the output.
 
-Finally, initialise LXD with a lightweight, default configuration:
+Finally, initialize LXD with a lightweight, default configuration:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
     :language: bash
@@ -189,7 +189,7 @@ Add the ``platform`` key after the project information:
     :start-at: platforms:
     :end-at: amd64:
 
-With this delcaration, Snapcraft will only build the snap on AMD64 machines, for AMD64
+With this declaration, Snapcraft will only build the snap on AMD64 machines, for AMD64
 machines. Take care to preserve the colon (:) in ``amd64:``.
 
 
@@ -207,7 +207,7 @@ For the ``parts`` key, add an entry for our main part, the ``pyfiglet`` source c
     :language: yaml
     :caption: snapcraft.yaml
     :start-at: parts:
-    :end-at: source: https://github.com/medubelko/pyfiglet
+    :end-at: source: https://github.com/snapcraft-docs/pyfiglet
 
 Parts have three important keys worth discussing.
 
@@ -368,7 +368,7 @@ At long last, let's try running our snap.
     :end-at: ukuzama-pyfiglet hello, world!
     :dedent: 2
 
-You should see the succesful result:
+You should see the successful result:
 
 .. terminal::
 
@@ -436,7 +436,7 @@ Add the following ``override-build`` key to the ``pyfiglet`` part:
     :emphasize-lines: 6-10
 
 The key does what its name suggests. It replaces the regular build step of the part's
-lifeycle, running whatever shell commands we provide to special effect. In this case,
+lifecycle, running whatever shell commands we provide to special effect. In this case,
 the build pre-empts the project's ``setup.py`` script by creating the font directory and
 copying both font sets into it at the same time. Then, by concluding with ``craftctl
 default``, we instruct the part to proceed with the build step like normal, in our
@@ -446,7 +446,7 @@ As a result, all the fonts are now copied into the snap. Let's give it a try. Re
 snap, reinstall it, and then try it with one of the new fonts:
 
 .. terminal::
-    :input: ukuzama-pyfiglet bonjour le monde -f thin
+    :input: ukuzama-pyfiglet -f thin bonjour le monde
     :user: crafter
     :host: home
 
@@ -457,18 +457,22 @@ snap, reinstall it, and then try it with one of the new fonts:
                    `---'
 
 
-Connect the home interface
---------------------------
+Connect the interfaces
+----------------------
 
 Pyfiglet adds some new functionality to FIGlet, such as a feature for installing new
-fonts to the user's ``/home`` directory. But by default, snaps block access to system
-resources like USB devices, the network, and home. *Interfaces* permit access to
-individual resources on the host, be they software, data, or hardware.
+fonts to the user's ``~/.local/share/pyfiglet/fonts`` directory. But, by default, snaps
+block access to system resources like USB devices, the network, and home. *Interfaces*
+permit access to individual resources on the host, be they software, data, or hardware.
 
-To enable writing to the home directory, we must connect the home interface.
+To enable writing to the home directory, we must connect two interfaces:
 
-Interfaces are established with the ``plug`` key on apps. Let's connect our
-``ukuzama-pyfiglet`` app to the home interface:
+- The home interface, which provides base access to the home folder
+- The personal-files interface, which provides access to hidden files in the home folder
+
+Interfaces are established on apps in your snap by the ``plug`` key.
+
+First, let's connect our ``ukuzama-pyfiglet`` app to the home interface:
 
 .. literalinclude:: code/craft-a-snap/snapcraft.yaml
     :language: yaml
@@ -477,15 +481,40 @@ Interfaces are established with the ``plug`` key on apps. Let's connect our
     :end-at: - home
     :emphasize-lines: 4-5
 
-If we repack and reinstall the snap, we can install a font to our system. However,
-before we repack, let's go back to two keys we skipped at the start.
+Next, the personal-files interface. For better confinement, personal-files can only
+target specific directories for reading and writing, so we must be explicit and
+configure which paths to link. Configurable interfaces must be declared at the root of
+the project file, with custom aliases. The alias must be something that users and admins
+can intuit. For personal-files, the convention is to start with ``dot-`` and follow with
+a short description of our intent.
+
+With all of that in mind, let's create an entry for personal-files after our apps,
+granting it write access to ``~/.local/share/pyfiglet/fonts``:
+
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
+    :caption: snapcraft.yaml
+    :lines: 36-
+
+Then, add it to the plugs of the ``ukuzama-pyfiglet`` app:
+
+.. literalinclude:: code/craft-a-snap/snapcraft.yaml
+    :language: yaml
+    :caption: snapcraft.yaml
+    :start-at: apps:
+    :end-at: - dot-pyfiglet-fonts
+    :emphasize-lines: 6
+
+If we repack and reinstall the snap, we can install a new font for pyfiglet to use.
+
+However, before we repack, let's go back to two keys we skipped at the beginning.
 
 
 Secure the snap
-~~~~~~~~~~~~~~~
+---------------
 
-Now that we're handling interfaces and sandboxing -- usually the last step in the
-crafting process -- the ``grade`` and ``confinement`` keys are relevant.
+Now that we're handling interfaces -- usually the last step in the crafting process --
+the ``grade`` and ``confinement`` keys are relevant.
 
 These keys account for the security and stability of the snap. The ``grade`` key is a
 self-attestation of how risky the snap is. When set to ``devel``, snapd and snap stores
@@ -506,10 +535,10 @@ system resources are blocked unless facilitated by an interface. And when we pub
 snap, users will be able to install it without the ``--devmode`` flag.
 
 
-Test the interface
-~~~~~~~~~~~~~~~~~~
+Test the Interfaces
+-------------------
 
-Now that the snap is confined, we can realistically test the home interface connection.
+Now that the snap is confined, we can test the interfaces realistically.
 
 Build and reinstall the snap, but this time, install it like a production-ready snap:
 
@@ -521,23 +550,30 @@ Build and reinstall the snap, but this time, install it like a production-ready 
 
 .. note::
 
-    We will continue passing the ``--dangerous`` argument during installation until the
-    snap is published to the Snap Store.
+    We must continue passing the ``--dangerous`` argument during installation because
+    it's not live in the Snap Store, and therefore not attestable.
 
-Next, let's gather a font that wasn't included with pyfiglet and install it. Download
-`Small Braille <https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf>`_ from
-the figlet-fonts project. Install it and verify it with:
+Next, let's gather a font that wasn't included with pyfiglet and install it.
 
-.. code-block:: bash
+Download `Small Braille
+<https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf>`_ from the figlet-fonts
+project and install it with:
 
-    ukuzama-pyfiglet -L ~/Downloads/smbraille.tlf
-    ls /usr/share/pyfiglet # todo: verify
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: ukuzama-pyfiglet -L smbraille.tlf
+    :end-at: ukuzama-pyfiglet -L smbraille.tlf
+    :dedent: 2
 
-It should be listed:
+And give it a try:
 
 .. terminal::
+    :input: ukuzama-pyfiglet -f smbraille hamba kahle
+    :user: crafter
+    :host: home
 
-    braille
+    ⣇⡀ ⢀⣀ ⣀⣀  ⣇⡀ ⢀⣀   ⡇⡠ ⢀⣀ ⣇⡀ ⡇ ⢀⡀
+    ⠇⠸ ⠣⠼ ⠇⠇⠇ ⠧⠜ ⠣⠼   ⠏⠢ ⠣⠼ ⠇⠸ ⠣ ⠣⠭
 
 
 Review the project file
@@ -555,7 +591,7 @@ it.
 Conclusion and next steps
 -------------------------
 
-And you're done! Your snap is functioning normally on your system.
+And you're done! You have a snap of pyfiglet that works on your system.
 
 It would be a good time to start planning for your first public snap. Ask yourself, what
 software would be interesting to package? What apps would benefit the most from the
