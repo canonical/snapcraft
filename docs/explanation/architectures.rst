@@ -1,3 +1,5 @@
+.. _explanation-architectures:
+
 Architectures
 =============
 
