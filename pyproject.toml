@@ -7,7 +7,7 @@ dependencies = [
     "attrs",
     "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
     "click==8.1.8",
-    "craft-application[remote]>=5.0.1,<6.0.0",
+    "craft-application[remote]>=5.0.3,<6.0.0",
     "craft-archives~=2.1",
     "craft-cli~=3.0",
     "craft-grammar>=2.0.3,<3.0.0",
@@ -67,8 +67,6 @@ dev = [
     "coverage[toml]",
     "pyflakes",
     "fixtures",
-    # For Tiobe TiCS
-    "flake8",
     "mccabe",
     "testscenarios",
     "pexpect",
@@ -76,8 +74,6 @@ dev = [
     "pycodestyle",
     "pyftpdlib",
     "pyinstaller ; sys_platform == 'win32'",
-    # For Tiobe TiCS
-    "pylint",
     "pymacaroons",
     "pyramid",
     "pytest",
@@ -127,6 +123,7 @@ dev-plucky = [
     # 2.9 for Oracular+
     "python-apt>=2.9.0;sys_platform=='linux'",
 ]
+tics = ["flake8", "pylint"]
 
 [tool.uv]
 conflicts = [
@@ -259,6 +256,10 @@ lint.ignore = [
     "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
     "D215",  # Section underline is over-indented (reason: pep257 default)
 
+    # Ignored due to conflicts with ruff's formatter:
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "COM812", # Missing trailing comma - mostly the same, but marginal differences.
+    "ISC001", # Single-line implicit string concatenation.
 
     # Stricter type checking rules that that are disabled.
     "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
@@ -291,26 +292,30 @@ lint.ignore = [
     "S607",  # Partial executable path for subprocess calls
 ]
 
-[tool.ruff.lint.pylint]
-max-args = 6
-max-branches = 16
-
 [tool.ruff.lint.per-file-ignores]
-"tests/**.py" = [
-    "D",  # Ignore docstring rules in tests
-    "ANN", # Ignore type annotations in tests
-    "S101",  # Yeah of course we assert in tests
-    "B009",  # Allow calling `getattr` in tests since it can be used to make the test clearer.
-    "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
-    "S105", # Allow Possible hardcoded password.
-    "S106", # Allow Possible hardcoded password.
-    "S108", # Allow Probable insecure usage of temporary file or directory.
-    "PLR0913",  # Allow many arguments to tests
+"tests/**.py" = [ # Some things we want for the main project are unnecessary in tests.
+    "D",       # Ignore docstring rules in tests
+    "ANN",     # Ignore type annotations in tests
+    "ARG",     # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
+    "S101",    # Allow assertions in tests
+    "S103",    # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+    "S105",    # Allow Possible hardcoded password.
+    "S106",    # Allow Possible hardcoded password.
+    "S108",    # Allow Probable insecure usage of temporary file or directory
+    "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
+    "PLR2004", # Allow magic values in tests
+    "SLF",     # Allow accessing private members from tests.
 ]
 "tests/unit/parts/plugins/test_kernel.py" = [
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
 ]
-"__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
+"__init__.py" = [
+    "I001", # isort leaves init files alone by default, this makes ruff ignore them too.
+    "F401", # Allows unused imports in __init__ files.
+]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
 
 [tool.ruff.lint.flake8-builtins]
 strict-checking = true
@@ -324,6 +329,10 @@ ignore-decorators = [ # Functions with these decorators don't have to have docst
     "typing.override",
     "typing_extensions.override",
 ]
+
+[tool.ruff.lint.pylint]
+max-args = 8
+max-branches = 16
 
 [tool.ruff.lint.pep8-naming]
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
