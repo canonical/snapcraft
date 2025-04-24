@@ -50,3 +50,5 @@ transition your snap between specific bases.
     :maxdepth: 1
 
     change-from-core18-to-core20
+    change-from-core20-to-core22
+    change-from-core22-to-core24
