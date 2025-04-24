@@ -1,3 +1,5 @@
+.. _reference-architectures:
+
 Architectures
 =============
 
@@ -57,6 +59,8 @@ be defined. See :ref:`this page<how-to-arch-build-for-all>` to learn how to
 use the ``all`` key.
 
 ``all`` cannot be used for ``build-on``.
+
+.. _reference-architectures-core22:
 
 core22
 ^^^^^^
