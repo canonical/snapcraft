@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Unit tests for confdbs commands."""
+"""Unit tests for confdb schema commands."""
 
 import sys
 
@@ -25,20 +25,22 @@ from snapcraft import application, const
 
 @pytest.fixture
 def mock_list_assertions(mocker):
-    return mocker.patch("snapcraft.services.confdbs.Confdbs.list_assertions")
+    return mocker.patch(
+        "snapcraft.services.confdbschemas.ConfdbSchemas.list_assertions"
+    )
 
 
 @pytest.fixture
 def mock_edit_assertion(mocker):
-    return mocker.patch("snapcraft.services.confdbs.Confdbs.edit_assertion")
+    return mocker.patch("snapcraft.services.confdbschemas.ConfdbSchemas.edit_assertion")
 
 
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize("output_format", const.OUTPUT_FORMATS)
 @pytest.mark.parametrize("name", [None, "test"])
-def test_list_confdbs(mocker, mock_list_assertions, output_format, name):
-    """Test `snapcraft list-confdbs`."""
-    cmd = ["snapcraft", "list-confdbs", "--format", output_format]
+def test_list_confdb_schemas(mocker, mock_list_assertions, output_format, name):
+    """Test `snapcraft list-confdb-schemas`."""
+    cmd = ["snapcraft", "list-confdb-schemas", "--format", output_format]
     if name:
         cmd.extend(["--name", name])
     mocker.patch.object(sys, "argv", cmd)
@@ -51,9 +53,9 @@ def test_list_confdbs(mocker, mock_list_assertions, output_format, name):
 
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize("name", [None, "test"])
-def test_list_confdbs_default_format(mocker, mock_list_assertions, name):
+def test_list_confdb_schemas_default_format(mocker, mock_list_assertions, name):
     """Default format is 'table'."""
-    cmd = ["snapcraft", "list-confdbs"]
+    cmd = ["snapcraft", "list-confdb-schemas"]
     if name:
         cmd.extend(["--name", name])
     mocker.patch.object(sys, "argv", cmd)
@@ -66,9 +68,9 @@ def test_list_confdbs_default_format(mocker, mock_list_assertions, name):
 
 @pytest.mark.parametrize("key_name", [None, "test-key"])
 @pytest.mark.usefixtures("memory_keyring")
-def test_edit_confdbs(key_name, mocker, mock_edit_assertion):
-    """Test `snapcraft edit-confdbs`."""
-    cmd = ["snapcraft", "edit-confdbs", "test-account-id", "test-name"]
+def test_edit_confdb_schemas(key_name, mocker, mock_edit_assertion):
+    """Test `snapcraft edit-confdb-schema`."""
+    cmd = ["snapcraft", "edit-confdb-schema", "test-account-id", "test-name"]
     if key_name:
         cmd.extend(["--key-name", key_name])
     mocker.patch.object(sys, "argv", cmd)

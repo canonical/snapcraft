@@ -58,6 +58,7 @@ CORE24_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
         craft_application.commands.lifecycle.BuildCommand,
         craft_application.commands.lifecycle.StageCommand,
         craft_application.commands.lifecycle.PrimeCommand,
+        craft_application.commands.lifecycle.TestCommand,
         commands.PackCommand,
         commands.SnapCommand,  # Hidden (legacy compatibility)
         commands.RemoteBuildCommand,
@@ -141,10 +142,10 @@ COMMAND_GROUPS = [
         ],
     ),
     craft_cli.CommandGroup(
-        "Store Confdbs",
+        "Store Confdb Schemas",
         [
-            commands.StoreEditConfdbsCommand,
-            commands.StoreListConfdbsCommand,
+            commands.StoreEditConfdbSchemaCommand,
+            commands.StoreListConfdbSchemasCommand,
         ],
     ),
     craft_cli.CommandGroup(
