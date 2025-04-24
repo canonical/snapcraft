@@ -13,14 +13,13 @@ It should take 20 minutes to complete.
 You won't need to come prepared with deep knowledge of software packaging, but
 familiarity with Linux paradigms and terminal operations is required.
 
-Once you complete this tutorial, you'll have experience hand-crafting snaps that will be
-the basis for further work with creating snaps.
+Once you complete this tutorial, you'll have experience hand-crafting snaps that serves as the basis for further work with creating snaps.
 
 
 Lesson plan
 -----------
 
-Put simply, this tutorial is a run through of the process of constructing a snap. We
+Put simply, this tutorial is a run-through of the process of constructing a snap. We
 show you how to:
 
 - Start a snap project from scratch
@@ -39,7 +38,7 @@ The object of this tutorial is to package `pyfiglet
 for displaying text as ASCII art, and is simple to build and test.
 
 The snap will be named *ukuzama-pyfiglet*, after a fictional user. Throughout this
-course, feel free to replace that username with your own.
+course, replace *ukuzama* with your own username.
 
 
 What you'll need
@@ -47,7 +46,7 @@ What you'll need
 
 For this tutorial, you'll need:
 
-- A x64 system running Ubuntu 22.04 or Ubuntu 24.04
+- An x64 system running Ubuntu 22.04 or Ubuntu 24.04
 - A local user with super user privileges
 - 20GB of free storage
 
@@ -76,7 +75,7 @@ run:
     :end-at: snap install snapcraft --classic
     :dedent: 2
 
-Next, let's add LXD to your system. It functions as the build provider and containerize
+Next, let's add LXD to your system. It functions as the build provider and containerizes
 the build environment.
 
 .. literalinclude:: code/craft-a-snap/task.yaml
@@ -559,7 +558,7 @@ Conclusion and next steps
 And you're done! Your snap is functioning normally on your system.
 
 It would be a good time to start planning for your first public snap. Ask yourself, what
-software would be interesting in packaging? What apps would benefit the most from the
+software would be interesting to package? What apps would benefit the most from the
 security and ease of a snap? Any reason or justification is valid. Snaps can be tools,
 productivity software, games, or any traditional Linux package.
 
