@@ -3,15 +3,18 @@
 snapcraft.yaml
 ==============
 
-This page provides brief descriptions and examples for each key that can be included
-in a snap's project file.
+This reference describes the purpose, usage, and examples of all available keys in a
+snap's project file, ``snapcraft.yaml``.
+
+For keys that refer to file and directory locations, paths are always relative to the
+snap's file system, not the host.
 
 
 Top-level keys
 --------------
 
-The top-level keys and values in snapcraft.yaml provide the snap build process, and the
-store, with the overarching details of a snap.
+The top-level keys dictate the snap's packaging information and the essential details of
+how it builds.
 
 Top-level details include a snap's name, version and description, alongside operational
 values such as its confinement level and supported architectures.
@@ -98,9 +101,8 @@ values such as its confinement level and supported architectures.
 App keys
 --------
 
-The ``apps`` key and its values in a snap's project file detail the applications and
-services that a snap wants to expose, including how they're executed and which resources
-they can access.
+The ``apps`` key declares the programs and services that a snap operates on the host,
+and details how they're executed and which resources they can access.
 
 .. kitbash-model:: project.App
     :prepend-name: apps.<app-name>
@@ -109,9 +111,8 @@ they can access.
 Part keys
 ---------
 
-The main building blocks of a snap are called parts. They are used to declare pieces of
-code that will be pulled into your snap package. The ``parts`` keys and its values in
-a snap's project file detail how parts are configured and built.
+The ``parts`` key and its values declare the snap's :ref:`parts <explanation-parts>` and
+detail how they're built.
 
 .. kitbash-model:: craft_parts.parts.PartSpec
     :prepend-name: parts.<part-name>
