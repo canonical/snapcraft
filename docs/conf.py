@@ -99,7 +99,6 @@ exclude_patterns = [
     "reference/advanced-grammar.rst",
     "reference/hooks.rst",
     "reference/package-repositories.rst",
-    "reference/part-environment-variables.rst",
     "reference/project-file.rst",
     "reference/snapcraft-yaml.rst",
     "explanation/interfaces.rst",
