@@ -13,6 +13,7 @@ Snapcraft.
    /common/craft-parts/reference/plugins/dotnet_plugin
    /common/craft-parts/reference/plugins/ant_plugin
    /common/craft-parts/reference/plugins/autotools_plugin
+   /common/craft-parts/reference/plugins/cargo_use_plugin
    /common/craft-parts/reference/plugins/cmake_plugin
    /common/craft-parts/reference/plugins/dump_plugin
    /common/craft-parts/reference/plugins/go_plugin
