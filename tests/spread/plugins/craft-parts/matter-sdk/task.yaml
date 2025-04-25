@@ -5,29 +5,23 @@ kill-timeout: 180m
 systems:
   - ubuntu-22.04-64
 
-prepare: |
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "$SNAP/snap/snapcraft.yaml"
+environment:
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS: 1
 
 restore: |
-  cd "$SNAP"
   snapcraft clean
   rm -f ./*.snap
 
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  restore_yaml "snap/snapcraft.yaml"
-
 execute: |
-  cd "$SNAP"
-
   # Build and install the snap
   snapcraft
-  snap install "${SNAP}*.snap" --dangerous
+  snap install "matter-lighting_1.0_amd64.snap" --dangerous
 
   start_time=$(date +"%Y-%m-%d %H:%M:%S")
   snap start matter-lighting
+
+  # wait for the snap to finish setting up
+  sleep 60
 
   # Check if storage path replacement from /tmp to SNAP_COMMON/mnt works
   for file in /tmp/chip_*; do
@@ -37,7 +31,7 @@ execute: |
     fi
   done
 
-  if [ ! -e "/var/snap/matter-lighting/common/mnt/chip_*}" ]; then
+  if ! find /var/snap/matter-lighting/common/mnt/ -maxdepth 1 -name "chip_*" | grep -q .; then
     echo "Error: /var/snap/matter-lighting/common/mnt/chip_* does not exist."
     exit 1
   fi
