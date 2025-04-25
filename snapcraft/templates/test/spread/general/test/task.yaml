@@ -1,0 +1,4 @@
+summary: Example test task
+
+execute: |
+  echo "Run a package test"
