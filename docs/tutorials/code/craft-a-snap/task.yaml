@@ -1,0 +1,35 @@
+summary: Test the "Craft a snap" tutorial
+
+execute: |
+  snap install curl
+  snap install snapcraft --classic
+  snap install --channel 5.21/stable lxd
+  sudo usermod -a -G lxd $USER
+  groups $USER
+  lxd init --minimal
+  mkdir ukuzama-pyfiglet
+  cd ukuzama-pyfiglet
+  snapcraft init
+  cp ../snapcraft-01-basic.yaml snap/snapcraft.yaml
+  snapcraft pack
+  snapcraft pack --shell
+  snap install ukuzama-pyfiglet_0.1_amd64.snap --devmode --dangerous
+  ukuzama-pyfiglet hello, world!
+  ukuzama-pyfiglet -f smscript ciao, mondo!
+  snapcraft clean
+  cp ../snapcraft-02-override-build.yaml snap/snapcraft.yaml
+  snapcraft pack
+  snap install ukuzama-pyfiglet_0.1_amd64.snap --devmode --dangerous
+  ukuzama-pyfiglet bonjour le monde -f thin
+  cp ../snapcraft-03-final.yaml snap/snapcraft.yaml
+  snapcraft pack
+  snap install ukuzama-pyfiglet_0.1_amd64.snap --dangerous
+  cd ..
+  curl -O https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf
+
+# The final two commands that aren't working inside the spread container.
+# The local dot path inside the snap is resolving to `/var/lib/snapd/void/`.
+# Need to find a way around this.
+not-executing: |
+  ukuzama-pyfiglet -L smbraille.tlf
+  ukuzama-pyfiglet -f smbraille hamba kahle

@@ -360,6 +360,11 @@ suites:
     systems:
       - ubuntu-24.04-64
 
+  docs/tutorials/code/:
+    summary: tests tutorials from the docs
+    systems:
+      - ubuntu-24.04-64
+
 path: /snapcraft/
 include:
   - docs/
