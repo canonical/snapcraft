@@ -1,18 +1,16 @@
 .. _explanation:
 
 Explanation
-***********
+===========
 
 .. toctree::
-   :maxdepth: 1
 
-   architectures
-   bases
-   snap-configurations
-   components
-   remote-build
-   /common/craft-parts/explanation/filesets
-   parts
-   parts-lifecycle
-   /common/craft-parts/explanation/dump_plugin
-   classic-confinement
+    architectures
+    bases
+    parts
+    parts-lifecycle
+    components
+    snap-configurations
+    remote-build
+    /common/craft-parts/explanation/filesets
+    classic-confinement

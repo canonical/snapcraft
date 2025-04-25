@@ -1,4 +1,4 @@
-.. _ros-2-content-extensions:
+.. _reference-ros-2-content-extensions:
 
 ROS 2 Content extensions
 ========================
@@ -78,12 +78,12 @@ This example contains the difference between the original file and the output of
 :ref:`snapcraft expand-extensions <ref_commands_expand-extensions>` command. Some of the
 text has been altered for ease of reading.
 
-The file is based on the :ref:`ros2-talker-listener <example-ros-2-app-project-files>`
+The file is based on the :ref:`ros2-talker-listener <how-to-craft-an-ros-2-app-project-files>`
 project.
 
 .. collapse:: Expanded project file for ros2-talker-listener
 
-    .. literalinclude:: ../code/extensions/ros-2-content-desktop-extension-talker-listener-expanded.diff
+    .. literalinclude:: code/ros-2-content-desktop-extension-talker-listener-expanded.diff
         :language: diff
         :lines: 3-
         :emphasize-lines: 18-38, 43-89

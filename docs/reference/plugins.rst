@@ -1,14 +1,11 @@
-.. _plugins:
+.. _reference-plugins:
 
-*****************
-Snapcraft plugins
-*****************
+Plugins
+=======
 
-This section contains an in-depth description of the plugins available in
-Snapcraft.
+This section contains an in-depth description of the plugins available in Snapcraft.
 
 .. toctree::
-   :maxdepth: 1
 
    /common/craft-parts/reference/plugins/dotnet_plugin
    /common/craft-parts/reference/plugins/ant_plugin

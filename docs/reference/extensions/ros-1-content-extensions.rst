@@ -1,10 +1,11 @@
-.. _ros-1-content-extensions:
+.. _reference-ros-1-content-extensions:
 
 ROS 1 Content extensions
 ========================
 
-The ROS 1 Content extensions comprise the main :ref:`ros-1-extension`, plus additional
-settings to enable `content sharing <https://snapcraft.io/docs/content-interface>`_.
+The ROS 1 Content extensions comprise the main :ref:`reference-ros-1-extension`, plus
+additional settings to enable `content sharing
+<https://snapcraft.io/docs/content-interface>`_.
 
 These extensions are split across content types, and are declared with the format
 ``ros1-noetic-<metapackage>``. The available extensions are:
@@ -60,12 +61,12 @@ This example contains the difference between the original file and the output of
 :ref:`snapcraft expand-extensions <ref_commands_expand-extensions>` command. Some of the
 text has been altered for ease of reading.
 
-The file is based on the :ref:`ros1-talker-listener <example-ros-1-app-project-files>`
-project.
+The file is based on the :ref:`ros1-talker-listener
+<how-to-craft-an-ros-1-app-project-files>` project.
 
 .. collapse:: Expanded project file for ros2-talker-listener
 
-    .. literalinclude:: ../code/extensions/ros-1-content-desktop-extension-talker-listener-expanded.diff
+    .. literalinclude:: code/ros-1-content-desktop-extension-talker-listener-expanded.diff
         :language: diff
         :lines: 3-
         :emphasize-lines: 18, 20-31, 36-62

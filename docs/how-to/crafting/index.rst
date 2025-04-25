@@ -1,0 +1,17 @@
+.. _how-to-crafting:
+
+Crafting
+========
+
+.. toctree::
+
+    configure-package-information
+    specify-a-base
+    select-architectures
+    add-a-snap-configuration
+    use-layouts
+    manage-data-compatibility
+    /common/craft-parts/how-to/include_files
+    /common/craft-parts/how-to/override_build
+    create-a-component
+    enable-classic-confinement

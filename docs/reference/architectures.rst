@@ -6,8 +6,8 @@ Architectures
 snapcraft.yaml
 --------------
 
-The :doc:`architectures how-to</how-to/architectures>` provides examples of how
-to use the ``platforms`` and ``architectures`` key.
+The :ref:`architectures how-to guide <how-to-select-architectures>` provides examples of
+how to use the ``platforms`` and ``architectures`` key.
 
 core24
 ^^^^^^
