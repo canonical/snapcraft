@@ -1507,6 +1507,21 @@ wheels = [
 ]
 
 [[package]]
+name = "pydantic-kitbash"
+version = "0.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "docutils" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b1/35/c4ad89e9a866c5473685afabaf1ce4dbcd7988b966d7f5b1eb6ac8463c06/pydantic_kitbash-0.0.3.tar.gz", hash = "sha256:d86c490f7aa31e465910e8d057ef6921fbe9ae001b3b84e8032a7e1f6687e43f", size = 116044 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/db/4c4563ae8597425ea5d7e38aaa75ccdc0a3716a016c653448f5fe074acdd/pydantic_kitbash-0.0.3-py3-none-any.whl", hash = "sha256:d12f0ea24d95a26f96a3911b8ac9967ff26d4a0fc38b21f19132279231b82e96", size = 12279 },
+]
+
+[[package]]
 name = "pyelftools"
 version = "0.31"
 source = { registry = "https://pypi.org/simple" }
@@ -2235,6 +2250,7 @@ dev-plucky = [
 docs = [
     { name = "canonical-sphinx", extra = ["full"] },
     { name = "docutils" },
+    { name = "pydantic-kitbash" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },
@@ -2337,6 +2353,7 @@ dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifi
 docs = [
     { name = "canonical-sphinx", extras = ["full"], specifier = ">=0.2.0" },
     { name = "docutils", specifier = "<0.20" },
+    { name = "pydantic-kitbash", specifier = ">=0.0.3" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },

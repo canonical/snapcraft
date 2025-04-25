@@ -24,6 +24,7 @@ Reference
    part-environment-variables
    metrics
    layouts
+   snapcraft-yaml
    snapshots
    system-requirements
 
