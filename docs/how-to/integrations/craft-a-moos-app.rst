@@ -17,7 +17,7 @@ The following code comprises the project file for the `MOOS core project
 
 .. collapse:: MOOS project file
 
-    .. literalinclude:: code/example-moos-recipe.yaml
+    .. literalinclude:: ../code/integrations/example-moos-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -26,7 +26,7 @@ The following code comprises the project file for the `MOOS core project
 Add a part written for MOOS
 ---------------------------
 
-.. literalinclude:: code/example-moos-recipe.yaml
+.. literalinclude:: ../code/integrations/example-moos-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:

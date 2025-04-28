@@ -25,7 +25,7 @@ benchmarking suite.
 
 .. collapse:: Geekbench project file
 
-    .. literalinclude:: code/example-pre-built-app.yaml
+    .. literalinclude:: ../code/integrations/example-pre-built-app.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -34,7 +34,7 @@ benchmarking suite.
 Add a compiled part
 -------------------
 
-.. literalinclude:: code/example-pre-built-app.yaml
+.. literalinclude:: ../code/integrations/example-pre-built-app.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:

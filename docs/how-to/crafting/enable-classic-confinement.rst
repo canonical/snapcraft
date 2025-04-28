@@ -73,7 +73,7 @@ project with a main part that uses the Autotools plugin.
 
 .. collapse:: autotools-classic-example project file
 
-    .. literalinclude:: code/enable-classic-confinement/example-classic-confinement-autotools.yaml
+    .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-autotools.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -88,7 +88,7 @@ project with a main part that uses the Make plugin.
 
 .. collapse:: makefile-lib-example project file
 
-    .. literalinclude:: code/enable-classic-confinement/example-classic-confinement-make.yaml
+    .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-make.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -102,7 +102,7 @@ project with a main part that uses the CMake plugin.
 
 .. collapse:: cmake-classic-example project file
 
-    .. literalinclude:: code/enable-classic-confinement/example-classic-confinement-cmake.yaml
+    .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-cmake.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -116,7 +116,7 @@ project with a main part that uses the Python plugin.
 
 .. collapse:: python-ctypes-example project file
 
-    .. literalinclude:: code/enable-classic-confinement/example-classic-confinement-python.yaml
+    .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-python.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -140,7 +140,7 @@ To craft this solution:
 2. Stage the system libraries in the main part. The core22 base uses Python 3.10, so the
    packages are:
 
-   .. literalinclude:: code/enable-classic-confinement/example-classic-confinement-python.yaml
+   .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-python.yaml
        :caption: snapcraft.yaml
        :language: yaml
        :lines: 31-34
@@ -148,7 +148,7 @@ To craft this solution:
 
 3. Override the part's build to also run a shell script that patches the ctype files:
 
-   .. literalinclude:: code/enable-classic-confinement/example-classic-confinement-python.yaml
+   .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-python.yaml
        :caption: snapcraft.yaml
        :language: yaml
        :lines: 26-28
@@ -168,6 +168,6 @@ a project with a main part that uses the Go plugin.
 
 .. collapse:: golang-classic-example project file
 
-    .. literalinclude:: code/enable-classic-confinement/example-classic-confinement-go.yaml
+    .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-go.yaml
         :language: yaml
         :caption: snapcraft.yaml

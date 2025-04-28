@@ -21,7 +21,7 @@ exclusive language.
 
 .. collapse:: woke project file
 
-    .. literalinclude:: code/example-go-recipe.yaml
+    .. literalinclude:: ../code/integrations/example-go-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 3-
@@ -30,7 +30,7 @@ exclusive language.
 Add a part written in Go
 ------------------------
 
-.. literalinclude:: code/example-go-recipe.yaml
+.. literalinclude:: ../code/integrations/example-go-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:

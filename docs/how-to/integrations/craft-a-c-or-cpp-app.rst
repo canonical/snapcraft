@@ -21,7 +21,7 @@ drive a buggy across the moon's surface.
 
 .. collapse:: moon-buggy project file
 
-    .. literalinclude:: code/example-c-or-cpp-recipe.yaml
+    .. literalinclude:: ../code/integrations/example-c-or-cpp-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -30,7 +30,7 @@ drive a buggy across the moon's surface.
 Add a part written in C or C++
 ------------------------------
 
-.. literalinclude:: code/example-c-or-cpp-recipe.yaml
+.. literalinclude:: ../code/integrations/example-c-or-cpp-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:

@@ -7,7 +7,7 @@ Create a component
 
 Start with a simple project file:
 
-.. literalinclude:: code/basic/snapcraft.yaml
+.. literalinclude:: ../code/crafting/basic/snapcraft.yaml
     :caption: snapcraft.yaml
     :language: yaml
 
@@ -26,7 +26,7 @@ To create a component, define a component called ``translations`` under
 a new top-level ``components`` key. We will also add a new part that
 dumps the contents of the ``translations`` directory:
 
-.. literalinclude:: code/components/snapcraft.yaml
+.. literalinclude:: ../code/crafting/components/snapcraft.yaml
     :caption: snapcraft.yaml
     :language: yaml
 
@@ -44,7 +44,7 @@ Next, create a ``translations`` directory with a file called ``la``:
 
 Pack the snap with:
 
-.. literalinclude:: code/components/task.yaml
+.. literalinclude:: ../code/crafting/components/task.yaml
     :language: bash
     :start-after: [docs:pack]
     :end-before: [docs:pack-end]
@@ -62,7 +62,7 @@ metadata file ``meta/component.yaml``.
 To move the ``la`` translation file to the ``component`` artifact, use the
 ``organize`` key for the ``translations`` part:
 
-.. literalinclude:: code/components-organize/snapcraft.yaml
+.. literalinclude:: ../code/crafting/components-organize/snapcraft.yaml
     :caption: snapcraft.yaml
     :language: yaml
 
@@ -71,7 +71,7 @@ should be organized into the translations component's install directory.
 
 Pack the snap again with:
 
-.. literalinclude:: code/components/task.yaml
+.. literalinclude:: ../code/crafting/components/task.yaml
     :language: bash
     :start-after: [docs:pack]
     :end-before: [docs:pack-end]

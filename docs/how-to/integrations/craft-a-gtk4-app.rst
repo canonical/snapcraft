@@ -18,7 +18,7 @@ editor of the GNOME desktop environment.
 
 .. collapse:: gnome-text-editor project file
 
-    .. literalinclude:: code/example-gtk4-recipe.yaml
+    .. literalinclude:: ../code/integrations/example-gtk4-recipe.yaml
         :caption: snapcraft.yaml
         :language: yaml
         :lines: 2-
@@ -27,7 +27,7 @@ editor of the GNOME desktop environment.
 Add an app that uses GNOME
 --------------------------
 
-.. literalinclude:: code/example-gtk4-recipe.yaml
+.. literalinclude:: ../code/integrations/example-gtk4-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: apps:
@@ -51,7 +51,7 @@ To add a GTK4 app:
 Add a part written for GTK4
 ---------------------------
 
-.. literalinclude:: code/example-gtk4-recipe.yaml
+.. literalinclude:: ../code/integrations/example-gtk4-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: parts:
@@ -78,7 +78,7 @@ To add a GTK4 part:
 Add required slots
 ------------------
 
-.. literalinclude:: code/example-gtk4-recipe.yaml
+.. literalinclude:: ../code/integrations/example-gtk4-recipe.yaml
     :caption: snapcraft.yaml
     :language: yaml
     :start-at: slots:
