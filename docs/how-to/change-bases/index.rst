@@ -47,6 +47,7 @@ Our core migration how-to guides provide detailed instructions and examples to h
 transition your snap between specific bases.
 
 .. toctree::
+    :titlesonly:
     :maxdepth: 1
 
     change-from-core18-to-core20

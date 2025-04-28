@@ -4,6 +4,8 @@ Crafting
 ========
 
 .. toctree::
+    :titlesonly:
+    :maxdepth: 1
 
     configure-package-information
     specify-a-base

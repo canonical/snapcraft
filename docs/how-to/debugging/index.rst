@@ -4,6 +4,8 @@ Debugging
 =========
 
 .. toctree::
+    :titlesonly:
+    :maxdepth: 1
 
     debug-a-snap
     use-the-classic-linter

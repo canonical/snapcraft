@@ -44,6 +44,7 @@ Frameworks
 - :ref:`how-to-craft-an-ros-1-app`
 
 .. toctree::
+    :hidden:
 
     craft-a-pre-built-app
     craft-a-python-app

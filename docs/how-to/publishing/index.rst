@@ -4,8 +4,8 @@ Publishing
 ==========
 
 .. toctree::
+    :titlesonly:
     :maxdepth: 1
-    :hidden:
 
     authenticate
     register-a-snap
