@@ -4,7 +4,7 @@ environment:
   SNAP_DIR: snaps/squid-proxy-test
   SQUID_PROXY_CONF: /etc/squid/squid.conf
   SQUID_PROXY_LOG: /var/log/squid/access.log
-  SQUID_PROXY_URL: http://localhost:3128
+  SQUID_PROXY_URL: http://_gateway.lxd:3128
 
 prepare: |
   sudo apt-get install --yes squid
