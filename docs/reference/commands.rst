@@ -63,4 +63,4 @@ Store validation sets
 Store confdb schemas
 --------------------
 
-.. include:: commands/store-confdbs-schemas-commands.rst
+.. include:: commands/store-confdb-schemas-commands.rst

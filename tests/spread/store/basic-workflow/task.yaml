@@ -45,6 +45,9 @@ restore: |
   restore_yaml "snapcraft.yaml"
 
 execute: |
+  #shellcheck source=tests/spread/tools/retry.sh
+  . "$TOOLS_DIR/retry.sh"
+
   # Get information about our snap.
   cd "$SNAP"
   snap_file=$(ls ./*.snap)
@@ -65,13 +68,13 @@ execute: |
   snapcraft list
 
   # Push and Release
-  snapcraft upload "${snap_file}" --release edge --component "foo=${foo_component_file}" --component "bar-baz=${bar_baz_component_file}"
+  retry snapcraft upload "${snap_file}" --release edge --component "foo=${foo_component_file}" --component "bar-baz=${bar_baz_component_file}"
 
   # Show revisions
   snapcraft list-revisions "${snap_name}"
 
   # Release
-  snapcraft release "${snap_name}" 1 edge
+  retry snapcraft release "${snap_name}" 1 edge
 
   # Status
   snapcraft status "${snap_name}"

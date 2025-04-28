@@ -16,6 +16,7 @@ Current releases
 Snapcraft 8
 ~~~~~~~~~~~
 
+- :ref:`Snapcraft 8.8 <release-8.8>`
 - :ref:`Snapcraft 8.7 <release-8.7>`
 
 
@@ -83,6 +84,7 @@ development keeps pace with the OS's new releases and support lifecycle.
    :maxdepth: 1
    :hidden:
 
+   Snapcraft 8.8 <snapcraft-8-8>
    Snapcraft 8.7 <snapcraft-8-7>
    changelog
 
@@ -271,7 +273,18 @@ development keeps pace with the OS's new releases and support lifecycle.
   Fixed bugs and issues
   ---------------------
 
-  The following issues have been resolved in Starcraft 2.0:
+  The following issues have been resolved in Starcraft 2.0.
+
+
+  Starcraft 2.0.0
+  ~~~~~~~~~~~~~~~
+
+  - `ID <link>`_ <Title>
+  - `ID <link>`_ <Title>
+
+
+  Starcraft 2.0.1
+  ~~~~~~~~~~~~~~~
 
   - `ID <link>`_ <Title>
   - `ID <link>`_ <Title>

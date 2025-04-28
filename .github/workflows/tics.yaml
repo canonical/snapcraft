@@ -1,57 +1,14 @@
 name: TICS
-
 on:
   push:
     branches:
-      - main
+      - "main"
       # to easy test changes to the workflow
-      - tiobe
+      - "tiobe"
 
 jobs:
-  CI:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install dependencies
-        run: |
-          echo "::group::apt-get update"
-          sudo apt-get update
-          echo "::endgroup::"
-          echo "::group::apt-get install..."
-          sudo apt-get install -y python3 python3-dev libapt-pkg-dev libyaml-dev umoci
-          echo "::endgroup::"
-          echo "::group::snap install"
-          sudo snap install --classic astral-uv
-          echo "::endgroup::"
-          echo "::group::install requirements"
-          uv sync --frozen --group dev
-          echo "::endgroup::"
-
-      - name: Install project
-        run: |
-          python -m pip install -e .
-
-      - name: Run coverage
-        run: |
-          make test-coverage
-
-      - name: Upload test results
-        if: success() || failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-ubuntu-24.04
-          path: results/
-
-      - name: Run TICS analysis
-        uses: tiobe/tics-github-action@v3
-        with:
-          mode: qserver
-          project: snapcraft
-          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
-          branchdir: ${{ github.workspace }}
-          ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
-          installTics: true
+  TICS:
+    uses: canonical/starflow/.github/workflows/tics.yaml@main
+    with:
+      project: "snapcraft"
+    secrets: inherit
