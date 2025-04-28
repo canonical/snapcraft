@@ -23,9 +23,10 @@ who are interested in publishing snaps for Linux and IoT devices.
     * - | :ref:`Tutorial <tutorials>`
         | Get started with a hands-on introduction to building snaps.
       - | :ref:`How-to guides <how-to-guides>`
-        | Step-by-step guidance for tasks in :ref:`crafting <how-to-use-plugins>`,
+        | Step-by-step guidance for tasks in :ref:`crafting
+          <how-to-configure-package-information>`,
           :ref:`debugging <how-to-debug-a-snap>`, and :ref:`publishing
-          <how-to-publish>` snaps.
+          <how-to-authenticate>` snaps.
     * - | :ref:`Reference <reference>`
         | Technical information about Snapcraft, from :ref:`commands
           <reference-commands>` to :ref:`plugins <reference-plugins>`.

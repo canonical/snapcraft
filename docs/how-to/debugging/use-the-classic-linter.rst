@@ -1,4 +1,4 @@
-.. _how-to-use-classic-linter:
+.. _how-to-use-the-classic-linter:
 
 Use the classic linter
 ======================
