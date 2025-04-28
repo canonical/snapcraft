@@ -4,10 +4,9 @@ environment:
   SNAP_DIR: snaps/squid-proxy-test
   SQUID_PROXY_CONF: /etc/squid/squid.conf
   SQUID_PROXY_LOG: /var/log/squid/access.log
-  SQUID_PROXY_URL: http://localhost:3128
 
 prepare: |
-  sudo apt-get install --yes squid
+  sudo apt-get install --yes squid dnsutils
 
   # Configure squid
   sed -i 's|^http_access deny CONNECT !SSL_ports|#http_access deny CONNECT !SSL_ports|' ${SQUID_PROXY_CONF}
@@ -21,10 +20,12 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
 
-  sudo apt-get remove --purge --yes squid
+  sudo apt-get remove --purge --yes squid dnsutils
 
 execute: |
   cd "$SNAP_DIR"
+
+  SQUID_PROXY_URL="http://$(dig -4 +short _gateway.lxd):3128"
 
   http_proxy=${SQUID_PROXY_URL} snapcraft
 
