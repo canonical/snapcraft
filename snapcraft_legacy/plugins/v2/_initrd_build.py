@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Common utilities for kernel plugins."""
+"""Common utilities for initrd plugins."""
 
 import logging
 import textwrap
@@ -134,7 +134,7 @@ def _link_files_fnc_cmd() -> List[str]:
 
 
 def _setup_ubuntu_base_chroot_fnc_cmd() -> List[str]:
-    """Add function to set tup chroot from Ubuntu Base."""
+    """Add function to set up chroot from Ubuntu Base."""
     cmd = textwrap.dedent(
         """
         # setup chroot from Ubuntu Base
