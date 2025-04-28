@@ -32,8 +32,8 @@ choosing the target CPU architectures, to the advanced, such as configuring layo
 Integrations and extensions
 ---------------------------
 
-Snapcraft has special features to accommodate different languages, build systems, and
-frameworks. These guides cover how to package software written in them.
+Snapcraft accommodates different languages, build systems, and frameworks. These guides
+cover how to package software written in them.
 
 - :ref:`how-to-integrations`
 - :ref:`how-to-extensions`
@@ -66,8 +66,9 @@ companion tools have features for identifying and resolving such issues.
 Change bases
 ------------
 
-With each major release of Snapcraft, snaps builds gain new features and capabilities
-and lose some others. When migrating from one version and base to a new one, you might need to reconfigure your project as described by these guides.
+With each major release of Snapcraft, snap builds gain new features and capabilities,
+and lose others. When migrating from one version and base to a new one, you might need
+to reconfigure your project as described by these guides.
 
 :ref:`how-to-change-bases`
 

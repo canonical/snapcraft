@@ -27,7 +27,7 @@ what goes inside it.
 Bases and architectures
 -----------------------
 
-Snaps are built using existing technologies and must be configure to build for specific
+Snaps are built using existing technologies and must be configured to build for specific
 CPU architectures.
 
 - :ref:`reference-bases`
