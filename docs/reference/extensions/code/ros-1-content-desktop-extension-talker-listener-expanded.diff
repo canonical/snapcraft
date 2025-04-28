@@ -1,0 +1,64 @@
+# Diff between snapcraft.yaml and `snapcraft expand-extensions`, showing the differences
+# that the ROS 1 Content Desktop extension applies to a project file.
+ name: ros-talker-listener
+ version: "0.1"
+ summary: ROS Talker/Listener Example
+ description: |
+   This example launches a ROS talker and listener.
+
+ confinement: devmode
+ base: core20
+
+ parts:
+   ros-tutorials:
+     plugin: catkin
+     source: https://github.com/ros/ros_tutorials.git
+     source-branch: noetic-devel
+     catkin-packages:
+       - roscpp_tutorials
+     stage-packages:
++      - ros-noetic-ros-environment
+       - ros-noetic-roslaunch
++    build-environment:
++      - ROS_VERSION: "1"
++      - ROS_DISTRO: noetic
++    ros-content-sharing-extension-cmake-args:
++      - -DCMAKE_SYSTEM_PREFIX_PATH="/snap/ros-noetic-desktop-dev/current/usr"
++    ros-build-snaps:
++      - ros-noetic-desktop-dev
++  ros1-noetic-extension:
++    build-packages:
++      - ros-noetic-catkin
++    plugin: make
++    source: $SNAPCRAFT_EXTENSIONS_DIR/ros1
+
+ apps:
+   ros-talker-listener:
+     command: opt/ros/noetic/bin/roslaunch roscpp_tutorials talker_listener.launch
+-    extensions:
+-      - ros1-noetic-desktop
++    command-chain:
++      - snap/command-chain/ros1-launch
++    environment:
++      PYTHONPATH: $SNAP/opt/ros/noetic/lib/python3.8/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}:$SNAP/opt/ros/underlay_ws/opt/ros/noetic/lib/python3.8/site-packages:$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages
++      ROS_DISTRO: noetic
++      ROS_VERSION: "1"
++
++plugs:
++  ros-noetic-desktop:
++    content: ros-noetic-desktop
++    default-provider: ros-noetic-desktop
++    interface: content
++    target: $SNAP/opt/ros/underlay_ws
++
++package-repositories:
++  - components:
++      - main
++    formats:
++      - deb
++    key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
++    key-server: keyserver.ubuntu.com
++    suites:
++      - focal
++    type: apt
++    url: http://packages.ros.org/ros/ubuntu

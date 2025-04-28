@@ -11,8 +11,8 @@ Learn about the new features, changes, and fixes introduced in Snapcraft 8.7.
 Requirements and compatibility
 ------------------------------
 
-See :ref:`System requirements<system-requirements>` for information on the minimum
-hardware and installed software.
+See :ref:`reference-system-requirements` for information on the minimum hardware and
+installed software.
 
 
 What's new
@@ -62,23 +62,23 @@ Documentation improvements
 
 The following how-to guides have been integrated:
 
-* :ref:`Use an extension <use-an-extension>`
-* :ref:`List extensions <list-extensions>`
-* :ref:`Enable experimental extensions <enable-experimental-extensions>`
-* :ref:`Use the env-injector extension <use-the-env-injector-extension>`
-* :ref:`Use the GNOME extension <use-the-gnome-extension>`
+* :ref:`Use an extension <how-to-use-an-extension>`
+* :ref:`List extensions <how-to-list-extensions>`
+* :ref:`Enable experimental extensions <how-to-enable-experimental-extensions>`
+* :ref:`Use the env-injector extension <how-to-use-the-env-injector-extension>`
+* :ref:`Use the GNOME extension <how-to-use-the-gnome-extension>`
 
 
 The following references have been integrated:
 
-* :ref:`env-injector extension <env-injector-extension>`
-* :ref:`GNOME extension <gnome-extension>`
-* :ref:`KDE neon extensions <kde-neon-extensions>`
-* :ref:`Flutter extension <flutter-extension>`
-* :ref:`ROS 1 extension <ros-1-extension>`
-* :ref:`ROS 1 content extensions <ros-1-content-extensions>`
-* :ref:`ROS 2 extensions <ros-2-foxy-extension>`
-* :ref:`ROS 2 content extensions <ros-2-content-extensions>`
+* :ref:`env-injector extension <reference-env-injector-extension>`
+* :ref:`GNOME extension <reference-gnome-extension>`
+* :ref:`KDE neon extensions <reference-kde-neon-extensions>`
+* :ref:`Flutter extension <reference-flutter-extension>`
+* :ref:`ROS 1 extension <reference-ros-1-extension>`
+* :ref:`ROS 1 content extensions <reference-ros-1-content-extensions>`
+* :ref:`ROS 2 extensions <reference-ros-2-foxy-extension>`
+* :ref:`ROS 2 content extensions <reference-ros-2-content-extensions>`
 
 
 Backwards-incompatible changes
