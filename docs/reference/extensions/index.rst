@@ -1,4 +1,4 @@
-.. _extensions:
+.. _reference-extensions:
 
 Extensions
 ==========
@@ -12,7 +12,7 @@ to add any needed scaffolding and boilerplate keys to enable a particular techno
 The procedure is merely a postprocessor acting on the project's keys in memory -- the
 actual project file on disk is unaffected.
 
-For guidance on specific extensions, see :ref:`use-extensions`.
+For guidance on specific extensions, see :ref:`how-to-extensions`.
 
 .. toctree::
     :hidden:

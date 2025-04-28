@@ -1,5 +1,7 @@
 :tocdepth: 2
 
+.. _changelog:
+
 Changelog
 *********
 
@@ -224,12 +226,12 @@ Store
 Documentation
 =============
 
-* Add a :ref:`Snapcraft quickstart guide <install-snapcraft>`.
+* Add a :ref:`Snapcraft quickstart guide <how-to-set-up-snapcraft>`.
 
-* Add a :ref:`how-to guide <select-a-build-provider>` for selecting a build
+* Add a :ref:`how-to guide <how-to-select-a-build-provider>` for selecting a build
   provider.
 
-* Add :ref:`how-to guides <how-to-craft>` for crafting snaps for common
+* Add :ref:`how-to guides <how-to-integrations>` for crafting snaps for common
   languages, frameworks, and meta build systems.
 
 * Update the :doc:`component documentation </reference/components>` to include
@@ -237,13 +239,13 @@ Documentation
 
 * Add the following reference documentation:
 
-  * :ref:`anatomy-of-a-project-file`
-  * :ref:`snap-build-process`
-  * :ref:`snap-publishing-process`
+  * :ref:`reference-anatomy-of-snapcraft-yaml`
+  * :ref:`reference-snap-build-process`
+  * :ref:`reference-snap-publishing-process`
   * :ref:`reference-channels`
-  * :ref:`system-requirements`
-  * :ref:`uv plugin<craft_parts_uv_plugin>`
-  * :ref:`Go Use plugin<craft_parts_go_use_plugin>`
+  * :ref:`reference-system-requirements`
+  * :ref:`uv plugin <craft_parts_uv_plugin>`
+  * :ref:`Go Use plugin <craft_parts_go_use_plugin>`
 
 For a complete list of commits, check out the `8.6.0`_ release on GitHub.
 
@@ -629,13 +631,13 @@ Documentation
 
 * Add changelog notes for all Snapcraft 8.x releases
 
-* Add :doc:`reference</reference/components>`,
-  :doc:`explanation</explanation/components>`, and
-  :doc:`how-to</how-to/components>` for components.
+* Add :ref:`reference <reference-components>`,
+  :ref:`explanation <explanation-components>`, and
+  :ref:`how-to guide <how-to-create-a-component>` for components.
 
-* Add :doc:`reference</reference/bases>`,
-  :doc:`explanation</explanation/bases>`, and
-  :doc:`how-to</how-to/bases>` for bases.
+* Add :ref:`reference <reference-bases>`,
+  :ref:`explanation <explanation-bases>`, and
+  :ref:`how-to guide <how-to-specify-a-base>` for bases.
 
 For a complete list of commits, check out the `8.4.0`_ release on GitHub.
 
@@ -765,13 +767,12 @@ Remote build
 Documentation
 =============
 
-* Add an :doc:`explanation</explanation/architectures>` for the remote builders
+* Add an :ref:`explanation <explanation-architectures>` for the remote builders
   (`#4842`_).
 
-* Update :doc:`reference</reference/architectures>`,
-  :doc:`how-to</how-to/architectures>`, and
-  :doc:`explanation</explanation/architectures>` for platforms and
-  architectures.
+* Update :ref:`reference <reference-architectures>`, :ref:`how-to guide
+  <how-to-select-architectures>`, and :ref:`explanation <explanation-architectures>` for
+  platforms and architectures.
 
 For a complete list of commits, check out the `8.3.1`_ release on GitHub.
 
@@ -1282,9 +1283,9 @@ Components
 * Components are parts of a snap that can be built and uploaded in
   conjunction with a snap and later optionally installed beside it.
 
-For more information, see the :doc:`reference</reference/components>`,
-:doc:`explanation</explanation/components>`, and
-:doc:`how-to</how-to/components>` documentation pages.
+For more information, see the :ref:`reference <reference-components>`, :ref:`explanation
+<explanation-components>`, and :ref:`how-to guide <how-to-create-a-component>`
+documentation pages.
 
 Remote build
 ============

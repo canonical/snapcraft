@@ -1,4 +1,4 @@
-.. _kde-neon-extensions:
+.. _reference-kde-neon-extensions:
 
 KDE neon extensions
 ===================
@@ -264,7 +264,7 @@ text has been altered for ease of reading.
 
         .. collapse:: Expanded project file for Keysmith
 
-            .. literalinclude:: ../code/extensions/kde-neon-6-extension-keysmith-expanded.diff
+            .. literalinclude:: code/kde-neon-6-extension-keysmith-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 45-51, 65-122, 130-138, 140-142, 144-171, 179-182
@@ -274,11 +274,11 @@ text has been altered for ease of reading.
         The original project file comes from the `KCalc snap
         <https://snapcraft.io/kcalc>`_.
 
-        We provide a review of the unmodified file in :ref:`example-qt5-kde-app`.
+        We provide a review of the unmodified file in :ref:`how-to-craft-a-qt5-kde-app`.
 
         .. collapse:: Expanded project file for KCalc
 
-            .. literalinclude:: ../code/extensions/kde-neon-extension-kcalc-expanded.diff
+            .. literalinclude:: code/kde-neon-extension-kcalc-expanded.diff
                   :language: diff
                   :lines: 3-
                   :emphasize-lines: 15-19, 27-28, 58-103

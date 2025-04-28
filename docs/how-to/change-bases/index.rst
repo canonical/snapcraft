@@ -10,7 +10,7 @@ transparent to users, but they need to be carefully considered when building a s
 Each base snap is built from a :ref:`corresponding Ubuntu LTS <reference-bases>`
 release. Migrating a snap from one base to the next gives the snap access to newer
 packages, extended support, and the latest Snapcraft features, including plugins and
-:ref:`extensions <extensions>`.
+:ref:`extensions <reference-extensions>`.
 
 The complexity of the migration process is directly linked to both dependencies in the
 snap's project file and the base snap versions being migrated between.
@@ -47,6 +47,7 @@ Our core migration how-to guides provide detailed instructions and examples to h
 transition your snap between specific bases.
 
 .. toctree::
+    :titlesonly:
     :maxdepth: 1
 
     change-from-core18-to-core20

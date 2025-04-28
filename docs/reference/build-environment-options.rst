@@ -24,7 +24,7 @@ Snapcraft can optionally use the following arguments to modify the build environ
      - Builds the snap using `LXD <https://linuxcontainers.org/lxd/introduction/>`_
        rather than Multipass. This can potentially reduce resource usage, especially
        from a VM.
-     - Requires LXD. For more information, see :ref:`select-a-build-provider`.
+     - Requires LXD. For more information, see :ref:`how-to-select-a-build-provider`.
 
    * - ``--http-proxy <http-proxy>``
      - Configures HTTP proxy. Snapcraft will honor the ``http_proxy`` environment

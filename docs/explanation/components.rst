@@ -1,3 +1,5 @@
+.. _explanation-components:
+
 Components
 **********
 
