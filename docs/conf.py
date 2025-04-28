@@ -43,6 +43,11 @@ html_context = {
     "display_contributors": False,
 }
 
+# Target repository for the edit button on pages
+html_theme_options = {
+    "source_edit_link": "https://github.com/canonical/snapcraft",
+}
+
 extensions = [
     "canonical_sphinx",
 ]
@@ -76,6 +81,7 @@ exclude_patterns = [
     "common/craft-parts/explanation/how_parts_are_built.rst",
     "common/craft-parts/explanation/parts.rst",
     "common/craft-parts/how-to/craftctl.rst",
+    "common/craft-parts/how-to/use_parts.rst",
     "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",

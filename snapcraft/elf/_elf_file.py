@@ -68,15 +68,13 @@ class SonameCache:
         """Add item to cache."""
         # Initial API error checks
         if not isinstance(key, tuple):
-            raise EnvironmentError(
-                "The key for SonameCache has to be a (arch, soname) tuple."
-            )
+            raise OSError("The key for SonameCache has to be a (arch, soname) tuple.")
         if not isinstance(key[0], tuple) or len(key[0]) != 3:
-            raise EnvironmentError(
+            raise OSError(
                 "The first element of the key needs to of type _ElfArchitectureTuple."
             )
         if not isinstance(key[1], str):
-            raise EnvironmentError(
+            raise OSError(
                 "The second element of the key needs to be "
                 "of type str representing the soname."
             )

@@ -1,0 +1,96 @@
+#!/bin/bash
+set -e -o pipefail
+
+SCRIPTDIR=$(dirname "$(realpath "${0}")")
+
+allocate-lxd-vm(){
+  # Allocate the relevant backend.
+  DISTRO=$(echo "$SPREAD_SYSTEM" | cut -d- -f1)
+  SERIES=$(echo "$SPREAD_SYSTEM" | cut -d- -f2)
+  VM_NAME="${VM_NAME:-${DISTRO}-${SERIES}-${RANDOM}}"
+  VM_NAME=$(echo "$VM_NAME" | tr . -)
+  DISK="${DISK:-20}"
+  CPU="${CPU:-4}"
+  MEM="${MEM:-8}"
+
+  cloud_config="$(mktemp)"
+  sed "s|SPREAD_PASSWORD|$SPREAD_PASSWORD|g" "${SCRIPTDIR}/cloud-config.yaml" > "$cloud_config"
+
+  lxc launch --vm \
+    "${DISTRO}:${SERIES}" \
+    "${VM_NAME}" \
+    --config user.user-data="$(cat "$cloud_config")" \
+    --config limits.cpu="${CPU}" \
+    --config limits.memory="${MEM}GiB" \
+    --device root,size="${DISK}GiB" >&2
+
+  # Wait for the spread user
+  while ! lxc exec "${VM_NAME}" -- id -u spread &>/dev/null; do sleep 0.5; done
+
+  # Wait for cloud-init to complete
+  lxc exec "${VM_NAME}" -- cloud-init status --wait &>/dev/null
+  # Wait for snap to complete seeding
+  lxc exec "${VM_NAME}" -- snap wait system seed.loaded &> /dev/null
+
+  rm "$cloud_config"
+
+  # Set the instance address for spread
+  while [[ -z $(lxc ls --format csv --columns 4 name="${VM_NAME}") ]]; do
+    sleep 0.1
+  done
+  lxc ls --format csv --columns 4 name="${VM_NAME}"
+}
+
+discard-lxd-vm(){
+  instance_name="$(lxc ls --format csv --columns n4 "ipv4=$SPREAD_SYSTEM_ADDRESS"|cut -f1 -d','|head -n 1)"
+  lxc delete --force "${instance_name}"
+}
+
+# hack
+allocate-ci(){
+  ssh-keyscan -H localhost >> ~/.ssh/known_hosts
+
+  useradd --shell /bin/bash --create-home --password "$(openssl passwd -6 "$SPREAD_SYSTEM_PASSWORD")" --system -U "$SPREAD_SYSTEM_USERNAME"
+  echo "$SPREAD_SYSTEM_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/local
+
+  echo "localhost"
+}
+
+# hack
+discard-ci(){
+  echo Step not needed >&2
+}
+
+case $2 in
+  lxd-vm)
+    case $1 in
+      allocate)
+        allocate-lxd-vm
+        ;;
+      discard)
+        discard-lxd-vm
+        ;;
+      *)
+        echo Step not needed >&2
+        ;;
+    esac
+    ;;
+  ci)
+    case $1 in
+      allocate)
+        allocate-ci
+        ;;
+      discard)
+        discard-ci
+        ;;
+      *)
+        echo Step not needed >&2
+        ;;
+    esac
+    ;;
+  *)
+    echo "FATAL Unknown backend"
+    echo Unknown backend >&2
+    exit 1
+    ;;
+esac

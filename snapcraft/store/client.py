@@ -19,8 +19,9 @@
 import os
 import platform
 import time
+from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any, Sequence, cast
+from typing import Any, cast
 
 import craft_store
 import distro
@@ -418,7 +419,7 @@ class LegacyStoreClientCLI:
             },
         )
 
-    def notify_upload(  # noqa: PLR0913[too-many-arguments]
+    def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
         snap_name: str,
@@ -500,27 +501,29 @@ class LegacyStoreClientCLI:
         return Revisions.unmarshal(response.json())
 
     @staticmethod
-    def _unmarshal_confdbs_set(confdbs_data) -> models.ConfdbAssertion:
-        """Unmarshal a confdbs set.
+    def _unmarshal_confdb_schema(confdb_schema_data) -> models.ConfdbSchemaAssertion:
+        """Unmarshal a confdb schema.
 
-        :raises StoreAssertionError: If the confdbs set cannot be unmarshalled.
+        :raises StoreAssertionError: If the confdb schema cannot be unmarshalled.
         """
         try:
-            return models.ConfdbAssertion.unmarshal(confdbs_data)
+            return models.ConfdbSchemaAssertion.unmarshal(confdb_schema_data)
         except pydantic.ValidationError as err:
             raise errors.SnapcraftAssertionError(
-                message="Received invalid confdbs set from the store",
+                message="Received invalid confdb schema from the store",
                 # this is an unexpected failure that the user can't fix, so hide
                 # the response in the details
-                details=f"{format_pydantic_errors(err.errors(), file_name='confdbs set')}",
+                details=f"{format_pydantic_errors(err.errors(), file_name='confdb schema')}",
             ) from err
 
-    def list_confdbs(self, *, name: str | None = None) -> list[models.ConfdbAssertion]:
-        """Return a list of confdbs.
+    def list_confdb_schemas(
+        self, *, name: str | None = None
+    ) -> list[models.ConfdbSchemaAssertion]:
+        """Return a list of confdb schemas.
 
-        :param name: If specified, only list the confdb set with that name.
+        :param name: If specified, only list the confdb schema with that name.
         """
-        endpoint = f"{self._base_url}/api/v2/confdbs"
+        endpoint = f"{self._base_url}/api/v2/confdb-schemas"
         if name:
             endpoint += f"/{name}"
 
@@ -539,60 +542,62 @@ class LegacyStoreClientCLI:
                 # move body into model
                 assertion_data["headers"]["body"] = assertion_data.get("body")
 
-                assertion = self._unmarshal_confdbs_set(assertion_data["headers"])
+                assertion = self._unmarshal_confdb_schema(assertion_data["headers"])
                 confdb_assertions.append(assertion)
-                emit.debug(f"Parsed confdbs set: {assertion.model_dump_json()}")
+                emit.debug(f"Parsed confdb schema: {assertion.model_dump_json()}")
 
         return confdb_assertions
 
-    def build_confdbs(
-        self, *, confdbs: models.EditableConfdbAssertion
-    ) -> models.ConfdbAssertion:
-        """Build a confdbs set.
+    def build_confdb_schema(
+        self, *, confdb_schema: models.EditableConfdbSchemaAssertion
+    ) -> models.ConfdbSchemaAssertion:
+        """Build a confdb schema.
 
-        Sends an edited confdbs set to the store, which validates the data,
-        populates additional fields, and returns the confdbs set.
+        Sends an edited confdb schema to the store, which validates the data,
+        populates additional fields, and returns the confdb schema.
 
-        :param confdbs: The confdbs set to build.
+        :param confdb_schema: The confdb schema to build.
 
-        :returns: The built confdbs set.
+        :returns: The built confdb schema.
         """
         response = self.request(
             "POST",
-            f"{self._base_url}/api/v2/confdbs/build-assertion",
+            f"{self._base_url}/api/v2/confdb-schemas/build-assertion",
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
-            json=confdbs.marshal(),
+            json=confdb_schema.marshal(),
         )
 
-        assertion = self._unmarshal_confdbs_set(response.json())
-        emit.debug(f"Built confdbs set: {assertion.model_dump_json()}")
+        assertion = self._unmarshal_confdb_schema(response.json())
+        emit.debug(f"Built confdb schema: {assertion.model_dump_json()}")
         return assertion
 
-    def post_confdbs(self, *, confdbs_data: bytes) -> models.ConfdbAssertion:
-        """Send a confdbs set to be published.
+    def post_confdb_schema(
+        self, *, confdb_schema_data: bytes
+    ) -> models.ConfdbSchemaAssertion:
+        """Send a confdb schema to be published.
 
-        :param confdbs_data: A signed confdbs set represented as bytes.
+        :param confdb_schema_data: A signed confdb schema represented as bytes.
 
         :returns: The published assertion.
         """
         response = self.request(
             "POST",
-            f"{self._base_url}/api/v2/confdbs",
+            f"{self._base_url}/api/v2/confdb-schemas",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/x.ubuntu.assertion",
             },
-            data=confdbs_data,
+            data=confdb_schema_data,
         )
 
         assertions = response.json().get("assertions")
 
         if not assertions or len(assertions) != 1:
             raise errors.SnapcraftAssertionError(
-                message="Received invalid confdbs set from the store",
+                message="Received invalid confdb schema from the store",
                 # this is an unexpected failure that the user can't fix, so hide
                 # the response in the details
                 details=f"Received data: {assertions}",
@@ -601,8 +606,8 @@ class LegacyStoreClientCLI:
         # move body into model
         assertions[0]["headers"]["body"] = assertions[0]["body"]
 
-        assertion = self._unmarshal_confdbs_set(assertions[0]["headers"])
-        emit.debug(f"Published confdbs set: {assertion.model_dump_json()}")
+        assertion = self._unmarshal_confdb_schema(assertions[0]["headers"])
+        emit.debug(f"Published confdb schema: {assertion.model_dump_json()}")
         return assertion
 
 
@@ -622,7 +627,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         emit.debug(f"Skipping verification for {snap_name!r}")
 
     @overrides
-    def notify_upload(  # noqa: PLR0913[too-many-arguments]
+    def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
         snap_name: str,

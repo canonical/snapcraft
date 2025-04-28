@@ -16,8 +16,9 @@
 
 """External metadata helpers."""
 
+from collections import OrderedDict
 from pathlib import Path
-from typing import Final, OrderedDict, cast
+from typing import Final, cast
 
 import pydantic
 from craft_application.models import ProjectTitle, SummaryStr, UniqueStrList, VersionStr
@@ -221,5 +222,5 @@ def _raise_formatted_validation_error(err: pydantic.ValidationError):
     if not (loc and msg) or not isinstance(loc, tuple):
         return
 
-    varname = ".".join((x for x in loc if isinstance(x, str)))
+    varname = ".".join(x for x in loc if isinstance(x, str))
     raise errors.SnapcraftError(f"error setting {varname}: {msg}")

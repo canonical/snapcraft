@@ -7,14 +7,14 @@ dependencies = [
     "attrs",
     "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
     "click==8.1.8",
-    "craft-application[remote]~=4.10",
+    "craft-application[remote]>=5.0.3,<6.0.0",
     "craft-archives~=2.1",
-    "craft-cli~=2.15.0",
-    "craft-grammar>=2.0.1,<3.0.0",
-    "craft-parts==2.4.1",
-    "craft-platforms~=0.6",
-    "craft-providers~=2.1",
-    "craft-store>=3.0.2,<4.0.0",
+    "craft-cli~=3.0",
+    "craft-grammar>=2.0.3,<3.0.0",
+    "craft-parts~=2.7",
+    "craft-platforms~=0.7",
+    "craft-providers~=2.2",
+    "craft-store~=3.2",
     "cryptography",
     "gnupg",
     "jsonschema==2.5.1",
@@ -32,7 +32,6 @@ dependencies = [
     # Further info: https://www.pygit2.org/install.html#version-numbers
     "pygit2~=1.13.0",
     "pylxd ; sys_platform == 'linux'",
-    "pymacaroons",
     "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
@@ -68,8 +67,6 @@ dev = [
     "coverage[toml]",
     "pyflakes",
     "fixtures",
-    # For Tiobe TiCS
-    "flake8",
     "mccabe",
     "testscenarios",
     "pexpect",
@@ -77,8 +74,7 @@ dev = [
     "pycodestyle",
     "pyftpdlib",
     "pyinstaller ; sys_platform == 'win32'",
-    # For Tiobe TiCS
-    "pylint",
+    "pymacaroons",
     "pyramid",
     "pytest",
     "pytest-cov",
@@ -87,8 +83,8 @@ dev = [
     "pytest-subprocess",
 ]
 docs = [
-    "canonical-sphinx[full]>=0.2.0",
-    "docutils<0.20", # Frozen until we can update sphinx dependencies.
+    "canonical-sphinx[full]>=0.4.0",
+    "docutils>=0.21",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
     "sphinxcontrib-details-directive",
@@ -98,7 +94,6 @@ docs = [
     "pyspelling",
 ]
 lint = [
-    "yamllint~=1.34",
     "codespell[toml]",
     { include-group = "types" },
 ]
@@ -122,12 +117,13 @@ dev-noble = [
 ]
 dev-oracular = [
     # 2.9 for Oracular+
-    "python-apt>=2.9.0;sys_platform=='linux'",
+    "python-apt>=2.9.0,<2.9.9;sys_platform=='linux'",
 ]
 dev-plucky = [
     # 2.9 for Oracular+
     "python-apt>=2.9.0;sys_platform=='linux'",
 ]
+tics = ["flake8", "pylint"]
 
 [tool.uv]
 conflicts = [
@@ -247,13 +243,12 @@ lint.select = [
     "ICN",  # Unconventional import aliases.
     "Q",  # Consistent quotations
     "RET",  # Return values
-    "UP006", # PEP 585 - type hinting generics
-    "UP007", # PEP 604 - union typing
+    "UP",  # pyupgrade
 ]
 lint.ignore = [
     # These following copy the flake8 configuration
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
-    "E501",  # Line too long
+    "E501",  # Line too long (reason: ruff will automatically fix this for us)
     # The following copy our pydocstyle configuration
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
     "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
@@ -261,6 +256,10 @@ lint.ignore = [
     "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
     "D215",  # Section underline is over-indented (reason: pep257 default)
 
+    # Ignored due to conflicts with ruff's formatter:
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "COM812", # Missing trailing comma - mostly the same, but marginal differences.
+    "ISC001", # Single-line implicit string concatenation.
 
     # Stricter type checking rules that that are disabled.
     "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
@@ -293,26 +292,33 @@ lint.ignore = [
     "S607",  # Partial executable path for subprocess calls
 ]
 
-[tool.ruff.lint.pylint]
-max-args = 6
-max-branches = 16
-
 [tool.ruff.lint.per-file-ignores]
-"tests/**.py" = [
-    "D",  # Ignore docstring rules in tests
-    "ANN", # Ignore type annotations in tests
-    "S101",  # Yeah of course we assert in tests
-    "B009",  # Allow calling `getattr` in tests since it can be used to make the test clearer.
-    "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
-    "S105", # Allow Possible hardcoded password.
-    "S106", # Allow Possible hardcoded password.
-    "S108", # Allow Probable insecure usage of temporary file or directory.
-    "PLR0913",  # Allow many arguments to tests
+"tests/**.py" = [ # Some things we want for the main project are unnecessary in tests.
+    "D",       # Ignore docstring rules in tests
+    "ANN",     # Ignore type annotations in tests
+    "ARG",     # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
+    "S101",    # Allow assertions in tests
+    "S103",    # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+    "S105",    # Allow Possible hardcoded password.
+    "S106",    # Allow Possible hardcoded password.
+    "S108",    # Allow Probable insecure usage of temporary file or directory
+    "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
+    "PLR2004", # Allow magic values in tests
+    "SLF",     # Allow accessing private members from tests.
 ]
 "tests/unit/parts/plugins/test_kernel.py" = [
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
 ]
-"__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
+"__init__.py" = [
+    "I001", # isort leaves init files alone by default, this makes ruff ignore them too.
+    "F401", # Allows unused imports in __init__ files.
+]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
+[tool.ruff.lint.flake8-builtins]
+strict-checking = true
 
 [tool.ruff.lint.pydocstyle]
 ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
@@ -324,6 +330,10 @@ ignore-decorators = [ # Functions with these decorators don't have to have docst
     "typing_extensions.override",
 ]
 
+[tool.ruff.lint.pylint]
+max-args = 8
+max-branches = 16
+
 [tool.ruff.lint.pep8-naming]
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
 classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
@@ -332,6 +342,7 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 minversion = "7.0"
 testpaths = "tests"
 xfail_strict = true
+addopts = "--ignore=tests/spread"
 markers = ["slow: slow tests"]
 
 [tool.coverage.run]

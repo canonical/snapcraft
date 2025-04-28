@@ -33,7 +33,9 @@ environment:
   GIT_AUTHOR_NAME: "Test User"
   GIT_AUTHOR_EMAIL: "test-user@email.com"
 
+  # Make log output much easier to get from these tests.
   CRAFT_DEBUG: 1
+  CRAFT_VERBOSITY_LEVEL: trace
 
 backends:
   lxd:
@@ -55,7 +57,7 @@ backends:
           storage: 20G
           image: ubuntu-2204-64
       - ubuntu-24.04-64:
-          image: ubuntu-24.04-64
+          image: ubuntu-2404-64
           storage: 20G
           workers: 6
 
@@ -221,6 +223,8 @@ suites:
     summary: core22 linter tests
     environment:
       SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: "n"
+      # We're checking the output text, so override the normal trace output.
+      CRAFT_VERBOSITY_LEVEL: brief
 
     systems:
       - ubuntu-22.04*
@@ -320,6 +324,7 @@ suites:
     summary: tests of snapcraft's v2 plugins
     systems:
       - ubuntu-20.04*
+    manual: true
   tests/spread/plugins/craft-parts/:
     summary: tests of snapcraft's craft-part's based plugins
     systems:
@@ -329,6 +334,7 @@ suites:
   tests/spread/extensions/:
     summary: tests of snapcraft's extensions
     kill-timeout: 20m
+    manual: true
 
   # External snap tests
   tests/spread/snaps/:

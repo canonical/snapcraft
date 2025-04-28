@@ -16,6 +16,9 @@ endif
 PRETTIER=npm exec --package=prettier -- prettier --log-level warn
 PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 
+# Cutoff (in seconds) before a test is considered slow by pytest
+SLOW_CUTOFF_TIME ?= 1
+
 # By default we should not update the uv lock file here.
 export UV_FROZEN := true
 
@@ -44,7 +47,7 @@ help: ## Show this help.
 			$$3=sprintf(" └ %s", $$3);
 			print $$0;
 		}
-	}'
+	}' | uniq
 
 .PHONY: setup
 setup: install-uv setup-precommit install-build-deps ## Set up a development environment
@@ -53,6 +56,14 @@ setup: install-uv setup-precommit install-build-deps ## Set up a development env
 .PHONY: setup-tests
 setup-tests: install-uv install-build-deps ##- Set up a testing environment without linters
 	uv sync $(UV_TEST_GROUPS)
+
+.PHONY: setup-tics
+setup-tics: install-uv install-build-deps ##- Set up a testing environment for Tiobe TICS
+	uv venv
+	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_TICS_GROUPS)
+ifneq ($(CI),)
+	echo $(PWD)/.venv/bin >> $(GITHUB_PATH)
+endif
 
 .PHONY: setup-lint
 setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps  ##- Set up a linting-only environment
@@ -192,10 +203,21 @@ test-slow:  ##- Run slow tests
 
 .PHONY: test-coverage
 test-coverage:  ## Generate coverage report
-	uv run coverage run --source $(PROJECT) -m pytest
-	uv run coverage xml -o coverage.xml
+ifeq ($(COVERAGE_SOURCE),)
+	uv run coverage run --source $(PROJECT),tests -m pytest
+else
+	uv run coverage run --source $(COVERAGE_SOURCE),tests -m pytest
+endif
+	uv run coverage xml -o results/coverage.xml
+	# for backwards compatibility
+	# https://github.com/canonical/starflow/blob/3447d302cb7883cbb966ce0ec7e5b3dfd4bb3019/.github/workflows/test-python.yaml#L109
+	cp results/coverage.xml coverage.xml
 	uv run coverage report -m
 	uv run coverage html
+
+.PHONY: test-find-slow
+test-find-slow:  ##- Identify slow tests. Set cutoff time in seconds with SLOW_CUTOFF_TIME
+	uv run pytest --durations 0 --durations-min $(SLOW_CUTOFF_TIME)
 
 .PHONY: docs
 docs:  ## Build documentation

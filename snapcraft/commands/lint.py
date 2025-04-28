@@ -22,9 +22,10 @@ import shlex
 import subprocess
 import tempfile
 import textwrap
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterator
+from typing import Any
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
