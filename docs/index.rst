@@ -6,10 +6,10 @@ Snapcraft
 **Snapcraft** is the command-line build tool for packaging and distributing software and
 apps in the snap container format.
 
-The tool provides platform-specific plugins and extensions to streamline and simplify
-the packaging process. Snaps can be tested, debugged, and locally shared before being
-published to the global Snap Store and private stores. It uses simple commands to manage
-and monitor releases at a granular level.
+The tool packages apps across many supported languegs, build tools, and frameworks, such
+as Python, C and C++, Rust, Node, and GNOME. Snaps can be tested, debugged, and locally
+shared before being published to the global Snap Store and private stores. It uses
+simple commands to manage and monitor releases at a granular level.
 
 It solves the problems of dependency management and architecture support by bundling all
 of a software's libraries into the container itself, and provides a way to package any
@@ -17,7 +17,6 @@ app, program, toolkit, or library for all major Linux distributions and IoT devi
 
 Snapcraft is for developers, package maintainers, fleet administrators, and hobbyists
 who are interested in publishing snaps for Linux and IoT devices.
-
 
 .. list-table::
 
