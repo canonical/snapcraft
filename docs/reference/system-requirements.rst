@@ -1,4 +1,4 @@
-.. _system-requirements:
+.. _reference-system-requirements:
 
 System requirements
 ===================

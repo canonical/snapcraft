@@ -1,4 +1,4 @@
-.. _flutter-extension:
+.. _reference-flutter-extension:
 
 Flutter extension
 =================
@@ -143,11 +143,11 @@ This example contains the difference between the original file and the output of
 :ref:`snapcraft expand-extensions <ref_commands_expand-extensions>` command. Some of the
 text has been altered for ease of reading.
 
-The file is based on the :ref:`my-flutter-app <example-flutter-app>` project.
+The file is based on the :ref:`my-flutter-app <how-to-craft-a-flutter-app>` project.
 
 .. collapse:: Expanded project file for my-flutter-app
 
-    .. literalinclude:: ../code/extensions/flutter-extension-my-flutter-app-expanded.diff
+    .. literalinclude:: code/flutter-extension-my-flutter-app-expanded.diff
         :language: diff
         :lines: 3-
         :emphasize-lines: 14-24, 31-78

@@ -1,4 +1,4 @@
-.. _env-injector-extension:
+.. _reference-env-injector-extension:
 
 env-injector extension
 ======================

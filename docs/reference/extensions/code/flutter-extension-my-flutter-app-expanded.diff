@@ -1,0 +1,80 @@
+# Diff between snapcraft.yaml and `snapcraft expand-extensions`, showing the differences
+# that the Flutter extensions applies to a project file.
+ name: my-flutter-app
+ version: '1.0'
+ summary: An example Flutter snap
+ description: |
+   An example showing how Flutter programs can be packaged as snaps.
+
+ base: core18
+ confinement: strict
+ grade: stable
+
+ apps:
+   my-flutter-app:
+     command: my_flutter_app
+-    extensions:
+-      - flutter-stable
++    command-chain:
++      - snap/command-chain/desktop-launch
++    plugs:
++      - desktop
++      - desktop-legacy
++      - gsettings
++      - opengl
++      - wayland
++      - x11
+
+ parts:
+   my-flutter-app:
+     source: .
+     plugin: flutter
+     flutter-target: lib/main.dart
++  gnome-3-28-extension:
++    build-packages:
++      - gcc
++      - libgtk-3-dev
++    make-parameters:
++      - PLATFORM_PLUG=gnome-3-28-1804
++    plugin: make
++    source: $SNAPCRAFT_EXTENSIONS_DIR/desktop
++    source-subdir: gnome
++  flutter-extension:
++    build-snaps:
++      - flutter/latest/stable
++    override-pull: |
++      flutter channel stable
++      flutter config --enable-linux-desktop
++      flutter upgrade
++      flutter doctor
++    plugin: nil
++
++assumes:
++  - snapd2.43
++
++plugs:
++  gnome-3-28-1804:
++    default-provider: gnome-3-28-1804
++    interface: content
++    target: $SNAP/gnome-platform
++  gtk-3-themes:
++    default-provider: gtk-common-themes
++    interface: content
++    target: $SNAP/data-dir/themes
++  icon-themes:
++    default-provider: gtk-common-themes
++    interface: content
++    target: $SNAP/data-dir/icons
++  sound-themes:
++    default-provider: gtk-common-themes
++    interface: content
++    target: $SNAP/data-dir/sounds
++
++environment:
++  SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
++
++layout:
++  /usr/share/libdrm:
++    bind: $SNAP/gnome-platform/usr/share/libdrm
++  /usr/share/xml/iso-codes:
++    bind: $SNAP/gnome-platform/usr/share/xml/iso-codes

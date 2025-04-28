@@ -1,4 +1,4 @@
-.. _ros-2-foxy-extension:
+.. _reference-ros-2-foxy-extension:
 
 ROS 2 extensions
 ================
@@ -30,7 +30,7 @@ There are three extensions in this family, each for a different version of ROS 2
       - `ROS 2 Jazzy Jalisco <https://docs.ros.org/en/jazzy/index.html>`_
       - core24
 
-        :ref:`Experimental extensions enabled <enable-experimental-extensions>`
+        :ref:`Experimental extensions enabled <how-to-enable-experimental-extensions>`
 
 All three extensions require Snapcraft 7.3 or higiher.
 
@@ -266,8 +266,8 @@ Each example contains the difference between the original file and the output of
 :ref:`snapcraft expand-extensions <ref_commands_expand-extensions>` command. Some of the
 text has been altered for ease of reading.
 
-The files are based on the :ref:`ros2-talker-listener <example-ros-2-app-project-files>`
-project.
+The files are based on the :ref:`ros2-talker-listener
+<how-to-craft-an-ros-2-app-project-files>` project.
 
 .. tabs::
 
@@ -275,7 +275,7 @@ project.
 
         .. collapse:: Expanded project file for ros2-talker-listener
 
-            .. literalinclude:: ../code/extensions/ros-2-foxy-extension-talker-listener-expanded.diff
+            .. literalinclude:: code/ros-2-foxy-extension-talker-listener-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 18-28, 33-52
@@ -284,7 +284,7 @@ project.
 
         .. collapse:: Expanded project file for ros2-talker-listener
 
-            .. literalinclude:: ../code/extensions/ros-2-humble-extension-talker-listener-expanded.diff
+            .. literalinclude:: code/ros-2-humble-extension-talker-listener-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 24-34, 39-59
@@ -293,7 +293,7 @@ project.
 
         .. collapse:: Expanded project file for ros2-talker-listener
 
-            .. literalinclude:: ../code/extensions/ros-2-jazzy-extension-talker-listener-expanded.diff
+            .. literalinclude:: code/ros-2-jazzy-extension-talker-listener-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 18-28, 33-41, 43-53

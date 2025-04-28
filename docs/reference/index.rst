@@ -4,33 +4,23 @@ Reference
 =========
 
 .. toctree::
-   :maxdepth: 1
+    :titlesonly:
+    :maxdepth: 1
 
-   anatomy-of-a-project-file
-   snap-build-process
-   snap-publishing-process
-   channels
-   architectures
-   build-environment-options
-   bases
-   commands
-   components
-   linters
-   external-package-information
-   plugins
-   extensions/index
-   /common/craft-parts/reference/part_properties
-   parts_steps
-   part-environment-variables
-   metrics
-   layouts
-   snapcraft-yaml
-   snapshots
-   system-requirements
-
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
+    commands
+    build-environment-options
+    project-file/index
+    bases
+    architectures
+    parts/index
+    plugins
+    extensions/index
+    external-package-information
+    components
+    linters
+    layouts
+    channels
+    snapshots
+    metrics
+    processes/index
+    system-requirements

@@ -1,4 +1,4 @@
-.. _gnome-extension:
+.. _reference-gnome-extension:
 
 GNOME extension
 ===============
@@ -260,7 +260,7 @@ reading.
 
         .. collapse:: Expanded project file for GNOME System Monitor
 
-            .. literalinclude:: ../code/extensions/gnome-extension-gnome-system-monitor-core-24-expanded.diff
+            .. literalinclude:: code/gnome-extension-gnome-system-monitor-core-24-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 57-66, 78-87, 100-150, 158-163, 171-173, 180-201, 210-212
@@ -269,7 +269,7 @@ reading.
 
         .. collapse:: Expanded project file for GNOME System Monitor
 
-            .. literalinclude:: ../code/extensions/gnome-extension-gnome-system-monitor-core-22-expanded.diff
+            .. literalinclude:: code/gnome-extension-gnome-system-monitor-core-22-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 60-69, 81-90, 103-155, 159-160, 164-170, 178-179, 186-207
