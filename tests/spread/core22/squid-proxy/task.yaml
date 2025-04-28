@@ -1,7 +1,5 @@
 summary: Verify that squid proxy can be passed as an http proxy to snapcraft.
 
-systems: [ubuntu-22.04*]
-
 environment:
   SNAP_DIR: snaps/squid-proxy-test
   SQUID_PROXY_CONF: /etc/squid/squid.conf

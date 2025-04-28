@@ -1,0 +1,51 @@
+summary: Verify that squid proxy can be passed as an http proxy to snapcraft.
+
+environment:
+  SNAP_DIR: snaps/squid-proxy-test
+  SQUID_PROXY_CONF: /etc/squid/squid.conf
+  SQUID_PROXY_LOG: /var/log/squid/access.log
+  SQUID_PROXY_URL: http://localhost:3128
+
+prepare: |
+  sudo apt-get install --yes squid
+
+  # Configure squid
+  sed -i 's|^http_access deny CONNECT !SSL_ports|#http_access deny CONNECT !SSL_ports|' ${SQUID_PROXY_CONF}
+  sed -i 's|^# via on|via off|' ${SQUID_PROXY_CONF}
+  sed -i 's|^# forwarded_for on|forwarded_for delete|' ${SQUID_PROXY_CONF}
+
+  sudo systemctl restart squid.service
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+  sudo apt-get remove --purge --yes squid
+
+execute: |
+  cd "$SNAP_DIR"
+
+  http_proxy=${SQUID_PROXY_URL} snapcraft
+
+  # Verify that squid's logs aren't empty
+  [ -s /var/log/squid/access.log ]
+
+  # First time around the package isn't cached
+  grep -E "TCP_MISS/200.*GET.*archive.ubuntu.com/ubuntu/pool/main/h/hello/hello_.*.deb " ${SQUID_PROXY_LOG} || \
+  ( cat ${SQUID_PROXY_LOG} && exit 1 )
+
+  snapcraft clean
+
+  # Clean snapcraft download cache to make sure to hit the proxy again
+  if [ -d "/root/.cache/snapcraft/download" ]; then
+    rm /root/.cache/snapcraft/download/*.deb
+  fi
+
+  sudo apt-get clean
+
+  http_proxy=${SQUID_PROXY_URL} snapcraft
+
+  # On second call the package is cached, we thus hit the memory
+  grep -E "TCP_MEM_HIT/200.*GET.*archive.ubuntu.com/ubuntu/pool/main/h/hello/hello_.*.deb " ${SQUID_PROXY_LOG} || \
+  ( cat ${SQUID_PROXY_LOG} && exit 1 )
