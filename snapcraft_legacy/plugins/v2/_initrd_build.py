@@ -484,7 +484,7 @@ def _make_initrd_cmd(
         """
     )
 
-    cmd_create_initrd = textwrap.dedent(
+    cmd_create_initrd_rm_existing = textwrap.dedent(
         """
         if compgen -G "${CRAFT_PART_INSTALL}/initrd.img*" > /dev/null; then
             rm -rf "${CRAFT_PART_INSTALL}"/initrd.img*
@@ -609,7 +609,7 @@ def _make_initrd_cmd(
         cmd_prepare_initrd_addons,
         cmd_prepare_snap_bootstrap_feature,
         'echo "Create new initrd..."',
-        cmd_create_initrd,
+        cmd_create_initrd_rm_existing,
         cmd_create_initrd_update_compression,
         cmd_create_initrd_workaround,
         cmd_create_initrd_install_extra_modules,
