@@ -156,8 +156,6 @@ class InitrdPlugin(PluginV2):
 
     def __init__(self, *, part_name: str, options) -> None:
         super().__init__(part_name=part_name, options=options)
-        self.name = part_name
-        self.options = options
         self._target_arch = _get_target_architecture()
         # check if we are cross building
         self._host_arch = os.getenv("SNAP_ARCH", "")
