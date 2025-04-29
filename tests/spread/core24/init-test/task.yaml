@@ -10,6 +10,5 @@ restore: |
 execute: |
   mkdir test-snap
   cd test-snap
-  snapcraft init
   snapcraft init --profile=test
   snapcraft test
