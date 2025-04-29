@@ -112,7 +112,6 @@ exclude_patterns = [
     "how-to/publishing/publish-a-snap.rst",
     "reference/advanced-grammar.rst",
     "reference/hooks.rst",
-    "reference/package-repositories.rst",
     "explanation/interfaces.rst",
 ]
 
