@@ -18,11 +18,12 @@ What's new
 
 Snapcraft 8.9 brings the following features, integrations, and improvements.
 
-``snapcraft test``
-~~~~~~~~~~~~~~~~~~
+Test command
+~~~~~~~~~~~~
 
 A new command called ``test``, and its accompanying ``init`` profile, are available for
-testing snaps. They leverage `Spread`_ to run identically on local and remote systems.
+testing snaps. They leverage `Spread`_ to run tests identically on local and remote
+systems.
 
 The command is experimental and subject to change. To try it on an existing snap
 project, run ``snapcraft init --profile=test`` at the root of your project directory.
@@ -32,7 +33,7 @@ For a description of the command and its options, see the :ref:`test command
 Cargo use plugin
 ~~~~~~~~~~~~~~~~
 
-We added a plugin that sets up a local `cargo registry`_ for `Rust`_ crates. These
+We added a plugin that sets up a local `cargo registry`_ for `Rust crates`_. These
 crates can then be used by the existing :ref:`Rust plugin <craft_parts_rust_plugin>`.
 See the :ref:`craft_parts_cargo_use_plugin` reference for details.
 
@@ -47,13 +48,18 @@ plugin. See the :ref:`craft_parts_gradle_plugin` reference for details.
 Documentation migration and redesign
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Previously, Snapcraft's documentation was hosted on `snapcraft.io
-<http://snapcraft.io/docs>`_ and edited via forum posts. The documentation has been
-migrated to :doc:`Read the Docs </index>` and is hosted in Snapcraft's repository.
+Previously, the main source of Snapcraft documentation was hosted on a Discourse
+instance at `snapcraft.io <http://snapcraft.io/docs>`_.
 
-The documentation was redesigned to follow `Diátaxis <https://diataxis.fr/>`_.
-It has a similar design to documentation from other Canonical products and
-is versioned and released alongside Snapcraft itself.
+With Snapcraft 8.9, the essential documentation was shifted to ReadTheDocs and is now
+hosted inside the Snapcraft repository. In the process, much of the documentation was
+reorganized and rewritten to closely follow the `Diátaxis framework
+<https://diataxis.fr>`_.
+
+The documentation now aligns more closely with the learning experience of all Canonical
+products. It's also versioned with each Snapcraft release.
+
+We're working to retire the remaining documentation on snapcraft.io.
 
 Minor features
 --------------
@@ -78,9 +84,17 @@ Renaming of confdb schema commands
 A confdb schema defines the configuration of Linux systems, including storage,
 access permission, granularity, and sharing between snaps.
 
-The existing confdb schema commands have been renamed. The commands
-``list-confdb-schemas`` and ``edit-confdb-schema`` replace the previous
-``list-confdbs`` and ``edit-confdbs`` commands, respectively.
+The existing confdb schema commands have been renamed as follows:
+
+.. list-table::
+    :header-rows: 1
+
+    * - Old command
+      - New command
+    * - ``list-confdbs``
+      - ``list-confdb-schemas``
+    * - ``edit-confdbs``
+      - ``edit-confdb-schema``
 
 Known issues
 ------------
@@ -120,7 +134,7 @@ this release.
 and :literalref:`@tigarmo<https://github.com/tigarmo>`
 
 .. _Gradle: https://gradle.org/
-.. _Rust: https://doc.rust-lang.org/stable/
+.. _Rust crates: https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html
 .. _Spread: https://github.com/snapcore/spread
 .. _cargo registry: https://doc.rust-lang.org/cargo/reference/registries.html
 .. _#5107: https://github.com/canonical/snapcraft/pull/5107
