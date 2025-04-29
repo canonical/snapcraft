@@ -250,6 +250,6 @@ parts:
       - CGO_ENABLED: 0
       - GOFLAGS: -trimpath -ldflags=-w -ldflags=-s
     organize:
-      bin/spread: libexec/snapcraft/spread
+      bin/spread: libexec/snapcraft/craft.spread
     stage:
       - libexec/snapcraft/
