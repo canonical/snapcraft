@@ -12,6 +12,7 @@ and their implementation.
 
     architectures
     bases
+    extensions
     parts
     parts-lifecycle
     components
