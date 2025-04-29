@@ -1,4 +1,4 @@
-summary: Example test task
+summary: Test task example
 
 execute: |
   echo "Run a package test"
