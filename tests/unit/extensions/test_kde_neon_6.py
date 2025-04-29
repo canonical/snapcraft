@@ -737,7 +737,6 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_6_extension_with_build_sna
 
     assert kde_neon_6_extension_with_build_snap.get_parts_snippet() == {
         "kde-neon-6/sdk": {
-            "after": ["part1"],
             "source": str(source),
             "plugin": "make",
             "make-parameters": [
@@ -755,7 +754,6 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
         kde_neon_6_extension_with_default_build_snap_from_latest_edge_core24.get_parts_snippet()
         == {
             "kde-neon-6/sdk": {
-                "after": ["part1"],
                 "source": str(source),
                 "plugin": "make",
                 "make-parameters": [

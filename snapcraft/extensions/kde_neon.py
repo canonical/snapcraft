@@ -437,7 +437,6 @@ class KDENeon(Extension):
 
         return {
             "kde-neon/sdk": {
-                "after": list(self.yaml_data["parts"].keys()),
                 "source": str(source),
                 "plugin": "make",
                 **gpu_opts,
