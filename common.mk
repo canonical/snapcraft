@@ -47,7 +47,7 @@ help: ## Show this help.
 			$$3=sprintf(" └ %s", $$3);
 			print $$0;
 		}
-	}'
+	}' | uniq
 
 .PHONY: setup
 setup: install-uv setup-precommit install-build-deps ## Set up a development environment

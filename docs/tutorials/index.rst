@@ -1,11 +1,18 @@
-.. _tutorial:
+.. _tutorials:
 
 Tutorials
-*********
+=========
 
-If you want to learn the basics from experience, then our tutorials will help
-you acquire the necessary competencies from real-life examples with fully
-reproducible steps.
+The tutorial offers a lesson that steps through the main process of packaging a snap
+with Snapcraft. It will introduce you to key concepts, tools, and operations, starting
+from installation and setup and progressing to finalizing your first snap.
+
+By completing the tutorial, you'll practice the fundamentals of Snapcraft and acquire
+knowledge through hands-on instruction.
+
+:ref:`Start the tutorial <tutorial-craft-a-snap>`
 
 .. toctree::
-   :maxdepth: 1
+    :hidden:
+
+    craft-a-snap

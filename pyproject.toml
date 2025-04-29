@@ -92,6 +92,7 @@ docs = [
     "sphinx-toolbox",
     "sphinxext-rediraffe==0.2.7",
     "pyspelling",
+    "pydantic-kitbash==0.0.3",
 ]
 lint = [
     "codespell[toml]",
@@ -342,6 +343,7 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 minversion = "7.0"
 testpaths = "tests"
 xfail_strict = true
+addopts = "--ignore=tests/spread"
 markers = ["slow: slow tests"]
 
 [tool.coverage.run]

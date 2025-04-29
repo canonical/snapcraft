@@ -23,8 +23,15 @@ import craft_parts_docs
 
 import snapcraft
 
-project_dir = pathlib.Path("..").resolve()
+project_dir = pathlib.Path(__file__).parent.parent.resolve()
 sys.path.insert(0, str(project_dir.absolute()))
+
+# Add directories to sys path to simplify kitbash arguments
+model_dir = (project_dir / "snapcraft/models").resolve()
+sys.path.append(str(model_dir.absolute()))
+
+library_dir = (project_dir / ".venv/lib/python3.12/site-packages").resolve()
+sys.path.append(str(library_dir.absolute()))
 
 project = "Snapcraft"
 author = "Canonical Group Ltd"
@@ -50,6 +57,7 @@ html_theme_options = {
 
 extensions = [
     "canonical_sphinx",
+    "pydantic_kitbash",
 ]
 
 sphinx_tabs_disable_tab_closing = True
@@ -58,6 +66,7 @@ sphinx_tabs_disable_tab_closing = True
 extensions.extend(
     (
         "sphinx.ext.ifconfig",
+        "sphinx.ext.intersphinx",
         "sphinxcontrib.details.directive",
         "sphinx_toolbox.collapse",
         "sphinxext.rediraffe",
@@ -76,13 +85,17 @@ exclude_patterns = [
     # documents (so they generate "duplicate label" errors) or they aren't
     # used in this documentation at all (so they generate "unreferenced"
     # errors).
+    "common/craft-parts/explanation/lifecycle.rst",
     "common/craft-parts/explanation/overlay_parameters.rst",
     "common/craft-parts/explanation/overlays.rst",
     "common/craft-parts/explanation/how_parts_are_built.rst",
     "common/craft-parts/explanation/parts.rst",
+    "common/craft-parts/explanation/dump_plugin.rst",
+    "common/craft-parts/explanation/gradle_plugin.rst",
     "common/craft-parts/how-to/craftctl.rst",
     "common/craft-parts/how-to/use_parts.rst",
     "common/craft-parts/reference/parts_steps.rst",
+    "common/craft-parts/reference/part_properties.rst",
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",
     "common/craft-parts/reference/plugins/poetry_plugin.rst",
@@ -90,7 +103,23 @@ exclude_patterns = [
     "common/craft-parts/reference/plugins/maven_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
+    # Staged files for Discourse migration
+    "how-to/crafting/add-a-part.rst",
+    "how-to/crafting/manage-dependencies.rst",
+    "how-to/crafting/override-the-build-step-with-craftctl.rst",
+    "how-to/publishing/build-snaps-remotely.rst",
+    "how-to/publishing/manage-releases.rst",
+    "how-to/publishing/publish-a-snap.rst",
+    "reference/advanced-grammar.rst",
+    "reference/hooks.rst",
+    "reference/package-repositories.rst",
+    "explanation/interfaces.rst",
 ]
+
+
+intersphinx_mapping = {
+    "craft-parts": ("https://canonical-craft-parts.readthedocs-hosted.com/en/latest/", None),
+}
 
 
 def generate_cli_docs(nil):

@@ -1,11 +1,13 @@
+.. _reference-architectures:
+
 Architectures
 =============
 
 snapcraft.yaml
 --------------
 
-The :doc:`architectures how-to</howto/architectures>` provides examples of how
-to use the ``platforms`` and ``architectures`` key.
+The :ref:`architectures how-to guide <how-to-select-architectures>` provides examples of
+how to use the ``platforms`` and ``architectures`` key.
 
 core24
 ^^^^^^
@@ -57,6 +59,8 @@ be defined. See :ref:`this page<how-to-arch-build-for-all>` to learn how to
 use the ``all`` key.
 
 ``all`` cannot be used for ``build-on``.
+
+.. _reference-architectures-core22:
 
 core22
 ^^^^^^
@@ -157,6 +161,8 @@ is equivalent to:
 
 The explicit and shorthand format cannot be mixed.
 
+
+.. _architectures-project-variables:
 
 Project variables
 -----------------

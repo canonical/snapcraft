@@ -16,6 +16,7 @@ Current releases
 Snapcraft 8
 ~~~~~~~~~~~
 
+- :ref:`Snapcraft 8.8 <release-8.8>`
 - :ref:`Snapcraft 8.7 <release-8.7>`
 
 
@@ -80,11 +81,11 @@ Snapcraft software bases are derived from Ubuntu LTS releases, and their
 development keeps pace with the OS's new releases and support lifecycle.
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+    :hidden:
 
-   Snapcraft 8.7 <snapcraft-8-7>
-   changelog
+    Snapcraft 8.8 <snapcraft-8-8>
+    Snapcraft 8.7 <snapcraft-8-7>
+    changelog
 
 
 .. _`Semantic Versioning 2.0.0`: https://semver.org/spec/v2.0.0.html
