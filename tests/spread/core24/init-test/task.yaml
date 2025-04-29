@@ -1,14 +1,15 @@
 summary: Init and execute tests
 
 prepare: |
-  mkdir test-snap
-  cd test-snap
-  snapcraft init
+  rm -rf test-snap
 
 restore: |
   rm -rf test-snap
   rm -rf ./*.snap
 
 execute: |
+  mkdir test-snap
+  cd test-snap
+  snapcraft init
   snapcraft init --profile=test
   snapcraft test
