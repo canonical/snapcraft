@@ -1,6 +1,6 @@
 .. _reference-matter-sdk-plugin:
 
-matter-sdk plugin
+Matter SDK plugin
 =================
 
 .. admonition:: Experimental
