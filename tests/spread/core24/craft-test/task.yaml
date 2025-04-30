@@ -4,4 +4,4 @@ environment:
   CI: "1"
 
 execute: |
-  snapcraft test --verbose
+  snapcraft test --verbose 2>&1 | MATCH "Successful tasks: 1"
