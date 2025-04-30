@@ -15,8 +15,6 @@ execute: |
   cd test-snap
   snapcraft init
   snapcraft init --profile=test
-  # Test defaults assume strict confinement
-  sed -i 's/confinement: devmode/confinement: strict/' snap/snapcraft.yaml
   # Remove once the packing issue is solved
   snapcraft pack
   snapcraft test
