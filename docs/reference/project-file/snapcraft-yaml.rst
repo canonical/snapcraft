@@ -108,6 +108,8 @@ and details how they're executed and which resources they can access.
     :prepend-name: apps.<app-name>
 
 
+.. _reference-snapcraft-yaml-part-keys:
+
 Part keys
 ---------
 
