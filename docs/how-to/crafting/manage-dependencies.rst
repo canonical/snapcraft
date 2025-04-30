@@ -51,8 +51,8 @@ command-line tool that interacts with git:
     stage-packages:
       - git
 
-Snaps are downloaded from the `Snap Store <https://snapcraft.io/store>`_ and unpacked
-into the snap being built.
+Staged snaps are downloaded from the `Snap Store <https://snapcraft.io/store>`_ and
+unpacked into the snap being built.
 
 For staged snaps, the ``meta`` and ``snap`` directories from the snap will be available
 as ``meta.<snap-name>`` and ``snap.<snap-name>`` for cases where assets from those
@@ -64,10 +64,9 @@ Package and snap names
 
 Package dependencies are listed as package names for the snap's build environment.
 
-For a default Snapcraft installation running `Multipass <https://multipass.run/>`_ or
-`LXD <https://linuxcontainers.org/lxd/introduction/>`_, the build environment is
-dependent on whatever :ref:`base snap <base-snap-reference>` is being used.
-Consequently, dependencies are listed using their respective apt package names. See
+Snapcraft's build environment is dependent on the :ref:`base snap <base-snap-reference>`
+used in the project file. Consequently, dependencies are listed using their respective
+apt package names from the `Ubuntu package archive <https://packages.ubuntu.com/>`_. See
 :ref:`reference-build-environment-options` for further details
 
 It's also feasible to have a build environment built on Fedora for example, using Fedora
@@ -118,7 +117,8 @@ will need to be installed, and because this is the building stage, so too will i
 header package (``libgc-dev``).
 
 If the package is unknown, its correct name can normally be found with a search from
-within the build environment, or via a search engine.
+within the build environment, a search engine, or on the `Ubuntu package archive
+<https://packages.ubuntu.com/>`_.
 
 
 Missing staging dependencies
