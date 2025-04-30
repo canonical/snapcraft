@@ -4,6 +4,7 @@ environment:
   SNAP_DIR: snaps/ua-token-test
   SNAPCRAFT_UA_TOKEN: "$(HOST: echo ${UA_TOKEN})"
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  GITHUB_REPOSITORY_OWNER: "$(HOST: echo ${GITHUB_REPOSITORY_OWNER})"
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -28,8 +29,14 @@ restore: |
 
 execute: |
   if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
-    echo "No UA token found in env UA_TOKEN"
-    exit 1
+    # This test has to run in the main repo's workflow and can be skipped in other environments.
+    if [ "$GITHUB_REPOSITORY_OWNER" == "canonical" ]; then
+      echo "No UA token found in env UA_TOKEN"
+      exit 1
+    else
+      echo "Skipping test because UA_TOKEN isn't set and the test is outside of canonical repo"
+      exit 0
+    fi
   fi
 
   # core20 will use multipass if this isn't set
