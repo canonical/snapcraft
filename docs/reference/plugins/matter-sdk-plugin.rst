@@ -6,7 +6,7 @@ Matter SDK plugin
 .. admonition:: Experimental
     :class: important
 
-    The matter-sdk plugin is experimental and subject to change. It can only be used
+    The Matter SDK plugin is experimental and subject to change. It can only be used
     by setting the ``--enable-experimental-plugins`` flag during a build.
 
 .. note::
@@ -14,7 +14,7 @@ Matter SDK plugin
     This plugin is only available on snaps with base core22 or later. See
     :ref:`base-snaps` for more details. It is supported on Snapcraft 8.1.0 and later.
 
-The ``matter-sdk`` plugin simplifies the building of parts that use the `connectedhomeip
+The Matter SDK plugin simplifies the building of parts that use the `connectedhomeip
 <https://github.com/project-chip/connectedhomeip>`_ Matter SDK. It abstracts away SDK
 setup and configuration when creating a snapped Matter application.
 
