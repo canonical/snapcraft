@@ -4,6 +4,7 @@ environment:
   SNAP_DIR: snaps/ua-token-test
   SNAPCRAFT_UA_TOKEN: "$(HOST: echo ${UA_TOKEN})"
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  RUN_UA_TESTS: "$(HOST: echo ${RUN_UA_TESTS})"
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -28,8 +29,14 @@ restore: |
 
 execute: |
   if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
-    echo "No UA token found in env UA_TOKEN"
-    exit 1
+    # This test has to run in the main repo's workflow and can be skipped in other environments.
+    if [ -z "$RUN_UA_TESTS" ] || [ "$RUN_UA_TESTS" = "false" ]; then
+      echo "Skipping test because UA_TOKEN isn't set."
+      exit 0
+    else
+      echo "Can't run test because UA_TOKEN isn't set."
+      exit 1
+    fi
   fi
 
   # core20 will use multipass if this isn't set
