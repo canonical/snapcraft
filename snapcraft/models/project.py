@@ -283,12 +283,17 @@ class Socket(models.CraftBaseModel):
 
     listen_stream: int | str = pydantic.Field(
         description="The socket's abstract name or socket path.",
-        examples=["listen-stream: $SNAP_COMMON/lxd/unix.socket", "listen-stream: 80"],
+        examples=["$SNAP_COMMON/lxd/unix.socket", "80"],
     )
+    """The socket's abstract name or socket path.
+
+    TCP and UNIX sockets are supported.
+    """
+
     socket_mode: int | None = pydantic.Field(
         default=None,
-        description="The socket's mode and permissions.",
-        examples=["socket-mode: 0660"],
+        description="The mode or permissions of the socket in octal.",
+        examples=["0660"],
     )
 
     @pydantic.field_validator("listen_stream")
@@ -325,7 +330,7 @@ class Lint(models.CraftBaseModel):
 
     ignore: list[str | dict[str, list[str]]] = pydantic.Field(
         description="Linters or files to skip when linting.",
-        examples=["lint: {ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"],
+        examples=["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"],
     )
 
     # A private field to simplify lookup.
@@ -374,101 +379,306 @@ class App(models.CraftBaseModel):
 
     command: str = pydantic.Field(
         description="The command to run inside the snap when the app is invoked.",
-        examples=["command: bin/foo-app"],
+        examples=["bin/foo-app"],
     )
+    """The command to run inside the snap when the app is invoked.
+
+    The command can be in either a snap runtime's command path,
+    ``$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin``, or an executable path
+    relative to ``$SNAP``.
+
+    The command must consist only of alphanumeric characters, spaces, and the
+    following special characters: ``/, ., _, #, :, $, -``. If other characters are
+    required, a wrapper script should be used for the command.
+
+    If the ``daemon`` is set, this will be the command to run the service. Only a snap
+    with classic confinement can use a relative path because PATH isn't modified by a
+    wrapper in classic confinement. See `Classic confinement
+    <https://snapcraft.io/docs/classic-confinement>`_ for more details.
+    """
+
     autostart: str | None = pydantic.Field(
         default=None,
-        description="The desktop file used to start an application when the desktop environment starts.",
-        examples=["autostart: foo-app.desktop"],
+        description="The desktop file used to start an app when the desktop environment starts.",
+        examples=["foo-app.desktop"],
     )
+    """The desktop file used to start an app when the desktop environment starts.
+
+    The desktop file is placed in ``$SNAP_USER_DATA/.config/autostart`` and the app
+    is launched by the app's command wrapper (``<name>.<app>``) plus any argument
+    present in the ``Exec=`` line in the ``.desktop`` file when the desktop
+    environment is started.
+
+    See `Autostart desktop files
+    <https://snapcraft.io/docs/the-snap-format#heading--autostart>`_ for an
+    example of both the desktop file and the ``Exec`` file entry.
+    """
+
     common_id: str | None = pydantic.Field(
         default=None,
-        description="The app's unique `AppStream identifier <https://www.freedesktop.org/software/appstream/docs/chap-CatalogData.html#tag-ct-component-id>`_.",
-        examples=["common-id: org.canonical.foo"],
+        description="The identifier to a desktop ID within an external appstream file.",
+        examples=["org.canonical.foo"],
     )
+    """The identifier to a desktop ID within an external appstream file.
+
+    See `Using external metadata
+    <https://snapcraft.io/docs/using-external-metadata>`_ for more information.
+    """
+
     bus_name: str | None = pydantic.Field(
         default=None,
-        description="The bus name that the app or service exposes through D-Bus.",
-        examples=["bus-name: org.bluez"],
+        description="The bus name that the application or service exposes through D-Bus.",
+        examples=["org.bluez"],
     )
+
     desktop: str | None = pydantic.Field(
         default=None,
-        description="The desktop file used to start the app.",
-        examples=["desktop: my-app.desktop"],
+        description="The desktop file used to start an app.",
+        examples=["my-app.desktop"],
     )
+    """The desktop file used to start an app.
+
+    See `Desktop files <https://snapcraft.io/docs/desktop-menu-support>`_ for
+    more information.
+    """
+
     completer: str | None = pydantic.Field(
         default=None,
         description="The name of the bash completion script for the app.",
-        examples=["completer: bash-complete.sh"],
+        examples=["bash-complete.sh"],
     )
+
     stop_command: str | None = pydantic.Field(
         default=None,
-        description="The command that stops the service.",
-        examples=["stop-command: bin/foo-app --halt"],
+        description="The command to run to stop the service.",
+        examples=["bin/foo-app --halt"],
     )
+    """The command to run to stop the service.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    This allows a daemon to gracefully stop or restart, such as when a snap
+    refresh occurs.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     post_stop_command: str | None = pydantic.Field(
         default=None,
         description="The command to run after the service is stopped.",
-        examples=["post-stop-command: bin/logrotate --force"],
+        examples=["bin/logrotate --force"],
     )
+    """The command to run after the service is stopped.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    This allows a daemon to gracefully stop or restart, such as when a snap
+    refresh occurs.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     start_timeout: str | None = pydantic.Field(
         default=None,
         description="The maximum amount of time to wait for the service to start.",
-        examples=["start-timeout: 10s", "start-timeout: 2m"],
+        examples=["10s", "2m"],
     )
+    """The maximum amount of time to wait for the service to start.
+
+    If the service does not start before the ``start-timeout`` elapses, then
+    snapd will take further action based on the ``restart-condition`` keyword in
+    the app.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     stop_timeout: str | None = pydantic.Field(
         default=None,
         description="The maximum amount of time to wait for the service to stop.",
-        examples=["stop-timeout: 10s", "stop-timeout: 2m"],
+        examples=["10s", "2m"],
     )
+    """The maximum amount of time to wait for the service to stop.
+
+    If the service does not stop before the ``stop-timeout`` elapses, then snapd
+    will send a ``SIGTERM`` signal.  If the service still does not stop, snapd
+    will send a ``SIGKILL`` signal.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     watchdog_timeout: str | None = pydantic.Field(
         default=None,
         description="The maximum amount of time the service can run without sending a heartbeat to the watchdog.",
-        examples=["watchdog-timeout: 10s", "watchdog-timeout: 2m"],
+        examples=["10s", "2m"],
     )
+    """The maximum amount of time the service can run without sending a
+    heartbeat to the watchdog.
+
+    For the watchdog to work, the application must have access to the
+    ``systemd`` notification socket by specifying ``daemon-notify`` plug in the
+    apps ``plugs`` definition.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     reload_command: str | None = pydantic.Field(
         default=None,
         description="The command to run to restart the service.",
-        examples=["reload-command: bin/foo-app --restart"],
+        examples=["bin/foo-app --restart"],
     )
+    """The command to run to restart the service.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     restart_delay: str | None = pydantic.Field(
         default=None,
         description="The time to wait between service restarts.",
-        examples=["restart-delay: 10s", "restart-delay: 2m"],
+        examples=["10s", "2m"],
     )
+    """The time to wait between service restarts.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     timer: str | None = pydantic.Field(
         default=None,
         description="The time or schedule to run a service.",
         examples=[
-            "timer: 23:00",
-            "timer: 00:00-24:00/24",
-            "timer: mon,10:00,,fri,15:00",
+            "23:00",
+            "00:00-24:00/24",
+            "mon,10:00,,fri,15:00",
         ],
     )
+    """The time or schedule to run a service.
+
+    The timer field uses a flexible syntax to schedule when a service should
+    run.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     daemon: Literal["simple", "forking", "oneshot", "notify", "dbus"] | None = (
         pydantic.Field(
             default=None,
             description="Configures the app as a service, and sets its runtime and notification behavior.",
-            examples=["daemon: simple", "daemon: oneshot"],
+            examples=["simple", "oneshot"],
         )
     )
+    """Configures the app as a service, and sets its runtime and
+    notification behavior.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_ for
+    more information.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``simple``
+          - Run as long as the service is active. This is the most common option.
+        * - ``forking``
+          - The app's ``command`` will call ``fork()`` as part of its start-up
+            and the parent process is expected to exit when start-up is
+            complete. This is used to support legacy fork-based Unix daemons.
+        * - ``oneshot``
+          - Run once and exit after completion, notifying systemd. After
+            completion, the daemon is still considered active and running.
+        * - ``notify``
+          - Allows the service to be managed by systemd. Requires the service to
+            send signals to the systemd notification socket by specifying
+            ``daemon-notify`` in the app's ``plugs`` definition.
+        * - ``dbus``
+          - ``Registers a D-Bus name to notify systemd. Requires ``bus-name`` or
+            ``activates-on`` to be specified.
+
+    """
+
     after: UniqueList[str] = pydantic.Field(
         default_factory=list,
-        description="The sequence of apps that the service runs after it launches.",
-        examples=["after: [foo-app, bar-app]"],
+        description="The ordered list of apps that the service runs after it launches.",
+        examples=["[foo-app, bar-app]"],
     )
+    """The ordered list of apps that the service runs after it launches.
+
+    The apps must be part of the same snap.
+
+    Requires the ``daemon`` keyword to be specified for the app. Apps in the
+    ``after`` keyword must also specify the ``daemon`` keyword.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     before: UniqueList[str] = pydantic.Field(
         default_factory=list,
-        description="The sequence of apps that the service runs before it launches.",
-        examples=["before: [baz-app, quz-app]"],
+        description="The ordered list of apps that the service runs before it launches.",
+        examples=["[baz-app, quz-app]"],
     )
+    """The ordered list of apps that the service runs before it launches.
+
+    The apps must be part of the same snap.
+
+    Requires the ``daemon`` keyword to be specified for the app. Apps in the
+    ``before`` keyword must also specify the ``daemon`` keyword.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
         pydantic.Field(
             default=None,
-            description="Determines how the service should restart when the snap refreshed.",
-            examples=["refresh-mode: restart"],
+            description="Determines how the service should restart when the snap refreshes.",
+            examples=["restart"],
         )
     )
+    """Determines how the service should restart when the snap refreshes.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``restart``
+          - Restart the service when the snap is refreshed. Default.
+        * - ``endure``
+          - Do not restart the service when the snap is refreshed.
+        * - ``ignore-running``
+          - Do not refresh the snap if the service is running.
+
+    """
+
     stop_mode: (
         Literal[
             "sigterm",
@@ -486,8 +696,16 @@ class App(models.CraftBaseModel):
     ) = pydantic.Field(
         default=None,
         description="The signal to send when stopping the service.",
-        examples=["stop-mode: sigterm"],
+        examples=["sigterm"],
     )
+    """The signal to send when stopping the service.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     restart_condition: (
         Literal[
             "on-success",
@@ -501,64 +719,199 @@ class App(models.CraftBaseModel):
         | None
     ) = pydantic.Field(
         default=None,
-        description="The condition under which the service restarts.",
-        examples=["restart-condition: on-failure"],
+        description="The conditions that cause the service to restart.",
+        examples=["on-failure"],
     )
+    """The conditions that cause the service to restart.
+
+    The conditions for ``restart-condition`` match those defined by ``systemd``.
+    See the `systemd manual
+    <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#Restart=>`_
+    for information on what exit codes will trigger a restart for each
+    condition.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     install_mode: Literal["enable", "disable"] | None = pydantic.Field(
         default=None,
         description="Whether snapd can automatically start the service when the snap is installed.",
-        examples=["install-mode: enable"],
+        examples=["enable"],
     )
+    """Whether snapd can automatically start the service when the snap is installed.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``enable``
+          - The service is started when the snap is installed. Additionally, if
+            the snap was installed without a service, then the snap is refreshed
+            to include a service. This will start the service too.
+        * - ``disable``
+          - The service is not automatically started. Instead, the service will
+            be started with `snapctl <https://snapcraft.io/docs/using-snapctl>`_
+            and another management agent, which is most commonly a `hook
+            <https://snapcraft.io/docs/supported-snap-hooks>`_.
+
+    """
+
     slots: UniqueList[str] | None = pydantic.Field(
-        default=None, description="The app's slots.", examples=["slots: [dbus-daemon]"]
+        default=None,
+        description="The list of slots that the app provides.",
+        examples=["[dbus-daemon]"],
     )
+    """The list of slots that the app provides.
+
+    Slot connections are only made when the snap is running in ``strict``
+    confinement.
+
+    Slots are used to define what code and data can be shared with other snaps.
+
+    See the `content interface <https://snapcraft.io/docs/content-interface>`_
+    for more information about plugs and slots.
+    """
+
     plugs: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The interfaces that the app can connect to.",
-        examples=["plugs: [home, removable-media]"],
+        examples=["[home, removable-media]"],
     )
+    """The list of interfaces that the app can connect to.
+
+    See the `content interface <https://snapcraft.io/docs/content-interface>`_
+    for more information about plugs and slots.
+    """
+
     aliases: UniqueList[str] | None = pydantic.Field(
         default=None,
-        description="The app's alternative internal identifiers.",
-        examples=["aliases: [my-app]"],
+        description="The aliases that can be used to run the app.",
+        examples=["[my-app]"],
     )
+    """The aliases that can be used to run the app.
+
+    See `Commands and aliases <https://snapcraft.io/docs/commands-and-aliases>`_
+    for more information.
+    """
+
     environment: dict[str, str] | None = pydantic.Field(
         default=None,
-        description="The runtime environment variables available to the snap's apps.",
+        description="The runtime environment variables.",
         examples=[
-            "environment: {PYTHONPATH: $SNAP/usr/lib/python3/dist-packages, DISABLE_WAYLAND: 1"
+            "{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages, DISABLE_WAYLAND: 1}"
         ],
     )
+    """The runtime environment variables.
+
+    To set an environment variable for all apps, use the top-level
+    ``environment`` key.
+    """
+
     command_chain: list[str] = pydantic.Field(
         default_factory=list,
-        description="The sequence of commands to run before the app's command runs. These commands also run when the user invokes ``snap run --shell``.",
-        examples=["command-chain: [bin/alsa-launch, bin/desktop-launch]"],
+        description="The ordered list of commands to run before the app's command runs.",
+        examples=["[bin/alsa-launch, bin/desktop-launch]"],
     )
+    """The ordered list of commands to run before the app's command
+    runs.
+
+    Command chains are useful to run setup scripts before running an app.
+    """
+
     sockets: dict[str, Socket] | None = pydantic.Field(
         default=None,
-        description="The app's sockets.",
-        examples=["listen-stream: $SNAP_COMMON/lxd/unix.socket, socket-mode: 0660"],
+        description="The sockets used to activate an app.",
+        examples=[
+            "{my-socket: {listen-stream: $SNAP_COMMON/lxd/unix.socket, socket-mode: 0660}}"
+        ],
     )
+    """The sockets used to activate an app.
+
+    Requires the ``network-bind`` interface in the app's ``plug`` keyword.
+
+    This value is used for services that are activated by a connection to a
+    socket.
+    """
+
     daemon_scope: Literal["system", "user"] | None = pydantic.Field(
         default=None,
         description="Determines whether the service is run on a system or user instance of systemd.",
-        examples=["daemon-scope: user"],
+        examples=["user"],
     )
+    """Determines whether the service is run on a system or a user instance of
+    systemd.
+
+    See `Enabling user daemons
+    <https://forum.snapcraft.io/t/enabling-user-daemons-and-d-bus-activation/22318>`_
+    for more information on how snapd manages daemon scope.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``system``
+          - Run the service under the system instance of systemd.
+        * - ``user``
+          - Run the service under a user-session instance of systemd.
+    """
+
     activates_on: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The slots exposed by the snap to activate the service with D-Bus.",
-        examples=["activates-on: gnome-shell-dbus"],
+        examples=["gnome-shell-dbus"],
     )
+    """The slots exposed by the snap to activate the service with D-Bus.
+
+    This is useful for services that are activated by other applications or
+    services.
+
+    See `D-Bus activation
+    <https://forum.snapcraft.io/t/enabling-user-daemons-and-d-bus-activation/22318>`_
+    for more information on how snapd activates services with D-Bus.
+
+    Requires the ``daemon`` keyword to be specified for the app.
+
+    See `Services and daemons <https://snapcraft.io/docs/services-and-daemons>`_
+    for more information.
+    """
+
     passthrough: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description=(
-            "Values to push to the built snap's metadata file, snap.yaml. "
-            "Snapcraft doesn't validate the values provided here, so this key is "
-            "a convenient means of configuring snap features that are "
-            "experimental or in early access."
-        ),
-        examples=["passthrough: {daemon: complex}"],
+        description="The attributes to pass to the snap's metadata file for the app.",
+        examples=["{daemon: complex}"],
     )
+    """The attributes to pass to the snap's metadata file for the app.
+
+    Attributes to passthrough to snap.yaml without validation from Snapcraft.
+    This is useful for early testing of a new feature in snapd that isn't
+    supported yet by Snapcraft.
+
+    To pass a value for the entire project, see the top-level ``passthrough``
+    key.
+
+    See `Using development features in Snapcraft
+    <https://snapcraft.io/docs/using-in-development-features>`_ for more
+    details.
+    """
 
     @pydantic.field_validator("autostart")
     @classmethod
@@ -618,26 +971,47 @@ class Hook(models.CraftBaseModel):
 
     command_chain: list[str] = pydantic.Field(
         default_factory=list,
-        description="The sequence of commands to run before the app's command runs. Also applied when running ``snap run --shell``",
-        examples=["command-chain: [bin/alsa-launch, bin/desktop-launch]"],
+        description="The ordered list of commands to run before the hook runs.",
+        examples=["[bin/alsa-launch, bin/desktop-launch]"],
     )
+    """The ordered list of commands to run before the hook runs.
+
+    Command chains are useful to run setup scripts before running a hook.
+    """
+
     environment: dict[str, str | None] | None = pydantic.Field(
         default=None,
-        description="The hook's run-time environment variables.",
-        examples=[
-            "environment: {PYTHONPATH: /custom/path/:$PYTHON_PATH, DISABLE_WAYLAND: 1}"
-        ],
+        description="The environment variables for the hook.",
+        examples=["{PYTHONPATH: /custom/path/:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
     )
+
     plugs: UniqueList[str] | None = pydantic.Field(
         default=None,
-        description="The interfaces that the hook can connect to.",
-        examples=["plugs: [home, removable-media]"],
+        description="The list of interfaces that the hook can connect to.",
+        examples=["[home, removable-media]"],
     )
+    """The list of interfaces that the hook can connect to.
+
+    See the `content interface <https://snapcraft.io/docs/content-interface>`_ for more
+    information about plugs and slots.
+    """
+
     passthrough: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="Attributes to not validate for correctness. Useful for testing experimental snapd features.",
-        examples=["passthrough: {daemon: complex}"],
+        description="The attributes to pass to the snap's metadata file for the hook.",
+        examples=["{daemon: complex}"],
     )
+    """The attributes to pass to the snap's metadata file for the hook.
+
+    Attributes to passthrough to snap.yaml without validation from Snapcraft. This is
+    useful for early testing of a new feature in snapd that isn't supported yet by
+    Snapcraft.
+
+    To pass a value for the entire project, see the top-level ``passthrough`` key.
+
+    See `Using development features in Snapcraft
+    <https://snapcraft.io/docs/using-in-development-features>`_ for more details.
+    """
 
     @pydantic.field_validator("command_chain")
     @classmethod
@@ -657,12 +1031,12 @@ class Architecture(models.CraftBaseModel, extra="forbid"):
 
     build_on: str | UniqueList[str] = pydantic.Field(
         description="The architectures on which the snap can be built.",
-        examples=["build-on: amd64, riscv64"],
+        examples=["[amd64, riscv64]"],
     )
     build_for: str | UniqueList[str] | None = pydantic.Field(
         default=None,
-        description="The single element list of the architecture where the snap can be run",
-        examples=["build-for: amd64, riscv64"],
+        description="The single element list containing the architecture where the snap can be run",
+        examples=["[amd64]", "[riscv64]"],
     )
 
 
@@ -672,18 +1046,46 @@ class ContentPlug(models.CraftBaseModel):
     content: str | None = pydantic.Field(
         default=None,
         description="The name for the content type.",
-        examples=["content: themes"],
+        examples=["themes"],
     )
-    interface: str = pydantic.Field(description="The name of the interface.")
+    """The name for the content type.
+
+    This is an arbitrary identifier for content interfaces. If it is not specified, it
+    will default to the plug's name.
+    """
+
+    interface: str = pydantic.Field(
+        description="The name of the interface.",
+        examples=["network"],
+    )
+    """The name of the interface.
+
+    See `Supported interfaces <https://snapcraft.io/docs/supported-interfaces>`_ for a
+    list of supported interfaces.
+
+    When using the content interface, this should be set to ``content``.
+    """
+
     target: str = pydantic.Field(
-        description="The path to the producer's files in the snap.",
-        examples=["target: $SNAP/data-dir/themes"],
+        description="The path to where the producer's files will be available in the snap.",
+        examples=["$SNAP/data-dir/themes"],
     )
+    """The path to where the producer's files will be available in the snap.
+
+    This is only needed when using the content interface. See the `Content
+    interface <https://snapcraft.io/docs/content-interface>`_ for more information.
+    """
+
     default_provider: str | None = pydantic.Field(
         default=None,
-        description="The default snap install to satisfy the interface.",
-        examples=["default-provider: gtk-common-themes"],
+        description="The name of the producer snap..",
+        examples=["gtk-common-themes"],
     )
+    """The name of the producer snap.
+
+    This is only needed when using the content interface. See the `Content interface
+    <https://snapcraft.io/docs/content-interface>`_ for more information.
+    """
 
     @pydantic.field_validator("default_provider")
     @classmethod
@@ -701,13 +1103,13 @@ class Platform(models.Platform):
 
     build_on: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
         description="The architectures on which the snap can be built.",
-        examples=["build-on: amd64, riscv64"],
+        examples=["[amd64, riscv64]"],
         min_length=1,
     )
     build_for: SingleEntryList | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
-        description="The single element list of the architecture the snap is built for.",
-        examples=["build-on: amd64, riscv64"],
+        description="The single element list containing the architecture the snap is built for.",
+        examples=["[amd64]", "[riscv64]"],
     )
 
     @pydantic.field_validator("build_on", "build_for", mode="before")
@@ -765,26 +1167,58 @@ class Component(models.CraftBaseModel):
 
     summary: SummaryStr = pydantic.Field(
         description="The summary of the component.",
-        examples=["summary: Language translations for the app"],
+        examples=["Language translations for the app"],
     )
+    """The summary of the component.
+
+    This is a freeform field used to describe the purpose of the component.
+    """
+
     description: str = pydantic.Field(
         description="The full description of the component.",
         examples=[
-            "description: Contains optional translation packs to allow the user to change the language."
+            "Contains optional translation packs to allow the user to change the language."
         ],
     )
+    """The multi-line description of the component.
+
+    This is a freeform field used to describe the purpose of the component.
+    """
+
     type: Literal["test", "kernel-modules", "standard"] = pydantic.Field(
-        description="The component's type.", examples=["type: standard"]
+        description="The type of the component.", examples=["standard"]
     )
+    """The type of the component.
+
+    Different component types may have special handling by snapd.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Values
+          - Description
+        * - ``standard``
+          - General use type. Use when no specific type applies.
+        * - ``kernel-modules``
+          - For kernel modules in snaps with type ``kernel``.
+    """
+
     version: VersionStr | None = pydantic.Field(
         default=None,
         description="The version of the component.",
-        examples=["version: 1.2.3"],
+        examples=["1.2.3"],
     )
+    """The version of the component.
+
+    If the version is not provided, the component will be unversioned.
+    """
+
     hooks: dict[str, Hook] | None = pydantic.Field(
         default=None,
-        description="Configures the component's hooks.",
-        examples=["hooks: {configure: {plugs: [home]}}"],
+        description="The configuration for the component's hooks.",
+        examples=["{configure: {plugs: [home]}}"],
     )
 
 
@@ -801,139 +1235,451 @@ class Project(models.Project):
     """
 
     # snapcraft's `name` is more general than craft-application
-    name: ProjectName  # type: ignore[assignment]
+    name: ProjectName = pydantic.Field(  # type: ignore[assignment]
+        description="The identifying name of the snap.",
+        examples=["my-app", "powershell", "jupyterlab-desktop"],
+    )
+    """The identifying name of the snap.
+
+    It must start with an ASCII character and can only contain lower case
+    letters, numbers, and hyphens. It must contain at least one letter and it
+    can't start or end with a hyphen. The maximum length is 40 characters.
+
+    The name must be unique if you want to `publish it to the Snap Store
+    <https://snapcraft.io/docs/releasing-your-app>`_.
+
+    For help on choosing a name and registering it on the Snap Store, see
+    `Registering your app name
+    <https://snapcraft.io/docs/registering-your-app-name>`_.
+    """
+
     build_base: str | None = pydantic.Field(
         validate_default=True,
         default=None,
         description="The build environment to use when building the snap",
-        examples=["base: core20", "base: core22", "base: core24", "base: devel"],
+        examples=["core20", "core22", "core24", "devel"],
     )
+
     compression: Literal["lzo", "xz"] = pydantic.Field(
         default="xz",
         description="Specifies the algorithm that compresses the snap.",
-        examples=["compression: xz", "compression: lzo"],
+        examples=["xz", "lzo"],
     )
+    """Specifies the algorithm that compresses the snap.
+
+    Snaps are compressed using ``xz`` data compression by default. This
+    offers the optimal performance to compression ratio for the majority of
+    snaps.
+
+    However, there are certain types of snap, such as large desktop applications,
+    that can benefit from using LZO compression. Snaps compressed with LZO are
+    slightly larger but can decompress quicker, reducing the time it takes for
+    freshly installed or refreshed snaps to launch.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``xz``
+          - Default. Use `XZ <https://en.wikipedia.org/wiki/XZ_Utils>`_ compression.
+        * - ``lzo``
+          - Use `LZO <https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Oberhumer>`_ compression.
+
+    """
+
     version: VersionStr | None = pydantic.Field(
         default=None,
         description="The version of the snap.",
-        examples=["version: 1.2.3"],
+        examples=["1.2.3"],
     )
+    """The version of the snap.
+
+    This field is required unless version information is provided by the
+    ``adopt-info`` key.
+
+    See `Using external
+    metadata <https://snapcraft.io/docs/using-external-metadata>`_ for more
+    information.
+    """
+
     donation: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The snap's donation links.",
-        examples=["donation: donate@example.com, https://example.com/donate"],
+        examples=["[donate@example.com, https://example.com/donate]"],
     )
+    """The snap's donation links.
+
+    Donation links can be adopted from appstream metadata files.
+
+    See `Using external
+    metadata <https://snapcraft.io/docs/using-external-metadata>`_ for more
+    information.
+    """
+
     # snapcraft's `source_code` is more general than craft-application
     source_code: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
         description="The links to the source code of the snap or the original project.",
-        examples=["source-code: https://example.com/source-code"],
+        examples=["[https://example.com/source-code]"],
     )
+    """The links to the source code of the snap or the original product.
+
+    Source code links can be adopted from appstream metadata files.
+
+    See `using external
+    metadata <https://snapcraft.io/docs/using-external-metadata>`_ for more
+    information.
+    """
+
     contact: UniqueList[str] | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
         default=None,
         description="The snap author's contact links and email addresses.",
-        examples=["contact: [contact@example.com, https://example.com/contact"],
+        examples=["[contact@example.com, https://example.com/contact]"],
     )
+    """The snap author's contact links and email addresses.
+
+    Contact information can be adopted from appstream metadata files.
+
+    See `using external
+    metadata <https://snapcraft.io/docs/using-external-metadata>`_ for more
+    information.
+    """
+
     issues: UniqueList[str] | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
         default=None,
         description="The links and email addresses for submitting issues, bugs, and feature requests.",
-        examples=["issues: issues@email.com, https://example.com/issues"],
+        examples=["[issues@email.com, https://example.com/issues]"],
     )
+    """The links and email addresses for submitting issues, bugs, and feature
+    requests.
+
+    Issue links can be adopted from appstream metadata files.
+
+    See `using external metadata
+    <https://snapcraft.io/docs/using-external-metadata>`_ for more information.
+    """
+
     website: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The links to the original software's web pages.",
-        examples=["website: https://example.com"],
+        examples=["[https://example.com]"],
     )
+    """The links to the original software's web pages.
+
+    Websites can be adopted from appstream metadata files.
+
+    See `using external metadata
+    <https://snapcraft.io/docs/using-external-metadata>`_ for more information.
+    """
+
     type: Literal["app", "base", "gadget", "kernel", "snapd"] | None = pydantic.Field(
-        default=None, description="The snap's type.", examples=["type: kernel"]
+        default=None, description="The snap's type.", examples=["kernel"]
     )
+    """The snap's type.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``app``
+          - Default. Set the snap as an application.
+        * - ``base``
+          - Set the snap as a base.
+        * - ``gadget``
+          - Set the snap as a `gadget
+            <https://snapcraft.io/docs/the-gadget-snap>`_ snap.
+        * - ``kernel``
+          - Set the snap as a `kernel
+            <https://snapcraft.io/docs/the-kernel-snap>`_ snap.
+        * - ``snapd``
+          - Set the snap as a snapd snap.
+
+    """
+
     icon: str | None = pydantic.Field(
         default=None,
         description="The path to the snap's icon.",
-        examples=["icon: snap/gui/icon.svg"],
+        examples=["snap/gui/icon.svg"],
     )
+    """The path to the snap's icon.
+
+    Icon size can be between 40x40 and 512x512 pixels.  256x256 is
+    recommended.  The file should be less than 256 KB.
+
+    The icon is used in the snap store and other graphical store fronts. The
+    icon defined in the ``.desktop`` file is used as the icon in desktop menus.
+    """
+
     confinement: Literal["classic", "devmode", "strict"] = pydantic.Field(
         description="The amount of isolation the snap has from the host system.",
         examples=[
-            "confinement: strict",
-            "confinement: classic",
-            "confinement: devmode",
+            "strict",
+            "classic",
+            "devmode",
         ],
     )
+    """The amount of isolation the snap has from the host system.
+
+    Snap confinement determines the amount of access an application has to
+    system resources, such as files, the network, peripherals and services.
+
+    For core22 and newer bases, confinement is a required property and has no
+    default value.
+
+    For more information, see
+    `Confinement <https://snapcraft.io/docs/snap-confinement>`_.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``strict``
+          - Default for core20 and older bases. Use strict confinement.
+        * - ``devmode``
+          - Use classic confinement.
+        * - ``strict``
+          - Use devmode confinement.
+
+    """
+
     layout: (
         dict[str, SingleEntryDict[Literal["symlink", "bind", "bind-file", "type"], str]]
         | None
     ) = pydantic.Field(
         default=None,
         description="The file layouts in the execution environment.",
-        examples=["layout: { /var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
+        examples=["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
     )
+    """The file layouts in the execution environment.
+
+    Layouts modify the execution environment of a strictly-confined snap.
+
+    With layouts, you can make elements in ``$SNAP``, ``$SNAP_DATA``,
+    ``$SNAP_COMMON`` accessible from locations such as ``/usr``, ``/var`` and
+    ``/etc``. This helps when using pre-compiled binaries and libraries that
+    expect to find files and directories outside of locations referenced by
+    ``$SNAP`` or ``$SNAP_DATA``.
+
+    See `snap layouts <https://snapcraft.io/docs/snap-layouts>`_ for more
+    details.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``symlink: <source-path>``
+          - Create a symbolic link. This method is preferred because it is the
+            cheapest; the other methods significantly increase the startup time
+            of your application
+        * - ``bind: <source-path>``
+          - Bind-mount a directory.
+        * - ``bind-file: <source-path>``
+          - Bind-mount a file.
+        * - ``type: tmpfs``
+          - Mount a private, temporary, in-memory filesystem
+
+    """
+
     grade: Literal["stable", "devel"] | None = pydantic.Field(
         default=None,
-        description="Publication guardrail for the snap",
-        examples=["grade: stable", "grade: devel"],
+        description="The quality grade of the snap.",
+        examples=["stable", "devel"],
     )
+    """The quality grade of the snap.
+
+    The grade can only be stable if the ``base`` and ``build-base`` are stable.
+    For example, if the ``build-base`` is ``devel``, then the grade must be
+    ``devel``.
+
+    The grade must be ``stable`` to publish the snap to the ``candidate`` or
+    ``stable`` channels on the snap store.  If the grade is ``devel``, it can only
+    be published to the ``beta`` and ``edge`` channels.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``stable``
+          - Default. The snap is stable.
+        * - ``devel``
+          - The snap is still under development.
+
+    """
+
     architectures: list[str | Architecture] | None = pydantic.Field(
         default=None,
-        description="Determines which instruction set architectures the snap builds on and runs on.",
+        description="The architecture sets where the snap can be built and where the resulting snap can run.",
         examples=[
-            "architectures: [amd64, riscv64]",
-            "architectures: [{build-on: [amd64], build-for: [amd64]}]",
-            "architectures: [{build-on: [amd64, riscv64], build-for: [riscv64]}]",
+            "[amd64, riscv64]",
+            "[{build-on: [amd64], build-for: [amd64]}]",
+            "[{build-on: [amd64, riscv64], build-for: [riscv64]}]",
         ],
     )
+    """The architecture sets where the snap can be built and where the resulting
+    snap can run.
+
+    The architectures keyword is only used in core22 and older snaps. For
+    core24 and newer snaps, use the ``platform`` key.
+
+    Architectures may be defined as a shorthand list of architectures or a
+    explicit pair of ``build-on``/``build-for`` entries.
+
+    """
+
     _architectures_in_yaml: bool | None = None
+
     platforms: dict[str, Platform] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
-        description="Determines which instruction set architectures the snap builds on and runs on.",
+        description="The platforms where the snap can be built and where the resulting snap can run.",
         examples=[
-            "platforms: {amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"
+            "{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"
         ],
     )
+    """The platforms where the snap can be built and where the resulting snap
+    can run.
+
+    If the platform name is a valid debian architecture, build-on and build-for
+    can be omitted.
+
+    The platform name describes a ``build-on``/``build-for`` pairing.  When
+    specifying ``build-on`` and ``build-for``, the the name is arbitrary but
+    it's recommended to set the platform name to the ``build-for`` architecture.
+
+    The platforms keyword is only used in core24 and newer snaps.  For core22
+    and older snaps, use the ``architectures`` key.
+    """
+
     assumes: UniqueList[str] = pydantic.Field(
         default_factory=list,
         description="The snapd features or minimum version of snapd required by the snap.",
-        examples=["assumes: [snapd2.66]", "assumes: [common-data-dir]"],
+        examples=["[snapd2.66, common-data-dir]"],
     )
+    """The snapd features or minimum version of snapd required by the snap.
+
+    "If any requirement in the ``assumes`` field is not met, the snap will fail
+    to install.
+
+    If a minimum version of snapd is required, it can be specified with
+    ``snapd<version>``.  Alternatively, some snapd features can be explicitly.
+    Features include:
+
+    - ``common-data-dir``: support for common data directory across revisions of
+      a snap
+    - ``snap-env``: support for the “Environment:” feature in snap.yaml
+    - ``command-chain``: support for the “command-chain” feature for apps and
+      hooks in snap.yaml
+    - ``kernel-assets``: support for kernel assets in a ``gadget.yaml`` file"
+    """
+
     hooks: dict[str, Hook] | None = pydantic.Field(
         default=None,
         description="Configures the snap's hooks.",
-        examples=["hooks: {configure: {plugs: [home]}}"],
+        examples=["{configure: {plugs: [home]}}"],
     )
+
     passthrough: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="Attributes to not validate for correctness. Useful for testing experimental snapd features.",
-        examples=["passthrough: {daemon: complex}"],
+        description="The attributes to pass to the snap's metadata file.",
+        examples=["{daemon: complex}"],
     )
+    """The attributes to pass to the snap's metadata file.
+
+    These attributes are passed to ``snap.yaml`` without validation from Snapcraft.
+    This is useful for early testing of a new feature in snapd that isn't yet supported
+    by Snapcraft.
+
+    To pass a value for a particular app, see the ``passthrough`` key for ``apps``.
+
+    See `Using development features in Snapcraft
+    <https://snapcraft.io/docs/using-in-development-features>`_.
+    """
+
     apps: dict[str, App] | None = pydantic.Field(
         default=None,
-        description="Declares the individual programs and services that the snap runs.",
-        examples=["apps: {foo-app: {command: bin/foo-app}}"],
+        description="The map of app names representing entry points to run for the snap.",
+        examples=["{app-1: {command: bin/app-1}}"],
     )
+    """The map of app names representing entry points to run for the snap.
+
+    Apps are used to expose applications and services for the snap, how they are
+    run, and which resources they can access.
+
+    If the app name is the same as snap name, the app will be run when the snap
+    is run as app-name.
+
+    If they differ, the program will be exposed as '<snap-name>.<app-name>'.
+    """
+
     plugs: dict[str, ContentPlug | Any] | None = pydantic.Field(
         default=None,
         description="Declares the snap's plugs.",
         examples=[
-            "plugs: {dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"
+            "{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"
         ],
     )
+
     slots: dict[str, Any] | None = pydantic.Field(
         default=None,
         description="Declares the snap's slots.",
         examples=[
-            "slots: {slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"
+            "{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"
         ],
     )
+
     lint: Lint | None = pydantic.Field(
         default=None,
-        description="The linter configuration.",
-        examples=["lint: {ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"],
+        description="The linter configuration settings.",
+        examples=["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"],
     )
+    """The linter configuration settings.
+
+    Snapcraft runs the following linters:
+
+    - `classic <https://snapcraft.io/docs/linters-classic>`_: Verifies binary
+      file parameters for snaps using `classic
+      confinement <https://snapcraft.io/docs/snap-confinement>`_.
+    - `library <https://snapcraft.io/docs/linters-library>`_: Verifies that no
+      ELF file dependencies, such as libraries, are missing and that no extra
+      libraries are included in the snap package.
+
+    See `Snapcraft linters <https://snapcraft.io/docs/linters>`_ for more information.
+
+    """
+
     epoch: str | None = pydantic.Field(
         default=None,
         description="The epoch associated with this version of the snap.",
-        examples=["epoch: 1", "epoch: 2*"],
+        examples=["1", "2*"],
     )
+    """The epoch associated with this version of the snap.
+
+    Controls when users receive configuration-breaking application releases and
+    ensures upgrades migrate through each epoch.
+
+    Asterisks after the epoch denote it can read configuration data from the
+    previous epoch.
+
+    This is an uncommonly used keyword.
+
+    See `snap epochs <https://snapcraft.io/docs/snap-epochs>`_ for more
+    information.
+    """
+
     adopt_info: str | None = pydantic.Field(
         default=None,
         description=textwrap.dedent(
@@ -942,44 +1688,99 @@ class Project(models.Project):
 
         Required if one of ``version``, ``summary``, or ``description`` isn't set."""
         ),
-        examples=["adopt-info: foo-part"],
+        examples=["foo-part"],
     )
+    """Selects a part to inherit metadata from and reuse for the snap's
+    metadata.
+
+    Required if one of ``version``, ``summary``, or ``description`` isn't set.
+
+    There are two ways to adopt metadata from a part:
+
+    - Using the 'craftctl set' command in an 'override-' script.
+    - Using appstream metadata files listed in the 'parse-info'  field of the
+      adopting part.
+    """
+
     system_usernames: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="The system usernames that the snap can use to run services.",
-        examples=["system-usernames: {snap-daemon: shared}"],
+        description="The system usernames that the snap can use to run daemons and services.",
+        examples=["{snap-daemon: shared}"],
     )
+    """The system usernames that the snap can use to run daemons and services.
+
+    This is used to use the snapd defined user ``snap_daemon`` run a daemon.  Otherwise, this is an uncommonly used vaiue.
+
+    See `system usernames <https://snapcraft.io/docs/system-usernames>`_ for more
+    information.
+    """
+
     environment: dict[str, str | None] | None = pydantic.Field(
         default=None,
-        description="The snap's run-time environment variables.",
+        description="The snap's runtime environment variables.",
         examples=[
-            "environment: {PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"
+            "{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"
         ],
     )
+    """The snap's runtime environment variables.
+
+    Environment variables are set at runtime for all apps.  To set an
+    environment variable for a particular app, use the ``environment`` key for
+    that ``app`` entry.
+    """
+
     build_packages: Grammar[list[str]] | None = pydantic.Field(
         default=None,
-        description="The system packages required on the host so that it can build parts for the snap.",
-        examples=["build-packages: libssl-dev, libyaml-dev"],
+        description="The list of packages to install when building a snap.",
+        examples=["[libssl-dev, libyaml-dev]"],
     )
+    """The list of packages to install when building a snap.
+
+    All build packages are installed before any part is built.  However, if a
+    package is only needed for one part, it is recommended to use the
+    ``build-packages`` key for that part.  This organization makes it easier to
+    track which parts require which build packages.
+    """
+
     build_snaps: Grammar[list[str]] | None = pydantic.Field(
         default=None,
-        description="The snaps required on the host so that it can build parts for the snap.",
-        examples=["build-snaps: go/1.22/stable, yq"],
+        description="The snaps to install when building a snap.",
+        examples=["[go/1.22/stable, yq]"],
     )
+    """The snaps to install when building a snap.
+
+    If only the snap name is provided, the snap will be installed from the
+    ``latest/stable`` channel.
+
+    Otherwise, a channel can be specified with ``<name>/<channel>``.
+    """
+
     ua_services: set[str] | None = pydantic.Field(
         default=None,
-        description="The Ubuntu Pro services to enable when building the snap.",
-        examples=["ua-services: [esm-apps]"],
+        description="The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+        examples=["[esm-apps]"],
     )
+    """The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when
+    building the snap.
+
+    Enabling `Ubuntu Pro <https://ubuntu.com/pro>`_ services allows building
+    snaps in an Ubuntu Pro enabled environment.
+    """
+
     provenance: str | None = pydantic.Field(
         default=None,
         description="The primary-key header for snaps signed by third parties.",
-        examples=["provenance: test-provenance"],
+        examples=["test-provenance"],
     )
+    """The primary-key header for snaps signed by third parties.
+
+    This is an uncommonly used value.
+    """
+
     components: dict[ProjectName, Component] | None = pydantic.Field(
         default=None,
-        description="Declares the components to pack in conjunction with the snap.",
-        examples=["components: {foo-component: {type: standard}}"],
+        description="Declares the components to build in conjunction with the snap.",
+        examples=["{foo-component: {type: standard}}"],
     )
 
     @override

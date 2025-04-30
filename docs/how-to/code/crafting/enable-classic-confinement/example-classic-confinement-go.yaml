@@ -1,0 +1,26 @@
+# golang-classic-example, a classically-confined project that uses the Go plugin
+
+name: golang-classic-example
+base: core22
+version: "0.1"
+summary: An example snap for a classic confinement golang project
+description: |
+  Shows how to create a snap for an application written in the Go language
+  that uses classic confinement.
+
+grade: devel
+confinement: classic
+
+apps:
+  golang-classic-example:
+    command: bin/main
+
+parts:
+  golang-classic-example:
+    plugin: go
+    source: .
+    build-snaps: [go]
+    build-packages: [pkg-config, libzstd-dev]
+    build-environment:
+      - CGO_ENABLED: 1
+      - CGO_LDFLAGS_ALLOW: ".*"

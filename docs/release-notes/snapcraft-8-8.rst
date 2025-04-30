@@ -11,8 +11,8 @@ Learn about the new features, changes, and fixes introduced in Snapcraft 8.8.
 Requirements and compatibility
 ------------------------------
 
-See :ref:`System requirements<system-requirements>` for information on the minimum
-hardware and installed software.
+See :ref:`reference-system-requirements` for information on the minimum hardware and
+installed software.
 
 
 What's new
@@ -30,7 +30,7 @@ This restriction has been dropped, so ``package-repositories`` and ``build-packa
 keys can now define entries for any :ref:`supported architecture
 <supported-architectures>`.
 
-For more information, see the :ref:`example-cross-compiled-app` how-to.
+For more information, see :ref:`how-to-craft-a-cross-compiled-app`.
 
 Remote build improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~

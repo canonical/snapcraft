@@ -1,16 +1,21 @@
 .. _explanation:
 
 Explanation
-***********
+===========
+
+The pages in this section explain the concepts that underpin Snapcraft, its features,
+and their implementation.
 
 .. toctree::
-   :maxdepth: 1
+    :titlesonly:
+    :maxdepth: 1
 
-   architectures
-   bases
-   components
-   remote-build
-   /common/craft-parts/explanation/filesets
-   parts
-   /common/craft-parts/explanation/lifecycle
-   /common/craft-parts/explanation/dump_plugin
+    architectures
+    bases
+    parts
+    parts-lifecycle
+    components
+    snap-configurations
+    remote-build
+    /common/craft-parts/explanation/filesets
+    classic-confinement
