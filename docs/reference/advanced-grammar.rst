@@ -3,10 +3,9 @@
 Advanced grammar
 ================
 
-Several fields in a snap's :ref:`project file <reference-snapcraft-yaml>` are dependent
-on the architecture or the operating system being exposed to Snapcraft. This is
-accomplished with a specific syntax in the project file that the ``snapcraft pack``
-command consumes.
+Several keys in a snap's :ref:`project file <reference-snapcraft-yaml>` depend on the
+architecture the snap is building on and building for. Defining different key values for
+these architectures is accomplished with a specific syntax called *advanced grammar*.
 
 The following ``build-packages`` section, for example, evaluates and then defines which
 build packages to install depending on the target environment (``to``) for the snap:
@@ -22,7 +21,7 @@ build packages to install depending on the target environment (``to``) for the s
         - gcc-multilib
         - g++-multilib
 
-This *advanced grammar* is made up of three statements: ``to``, ``on``, and ``try``.
+This advanced grammar is made up of three statements: ``to``, ``on``, and ``try``.
 
 
 The ``to`` statement
@@ -32,16 +31,13 @@ The ``to`` statement
     :caption: snapcraft.yaml
 
     - to <selector>:
-        <grammar>|<primitive>
+        <grammar>|<value>
     - else:
-        <grammar>|<primitive>
+        <grammar>|<value>
 
 The body of the ``to`` clause is taken into account if every (AND, not OR) selector is
 true for the target environment. The only selectors currently supported are host and
 target architectures (e.g., ``amd64``).
-
-``<primitive>`` may be either a list or a scalar, depending on whether the keyword is a
-command-delimited list of names or not.
 
 If the ``to`` clause doesn't match and is immediately followed by an ``else`` clause,
 the ``else`` clause must be satisfied. A ``to`` clause without an ``else`` clause is
@@ -69,7 +65,7 @@ The body of the ``on`` clause is taken into account if every (AND, not OR) selec
 true for the build environment. The only selectors currently supported are host and
 target architectures (e.g., ``amd64``).
 
-``<primitive`` may be either a list or a scalar, depending on whether the keyword is a
+``<primitive>`` may be either a list or a scalar, depending on whether the keyword is a
 command-delimited list of names or not.
 
 If the ``on`` clause doesn't match and is immediately followed by an ``else`` clause,
@@ -81,11 +77,10 @@ error if a ``to`` clause isn't matched.
 The ``try`` statement
 ---------------------
 
-.. admonition:: Base snap requirements
+.. admonition:: Deprecated feature
     :class: important
 
-    The ``try`` statement isn't compatible with builds using a :ref:`base snap
-    <base-snaps>` of core22 or later.
+    The ``try`` statement was deprecated in core20 and removed in core22.
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
