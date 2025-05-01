@@ -12,12 +12,36 @@ For further help on solving build dependencies, see
 :ref:`iterate-on-the-build-lifecycle`.
 
 
+Identify a dependency
+---------------------
+
+Package dependencies are listed as package names for the snap's build environment.
+
+Snapcraft's build environment is dependent on the :ref:`base snap <base-snap-reference>`
+used in the project file. Consequently, dependencies are listed using their respective
+apt package names from the `Ubuntu package archive <https://packages.ubuntu.com/>`_. See
+:ref:`reference-build-environment-options` for further details.
+
+It's also feasible to have a build environment built on Fedora for example, using Fedora
+packages, or those of your own host environment.
+
+The required packages are likely to be identical to those needed to either build the
+project (``build-packages``) or install your project (``stage-packages``) natively.
+You'll often find them listed in a project's README, or alongside any build
+instructions.
+
+Snap names are identical to the names used to install the snap outside of the build
+environment, and those listed by the Snap Store. If a specific channel is required, the
+syntax is of the form ``<snap-name>/<channel>`` (see :ref:`reference-channels` for more
+details on the syntax).
+
+
 Define a dependency
 -------------------
 
 Build and staging dependencies are added to a snap's :ref:`project file
 <reference-snapcraft-yaml>` within a part definition. They can be added as standard
-packages for the chosen build environment, such as deb packages for Ubuntu, or as a
+packages for the chosen build environment, such as Debian packages for Ubuntu, or as a
 cross-platform snap using the following keys:
 
 .. list-table::
@@ -57,30 +81,6 @@ unpacked into the snap being built.
 For staged snaps, the ``meta`` and ``snap`` directories from the snap will be available
 as ``meta.<snap-name>`` and ``snap.<snap-name>`` for cases where assets from those
 locations are desired for reuse.
-
-
-Identify a dependency
----------------------
-
-Package dependencies are listed as package names for the snap's build environment.
-
-Snapcraft's build environment is dependent on the :ref:`base snap <base-snap-reference>`
-used in the project file. Consequently, dependencies are listed using their respective
-apt package names from the `Ubuntu package archive <https://packages.ubuntu.com/>`_. See
-:ref:`reference-build-environment-options` for further details.
-
-It's also feasible to have a build environment built on Fedora for example, using Fedora
-packages, or those of your own host environment.
-
-The required packages are likely to be identical to those needed to either build the
-project (``build-packages``) or install your project (``stage-packages``) natively.
-You'll often find them listed in a project's README, or alongside any build
-instructions.
-
-Snap names are identical to the names used to install the snap outside of the build
-environment, and those listed by the Snap Store. If a specific channel is required, the
-syntax is of the form ``<snap-name>/<channel>`` (see :ref:`reference-channels` for more
-details on the syntax).
 
 
 Resolve missing dependencies
