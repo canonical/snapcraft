@@ -7,8 +7,9 @@ Several keys in a snap's :ref:`project file <reference-snapcraft-yaml>` depend o
 architecture the snap is building on and building for. Defining different key values for
 these architectures is accomplished with a specific syntax called *advanced grammar*.
 
-The following ``build-packages`` section, for example, evaluates and then defines which
-build packages to install depending on the target environment (``to``) for the snap:
+The following :literalref:`build-packages <how-to-manage-dependencies>` section, for
+example, evaluates and then defines which build packages to install depending on the
+target environment (``to``) for the snap:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
