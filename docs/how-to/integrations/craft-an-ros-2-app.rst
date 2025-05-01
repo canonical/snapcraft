@@ -216,7 +216,7 @@ core18 and core20
 ~~~~~~~~~~~~~~~~~
 
 The warnings regarding missing libraries that you might see when building your snap are
-false positive. These libraries are build time dependencies only.
+false positives. These libraries are build time dependencies only.
 
 
 Share content between ROS 2 snaps
@@ -231,8 +231,8 @@ You can find more information in `ROS architectures with snaps
 <https://ubuntu.com/robotics/docs/ros-architectures-with-snaps>`_ in the Canonical ROS
 documentation.
 
-Turning on content sharing takes requires two small changes in the project file. Here's
-the difference in the project file when content sharing is enabled:
+Turning on content sharing requires two small changes in the project file. Here's the
+difference in the project file when content sharing is enabled:
 
 .. tabs::
 
@@ -282,8 +282,8 @@ To turn on content sharing:
 
 #. Remove the ``stage-packages`` key from the part. The package is already available in
    the content-sharing snap.
-#. Change the ROS 2 extensions in ``extensions`` to the variant that correspond to the
-   core:
+#. Change the ROS 2 extensions in ``extensions`` to the variant that corresponds to the
+   snap's core:
 
    .. list-table::
       :header-rows: 1
@@ -308,15 +308,16 @@ To connect the snaps:
 
 #. Run:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      snap connect ros2-talker-listener:ros-foxy ros-foxy-ros-base
+        snap connect ros2-talker-listener:ros-foxy ros-foxy-ros-base
 
 #. Verify that the connection is established by running:
 
-   .. code-block:: bash
+    .. code-block:: bash
 
-      snap connections ros2-talker-listener
+        snap connections ros2-talker-listener
 
-If the connection is successful, the output will show that through the content
-interface, the snap's ROS launch command is manually plugged in to the ROS base snap.
+    If the connection is successful, the output will show that through the content
+    interface, the snap's ROS launch command is manually plugged in to the ROS base
+    snap.

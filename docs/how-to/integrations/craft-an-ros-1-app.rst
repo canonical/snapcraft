@@ -30,33 +30,33 @@ Example project file for ROS Talker/Listener
 
     .. group-tab:: core18
 
-    The following code comprises the project file for the `core18 version of ROS
-    Talker/Listener <https://github.com/snapcraft-docs/ros-talker-listener>`_.
+        The following code comprises the project file for the `core18 version of ROS
+        Talker/Listener <https://github.com/snapcraft-docs/ros-talker-listener>`_.
 
-    .. collapse:: Code
+        .. collapse:: Code
 
-        .. code-block:: yaml
-            :caption: snapcraft.yaml
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
 
-            name: ros-talker-listener
-            version: '0.1'
-            summary: ROS Talker/Listener Example
-            description: |
-              This example launches a ROS talker and listener.
+                name: ros-talker-listener
+                version: '0.1'
+                summary: ROS Talker/Listener Example
+                description: |
+                  This example launches a ROS talker and listener.
 
-            confinement: devmode
-            base: core18
+                confinement: devmode
+                base: core18
 
-            parts:
-              ros-tutorials:
-                plugin: catkin
-                source: https://github.com/ros/ros_tutorials.git
-                source-branch: melodic-devel
-                source-space: roscpp_tutorials/
+                parts:
+                  ros-tutorials:
+                    plugin: catkin
+                    source: https://github.com/ros/ros_tutorials.git
+                    source-branch: melodic-devel
+                    source-space: roscpp_tutorials/
 
-            apps:
-              ros-talker-listener:
-                command: roslaunch roscpp_tutorials talker_listener.launch
+                apps:
+                  ros-talker-listener:
+                    command: roslaunch roscpp_tutorials talker_listener.launch
 
     .. group-tab:: core20
 
