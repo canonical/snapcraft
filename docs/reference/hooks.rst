@@ -18,9 +18,9 @@ Common scenarios requiring hooks include:
 Transactions and rollback
 -------------------------
 
-Snapd executes a hook as a single transaction, where a transaction holds all the
-configuration changes made by the hook. These changes are atomic and are only
-visible to the running system after the hook finishes executing.
+Snapd executes a hook as a single transaction that holds all the configuration changes
+made by the hook. These changes are atomic and are only visible to the running system
+after the hook finishes executing.
 
 This allows changes to be rolled back if errors occur during the execution of a hook.
 This happens if a non-zero value is returned with either the configure or
@@ -34,7 +34,7 @@ If the hook executable is a shell script, it should assume a POSIX-compliant she
 environment for its execution.
 
 If your script needs a specific interpreter, such as Bash or Python, it needs to be
-explicitly declared within the script’s hashbang header (``#!/bin/bash``, for example)
+explicitly declared within the script’s shebang header (``#!/bin/bash``, for example)
 and your snap needs to ensure the interpreter is available.
 
 Hook names
@@ -48,14 +48,14 @@ for details on supported hooks.
 Adding hooks to a snap
 ----------------------
 
-A hook executable can be added to a snap in one of two ways. It can be in
-``snap/hooks`` in the project or it can be generated at build time by a part.
+A hook executable can be added to a snap by either placing it in the project's
+``snap/hooks/`` directory or by generating it at build time with a part.
 
 Adding a hook from the project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A hook can be added to a snap by placing the hook executable in ``snap/hooks/`` in
-the project directory. The following example shows the location of a configure
+A hook can be added to a snap by placing the hook executable in the project's
+``snap/hooks/`` directory. The following example shows the location of a configure
 hook executable:
 
 .. terminal::
