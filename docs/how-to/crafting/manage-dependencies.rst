@@ -12,7 +12,7 @@ For further help on solving build dependencies, see
 :ref:`iterate-on-the-build-lifecycle`.
 
 
-Define dependencies
+Define a dependency
 -------------------
 
 Build and staging dependencies are added to a snap's :ref:`project file
@@ -35,7 +35,7 @@ cross-platform snap using the following keys:
       - snaps required to run the part
 
 The following is a typical example of a part's ``build-`` and ``stage-`` sections for a
-command-line tool that interacts with git:
+snap of a command-line tool that interacts with Git:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -59,15 +59,15 @@ as ``meta.<snap-name>`` and ``snap.<snap-name>`` for cases where assets from tho
 locations are desired for reuse.
 
 
-Package and snap names
-----------------------
+Identify a dependency
+---------------------
 
 Package dependencies are listed as package names for the snap's build environment.
 
 Snapcraft's build environment is dependent on the :ref:`base snap <base-snap-reference>`
 used in the project file. Consequently, dependencies are listed using their respective
 apt package names from the `Ubuntu package archive <https://packages.ubuntu.com/>`_. See
-:ref:`reference-build-environment-options` for further details
+:ref:`reference-build-environment-options` for further details.
 
 It's also feasible to have a build environment built on Fedora for example, using Fedora
 packages, or those of your own host environment.
@@ -83,12 +83,12 @@ syntax is of the form ``<snap-name>/<channel>`` (see :ref:`reference-channels` f
 details on the syntax).
 
 
-Identify missing packages
--------------------------
+Resolve missing dependencies
+----------------------------
 
 Working out your project's dependencies can be an iterative process, much like compiling
 a third-party package, with the process split into identifying the dependencies a snap
-needs for a successful build, and those required for running the resultant application.
+needs for a successful build, and those required for running the resulting application.
 
 
 Missing build dependencies
@@ -117,14 +117,14 @@ will need to be installed, and because this is the building stage, so too will i
 header package (``libgc-dev``).
 
 If the package is unknown, its correct name can normally be found with a search from
-within the build environment, a search engine, or on the `Ubuntu package archive
-<https://packages.ubuntu.com/>`_.
+within the build environment, on the `Ubuntu package archive
+<https://packages.ubuntu.com/>`_, or searching online.
 
 
 Missing staging dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After a snap has been successfully built, if Snapcraft detects that the resultant
+After a snap has been successfully built, if Snapcraft detects that the resulting
 executable will require further packages, it will attempt to guess these and output a
 list that can be copied and pasted into the snap's project file. The output will look
 similar to the following:
