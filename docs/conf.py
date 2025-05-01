@@ -113,7 +113,6 @@ exclude_patterns = [
     "reference/advanced-grammar.rst",
     "reference/hooks.rst",
     "reference/package-repositories.rst",
-    "explanation/interfaces.rst",
 ]
 
 

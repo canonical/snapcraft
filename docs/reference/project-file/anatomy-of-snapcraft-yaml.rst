@@ -101,7 +101,7 @@ define what type of system resources outside the snap that the app can access.
 
 Confinement is defined by a *level* and fine-tuned using interfaces.
 
-There are three confinment levels:
+There are three confinement levels:
 
 - ``strict``. This confinement level uses Linux kernel security features to
   lock down the apps inside the snap. By default, a strictly-confined app can't
@@ -120,46 +120,12 @@ There are three confinment levels:
   as a stop-gap measure to enable developers to publish apps that need more
   access than the current set of permissions allow.
 
-  This confinment should be used only when required for functionality, as its
+  This confinement should be used only when required for functionality, as its
   lack of restrictions is a security risk. Before a snap can be published with
   classic confinement, it must be approved by the Snap Store team according to
   a `candidate review process
   <https://forum.snapcraft.io/t/process-for-reviewing-classic-confinement-snaps/1460>`_.
   Snaps may be rejected if they don't meet the necessary requirements.
-
-Here are the resources the snap is exposed to, across confinement levels:
-
-A strictly-confined snap is considered untrusted, and it runs in a restricted
-sandbox. By design, untrusted apps:
-
-- Can freely access their own data.
-- Can't access other apps' data.
-- Can't access non-app-specific user data.
-- Can't access privileged portions of the OS.
-- Can't access privileged system APIs.
-- May access sensitive APIs under some conditions.
-
-
-Interfaces
-^^^^^^^^^^
-
-Strictly-confined apps don't always function properly with the default security
-policy. For example, a browser without network access or a media player without
-audio access don't serve their intended purpose. To that end, snap developers
-can use `interfaces <https://snapcraft.io/docs/interface-management>`_, a
-mechanism of granular resource-level security permissions. These allow
-developers to expand on the default security policies and connect apps to
-system resources.
-
-An interface consists of a connection between a slot and a plug. The slot is
-the provider of the interface while the plug is the consumer, and a slot can
-support multiple plug connections.
-
-Interfaces can be automatically or manually connected. Some interfaces will be
-auto-connected. Others may not, especially if they have access to sensitive
-resources, like network control. Users have the option to manually control
-interfaces by connecting and disconnecting them using snapd.
-
 
 Parts
 ~~~~~
@@ -291,9 +257,9 @@ source code.
 
 The ``override-pull`` key is an inline Bash script that runs during the pull
 step of the :ref:`part lifecycle <lifecycle>`. It's used to perform operations
-that can't be satisfied by the default pull operation in the lifecyele. In the
+that can't be satisfied by the default pull operation in the lifecycle. In the
 wethr example, the listed commands are used to derive the correct version of
-the app, and set it using the Snapcraftctl scriptlet. More details about
+the app, and set it using the craftctl scriptlet. More details about
 overrides can be found in :ref:`Overriding the default build <override_build>`.
 
 The ``build-packages`` key defines the list of tools and libraries required to
