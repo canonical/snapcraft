@@ -3,10 +3,11 @@
 Expand extensions
 =================
 
-Extensions make temporary modifications the snap's project file with useful boilerplate,
-right before the snap is built. They help incorporate known solutions that are common to
-a supported technology. Run the ``expand-extensions`` command from your project's root
-directory to see how the project file will look with the extensions applied.
+Extensions make temporary modifications to the snap's project file with useful
+boilerplate, right before the snap is built. They help incorporate known solutions that
+are common to a supported technology. Run the ``expand-extensions`` command from your
+project's root directory to see how the project file will look with the extensions
+applied.
 
 .. terminal::
     :user: crafter
