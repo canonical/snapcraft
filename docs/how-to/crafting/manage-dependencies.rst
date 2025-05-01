@@ -170,8 +170,8 @@ The following are the most common solutions for these kinds of errors:
   testing and automatically for production.
 
 
-Remove stage package duplication
---------------------------------
+Override a core dependency
+--------------------------
 
 Snapcraft minimizes the size of a target snap by filtering out staging dependencies, if
 they are available in the base.
