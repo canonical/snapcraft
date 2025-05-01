@@ -1,0 +1,20 @@
+summary: Init and execute tests
+
+environment:
+  CI: "1"
+
+prepare: |
+  rm -rf test-snap
+
+restore: |
+  rm -rf test-snap
+  rm -rf ./*.snap
+
+execute: |
+  mkdir test-snap
+  cd test-snap
+  snapcraft init
+  snapcraft init --profile=test
+  # Remove once the packing issue is solved
+  snapcraft pack
+  snapcraft test

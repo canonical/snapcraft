@@ -72,17 +72,17 @@ class Package(PackageService):
             prime_dir=project_info.prime_dir,
         )
 
-    def _pack_components(self, dest: pathlib.Path) -> list[pathlib.Path]:
-        component_files: list[pathlib.Path] = []
+    def _pack_components(self, dest: pathlib.Path) -> dict[str, pathlib.Path]:
+        component_map: dict[str, pathlib.Path] = {}
         for component in self._project.get_component_names():
             filename = pack.pack_component(
                 cast(Lifecycle, self._services.lifecycle).get_prime_dir(component),
                 compression=self._project.compression,
                 output_dir=dest,
             )
-            component_files.append(pathlib.Path(filename))
+            component_map[component] = pathlib.Path(filename)
 
-        return component_files
+        return component_map
 
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
@@ -109,9 +109,10 @@ class Package(PackageService):
                 target_arch=self._build_for,
             )
         )
-        component_files = self._pack_components(dest)
+        component_map = self._pack_components(dest)
+        self._resource_map = component_map
 
-        return [snap_file] + component_files
+        return [snap_file] + list(component_map.values())
 
     def _get_assets_dir(self) -> pathlib.Path:
         """Return a snapcraft assets directory.

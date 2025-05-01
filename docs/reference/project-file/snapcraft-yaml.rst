@@ -98,6 +98,8 @@ values such as its confinement level and supported architectures.
 .. kitbash-field:: project.Project plugs
 
 
+.. _reference-snapcraft-yaml-app-keys:
+
 App keys
 --------
 
