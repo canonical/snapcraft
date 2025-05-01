@@ -64,12 +64,14 @@ Snapcraft has defined processes underlying its basic operation.
     architectures
     parts/index
     plugins
+    package-repositories
     extensions/index
     external-package-information
     components
     linters
     layouts
     advanced-grammar
+    hooks
     channels
     snapshots
     metrics
