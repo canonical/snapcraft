@@ -8,10 +8,10 @@ package names or snaps for the snap's build environment. This is covered in `Bui
 staging dependencies <https://snapcraft.io/docs/build-and-staging-dependencies>`_.
 
 For a default Snapcraft installation, the build environment is invariably some version
-of Ubuntu. Consequently, dependencies are listed using their *apt* package names and are
+of Ubuntu. Consequently, dependencies are listed using their APT package names and are
 retrieved from the set of repositories officially supported by the distribution.
 
-Using the ``package-repositories`` key, it's possible to add your own apt repositories
+Using the ``package-repositories`` key, it's possible to add your own APT repositories
 as sources for the ``build-packages`` and ``stage-packages`` keys, including those
 listed on a Personal Package Archive (PPA), which serves personally hosted non-standard
 packages.
