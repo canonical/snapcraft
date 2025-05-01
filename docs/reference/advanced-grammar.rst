@@ -57,16 +57,13 @@ The ``on`` statement
     :caption: snapcraft.yaml
 
     - on <selector>[,<selector>...]:
-        <grammar>|<primitive>
+        <grammar>|<value>
     - else[fail]:
-        <grammar>|<primitive>
+        <grammar>|<value>
 
 The body of the ``on`` clause is taken into account if every (AND, not OR) selector is
 true for the build environment. The only selectors currently supported are host and
 target architectures (e.g., ``amd64``).
-
-``<primitive>`` may be either a list or a scalar, depending on whether the keyword is a
-command-delimited list of names or not.
 
 If the ``on`` clause doesn't match and is immediately followed by an ``else`` clause,
 the ``else`` clause must be satisfied. An ``on`` clause without an ``else`` clause is
@@ -86,18 +83,15 @@ The ``try`` statement
     :caption: snapcraft.yaml
 
     - try:
-        <grammar>|<primitive>
+        <grammar>|<value>
     - else:
-        <grammar>|<primitive>
+        <grammar>|<value>
 
-The body of the ``try`` clause is taken into account only when all primitives it
-contains are valid. Primitive validity is determined on a keyword-specific basis. If
-they're not all valid, any subsequent ``else`` clauses are tried in order, and one of
-them must be satisfied. A ``try`` clause with no ``else`` clause is considered satisfied
-even if it contains invalid primitives.
-
-``<primitive>`` may be either a list or a scalar, depending on whether the keyword is a
-command-delimited list of names or not.
+The body of the ``try`` clause is taken into account only when all provided values are
+valid. The validity of values is determined on a keyword-specific basis. If they're not
+all valid, any subsequent ``else`` clauses are tried in order, and one of them must be
+satisfied. A ``try`` clause with no ``else`` clause is considered satisfied even if it
+contains invalid values.
 
 
 Examples
