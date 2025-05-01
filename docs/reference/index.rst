@@ -69,6 +69,7 @@ Snapcraft has defined processes underlying its basic operation.
     components
     linters
     layouts
+    hooks
     channels
     snapshots
     metrics
