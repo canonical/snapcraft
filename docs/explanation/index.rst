@@ -12,9 +12,9 @@ and their implementation.
 
     architectures
     bases
-    extensions
     parts
     parts-lifecycle
+    extensions
     components
     snap-configurations
     remote-build

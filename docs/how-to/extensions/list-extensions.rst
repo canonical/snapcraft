@@ -14,9 +14,6 @@ The output includes all extensions, both stable and experimental, without
 differentiating them.
 
 .. terminal::
-    :user: crafter
-    :host: home
-    :input: snapcraft extensions
 
     Extension name          Supported bases
     ----------------------  ------------------------------
