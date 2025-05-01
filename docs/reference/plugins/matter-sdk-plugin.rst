@@ -18,15 +18,40 @@ The Matter SDK plugin simplifies the building of parts that use the `connectedho
 <https://github.com/project-chip/connectedhomeip>`_ Matter SDK. It abstracts away SDK
 setup and configuration when creating a snapped Matter application.
 
-The plugin uses standard :ref:`part keys <reference-snapcraft-yaml-part-keys>` and the
-plugin-specific ``matter-sdk-version`` key, which must match one of the `existing tags
-<https://github.com/project-chip/connectedhomeip/tags>`_ in the SDK repository.
+
+Keywords
+--------
+
+In addition to the common :ref:`plugin <part-properties-plugin>` and :ref:`sources
+<part-properties-sources>` keywords, this plugin provides the following plugin-specific
+keyword:
+
+
+matter-sdk-version
+~~~~~~~~~~~~~~~~~~
+
+**Type**: string
+
+*Required*
+
+The Matter SDK version the plugin will use. This value must match one of the `existing
+tags <https://github.com/project-chip/connectedhomeip/tags>` in the SDK repository.
+
+
+Dependencies
+------------
+
+This plugin has no dependencies.
+
+
+How it works
+------------
 
 The project file for a snap using this plugin should include the following:
 
 
 Plugin part
------------
+~~~~~~~~~~~
 
 Bootstrapping the SDK requires resource-intensive operations such as cloning several
 repositories and building the various artifacts. To save resources and allow for caching
@@ -43,7 +68,7 @@ part. For example:
 
 
 Application part
-----------------
+~~~~~~~~~~~~~~~~
 
 The application's part should be built after staging the SDK.
 
@@ -70,7 +95,7 @@ at ``$CRAFT_STAGE/matter-sdk-env.sh``. For example:
 
 
 Layout mapping
---------------
+~~~~~~~~~~~~~~
 
 The plugin changes the SDK's default paths from ``/tmp`` to ``/mnt`` for writing storage
 and platform configurations. This allows applications to retain data across reboots. To
