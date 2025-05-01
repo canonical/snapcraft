@@ -36,13 +36,6 @@ ifeq ($(shell which snapcraft),)
 endif
 	snapcraft pack
 
-.PHONY: publish
-publish: publish-pypi  ## Publish packages
-
-.PHONY: publish-pypi
-publish-pypi: clean package-pip lint-twine  ##- Publish Python packages to pypi
-	uv tool run twine upload dist/*
-
 # Find dependencies that need installing
 APT_PACKAGES :=
 ifeq ($(wildcard /usr/include/libxml2/libxml/xpath.h),)
