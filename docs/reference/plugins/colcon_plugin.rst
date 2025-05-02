@@ -47,7 +47,7 @@ colcon-packages
 
 List of colcon packages to build. If not specified, all packages in the workspace will
 be built. If set to an empty list (``[]``), no packages will be built, which could
-be useful if you only want ROS debs in the snap.
+be useful if you only want ROS Debian packages in the snap.
 
 colcon-packages-ignore
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -115,13 +115,13 @@ reference pages.
 During the build step the plugin performs the following actions:
 
 * Call ``rosdep init`` and ``rosdep update`` to initialize the rosdep database.
-* Sources ROS workspaces present in any build snaps, stage snaps, and on the system.
-* Installs all ROS 2 build packages required by the part.
-* Call ``colcon build`` with all colcon-specific keywords set in the part.
-* Stages all runtime packages required by the part.
+* Source ROS workspaces present in any build snaps, stage snaps, and on the system.
+* Install ROS 2 build packages required by the part.
+* Call ``colcon build`` with any colcon-specific keywords set in the part.
+* Stage runtime packages required by the part.
 
 Example
 -------
 
 See the :ref:`how-to-craft-an-ros-2-app` page for an example of how to create a snap
-for an ROS 2 app.
+for a ROS 2 app.
