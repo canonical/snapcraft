@@ -37,8 +37,7 @@ staged during build.
 Sometimes when a snap is initially built, libraries are missing because they weren't
 explicitly specified by the developer. There's a couple of ways to bundle required
 libraries in a snap, both of which are covered below, but more details can be found in
-`Build and staging dependencies
-<https://snapcraft.io/docs/build-and-staging-dependencies>`_.
+:ref:`how-to-manage-dependencies`.
 
 
 Staged packages
@@ -153,6 +152,8 @@ part, then rebuild:
     snapcraft build --shell
 
 
+.. _iterate-on-the-build-lifecycle:
+
 Iterate on the build lifecycle
 ------------------------------
 
@@ -224,8 +225,8 @@ dependency.
 
 In this way the solution is just like resolving dependencies with other build tools.
 
-For more details on package names and build dependencies, see `Build and staging
-dependencies <https://snapcraft.io/docs/build-and-staging-dependencies>`_.
+For more details on package names and build dependencies, see
+:ref:`how-to-manage-dependencies`.
 
 
 Stage step

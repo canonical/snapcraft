@@ -10,6 +10,7 @@ Crafting
     configure-package-information
     specify-a-base
     select-architectures
+    manage-dependencies
     add-a-snap-configuration
     use-layouts
     manage-data-compatibility
