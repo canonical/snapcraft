@@ -109,9 +109,6 @@ exclude_patterns = [
     "how-to/publishing/build-snaps-remotely.rst",
     "how-to/publishing/manage-releases.rst",
     "how-to/publishing/publish-a-snap.rst",
-    "reference/hooks.rst",
-    "reference/advanced-grammar.rst",
-    "reference/package-repositories.rst",
 ]
 
 
