@@ -1,4 +1,4 @@
-.. _reference-matter-sdk-plugin:
+.. _reference_matter_sdk_plugin:
 
 Matter SDK plugin
 =================
