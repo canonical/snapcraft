@@ -18,17 +18,15 @@ Design
 .. image:: https://assets.ubuntu.com/v1/59c290a8-snapd-interfaces.png
    :alt: Interface between slots and plugs.
 
-An interface consists of a connection between a slot and a plug. A slot is
-the provider of the interface and may be a system resource or access to another snap.
-A slot can support multiple plug connections. A plug is the consumer and connects to a
-slot through an interface.
+A slot can be connected to one or more plugs through an interface. The slot provides
+this interface and access to either a system resource or a resource from another snap.
+The plug connects to the provided interface and consumes the resource.
 
-Interfaces can be automatically or manually connected. Some interfaces automatically
-connect when a snap is installed. Others interfaces don't automatically connect,
-especially if they have access to sensitive resources like network control.
-See `Supported interfaces <https://snapcraft.io/docs/supported-interfaces>`_ for
-details on which interfaces can auto-connect.
+Some interfaces connect automatically when a snap is installed, while others, such as
+those that have access to sensitive resources, need to be connected manually. See
+`Supported interfaces <https://snapcraft.io/docs/supported-interfaces>`_ for details on
+which interfaces connect automatically.
 
-Users have the option to manually control interfaces by connecting and disconnecting
-them using snapd. See `Interface management
-<https://snapcraft.io/docs/interface-management>`_ for details.
+Users can control interfaces manually by connecting and disconnecting them with snapd.
+See `Interface management <https://snapcraft.io/docs/interface-management>`_ for
+details.

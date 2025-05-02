@@ -14,9 +14,9 @@ and their implementation.
     bases
     parts
     parts-lifecycle
+    interfaces
     extensions
     components
-    interfaces
     snap-configurations
     remote-build
     /common/craft-parts/explanation/filesets
