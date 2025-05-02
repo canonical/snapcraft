@@ -15,16 +15,16 @@ is run:
 * ``.snapcraft.yaml``
 * ``build-aux/snap/snapcraft.yaml``
 
-The project file is organised into three main sections:
+The project file is organized into three main sections:
 
-* Top-level directives and information about the snap, which describe its base
+* Top-level directives, which provide information about the snap and describe its base
   properties and publication details.
 * App directives, which describe the execution, interfaces, and resources available
   to each app in the snap.
 * Part directives, which describe how to import and build the apps inside the snap.
 
-You can create a project file manually or you can run the init command to create a
-basic template:
+You can create a project file manually or by running the ``init`` command, which
+creates a basic template:
 
 .. code-block::
 
