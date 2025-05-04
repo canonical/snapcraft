@@ -37,24 +37,33 @@ def _to_string(data: Any) -> Any:
 
     Supported scalar types are str, bool, and numbers.
     """
-    # check for a string first, as it is the most common scenario
+    # check for a string first, as it is the most common scenario and prevents
+    # strings being treated as collections of characters.
     if isinstance(data, str):
         return data
 
     if isinstance(data, abc.Mapping):
         return {_to_string(key): _to_string(value) for key, value in data.items()}
 
+    # Check collection *excluding* strings which were handled above.
     if isinstance(data, abc.Collection):
         return [_to_string(i) for i in data]
 
     if isinstance(data, numbers.Number | bool):
         return str(data)
 
+    # Return None as None, otherwise cast_dict_scalars_to_strings might turn it into "None" string
+    if data is None:
+        return None
+
+    # Fallback for unknown types, return as is
     return data
 
 
 class ConfdbSchema(models.CraftBaseModel):
     """Access and data definitions for a specific facet of a snap or system."""
+
+    summary: str | None = pydantic.Field(default=None, description="Optional summary for the specific rule.")
 
     request: str | None = None
     """Optional dot-separated path to access the field."""
@@ -72,12 +81,14 @@ class ConfdbSchema(models.CraftBaseModel):
 class Rules(models.CraftBaseModel):
     """A list of confdb schemas for a particular view."""
 
+    summary: str | None = pydantic.Field(default=None, description="Optional summary for the view.")
     rules: list[ConfdbSchema]
 
 
 class EditableConfdbSchemaAssertion(models.CraftBaseModel):
     """Subset of a confdb-schema assertion that can be edited by the user."""
 
+    summary: str | None = pydantic.Field(default=None, description="Optional summary for the entire schema.")
     account_id: str
     """Issuer of the confdb-schema assertion and owner of the signing key."""
 
@@ -92,7 +103,9 @@ class EditableConfdbSchemaAssertion(models.CraftBaseModel):
 
     def marshal_scalars_as_strings(self) -> dict[str, Any]:
         """Marshal the model where all scalars are represented as strings."""
-        return cast_dict_scalars_to_strings(self.marshal())
+        # Use exclude_none=True to align with test expectation that None fields are omitted.
+        marshalled = self.model_dump(mode="python", exclude_none=True)
+        return cast_dict_scalars_to_strings(marshalled)
 
 
 class ConfdbSchemaAssertion(EditableConfdbSchemaAssertion):
@@ -111,6 +124,12 @@ class ConfdbSchemaAssertion(EditableConfdbSchemaAssertion):
 
     sign_key_sha3_384: str | None = None
     """Signing key ID."""
+
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
+        """Marshal the model where all scalars are represented as strings."""
+        # Use exclude_none=True to align with test expectation that None fields are omitted.
+        marshalled = self.model_dump(mode="python", exclude_none=True)
+        return cast_dict_scalars_to_strings(marshalled)
 
 
 class ConfdbSchemasList(models.CraftBaseModel):

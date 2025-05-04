@@ -21,6 +21,7 @@ from .assertions import (
     EditableConfdbSchemaAssertion,
     ConfdbSchema,
     ConfdbSchemaAssertion,
+    Rules,
 )
 from .manifest import Manifest
 from .project import (
@@ -58,5 +59,6 @@ __all__ = [
     "Project",
     "ConfdbSchema",
     "ConfdbSchemaAssertion",
+    "Rules",
     "Socket",
 ]
