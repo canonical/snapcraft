@@ -39,8 +39,15 @@ copyright = "%s, %s" % (datetime.date.today().year, author)
 release = snapcraft.__version__
 
 # region Configuration for canonical-sphinx
-ogp_site_url = "https://canonical-snapcraft.readthedocs-hosted.com/"
+ogp_site_url = "https://documentation.ubuntu.com/snapcraft"
 ogp_site_name = project
+
+# Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
+#
+# TODO: If your documentation is hosted on https://docs.ubuntu.com/,
+#       uncomment and update as needed.
+
+slug = "snapcraft"
 
 html_context = {
     "product_page": "snapcraft.io",

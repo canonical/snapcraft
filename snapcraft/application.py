@@ -51,7 +51,7 @@ APP_METADATA = AppMetadata(
     source_ignore_patterns=["*.snap"],
     project_variables=["version", "grade"],
     mandatory_adoptable_fields=["version", "summary", "description"],
-    docs_url="https://canonical-snapcraft.readthedocs-hosted.com/en/{version}",
+    docs_url="https://documentation.ubuntu.com/snapcraft/{version}",
 )
 
 

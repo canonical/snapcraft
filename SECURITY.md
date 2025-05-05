@@ -24,8 +24,8 @@ mitigations for the issue.
 The [Ubuntu Security disclosure and embargo policy] contains more information about
 what you can expect when you contact us and what we expect from you.
 
-[current major release]: https://canonical-snapcraft.readthedocs-hosted.com/en/latest/release-notes#current-releases
-[Bases]: https://canonical-snapcraft.readthedocs-hosted.com/en/latest/reference/bases.html#base-snaps
+[current major release]: https://documentation.ubuntu.com/snapcraft/stable/release-notes#current-releases
+[Bases]: https://documentation.ubuntu.com/snapcraft/stable/reference/bases#base-snaps
 [Private Security Report]: https://github.com/canonical/snapcraft/security/advisories/new
 [Ubuntu Security disclosure and embargo policy]: https://ubuntu.com/security/disclosure-policy
 [Ubuntu LTS release cycle]: https://ubuntu.com/about/release-cycle
