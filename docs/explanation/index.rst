@@ -14,6 +14,8 @@ and their implementation.
     bases
     parts
     parts-lifecycle
+    interfaces
+    extensions
     components
     snap-configurations
     remote-build

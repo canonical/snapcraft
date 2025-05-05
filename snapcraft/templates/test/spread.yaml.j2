@@ -14,7 +14,7 @@ suites:
   spread/general/:
     summary: General integration tests
     prepare: |
-      snap install "$CRAFT_ARTIFACT" --dangerous
+      snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
     restore: |
       snap remove {{ name }} --purge
 

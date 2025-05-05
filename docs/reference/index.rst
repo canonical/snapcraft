@@ -17,11 +17,10 @@ Snapcraft is operated from the command line, with a command for each function.
 Project file
 ------------
 
-The main object inside a snap project is a configurable project file. These pages detail
-what goes inside it.
+The main object inside a snap project is a configurable project file. Read on for a
+complete reference of the structure and contents of this file.
 
-- :ref:`reference-snapcraft-yaml`
-- :ref:`reference-anatomy-of-snapcraft-yaml`
+:ref:`Project file references <reference-project-file>`
 
 
 Bases and architectures
@@ -64,11 +63,14 @@ Snapcraft has defined processes underlying its basic operation.
     architectures
     parts/index
     plugins
+    package-repositories
     extensions/index
     external-package-information
     components
     linters
     layouts
+    advanced-grammar
+    hooks
     channels
     snapshots
     metrics
