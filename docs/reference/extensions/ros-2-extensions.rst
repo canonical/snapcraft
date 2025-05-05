@@ -1,4 +1,5 @@
 .. _reference-ros-2-foxy-extension:
+.. _reference-ros-2-extensions:
 
 ROS 2 extensions
 ================
