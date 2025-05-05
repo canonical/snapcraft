@@ -61,6 +61,25 @@ products. It's also versioned with each Snapcraft release.
 
 We're working to retire the remaining documentation on snapcraft.io.
 
+
+New documentation domain
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The second Snapcraft documentation set -- the one you're reading now -- was first
+deployed to the ReadTheDocs domain.
+
+Snapcraft is an important member of the Canonical community and ecosystem, and all its
+site names should demonstrate that. With this release, we gave the docs a new home at
+the Ubuntu domain. You can now reach it at:
+
+`documentation.ubuntu.com/snapcraft <https://documentation.ubuntu.com/snapcraft>`_
+
+We put redirects in place to handle links to the old ReadTheDocs domain.
+
+With this change, we also removed the language subdirectory (``/en``) in the URL, to
+shave a few characters off all links.
+
+
 Minor features
 --------------
 
@@ -95,25 +114,6 @@ The existing confdb schema commands have been renamed as follows:
       - ``list-confdb-schemas``
     * - ``edit-confdbs``
       - ``edit-confdb-schema``
-
-
-New documentation domain
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-The Snapcraft documentation was first hosted with the forum on snapcraft.io. Later, a
-new documentation set -- the one you're reading now -- was developed in parallel on the
-ReadTheDocs platform and domain.
-
-Snapcraft is an important member of the Canonical community and ecosystem, and all its
-site names should demonstrate that. With this release, we gave the docs a new home at
-the Ubuntu domain. You can now reach it at:
-
-`documentation.ubuntu.com/snapcraft <https://documentation.ubuntu.com/snapcraft>`_
-
-We put redirects in place to handle links to the old ReadTheDocs domain.
-
-With this change, we also removed the language subdirectory (``/en``) in the URL, to
-shave a few characters off all links.
 
 
 Known issues
