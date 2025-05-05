@@ -47,7 +47,7 @@ colcon-packages
 
 List of colcon packages to build. If not specified, all packages in the workspace will
 be built. If set to an empty list (``[]``), no packages will be built, which could
-be useful if you only want ROS Debian packages in the snap.
+be useful if you only want Debian packages in the snap.
 
 colcon-packages-ignore
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -123,5 +123,5 @@ During the build step the plugin performs the following actions:
 Example
 -------
 
-See the :ref:`how-to-craft-an-ros-2-app` page for an example of how to create a snap
+See :ref:`how-to-craft-an-ros-2-app` for an example of how to create a snap
 for a ROS 2 app.
