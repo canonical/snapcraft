@@ -49,8 +49,8 @@ snapcraft upload
 ```
 
 If you're interested in learning more about the Snapcraft commands and how to compose a
-project file, try [creating your first
-snap](https://snapcraft.io/docs/create-a-new-snap).
+project file, try [crafting your first
+snap](https://documentation.ubuntu.com/snapcraft/stable/tutorials/craft-a-snap).
 
 ## Installation
 
@@ -65,17 +65,13 @@ sudo snap install snapcraft --classic
 For complete installation, you need an additional Linux container tool. Snapcraft can
 also be installed as a traditional package on many popular Linux repositories. If you
 need help with either, the documentation covers how to [set up
-Snapcraft](https://canonical-snapcraft.readthedocs-hosted.com/en/stable/howto/set-up-snapcraft).
+Snapcraft](https://documentation.ubuntu.com/snapcraft/stable/how-to/setup/set-up-snapcraft).
 
 ## Documentation
 
-The Snapcraft docs provide guidance and learning material about the full process of
-building a project file, debugging snaps, resolving interfaces, the command reference,
-and much more:
-
-- [Snapcraft build guide on snapcraft.io](https://snapcraft.io/docs)
-- [Snapcraft documentation on
-  ReadTheDocs](https://canonical-snapcraft.readthedocs-hosted.com/en/stable/)
+The [Snapcraft documentation](https://documentation.ubuntu.com/snapcraft/stable)
+provides guidance and learning material about the full process of building a project
+file, debugging snaps, resolving interfaces, the command reference, and much more.
 
 ## Community and support
 
@@ -110,7 +106,7 @@ Snapcraft is released under the [GPL-3.0 license](LICENSE).
 [snapcraft-badge]: https://snapcraft.io/snapcraft/badge.svg
 [snapcraft-site]: https://snapcraft.io/snapcraft
 [rtd-badge]: https://readthedocs.com/projects/canonical-snapcraft/badge/?version=latest
-[rtd-latest]: https://canonical-snapcraft.readthedocs-hosted.com/en/latest/?badge=latest
+[rtd-latest]: https://documentation.ubuntu.com/snapcraft/latest/?badge=latest
 [gha-spread-badge]: https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml/badge.svg?branch=main
 [gha-spread]: https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json

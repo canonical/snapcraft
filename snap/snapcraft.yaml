@@ -20,7 +20,7 @@ issues:
 source-code:
   - https://github.com/canonical/snapcraft
 website:
-  - https://canonical-snapcraft.readthedocs-hosted.com
+  - https://documentation.ubuntu.com/snapcraft
 
 # https://github.com/canonical/snapcraft/issues/4187
 environment:
