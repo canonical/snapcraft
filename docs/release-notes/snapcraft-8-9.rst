@@ -116,6 +116,12 @@ Snapcraft 8.9.0
 
 - `#5107`_ Plugin errors would provide broken links to documentation.
 
+Snapcraft 8.9.1
+~~~~~~~~~~~~~~~
+
+- The uv plugin was breaking with uv 0.7.
+- The ``snapcraft test`` command would fail to install snaps with devmode confinement.
+
 Contributors
 ------------
 
