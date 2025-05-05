@@ -1,16 +1,26 @@
 name: snapcraft
+title: Snapcraft
 base: core24
-summary: easily create snaps
+summary: Package, distribute, and update any app for Linux and IoT.
 description: |
-  Snapcraft aims to make upstream developers' lives easier and as such is not
-  a single toolset, but instead is a collection of tools that enable the
-  natural workflow of an upstream to be extended with a simple release step
-  into Snappy.
+  Snapcraft is the command-line build tool for packaging and distributing software and apps in the snap container format.
+
+  The tool packages apps across many supported languages, build tools, and frameworks, such as Python, C and C++, Rust, Node, and GNOME. Snaps can be tested, debugged, and locally shared before being published to the global Snap Store and private stores. It uses simple commands to manage and monitor releases at a granular level.
+
+  It solves the problems of dependency management and architecture support by bundling all of a software’s libraries into the container itself, and provides a way to package any app, program, toolkit, or library for all major Linux distributions and IoT devices.
+
+  Snapcraft is for developers, package maintainers, fleet administrators, and hobbyists who are interested in publishing snaps for Linux and IoT devices.
 adopt-info: snapcraft
 confinement: classic
 license: GPL-3.0
 assumes:
   - snapd2.43
+issues:
+  - https://github.com/canonical/snapcraft/issues
+source-code:
+  - https://github.com/canonical/snapcraft
+website:
+  - https://canonical-snapcraft.readthedocs-hosted.com
 
 # https://github.com/canonical/snapcraft/issues/4187
 environment:
