@@ -154,7 +154,9 @@ lint-shellcheck:  ##- Lint shell scripts
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	git ls-files | file --mime-type -Nnf- | grep shellscript | cut -f1 -d: | xargs -r shellcheck
+	@# jinja2 shell script templates are mistakenly counted as "true" shell scripts due to their shebang,
+	@# so explicitly filter them out
+	git ls-files | grep -vE "\.sh\.j2$$" | file --mime-type -Nnf- | grep shellscript | cut -f1 -d: | xargs -r shellcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
