@@ -64,6 +64,7 @@ jobs:
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UA_TOKEN: ${{ secrets.UA_TOKEN }}
+          RUN_UA_TESTS: ${{ ! github.event.pull_request.head.repo.fork }}
         run: spread ${{ matrix.spread-jobs }}
 
       - name: Discard spread workers
