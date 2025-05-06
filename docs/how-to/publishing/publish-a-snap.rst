@@ -7,8 +7,8 @@ After :ref:`crafting a snap <tutorial-craft-a-snap>`, you should upload it to th
 Store or a private store so that others can use it.
 
 
-Prepare to register
--------------------
+Prepare to publish
+------------------
 
 First, register for a Snapcraft account and :ref:`log in to your account
 <how-to-autheneticate-log-in>` in a terminal.
@@ -37,8 +37,8 @@ After receiving the upload, the store performs an automated review of the snap f
 If no errors are found, the store makes the snap immediately available to users.
 
 If the automated check finds any errors, Snapcraft will give a brief summary and
-guidance on how to correct each. Correct all the errors, rebuild the snap, then upload
-it again. Continue retrying until successful.
+guidance on how to correct each one. Correct all the errors, rebuild the snap, then
+upload it again. Continue retrying until successful.
 
 Your snap is now released and ready for people to try!
 
