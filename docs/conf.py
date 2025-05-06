@@ -115,7 +115,6 @@ exclude_patterns = [
     "how-to/crafting/override-the-build-step-with-craftctl.rst",
     "how-to/publishing/build-snaps-remotely.rst",
     "how-to/publishing/manage-releases.rst",
-    "how-to/publishing/publish-a-snap.rst",
 ]
 
 

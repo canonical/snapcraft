@@ -8,6 +8,8 @@ developer account. File-based authentication is also available for deployments w
 login isn't possible or desired, such as private networks.
 
 
+.. _how-to-autheneticate-log-in:
+
 Log in to your Snapcraft account
 --------------------------------
 
