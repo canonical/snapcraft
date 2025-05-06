@@ -38,7 +38,8 @@ Request classic confinement on the Snap Store
 ---------------------------------------------
 
 A classically-confined snap requires approval from the Store team before you can
-distribute it on the Snap Store.
+distribute it on the Snap Store. Obtaining approval takes takes on average three to five
+business days.
 
 `Submit your snap for review
 <https://snapcraft.io/docs/reviewing-classic-confinement-snaps>`_ to get approval for

@@ -9,6 +9,7 @@ Publishing
 
     authenticate
     register-a-snap
+    publish-a-snap
     check-a-snaps-status
     manage-revisions-and-releases
     get-snap-metrics
