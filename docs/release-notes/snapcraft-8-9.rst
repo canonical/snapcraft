@@ -100,8 +100,9 @@ The following changes are incompatible with previous versions of Snapcraft.
 Renaming of confdb schema commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A confdb schema defines the configuration of Linux systems, including storage,
-access permission, granularity, and sharing between snaps.
+A `confdb schema <https://snapcraft.io/docs/configure-with-confdb>`_ defines the
+configuration of Linux systems, including storage, access permission, granularity,
+and sharing between snaps.
 
 The existing confdb schema commands have been renamed as follows:
 
