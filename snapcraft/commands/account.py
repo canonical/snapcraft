@@ -42,7 +42,7 @@ _VALID_DATE_FORMATS = [
 ]
 
 
-def _read_config(config_path) -> str:
+def _read_config(config_path: str) -> str:
     if config_path == "-":
         config_path = "/dev/stdin"
 
@@ -95,7 +95,7 @@ class StoreLoginCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
                 "--experimental-login no longer supported. "
@@ -186,7 +186,7 @@ class StoreExportLoginCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args) -> None:
+    def run(self, parsed_args: "argparse.Namespace") -> None:
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
                 "--experimental-login no longer supported. "
@@ -254,7 +254,7 @@ class StoreWhoAmICommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         whoami = store.StoreClientCLI().store_client.whoami()
 
         if whoami.get("permissions"):
@@ -300,6 +300,6 @@ class StoreLogoutCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         store.StoreClientCLI().store_client.logout()
         emit.message("Credentials cleared")

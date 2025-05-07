@@ -17,6 +17,7 @@
 """YAML utilities for Snapcraft."""
 
 import os
+from collections.abc import Hashable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TextIO, cast
@@ -52,7 +53,7 @@ _SNAP_PROJECT_FILES = [
 ]
 
 
-def _check_duplicate_keys(node):
+def _check_duplicate_keys(node: yaml.Node) -> None:
     mappings = set()
 
     for key_node, _ in node.value:
@@ -70,7 +71,9 @@ def _check_duplicate_keys(node):
             pass
 
 
-def _dict_constructor(loader, node):
+def _dict_constructor(
+    loader: yaml.Loader, node: yaml.MappingNode
+) -> dict[Hashable, Any]:
     _check_duplicate_keys(node)
 
     # Necessary in order to make yaml merge tags work

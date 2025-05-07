@@ -276,8 +276,6 @@ lint.ignore = [
     # Most of these are probably worth enabling eventually.
 
     # Annotation issues appear to be mostly in older code, so could be eventually enabled.
-    # 39 instances of ANN001.
-    "ANN001",  # Missing type annotation for function argument
     # 5 instances of ANN201, 10 instances of ANN202
     "ANN201", "ANN202",  # Missing return type annotation for public/private function
     # 13 instances of ANN206 - probably mostly :noqa-able

@@ -33,7 +33,7 @@ class LegacyAppCommand(AppCommand):
     """Legacy command runner."""
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         # Setup env var for legacy credentials.
         set_legacy_env()
 

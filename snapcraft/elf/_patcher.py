@@ -35,7 +35,11 @@ class Patcher:
     """Hold the necessary logic to patch elf files."""
 
     def __init__(
-        self, *, dynamic_linker: str, root_path: Path, preferred_patchelf=None
+        self,
+        *,
+        dynamic_linker: str,
+        root_path: Path,
+        preferred_patchelf: str | None = None,
     ) -> None:
         """Create a Patcher instance.
 

@@ -17,6 +17,7 @@
 """Snap file packing."""
 
 import subprocess
+from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
 
@@ -124,7 +125,7 @@ def _pack(
     return Path(str(proc.stdout).partition(":")[2].strip()).name
 
 
-def _retry_with_newer_snapd(func):
+def _retry_with_newer_snapd(func: Callable) -> Callable:
     @wraps(func)
     def retry_with_edge_snapd(
         directory: Path, output_dir: Path, compression: str | None = None
