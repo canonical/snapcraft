@@ -37,7 +37,7 @@ TODO
 3. Modify top-level files in your project to match what's in Starbase as closely as
    possible.
 
-    1. `Makefile` - Ensure you use `uv` and at least have the same targets:
+    1. `Makefile` – Ensure you use `uv` and at least have the same targets:
 
         - `setup`
         - `lint`
@@ -49,16 +49,20 @@ TODO
     2. `pyproject.toml` – Expand from just the ruff things: move things into here from
        your `setup.py`, `setup.cfg`, and `requirements.*.txt`.
 
-    3. `README` – If any of the repository documentation (README, CONTRIBUTING, etc.)
-       isn't in Markdown, convert to a .md with pandoc:
+    3. Project files – If any of the repository docs (README, CONTRIBUTING, and so on)
+       aren't written in Markdown, convert them to `.md` with pandoc:
 
         `pandoc -o README.md README.rst`
 
-        Don't worry about making the contents match, Starbase's is very specific. Be
-        sure to review the changes it makes - pandoc sometimes does weird things with
-        lists and certain rST directives.
+        Be sure to review the changes it makes. Pandoc sometimes does unexpected things
+        when interpreting reStructuredText directives.
 
-    4. `SECURITY.md` - Match the content of your project's `SECURITY.md` file as closely
+    4. `README.md` – Base the contents of the README on the provided [README
+       template](README-template.md). Try and align with the model as closely as you
+       can. For an example of this template in use, refer to the [Snapcraft
+       README](https://github.com/canonical/snapcraft/blob/6fa334402a1ebaa6ff58064d49f1f46fd01fb404/README.md).
+
+    5. `SECURITY.md` – Match the content of your project's `SECURITY.md` file as closely
        as you can to the structure of the [Security policy template](SECURITY.md). Be
        sure to follow the comments in the template closely.
 
