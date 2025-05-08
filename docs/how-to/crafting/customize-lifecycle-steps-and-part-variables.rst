@@ -14,8 +14,8 @@ Customize lifecycle steps and project variables
 The ``version`` and ``grade`` keys are supported.
 
 To incorporate retrieved package information correctly, point ``adopt-info`` to the part
-that runs ``craftctl set``. Without such a connection, your snap's package information
-won't update. You can find more guidance on sourcing information in
+that runs ``craftctl set``. Without such a connection, the snap fails to build. You can
+find more guidance on sourcing information in
 :ref:`reference-external-package-information`.
 
 
