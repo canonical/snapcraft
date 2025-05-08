@@ -31,8 +31,8 @@ available on the system.
 For more information on the use of cryptography for plugins provided by Craft Parts, see
 the `Craft Parts cryptography`_ documentation.
 
-For plugins provided by Snapcraft, the table below summarizes how they provision build
-tools, and which build tools they use to download and verify dependencies.
+For plugins provided by Snapcraft, the following table summarizes how they provision
+build tools, and which build tools they use to download and verify dependencies.
 
 .. list-table::
   :header-rows: 1
@@ -92,8 +92,7 @@ downloads and verifies build dependencies.
 core20
 ------
 
-Snaps using core20 as their base snap depend on various craft libraries to build.
-Snapcraft's cryptographic functionality with these libraries is described below.
+Snaps using core20 as their base snap depend on various external libraries to build.
 
 Creating virtual build environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,8 +162,8 @@ Downloading build dependencies
 
 Plugins use build tools to download and verify build dependencies. Some plugins can
 provision their own build tools, while others require the build tools to be available on
-the system. The table below summarizes how plugins provision build tools and which build
-tools are used to download and verify dependencies.
+the system. The following table summarizes how plugins provision build tools and which
+build tools are used to download and verify dependencies.
 
 .. list-table::
   :header-rows: 1
