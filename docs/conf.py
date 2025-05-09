@@ -112,9 +112,7 @@ exclude_patterns = [
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
-    "how-to/crafting/override-the-build-step-with-craftctl.rst",
     "how-to/publishing/build-snaps-remotely.rst",
-    "how-to/publishing/manage-releases.rst",
 ]
 
 

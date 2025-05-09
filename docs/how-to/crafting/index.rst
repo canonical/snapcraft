@@ -16,5 +16,6 @@ Crafting
     manage-data-compatibility
     /common/craft-parts/how-to/include_files
     /common/craft-parts/how-to/override_build
+    customize-lifecycle-steps-and-part-variables
     create-a-component
     enable-classic-confinement
