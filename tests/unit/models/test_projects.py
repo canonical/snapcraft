@@ -32,6 +32,7 @@ from snapcraft.models import (
     ContentPlug,
     GrammarAwareProject,
     Hook,
+    Lint,
     Platform,
     Project,
 )
@@ -2480,3 +2481,23 @@ class TestComponents:
         partitions = test_project.get_partitions()
 
         assert partitions is None
+
+
+class TestLint:
+    """Test the Lint model."""
+
+    def test_lint(self, project_yaml_data):
+        lint_data = {"ignore": ["classic", {"library": ["usr/lib/**/libfoo.so*"]}]}
+        project = Project.unmarshal(project_yaml_data(lint=lint_data))
+
+        assert project.lint == Lint(
+            ignore=["classic", {"library": ["usr/lib/**/libfoo.so*"]}]
+        )
+
+    def test_list_invalid(self, project_yaml_data):
+        """Error on multiple items in an ignore dict."""
+        lint_data = {"ignore": [{"linter-1": ["test"], "linter-2": ["test"]}]}
+        error = "Expected exactly one key in lint ignore entry."
+
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(project_yaml_data(lint=lint_data))
