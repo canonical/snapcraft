@@ -418,6 +418,20 @@ def test_esm_pass(mocker, snapcraft_yaml, base):
         mock_dispatch.assert_called_once()
 
 
+def test_yaml_syntax_error(in_project_path, monkeypatch, capsys):
+    """Provide a user friendly error on yaml syntax errors."""
+    (in_project_path / "snapcraft.yaml").write_text("bad:\nyaml")
+    monkeypatch.setattr("sys.argv", ["snapcraft"])
+
+    application.main()
+
+    _, err = capsys.readouterr()
+    assert re.match(
+        "^error parsing 'snapcraft\\.yaml': .*\nDetailed information:",
+        err,
+    )
+
+
 @pytest.mark.parametrize("envvar", ["disable-fallback", None])
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 @pytest.mark.usefixtures("mock_remote_build_argv")

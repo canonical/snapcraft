@@ -143,6 +143,12 @@ Snapcraft 8.9.1
 - The uv plugin was breaking with uv 0.7.
 - The ``snapcraft test`` command would fail to install snaps with devmode confinement.
 
+Snapcraft 8.9.2
+~~~~~~~~~~~~~~~
+
+- YAML issues originating from the project file now emit errors instead of tracebacks,
+  making them easier to identify and read.
+
 Contributors
 ------------
 
