@@ -146,7 +146,8 @@ Snapcraft 8.9.1
 Snapcraft 8.9.2
 ~~~~~~~~~~~~~~~
 
-- YAML errors in the project file weren't properly presented.
+- YAML issues originating from the project file now emit errors instead of tracebacks,
+  making them easier to identify and read.
 
 Contributors
 ------------
