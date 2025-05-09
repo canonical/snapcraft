@@ -307,6 +307,16 @@ class GNOME(Extension):
                         ],
                     )
                 },
+                {
+                    "CMAKE_PREFIX_PATH": prepend_to_env(
+                        "CMAKE_PREFIX_PATH",
+                        [
+                            "$CRAFT_STAGE",
+                            f"/snap/{sdk_snap}/current",
+                        ],
+                        separator=":",
+                    ),
+                },
             ],
         }
 
