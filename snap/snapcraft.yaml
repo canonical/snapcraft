@@ -263,3 +263,39 @@ parts:
       bin/spread: libexec/snapcraft/craft.spread
     stage:
       - libexec/snapcraft/
+
+  pc-gadget-20:
+    after: [snapcraft]
+    plugin: dump
+    source: https://github.com/canonical/pc-gadget.git
+    # latest commit on the 20 branch as of 2025-May-09
+    source-commit: 5af317ea393e164270497f1ffda58e998c25f775
+    organize:
+      "*": lib/python3.12/site-packages/snapcraft/templates/pc-gadget-20/
+
+  pc-gadget-22:
+    after: [snapcraft]
+    plugin: dump
+    source: https://github.com/canonical/pc-gadget.git
+    # latest commit on the 22 branch as of 2025-May-09
+    source-commit: d536d5974bd1b652ab70b7084d3f04c862cdabf1
+    organize:
+      "*": lib/python3.12/site-packages/snapcraft/templates/pc-gadget-22/
+
+  pc-gadget-24:
+    after: [snapcraft]
+    plugin: dump
+    source: https://github.com/canonical/pc-gadget.git
+    # latest commit on the 24 branch as of 2025-May-09
+    source-commit: bc6b26594bff3cd37dc2011b5600fbf577fc1842
+    organize:
+      "*": lib/python3.12/site-packages/snapcraft/templates/pc-gadget-24/
+
+  pi-gadget-24:
+    after: [snapcraft]
+    plugin: dump
+    source: https://github.com/canonical/pi-gadget.git
+    # latest commit on the 24 branch as of 2025-May-09
+    source-commit: 9e18393aef7041c1aae866989edd9e5ce8a647fb
+    organize:
+      "*": lib/python3.12/site-packages/snapcraft/templates/pi-gadget-24/
