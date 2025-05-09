@@ -56,7 +56,7 @@ class DesktopFile:
         self._parser.optionxform = str  # type: ignore
         self._parser.read(file_path, encoding="utf-8")
 
-    def _parse_and_reformat_section_exec(self, section):
+    def _parse_and_reformat_section_exec(self, section: str):
         exec_value = self._parser[section]["Exec"]
         exec_split = shlex.split(exec_value, posix=False)
 
@@ -68,7 +68,9 @@ class DesktopFile:
 
         self._parser[section]["Exec"] = " ".join(exec_split)
 
-    def _parse_and_reformat_section(self, *, section, icon_path: str | None = None):
+    def _parse_and_reformat_section(
+        self, *, section: str, icon_path: str | None = None
+    ):
         if "Exec" not in self._parser[section]:
             raise errors.DesktopFileError(self._filename, "missing 'Exec' key")
 

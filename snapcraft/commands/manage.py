@@ -91,7 +91,7 @@ class StoreReleaseCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         channels = parsed_args.channels.split(",")
 
         store.StoreClientCLI().release(
@@ -141,7 +141,7 @@ class StoreCloseCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         client = store.StoreClientCLI()
 
         client.close(

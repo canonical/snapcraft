@@ -230,7 +230,7 @@ def _run_dispatcher(
     emit.ended_ok()
 
 
-def _emit_error(error, cause=None):
+def _emit_error(error: craft_cli.CraftError, cause: BaseException | None = None):
     """Emit the error in a centralized way so we can alter it consistently."""
     # set the cause, if any
     if cause is not None:

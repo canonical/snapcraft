@@ -60,7 +60,7 @@ class SonameCache:
     def __init__(self) -> None:
         self._soname_paths: _SonameCacheDict = {}
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: tuple[_ElfArchitectureTuple, str]):
         """Obtain cached item."""
         return self._soname_paths[key]
 
@@ -80,7 +80,7 @@ class SonameCache:
             )
         self._soname_paths[key] = item
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: tuple[_ElfArchitectureTuple, str]) -> bool:
         """Check if key is already in cache."""
         return key in self._soname_paths
 
@@ -409,7 +409,7 @@ class ElfFile:
         return dependencies
 
 
-def _get_host_libc_path(arch_triplet) -> Path:
+def _get_host_libc_path(arch_triplet: str) -> Path:
     return Path("/lib") / arch_triplet / "libc.so.6"
 
 
