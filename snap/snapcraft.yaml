@@ -188,8 +188,6 @@ parts:
     python-packages:
       - wheel
       - pip
-    python-constraints:
-      - constraints.txt
     python-requirements:
       - uv-requirements.txt
       - requirements-noble.txt
