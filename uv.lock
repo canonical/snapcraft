@@ -12,6 +12,9 @@ conflicts = [[
     { package = "snapcraft", group = "dev-plucky" },
 ]]
 
+[manifest]
+constraints = [{ name = "cython", specifier = "<3" }]
+
 [[package]]
 name = "alabaster"
 version = "0.7.16"
