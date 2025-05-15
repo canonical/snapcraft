@@ -135,10 +135,6 @@ conflicts = [
         { group = "dev-plucky" },
     ]
 ]
-constraint-dependencies = [
-    # Can be removed once https://github.com/yaml/pyyaml/issues/601 is resolved OR snapcraft builds with Python 3.13+
-    "cython<3",
-]
 
 [[tool.uv.index]]
 name = "python-apt-wheels"
