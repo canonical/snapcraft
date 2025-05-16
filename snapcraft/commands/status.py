@@ -34,6 +34,8 @@ from snapcraft.store.channel_map import ChannelMap, MappedChannel, Revision, Sna
 if TYPE_CHECKING:
     import argparse
 
+    from snapcraft_legacy.storeapi.v2.releases import Releases
+
 
 class StoreStatusCommand(AppCommand):
     """Check the status of a snap in the Snap Store."""
@@ -72,7 +74,7 @@ class StoreStatusCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args) -> None:
+    def run(self, parsed_args: "argparse.Namespace") -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
         )
@@ -127,7 +129,9 @@ class _HINTS:
     UNKNOWN: Final[str] = "?"
 
 
-def _get_channel_order(snap_channels, tracks: Sequence[str]) -> OrderedDict:
+def _get_channel_order(
+    snap_channels: list[SnapChannel], tracks: Sequence[str]
+) -> OrderedDict:
     channel_order: OrderedDict = OrderedDict()
 
     if tracks:
@@ -285,7 +289,7 @@ def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
 
 
 def _has_channels_for_architecture(
-    snap_channel_map, architecture: str, channels: list[str]
+    snap_channel_map: ChannelMap, architecture: str, channels: list[str]
 ) -> bool:
     progressive = (False, True)
     # channel_query = (channel_name, progressive)
@@ -307,7 +311,7 @@ def _has_channels_for_architecture(
 
 
 def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
-    snap_channel_map,
+    snap_channel_map: ChannelMap,
     *,
     architectures: Sequence[str],
     tracks: Sequence[str],
@@ -392,7 +396,7 @@ class StoreListTracksCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args) -> None:
+    def run(self, parsed_args: "argparse.Namespace") -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
         )
@@ -453,12 +457,12 @@ class StoreListRevisionsCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         releases = store.StoreClientCLI().list_revisions(
             snap_name=parsed_args.snap_name
         )
 
-        parsed_revisions = []
+        parsed_revisions: list[tuple[str, ...]] = []
         for rev in releases.revisions:
             if parsed_args.arch and parsed_args.arch not in rev.architectures:
                 continue
@@ -503,7 +507,9 @@ class StoreListRevisionsCommand(AppCommand):
 
         emit.message(tabulated_revisions)
 
-    def _get_channels_for_revision(self, releases, revision: int) -> list[str]:
+    def _get_channels_for_revision(
+        self, releases: "Releases", revision: int
+    ) -> list[str]:
         # channels: the set of channels revision was released to, active or not.
         channels: set[str] = set()
         # seen_channel: applies to channels regardless of revision.

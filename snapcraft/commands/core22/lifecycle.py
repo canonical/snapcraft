@@ -20,6 +20,7 @@ import abc
 import argparse
 import os
 import textwrap
+from typing import TYPE_CHECKING
 
 from craft_application.util import strtobool
 from craft_cli import BaseCommand, emit
@@ -27,6 +28,9 @@ from overrides import overrides
 
 from snapcraft import pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
+
+if TYPE_CHECKING:
+    import argparse
 
 
 class _LifecycleCommand(BaseCommand, abc.ABC):
@@ -130,7 +134,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
         parser.add_argument("--provider", help=argparse.SUPPRESS)
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         """Run the command."""
         if not self.name:
             raise RuntimeError("command name not specified")
@@ -255,7 +259,7 @@ class PackCommand(_LifecycleCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         """Run the command."""
         if parsed_args.directory:
             snap_filename = pack.pack_snap(
@@ -319,7 +323,7 @@ class TryCommand(_LifecycleCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: "argparse.Namespace"):
         """Overridden to give a helpful message when the lifecycle finishes."""
         super().run(parsed_args)
         if not utils.is_managed_mode():
