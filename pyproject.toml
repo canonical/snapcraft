@@ -102,7 +102,7 @@ types = [
     "mypy",
     "types-PyYAML",
     # Pinned because any higher requires urllib3>=2
-    "types-requests==2.31.0.6",
+    "types-requests==2.32.0.20250515",
     "types-setuptools",
     "types-simplejson",
     "types-tabulate",

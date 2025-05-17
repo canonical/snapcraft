@@ -2373,7 +2373,7 @@ lint = [
     { name = "codespell", extras = ["toml"] },
     { name = "mypy" },
     { name = "types-pyyaml" },
-    { name = "types-requests", specifier = "==2.31.0.6" },
+    { name = "types-requests", specifier = "==2.32.0.20250515" },
     { name = "types-setuptools" },
     { name = "types-simplejson" },
     { name = "types-tabulate" },
@@ -2386,7 +2386,7 @@ tics = [
 types = [
     { name = "mypy" },
     { name = "types-pyyaml" },
-    { name = "types-requests", specifier = "==2.31.0.6" },
+    { name = "types-requests", specifier = "==2.32.0.20250515" },
     { name = "types-setuptools" },
     { name = "types-simplejson" },
     { name = "types-tabulate" },
@@ -2823,14 +2823,14 @@ wheels = [
 
 [[package]]
 name = "types-requests"
-version = "2.31.0.6"
+version = "2.32.0.20250515"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "types-urllib3" },
+    { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f9/b8/c1e8d39996b4929b918aba10dba5de07a8b3f4c8487bb61bb79882544e69/types-requests-2.31.0.6.tar.gz", hash = "sha256:cd74ce3b53c461f1228a9b783929ac73a666658f223e28ed29753771477b3bd0", size = 15535, upload-time = "2023-09-27T06:19:38.443Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/06/c1/cdc4f9b8cfd9130fbe6276db574f114541f4231fcc6fb29648289e6e3390/types_requests-2.32.0.20250515.tar.gz", hash = "sha256:09c8b63c11318cb2460813871aaa48b671002e59fda67ca909e9883777787581", size = 23012, upload-time = "2025-05-15T03:04:31.817Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/a1/6f8dc74d9069e790d604ddae70cb46dcbac668f1bb08136e7b0f2f5cd3bf/types_requests-2.31.0.6-py3-none-any.whl", hash = "sha256:a2db9cb228a81da8348b49ad6db3f5519452dd20a9c1e1a868c83c5fe88fd1a9", size = 14516, upload-time = "2023-09-27T06:19:36.373Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/0f/68a997c73a129287785f418c1ebb6004f81e46b53b3caba88c0e03fcd04a/types_requests-2.32.0.20250515-py3-none-any.whl", hash = "sha256:f8eba93b3a892beee32643ff836993f15a785816acca21ea0ffa006f05ef0fb2", size = 20635, upload-time = "2025-05-15T03:04:30.5Z" },
 ]
 
 [[package]]
@@ -2870,15 +2870,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/86/47/3e4c75042792bff8e90d7991aa5c51812cc668828cc6cce711e97f63a607/types-toml-0.10.8.20240310.tar.gz", hash = "sha256:3d41501302972436a6b8b239c850b26689657e25281b48ff0ec06345b8830331", size = 4392, upload-time = "2024-03-10T02:18:37.518Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/da/a2/d32ab58c0b216912638b140ab2170ee4b8644067c293b170e19fba340ccc/types_toml-0.10.8.20240310-py3-none-any.whl", hash = "sha256:627b47775d25fa29977d9c70dc0cbab3f314f32c8d8d0c012f2ef5de7aaec05d", size = 4777, upload-time = "2024-03-10T02:18:36.568Z" },
-]
-
-[[package]]
-name = "types-urllib3"
-version = "1.26.25.14"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/73/de/b9d7a68ad39092368fb21dd6194b362b98a1daeea5dcfef5e1adb5031c7e/types-urllib3-1.26.25.14.tar.gz", hash = "sha256:229b7f577c951b8c1b92c1bc2b2fdb0b49847bd2af6d1cc2a2e3dd340f3bda8f", size = 11239, upload-time = "2023-07-20T15:19:31.307Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/7b/3fc711b2efea5e85a7a0bbfe269ea944aa767bbba5ec52f9ee45d362ccf3/types_urllib3-1.26.25.14-py3-none-any.whl", hash = "sha256:9683bbb7fb72e32bfe9d2be6e04875fbe1b3eeec3cbb4ea231435aa7fd6b4f0e", size = 15377, upload-time = "2023-07-20T15:19:30.379Z" },
 ]
 
 [[package]]
