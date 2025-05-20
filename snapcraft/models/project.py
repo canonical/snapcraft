@@ -2064,7 +2064,7 @@ class Project(models.Project):
         extra_build_snaps = list(content_snaps - part_build_snaps)
 
         # Always add the base as an extra build snap
-        if self.base is not None:
+        if self.base is not None and self.build_base == self.base:
             extra_build_snaps.append(self.base)
         extra_build_snaps.sort()
 
