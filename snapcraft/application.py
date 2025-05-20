@@ -108,7 +108,11 @@ class Snapcraft(Application):
             snapcraft_yaml_path = get_snap_project(self.project_dir).project_file
             with snapcraft_yaml_path.open() as file:
                 _snapcraft_yaml_data = util.safe_yaml_load(file)
-        except craft_application.errors.ProjectFileError:
+        # defer to the project service to raise errors
+        except (
+            craft_application.errors.ProjectFileError,
+            craft_application.errors.YamlError,
+        ):
             return False
 
         base = _snapcraft_yaml_data.get("base")
@@ -205,9 +209,17 @@ class Snapcraft(Application):
     @override
     def _enable_craft_parts_features(self) -> None:
         """Enable partitions if components are defined."""
-        if project := self._get_project_raw():
-            if project.get("components"):
-                craft_parts.Features(enable_partitions=True)
+        try:
+            project = self._get_project_raw()
+        # defer to the project service to raise errors
+        except (
+            craft_application.errors.ProjectFileError,
+            craft_application.errors.YamlError,
+        ):
+            return
+
+        if project and project.get("components"):
+            craft_parts.Features(enable_partitions=True)
 
     @staticmethod
     def _get_argv_command() -> str | None:
