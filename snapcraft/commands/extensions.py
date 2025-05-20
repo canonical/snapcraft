@@ -16,6 +16,8 @@
 
 """Snapcraft extension commands."""
 
+from __future__ import annotations
+
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -68,7 +70,7 @@ class ListExtensionsCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args: "argparse.Namespace") -> None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
         extension_presentation: dict[str, ExtensionModel] = {}
 
         # New extensions.
@@ -120,7 +122,7 @@ class ExpandExtensionsCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args: "argparse.Namespace"):
+    def run(self, parsed_args: argparse.Namespace):
         snap_project = get_snap_project()
 
         # load yaml file and trigger legacy behavior if base is core, core18, or core20

@@ -16,6 +16,8 @@
 
 """Snapcraft Store Account management commands."""
 
+from __future__ import annotations
+
 import itertools
 import operator
 import textwrap
@@ -50,7 +52,7 @@ class StoreStatusCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
             type=str,
@@ -74,7 +76,7 @@ class StoreStatusCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args: "argparse.Namespace") -> None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
         )
@@ -388,7 +390,7 @@ class StoreListTracksCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
             type=str,
@@ -396,7 +398,7 @@ class StoreListTracksCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args: "argparse.Namespace") -> None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
         )
@@ -445,7 +447,7 @@ class StoreListRevisionsCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_name",
             metavar="snap-name",
@@ -457,7 +459,7 @@ class StoreListRevisionsCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args: "argparse.Namespace"):
+    def run(self, parsed_args: argparse.Namespace):
         releases = store.StoreClientCLI().list_revisions(
             snap_name=parsed_args.snap_name
         )
@@ -508,7 +510,7 @@ class StoreListRevisionsCommand(AppCommand):
         emit.message(tabulated_revisions)
 
     def _get_channels_for_revision(
-        self, releases: "Releases", revision: int
+        self, releases: Releases, revision: int
     ) -> list[str]:
         # channels: the set of channels revision was released to, active or not.
         channels: set[str] = set()
