@@ -92,6 +92,9 @@ endif
 ifeq ($(wildcard /usr/share/doc/xdelta3/copyright),)
 APT_PACKAGES += xdelta3
 endif
+ifeq ($(wildcard /usr/share/doc/patchelf/copyright),)
+APT_PACKAGES += patchelf
+endif
 
 # Used for installing build dependencies in CI.
 .PHONY: install-build-deps
