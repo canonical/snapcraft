@@ -16,6 +16,8 @@
 
 """Snapcraft commands that refer to the legacy implementation."""
 
+from __future__ import annotations
+
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -33,7 +35,7 @@ class LegacyAppCommand(AppCommand):
     """Legacy command runner."""
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         # Setup env var for legacy credentials.
         set_legacy_env()
 
@@ -70,7 +72,7 @@ class StoreLegacyUploadMetadataCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
             metavar="snap-file",
@@ -112,7 +114,7 @@ class StoreLegacyPromoteCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_name",
             metavar="snap-name",
@@ -147,7 +149,7 @@ class StoreLegacySetDefaultTrackCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_name",
             metavar="snap-name",
@@ -168,7 +170,7 @@ class StoreLegacyMetricsCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("snap_name", metavar="snap-name")
         parser.add_argument("--name", metavar="name", required=True, help="metric name")
         parser.add_argument(
@@ -219,7 +221,7 @@ class StoreLegacyCreateKeyCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "key_name", metavar="key-name", help="Key used to sign the assertion"
         )
@@ -236,7 +238,7 @@ class StoreLegacyRegisterKeyCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "key_name", metavar="key-name", help="Key used to sign the assertion"
         )
@@ -254,7 +256,7 @@ class StoreLegacySignBuildCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--key-name", metavar="key-name", help="key used to sign the assertion"
         )
@@ -280,7 +282,7 @@ class StoreLegacyValidateCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--key-name", metavar="key-name", help="key used to sign the assertion"
         )
@@ -300,7 +302,7 @@ class StoreLegacyGatedCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("snap_name", metavar="snap-name")
 
 
@@ -316,6 +318,6 @@ class StoreLegacyListValidationSetsCommand(LegacyAppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--name", help="limit results to <name>")
         parser.add_argument("--sequence", help="limit results to <sequence>")

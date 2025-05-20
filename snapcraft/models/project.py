@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import re
 import textwrap
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import Annotated, Any, Literal, Self, cast, override
 
 import pydantic
@@ -36,7 +36,7 @@ from craft_cli import emit
 from craft_grammar.models import Grammar  # type: ignore[import-untyped]
 from craft_platforms import DebianArchitecture
 from craft_providers import bases
-from pydantic import ConfigDict, PrivateAttr, StringConstraints
+from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS
@@ -48,20 +48,21 @@ from snapcraft.utils import get_effective_base
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
 
 
-def _validate_command_chain(command_chains: list[str] | None) -> list[str] | None:
+def _validate_command_chain(command_chains: list[str]) -> list[str]:
     """Validate command_chain."""
-    if command_chains is not None:
-        for command_chain in command_chains:
-            if not re.match(r"^[A-Za-z0-9/._#:$-]*$", command_chain):
-                raise ValueError(
-                    f"{command_chain!r} is not a valid command chain. Command chain entries must "
-                    "be strings, and can only use ASCII alphanumeric characters and the following "
-                    "special characters: / . _ # : $ -"
-                )
+    for command_chain in command_chains:
+        if not re.match(r"^[A-Za-z0-9/._#:$-]*$", command_chain):
+            raise ValueError(
+                f"{command_chain!r} is not a valid command chain. Command chain entries must "
+                "be strings, and can only use ASCII alphanumeric characters and the following "
+                "special characters: / . _ # : $ -"
+            )
     return command_chains
 
 
-def validate_architectures(architectures):
+def validate_architectures(
+    architectures: list[Architecture | str],
+) -> list[Architecture]:
     """Expand and validate architecture data.
 
     Validation includes:
@@ -73,9 +74,6 @@ def validate_architectures(architectures):
 
     :raise ValueError: If architecture data is invalid.
     """
-    if not architectures:
-        return architectures
-
     # validate strings and Architecture objects are not mixed
     if not (
         all(isinstance(architecture, str) for architecture in architectures)
@@ -85,29 +83,31 @@ def validate_architectures(architectures):
             f"every item must either be a string or an object for {architectures!r}"
         )
 
-    _expand_architectures(architectures)
+    expanded_archs = _expand_architectures(architectures)
 
     # validate `build_for` after expanding data
-    if any(len(architecture.build_for) > 1 for architecture in architectures):
+    if any(len(cast(UniqueList[str], arch.build_for)) > 1 for arch in expanded_archs):
         raise ValueError("only one architecture can be defined for 'build-for'")
 
-    _validate_architectures_all_keyword(architectures)
+    _validate_architectures_all_keyword(expanded_archs)
 
-    if len(architectures) > 1:
+    if len(expanded_archs) > 1:
         # validate multiple uses of the same architecture
         unique_build_fors = set()
-        for element in architectures:
-            for architecture in element.build_for:
-                if architecture in unique_build_fors:
+        for element in expanded_archs:
+            for arch in cast(UniqueList[str], element.build_for):
+                if arch in unique_build_fors:
                     raise ValueError(
-                        f"multiple items will build snaps that claim to run on {architecture}"
+                        f"multiple items will build snaps that claim to run on {arch}"
                     )
-                unique_build_fors.add(architecture)
+                unique_build_fors.add(arch)
 
     # validate architectures are supported
-    if len(architectures):
-        for element in architectures:
-            for arch in element.build_for + element.build_on:
+    if len(expanded_archs):
+        for element in expanded_archs:
+            for arch in cast(UniqueList[str], element.build_for) + cast(
+                UniqueList[str], element.build_on
+            ):
                 if arch != "all" and arch not in utils.get_supported_architectures():
                     supported_archs = utils.humanize_list(
                         utils.get_supported_architectures(), "and"
@@ -117,36 +117,54 @@ def validate_architectures(architectures):
                         f"architectures are {supported_archs}."
                     )
 
-    return architectures
+    return expanded_archs
 
 
-def _expand_architectures(architectures):
+def _expand_architectures(
+    architectures: list[Architecture | str],
+) -> list[Architecture]:
     """Expand architecture data.
 
     Expansion to fully-defined Architecture objects includes the following:
         - strings (shortform notation) are converted to Architecture objects
         - `build-on` and `build-for` strings are converted to single item lists
         - Empty `build-for` fields are implicitly set to the same architecture used in `build-on`
+
+    :param architectures: The architecture data to expand.
+
+    :returns: A list of expanded architecture objects.
     """
-    for index, architecture in enumerate(architectures):
+    result: list[Architecture] = []
+    for arch in architectures:
         # convert strings into Architecture objects
-        if isinstance(architecture, str):
-            architectures[index] = Architecture(
-                build_on=cast(UniqueList[str], [architecture]),
-                build_for=cast(UniqueList[str], [architecture]),
-            )
-        elif isinstance(architecture, Architecture):
+        if isinstance(arch, str):
+            build_on = build_for = [arch]
+        else:
             # convert strings to lists
-            if isinstance(architecture.build_on, str):
-                architectures[index].build_on = [architecture.build_on]
-            if isinstance(architecture.build_for, str):
-                architectures[index].build_for = [architecture.build_for]
+            if isinstance(arch.build_on, str):
+                build_on = [arch.build_on]
+            else:
+                build_on = arch.build_on
+
+            if isinstance(arch.build_for, str):
+                build_for = [arch.build_for]
+            elif isinstance(arch.build_for, list):
+                build_for = arch.build_for
             # implicitly set build_for from build_on
-            elif architecture.build_for is None:
-                architectures[index].build_for = architectures[index].build_on
+            else:
+                build_for = build_on
+
+        result.append(
+            Architecture(
+                build_on=cast(UniqueList[str], build_on),
+                build_for=cast(UniqueList[str], build_for),
+            )
+        )
+
+    return result
 
 
-def _validate_architectures_all_keyword(architectures):
+def _validate_architectures_all_keyword(architectures: list[Architecture]) -> None:
     """Validate `all` keyword is properly used.
 
     Validation rules:
@@ -163,7 +181,10 @@ def _validate_architectures_all_keyword(architectures):
 
     # validate use of `all` across all items in architecture list
     if len(architectures) > 1:
-        if any("all" in architecture.build_for for architecture in architectures):
+        if any(
+            "all" in cast(UniqueList[str], architecture.build_for)
+            for architecture in architectures
+        ):
             raise ValueError(
                 "one of the items has 'all' in 'build-for', but there are"
                 f" {len(architectures)} items: upon release they will conflict."
@@ -298,7 +319,7 @@ class Socket(models.CraftBaseModel):
 
     @pydantic.field_validator("listen_stream")
     @classmethod
-    def _validate_list_stream(cls, listen_stream):
+    def _validate_list_stream(cls, listen_stream: int | str) -> int | str:
         if isinstance(listen_stream, int):
             if listen_stream < 1 or listen_stream > 65535:
                 raise ValueError(
@@ -336,8 +357,10 @@ class Lint(models.CraftBaseModel):
     # A private field to simplify lookup.
     _lint_ignores: dict[str, list[str]] = PrivateAttr(default_factory=dict)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object):
         """Compare two Lint objects and ignore private attributes."""
+        if not isinstance(other, Lint):
+            return False
         return self.ignore == other.ignore
 
     def __init__(self, **kwargs):
@@ -915,7 +938,7 @@ class App(models.CraftBaseModel):
 
     @pydantic.field_validator("autostart")
     @classmethod
-    def _validate_autostart_name(cls, name):
+    def _validate_autostart_name(cls, name: str) -> str:
         if not re.match(r"^[A-Za-z0-9. _#:$-]+\.desktop$", name):
             raise ValueError(
                 f"{name!r} is not a valid desktop file name (e.g. myapp.desktop)"
@@ -941,7 +964,7 @@ class App(models.CraftBaseModel):
         "start_timeout", "stop_timeout", "watchdog_timeout", "restart_delay"
     )
     @classmethod
-    def _validate_time(cls, timeval):
+    def _validate_time(cls, timeval: str) -> str:
         if not re.match(r"^[0-9]+(ns|us|ms|s|m)*$", timeval):
             raise ValueError(f"{timeval!r} is not a valid time value")
 
@@ -949,12 +972,12 @@ class App(models.CraftBaseModel):
 
     @pydantic.field_validator("command_chain")
     @classmethod
-    def _validate_command_chain(cls, command_chains):
+    def _validate_command_chain(cls, command_chains: list[str]) -> list[str]:
         return _validate_command_chain(command_chains)
 
     @pydantic.field_validator("aliases")
     @classmethod
-    def _validate_aliases(cls, aliases):
+    def _validate_aliases(cls, aliases: list[str]) -> list[str]:
         for alias in aliases:
             if not re.match(r"^[a-zA-Z0-9][-_.a-zA-Z0-9]*$", alias):
                 raise ValueError(
@@ -1015,12 +1038,12 @@ class Hook(models.CraftBaseModel):
 
     @pydantic.field_validator("command_chain")
     @classmethod
-    def _validate_command_chain(cls, command_chains):
+    def _validate_command_chain(cls, command_chains: list[str]) -> list[str]:
         return _validate_command_chain(command_chains)
 
     @pydantic.field_validator("plugs")
     @classmethod
-    def _validate_plugs(cls, plugs):
+    def _validate_plugs(cls, plugs: list[str]) -> list[str]:
         if not plugs:
             raise ValueError("'plugs' field cannot be empty.")
         return plugs
@@ -1089,7 +1112,7 @@ class ContentPlug(models.CraftBaseModel):
 
     @pydantic.field_validator("default_provider")
     @classmethod
-    def _validate_default_provider(cls, default_provider):
+    def _validate_default_provider(cls, default_provider: str) -> str:
         if default_provider and "/" in default_provider:
             raise ValueError(
                 "Specifying a snap channel in 'default_provider' is not supported: "
@@ -1810,7 +1833,9 @@ class Project(models.Project):
 
     @pydantic.field_validator("plugs")
     @classmethod
-    def _validate_plugs(cls, plugs) -> dict[str, ContentPlug | Any]:
+    def _validate_plugs(
+        cls, plugs: dict[str, ContentPlug | Any]
+    ) -> dict[str, ContentPlug | Any]:
         empty_plugs = []
         if plugs is not None:
             for plug_name, plug in plugs.items():
@@ -1845,7 +1870,7 @@ class Project(models.Project):
 
     @pydantic.field_validator("slots")
     @classmethod
-    def _validate_slots(cls, slots):
+    def _validate_slots(cls, slots: dict[str, Any]) -> dict[str, Any]:
         empty_slots = []
         if slots is not None:
             for slot_name, slot in slots.items():
@@ -1874,12 +1899,14 @@ class Project(models.Project):
 
     @pydantic.field_validator("name")
     @classmethod
-    def _validate_snap_name(cls, name):
+    def _validate_snap_name(cls, name: str) -> str:
         return validate_name(name=name, field_name="snap")
 
     @pydantic.field_validator("components")
     @classmethod
-    def _validate_components(cls, components):
+    def _validate_components(
+        cls, components: dict[str, Component]
+    ) -> dict[str, Component]:
         """Validate component names."""
         for component_name in components.keys():
             _validate_component(name=component_name)
@@ -1999,7 +2026,7 @@ class Project(models.Project):
 
     @pydantic.field_validator("epoch")
     @classmethod
-    def _validate_epoch(cls, epoch):
+    def _validate_epoch(cls, epoch: str) -> str:
         """Verify epoch format."""
         if epoch is not None and not re.match(r"^(?:0|[1-9][0-9]*[*]?)$", epoch):
             raise ValueError(
@@ -2010,13 +2037,15 @@ class Project(models.Project):
 
     @pydantic.field_validator("architectures")
     @classmethod
-    def _validate_architecture_data(cls, architectures, info: pydantic.ValidationInfo):
+    def _validate_architecture_data(
+        cls, architectures: list[str | Architecture], info: pydantic.ValidationInfo
+    ) -> list[Architecture]:
         """Validate architecture data."""
         return validate_architectures(architectures)
 
     @pydantic.field_validator("provenance")
     @classmethod
-    def _validate_provenance(cls, provenance):
+    def _validate_provenance(cls, provenance: str) -> str:
         if provenance and not re.match(r"^[a-zA-Z0-9-]+$", provenance):
             raise ValueError(
                 "provenance must consist of alphanumeric characters and/or hyphens."
@@ -2028,7 +2057,7 @@ class Project(models.Project):
         "contact", "donation", "issues", "source_code", "website", mode="before"
     )
     @classmethod
-    def _validate_urls(cls, field_value):
+    def _validate_urls(cls, field_value: list[str] | str) -> list[str]:
         if isinstance(field_value, str):
             field_value = cast(UniqueList[str], [field_value])
         return field_value
@@ -2185,7 +2214,9 @@ class ArchitectureProject(models.CraftBaseModel, extra="ignore"):
 
     @pydantic.field_validator("architectures")
     @classmethod
-    def _validate_architecture_data(cls, architectures):
+    def _validate_architecture_data(
+        cls, architectures: list[str | Architecture]
+    ) -> list[Architecture]:
         """Validate architecture data."""
         return validate_architectures(architectures)
 
@@ -2197,7 +2228,9 @@ class ComponentProject(models.CraftBaseModel, extra="ignore"):
 
     @pydantic.field_validator("components")
     @classmethod
-    def _validate_components(cls, components):
+    def _validate_components(
+        cls, components: dict[str, Component]
+    ) -> dict[str, Component]:
         """Validate component names."""
         for component_name in components.keys():
             _validate_component(name=component_name)
@@ -2220,7 +2253,11 @@ class ComponentProject(models.CraftBaseModel, extra="ignore"):
         return _get_partitions_from_components(self.components)
 
 
-def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
+def _format_pydantic_errors(
+    errors: Iterable[error_wrappers.ErrorDict],
+    *,
+    file_name: str = "snapcraft.yaml",
+) -> str:
     """Format errors.
 
     Example 1: Single error.
@@ -2265,7 +2302,7 @@ def _format_pydantic_errors(errors, *, file_name: str = "snapcraft.yaml"):
     return "\n".join(combined)
 
 
-def _format_pydantic_error_location(loc):
+def _format_pydantic_error_location(loc: Iterable[str | int]) -> str:
     """Format location."""
     loc_parts = []
     for loc_part in loc:
@@ -2287,7 +2324,7 @@ def _format_pydantic_error_location(loc):
     return loc
 
 
-def _format_pydantic_error_message(msg):
+def _format_pydantic_error_message(msg: str) -> str:
     """Format pydantic's error message field."""
     # Replace shorthand "str" with "string".
     msg = msg.replace("str type expected", "string type expected")

@@ -121,14 +121,14 @@ class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is cras
 
     @pydantic.field_validator("target")
     @classmethod
-    def _validate_target_not_empty(cls, val):
+    def _validate_target_not_empty(cls, val: str) -> str:
         if val == "":
             raise ValueError("value cannot be empty")
         return val
 
     @pydantic.field_validator("default_provider")
     @classmethod
-    def _validate_default_provider(cls, default_provider):
+    def _validate_default_provider(cls, default_provider: str) -> str:
         if default_provider and "/" in default_provider:
             raise ValueError(
                 "Specifying a snap channel in 'default_provider' is not supported: "
@@ -506,7 +506,7 @@ def write(project: models.Project, prime_dir: Path, *, arch: str):
     snap_metadata.to_yaml_file(meta_dir / "snap.yaml")
 
 
-def _repr_str(dumper, data):
+def _repr_str(dumper: yaml.Dumper, data: str):
     """Multi-line string representer for the YAML dumper."""
     if "\n" in data:
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
