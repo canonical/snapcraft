@@ -370,7 +370,8 @@ class Lint(models.CraftBaseModel):
             if isinstance(item, str):
                 self._lint_ignores[item] = []
             else:
-                assert len(item) == 1, "Expected exactly one key in lint ignore entry."
+                if len(item) != 1:
+                    raise ValueError("Expected exactly one key in lint ignore entry.")
                 name, files = list(item.items())[0]
                 self._lint_ignores[name] = files
 

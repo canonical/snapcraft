@@ -280,8 +280,6 @@ lint.ignore = [
     "ANN201", "ANN202",  # Missing return type annotation for public/private function
     # 13 instances of ANN206 - probably mostly :noqa-able
     "ANN206",
-    # 4 instances - would break if run with optimization
-    "S101", # Use of assert detected
     # Comprehensions - IDK, these ones flagged and they really could go either way.
     "C405", "C408", "C414",
     "RET504", "RET506",  # Return value related.
