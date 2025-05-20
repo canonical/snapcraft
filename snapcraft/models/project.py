@@ -86,7 +86,7 @@ def validate_architectures(
     expanded_archs = _expand_architectures(architectures)
 
     # validate `build_for` after expanding data
-    if any(len(arch.build_for) > 1 for arch in expanded_archs):  # type: ignore[arg-type] # build-for is a list
+    if any(len(cast(UniqueList[str], arch.build_for)) > 1 for arch in expanded_archs):
         raise ValueError("only one architecture can be defined for 'build-for'")
 
     _validate_architectures_all_keyword(expanded_archs)
@@ -95,7 +95,7 @@ def validate_architectures(
         # validate multiple uses of the same architecture
         unique_build_fors = set()
         for element in expanded_archs:
-            for arch in element.build_for:  # type: ignore[union-attr] # build-for is a list
+            for arch in cast(UniqueList[str], element.build_for):
                 if arch in unique_build_fors:
                     raise ValueError(
                         f"multiple items will build snaps that claim to run on {arch}"
@@ -105,7 +105,9 @@ def validate_architectures(
     # validate architectures are supported
     if len(expanded_archs):
         for element in expanded_archs:
-            for arch in element.build_for + element.build_on:  # type: ignore[operator] # build-for and build-on are lists
+            for arch in cast(UniqueList[str], element.build_for) + cast(
+                UniqueList[str], element.build_on
+            ):
                 if arch != "all" and arch not in utils.get_supported_architectures():
                     supported_archs = utils.humanize_list(
                         utils.get_supported_architectures(), "and"
@@ -179,7 +181,10 @@ def _validate_architectures_all_keyword(architectures: list[Architecture]) -> No
 
     # validate use of `all` across all items in architecture list
     if len(architectures) > 1:
-        if any("all" in architecture.build_for for architecture in architectures):  # type: ignore[operator] # build-for is a list
+        if any(
+            "all" in cast(UniqueList[str], architecture.build_for)
+            for architecture in architectures
+        ):
             raise ValueError(
                 "one of the items has 'all' in 'build-for', but there are"
                 f" {len(architectures)} items: upon release they will conflict."
