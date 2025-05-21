@@ -151,17 +151,19 @@ def test_confdb_schema_assertion_defaults(check):
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
             "name": "test-confdb",
+            "summary": "This is a test summary.",
             "timestamp": "2024-01-01T10:20:30Z",
             "type": "confdb-schema",
             "views": {
                 "wifi-setup": {
+                    "summary": "This is a test views summary.",
                     "rules": [
                         {
                             "access": "read-write",
                             "request": "ssids",
                             "storage": "wifi.ssids",
                         }
-                    ]
+                    ],
                 }
             },
         }
@@ -171,6 +173,8 @@ def test_confdb_schema_assertion_defaults(check):
     check.is_none(assertion.body_length)
     check.is_none(assertion.sign_key_sha3_384)
     check.equal(assertion.revision, 0)
+    check.equal(assertion.summary, "This is a test summary.")
+    check.equal(assertion.views["wifi-setup"].summary, "This is a test views summary.")
 
 
 def test_confdb_schema_assertion_marshal_as_str():
