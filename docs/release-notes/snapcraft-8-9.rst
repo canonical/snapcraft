@@ -148,6 +148,7 @@ Snapcraft 8.9.2
 
 - YAML issues originating from the project file now emit errors instead of tracebacks,
   making them easier to identify and read.
+- `#5491`_ Project variables weren't being evaluated in project files.
 
 Contributors
 ------------
@@ -172,3 +173,4 @@ and :literalref:`@tigarmo<https://github.com/tigarmo>`
 .. _cargo registry: https://doc.rust-lang.org/cargo/reference/registries.html
 .. _#5107: https://github.com/canonical/snapcraft/pull/5107
 .. _#5272: https://github.com/canonical/snapcraft/pull/5272
+.. _#5491: https://github.com/canonical/snapcraft/pull/5491
