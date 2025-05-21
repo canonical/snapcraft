@@ -3,7 +3,11 @@ summary: Test project variables on core24
 environment:
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 1
 
+prepare: |
+  snap install yq
+
 restore: |
+  snap remove --purge yq
   rm -f ./*.snap
   snapcraft clean
 
