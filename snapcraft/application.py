@@ -36,7 +36,6 @@ from overrides import override
 import snapcraft
 import snapcraft_legacy
 from snapcraft import cli, commands, errors, models, services, store
-from snapcraft.parts import set_global_environment
 from snapcraft.utils import get_effective_base
 from snapcraft_legacy.cli import legacy
 
@@ -411,12 +410,6 @@ class Snapcraft(Application):
             extra_global_args=self._global_arguments,
             default_command=commands.PackCommand,
         )
-
-    @override
-    def _set_global_environment(self, info: craft_parts.ProjectInfo) -> None:
-        """Set global environment variables."""
-        super()._set_global_environment(info)
-        set_global_environment(info)
 
     def _get_project_raw(self) -> dict[str, Any] | None:
         """Get raw project data from the project service."""
