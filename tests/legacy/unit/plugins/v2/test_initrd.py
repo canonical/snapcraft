@@ -864,15 +864,9 @@ _intatll_initrd_overlay_cmd = [
 _prepare_ininird_features_cmd = [
     textwrap.dedent(
         """
-        # install selected snap bootstrap
-        echo "Preparing snap-boostrap initrd feature..."
+        # seed snapd-info
         uc_initrd_main_lib_snapd=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd
-        [ -e "${uc_initrd_main_lib_snapd}/snap-bootstrap" ] && ln -f "${UC_INITRD_ROOT}/usr/lib/snapd/snap-bootstrap" \\
-                                                                     "${uc_initrd_main_lib_snapd}/snap-bootstrap"
-        [ -e "${uc_initrd_main_lib_snapd}/info" ] && ln -f "${UC_INITRD_ROOT}/usr/lib/snapd/info" \\
-                                                           "${uc_initrd_main_lib_snapd}/info"
-
-        cp "${UC_INITRD_ROOT}/usr/lib/snapd/info" "${CRAFT_PART_INSTALL}/snapd-info"
+        cp "${uc_initrd_main_lib_snapd}/info" "${CRAFT_PART_INSTALL}/snapd-info"
         """
     )
 ]
