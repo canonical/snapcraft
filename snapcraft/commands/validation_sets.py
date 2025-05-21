@@ -16,6 +16,8 @@
 
 """Snapcraft Store Validation Sets commands."""
 
+from __future__ import annotations
+
 import json
 import os
 import subprocess
@@ -82,7 +84,7 @@ class StoreEditValidationSetsCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--key-name", metavar="key-name", help="Key used to sign the assertion"
         )
@@ -91,7 +93,7 @@ class StoreEditValidationSetsCommand(AppCommand):
         parser.add_argument("sequence", metavar="sequence")
 
     @overrides
-    def run(self, parsed_args: "argparse.Namespace"):
+    def run(self, parsed_args: argparse.Namespace):
         store_client = StoreClientCLI()
 
         asserted_validation_sets = store_client.get_validation_sets(

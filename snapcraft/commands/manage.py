@@ -16,6 +16,8 @@
 
 """Snapcraft Store Account management commands."""
 
+from __future__ import annotations
+
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -66,7 +68,7 @@ class StoreReleaseCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
             type=str,
@@ -91,7 +93,7 @@ class StoreReleaseCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         channels = parsed_args.channels.split(",")
 
         store.StoreClientCLI().release(
@@ -128,7 +130,7 @@ class StoreCloseCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
             type=str,
@@ -141,7 +143,7 @@ class StoreCloseCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         client = store.StoreClientCLI()
 
         client.close(

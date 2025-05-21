@@ -16,6 +16,8 @@
 
 """Snapcraft Store Account management commands."""
 
+from __future__ import annotations
+
 import contextlib
 import functools
 import os
@@ -42,7 +44,7 @@ _VALID_DATE_FORMATS = [
 ]
 
 
-def _read_config(config_path) -> str:
+def _read_config(config_path: str) -> str:
     if config_path == "-":
         config_path = "/dev/stdin"
 
@@ -74,7 +76,7 @@ class StoreLoginCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
             "--with",
@@ -95,7 +97,7 @@ class StoreLoginCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
                 "--experimental-login no longer supported. "
@@ -135,7 +137,7 @@ class StoreExportLoginCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
             "login_file",
@@ -186,7 +188,7 @@ class StoreExportLoginCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args) -> None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
                 "--experimental-login no longer supported. "
@@ -254,7 +256,7 @@ class StoreWhoAmICommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         whoami = store.StoreClientCLI().store_client.whoami()
 
         if whoami.get("permissions"):
@@ -300,6 +302,6 @@ class StoreLogoutCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         store.StoreClientCLI().store_client.logout()
         emit.message("Credentials cleared")

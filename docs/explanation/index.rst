@@ -10,6 +10,7 @@ and their implementation.
     :titlesonly:
     :maxdepth: 1
 
+    Cryptographic technology <cryptography>
     architectures
     bases
     parts

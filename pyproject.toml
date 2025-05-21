@@ -11,7 +11,7 @@ dependencies = [
     "craft-archives~=2.1",
     "craft-cli~=3.0",
     "craft-grammar>=2.0.3,<3.0.0",
-    "craft-parts>=2.9.1,<3.0.0",
+    "craft-parts>=2.10.0,<3.0.0",
     "craft-platforms~=0.7",
     "craft-providers~=2.2",
     "craft-store~=3.2",
@@ -276,14 +276,10 @@ lint.ignore = [
     # Most of these are probably worth enabling eventually.
 
     # Annotation issues appear to be mostly in older code, so could be eventually enabled.
-    # 39 instances of ANN001.
-    "ANN001",  # Missing type annotation for function argument
     # 5 instances of ANN201, 10 instances of ANN202
     "ANN201", "ANN202",  # Missing return type annotation for public/private function
     # 13 instances of ANN206 - probably mostly :noqa-able
     "ANN206",
-    # 4 instances - would break if run with optimization
-    "S101", # Use of assert detected
     # Comprehensions - IDK, these ones flagged and they really could go either way.
     "C405", "C408", "C414",
     "RET504", "RET506",  # Return value related.

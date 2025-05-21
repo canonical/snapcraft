@@ -49,9 +49,7 @@ _HUMAN_STATUS = {
 }
 
 
-def build_user_agent(
-    version=__version__,
-):
+def build_user_agent(version: str = __version__):
     """Build Snapcraft's user agent."""
     dist_id = distro.id()
     dist_version = distro.version()
@@ -172,7 +170,7 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
 class LegacyStoreClientCLI:
     """A BaseClient implementation considering command line prompts."""
 
-    def __init__(self, ephemeral=False):
+    def __init__(self, ephemeral: bool = False):
         self.store_client = get_client(ephemeral=ephemeral)
         self._base_url = get_store_url()
 
@@ -501,7 +499,9 @@ class LegacyStoreClientCLI:
         return Revisions.unmarshal(response.json())
 
     @staticmethod
-    def _unmarshal_confdb_schema(confdb_schema_data) -> models.ConfdbSchemaAssertion:
+    def _unmarshal_confdb_schema(
+        confdb_schema_data: dict[str, Any],
+    ) -> models.ConfdbSchemaAssertion:
         """Unmarshal a confdb schema.
 
         :raises StoreAssertionError: If the confdb schema cannot be unmarshalled.
@@ -697,7 +697,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
     @overrides
-    def close(self, snap_name: str, channel) -> None:
+    def close(self, snap_name: str, channel: str) -> None:
         self.release(snap_name=snap_name, revision=None, channels=[channel])
 
     @overrides

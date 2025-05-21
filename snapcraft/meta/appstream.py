@@ -153,14 +153,13 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata | None:
     )
 
 
-def _get_transformed_dom(path: str):
+def _get_transformed_dom(path: str) -> lxml.etree._XSLTResultTree:
     dom = _get_dom(path)
     transform = _get_xslt()
     return transform(dom)
 
 
-# error: Function "lxml.etree.ElementTree" is not valid as a type
-def _get_dom(path: str) -> lxml.etree.ElementTree:  # type: ignore
+def _get_dom(path: str) -> lxml.etree._ElementTree:
     try:
         return lxml.etree.parse(path)  # noqa S320
     except OSError as err:
@@ -169,12 +168,14 @@ def _get_dom(path: str) -> lxml.etree.ElementTree:  # type: ignore
         raise errors.MetadataExtractionError(path, str(err)) from err
 
 
-def _get_xslt():
+def _get_xslt() -> lxml.etree.XSLT:
     xslt = lxml.etree.parse(StringIO(_XSLT))  # noqa S320
     return lxml.etree.XSLT(xslt)
 
 
-def _get_value_from_xml_element(tree, key) -> str | None:
+def _get_value_from_xml_element(
+    tree: lxml.etree._XSLTResultTree, key: str
+) -> str | None:
     node = tree.find(key)
     if node is not None and node.text:
         # Lines that should be empty end up with empty space after the
@@ -186,12 +187,15 @@ def _get_value_from_xml_element(tree, key) -> str | None:
     return None
 
 
-def _get_urls_from_xml_element(nodes, url_type) -> list[str] | None:
+def _get_urls_from_xml_element(
+    nodes: list[lxml.etree._Element], url_type: str
+) -> list[str] | None:
     urls: list[str] = []
     for node in nodes:
         if (
             node is not None
             and node.attrib["type"] == url_type
+            and node.text is not None
             and node.text.strip() not in urls
         ):
             link = node.text.strip()
@@ -207,14 +211,14 @@ def _get_urls_from_xml_element(nodes, url_type) -> list[str] | None:
     return None
 
 
-def _get_latest_release_from_nodes(nodes) -> str | None:
+def _get_latest_release_from_nodes(nodes: list[lxml.etree._Element]) -> str | None:
     for node in nodes:
         if "version" in node.attrib:
             return node.attrib["version"]
     return None
 
 
-def _get_desktop_file_ids_from_nodes(nodes) -> list[str]:
+def _get_desktop_file_ids_from_nodes(nodes: list[lxml.etree._Element]) -> list[str]:
     desktop_file_ids: list[str] = []
     for node in nodes:
         if "type" in node.attrib and node.attrib["type"] == "desktop-id":
@@ -237,7 +241,9 @@ def _desktop_file_id_to_path(desktop_file_id: str, *, workdir: str) -> str | Non
     return None
 
 
-def _extract_icon(dom, workdir: str, desktop_file_paths: list[str]) -> str | None:
+def _extract_icon(
+    dom: lxml.etree._XSLTResultTree, workdir: str, desktop_file_paths: list[str]
+) -> str | None:
     icon_node = dom.find("icon")
     if icon_node is not None and "type" in icon_node.attrib:
         icon_node_type = icon_node.attrib["type"]
