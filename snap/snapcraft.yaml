@@ -38,7 +38,7 @@ apps:
     completer: completion.sh
 
 build-packages:
-  - cargo
+  - cargo-1.80
   - build-essential
   - intltool
   - libapt-pkg-dev
