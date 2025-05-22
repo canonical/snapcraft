@@ -16,6 +16,8 @@
 
 """Snapcraft Store Confdb Schemas commands."""
 
+from __future__ import annotations
+
 import argparse
 import textwrap
 from typing import override
@@ -44,7 +46,7 @@ class StoreListConfdbSchemasCommand(craft_application.commands.AppCommand):
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
 
     @override
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--name",
             metavar="name",
@@ -64,7 +66,7 @@ class StoreListConfdbSchemasCommand(craft_application.commands.AppCommand):
         )
 
     @override
-    def run(self, parsed_args: "argparse.Namespace"):
+    def run(self, parsed_args: argparse.Namespace):
         self._services.confdb_schemas.list_assertions(
             name=parsed_args.name,
             output_format=parsed_args.format,
@@ -93,7 +95,7 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
 
     @override
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "account_id",
             metavar="account-id",
@@ -107,7 +109,7 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
         )
 
     @override
-    def run(self, parsed_args: "argparse.Namespace"):
+    def run(self, parsed_args: argparse.Namespace):
         self._services.confdb_schemas.edit_assertion(
             name=parsed_args.name,
             account_id=parsed_args.account_id,

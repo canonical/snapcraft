@@ -16,6 +16,8 @@
 
 """Snapcraft Store uploading related commands."""
 
+from __future__ import annotations
+
 import pathlib
 import textwrap
 from collections import abc
@@ -75,7 +77,7 @@ class StoreUploadCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
             metavar="snap-file",
@@ -102,7 +104,7 @@ class StoreUploadCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args) -> None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
         snap_file = pathlib.Path(parsed_args.snap_file)
         if not snap_file.exists() or not snap_file.is_file():
             raise ArgumentParsingError(f"{str(snap_file)!r} is not a valid file")

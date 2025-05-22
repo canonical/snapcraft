@@ -16,6 +16,8 @@
 
 """Snapcraft discovery commands."""
 
+from __future__ import annotations
+
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -50,7 +52,7 @@ class ListPluginsCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
             "--base",
@@ -60,7 +62,7 @@ class ListPluginsCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args) -> None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
         if parsed_args.base == "core20":
             raise errors.LegacyFallback()
 
