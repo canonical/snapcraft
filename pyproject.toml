@@ -92,7 +92,7 @@ docs = [
     "sphinx-toolbox",
     "sphinxext-rediraffe==0.2.7",
     "pyspelling",
-    "pydantic-kitbash==0.0.3",
+    "pydantic-kitbash==0.0.4",
 ]
 lint = [
     "codespell[toml]",
