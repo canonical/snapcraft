@@ -10,12 +10,12 @@ idna==3.10
 imagesize==1.4.1
 Jinja2==3.1.6
 livereload==2.7.1
-MarkupSafe==2.1.5
+MarkupSafe==3.0.2
 packaging==23.2
 pyenchant==3.2.2
 Pygments==2.19.1
 pyparsing==3.0.9
-pytz==2022.6
+pytz==2022.7.1
 requests==2.32.3
 six==1.16.0
 snowballstemmer==2.2.0
@@ -26,7 +26,7 @@ sphinx-basic-ng==1.0.0b2
 sphinx_design==0.5.0
 sphinxcontrib-applehelp==1.0.8
 sphinxcontrib-devhelp==1.0.6
-sphinxcontrib-htmlhelp==2.0.5
+sphinxcontrib-htmlhelp==2.1.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.8
 sphinxcontrib-serializinghtml==1.1.10

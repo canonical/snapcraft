@@ -14,8 +14,10 @@
 
 """Snapcraft Project service."""
 
+from __future__ import annotations
+
 import pathlib
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import craft_cli
 import craft_platforms
@@ -25,9 +27,13 @@ from overrides import override
 
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import ComponentProject, Platform, apply_root_packages
+from snapcraft.parts import set_global_environment
 from snapcraft.parts.yaml_utils import extract_parse_info, get_snap_project
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
+
+if TYPE_CHECKING:
+    import craft_parts
 
 
 class Project(ProjectService):
@@ -116,3 +122,9 @@ class Project(ProjectService):
             }
 
         return platforms
+
+    @override
+    def update_project_environment(self, info: craft_parts.ProjectInfo) -> None:
+        """Set global environment variables."""
+        super().update_project_environment(info)
+        set_global_environment(info)
