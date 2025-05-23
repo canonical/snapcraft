@@ -278,6 +278,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_release_fnc)
         assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
@@ -323,6 +324,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_release_fnc)
         assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
@@ -351,6 +353,7 @@ class TestPluginInitrd:
                 "initrd-configured-modules": ["libarc4"],
                 "initrd-overlay": "my-overlay",
                 "initrd-compression": "gz",
+                "initrd-ubuntu-core-initramfs-deb": "${CRAFT_STAGE}/ubuntu-core-initramfs_my_build.deb",
             },
         )
 
@@ -364,7 +367,8 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
-        assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_custom_fnc)
+        assert _is_sub_array(build_commands, _setup_initrd_chroot_custom_u_c_i_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
@@ -405,6 +409,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_release_fnc)
         assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
@@ -446,6 +451,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_release_fnc)
         assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
@@ -485,6 +491,7 @@ class TestPluginInitrd:
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_release_fnc)
         assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
@@ -808,6 +815,28 @@ _chroot_run_cmd_fnc = [
     )
 ]
 
+_setup_stage_u_c_i_deb_release_fnc = [
+    textwrap.dedent(
+        """
+        # stage custom ubuntu-core-initramfs if required
+        stage_ubuntu_core_initramfs_deb() {
+            echo "Using release version of the initrd-ubuntu-core-initramfs"
+        }
+        """
+    )
+]
+
+_setup_stage_u_c_i_deb_custom_fnc = [
+    textwrap.dedent(
+        """
+        # stage custom ubuntu-core-initramfs if required
+        stage_ubuntu_core_initramfs_deb() {
+            cp -f "${CRAFT_STAGE}/ubuntu-core-initramfs_my_build.deb" "${UC_INITRD_ROOT}/ubuntu-core-initramfs_custom.deb"
+        }
+        """
+    )
+]
+
 _setup_initrd_chroot_fnc = [
     textwrap.dedent(
         """
@@ -843,6 +872,8 @@ _setup_initrd_chroot_fnc = [
                 if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
                     run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y snapd"
                 fi
+
+                stage_ubuntu_core_initramfs_deb
                 run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ubuntu-core-initramfs"
                 touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i"
             fi
@@ -868,6 +899,13 @@ _setup_initrd_chroot_fnc = [
             set -x
         }
         """
+    )
+]
+
+_setup_initrd_chroot_custom_u_c_i_fnc = [
+    _setup_initrd_chroot_fnc[0].replace(
+        "ubuntu-core-initramfs",
+        "/ubuntu-core-initramfs_custom.deb"
     )
 ]
 
