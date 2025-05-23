@@ -721,7 +721,11 @@ _setup_initrd_chroot_fnc = [
             if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i" ]; then
                 run_chroot "${UC_INITRD_ROOT}" "apt-get update"
                 run_chroot "${UC_INITRD_ROOT}" "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
-                run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y snapd ubuntu-core-initramfs"
+                # snapd is needed only on focal & jammy systems
+                if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+                    run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y snapd"
+                fi
+                run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ubuntu-core-initramfs"
                 touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i"
             fi
 
