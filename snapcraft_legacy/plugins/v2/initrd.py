@@ -78,6 +78,13 @@ The following initramfs-specific options are provided by this plugin:
       ${SNAPCRAFT_STAGE}/{initrd-addon}
       Default: none
 
+    - initrd-ubuntu-core-initramfs-deb
+      (string; default: none)
+      Optional path to the initrd-ubuntu-core-initramfs deb package.
+      This package would be installed instead of the release version from PPA.
+      This option os meant for development, to test custom builds of the
+      initrd-ubuntu-core-initramfs package.
+
 This plugin support cross compilation, for which plugin expects
 the build-environment is configured accordingly and has foreign architectures
 setup accordingly.
@@ -151,6 +158,10 @@ class InitrdPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
+                "initrd-ubuntu-core-initramfs-deb": {
+                    "type": "string",
+                    "default": "",
+                },
             },
         }
 
@@ -212,6 +223,7 @@ class InitrdPlugin(PluginV2):
             initrd_firmware=self.options.initrd_firmware,
             initrd_addons=self.options.initrd_addons,
             initrd_overlay=self.options.initrd_overlay,
+            initrd_ubuntu_core_initramfs_deb=self.options.initrd_ubuntu_core_initramfs_deb,
             initrd_ko_use_workaround=True,
             initrd_default_compression="lz4 -9 -l",
         )

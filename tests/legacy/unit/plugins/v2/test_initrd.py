@@ -34,6 +34,7 @@ class Initrdv2PluginProperties:
     initrd_compression_options: Optional[List[str]]
     initrd_overlay: Optional[str]
     initrd_addons: Optional[List[str]]
+    initrd_ubuntu_core_initramfs_deb: Optional[str]
 
 
 class TestPluginInitrd(TestCase):
@@ -54,6 +55,7 @@ class TestPluginInitrd(TestCase):
         initrdcompressionoptions=None,
         initrdoverlay=None,
         initrdaddons=None,
+        initrdubuntucoreinitramfsdeb=None,
         arch=platform.machine(),
     ):
         @dataclass
@@ -66,6 +68,7 @@ class TestPluginInitrd(TestCase):
             initrd_compression_options = initrdcompressionoptions
             initrd_overlay = initrdoverlay
             initrd_addons = initrdaddons
+            initrd_ubuntu_core_initramfs_deb = initrdubuntucoreinitramfsdeb
 
         target_arch = _DEB_ARCH_TRANSLATIONS[arch]
         # plugin used os.getenv("SNAP_ARCH") to determine host arch
@@ -130,6 +133,10 @@ class TestPluginInitrd(TestCase):
                         "items": {"type": "string"},
                         "default": [],
                     },
+                    "initrd-ubuntu-core-initramfs-deb": {
+                        "type": "string",
+                        "default": "",
+                    },
                 },
             },
         )
@@ -175,6 +182,7 @@ class TestPluginInitrd(TestCase):
         self.assertEqual(opt.initrd_compression_options, None)
         self.assertEqual(opt.initrd_overlay, None)
         self.assertEqual(opt.initrd_addons, None)
+        self.assertEqual(opt.initrd_ubuntu_core_initramfs_deb, None)
 
     def test_check_configuration_zstd_compression(self):
         plugin = self._setup_test(
@@ -189,6 +197,7 @@ class TestPluginInitrd(TestCase):
         self.assertIs(opt.initrd_compression_options, None)
         self.assertIs(opt.initrd_overlay, None)
         self.assertIs(opt.initrd_addons, None)
+        self.assertEqual(opt.initrd_ubuntu_core_initramfs_deb, None)
 
     def test_check_configuration_lz4_custom_compression(self):
         plugin = self._setup_test(
@@ -204,6 +213,7 @@ class TestPluginInitrd(TestCase):
         self.assertEqual(opt.initrd_compression_options, ["-9", "-l"])
         self.assertIs(opt.initrd_overlay, None)
         self.assertIs(opt.initrd_addons, None)
+        self.assertEqual(opt.initrd_ubuntu_core_initramfs_deb, None)
 
     def test_check_get_build_environment(self):
         plugin = self._setup_test()
@@ -262,6 +272,7 @@ class TestPluginInitrd(TestCase):
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_release_fnc)
         assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
@@ -302,6 +313,7 @@ class TestPluginInitrd(TestCase):
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_release_fnc)
         assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
@@ -326,6 +338,7 @@ class TestPluginInitrd(TestCase):
             initrdconfiguredmodules=["libarc4"],
             initrdoverlay="my-overlay",
             initrdcompression="gz",
+            initrdubuntucoreinitramfsdeb="${CRAFT_STAGE}/ubuntu-core-initramfs_my_build.deb"
         )
 
         # we need to get build environment
@@ -338,7 +351,8 @@ class TestPluginInitrd(TestCase):
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
-        assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_custom_fnc)
+        assert _is_sub_array(build_commands, _setup_initrd_chroot_custom_u_c_i_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
         assert _is_sub_array(build_commands, _parse_kernel_release_cmd)
@@ -374,6 +388,7 @@ class TestPluginInitrd(TestCase):
         assert _is_sub_array(build_commands, _setup_ubuntu_base_chroot_fnc)
         assert _is_sub_array(build_commands, _chroot_add_snappy_dev_ppa_fnc)
         assert _is_sub_array(build_commands, _chroot_run_cmd_fnc)
+        assert _is_sub_array(build_commands, _setup_stage_u_c_i_deb_release_fnc)
         assert _is_sub_array(build_commands, _setup_initrd_chroot_fnc)
         assert _is_sub_array(build_commands, _check_for_stage_firmware_cmd)
         assert _is_sub_array(build_commands, _setup_initrd_build_env_cmd)
@@ -689,6 +704,28 @@ _chroot_run_cmd_fnc = [
     )
 ]
 
+_setup_stage_u_c_i_deb_release_fnc = [
+    textwrap.dedent(
+        """
+        # stage custom ubuntu-core-initramfs if required
+        stage_ubuntu_core_initramfs_deb() {
+            echo "Using release version of the initrd-ubuntu-core-initramfs"
+        }
+        """
+    )
+]
+
+_setup_stage_u_c_i_deb_custom_fnc = [
+    textwrap.dedent(
+        """
+        # stage custom ubuntu-core-initramfs if required
+        stage_ubuntu_core_initramfs_deb() {
+            cp -f "${CRAFT_STAGE}/ubuntu-core-initramfs_my_build.deb" "${UC_INITRD_ROOT}/ubuntu-core-initramfs_custom.deb"
+        }
+        """
+    )
+]
+
 _setup_initrd_chroot_fnc = [
     textwrap.dedent(
         """
@@ -725,6 +762,8 @@ _setup_initrd_chroot_fnc = [
                 if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
                     run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y snapd"
                 fi
+
+                stage_ubuntu_core_initramfs_deb
                 run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ubuntu-core-initramfs"
                 touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i"
             fi
@@ -750,6 +789,13 @@ _setup_initrd_chroot_fnc = [
             set -x
         }
         """
+    )
+]
+
+_setup_initrd_chroot_custom_u_c_i_fnc = [
+    _setup_initrd_chroot_fnc[0].replace(
+        "ubuntu-core-initramfs",
+        "/ubuntu-core-initramfs_custom.deb"
     )
 ]
 
