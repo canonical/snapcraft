@@ -43,7 +43,7 @@ _CONFDB_SCHEMA_VIEWS_TEMPLATE = textwrap.dedent(
     """\
     views:
       wifi-setup:
-      summary: Summary of the view.
+        summary: Summary of the view.
         rules:
           - request: ssids
             storage: wifi.ssids
