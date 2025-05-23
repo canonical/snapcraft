@@ -143,6 +143,13 @@ Snapcraft 8.9.1
 - The uv plugin was breaking with uv 0.7.
 - The ``snapcraft test`` command would fail to install snaps with devmode confinement.
 
+Snapcraft 8.9.2
+~~~~~~~~~~~~~~~
+
+- YAML issues originating from the project file now emit errors instead of tracebacks,
+  making them easier to identify and read.
+- `#5491`_ Project variables weren't being evaluated in project files.
+
 Contributors
 ------------
 
@@ -164,5 +171,6 @@ and :literalref:`@tigarmo<https://github.com/tigarmo>`
 .. _Rust crates: https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html
 .. _Spread: https://github.com/snapcore/spread
 .. _cargo registry: https://doc.rust-lang.org/cargo/reference/registries.html
-.. _#5107: https://github.com/canonical/snapcraft/pull/5107
-.. _#5272: https://github.com/canonical/snapcraft/pull/5272
+.. _#5107: https://github.com/canonical/snapcraft/issues/5107
+.. _#5272: https://github.com/canonical/snapcraft/issues/5272
+.. _#5491: https://github.com/canonical/snapcraft/issues/5491
