@@ -198,8 +198,10 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
 
         raised = self.assertRaises(
             storeapi.errors.StoreUploadError,
-            self.run_command,
-            ["upload-metadata", self.snap_file],
+            lambda: self.run_command(
+                ["upload-metadata", self.snap_file],
+                input="n\n"
+            )
         )
 
         self.assertThat(
