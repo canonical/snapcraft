@@ -850,6 +850,11 @@ _setup_initrd_chroot_fnc = [
                 touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.firmware"
             fi
 
+            # if kernel version is not aligned with installed modules, re-run the step
+            if [ ! -e "${UC_INITRD_ROOT}/usr/lib/modules/${KERNEL_RELEASE}" ]; then
+                rm -rf "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules"
+            fi
+
             if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules" ]; then
                 rm -rf "${UC_INITRD_ROOT}"/usr/lib/modules/*
                 link_files "${KERNEL_MODULES}" "*" "${UC_INITRD_ROOT}/usr/lib/modules"
