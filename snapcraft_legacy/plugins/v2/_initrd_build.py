@@ -286,69 +286,87 @@ def _chroot_run_cmd_fnc_cmd() -> List[str]:
     return [cmd]
 
 
-def _setup_initrd_chroot_fnc_cmd() -> List[str]:
+def _setup_initrd_chroot_fnc_cmd(initrd_ubuntu_core_initramfs_deb: Optional[str]) -> List[str]:
     """Define helper fnc to prepare build chroot ."""
-    cmd = textwrap.dedent(
+    initrd_ubuntu_core_initramfs = "ubuntu-core-initramfs"
+    stage_initrd_ubuntu_core_initramfs_cmd = 'echo "Using release version of the initrd-ubuntu-core-initramfs"'
+    if initrd_ubuntu_core_initramfs_deb:
+        initrd_ubuntu_core_initramfs = "/ubuntu-core-initramfs_custom.deb"
+        stage_initrd_ubuntu_core_initramfs_cmd = f'cp -f "{initrd_ubuntu_core_initramfs_deb}" "${{UC_INITRD_ROOT}}{initrd_ubuntu_core_initramfs}"'
+
+    stage_u_c_i_deb_fnc = textwrap.dedent(
+        f"""
+        # stage custom ubuntu-core-initramfs if required
+        stage_ubuntu_core_initramfs_deb() {{
+            {stage_initrd_ubuntu_core_initramfs_cmd}
+        }}
         """
+    )
+
+    setup_initrd_chroot_fnc = textwrap.dedent(
+        f"""
         # setup chroot to build Ubuntu Core initrd
         # chroot is based on the Ubuntu Base
         # 1: work dir, 2: ppa fingerprint
-        setup_initrd_chroot() {
+        setup_initrd_chroot() {{
             set +x
-            local work_dir="${1}"
-            local ppa_fingerprint="${2}"
+            local work_dir="${{1}}"
+            local ppa_fingerprint="${{2}}"
 
-            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.base" ]; then
-                setup_chroot_base "${work_dir}" "${UBUNTU_SERIES}"
-                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.base"
+            if [ ! -e "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.base" ]; then
+                setup_chroot_base "${{work_dir}}" "${{UBUNTU_SERIES}}"
+                touch "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.base"
             fi
 
-            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa" ]; then
-                run_chroot "${UC_INITRD_ROOT}" "apt-get update"
-                run_chroot "${UC_INITRD_ROOT}" "apt-get dist-upgrade -y"
-                run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y ca-certificates debconf-utils libfakeroot lz4 xz-utils zstd"
-                if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
-                    run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y systemd"
+            if [ ! -e "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.ppa" ]; then
+                run_chroot "${{UC_INITRD_ROOT}}" "apt-get update"
+                run_chroot "${{UC_INITRD_ROOT}}" "apt-get dist-upgrade -y"
+                run_chroot "${{UC_INITRD_ROOT}}" "apt-get install --no-install-recommends -y ca-certificates debconf-utils libfakeroot lz4 xz-utils zstd"
+                if [ "${{UBUNTU_SERIES}}" = "focal" ] || [ "${{UBUNTU_SERIES}}" = "jammy" ]; then
+                    run_chroot "${{UC_INITRD_ROOT}}" "apt-get install --no-install-recommends -y systemd"
                 else
-                    run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y libsystemd-shared"
+                    run_chroot "${{UC_INITRD_ROOT}}" "apt-get install --no-install-recommends -y libsystemd-shared"
                 fi
-                chroot_add_snappy_dev_ppa "${work_dir}" "${UBUNTU_SERIES}" "${ppa_fingerprint}"
-                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa"
+                chroot_add_snappy_dev_ppa "${{work_dir}}" "${{UBUNTU_SERIES}}" "${{ppa_fingerprint}}"
+                touch "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.ppa"
             fi
 
-            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i" ]; then
-                run_chroot "${UC_INITRD_ROOT}" "apt-get update"
-                run_chroot "${UC_INITRD_ROOT}" "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
-                if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
-                    run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y snapd"
+            if [ ! -e "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.u-c-i" ]; then
+                run_chroot "${{UC_INITRD_ROOT}}" "apt-get update"
+                run_chroot "${{UC_INITRD_ROOT}}" "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
+                # snapd is needed only on focal & jammy systems
+                if [ "${{UBUNTU_SERIES}}" = "focal" ] || [ "${{UBUNTU_SERIES}}" = "jammy" ]; then
+                    run_chroot "${{UC_INITRD_ROOT}}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y snapd"
                 fi
-                run_chroot "${UC_INITRD_ROOT}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ubuntu-core-initramfs"
-                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.u-c-i"
+
+                stage_ubuntu_core_initramfs_deb
+                run_chroot "${{UC_INITRD_ROOT}}" "DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y {initrd_ubuntu_core_initramfs}"
+                touch "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.u-c-i"
             fi
 
-            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.firmware" ]; then
-                rm -rf "${UC_INITRD_ROOT}"/usr/lib/firmware/*
-                link_files "${KERNEL_FIRMWARE}" "*" "${UC_INITRD_ROOT}/usr/lib/firmware"
-                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.firmware"
+            if [ ! -e "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.firmware" ]; then
+                rm -rf "${{UC_INITRD_ROOT}}"/usr/lib/firmware/*
+                link_files "${{KERNEL_FIRMWARE}}" "*" "${{UC_INITRD_ROOT}}/usr/lib/firmware"
+                touch "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.firmware"
             fi
 
             # if kernel version is not aligned with installed modules, re-run the step
-            if [ ! -e "${UC_INITRD_ROOT}/usr/lib/modules/${KERNEL_RELEASE}" ]; then
-                rm -rf "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules"
+            if [ ! -e "${{UC_INITRD_ROOT}}/usr/lib/modules/${{KERNEL_RELEASE}}" ]; then
+                rm -rf "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.modules"
             fi
 
-            if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules" ]; then
-                rm -rf "${UC_INITRD_ROOT}"/usr/lib/modules/*
-                link_files "${KERNEL_MODULES}" "*" "${UC_INITRD_ROOT}/usr/lib/modules"
+            if [ ! -e "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.modules" ]; then
+                rm -rf "${{UC_INITRD_ROOT}}"/usr/lib/modules/*
+                link_files "${{KERNEL_MODULES}}" "*" "${{UC_INITRD_ROOT}}/usr/lib/modules"
                 # remove potentially dangling source link
-                rm -rf ${UC_INITRD_ROOT}/usr/lib/modules/*/build
-                touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.modules"
+                rm -rf ${{UC_INITRD_ROOT}}/usr/lib/modules/*/build
+                touch "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.modules"
             fi
             set -x
-        }
+        }}
         """
     )
-    return [cmd]
+    return [stage_u_c_i_deb_fnc, setup_initrd_chroot_fnc]
 
 
 def _check_for_stage_firmware_cmd() -> List[str]:
@@ -631,6 +649,7 @@ def get_build_commands(
     initrd_firmware: Optional[List[str]],
     initrd_addons: Optional[List[str]],
     initrd_overlay: Optional[str],
+    initrd_ubuntu_core_initramfs_deb: Optional[str],
     initrd_ko_use_workaround: bool,
     initrd_default_compression: str,
     build_efi_image: Optional[bool] = False,
@@ -652,7 +671,7 @@ def get_build_commands(
         "",
         *_chroot_run_cmd_fnc_cmd(),
         "",
-        *_setup_initrd_chroot_fnc_cmd(),
+        *_setup_initrd_chroot_fnc_cmd(initrd_ubuntu_core_initramfs_deb),
         "",
         *_parse_kernel_release_cmd(),
         "",
