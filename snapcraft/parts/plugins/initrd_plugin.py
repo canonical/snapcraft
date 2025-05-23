@@ -90,6 +90,13 @@ The following initramfs-specific options are provided by this plugin:
       During build it will be expanded to ${CRAFT_STAGE}/{initrd-addon}
       Default: none
 
+    - initrd-ubuntu-core-initramfs-deb
+      (string; default: none)
+      Optional path to the initrd-ubuntu-core-initramfs deb package.
+      This package would be installed instead of the release version from PPA.
+      This option os meant for development, to test custom builds of the
+      initrd-ubuntu-core-initramfs package.
+
 This plugin support cross compilation, for which plugin expects
 the build-environment is configured accordingly and has foreign architectures
 setup accordingly.
@@ -124,6 +131,7 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     initrd_compression_options: list[str] | None = None
     initrd_overlay: str | None = None
     initrd_addons: list[str] | None = None
+    initrd_ubuntu_core_initramfs_deb: str | None = None
 
     # part properties required by the plugin
     @pydantic.model_validator(mode="after")
@@ -223,6 +231,7 @@ class InitrdPlugin(plugins.Plugin):
             initrd_firmware=self.options.initrd_firmware,
             initrd_addons=self.options.initrd_addons,
             initrd_overlay=self.options.initrd_overlay,
+            initrd_ubuntu_core_initramfs_deb=self.options.initrd_ubuntu_core_initramfs_deb,
             initrd_ko_use_workaround=False,
             initrd_default_compression="zstd -1 -T0",
             build_efi_image=self.options.initrd_build_efi_image,
