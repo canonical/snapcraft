@@ -134,7 +134,6 @@ def test_generate_yaml_from_model(fake_confdb_schema_assertion, fake_services):
         """\
         account-id: test-account-id
         name: test-confdb
-        summary: None
         # The revision for this confdb-schema
         # revision: 10
         views:
