@@ -132,7 +132,7 @@ using ``craftctl``. All you need to do is select which part to adopt using
           craftctl set version="my-version"
           craftctl set grade="devel"
 
-See `Using the craftctl tool <https://snapcraft.io/docs/using-craftctl>`_ for more
+See :ref:`how-to-customize-the-build-and-part-variables` for more
 details on using scripting elements within a project file.
 
 .. _Desktop File ID: https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
