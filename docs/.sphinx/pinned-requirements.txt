@@ -18,7 +18,7 @@ pyparsing==3.0.9
 pytz==2022.7.1
 requests==2.32.3
 six==1.16.0
-snowballstemmer==2.2.0
+snowballstemmer==3.0.1
 soupsieve==2.3.2.post1
 Sphinx==5.3.0
 sphinx-autobuild==2021.3.14
