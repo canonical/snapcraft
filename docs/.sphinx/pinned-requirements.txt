@@ -20,7 +20,7 @@ requests==2.32.3
 six==1.16.0
 snowballstemmer==2.2.0
 soupsieve==2.3.2.post1
-Sphinx==5.3.0
+Sphinx==8.2.3
 sphinx-autobuild==2021.3.14
 sphinx-basic-ng==1.0.0b2
 sphinx_design==0.5.0
