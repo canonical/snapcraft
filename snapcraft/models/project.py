@@ -1468,9 +1468,9 @@ class Project(models.Project):
           - Description
         * - ``strict``
           - Default for core20 and older bases. Use strict confinement.
-        * - ``devmode``
+        * - ``classic``
           - Use classic confinement.
-        * - ``strict``
+        * - ``devmode``
           - Use devmode confinement.
 
     """
