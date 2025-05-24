@@ -258,7 +258,7 @@ For more information about the parts lifecycle, see the following resources:
 
 - `Parts environment variables <https://snapcraft.io/docs/parts-environment-variables>`_
   has a list of part-specific environment variables that can be accessed at build time.
-- `Scriptlets <https://forum.snapcraft.iohttps://snapcraft.io/docs/scriptlets>`_ has
+- :ref:`Scriptlets <reference-external-package-scriptlets>` has
   more details on how to override steps.
 - :external+craft-parts:doc:`Lifecycle <common/craft-parts/explanation/lifecycle>`
   in the Craft Parts documentation.
