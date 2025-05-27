@@ -1,7 +1,7 @@
 [project]
 name = "starcraft"
 description = "The basis for Starcraft team packages"
-dynamic = ["version", "readme"]
+dynamic = ["version"]
 dependencies = []
 classifiers = [
     "Development Status :: 1 - Planning",
@@ -11,6 +11,7 @@ classifiers = [
 ]
 license = "GPL-3.0"
 requires-python = ">=3.10"
+readme = { file = "README.md", content-type = "text/markdown" }
 
 [project.scripts]
 starcraft-hello = "starcraft:hello"
@@ -77,8 +78,6 @@ constraint-dependencies = [
 requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.dynamic]
-readme = { file = "README.md" }
 
 [tool.setuptools_scm]
 write_to = "starcraft/_version.py"
