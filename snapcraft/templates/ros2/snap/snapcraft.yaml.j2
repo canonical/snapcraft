@@ -1,0 +1,37 @@
+# The name of the snap.
+# Use 'snapcraft register <name>' to register the name on the store.
+name: {{ name }}
+# Just for humans, typically '1.2+git' or '1.3.2'
+version: "0.0.1"
+summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+description: |
+  This is {{ name }}'s description. You have a paragraph or two to tell the
+  most important story about your snap. Keep it under 100 words though,
+  so that it looks good in the snap store.
+
+# The base snap is the runtime environment for this snap.
+# Bases have a 1:1 correspondence with ROS 2 LTS distributions.
+base: core24
+
+# Use 'devmode' while developing until you have the right plugs and slots.
+confinement: strict
+# Use 'devel' while developing to prevent pushing the snap to either of the 'candidate' or 'stable' track on the store
+grade: stable
+
+# The applications exposed by the snap.
+apps:
+  ros2-talker-listener:
+    command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+    # ROS extensions abstracts some common boilerplate configurations.
+    # Learn more about it at https://canonical-robotics.readthedocs-hosted.com/en/latest/references/snapcraft/extensions/
+    extensions: [ros2-jazzy-ros-core]
+
+# The parts to build the snap.
+parts:
+  ros-demos:
+    # The 'colcon' plugin drives the build process.
+    # Learn more about the ROS plugins at https://canonical-robotics.readthedocs-hosted.com/en/latest/references/snapcraft/plugins/
+    plugin: colcon
+    source: https://github.com/ros2/demos.git
+    source-branch: jazzy
+    source-subdir: demo_nodes_cpp
