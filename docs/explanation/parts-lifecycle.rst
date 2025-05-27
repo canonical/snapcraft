@@ -141,8 +141,8 @@ Overriding a step
 Each plugin defines the default actions that happen during a step. This behavior can be
 changed in two ways:
 
-- With the ``override-<step-name>`` key. See :ref:`Customize the build steps
-  <how-to-customize-the-build-and-part-variables>` for guidance.
+- With the ``override-<step-name>`` key. See
+  :ref:`how-to-customize-the-build-and-part-variables` for guidance.
 - (core20 only) With a local plugin, which can inherit the parent plugin or scaffolding
   from the original. See `Writing local plugins
   <https://snapcraft.io/docs/writing-local-plugins>`_ for details.
