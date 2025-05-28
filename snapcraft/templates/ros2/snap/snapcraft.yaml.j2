@@ -29,8 +29,8 @@ apps:
 # The parts to build the snap.
 parts:
   ros-demos:
-    # The 'colcon' plugin drives the build process.
-    # Learn more about the ROS plugins at https://canonical-robotics.readthedocs-hosted.com/en/latest/references/snapcraft/plugins/
+    # The colcon plugin builds parts for ROS 2.
+    # Learn more about the plugin at https://documentation.ubuntu.com/snapcraft/stable/reference/plugins/colcon_plugin
     plugin: colcon
     source: https://github.com/ros2/demos.git
     source-branch: jazzy
