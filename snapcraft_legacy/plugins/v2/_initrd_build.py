@@ -64,10 +64,10 @@ def _link_files_fnc_cmd() -> List[str]:
         """
         # link files helper, accept wild cards
         # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
-        # 4: quiet mode [ "-quiet" ] (optional)
+        # 4: quiet mode [ "--quiet" ] (optional)
         link_files() {
             set +x
-            link_files_impl "${@}"
+            link_files_impl ${@}
             local retVal=$?
             set -x
             return ${retVal}
@@ -75,7 +75,7 @@ def _link_files_fnc_cmd() -> List[str]:
 
         # link files helper implementation, accept wild cards
         # 1: reference dir, 2: file(s) including wild cards, 3: dst dir
-        # 4: quiet mode [ "-quiet" ] (optional)
+        # 4: quiet mode [ "--quiet" ] (optional)
         link_files_impl() {
             if [ -z "${2}" ]; then
                 return 0
@@ -117,7 +117,7 @@ def _link_files_fnc_cmd() -> List[str]:
                     fi
                     dir_path=$(dirname "${rel_path}")
                     mkdir -p "${3}/${dir_path}"
-                    [ "${quiet}" != "-quiet" ] && echo "installing ${f} to ${3}/${dir_path}"
+                    [ "${quiet}" != "--quiet" ] && echo "installing ${f} to ${3}/${dir_path}"
                     ln -f "${f}" "${3}/${dir_path}"
                 fi
                 found="yes"
@@ -346,7 +346,7 @@ def _setup_initrd_chroot_fnc_cmd(initrd_ubuntu_core_initramfs_deb: Optional[str]
 
             if [ ! -e "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.firmware" ]; then
                 rm -rf "${{UC_INITRD_ROOT}}"/usr/lib/firmware/*
-                link_files "${{KERNEL_FIRMWARE}}" "*" "${{UC_INITRD_ROOT}}/usr/lib/firmware"
+                link_files "${{KERNEL_FIRMWARE}}" "*" "${{UC_INITRD_ROOT}}/usr/lib/firmware" "--quiet"
                 touch "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.firmware"
             fi
 
@@ -357,7 +357,7 @@ def _setup_initrd_chroot_fnc_cmd(initrd_ubuntu_core_initramfs_deb: Optional[str]
 
             if [ ! -e "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.modules" ]; then
                 rm -rf "${{UC_INITRD_ROOT}}"/usr/lib/modules/*
-                link_files "${{KERNEL_MODULES}}" "*" "${{UC_INITRD_ROOT}}/usr/lib/modules"
+                link_files "${{KERNEL_MODULES}}" "*" "${{UC_INITRD_ROOT}}/usr/lib/modules" "--quiet"
                 # remove potentially dangling source link
                 rm -rf ${{UC_INITRD_ROOT}}/usr/lib/modules/*/build
                 touch "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.modules"
