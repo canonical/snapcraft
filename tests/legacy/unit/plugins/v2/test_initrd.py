@@ -594,41 +594,39 @@ _chroot_add_snappy_dev_ppa_fnc = [
         """
         # add snappy-dev/image ppa to the chroot
         # import ppa keys for the ppa
-        # 1: work dir, 2: ubuntu series, 3: ppa fingerprint
+        # 1: ubuntu series, 2: ppa fingerprint
         chroot_add_snappy_dev_ppa() {
-            local work_dir="${1}"
-            local series="${2}"
-            local key_fingerprint="${3}"
-            local source_file="snappy-dev-image.sources"
-            local key_file="/etc/apt/keyrings/snappy-dev-image.gpg"
+            set +x
+            local series="${1}"
+            local key_fingerprint="${2}"
             local chroot_home="${UC_INITRD_ROOT}"
-            local gnupg_home="${work_dir}/.gnupg"
-            local snappy_key="${gnupg_home}/snappy-dev.kbx"
-            rm -rf "${gnupg_home}"
-            mkdir --mode 700 "${gnupg_home}"
-            gpg \\
-                --homedir "${gnupg_home}" \\
-                --no-default-keyring \\
-                --keyring "${snappy_key}" \\
-                --keyserver keyserver.ubuntu.com \\
-                --recv-keys "${key_fingerprint}"
+            local source_file="/etc/apt/sources.list.d/snappy-dev-image.sources"
+            local key_file="/etc/apt/keyrings/snappy-dev.gpg"
+            local snappy_key="/usr/share/keyrings/snappy-dev.kbx"
+            run_chroot "${chroot_home}" "rm -rf /root/.gnupg ${key_file} ${snappy_key}"
+            run_chroot "${chroot_home}" "mkdir -p --mode 700 /root/.gnupg"
+            run_chroot "${chroot_home}" "gpg \\
+                        --homedir /root/.gnupg \\
+                        --no-default-keyring \\
+                        --keyring "${snappy_key}" \\
+                        --keyserver keyserver.ubuntu.com \\
+                        --recv-keys "${key_fingerprint}""
 
-            mkdir -p "$(dirname "${chroot_home}/${key_file}")"
-            rm -rf "${chroot_home:?}/${key_file}"
-            gpg \\
-                --homedir "${gnupg_home}" \\
-                --no-default-keyring \\
-                --keyring "${snappy_key}" \\
-                --export \\
-                --out "${chroot_home}/${key_file}"
+            run_chroot "${chroot_home}" "gpg \\
+                        --homedir /root/.gnupg \\
+                        --no-default-keyring \\
+                        --keyring "${snappy_key}" \\
+                        --export \\
+                        --out "${key_file}""
 
-            tee "${chroot_home}/etc/apt/sources.list.d/${source_file}" <<EOF
+            tee "${chroot_home}/${source_file}" <<EOF
         Types: deb
         URIs: https://ppa.launchpadcontent.net/snappy-dev/image/ubuntu/
         Suites: ${series}
         Components: main
         Signed-By: ${key_file}
         EOF
+            set -x
         }
         """
     )
@@ -745,13 +743,13 @@ _setup_initrd_chroot_fnc = [
             if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa" ]; then
                 run_chroot "${UC_INITRD_ROOT}" "apt-get update"
                 run_chroot "${UC_INITRD_ROOT}" "apt-get dist-upgrade -y"
-                run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y ca-certificates debconf-utils libfakeroot lz4 xz-utils zstd"
+                run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y ca-certificates gpg dirmngr gpg-agent debconf-utils libfakeroot lz4 xz-utils zstd"
                 if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
                     run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y systemd"
                 else
                     run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y libsystemd-shared"
                 fi
-                chroot_add_snappy_dev_ppa "${work_dir}" "${UBUNTU_SERIES}" "${ppa_fingerprint}"
+                chroot_add_snappy_dev_ppa "${UBUNTU_SERIES}" "${ppa_fingerprint}"
                 touch "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa"
             fi
 
