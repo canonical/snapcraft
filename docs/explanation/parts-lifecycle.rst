@@ -92,8 +92,7 @@ in order.
 
 To enter the part environment at any stage, add the ``--shell`` argument to these
 commands. For example, ``snapcraft prime --shell`` will run up to the prime step and
-open a shell. See `Iterating over a build
-<https://snapcraft.io/docs/iterating-over-a-build>`_ for more practical details.
+open a shell. See :ref:`iterate-on-the-build-lifecycle` for more practical details.
 
 
 Directories
@@ -141,8 +140,8 @@ Overriding a step
 Each plugin defines the default actions that happen during a step. This behavior can be
 changed in two ways:
 
-- With the ``override-<step-name>`` key. See `Override build steps
-  <https://snapcraft.io/docs/scriptlets>`_ for guidance.
+- With the ``override-<step-name>`` key. See
+  :ref:`how-to-customize-the-build-and-part-variables` for guidance.
 - (core20 only) With a local plugin, which can inherit the parent plugin or scaffolding
   from the original. See `Writing local plugins
   <https://snapcraft.io/docs/writing-local-plugins>`_ for details.
@@ -258,7 +257,7 @@ For more information about the parts lifecycle, see the following resources:
 
 - `Parts environment variables <https://snapcraft.io/docs/parts-environment-variables>`_
   has a list of part-specific environment variables that can be accessed at build time.
-- `Scriptlets <https://forum.snapcraft.iohttps://snapcraft.io/docs/scriptlets>`_ has
+- :ref:`Scriptlets <reference-external-package-scriptlets>` has
   more details on how to override steps.
 - :external+craft-parts:doc:`Lifecycle <common/craft-parts/explanation/lifecycle>`
   in the Craft Parts documentation.
