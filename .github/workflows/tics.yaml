@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - "main"
+      # For troubleshooting
+      - "work/tiobe**"
 
 jobs:
   TICS:
