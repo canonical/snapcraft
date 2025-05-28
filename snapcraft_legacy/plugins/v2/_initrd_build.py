@@ -219,22 +219,32 @@ def _chroot_run_cmd_fnc_cmd() -> List[str]:
         """
         # clean any existing mounts for the chroot function
         _clean_chroot() {
+            set +x
             local chroot_home="${1}"
             if [ -z "${chroot_home}" ]; then
                 echo "Missing chroot home to clean"
                 return
             fi
+            # ensure no chroot processes are left running
+            for pid in $(ls /proc | grep -E '^[0-9]+$'); do
+                if [ -e "/proc/${pid}/root" ] && [ "$(readlink -f /proc/${pid}/root)" = "${chroot_home}" ]; then
+                    echo "Killing PID ${pid} inside ${chroot_home} chroot"
+                    kill -9 "${pid}"
+                fi
+            done
             for m in dev/pts dev/null dev/zero dev/full dev/random dev/urandom dev/tty dev proc run sys
             do
                 if grep "${chroot_home}/${m}" /proc/self/mounts > /dev/null; then
                     umount "${chroot_home}/${m}"
                 fi
             done
+            set -x
         }
 
         _chroot_configured="no"
         # setup necessary mounts for the chroot function
         _setup_chroot() {
+            set +x
             if [ "${_chroot_configured}" = "yes" ]; then
                 return
             fi
@@ -244,19 +254,23 @@ def _chroot_run_cmd_fnc_cmd() -> List[str]:
                 mount --bind "/${m}" "${chroot_home}/${m}"
             done
             _chroot_configured="yes"
+            set -x
         }
 
         # run command in true chroot
         _run_truechroot() {
+            set +x
             local chroot_home="${1}"
             local cmd="${2}"
             trap "_clean_chroot ${chroot_home}" EXIT
             _setup_chroot "${chroot_home}"
             chroot "${chroot_home}" /bin/bash -c "${cmd}"
+            set -x
         }
 
         # run command in fake chroot
         _run_fakechroot() {
+            set +x
             local chroot_home="${1}"
             local cmd="${2}"
             if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
@@ -265,11 +279,13 @@ def _chroot_run_cmd_fnc_cmd() -> List[str]:
                 ld_path="${LD_LIBRARY_PATH}:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/systemd:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/fakechroot:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfakeroot"
             fi
             LD_LIBRARY_PATH="${ld_path}" fakechroot fakeroot chroot "${chroot_home}" /bin/bash -c "${cmd}"
+            set -x
         }
 
         # run command with chroot
         # 1: chroot home, 2: command to run
         run_chroot() {
+            set +x
             local chroot_home="${1}"
             local cmd="${2}"
             # use true chroot if we have root permissions
@@ -278,6 +294,7 @@ def _chroot_run_cmd_fnc_cmd() -> List[str]:
             else
                 _run_fakechroot "${chroot_home}" "${cmd}"
             fi
+            set -x
         }
         """
     )
