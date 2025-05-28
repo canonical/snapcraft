@@ -92,8 +92,7 @@ in order.
 
 To enter the part environment at any stage, add the ``--shell`` argument to these
 commands. For example, ``snapcraft prime --shell`` will run up to the prime step and
-open a shell. See :ref:`Iterating over a build
-<iterate-on-the-build-lifecycle>` for more practical details.
+open a shell. See :ref:`iterate-on-the-build-lifecycle` for more practical details.
 
 
 Directories
