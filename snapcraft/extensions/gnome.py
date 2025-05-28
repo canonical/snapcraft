@@ -216,9 +216,10 @@ class GNOME(Extension):
 
     @overrides
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
+        base = self.yaml_data["base"]
         sdk_snap = self.gnome_snaps.sdk
 
-        return {
+        part_snippet = {
             "build-environment": [
                 {
                     "PATH": prepend_to_env(
@@ -319,6 +320,25 @@ class GNOME(Extension):
                 },
             ],
         }
+
+        if base != "core22":
+            # While this should be done with any base, clang that is available
+            # in core22 does not handle it properly, breaking the flutter
+            # builds. So do it only on newer bases.
+            part_snippet["build-environment"].append(
+                {
+                    "C_INCLUDE_PATH": prepend_to_env(
+                        "C_INCLUDE_PATH",
+                        [
+                            "$CRAFT_STAGE/usr/include",
+                            f"/snap/{sdk_snap}/current/usr/include",
+                            f"/snap/{base}/current/include",
+                        ],
+                    ),
+                }
+            )
+
+        return part_snippet
 
     @overrides
     def get_parts_snippet(self) -> dict[str, Any]:
