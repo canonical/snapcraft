@@ -88,12 +88,15 @@ values such as its confinement level and supported architectures.
 .. kitbash-field:: project.Project apps
 
 .. kitbash-field:: craft_application.models.project.Project parts
+    :override-type: dict[str, dict[str, Any]]
 
 .. kitbash-field:: craft_application.models.project.Project package_repositories
+    :override-type: list[dict[str, Any]]
 
 .. kitbash-field:: project.Project hooks
 
 .. kitbash-field:: project.Project components
+    :override-type: dict[str, Component]
 
 .. kitbash-field:: project.Project plugs
 
@@ -118,8 +121,67 @@ Part keys
 The ``parts`` key and its values declare the snap's :ref:`parts <explanation-parts>` and
 detail how they're built.
 
-.. kitbash-model:: craft_parts.parts.PartSpec
-    :prepend-name: parts.<part-name>
+.. kitbash-field:: craft_parts.parts.PartSpec plugin
+
+.. kitbash-field:: craft_parts.parts.PartSpec source
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_checksum
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_channel
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_branch
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_commit
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_depth
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_subdir
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_submodules
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_tag
+
+.. kitbash-field:: craft_parts.parts.PartSpec source_type
+
+.. kitbash-field:: craft_parts.parts.PartSpec disable_parallel
+
+.. kitbash-field:: craft_parts.parts.PartSpec after
+
+.. kitbash-field:: craft_parts.parts.PartSpec overlay_packages
+
+.. kitbash-field:: craft_parts.parts.PartSpec stage_snaps
+
+.. kitbash-field:: craft_parts.parts.PartSpec stage_packages
+
+.. kitbash-field:: craft_parts.parts.PartSpec build_snaps
+
+.. kitbash-field:: craft_parts.parts.PartSpec build_packages
+
+.. kitbash-field:: craft_parts.parts.PartSpec build_environment
+
+.. kitbash-field:: craft_parts.parts.PartSpec build_attributes
+
+.. kitbash-field:: craft_parts.parts.PartSpec organize_files
+
+.. kitbash-field:: craft_parts.parts.PartSpec overlay_files
+
+.. kitbash-field:: craft_parts.parts.PartSpec overlay_script
+
+.. kitbash-field:: craft_parts.parts.PartSpec stage_files
+    :override-type: list[str]
+
+.. kitbash-field:: craft_parts.parts.PartSpec prime_files
+    :override-type: list[str]
+
+.. kitbash-field:: craft_parts.parts.PartSpec override_pull
+
+.. kitbash-field:: craft_parts.parts.PartSpec override_build
+
+.. kitbash-field:: craft_parts.parts.PartSpec override_stage
+
+.. kitbash-field:: craft_parts.parts.PartSpec override_prime
+
+.. kitbash-field:: craft_parts.parts.PartSpec permissions
 
 
 Socket keys
@@ -148,3 +210,23 @@ Content plug keys
 
 .. kitbash-model:: project.ContentPlug
     :prepend-name: plugs.<plug-name>
+
+
+Platform keys
+-------------
+
+.. kitbash-field:: project.Platform build_on
+    :override-type: list[str]
+
+.. kitbash-field:: project.Platform build_for
+    :override-type: list[str]
+
+
+Architecture keys
+-----------------
+
+.. kitbash-field:: project.Architecture build_on
+    :override-type: str | list[str]
+
+.. kitbash-field:: project.Architecture build_for
+    :override-type: str | list[str]
