@@ -77,7 +77,7 @@ class Init(services.InitService):
                     "Could not initialise a new snapcraft project because "
                     "a file named 'snap' already exists.",
                     details="The 'snap' name is reserved for the project directory.",
-                    resolution="Rename or delete any file named 'snap'.",
+                    resolution="Rename or remove the file named 'snap'.",
                 )
             except craft_application.errors.ProjectFileError:
                 craft_cli.emit.debug("Could not find an existing 'snapcraft.yaml'.")

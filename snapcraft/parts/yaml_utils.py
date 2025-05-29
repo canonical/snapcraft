@@ -250,7 +250,7 @@ def get_snap_project(project_dir: Path | None = None) -> _SnapProject:
             raise craft_application.errors.ProjectDirectoryTypeError(
                 snap_project.project_file,
                 details="The 'snap' name is reserved for the project directory.",
-                resolution="Rename or delete any file named 'snap'.",
+                resolution="Rename or remove the file named 'snap'.",
             )
 
         return snap_project
