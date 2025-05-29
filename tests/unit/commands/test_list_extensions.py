@@ -32,7 +32,15 @@ import snapcraft.commands
 )
 def test_command(emitter, command, fake_app_config):
     cmd = command(fake_app_config)
+
     cmd.run(Namespace())
+
+    if cmd.hidden:
+        emitter.assert_progress(
+            f"The '{cmd.name}' command is deprecated and will be removed "
+            "in an upcoming major release of Snapcraft. Use 'list-extensions' instead.",
+            permanent=True,
+        )
     emitter.assert_message(
         dedent(
             """\

@@ -108,6 +108,15 @@ class ExtensionsCommand(ListExtensionsCommand):
     name = "extensions"
     hidden = True
 
+    @overrides
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            "The 'extensions' command is deprecated and will be removed "
+            "in an upcoming major release of Snapcraft. Use 'list-extensions' instead.",
+            permanent=True,
+        )
+        super().run(parsed_args)
+
 
 class ExpandExtensionsCommand(AppCommand):
     """Expand the extensions in the snapcraft.yaml file."""

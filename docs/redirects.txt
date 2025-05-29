@@ -54,3 +54,13 @@
 "reference/parts_steps.rst" "reference/parts/parts-and-steps.rst"
 "reference/snap-build-process.rst" "reference/processes/snap-build-process.rst"
 "reference/snap-publishing-process.rst" "reference/processes/snap-publishing-process.rst"
+
+# reference/commands
+"reference/commands/list.rst" "reference/commands/names.rst"
+"reference/commands/list-registered.rst" "reference/commands/names.rst"
+"reference/commands/extensions.rst" "reference/commands/list-extensions.rst"
+"reference/commands/plugins.rst" "reference/commands/list-plugins.rst"
+"reference/commands/tracks.rst" "reference/commands/list-tracks.rst"
+"reference/commands/revisions.rst" "reference/commands/list-revisions.rst"
+"reference/commands/push.rst" "reference/commands/upload.rst"
+"reference/commands/snap.rst" "reference/commands/pack.rst"

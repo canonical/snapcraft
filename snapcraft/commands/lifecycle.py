@@ -137,8 +137,8 @@ class SnapCommand(PackCommand):
         **kwargs: Any,
     ) -> None:
         emit.progress(
-            "Warning: the 'snap' command is deprecated and will be removed "
-            "in a future release of Snapcraft. Use 'pack' instead.",
+            "The 'snap' command is deprecated and will be removed "
+            "in an upcoming major release of Snapcraft. Use 'pack' instead.",
             permanent=True,
         )
 

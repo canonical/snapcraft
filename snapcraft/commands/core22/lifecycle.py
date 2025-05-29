@@ -298,6 +298,15 @@ class SnapCommand(_LifecycleCommand):
             help="Path to the resulting snap",
         )
 
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            "The 'snap' command is deprecated and will be removed "
+            "in an upcoming major release of Snapcraft. Use 'pack' instead.",
+            permanent=True,
+        )
+        super().run(parsed_args)
+
 
 class CleanCommand(_LifecycleStepCommand):
     """Remove part assets."""
