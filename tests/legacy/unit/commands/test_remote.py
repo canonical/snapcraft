@@ -79,7 +79,7 @@ class RemoteBuildTests(CommandBaseTestCase):
             result.output,
             Not(
                 Contains(
-                    "Using the legacy remote builder for core22 snaps is deprecated and will "
+                    "The legacy remote builder for core22 snaps is deprecated and will "
                     "be removed in an upcoming major release of Snapcraft. "
                     "See https://documentation.ubuntu.com/snapcraft/stable/explanation/remote-build/#versions "
                     "for more information."
@@ -104,7 +104,7 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.assertThat(
             result.output,
             Contains(
-                "Using the legacy remote builder for core22 snaps is deprecated and will "
+                "The legacy remote builder for core22 snaps is deprecated and will "
                 "be removed in an upcoming major release of Snapcraft. "
                 "See https://documentation.ubuntu.com/snapcraft/stable/explanation/remote-build/#versions "
                 "for more information."

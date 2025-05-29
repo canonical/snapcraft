@@ -131,7 +131,7 @@ def remote_build(
 
     if base == "core22":
         echo.warning(
-            "Using the legacy remote builder for core22 snaps is deprecated and will "
+            "The legacy remote builder for core22 snaps is deprecated and will "
             "be removed in an upcoming major release of Snapcraft. "
             "See https://documentation.ubuntu.com/snapcraft/stable/explanation/remote-build/#versions "
             "for more information."

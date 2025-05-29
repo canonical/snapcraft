@@ -52,12 +52,15 @@ It does not modify the project or project metadata.
 Legacy
 ^^^^^^
 
+.. admonition:: Deprecation notice
+    :class: important
+
+    The legacy remote builder will be removed in an upcoming major release
+    of Snapcraft
+
 The "fallback" or legacy version of the remote builder can be used for
 ``core20`` and ``core22`` snaps.  It is not available for ``core24`` and newer
 snaps.
-
-Support for the legacy version of the remote builder for ``core22`` snaps will be
-removed in an upcoming major release of Snapcraft.
 
 The legacy remote builder was deprecated because of its design. It retrieves and
 tarballs remote sources and modifies the project file to point to the local tarballs.
