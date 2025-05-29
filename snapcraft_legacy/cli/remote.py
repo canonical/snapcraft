@@ -125,9 +125,17 @@ def remote_build(
         build_on = build_for
 
     try:
-        project._get_build_base()
+        base = project._get_build_base()
     except RuntimeError:
         raise errors.BaseRequiredError()
+
+    if base == "core22":
+        echo.warning(
+            "Using the legacy remote builder for core22 snaps is deprecated and will "
+            "be removed in an upcoming major release of Snapcraft. "
+            "See https://documentation.ubuntu.com/snapcraft/stable/explanation/remote-build/#versions "
+            "for more information."
+        )
 
     if not build_id:
         # If the option wasn't provided, use the project directory hash
