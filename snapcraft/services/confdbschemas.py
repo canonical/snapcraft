@@ -132,7 +132,7 @@ class ConfdbSchemas(Assertion):
             body=_CONFDB_SCHEMA_BODY_TEMPLATE,
             name=name,
             revision=1,
-            summary="Summary of the confdb-schema",
+            summary="\nsummary: Summary of the confdb-schema",
         )
 
     @override

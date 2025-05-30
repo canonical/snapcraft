@@ -202,7 +202,7 @@ def test_confdb_schema_assertion_marshal_as_str():
     assert assertion_dict["revision"] == "10"
 
 
-def test_confdb_schema_assertion_with_summaries(check):
+def test_confdb_schema_assertion_with_summary(check):
     """Test that summaries are set correctly when provided."""
     assertion = ConfdbSchemaAssertion.unmarshal(
         {
