@@ -19,6 +19,7 @@ import io
 import pathlib
 from textwrap import dedent
 
+import craft_application.errors
 import pytest
 
 from snapcraft import errors
@@ -264,7 +265,7 @@ def test_get_snap_project_snap_not_a_directory(project, project_dir, new_dir):
     project_dir.mkdir(parents=True, exist_ok=True)
     (project_dir / "snap").touch()
 
-    with pytest.raises(Exception) as raised:
+    with pytest.raises(craft_application.errors.ProjectDirectoryTypeError) as raised:
         yaml_utils.get_snap_project(project_dir)
 
     assert "Given project directory path is not a directory:" in str(raised.value)
