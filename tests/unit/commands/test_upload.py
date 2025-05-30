@@ -102,6 +102,12 @@ def test_default(
         )
     )
 
+    if command_class.hidden:
+        emitter.assert_progress(
+            f"The '{command_class.name}' command is deprecated and will be removed "
+            "in an upcoming major release of Snapcraft. Use 'upload' instead.",
+            permanent=True,
+        )
     assert fake_store_verify_upload.mock_calls == [call(ANY, snap_name="basic")]
     assert fake_store_notify_upload.mock_calls == [
         call(

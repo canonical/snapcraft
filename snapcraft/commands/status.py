@@ -430,6 +430,15 @@ class StoreTracksCommand(StoreListTracksCommand):
     name = "tracks"
     hidden = True
 
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            "The 'tracks' command is deprecated and will be removed "
+            "in an upcoming major release of Snapcraft. Use 'list-tracks' instead.",
+            permanent=True,
+        )
+        super().run(parsed_args)
+
 
 class StoreListRevisionsCommand(AppCommand):
     """List revisions of a published snap."""
@@ -549,3 +558,12 @@ class StoreRevisionsCommand(StoreListRevisionsCommand):
 
     name = "revisions"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            "The 'revisions' command is deprecated and will be removed "
+            "in an upcoming major release of Snapcraft. Use 'list-revisions' instead.",
+            permanent=True,
+        )
+        super().run(parsed_args)

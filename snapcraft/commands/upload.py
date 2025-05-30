@@ -218,3 +218,12 @@ class StoreLegacyPushCommand(StoreUploadCommand):
 
     name = "push"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            "The 'push' command is deprecated and will be removed "
+            "in an upcoming major release of Snapcraft. Use 'upload' instead.",
+            permanent=True,
+        )
+        super().run(parsed_args)
