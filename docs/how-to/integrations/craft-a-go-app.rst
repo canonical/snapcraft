@@ -36,7 +36,7 @@ Add a part written in Go
     :start-at: parts:
 
 
-Go parts are built with the `Go plugin <https://snapcraft.io/docs/go-plugin>`_.
+Go parts are built with the :ref:`craft_parts_go_plugin`.
 
 To declare a Go part:
 

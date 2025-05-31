@@ -34,10 +34,9 @@ To resolve an unused library:
      - Snapcraft may falsely flag dynamic loading libraries as unused. In this case,
        don't change its declaration in the recipe. Moving or removing it has a high risk
        of causing your app to malfunction at runtime. Instead, list it in the
-       `lint.ignore.<linter> key <https://snapcraft.io/docs/linters>`_ to suppress the
-       warning for this library.
+       :literalref:`lint.ignore<how-to-disable-a-linter-ignore-specific-files>` key to
+       suppress the warning for this library.
 
 
-See `Build and staging dependencies
-<https://snapcraft.io/docs/build-and-staging-dependencies>`_ for further details about
-the ``stage-packages`` key.
+See :ref:`how-to-manage-dependencies` for further details about the ``stage-packages``
+key.

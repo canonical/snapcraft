@@ -207,7 +207,7 @@ def test_PackageRepositoriesValidationError():
     )
     assert error.get_resolution() == "some way to fix"
     assert error.get_details() is None
-    assert error.get_docs_url() == "https://snapcraft.io/docs/package-repositories"
+    assert error.get_docs_url() == "https://documentation.ubuntu.com/snapcraft/stable/reference/package-repositories"
     assert error.get_reportable() is False
 
 

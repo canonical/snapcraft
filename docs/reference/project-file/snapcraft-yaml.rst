@@ -10,6 +10,8 @@ For keys that refer to file and directory locations, paths are always relative t
 snap's file system, not the host.
 
 
+.. _reference-snapcraft-yaml-top-level-keys:
+
 Top-level keys
 --------------
 

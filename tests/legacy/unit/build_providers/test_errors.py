@@ -403,7 +403,7 @@ class TestSnapcraftExceptionTests:
                 "expected_brief": "The 'LXD' provider does not support base 'core29'",
                 "expected_resolution": "Ensure build-base or base are correct in the snapcraft.yaml file.",
                 "expected_details": None,
-                "expected_docs_url": "https://snapcraft.io/docs/base-snaps",
+                "expected_docs_url": "https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base",
                 "expected_reportable": False,
             },
         ),

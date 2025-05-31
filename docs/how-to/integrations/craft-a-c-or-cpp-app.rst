@@ -39,10 +39,9 @@ Add a part written in C or C++
 C and C++ parts are built with the ``autotools``, ``make``, or ``cmake``
 plugins.
 
-The project file uses the `autotools plugin
-<https://snapcraft.io/docs/the-autotools-plugin>`_, and a special
-``autotools-configure-parameters`` key to override the autotools command's
-``--prefix`` argument, which would typically default to ``/usr/local``.
+The project file uses the :ref:`craft_parts_autotools_plugin`, and a special
+``autotools-configure-parameters`` key to override the autotools command's ``--prefix``
+argument, which would typically default to ``/usr/local``.
 
 To declare a part written in C or C++:
 

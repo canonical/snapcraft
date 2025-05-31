@@ -9,8 +9,8 @@ store profile. This information is sometimes referred to as *metadata*.
 
 Package information is declared through a mixture of required and optional keys. Most of
 this guide focuses on the required keys. For a list of all the keys, review the
-top-level directives in the `snapcraft.yaml reference
-<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-top-level-directives>`_.
+:ref:`top-level keys <reference-snapcraft-yaml-top-level-keys>` in the
+``snapcraft.yaml`` reference.
 
 
 Configure the required information
@@ -87,6 +87,8 @@ When crafting a snap, fill these keys as follows:
         unsandboxed package, you can :ref:`enable classic confinement
         <how-to-enable-classic-confinement>`.
 
+
+.. _configure-package-information-reuse-information:
 
 Reuse information
 -----------------
@@ -236,6 +238,8 @@ There are three methods to provide a desktop menu entry:
     The icon in the desktop entry is separate from the ``icon`` key. The latter is used
     in graphical front ends, like the snap's profile in the Snap Store.
 
+
+.. _how-to-configure-package-information-desktop-entry-copy-file:
 
 Copy the desktop entry from the app's files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

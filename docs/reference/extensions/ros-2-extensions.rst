@@ -18,17 +18,17 @@ There are three extensions in this family, each for a different version of ROS 2
 
     * - ROS 2 Foxy
       - ``ros2-foxy``
-      - `ROS 2 Foxy Fitzroy <https://docs.ros.org/en/foxy/index.html>`_
+      - :ref:`ROS 2 Foxy Fitzroy <reference-ros-2-content-extensions>`
       - core20
 
     * - ROS 2 Humble
       - ``ros2-humble``
-      - `ROS 2 Humble Hawksbill <https://docs.ros.org/en/humble/index.html>`_
+      - :ref:`ROS 2 Humble Hawksbill <reference-ros-2-content-extensions>`
       - core22
 
     * - ROS 2 Jazzy
       - ``ros2-jazzy``
-      - `ROS 2 Jazzy Jalisco <https://docs.ros.org/en/jazzy/index.html>`_
+      - :ref:`ROS 2 Jazzy Jalisco <reference-ros-2-content-extensions>`
       - core24
 
         :ref:`Experimental extensions enabled <how-to-enable-experimental-extensions>`

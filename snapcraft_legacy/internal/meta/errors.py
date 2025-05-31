@@ -195,7 +195,7 @@ class PackageRepositoryValidationError(errors.SnapcraftException):
         return self.details
 
     def get_docs_url(self) -> str:
-        return "https://snapcraft.io/docs/package-repositories"
+        return "https://documentation.ubuntu.com/snapcraft/stable/reference/package-repositories"
 
 
 class SystemUsernamesValidationError(errors.SnapcraftException):

@@ -37,8 +37,7 @@ Add a part written in Node
     :start-at: parts:
     :end-at: npm-node-version: 14.16.1
 
-Node parts are built with the `npm plugin
-<https://snapcraft.io/docs/npm-plugin>`_.
+Node parts are built with the :ref:`craft_parts_npm_plugin`.
 
 To declare a Node part:
 

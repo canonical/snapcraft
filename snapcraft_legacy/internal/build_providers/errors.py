@@ -135,7 +135,7 @@ class ProviderInvalidBaseError(_SnapcraftException):
         return "Ensure build-base or base are correct in the snapcraft.yaml file."
 
     def get_docs_url(self) -> str:
-        return "https://snapcraft.io/docs/base-snaps"
+        return "https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base"
 
 
 class ProviderStartError(_GenericProviderError):

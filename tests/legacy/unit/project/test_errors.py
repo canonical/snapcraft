@@ -81,7 +81,7 @@ def test_UnsupportedBaseError_core():
         error.get_resolution()
         == "Switch to Snapcraft's 4.x channel track or consider upgrading to a newer base."
     )
-    assert error.get_docs_url() == "https://snapcraft.io/docs/base-snaps"
+    assert error.get_docs_url() == "https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base"
     assert error.get_exit_code() == 2
 
 
@@ -94,5 +94,5 @@ def test_UnsupportedBaseError_other():
     )
     assert error.get_details() is None
     assert error.get_resolution() == "Ensure a valid base is set in 'snapcraft.yaml'."
-    assert error.get_docs_url() == "https://snapcraft.io/docs/base-snaps"
+    assert error.get_docs_url() == "https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base"
     assert error.get_exit_code() == 2

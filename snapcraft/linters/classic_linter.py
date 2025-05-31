@@ -24,7 +24,7 @@ from snapcraft.elf import ElfFile, Patcher, SonameCache, elf_utils, errors
 
 from .base import Linter, LinterIssue, LinterResult
 
-_HELP_URL = "https://snapcraft.io/docs/linters-classic"
+_HELP_URL = "https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-classic-linter"
 
 
 class ClassicLinter(Linter):

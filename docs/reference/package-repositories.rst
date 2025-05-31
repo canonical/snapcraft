@@ -4,8 +4,8 @@ Package repositories
 ====================
 
 When building a snap and constructing a part, package dependencies are listed as either
-package names or snaps for the snap's build environment. This is covered in `Build and
-staging dependencies <https://snapcraft.io/docs/build-and-staging-dependencies>`_.
+package names or snaps for the snap's build environment. This is covered in
+:ref:`how-to-manage-dependencies`.
 
 For a default Snapcraft installation, the build environment is invariably some version
 of Ubuntu. Consequently, dependencies are listed using their APT package names and are

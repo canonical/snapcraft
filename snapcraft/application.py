@@ -180,7 +180,7 @@ class Snapcraft(Application):
                         f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
                         "is correctly exported into the environment"
                     ),
-                    docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+                    docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate",
                 )
             )
             return_code = 1

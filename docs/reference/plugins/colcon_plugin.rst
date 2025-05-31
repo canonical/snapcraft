@@ -1,4 +1,4 @@
-.. _reference_colcon_plugin:
+.. _reference-colcon-plugin:
 
 Colcon plugin
 =============

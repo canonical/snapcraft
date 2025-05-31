@@ -34,6 +34,8 @@ They add a configuration option for specifying the server's port.
 For a standard setup, recreate their implementation in your project.
 
 
+.. _how-to-add-a-snap-configuration-configure-hook:
+
 Add the configure hook script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -70,6 +72,8 @@ server and making sure the changes have taken hold:
     }
     handle_port_config
 
+
+.. _how-to-add-a-snap-configuration-default-configure-hook:
 
 Add the default-configure hook script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

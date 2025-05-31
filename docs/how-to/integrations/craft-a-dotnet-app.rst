@@ -33,8 +33,7 @@ Add a part written for .NET
     :start-at: parts:
     :end-at: - libicu70
 
-.NET parts are built with the `dotnet plugin
-<https://snapcraft.io/docs/dotnet-plugin>`_.
+.NET parts are built with the :ref:`craft_parts_dotnet_plugin`.
 
 To add a .NET part:
 

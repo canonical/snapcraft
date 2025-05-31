@@ -612,7 +612,7 @@ class StrangeExceptionSimple(errors.SnapcraftException):
         return "i ain't afraid of no ghosts"
 
     def get_docs_url(self):
-        return "https://docs.snapcraft.io/the-snapcraft-format/8337"
+        return "https://documentation.ubuntu.com/snapcraft/stable/reference/project-file"
 
 
 class StrangeExceptionWithFormatting(errors.SnapcraftException):
@@ -633,7 +633,7 @@ class StrangeExceptionWithFormatting(errors.SnapcraftException):
         return "i ain't afraid of no ghosts: {}".format(self._ghosts)
 
     def get_docs_url(self):
-        return "https://docs.snapcraft.io/the-snapcraft-format/8337"
+        return "https://documentation.ubuntu.com/snapcraft/stable/reference/project-file"
 
 
 class TestSnapcraftExceptionTests:
@@ -646,7 +646,7 @@ class TestSnapcraftExceptionTests:
                 "expected_brief": "something's strange, in the neighborhood",
                 "expected_resolution": "who you gonna call? ghostbusters!!",
                 "expected_details": "i ain't afraid of no ghosts",
-                "expected_docs_url": "https://docs.snapcraft.io/the-snapcraft-format/8337",
+                "expected_docs_url": "https://documentation.ubuntu.com/snapcraft/stable/reference/project-file",
                 "expected_reportable": False,
             },
         ),
@@ -662,7 +662,7 @@ class TestSnapcraftExceptionTests:
                 "expected_brief": "something's strange, in the neighborhood of Times Square",
                 "expected_resolution": "who you gonna call? Janine Melnitz!!",
                 "expected_details": "i ain't afraid of no ghosts: ['slimer', 'puft', 'vigo']",
-                "expected_docs_url": "https://docs.snapcraft.io/the-snapcraft-format/8337",
+                "expected_docs_url": "https://documentation.ubuntu.com/snapcraft/stable/reference/project-file",
                 "expected_reportable": False,
             },
         ),

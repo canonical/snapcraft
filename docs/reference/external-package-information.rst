@@ -29,7 +29,8 @@ AppStream
 `AppStream`_ is a metadata standard used to describe a common set of software
 components. It can be parsed by Snapcraft to provide the ``title``, ``version``,
 ``summary``, ``description``, and ``icon`` keys for a snap, along with the location of
-an app's `desktop <https://snapcraft.io/docs/desktop-menu-support>`_ file.
+an app's :ref:`desktop <how-to-configure-package-information-desktop-entry-copy-file>`
+file.
 
 The following is a typical example from an upstream project.
 
@@ -82,9 +83,9 @@ configuration:
         source: http://github.com/example/sampleapp.git
         parse-info: [usr/share/metainfo/com.example.sampleapp.appdata.xml]
 
-The path in ``parse-info`` is a relative path from the `part source, build, or install
-directories <https://snapcraft.io/docs/parts-lifecycle#heading--parts-directories>`_
-(``CRAFT_PART_SRC``, ``CRAFT_PART_BUILD``, ``CRAFT_PART_INSTALL``).
+The path in ``parse-info`` is a relative path from the :ref:`part source, build, or
+install directories <explanation-parts-lifecycle-directories>` (``CRAFT_PART_SRC``,
+``CRAFT_PART_BUILD``, ``CRAFT_PART_INSTALL``).
 
 The resulting snap will set the ``title``, ``version``, ``summary``, ``description``, ``license``, ``contact``,
 ``donation``, ``issues``, ``source-code`` and ``website`` from the AppStream file.

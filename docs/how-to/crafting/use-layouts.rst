@@ -9,8 +9,8 @@ host system at runtime. They can make files, folders, and links in ``$SNAP``,
 ``/var``, and ``/etc``. These connections between the snap and host aren't routed for
 other snaps.
 
-Layouts can help `hooks <https://snapcraft.io/docs/supported-snap-hooks>`_ access any
-executables they may require.
+Layouts can help :ref:`hooks <reference-hooks>` access any executables they may
+require.
 
 
 Define a layout
