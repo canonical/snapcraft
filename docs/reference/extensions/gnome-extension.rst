@@ -191,10 +191,9 @@ The following environment variables are exported when the app runs:
 Included layouts
 ----------------
 
-This extension uses `layouts <https://snapcraft.io/docs/snap-layouts>`_ to access files
-on the host. The platform snap's GNOME JavaScript (GJS), webkit2gtk-4.0, and iso-codes
-are used so they don't need to be packaged as part of the snap and would greatly inflate
-the size.
+This extension uses :ref:`layouts <reference-layouts>` to access files on the host. The
+platform snap's GNOME JavaScript (GJS), webkit2gtk-4.0, and iso-codes are used so they
+don't need to be packaged as part of the snap and would greatly inflate the size.
 
 .. tabs::
 

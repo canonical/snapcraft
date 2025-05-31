@@ -18,37 +18,29 @@ During build, a part goes through five steps:
 
 1. **Pull**. Downloads or otherwise retrieves the components needed to build the part.
 
-   The
-   :literalref:`source<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-source-88>`
-   keys of a part specify which components to retrieve. For instance, if ``source``
-   points to a Git repository, the pull step will clone that repository.
+   The ``source`` key of a part specify which components to retrieve. For instance, if
+   ``source`` points to a Git repository, the pull step will clone that repository.
 
 2. **Build**. Constructs the part from the previously pulled components.
 
-   The
-   :literalref:`plugin<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-plugin-85>`
-   of a part specifies how it is constructed. The `Meson plugin
-   <https://snapcraft.io/docs/meson-plugin>`_, for example, runs ``meson`` and ``ninja``
-   to compile source code.
+   The ``plugin`` key of a part specifies how it is constructed. The
+   :ref:`craft_parts_meson_plugin`, for example, runs ``meson`` and ``ninja`` to compile
+   source code.
 
    Each part is built in a separate directory, but it can use the contents of the
    staging area if it specifies a dependency on other parts using the ``after`` key. See
    the :ref:`Processing order and dependencies
    <explanation-parts-lifecycle-processing-order>` section for details.
 
-   The
-   :literalref:`organize<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-organize-79>`
-   key moves and renames files.
+   The ``organize`` key moves and renames files.
 
 3. **Stage**. Copies the built components into the staging area.
 
    This is the first time all the different parts that make up the snap are actually
    placed in the same directory. It's possible for multiple parts to provide clashing
-   file names. The
-   :literalref:`stage<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-stage-97>`
-   key allows or blocks files coming from the part to circumvent such conflicts. It's
-   also used to filter out files that aren't required in the snap itself, such as build
-   files specific to a single part.
+   file names. The ``stage`` key allows or blocks files coming from the part to
+   circumvent such conflicts. It's also used to filter out files that aren't required in
+   the snap itself, such as build files specific to a single part.
 
 4. **Prime**. Copies the staged components into the priming area.
 
@@ -56,10 +48,8 @@ During build, a part goes through five steps:
    the staging area. The prime step exists because the staging area might still contain
    files that are required for the build but not for the snap. For example, if a part
    downloads and installs a compiler, then this part should be staged so that other
-   parts can use the compiler during build. The
-   :literalref:`prime<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-prime-86>`
-   key could then filter the compiler from the priming area, so it doesn't take up space
-   inside the snap.
+   parts can use the compiler during build. The ``prime`` key could then filter the
+   compiler from the priming area, so it doesn't take up space inside the snap.
 
    The ``permissions`` key controls file permissions.
 
@@ -94,6 +84,8 @@ To enter the part environment at any stage, add the ``--shell`` argument to thes
 commands. For example, ``snapcraft prime --shell`` will run up to the prime step and
 open a shell. See :ref:`iterate-on-the-build-lifecycle` for more practical details.
 
+
+.. _explanation-parts-lifecycle-directories:
 
 Directories
 -----------
@@ -255,8 +247,8 @@ Learn more
 
 For more information about the parts lifecycle, see the following resources:
 
-- `Parts environment variables <https://snapcraft.io/docs/parts-environment-variables>`_
-  has a list of part-specific environment variables that can be accessed at build time.
+- :ref:`reference-part-environment-variables` has a list of part-specific environment
+  variables that can be accessed at build time.
 - :ref:`Scriptlets <reference-external-package-scriptlets>` has
   more details on how to override steps.
 - :external+craft-parts:doc:`Lifecycle <common/craft-parts/explanation/lifecycle>`

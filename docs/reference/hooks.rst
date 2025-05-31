@@ -41,9 +41,7 @@ Hook names
 ----------
 
 The filename of the executable should be the name of the hook. If the file
-exists, snapd will execute the file when required by that hook’s action. See
-`Supported snap hooks <https://snapcraft.io/docs/supported-snap-hooks>`_
-for details on supported hooks.
+exists, snapd will execute the file when required by that hook’s action.
 
 Adding hooks to a snap
 ----------------------
@@ -90,8 +88,7 @@ Accessing resources
 -------------------
 
 If a hook requires access to system resources outside of a snap’s confined environment,
-it needs to use `interfaces <https://snapcraft.io/docs/interface-management>`_ to
-access those resources.
+it needs to use :ref:`interfaces <explanation-interfaces>` to access those resources.
 
 The following example registers an install hook making use of the `network
 <https://snapcraft.io/docs/network-interface>`_ interface:
@@ -104,5 +101,5 @@ The following example registers an install hook making use of the `network
         plugs: [network]
 
 Snapd executes hooks with no parameters. If a hook needs to request or modify
-information, they can use the snapctl tool. See `Using the snapctl tool
-<https://snapcraft.io/docs/using-snapctl>`_ for details.
+information, they can use the snapctl tool. See
+:ref:`how-to-customize-the-build-and-part-variables` for details.

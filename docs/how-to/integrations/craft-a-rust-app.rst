@@ -35,7 +35,7 @@ Add a part written in Rust
     :start-at: parts:
     :end-at: source: .
 
-Rust parts are built with the `Rust plugin <https://snapcraft.io/docs/rust-plugin>`_.
+Rust parts are built with the :ref:`craft_parts_rust_plugin`.
 
 This project file bundles the current stable release of Rust in the snap using
 Rustup. Dependencies from the project's ``Cargo.toml`` are also bundled.
