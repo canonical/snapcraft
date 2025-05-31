@@ -88,7 +88,7 @@ class TestSnapcraftExceptionHandling(unit.TestCase):
         exception._brief = "something's strange, in the neighborhood"
         exception._resolution = "who you gonna call? ghostbusters!!"
         exception._details = "i ain't afraid of no ghosts"
-        exception._docs_url = "https://docs.snapcraft.io/the-snapcraft-format/8337"
+        exception._docs_url = "https://documentation.ubuntu.com/snapcraft/stable/reference/project-file"
 
         _print_exception_message(exception)
         self.error_mock.assert_called_once_with(
@@ -101,7 +101,7 @@ Detailed information:
 i ain't afraid of no ghosts
 
 For more information, check out:
-https://docs.snapcraft.io/the-snapcraft-format/8337"""
+https://documentation.ubuntu.com/snapcraft/stable/reference/project-file"""
         )
 
     def test_snapcraft_exception_minimal(self):
@@ -129,7 +129,7 @@ who you gonna call? ghostbusters!!"""
         exception = SnapcraftTException()
         exception._brief = "something's strange, in the neighborhood"
         exception._resolution = "who you gonna call? ghostbusters!!"
-        exception._docs_url = "https://docs.snapcraft.io/the-snapcraft-format/8337"
+        exception._docs_url = "https://documentation.ubuntu.com/snapcraft/stable/reference/project-file"
 
         _print_exception_message(exception)
         self.error_mock.assert_called_once_with(
@@ -139,7 +139,7 @@ Recommended resolution:
 who you gonna call? ghostbusters!!
 
 For more information, check out:
-https://docs.snapcraft.io/the-snapcraft-format/8337"""
+https://documentation.ubuntu.com/snapcraft/stable/reference/project-file"""
         )
 
     def test_snapcraft_exception_reportable(self):
