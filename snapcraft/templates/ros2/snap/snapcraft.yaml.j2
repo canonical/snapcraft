@@ -12,10 +12,10 @@ description: |
 # Bases have a 1:1 correspondence with ROS 2 LTS distributions.
 base: core24
 
-# Use 'devmode' while developing until you have the right plugs and slots.
-confinement: strict
-# Use 'devel' while developing to prevent pushing the snap to either of the 'candidate' or 'stable' track on the store
-grade: stable
+# use 'strict' once you have the right plugs and slots
+confinement: devmode
+# must be 'stable' to release into candidate/stable channels
+grade: devel
 
 # The applications exposed by the snap.
 apps:
