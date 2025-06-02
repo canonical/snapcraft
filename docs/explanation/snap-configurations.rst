@@ -63,8 +63,8 @@ Default values
 --------------
 
 The snap daemon has no concept of *default values* for configuration options. Actions
-for these values need to be implemented by the snap developer using the `configure hook
-<how-to-add-a-snap-configuration-hook-script>`.
+for these values need to be implemented by the snap developer using the :ref:`configure
+hook <how-to-add-a-snap-configuration-configure-hook>`.
 
 When a user resets a configuration option with ``snap unset``, or installs a snap, the
 configure hook is run and the snap developer can therefore use this hook to check when

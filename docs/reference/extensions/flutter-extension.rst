@@ -6,7 +6,7 @@ Flutter extension
 The Flutter family of extensions help fill in common settings for software built with
 the `Flutter <https://flutter.dev>`__ framework.
 
-.. Missing link to Flutter plugin
+.. SNAPCRAFT-1123: Missing link to Flutter plugin.
 
 The Flutter extensions require Snapcraft 7 and lower and are currently only supported
 with the core18 base. Snaps using cores higher than core18 should instead use the

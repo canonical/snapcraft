@@ -1292,11 +1292,11 @@ class Project(models.Project):
     with a hyphen. The maximum length is 40 characters.
 
     The name must be unique if you want to `publish it to the Snap Store
-    <https://documentation.ubuntu.com/snapcraft/latest/how-to/publishing/publish-a-snap>`_.
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/publish-a-snap>`_.
 
     For help on choosing a name and registering it on the Snap Store, see `Register a
     snap
-    <https://documentation.ubuntu.com/snapcraft/latest/how-to/publishing/register-a-snap>`_.
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/register-a-snap>`_.
     """
 
     build_base: str | None = pydantic.Field(
@@ -1347,7 +1347,7 @@ class Project(models.Project):
     key.
 
     See `Configure package information
-    <https://documentation.ubuntu.com/snapcraft/latest/how-to/crafting/configure-package-information>`_
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_
     for details.
     """
 
@@ -1361,7 +1361,7 @@ class Project(models.Project):
     Donation links can be adopted from appstream metadata files.
 
     See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/latest/how-to/crafting/configure-package-information/#reuse-information>`_
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
     for details.
     """
 
@@ -1376,7 +1376,7 @@ class Project(models.Project):
     Source code links can be adopted from appstream metadata files.
 
     See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/latest/how-to/crafting/configure-package-information/#reuse-information>`_
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
     for details.
     """
 
@@ -1390,7 +1390,7 @@ class Project(models.Project):
     Contact information can be adopted from appstream metadata files.
 
     See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/latest/how-to/crafting/configure-package-information/#reuse-information>`_
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
     for details.
     """
 
@@ -1405,7 +1405,7 @@ class Project(models.Project):
     Issue links can be adopted from appstream metadata files.
 
     See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/latest/how-to/crafting/configure-package-information/#reuse-information>`_
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
     for details.
     """
 
@@ -1419,7 +1419,7 @@ class Project(models.Project):
     Websites can be adopted from appstream metadata files.
 
     See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/latest/how-to/crafting/configure-package-information/#reuse-information>`_
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
     for details.
     """
 

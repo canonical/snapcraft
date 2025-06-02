@@ -33,7 +33,7 @@ Add an app written for Flutter
     :start-at: parts:
     :end-at: flutter-target: lib/main.dart
 
-.. Missing link to Flutter plugin
+.. SNAPCRAFT-1123: Missing link to Flutter plugin.
 
 Flutter parts are built with the Flutter plugin.
 
