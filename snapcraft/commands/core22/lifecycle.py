@@ -301,7 +301,7 @@ class SnapCommand(_LifecycleCommand):
     @overrides
     def run(self, parsed_args: argparse.Namespace):
         emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new="pack"),
             permanent=True,
         )
         super().run(parsed_args)
