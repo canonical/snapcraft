@@ -222,8 +222,8 @@ class TestNames:
 
         if command_class.hidden:
             emitter.assert_progress(
-                f"The '{command_class.name}' command is deprecated and will be removed "
-                "in an upcoming major release of Snapcraft. Use 'names' instead.",
+                f"The '{command_class.name}' command was renamed to 'names'. Use 'names' instead. "
+                "The old name will be removed in a future release.",
                 permanent=True,
             )
         emitter.assert_message(
@@ -250,8 +250,8 @@ class TestNames:
 
         if command_class.hidden:
             emitter.assert_progress(
-                f"The '{command_class.name}' command is deprecated and will be removed "
-                "in an upcoming major release of Snapcraft. Use 'names' instead.",
+                f"The '{command_class.name}' command was renamed to 'names'. Use 'names' instead. "
+                "The old name will be removed in a future release.",
                 permanent=True,
             )
 

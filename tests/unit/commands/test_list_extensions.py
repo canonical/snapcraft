@@ -37,8 +37,8 @@ def test_command(emitter, command, fake_app_config):
 
     if cmd.hidden:
         emitter.assert_progress(
-            f"The '{cmd.name}' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'list-extensions' instead.",
+            f"The '{cmd.name}' command was renamed to 'list-extensions'. Use 'list-extensions' instead. "
+            "The old name will be removed in a future release.",
             permanent=True,
         )
     emitter.assert_message(

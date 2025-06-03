@@ -697,8 +697,8 @@ def test_list_tracks(emitter, command_class, fake_app_config):
 
     if command_class.hidden:
         emitter.assert_progress(
-            f"The '{command_class.name}' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'list-tracks' instead.",
+            f"The '{command_class.name}' command was renamed to 'list-tracks'. Use 'list-tracks' instead. "
+            "The old name will be removed in a future release.",
             permanent=True,
         )
     emitter.assert_message(
@@ -728,8 +728,8 @@ def test_list_revisions(emitter, command_class, fake_app_config):
 
     if command_class.hidden:
         emitter.assert_progress(
-            f"The '{command_class.name}' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'list-revisions' instead.",
+            f"The '{command_class.name}' command was renamed to 'list-revisions'. Use 'list-revisions' instead. "
+            "The old name will be removed in a future release.",
             permanent=True,
         )
     emitter.assert_message(

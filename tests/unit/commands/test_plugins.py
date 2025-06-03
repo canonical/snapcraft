@@ -55,8 +55,8 @@ def test_registered_plugins_default(command, emitter, fake_app_config):
 
     if command.hidden:
         emitter.assert_progress(
-            f"The '{command.name}' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'list-plugins' instead.",
+            f"The '{command.name}' command was renamed to 'list-plugins'. Use 'list-plugins' instead. "
+            "The old name will be removed in a future release.",
             permanent=True,
         )
     emitter.assert_message(

@@ -62,8 +62,8 @@ def test_core22_pack_command(mocker, cmd_class, emitter):
 
     if cmd_class.hidden:
         emitter.assert_progress(
-            f"The '{cmd_class.name}' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'pack' instead.",
+            f"The '{cmd_class.name}' command was renamed to 'pack'. Use 'pack' instead. "
+            "The old name will be removed in a future release.",
             permanent=True,
         )
     assert lifecycle_run_mock.mock_calls == [
@@ -90,8 +90,8 @@ def test_core22_pack_command_with_output(mocker, cmd_class, emitter):
 
     if cmd_class.hidden:
         emitter.assert_progress(
-            f"The '{cmd_class.name}' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'pack' instead.",
+            f"The '{cmd_class.name}' command was renamed to 'pack'. Use 'pack' instead. "
+            "The old name will be removed in a future release.",
             permanent=True,
         )
     assert lifecycle_run_mock.mock_calls == [
@@ -124,8 +124,8 @@ def test_snap_command_fallback(tmp_path, emitter, mocker, fake_services):
 
     mock_pack.assert_called_once()
     emitter.assert_progress(
-        "The 'snap' command is deprecated and will be removed "
-        "in an upcoming major release of Snapcraft. Use 'pack' instead.",
+        "The 'snap' command was renamed to 'pack'. Use 'pack' instead. "
+        "The old name will be removed in a future release.",
         permanent=True,
     )
 
@@ -155,8 +155,8 @@ def test_core24_snap(mocker, emitter, fake_services, tmp_path):
 
     if cmd.hidden:
         emitter.assert_progress(
-            f"The '{cmd.name}' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'pack' instead.",
+            f"The '{cmd.name}' command was renamed to 'pack'. Use 'pack' instead. "
+            "The old name will be removed in a future release.",
             permanent=True,
         )
     assert pack_mock.mock_calls[0] == call(tmp_path, output="test-output")
