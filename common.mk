@@ -149,6 +149,11 @@ ifneq ($(CI),)
 	@echo ::endgroup::
 endif
 
+.PHONY: lint-uv-lockfile
+lint-uv-lockfile: install-uv  ##- Check that uv.lock matches expectations from pyproject.toml
+	unset UV_FROZEN
+	uv lock --check
+
 .PHONY: lint-shellcheck
 lint-shellcheck:  ##- Lint shell scripts
 ifneq ($(CI),)
