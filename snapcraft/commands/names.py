@@ -28,7 +28,7 @@ from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
 
-from snapcraft import store, utils
+from snapcraft import const, store, utils
 
 if TYPE_CHECKING:
     import argparse
@@ -187,13 +187,24 @@ class StoreLegacyListCommand(StoreNamesCommand):
     hidden = True
 
     @overrides
-    def run(self, parsed_args: argparse.Namespace):
-        emit.progress("This command is deprecated: use 'names' instead", permanent=True)
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
         super().run(parsed_args)
 
 
-class StoreLegacyListRegisteredCommand(StoreLegacyListCommand):
+class StoreLegacyListRegisteredCommand(StoreNamesCommand):
     """Legacy command to list the snap names registered with the current account."""
 
     name = "list-registered"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)
