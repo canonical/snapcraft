@@ -250,12 +250,12 @@ The ``source`` key like before defines the URL or a path of the app code that
 needs to be downloaded for the build. It points to the original wethr project's
 source code.
 
-The ``override-pull`` key is an inline Bash script that runs during the pull
-step of the :ref:`part lifecycle <lifecycle>`. It's used to perform operations
-that can't be satisfied by the default pull operation in the lifecycle. In the
-wethr example, the listed commands are used to derive the correct version of
-the app, and set it using the craftctl scriptlet. More details about
-overrides can be found in :ref:`Overriding the default build <override_build>`.
+The ``override-pull`` key is an inline Bash script that runs during the pull step of the
+:ref:`part lifecycle <lifecycle>`. It's used to perform operations that can't be
+satisfied by the default pull operation in the lifecycle. In the wethr example, the
+listed commands are used to derive the correct version of the app, and set it using the
+craftctl scriptlet. More details about overrides can be found in
+:ref:`how-to-override-the-default-build`.
 
 The ``build-packages`` key defines the list of tools and libraries required to
 successfully build or compile the part. The build packages are obtained from
