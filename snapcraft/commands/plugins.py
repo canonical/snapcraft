@@ -111,8 +111,7 @@ class PluginsCommand(ListPluginsCommand):
     @overrides
     def run(self, parsed_args: argparse.Namespace) -> None:
         emit.progress(
-            "The 'plugins' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'list-plugins' instead.",
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
             permanent=True,
         )
         super().run(parsed_args)

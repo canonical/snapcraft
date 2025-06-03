@@ -30,7 +30,7 @@ from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
 
-from snapcraft import store
+from snapcraft import const, store
 from snapcraft.store.channel_map import ChannelMap, MappedChannel, Revision, SnapChannel
 
 if TYPE_CHECKING:
@@ -433,8 +433,7 @@ class StoreTracksCommand(StoreListTracksCommand):
     @overrides
     def run(self, parsed_args: argparse.Namespace):
         emit.progress(
-            "The 'tracks' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'list-tracks' instead.",
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
             permanent=True,
         )
         super().run(parsed_args)
@@ -562,8 +561,7 @@ class StoreRevisionsCommand(StoreListRevisionsCommand):
     @overrides
     def run(self, parsed_args: argparse.Namespace):
         emit.progress(
-            "The 'revisions' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'list-revisions' instead.",
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
             permanent=True,
         )
         super().run(parsed_args)

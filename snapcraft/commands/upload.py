@@ -29,7 +29,7 @@ from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from snapcraft import errors, store, utils
+from snapcraft import const, errors, store, utils
 from snapcraft.meta import SnapMetadata
 from snapcraft_legacy._store import get_data_from_snap_file
 
@@ -222,8 +222,7 @@ class StoreLegacyPushCommand(StoreUploadCommand):
     @overrides
     def run(self, parsed_args: argparse.Namespace):
         emit.progress(
-            "The 'push' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'upload' instead.",
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
             permanent=True,
         )
         super().run(parsed_args)

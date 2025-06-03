@@ -28,7 +28,7 @@ from craft_platforms import DebianArchitecture
 from overrides import overrides
 from pydantic import BaseModel
 
-from snapcraft import extensions, models
+from snapcraft import const, extensions, models
 from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
@@ -111,8 +111,7 @@ class ExtensionsCommand(ListExtensionsCommand):
     @overrides
     def run(self, parsed_args: argparse.Namespace) -> None:
         emit.progress(
-            "The 'extensions' command is deprecated and will be removed "
-            "in an upcoming major release of Snapcraft. Use 'list-extensions' instead.",
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
             permanent=True,
         )
         super().run(parsed_args)
