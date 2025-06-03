@@ -27,7 +27,6 @@ Languages
 - :ref:`how-to-craft-a-go-app`
 - :ref:`how-to-craft-a-rust-app`
 - :ref:`how-to-craft-a-node-app`
-- :ref:`how-to-craft-a-ruby-app`
 
 
 Frameworks
@@ -55,7 +54,6 @@ Frameworks
     craft-a-go-app
     craft-a-rust-app
     craft-a-node-app
-    craft-a-ruby-app
     craft-a-gtk4-app
     craft-a-gtk3-app
     craft-a-gtk2-app
