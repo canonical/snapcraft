@@ -1,5 +1,5 @@
 summary: test the 'craft-test' project
 
 execute: |
-  snap install --dangerous "$PROJECT_PATH"/spread/craft-test*.snap
+  snap install --dangerous "$CRAFT_ARTIFACT"
   craft-test.hello | MATCH "Hello, world!"
