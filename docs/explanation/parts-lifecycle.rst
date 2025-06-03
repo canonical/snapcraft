@@ -18,7 +18,7 @@ During build, a part goes through five steps:
 
 1. **Pull**. Downloads or otherwise retrieves the components needed to build the part.
 
-   The ``source`` key of a part specify which components to retrieve. For instance, if
+   The ``source`` key of a part specifies which components to retrieve. For instance, if
    ``source`` points to a Git repository, the pull step will clone that repository.
 
 2. **Build**. Constructs the part from the previously pulled components.
