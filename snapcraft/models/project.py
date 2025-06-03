@@ -1468,9 +1468,9 @@ class Project(models.Project):
           - Description
         * - ``strict``
           - Default for core20 and older bases. Use strict confinement.
-        * - ``devmode``
+        * - ``classic``
           - Use classic confinement.
-        * - ``strict``
+        * - ``devmode``
           - Use devmode confinement.
 
     """
@@ -1590,24 +1590,24 @@ class Project(models.Project):
 
     assumes: UniqueList[str] = pydantic.Field(
         default_factory=list,
-        description="The snapd features or minimum version of snapd required by the snap.",
+        description="The minimum version of snapd and its features that the snap requires from the host.",
         examples=["[snapd2.66, common-data-dir]"],
     )
-    """The snapd features or minimum version of snapd required by the snap.
+    """The minimum version of snapd and its features that the snap requires from the
+    host.
 
-    "If any requirement in the ``assumes`` field is not met, the snap will fail
-    to install.
+    If the host doesn't meet any of the requirements, snapd won't install the snap.
 
-    If a minimum version of snapd is required, it can be specified with
-    ``snapd<version>``.  Alternatively, some snapd features can be explicitly.
-    Features include:
+    You can declare both a snapd version and its features at the same time.
 
-    - ``common-data-dir``: support for common data directory across revisions of
-      a snap
-    - ``snap-env``: support for the “Environment:” feature in snap.yaml
-    - ``command-chain``: support for the “command-chain” feature for apps and
-      hooks in snap.yaml
-    - ``kernel-assets``: support for kernel assets in a ``gadget.yaml`` file"
+    List a minimum version of snapd with ``snapd<version>``.
+
+    List required snapd features by name:
+
+    - ``common-data-dir`` for the common data directory across revisions of a snap.
+    - ``snap-env`` for declaring runtime environment variables in the project file.
+    - ``command-chain`` for chaining commands in apps and hooks in the project file.
+    - ``kernel-assets`` for kernel assets declared in a gadget snap project file.
     """
 
     hooks: dict[str, Hook] | None = pydantic.Field(

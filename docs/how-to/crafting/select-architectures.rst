@@ -238,10 +238,13 @@ the ``all`` key.
 core24
 ^^^^^^
 
-platforms:
-  all:
-    build-on: [amd64]
-    build-for: [all]
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    platforms:
+      all:
+        build-on: [amd64]
+        build-for: [all]
 
 core22
 ^^^^^^
