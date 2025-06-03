@@ -107,3 +107,11 @@ class PluginsCommand(ListPluginsCommand):
 
     name = "plugins"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)
