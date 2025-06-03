@@ -38,7 +38,7 @@ the app so that all desktop functionality is correctly initialised. As desktop
 environment apps, they also need special configuration for AppStream and ``.desktop``
 file compatibility.
 
-To add a GTK4 app:
+To add a GTK3 app:
 
 #. Declare the general app keys, such as ``command``,
    ``plugs``, ``after``, and so on.
@@ -59,7 +59,7 @@ Add a part written for GTK3
 
 GTK3 parts are built with the :ref:`craft_parts_meson_plugin`.
 
-To add a GTK4 part:
+To add a GTK3 part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.

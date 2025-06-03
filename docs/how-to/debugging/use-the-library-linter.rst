@@ -26,7 +26,7 @@ To resolve an unused library:
 
    * - Static linking
      - Static linking libraries must only be present at build time. So, the part should
-       list the libnrary in its ``build-packages`` key, not ``stage-packages``. Again,
+       list the library in its ``build-packages`` key, not ``stage-packages``. Again,
        if the library contains other necessary assets for the snap, then move it into
        the part's ``stage`` key and prefix it with a minus sign (``-``).
 
