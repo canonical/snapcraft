@@ -43,7 +43,8 @@
 "howto/craft-a-snap/example-qt5-kde-app.rst" "how-to/integrations/craft-a-qt5-kde-app.rst"
 "howto/craft-a-snap/example-ros-1-app.rst" "how-to/integrations/craft-an-ros-1-app.rst"
 "howto/craft-a-snap/example-ros-2-app.rst" "how-to/integrations/craft-an-ros-2-app.rst"
-"howto/craft-a-snap/example-ruby-app.rst" "how-to/integrations/craft-a-ruby-app.rst"
+"howto/craft-a-snap/example-ruby-app.rst" "how-to/integrations/index.rst"
+"how-to/integrations/craft-a-ruby-app.rst" "how-to/integrations/index.rst"
 "howto/craft-a-snap/example-rust-app.rst" "how-to/integrations/craft-a-rust-app.rst"
 
 # reference
