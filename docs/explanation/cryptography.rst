@@ -41,7 +41,7 @@ build tools, and which build tools they use to download and verify dependencies.
     - Build tools used
     - Method of provisioning the build tools
 
-  * - :ref:`Colcon <reference_colcon_plugin>`
+  * - :ref:`Colcon <reference-colcon-plugin>`
     - ``colcon`` and ``rosdep``
     - Not provisioned
 
@@ -180,7 +180,7 @@ build tools are used to download and verify dependencies.
     - ``catkin`` and ``rosdep``
     - Not provisioned
 
-  * - :ref:`Colcon <reference_colcon_plugin>`
+  * - :ref:`Colcon <reference-colcon-plugin>`
     - ``colcon`` and ``rosdep``
     - Not provisioned
 

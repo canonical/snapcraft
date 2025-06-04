@@ -284,7 +284,7 @@ def run():  # noqa: C901 (complex-structure)
                     f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
                     "is correctly exported into the environment"
                 ),
-                docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+                docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate",
             )
         )
         retcode = 1
@@ -301,7 +301,7 @@ def run():  # noqa: C901 (complex-structure)
         emit.error(
             craft_cli.errors.CraftError(
                 message=f"remote-build error: {err}",
-                docs_url="https://snapcraft.io/docs/remote-build",
+                docs_url="https://documentation.ubuntu.com/snapcraft/stable/explanation/remote-build",
             )
         )
         retcode = 1

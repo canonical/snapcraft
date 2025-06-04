@@ -708,7 +708,7 @@ def test_store_key_error(mocker, capsys):
             """\
             No keyring found to store or retrieve credentials from.
             Recommended resolution: Ensure the keyring is working or SNAPCRAFT_STORE_CREDENTIALS is correctly exported into the environment
-            For more information, check out: https://snapcraft.io/docs/snapcraft-authentication
+            For more information, check out: https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate
         """
             # pylint: enable=[line-too-long]
         )

@@ -96,7 +96,7 @@ class Extension(abc.ABC):
         ):
             raise errors.ExtensionError(
                 f"Extension is experimental: {extension_name!r}",
-                docs_url="https://snapcraft.io/docs/supported-extensions",
+                docs_url="https://documentation.ubuntu.com/snapcraft/stable/reference/extensions",
             )
 
         if self.is_experimental(base):
