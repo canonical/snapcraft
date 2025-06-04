@@ -323,6 +323,11 @@ def test_application_plugins():
         ("core22", None),
         ("core22", "core22"),
         ("core22", "devel"),
+        ("core24", None),
+        ("core24", "core20"),
+        ("core24", "core22"),
+        ("core24", "core24"),
+        ("core24", "devel"),
     ],
 )
 def test_application_dotnet_registered(base, build_base, snapcraft_yaml):
@@ -333,26 +338,6 @@ def test_application_dotnet_registered(base, build_base, snapcraft_yaml):
     app._register_default_plugins()
 
     assert "dotnet" in craft_parts.plugins.get_registered_plugins()
-
-
-@pytest.mark.parametrize(
-    ("base", "build_base"),
-    [
-        ("core24", None),
-        ("core24", "core20"),
-        ("core24", "core22"),
-        ("core24", "core24"),
-        ("core24", "devel"),
-    ],
-)
-def test_application_dotnet_not_registered(base, build_base, snapcraft_yaml):
-    """dotnet plugin is disabled for core24 and newer bases."""
-    snapcraft_yaml(base=base, build_base=build_base)
-    app = application.create_app()
-
-    app._register_default_plugins()
-
-    assert "dotnet" not in craft_parts.plugins.get_registered_plugins()
 
 
 def test_default_command_integrated(monkeypatch, mocker, new_dir):
