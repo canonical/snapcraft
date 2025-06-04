@@ -2397,5 +2397,5 @@ def _format_global_key_warning(key: str, empty_entries: list[str]) -> str:
         f"and not implicitly assigned via the global '{key.lower()}s:' "
         "stanza which is intended for configuration only."
         "\n(Reference: https://documentation.ubuntu.com/snapcraft/stable/reference/"
-        "project-file/snapcraft-yaml/#plugs)"
+        "project-file/snapcraft-yaml)"
     )

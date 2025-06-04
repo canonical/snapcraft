@@ -47,7 +47,7 @@ def test_no_keyring_error(capsys, mocker):
         "Recommended resolution: Ensure the keyring is working or SNAPCRAFT_STORE_CREDENTIALS "
     )
     assert stderr[2].startswith(
-        "For more help, see: https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate"
+        "For more information, check out: https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate"
     )
 
 
