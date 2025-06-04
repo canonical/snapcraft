@@ -33,6 +33,3 @@ project file. At the root of your project, run:
 Expanding the extensions prints your project file to the terminal exactly as it would be
 transformed by the preprocessor immediately prior to build. The output reveals all the
 keys and their default values.
-
-For help with other plugs, see `Adding interfaces
-<https://snapcraft.io/docs/snapcraft-interfaces>`_.

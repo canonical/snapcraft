@@ -21,7 +21,7 @@ To use the ``core24`` base for a snap:
 How to migrate to a newer base
 ------------------------------
 
-See `migrating bases`_ for details on migrating to a newer base.
+See :ref:`how-to-change-bases` for details on migrating to a newer base.
 
 .. _how-to-deprecated-base:
 
@@ -169,6 +169,5 @@ environment.
 
 .. _`Snapcraft and ESM`: https://snapcraft.io/docs/snapcraft-esm
 .. _`Snapcraft rocks`: https://github.com/canonical/snapcraft-rocks
-.. _`migrating bases`: https://snapcraft.io/docs/migrating-bases
 .. _`parallel installs`: https://snapcraft.io/docs/parallel-installs
 .. _`tracks`: https://snapcraft.io/docs/channels#heading--tracks

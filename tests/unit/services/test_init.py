@@ -59,8 +59,8 @@ def test_init_valid_name(name, init_service, new_dir, emitter):
 
     assert (new_dir / "snap/snapcraft.yaml").exists()
     emitter.assert_message(
-        "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-        "information about the snapcraft.yaml format."
+        "See https://documentation.ubuntu.com/snapcraft/stable/reference/project-file "
+        "for reference information about the snapcraft.yaml format."
     )
 
 
@@ -106,8 +106,8 @@ def test_init_snap_dir_exists(init_service, new_dir, emitter):
 
     assert snapcraft_yaml.exists()
     emitter.assert_message(
-        "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-        "information about the snapcraft.yaml format."
+        "See https://documentation.ubuntu.com/snapcraft/stable/reference/project-file "
+        "for reference information about the snapcraft.yaml format."
     )
 
 

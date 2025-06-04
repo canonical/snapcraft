@@ -182,7 +182,7 @@ The main runtime variables apply to the whole snap.
 .. _kde-neon-extensions-configure-hook:
 
 The rest of the runtime variables are set at launch by a ``command-chain`` shell script
-included by a `configure hook <https://snapcraft.io/docs/supported-snap-hooks>`_:
+included by a :ref:`configure hook <how-to-add-a-snap-configuration-configure-hook>`:
 
 .. collapse:: Included configure hook from KDE neon 6
 
@@ -217,8 +217,7 @@ The part assembles the shell script from shared scripts in Snapcraft's source:
 Included layouts
 ----------------
 
-The KDE neon 6 extension adds the following `layouts
-<https://snapcraft.io/docs/snap-layouts>`_.
+The KDE neon 6 extension adds the following :ref:`layouts <reference-layouts>`.
 
 .. collapse:: Included layouts
 

@@ -36,8 +36,9 @@ Add a part written in Ruby
     :start-at: parts:
     :end-at: - git
 
-Ruby parts are built with the `Ruby <https://snapcraft.io/docs/ruby-plugin>`_
-plugin.
+.. Missing link to Ruby plugin
+
+Ruby parts are built with the Ruby plugin.
 
 To declare a Ruby part:
 
