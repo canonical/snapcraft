@@ -1,5 +1,5 @@
 name: Task
-description: File an enhancement proposal
+description: File an enhancement proposal, such as feature requests or documentation improvements
 labels: "Enhancement"
 body:
   - type: markdown

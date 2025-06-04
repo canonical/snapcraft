@@ -212,9 +212,8 @@ social platform.
 Electron parts
 ~~~~~~~~~~~~~~
 
-Since they are wrapped binaries, Electron parts don't have a custom plugin
-because and instead use the `dump plugin
-<https://snapcraft.io/docs/dump-plugin>`_.
+Since they are wrapped binaries, Electron parts don't have a custom plugin and instead
+use the :ref:`craft_parts_dump_plugin`.
 
 In the definition of the ``discord`` part, you can see that we set the source
 to the official Debian archive published by the Discord authors, and then

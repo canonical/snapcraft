@@ -103,6 +103,8 @@ def main(docs_dir):
         g = group_path.open("w")
 
         for cmd_class in sorted(group.commands, key=lambda c: c.name):
+            if cmd_class.hidden:
+                continue
             cmd = cmd_class(app.app_config)
             p = _CustomArgumentParser(help_builder)
             cmd.fill_parser(p)

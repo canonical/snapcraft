@@ -222,7 +222,9 @@ class TestNames:
 
         if command_class.hidden:
             emitter.assert_progress(
-                "This command is deprecated: use 'names' instead", permanent=True
+                f"The '{command_class.name}' command was renamed to 'names'. Use 'names' instead. "
+                "The old name will be removed in a future release.",
+                permanent=True,
             )
         emitter.assert_message(
             dedent(
@@ -248,7 +250,8 @@ class TestNames:
 
         if command_class.hidden:
             emitter.assert_progress(
-                "This command is deprecated: use 'names' instead",
+                f"The '{command_class.name}' command was renamed to 'names'. Use 'names' instead. "
+                "The old name will be removed in a future release.",
                 permanent=True,
             )
 

@@ -18,20 +18,14 @@ Set up the env-injector extension
 
 To add the env-injector extension to an app in your snap:
 
-1. Since env-injector is an `experimental extension
-   <https://snapcraft.io/docs/supported-extensions#p-80380-experimental-extensions>`_,
-   it's blocked by default. To enable experimental extensions during build, your host
-   must set the following environment variable when packing with Snapcraft:
+1. Since env-injector is an experimental extension, it's blocked by default. You must
+   first :ref:`enable experimental extensions <how-to-enable-experimental-extensions>`
+   for the build.
 
-   .. code-block:: bash
-
-       SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1
-
-2. Your snap must enable configurations with a `configure hook
-   <https://snapcraft.io/docs/supported-snap-hooks#heading--the-configure-hook>`_. If
-   your snap doesn't use this hook yet, it needs at minimum an executable file named
-   ``configure``, without an extension, in ``snap/hooks/``. It should contain at
-   minimum:
+2. Your snap must enable configurations with a :ref:`configure hook
+   <how-to-add-a-snap-configuration-configure-hook>`. If your snap doesn't use this hook
+   yet, it needs at minimum an executable file named ``configure``, without an
+   extension, in ``snap/hooks/``. It should contain at minimum:
 
    .. code-block:: bash
 

@@ -40,8 +40,7 @@ Add a compiled part
     :start-at: parts:
     :end-at: source: http://cdn.geekbench.com/Geekbench-$SNAPCRAFT_PROJECT_VERSION-Linux.tar.gz
 
-Compiled parts stored in archives are built with the `dump plugin
-<https://snapcraft.io/docs/dump-plugin>`_.
+Compiled parts stored in archives are built with the :ref:`craft_parts_dump_plugin`.
 
 To add a compiled part:
 

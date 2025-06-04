@@ -18,6 +18,11 @@
 
 import enum
 
+DEPRECATED_COMMAND_WARNING = (
+    "The '{old}' command was renamed to '{new}'. Use '{new}' instead. "
+    "The old name will be removed in a future release."
+)
+
 
 class SnapArch(str, enum.Enum):
     """An architecture for a snap."""

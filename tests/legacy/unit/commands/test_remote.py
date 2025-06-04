@@ -17,7 +17,7 @@
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, Not
 
 import snapcraft_legacy.internal.remote_build.errors as errors
 import snapcraft_legacy.project
@@ -60,6 +60,56 @@ class RemoteBuildTests(CommandBaseTestCase):
         self.mock_lc.start_build.assert_called_once()
         self.mock_lc.cleanup.assert_called_once()
         self.assertThat(result.output, Contains("Building snap package for i386."))
+        self.assertThat(result.exit_code, Equals(0))
+        mock_confirm.assert_not_called()
+
+    @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
+    def test_remote_build_core20_no_deprecation_warning(self, mock_confirm):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path,
+            base="core20",
+            parts={"part0": {"plugin": "nil"}},
+        )
+        self.useFixture(snapcraft_yaml)
+        result = self.run_command(["remote-build", "--launchpad-accept-public-upload"])
+
+        self.mock_lc.start_build.assert_called_once()
+        self.mock_lc.cleanup.assert_called_once()
+        self.assertThat(
+            result.output,
+            Not(
+                Contains(
+                    "The legacy remote builder for core22 snaps will be removed in a future release. "
+                    "Use the new remote builder instead.\n"
+                    "For more information, check out "
+                    "https://documentation.ubuntu.com/snapcraft/stable/explanation/remote-build/#versions "
+                )
+            )
+        )
+        self.assertThat(result.exit_code, Equals(0))
+        mock_confirm.assert_not_called()
+
+    @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
+    def test_remote_build_core22_deprecation_warning(self, mock_confirm):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path,
+            base="core22",
+            parts={"part0": {"plugin": "nil"}},
+        )
+        self.useFixture(snapcraft_yaml)
+        result = self.run_command(["remote-build", "--launchpad-accept-public-upload"])
+
+        self.mock_lc.start_build.assert_called_once()
+        self.mock_lc.cleanup.assert_called_once()
+        self.assertThat(
+            result.output,
+            Contains(
+                "The legacy remote builder for core22 snaps will be removed in a future release. "
+                "Use the new remote builder instead.\n"
+                "For more information, check out "
+                "https://documentation.ubuntu.com/snapcraft/stable/explanation/remote-build/#versions "
+            )
+        )
         self.assertThat(result.exit_code, Equals(0))
         mock_confirm.assert_not_called()
 

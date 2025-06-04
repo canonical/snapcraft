@@ -197,7 +197,7 @@ class LibraryLinter(Linter):
                     result=LinterResult.WARNING,
                     filename=str(elf_file.path),
                     text=message,
-                    url="https://snapcraft.io/docs/linters-library",
+                    url="https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter",
                 )
                 issues.append(issue)
 
@@ -238,7 +238,7 @@ class LibraryLinter(Linter):
                 result=LinterResult.WARNING,
                 filename=library.soname,
                 text=f"unused library {str(library.path)!r}.",
-                url="https://snapcraft.io/docs/linters-library",
+                url="https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter",
             )
             issues.append(issue)
 

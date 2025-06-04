@@ -239,7 +239,10 @@ def test_apply_extension_experimental():
     assert (
         str(raised.value) == "Extension is experimental: 'fake-extension-experimental'"
     )
-    assert raised.value.docs_url == "https://snapcraft.io/docs/supported-extensions"
+    assert (
+        raised.value.docs_url
+        == "https://documentation.ubuntu.com/snapcraft/stable/reference/extensions"
+    )
 
 
 @pytest.mark.usefixtures("fake_extension_experimental")

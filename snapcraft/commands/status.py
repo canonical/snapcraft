@@ -30,7 +30,7 @@ from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
 
-from snapcraft import store
+from snapcraft import const, store
 from snapcraft.store.channel_map import ChannelMap, MappedChannel, Revision, SnapChannel
 
 if TYPE_CHECKING:
@@ -430,6 +430,14 @@ class StoreTracksCommand(StoreListTracksCommand):
     name = "tracks"
     hidden = True
 
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)
+
 
 class StoreListRevisionsCommand(AppCommand):
     """List revisions of a published snap."""
@@ -549,3 +557,11 @@ class StoreRevisionsCommand(StoreListRevisionsCommand):
 
     name = "revisions"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)

@@ -14,8 +14,8 @@ Crafting
     add-a-snap-configuration
     use-layouts
     manage-data-compatibility
-    /common/craft-parts/how-to/include_files
-    /common/craft-parts/how-to/override_build
+    include-local-files-and-remote-resources
+    override-the-default-build
     customize-lifecycle-steps-and-part-variables
     create-a-component
     enable-classic-confinement

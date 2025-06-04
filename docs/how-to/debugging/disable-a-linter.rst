@@ -17,6 +17,8 @@ For example, to disable both built-in linters, add this to your project file:
         - library
 
 
+.. _how-to-disable-a-linter-ignore-specific-files:
+
 Ignore specific files
 ---------------------
 

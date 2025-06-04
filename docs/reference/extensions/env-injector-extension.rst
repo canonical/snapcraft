@@ -44,8 +44,7 @@ App build process
 For each app that uses the extension:
 
 1. The app responsible for processing environment variables (the exporter program) is
-   added to its `command chain
-   <https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-command-chain-47>`_.
+   added to its :ref:`command chain <reference-snapcraft-yaml>`.
 2. The app's name is taken either from its internal name or an :ref:`environment alias
    <use-the-env-injector-give-app-alias>`.
 

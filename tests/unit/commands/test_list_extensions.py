@@ -32,7 +32,15 @@ import snapcraft.commands
 )
 def test_command(emitter, command, fake_app_config):
     cmd = command(fake_app_config)
+
     cmd.run(Namespace())
+
+    if cmd.hidden:
+        emitter.assert_progress(
+            f"The '{cmd.name}' command was renamed to 'list-extensions'. Use 'list-extensions' instead. "
+            "The old name will be removed in a future release.",
+            permanent=True,
+        )
     emitter.assert_message(
         dedent(
             """\

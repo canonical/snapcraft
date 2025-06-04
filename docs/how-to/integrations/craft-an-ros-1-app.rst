@@ -99,16 +99,16 @@ Add an ROS 1 app based on core20
 To add an ROS 1 app based on core20:
 
 #. Declare the general app keys, such as ``command``.
-#. For ``extensions``, list ``ros1-noetic``. See `The ROS 1 Noetic Extension
-   <https://snapcraft.io/docs/ros-noetic>`_ for a description of what the extension does
-   during build.
+#. For ``extensions``, list ``ros1-noetic``. See :ref:`reference-ros-1-extension` for a
+   description of what the extension does during build.
 
 
 Add a part written for ROS 1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ROS 1 parts are built with the `catkin plugin
-<https://snapcraft.io/docs/catkin-plugin>`_.
+.. SNAPCRAFT-1125: Missing link to catkin plugin.
+
+ROS 1 parts are built with the catkin plugin.
 
 To add an ROS 1 part:
 
