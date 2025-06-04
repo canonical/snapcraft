@@ -55,8 +55,8 @@ class Init(services.InitService):
             template_dir=template_dir,
         )
         craft_cli.emit.message(
-            "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-            "information about the snapcraft.yaml format."
+            "See https://documentation.ubuntu.com/snapcraft/stable/reference/"
+            "project-file for reference information about the snapcraft.yaml format."
         )
 
     @override

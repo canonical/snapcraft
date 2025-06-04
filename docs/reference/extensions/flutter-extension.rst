@@ -6,10 +6,11 @@ Flutter extension
 The Flutter family of extensions help fill in common settings for software built with
 the `Flutter <https://flutter.dev>`__ framework.
 
+.. SNAPCRAFT-1123: Missing link to Flutter plugin.
+
 The Flutter extensions require Snapcraft 7 and lower and are currently only supported
 with the core18 base. Snaps using cores higher than core18 should instead use the
-`flutter <https://snapcraft.io/docs/flutter-plugin>`_ plugin with the `GNOME
-<https://snapcraft.io/docs/gnome-extension>`_ extension.
+Flutter plugin with the :ref:`reference-gnome-extension`.
 
 There are four extensions in the family. Each tracks a different `Flutter build release
 channel
@@ -117,8 +118,7 @@ The extensions add one runtime environment variable:
 Included layouts
 ----------------
 
-The Flutter extensions add the following `layouts
-<https://snapcraft.io/docs/snap-layouts>`_:
+The Flutter extensions add the following :ref:`layouts <reference-layouts>`:
 
 .. collapse:: Included layouts
 

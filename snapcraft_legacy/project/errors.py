@@ -85,4 +85,4 @@ class UnsupportedBaseError(SnapcraftException):
             return "Ensure a valid base is set in 'snapcraft.yaml'."
 
     def get_docs_url(self) -> Optional[str]:
-        return "https://snapcraft.io/docs/base-snaps"
+        return "https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base"

@@ -21,9 +21,8 @@ The ``snapshots.yaml`` configuration file starts with the ``exclude`` keyword fo
 by a list of shell-style wildcard patterns to indicate which files or directories to
 exclude.
 
-These wildcard patterns must start with a system or user data `environment variable
-<https://snapcraft.io/docs/parts-environment-variables>`_. Only the asterisk wildcard is
-supported.
+These wildcard patterns must start with a system or user data :ref:`environment variable
+<reference-part-environment-variables>`. Only the any wildcard (*) is supported.
 
 .. code-block:: yaml
     :caption: snapshots.yaml
@@ -38,7 +37,6 @@ Including ``snapshots.yaml`` in a snap
 --------------------------------------
 
 The ``snapshots.yaml`` file must be located within a snap's ``meta`` directory. This is
-typically done by `creating a part <https://snapcraft.io/docs/adding-parts>`_ that uses
-either the :ref:`dump plugin <craft_parts_dump_plugin>` or a :doc:`build step override
-</common/craft-parts/how-to/override_build>` to copy ``snapshots.yaml`` from another
-directory.
+typically done by creating a part that uses either the :ref:`craft_parts_dump_plugin` or
+a :ref:`build step override <how-to-override-the-default-build>` to copy
+``snapshots.yaml`` from another directory.
