@@ -258,9 +258,8 @@ def test_get_snap_project(project, project_dir, new_dir):
     assert actual_project == project
 
 
-@pytest.mark.parametrize("project", yaml_utils._SNAP_PROJECT_FILES)
 @pytest.mark.parametrize("project_dir", [None, "test-project-dir"])
-def test_get_snap_project_snap_not_a_directory(project, project_dir, new_dir):
+def test_get_snap_project_snap_not_a_directory(project_dir, new_dir):
     project_dir = pathlib.Path(project_dir) if project_dir else new_dir
     project_dir.mkdir(parents=True, exist_ok=True)
     (project_dir / "snap").touch()
