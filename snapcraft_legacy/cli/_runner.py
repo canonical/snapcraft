@@ -91,8 +91,6 @@ def configure_requests_ca() -> None:
 )
 @click.pass_context
 @add_provider_options(hidden=True)
-@click.option("--debug", "-d", is_flag=True)
-@click.option("--verbose", "-v", is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 
