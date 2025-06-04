@@ -28,7 +28,7 @@ from craft_application.util import strtobool
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import pack, utils
+from snapcraft import const, pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 if TYPE_CHECKING:
@@ -297,6 +297,14 @@ class SnapCommand(_LifecycleCommand):
             type=str,
             help="Path to the resulting snap",
         )
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new="pack"),
+            permanent=True,
+        )
+        super().run(parsed_args)
 
 
 class CleanCommand(_LifecycleStepCommand):

@@ -9,7 +9,7 @@ these architectures is accomplished with a specific syntax called *advanced gram
 
 This advanced grammar is made up of three statements: ``to``, ``on``, and ``try``.
 
-The following :literalref:`build-packages <how-to-manage-dependencies>` section, for
+The following :ref:`build-packages <how-to-manage-dependencies>` section, for
 example, evaluates and then defines which build packages to install depending on the
 target environment (``to``) for the snap:
 

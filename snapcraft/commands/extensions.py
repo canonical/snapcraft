@@ -28,7 +28,7 @@ from craft_platforms import DebianArchitecture
 from overrides import overrides
 from pydantic import BaseModel
 
-from snapcraft import extensions, models
+from snapcraft import const, extensions, models
 from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
@@ -107,6 +107,14 @@ class ExtensionsCommand(ListExtensionsCommand):
 
     name = "extensions"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)
 
 
 class ExpandExtensionsCommand(AppCommand):

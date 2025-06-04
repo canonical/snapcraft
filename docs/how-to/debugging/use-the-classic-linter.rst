@@ -104,9 +104,9 @@ Or, to set the ELF interpreter, the following command can be used:
 
     patchelf --set-interpreter /snap/core22/current/lib64/ld-linux-x86-64.so.2 foo
 
-This can be done using override scripts in order to patch the binaries as part of
-the packaging of the snap. For more information, see `Override build steps
-<https://snapcraft.io/docs/overrides>`_.
+This can be done using override scripts in order to patch the binaries as part of the
+packaging of the snap. For more information, see
+:ref:`how-to-override-the-default-build`.
 
 Enable automatic ELF file patching
 ----------------------------------

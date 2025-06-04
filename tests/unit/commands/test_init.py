@@ -96,7 +96,7 @@ def test_init_default(profile, name, project_dir, emitter, valid_new_dir, mocker
     emitter.assert_progress("Checking for an existing 'snapcraft.yaml'.")
     emitter.assert_debug("Could not find an existing 'snapcraft.yaml'.")
     emitter.assert_message(
-        "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-        "information about the snapcraft.yaml format."
+        "See https://documentation.ubuntu.com/snapcraft/stable/reference/project-file "
+        "for reference information about the snapcraft.yaml format."
     )
     emitter.assert_message("Successfully initialised project.")

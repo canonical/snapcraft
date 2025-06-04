@@ -32,9 +32,8 @@ self-contained Python project.
 Top-level directives
 ~~~~~~~~~~~~~~~~~~~~
 
-Several `top-level keys
-<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-top-level-directives>`_
-define and describe the snap.
+Several :ref:`top-level keys <reference-snapcraft-yaml-top-level-keys>` define and
+describe the snap.
 
 
 Metadata
@@ -80,11 +79,11 @@ provides a minimal set of libraries common to most snaps. It's mounted and used
 as the root filesystem for the apps inside the snap. In essence, this means the
 snaps behave as though they were running on a system that matches the base.
 
-The core24, core22, and core20 bases are available. Bases correspond to Ubuntu
-LTS releases. For example, the library set in core24 is equivalent to a subset
-found in the Ubuntu 24.04 LTS general release. For most practical purposes, the
-use of either core24 and core22 is recommended, depending on the `supported
-plugins <https://snapcraft.io/docs/supported-plugins>`_ the snap uses.
+The core24, core22, and core20 bases are available. Bases correspond to Ubuntu LTS
+releases. For example, the library set in core24 is equivalent to a subset found in the
+Ubuntu 24.04 LTS general release. For most practical purposes, the use of either core24
+and core22 is recommended, depending on the :ref:`plugins <reference-plugins>` the snap
+uses.
 
 Confinement
 ^^^^^^^^^^^
@@ -130,10 +129,9 @@ There are three confinement levels:
 Parts
 ~~~~~
 
-The `part directives
-<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-part-directives>`_
-define all the pieces of software that will be used to build the apps inside
-the snap. It describes how the snap is going to be built.
+The :ref:`part keys <reference-snapcraft-yaml-part-keys>` define all the pieces of
+software that will be used to build the apps inside the snap. It describes how the snap
+is going to be built.
 
 The yt-dlp snap only has one part, for the app itself.
 
@@ -150,10 +148,9 @@ the app is built the project's upstream GitHub repository.
 Apps
 ~~~~
 
-The `app directives
-<https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-app-directives>`_
-define the command path for each app, how it will be run, optional parameters,
-and the interface connections that will be established at runtime.
+The :ref:`app keys <reference-snapcraft-yaml-part-keys>` define the command path for
+each app, how it will be run, optional parameters, and the interface connections that
+will be established at runtime.
 
 The yt-dlp project file declares a single app, which is the main app itself. Other
 snaps may have multiple sub-apps or executables.
@@ -199,9 +196,8 @@ source. Such use can be useful for continuous integration and delivery systems,
 where the declarations in the project file can be obtained from scripts rather than
 manually.
 
-There are multiple ways that information can be obtained. For a how-to guide on
-bringing in external metadata, see `Using external metadata
-<https://snapcraft.io/docs/using-external-metadata>`_.
+There are multiple ways that information can be obtained. For a how-to guide on bringing
+in external metadata, see :ref:`configure-package-information-reuse-information`.
 
 Multiple metadata fields can be populated using this key. In this project file, the
 snap's version is obtained from the Git repository release tag, which proceeds
@@ -242,10 +238,9 @@ Parts
 Compared to the project file of yt-dlp, wethr has a part that's notably more
 intricate.
 
-It too has one part, but it's built with the `npm plugin
-<https://snapcraft.io/docs/npm-plugin>`_, which is designed to simplify the
-building of Node and JavaScript-based apps, and contains custom options for
-Node.
+It too has one part, but it's built with the :ref:`craft_parts_npm_plugin`, which is
+designed to simplify the building of Node and JavaScript-based apps, and contains custom
+options for Node.
 
 The ``npm-include-node`` key determines whether to download and include a Node
 runtime in the snap, which in turn is specified by the ``npm-node-version``
@@ -255,12 +250,12 @@ The ``source`` key like before defines the URL or a path of the app code that
 needs to be downloaded for the build. It points to the original wethr project's
 source code.
 
-The ``override-pull`` key is an inline Bash script that runs during the pull
-step of the :ref:`part lifecycle <lifecycle>`. It's used to perform operations
-that can't be satisfied by the default pull operation in the lifecycle. In the
-wethr example, the listed commands are used to derive the correct version of
-the app, and set it using the craftctl scriptlet. More details about
-overrides can be found in :ref:`Overriding the default build <override_build>`.
+The ``override-pull`` key is an inline Bash script that runs during the pull step of the
+:ref:`part lifecycle <lifecycle>`. It's used to perform operations that can't be
+satisfied by the default pull operation in the lifecycle. In the wethr example, the
+listed commands are used to derive the correct version of the app, and set it using the
+craftctl scriptlet. More details about overrides can be found in
+:ref:`how-to-override-the-default-build`.
 
 The ``build-packages`` key defines the list of tools and libraries required to
 successfully build or compile the part. The build packages are obtained from

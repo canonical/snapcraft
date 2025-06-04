@@ -33,8 +33,9 @@ Add an app written for Flutter
     :start-at: parts:
     :end-at: flutter-target: lib/main.dart
 
-Flutter parts are built with the `flutter plugin
-<https://snapcraft.io/docs/flutter-plugin>`_.
+.. SNAPCRAFT-1123: Missing link to Flutter plugin.
+
+Flutter parts are built with the Flutter plugin.
 
 To add a Flutter part:
 

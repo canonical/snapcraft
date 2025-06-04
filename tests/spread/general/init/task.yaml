@@ -12,6 +12,9 @@ environment:
   PROJECT_DIR/with_project_dir: test-project-dir
   NAME/with_project_dir_and_name: test-snap-name
   PROJECT_DIR/with_project_dir_and_name: test-project-dir
+  PROFILE/ros2: ros2
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS/ros2: 1
+
 
 restore: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT

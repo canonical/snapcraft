@@ -35,8 +35,8 @@ configuration files.
 Interpreting options
 --------------------
 
-Internally, snaps view and change their configuration with `snapctl
-<https://snapcraft.io/docs/using-snapctl>`_ and its ``get``, ``set``, and ``unset``
+Internally, snaps view and change their configuration with :ref:`craftctl
+<how-to-customize-the-build-and-part-variables>` and its ``get``, ``set``, and ``unset``
 arguments.
 
 The snapctl command works anywhere within the snap context, during execution of your
@@ -48,8 +48,8 @@ action by the snap developer.
 
 A snap developer is free to implement this process however they prefer, but it's most
 commonly accomplished with a purpose-built script or function for each option, as
-defined by a snap's project file and its associated scripts and `hooks
-<https://snapcraft.io/docs/supported-snap-hooks>`_.
+defined by a snap's project file and its associated scripts and :ref:`hooks
+<reference-hooks>`.
 
 If a hook alters the configuration and exits with a non-zero status code, the changes
 won't apply. This is because the hook context is transactional -- either every change is
@@ -63,8 +63,8 @@ Default values
 --------------
 
 The snap daemon has no concept of *default values* for configuration options. Actions
-for these values need to be implemented by the snap developer using the `configure hook
-<https://snapcraft.io/docs/supported-snap-hooks#heading--the-configure-hook>`.
+for these values need to be implemented by the snap developer using the :ref:`configure
+hook <how-to-add-a-snap-configuration-configure-hook>`.
 
 When a user resets a configuration option with ``snap unset``, or installs a snap, the
 configure hook is run and the snap developer can therefore use this hook to check when
@@ -78,11 +78,10 @@ supports.
 On Ubuntu Core, a device's `gadget snap <https://snapcraft.io/docs/the-gadget-snap>`_
 can share default configuration options with the snaps listed in its ``gadget.yaml``
 file. These options are shared when a snap is first installed using either the
-`default-configure hook
-<https://snapcraft.io/docs/supported-snap-hooks#heading--default-configure>`_, which is
-run before services are started, or with the `configure hook
-<https://snapcraft.io/docs/supported-snap-hooks#heading--the-configure-hook>`_, which
-runs after services are started.
+:ref:`default-configure hook <how-to-add-a-snap-configuration-default-configure-hook>`,
+which is run before services are started, or with the :ref:`configure hook
+<how-to-add-a-snap-configuration-configure-hook>`, which runs after services are
+started.
 
 
 Nested values
