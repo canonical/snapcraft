@@ -8,11 +8,13 @@ confinement: strict
 
 apps:
   dotnet-hello:
-    command: dotnet
+    command: HelloWorld
 
 parts:
   hello:
     plugin: dotnet
-    source: .
-    dotnet-self-contained-runtime-identifier: linux-x64
-    build-snaps: [dotnet-sdk]
+    source: src
+    dotnet-version: "8.0"
+    dotnet-self-contained: true
+    dotnet-configuration: Release
+    stage-packages: [ libicu74 ]

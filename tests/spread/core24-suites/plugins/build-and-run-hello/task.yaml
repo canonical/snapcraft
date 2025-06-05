@@ -12,6 +12,7 @@ environment:
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
   SNAP/uv: uv-hello
+  SNAP/dotnet: dotnet-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/package-utils.sh
@@ -88,6 +89,8 @@ execute: |
     modified_file=src/hello/__init__.py
   elif [ -f src/main/java/com/example/hello/Main.java ]; then
     modified_file=src/main/java/com/example/hello/Main.java
+  elif [ -f src/Program.cs ]; then
+    modified_file=src/Program.cs
   else
     FATAL "Cannot setup ${SNAP} for rebuilding"
   fi
