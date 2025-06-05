@@ -29,75 +29,112 @@ Install Snapcraft
 
     .. code:: bash
 
-      sudo snap install snapcraft --classic
-
+        snap install snapcraft --classic
 
   .. group-tab:: macOS
 
-    #. `Install Brew <https://brew.sh#install>`_.
-    #. Install Snapcraft:
+    First, `install Brew <https://brew.sh#install>`_.
 
-       .. code:: bash
+    Then, install Snapcraft through Brew:
+
+    .. code:: bash
 
         brew install snapcraft
 
   .. group-tab:: Windows
 
-    #. `Install WSL2 with Ubuntu 20.04 or higher
-       <https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command>`_.
-    #. In WSL2, install Snapcraft:
+    First, `install WSL2 with Ubuntu 20.04 or higher
+    <https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command>`_.
 
-       .. code:: bash
+    Then, install Snapcraft in WSL2:
 
-         sudo snap install snapcraft
+    .. code:: bash
+
+        snap install snapcraft --classic
 
 
 Install a build provider
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Snapcraft is compatible with two build providers -- Multipass and LXD. It
-relies on a build provider to host an isolated build environment, like a
-sandbox. Inside this environment, software can be built and packaged as snaps
-without making potentially destructive changes to the host system.
+Snapcraft relies on a *build provider* to create an isolated build environment, like a
+sandbox. Inside this environment, software can be built and packaged as snaps without
+making potentially destructive changes to the host system.
 
-For **core22 and higher**, LXD is the default provider on Linux, and Multipass
-is the default on macOS and Windows.
+.. list-table::
+    :widths: 1 3 2
 
-For **core20**, Multipass is the default provider on all platforms.
+    * - Build provider
+      - Description
+      - Default on
+    * - `LXD <https://canonical.com/lxd>`_
+      - Creates and manages Linux container images. It can operate inside VMs.
+      - Snapcraft 7 on Linux
+    * - `Multipass <https://multipass.run>`_
+      - Creates and manages virtual machine (VM) build instances. It automates setup and
+        teardown of cloud-style Ubuntu VMs. It can't be used  reliably on platforms that
+        don't support nested virtualization. For instance, it most likely won't itself
+        run inside a VM.
+      - Snapcraft 6 on Linux
+
+        macOS and Windows
+
+When you first run Snapcraft, it installs the default build provider. If the default
+build provider isn't fit for purpose, you can install the alternative and then
+:ref:`switch to it <how-to-select-a-build-provider>`.
 
 
-Choose a build provider
-^^^^^^^^^^^^^^^^^^^^^^^
+.. _how-to-set-up-snapcraft-install-lxd:
 
-Before proceeding, you must choose a build provider.
+Install LXD
+^^^^^^^^^^^
 
-`Multipass <https://multipass.run>`_ creates and manages virtual machine (VM)
-build instances. It automates setup and teardown of cloud-style Ubuntu VMs. It
-can't be used reliably on platforms that don't support nested virtualization.
-For instance, it most likely won't itself run inside a VM.
+Install the LXD snap:
 
-`LXD <https://linuxcontainers.org/lxd/introduction>`_ creates and manages Linux
-container images. It can operate inside VMs.
+.. code:: bash
 
-If the default build provider isn't fit for your snap, you can
-:ref:`switch between them <how-to-select-a-build-provider>`.
+    snap install lxd
 
+LXD has special requirements from your local user account that Snapcraft can't manage
+for you during its automatic setup. Add your user account to the ``lxd`` group so you
+can access the LXD daemon:
+
+.. code:: bash
+
+    sudo usermod -a -G lxd $USER
+
+Log out and back in to your account on your system for the new group to take effect.
+Then, check that you're a member of the group by running:
+
+.. code:: bash
+
+    groups $USER
+
+The list should contain ``lxd``.
+
+Finnally, initialize LXD with a lightweight configuration:
+
+.. code:: bash
+
+    sudo lxd init --auto
+
+If you need help troubleshooting your LXD installation, see `How to install LXD
+<https://documentation.ubuntu.com/lxd/en/latest/installing/#installing>`_ in the LXD
+documentation.
+
+
+.. _how-to-set-up-snapcraft-install-multipass:
 
 Install Multipass
 ^^^^^^^^^^^^^^^^^
 
-If Multipass isn't installed, on first run Snapcraft will ask you'd like to
-automatically install and configure it. If you agree, it will walk you through
-installation.
-
-.. If Multipass isn't installed while running in a non-interactive mode
-.. (running from a CI/CD pipeline), snapcraft will log an error and exit.
-
-To install Multipass on its own, run:
+Install the Multipass snap:
 
 .. code:: bash
 
-  sudo snap install multipass
+    snap install multipass
+
+.. If Multipass isn't installed while running in a non-interactive mode
+.. (running from a CI/CD pipeline), snapcraft will log an error and exit.
 
 .. tip::
 
@@ -112,44 +149,7 @@ To install Multipass on its own, run:
     export SNAPCRAFT_BUILD_ENVIRONMENT_MEMORY=16G
 
 
-Install LXD
-^^^^^^^^^^^
-
-To install LXD:
-
-#. Install the app:
-
-   .. code:: bash
-
-     sudo snap install lxd
-
-#. Add your user account to the ``lxd`` group so you can access the tool's
-   resources:
-
-   .. code:: bash
-
-     sudo usermod -a -G lxd $USER
-
-#. Log out and back in to your account for the new group to become
-   active. Then, check that you're a member of the group by running:
-
-   .. code:: bash
-
-     groups $USER
-
-   ``lxd`` should be present in the output.
-
-#. Finally, initialise LXD with a lightweight, default configuration:
-
-   .. code:: bash
-
-     lxd init --minimal
-
-See `How to install LXD
-<https://documentation.ubuntu.com/lxd/en/latest/installing/#installing>`_ in
-the LXD documentation for further installation options and troubleshooting.
-
-.. _multiple-installs:
+.. _how-to-set-up-snapcraft-multiple-instances:
 
 Install multiple instances of Snapcraft
 ---------------------------------------
@@ -158,29 +158,33 @@ If you're installing Snapcraft as a snap, you can install multiple concurrent
 versions at the same time. Doing so could come in handy if you want to test new
 features in your snaps, before they arrive in a mainstream release.
 
-To install another instance of Snapcraft:
+First, enable parallel installs in snapd:
 
-#. Enable parallel installs in snapd:
+.. code:: bash
 
-   .. code:: bash
+    snap set system experimental.parallel-instances=true
 
-     sudo snap set system experimental.parallel-instances=true
+List all the available versions of Snapcraft. For the version you're interested in, take
+note of the value in the channel column.
 
-#. List all the available versions of Snapcraft. For the version you're
-   interested in, take note of the value in the channel column.
+.. code:: bash
 
-   .. code:: bash
+    snap info snapcraft
 
-     sudo snap info snapcraft
+Install a new instance of Snapcraft with the `instance key naming
+<https://snapcraft.io/docs/parallel-installs#heading--naming>`_ syntax, replacing
+``<instance>`` with whichever name is appropriate for the instance, and ``<channel>``
+with the target channel and track:
 
-#. Install Snapcraft using the `instance key naming
-   <https://snapcraft.io/docs/parallel-installs#heading--naming>`_ syntax.
-   Replace ``edge`` with whichever name is appropriate for the instance, and
-   ``latest/edge`` with the target channel and track:
+.. code:: bash
 
-   .. code:: bash
+    snap install snapcraft_<instance> <channel> --classic
 
-     sudo snap install snapcraft_edge latest/edge --classic
+For example, you could install the very latest official releases with:
 
-Whenever you want to run this parallel version of Snapcraft, invoke the
-instance name of the command -- in this example, ``snapcraft_edge``.
+.. code:: bash
+
+    snap install snapcraft_edge latest/edge --classic
+
+Whenever you want to run this parallel version of Snapcraft, invoke the instance name of
+the command -- in this example, ``snapcraft_edge``.

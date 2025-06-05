@@ -80,12 +80,12 @@ the build environment.
 
 .. literalinclude:: code/craft-a-snap/task.yaml
     :language: bash
-    :start-at: snap install --channel 5.21/stable lxd
-    :end-at: snap install --channel 5.21/stable lxd
+    :start-at: snap install lxd
+    :end-at: snap install lxd
     :dedent: 2
 
-You also need to add your user account to the ``lxd`` group so you can access the tool's
-resources:
+You also need to add your local user account to the ``lxd`` group so you can access the
+tool's resources:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
     :language: bash
@@ -108,8 +108,8 @@ Finally, initialize LXD with a lightweight, default configuration:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
     :language: bash
-    :start-at: lxd init --minimal
-    :end-at: lxd init --minimal
+    :start-at: sudo lxd init --auto
+    :end-at: sudo lxd init --auto
     :dedent: 2
 
 
