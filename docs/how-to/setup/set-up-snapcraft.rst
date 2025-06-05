@@ -71,15 +71,15 @@ making potentially destructive changes to the host system.
       - Snapcraft 7 and higher on Linux
     * - `Multipass <https://multipass.run>`_
       - Creates and manages virtual machine (VM) build instances. It automates setup and
-        teardown of cloud-style Ubuntu VMs. It can't be used  reliably on platforms that
-        don't support nested virtualization. For instance, it most likely won't itself
-        run inside a VM.
+        teardown of cloud-style Ubuntu VMs. It can't be used reliably on platforms that
+        don't support nested virtualization. In other words, it most likely won't run
+        inside another VM.
       - - Snapcraft 6 on Linux
         - All versions on macOS and Windows
 
-When you first run Snapcraft, it installs the default build provider. If the default
-build provider isn't suitable, you can install the alternative and then :ref:`switch to
-it <how-to-select-a-build-provider>`.
+When you first run Snapcraft, it installs the default build provider for your host
+platform. If the default build provider isn't suitable, you can install the alternative
+and then :ref:`switch to it <how-to-select-a-build-provider>`.
 
 
 .. _how-to-set-up-snapcraft-install-lxd:
@@ -101,8 +101,8 @@ can access the LXD daemon:
 
     sudo usermod -a -G lxd $USER
 
-Log out and back in to your account on your system for the new group to take effect.
-Then, check that you're a member of the group by running:
+Log out and back in to your local user account for the new group to take effect. Then,
+check that you're a member of the group by running:
 
 .. code:: bash
 
