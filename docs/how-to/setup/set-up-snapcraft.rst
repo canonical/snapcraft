@@ -68,19 +68,18 @@ making potentially destructive changes to the host system.
       - Default on
     * - `LXD <https://canonical.com/lxd>`_
       - Creates and manages Linux container images. It can operate inside VMs.
-      - Snapcraft 7 on Linux
+      - Snapcraft 7 and higher on Linux
     * - `Multipass <https://multipass.run>`_
       - Creates and manages virtual machine (VM) build instances. It automates setup and
         teardown of cloud-style Ubuntu VMs. It can't be used  reliably on platforms that
         don't support nested virtualization. For instance, it most likely won't itself
         run inside a VM.
-      - Snapcraft 6 on Linux
-
-        macOS and Windows
+      - - Snapcraft 6 on Linux
+        - All versions on macOS and Windows
 
 When you first run Snapcraft, it installs the default build provider. If the default
-build provider isn't fit for purpose, you can install the alternative and then
-:ref:`switch to it <how-to-select-a-build-provider>`.
+build provider isn't suitable, you can install the alternative and then :ref:`switch to
+it <how-to-select-a-build-provider>`.
 
 
 .. _how-to-set-up-snapcraft-install-lxd:
