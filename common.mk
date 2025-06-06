@@ -50,7 +50,7 @@ help: ## Show this help.
 	}' | uniq
 
 .PHONY: setup
-setup: install-uv setup-precommit install-build-deps ## Set up a development environment
+setup: install-uv setup-precommit install-build-deps  ## Set up a development environment
 	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_DOCS_GROUPS)
 
 .PHONY: setup-tests
@@ -84,7 +84,7 @@ endif
 .PHONY: clean
 clean:  ## Clean up the development environment
 	uv tool run pyclean .
-	rm -rf dist/ build/ docs/_build/ *.snap .coverage*
+	rm -rf dist/ build/ docs/_build/ docs/_linkcheck *.snap .coverage*
 
 .PHONY: autoformat
 autoformat: format  # Hidden alias for 'format'
@@ -182,6 +182,7 @@ ifneq ($(CI),)
 	@echo ::group::$@
 endif
 	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
+	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
