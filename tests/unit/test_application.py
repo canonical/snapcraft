@@ -189,7 +189,7 @@ def test_application_extra_yaml_transforms(
     app = application.create_app()
     app.run()
 
-    project = app.get_project()
+    project = app.services.get("project").get()
     assert "fake-extension/fake-part" in project.parts
     assert project.parts["snapcraft/core"]["build-packages"] == ["test-package"]
     assert project.parts["snapcraft/core"]["build-snaps"] == ["test-snap"]
