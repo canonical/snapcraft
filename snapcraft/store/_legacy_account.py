@@ -42,11 +42,11 @@ def _load_potentially_base64_config(config_content: str) -> configparser.ConfigP
         # The config may be base64-encoded, try decoding it
         try:
             decoded_config_content = base64.b64decode(config_content).decode()
-        except base64.binascii.Error as b64_error:  # type: ignore
+        except (base64.binascii.Error, UnicodeDecodeError) as err:  # type: ignore
             # It wasn't base64, so use the original error
             raise errors.LegacyCredentialsParseError(
                 f"Cannot parse config: {parser_error}"
-            ) from b64_error
+            ) from err
 
         try:
             parser.read_string(decoded_config_content)

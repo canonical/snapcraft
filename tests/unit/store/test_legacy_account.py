@@ -105,6 +105,14 @@ def test_store_credentials_not_configparser_based_fails(
         LegacyUbuntuOne.store_credentials("not config parser")
 
 
+def test_store_credentials_unicode_decode_error(
+    legacy_config_path, legacy_config_credentials
+):
+    """Catch UnicodeDecode errors."""
+    with pytest.raises(errors.LegacyCredentialsParseError):
+        LegacyUbuntuOne.store_credentials("\\\\nfoo")
+
+
 def test_legacy_credentials_in_env(monkeypatch, legacy_config_credentials):
     monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", legacy_config_credentials)
 
