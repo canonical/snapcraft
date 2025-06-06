@@ -3,10 +3,10 @@ summary: Test the "Craft a snap" tutorial
 execute: |
   snap install curl
   snap install snapcraft --classic
-  snap install --channel 5.21/stable lxd
+  snap install lxd
   sudo usermod -a -G lxd $USER
   groups $USER
-  lxd init --minimal
+  sudo lxd init --auto
   mkdir ukuzama-pyfiglet
   cd ukuzama-pyfiglet
   snapcraft init

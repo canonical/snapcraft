@@ -25,9 +25,8 @@ Snapcraft 7
 ~~~~~~~~~~~
 
 Snapcraft 7 is available for building ``core18`` snaps. When building for newer bases,
-use Snapcraft 8. See
-:ref:`How to install multiple instances of Snapcraft <multiple-installs>` for
-more information.
+use Snapcraft 8. See :ref:`how-to-set-up-snapcraft-multiple-instances` for more
+information.
 
 - :ref:`Snapcraft 7.5.8 <changelog-7-5-8>`
 
