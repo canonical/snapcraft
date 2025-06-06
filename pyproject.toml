@@ -14,7 +14,7 @@ dependencies = [
     "craft-parts>=2.10.0,<3.0.0",
     "craft-platforms~=0.7",
     "craft-providers~=2.2",
-    "craft-store~=3.2",
+    "craft-store>=3.2.2,<4.0.0",
     "cryptography",
     "gnupg",
     "jsonschema==2.5.1",
