@@ -150,6 +150,11 @@ Snapcraft 8.9.2
   making them easier to identify and read.
 - `#5491`_ Project variables weren't being evaluated in project files.
 
+Snapcraft 8.9.3
+~~~~~~~~~~~~~~~
+
+- Minimum Python version reduced to 3.10
+
 Contributors
 ------------
 
