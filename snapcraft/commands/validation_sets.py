@@ -229,6 +229,13 @@ def edit_validation_sets(
             )
             validate_assertion(edited_validation_sets, **kwargs)
             return edited_validation_sets
+        # assertions with warnings can be submitted
+        except errors.SnapcraftAssertionWarning as err:
+            emit.message(f"{err!s}")
+            if utils.confirm_with_user("Do you wish to amend the validation set?"):
+                continue
+            return edited_validation_sets  # type: ignore[reportPossiblyUnboundVariable] # if there's a warning, then the assertion exists
+        # assertions with errors can't be submitted
         except (yaml.YAMLError, CraftValidationError) as err:
             emit.message(f"{err!s}")
             if not utils.confirm_with_user("Do you wish to amend the validation set?"):
@@ -243,14 +250,14 @@ def validate_assertion(
     :param assertion: The assertion to validate.
     :param kwargs: Additional keyword arguments to use for validation.
 
-    :raises CraftValidationError: If the assertion is invalid.
+    :raises SnapcraftAssertionWarning: If the assertion has non-critical warnings.
     """
     new_sequence = assertion.sequence
     old_sequence = cast(int, kwargs.get("sequence", 0))
     emit.debug(f"Sequence updated from {old_sequence} to {new_sequence}")
 
     if new_sequence <= old_sequence:
-        raise CraftValidationError(
+        raise errors.SnapcraftAssertionWarning(
             "Warning: The sequence number was not incremented. This prevents automatic reversions to a valid state in "
             "the case of invalid changes or snap refresh failures."
         )

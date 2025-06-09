@@ -542,7 +542,10 @@ def test_edit_sequence_error_retry(
 def test_edit_sequence_error_no_retry(
     sequence_num, mocker, tmp_path, monkeypatch, emitter
 ):
-    """Don't increment the sequence number and don't amend."""
+    """Don't increment the sequence number and don't amend.
+
+    Users can disregard this warning and still submit the assertion, so no error is raised.
+    """
     monkeypatch.setenv("EDITOR", "faux-vi")
     kwargs: dict[str, Any] = {"sequence": 9}
     tmp_file = tmp_path / "validation_sets_template"
@@ -556,8 +559,7 @@ def test_edit_sequence_error_no_retry(
 
     subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
 
-    with pytest.raises(errors.SnapcraftError):
-        edit_validation_sets(tmp_file, **kwargs)
+    edit_validation_sets(tmp_file, **kwargs)
 
     assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
     assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)]

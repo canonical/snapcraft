@@ -182,6 +182,10 @@ class SnapcraftAssertionError(SnapcraftError):
     """
 
 
+class SnapcraftAssertionWarning(SnapcraftAssertionError):
+    """Error raised when there is a non-critical warning for the assertion."""
+
+
 class SnapPackError(SnapcraftError):
     """Snapd packing error."""
 
