@@ -25,7 +25,7 @@ import os
 import pathlib
 import subprocess
 import tempfile
-from typing import Any, override
+from typing import Any
 
 import craft_cli
 import tabulate
@@ -34,6 +34,7 @@ from craft_application.errors import CraftValidationError
 from craft_application.services import base
 from craft_application.util import safe_yaml_load
 from craft_store.errors import StoreServerError
+from typing_extensions import override
 
 from snapcraft import const, errors, models, store, utils
 
