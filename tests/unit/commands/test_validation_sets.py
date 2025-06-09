@@ -497,7 +497,13 @@ def test_edit_yaml_error_no_retry(mocker, tmp_path, monkeypatch):
     assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)]
 
 
-def test_edit_sequence_error_retry(mocker, tmp_path, monkeypatch, emitter):
+@pytest.mark.parametrize(
+    "sequence_num",
+    [pytest.param(9, id="not incremented"), pytest.param(4, id="decremented")],
+)
+def test_edit_sequence_error_retry(
+    sequence_num, mocker, tmp_path, monkeypatch, emitter
+):
     """Don't increment the sequence number, then amend and increment the sequence number."""
     monkeypatch.setenv("EDITOR", "faux-vi")
     kwargs: dict[str, Any] = {"sequence": 9}
@@ -511,7 +517,7 @@ def test_edit_sequence_error_retry(mocker, tmp_path, monkeypatch, emitter):
             "snaps": [{"name": "core22"}],
         }
     )
-    yaml_original_sequence = "{'account-id': 'test', 'name': 'test', 'sequence': 9, 'snaps': [{'name': 'core22'}]}"
+    yaml_original_sequence = f"{{'account-id': 'test', 'name': 'test', 'sequence': {sequence_num}, 'snaps': [{{'name': 'core22'}}]}}"
     yaml_new_sequence = "{'account-id': 'test', 'name': 'test', 'sequence': 10, 'snaps': [{'name': 'core22'}]}"
     data_write = [yaml_new_sequence, yaml_original_sequence]
 
@@ -529,7 +535,13 @@ def test_edit_sequence_error_retry(mocker, tmp_path, monkeypatch, emitter):
     )
 
 
-def test_edit_sequence_error_no_retry(mocker, tmp_path, monkeypatch, emitter):
+@pytest.mark.parametrize(
+    "sequence_num",
+    [pytest.param(9, id="not incremented"), pytest.param(4, id="decremented")],
+)
+def test_edit_sequence_error_no_retry(
+    sequence_num, mocker, tmp_path, monkeypatch, emitter
+):
     """Don't increment the sequence number and don't amend."""
     monkeypatch.setenv("EDITOR", "faux-vi")
     kwargs: dict[str, Any] = {"sequence": 9}
@@ -538,7 +550,7 @@ def test_edit_sequence_error_no_retry(mocker, tmp_path, monkeypatch, emitter):
 
     def side_effect(*args, **kwargs):
         tmp_file.write_text(
-            "{'account-id': 'test', 'name': 'test', 'sequence': 9, 'snaps': [{'name': 'core22'}]}",
+            f"{{'account-id': 'test', 'name': 'test', 'sequence': {sequence_num}, 'snaps': [{{'name': 'core22'}}]}}",
             encoding="utf-8",
         )
 

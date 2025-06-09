@@ -24,7 +24,7 @@ import subprocess
 import tempfile
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import craft_application.util
 import yaml
@@ -246,10 +246,10 @@ def validate_assertion(
     :raises CraftValidationError: If the assertion is invalid.
     """
     new_sequence = assertion.sequence
-    old_sequence = kwargs.get("sequence")
+    old_sequence = cast(int, kwargs.get("sequence", 0))
     emit.debug(f"Sequence updated from {old_sequence} to {new_sequence}")
 
-    if new_sequence == old_sequence:
+    if new_sequence <= old_sequence:
         raise CraftValidationError(
             "Warning: The sequence number was not incremented. This prevents automatic reversions to a valid state in "
             "the case of invalid changes or snap refresh failures."
