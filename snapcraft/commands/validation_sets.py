@@ -231,7 +231,7 @@ def edit_validation_sets(
             return edited_validation_sets
         # assertions with warnings can be submitted
         except errors.SnapcraftAssertionWarning as err:
-            emit.message(f"{err!s}")
+            emit.progress(f"{err!s}", permanent=True)
             if utils.confirm_with_user("Do you wish to amend the validation set?"):
                 continue
             return edited_validation_sets  # type: ignore[reportPossiblyUnboundVariable] # if there's a warning, then the assertion exists

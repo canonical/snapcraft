@@ -529,9 +529,10 @@ def test_edit_sequence_error_retry(
     assert edit_validation_sets(tmp_file, **kwargs) == expected_edited_assertion
     assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
     assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)] * 2
-    emitter.assert_message(
+    emitter.assert_progress(
         "Warning: The sequence number was not incremented. This prevents automatic reversions "
-        "to a valid state in the case of invalid changes or snap refresh failures."
+        "to a valid state in the case of invalid changes or snap refresh failures.",
+        permanent=True,
     )
 
 
@@ -563,7 +564,8 @@ def test_edit_sequence_error_no_retry(
 
     assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
     assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)]
-    emitter.assert_message(
+    emitter.assert_progress(
         "Warning: The sequence number was not incremented. This prevents automatic reversions "
-        "to a valid state in the case of invalid changes or snap refresh failures."
+        "to a valid state in the case of invalid changes or snap refresh failures.",
+        permanent=True,
     )
