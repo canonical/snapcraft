@@ -30,4 +30,7 @@ build:
     create_environment:
       - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
     install:
-      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --group docs
+      - make setup-docs UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}"
+    build:
+      html:
+        - make docs UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" DOCS_OUTPUT="$READTHEDOCS_OUTPUT/html/"
