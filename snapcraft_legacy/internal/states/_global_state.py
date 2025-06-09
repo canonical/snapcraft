@@ -15,9 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import List, Optional, Type
-
-from mypy_extensions import TypedDict
+from typing import List, Optional, Type, TypedDict
 
 from snapcraft_legacy import yaml_utils
 from snapcraft_legacy.internal.states._state import State
