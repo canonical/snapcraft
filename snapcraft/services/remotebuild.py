@@ -16,12 +16,12 @@
 """Snapcraft Lifecycle Service."""
 
 import pathlib
-from typing import override
 
 import craft_cli
 import platformdirs
 from craft_application import launchpad
 from craft_application.services import remotebuild
+from typing_extensions import override
 
 
 class RemoteBuild(remotebuild.RemoteBuildService):
