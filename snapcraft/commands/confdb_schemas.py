@@ -18,9 +18,9 @@
 
 import argparse
 import textwrap
-from typing import override
 
 import craft_application.commands
+from typing_extensions import override
 
 from snapcraft import const, services
 

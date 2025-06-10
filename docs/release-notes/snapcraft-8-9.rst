@@ -150,6 +150,11 @@ Snapcraft 8.9.2
   making them easier to identify and read.
 - `#5491`_ Project variables weren't being evaluated in project files.
 
+Snapcraft 8.9.3
+~~~~~~~~~~~~~~~
+
+- `#5522`_ Minimum Python version changed to 3.10.
+
 Contributors
 ------------
 
@@ -174,3 +179,4 @@ and :literalref:`@tigarmo<https://github.com/tigarmo>`
 .. _#5107: https://github.com/canonical/snapcraft/issues/5107
 .. _#5272: https://github.com/canonical/snapcraft/issues/5272
 .. _#5491: https://github.com/canonical/snapcraft/issues/5491
+.. _#5522: https://github.com/canonical/snapcraft/issues/5522

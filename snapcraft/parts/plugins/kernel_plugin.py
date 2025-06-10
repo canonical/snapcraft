@@ -167,11 +167,12 @@ architectures set up accordingly.
 import logging
 import os
 import re
-from typing import Any, Literal, Self, cast
+from typing import Any, Literal, cast
 
 import pydantic
 from craft_parts import infos, plugins
 from overrides import overrides
+from typing_extensions import Self
 
 from snapcraft_legacy.plugins.v2 import _kernel_build
 
