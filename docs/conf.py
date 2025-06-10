@@ -22,13 +22,19 @@ author = "Canonical"
 copyright = "2023-%s, %s" % (datetime.date.today().year, author)
 
 # region Configuration for canonical-sphinx
+
 ogp_site_url = "https://canonical-starbase.readthedocs-hosted.com/"
 ogp_site_name = project
 ogp_image = "https://assets.ubuntu.com/v1/253da317-image-document-ubuntudocs.svg"
 
 html_context = {
+    # The following items are required for public-facing products. Replace the
+    # placeholder links with those specific to your product.
     "product_page": "github.com/canonical/starbase",
     "github_url": "https://github.com/canonical/starbase",
+    "github_issues": "https://github.com/canonical/starbase/issues",
+    "matrix": "https://matrix.to/#/#starcraft-development:ubuntu.com",
+    "discourse": "",  # Leave this blank to hide it from the dropdown
 }
 
 # Target repository for the edit button on pages
@@ -39,6 +45,7 @@ html_theme_options = {
 extensions = [
     "canonical_sphinx",
 ]
+
 # endregion
 
 # region General configuration
