@@ -38,7 +38,7 @@ dependencies = [
     "raven",
     "requests-toolbelt",
     "requests-unixsocket2",
-    "requests",
+    "requests>=2.32.4",
     "simplejson",
     "snap-helpers",
     "tabulate",
