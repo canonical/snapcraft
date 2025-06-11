@@ -80,6 +80,14 @@ With this change, we also removed the language subdirectory (``/en``) in the URL
 shave a few characters off all links.
 
 
+Corrections to build provider documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We've corrected several parts of the :ref:`tutorial <tutorial-craft-a-snap>` and
+:ref:`Set up Snapcraft <how-to-set-up-snapcraft>` related to installing Snapcraft and
+setting up LXD. The instructions are now up-to-date.
+
+
 Minor features
 --------------
 
@@ -115,7 +123,6 @@ The existing confdb schema commands have been renamed as follows:
       - ``list-confdb-schemas``
     * - ``edit-confdbs``
       - ``edit-confdb-schema``
-
 
 Known issues
 ------------
@@ -155,12 +162,20 @@ Snapcraft 8.9.3
 
 - `#5522`_ Minimum Python version changed to 3.10.
 
+Snapcraft 8.9.4
+~~~~~~~~~~~~~~~
+
+- Addressed all snapcraft.io/docs links in the code and docs.
+- Retired legacy Ruby how-to guide.
+- Corrected the values in the description of the ``confinement`` key.
+
 Contributors
 ------------
 
 We would like to express a big thank you to all the people who contributed to
 this release.
 
+:literalref:`@astrojuanlu<https://github.com/astrojuanlu>`,
 :literalref:`@bepri<https://github.com/bepri>`,
 :literalref:`@cmatsuoka<https://github.com/cmatsuoka>`,
 :literalref:`@jahn-junior<https://github.com/jahn-junior>`,
