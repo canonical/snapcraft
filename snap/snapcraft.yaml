@@ -210,6 +210,7 @@ parts:
       # Use base image's libsodium for PyNaCl.
       - "SODIUM_INSTALL": "system"
       - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
+      - "UV_FROZEN": "1" # Never update the uv lockfile - fail build if we can't succeed.
     build-snaps:
       - astral-uv
     override-build: |

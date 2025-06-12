@@ -18,10 +18,11 @@
 
 import numbers
 from collections import abc
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
 import pydantic
 from craft_application import models
+from typing_extensions import Self
 
 
 def cast_dict_scalars_to_strings(data: dict) -> dict:
