@@ -17,11 +17,11 @@
 """Service for initializing a project."""
 
 import pathlib
-from typing import override
 
 import craft_application.errors
 import craft_cli
 from craft_application import services
+from typing_extensions import override
 
 from snapcraft import errors
 from snapcraft.models.project import validate_name
