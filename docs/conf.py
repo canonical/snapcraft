@@ -20,23 +20,17 @@ import pathlib
 import sys
 
 import craft_parts_docs
-
 import snapcraft
-
-project_dir = pathlib.Path(__file__).parent.parent.resolve()
-sys.path.insert(0, str(project_dir.absolute()))
-
-# Add directories to sys path to simplify kitbash arguments
-model_dir = (project_dir / "snapcraft/models").resolve()
-sys.path.append(str(model_dir.absolute()))
-
-library_dir = (project_dir / ".venv/lib/python3.12/site-packages").resolve()
-sys.path.append(str(library_dir.absolute()))
 
 project = "Snapcraft"
 author = "Canonical Group Ltd"
-copyright = "%s, %s" % (datetime.date.today().year, author)
+# The full version, including alpha/beta/rc tags
 release = snapcraft.__version__
+# The commit hash in the dev release version confuses the spellchecker
+if ".post" in release:
+    release = "dev"
+
+copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
 # region Configuration for canonical-sphinx
 ogp_site_url = "https://documentation.ubuntu.com/snapcraft"
@@ -51,9 +45,12 @@ slug = "snapcraft"
 
 html_context = {
     "product_page": "snapcraft.io",
-    "discourse": "https://forum.snapcraft.io",
-    "matrix": "https://matrix.to/#/#snapcraft:ubuntu.com",
     "github_url": "https://github.com/canonical/snapcraft",
+    "repo_default_branch": "main",
+    "repo_folder": "/docs/",
+    "github_issues": "enabled",
+    "matrix": "https://matrix.to/#/#snapcraft:ubuntu.com",
+    "discourse": "https://forum.snapcraft.io",
     "display_contributors": False,
 }
 
@@ -64,6 +61,7 @@ html_theme_options = {
 
 extensions = [
     "canonical_sphinx",
+    "sphinx_sitemap",
     "pydantic_kitbash",
 ]
 
@@ -116,20 +114,44 @@ exclude_patterns = [
     "how-to/publishing/build-snaps-remotely.rst",
 ]
 
+# region Options for extensions
 
 intersphinx_mapping = {
     "craft-parts": ("https://canonical-craft-parts.readthedocs-hosted.com/en/latest/", None),
 }
 
+# Client-side page redirects.
+rediraffe_redirects = "redirects.txt"
+
+# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
+html_baseurl = "https://documentation.ubuntu.com/snapcraft/"
+
+if "READTHEDOCS_VERSION" in os.environ:
+    version = os.environ["READTHEDOCS_VERSION"]
+    sitemap_url_scheme = "{version}{link}"
+else:
+    sitemap_url_scheme = "latest/{link}"
+
+# endregion
+
+# region Automated documentation
+
+project_dir = pathlib.Path(__file__).parents[1].resolve()
+sys.path.insert(0, str(project_dir.absolute()))
+
+# Add directories to sys path to simplify kitbash arguments
+model_dir = (project_dir / "snapcraft/models").resolve()
+sys.path.append(str(model_dir.absolute()))
+
+library_dir = (project_dir / ".venv/lib/python3.12/site-packages").resolve()
+sys.path.append(str(library_dir.absolute()))
 
 def generate_cli_docs(nil):
-    gen_cli_docs_path = (project_dir / "tools" / "docs" / "gen_cli_docs.py").resolve()
+    gen_cli_docs_path = (project_dir / "tools/docs/gen_cli_docs.py").resolve()
     os.system("%s %s" % (gen_cli_docs_path, project_dir / "docs"))
-
 
 def setup(app):
     app.connect("builder-inited", generate_cli_docs)
-
 
 # Setup libraries documentation snippets for use in snapcraft docs.
 common_docs_path = pathlib.Path(__file__).parent / "common"
@@ -139,5 +161,4 @@ craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-
     craft_parts_docs_path, target_is_directory=True
 )
 
-# Client-side page redirects.
-rediraffe_redirects = "redirects.txt"
+# endregion
