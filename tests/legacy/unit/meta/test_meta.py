@@ -46,7 +46,7 @@ from tests.legacy import fixture_setup, unit
 
 
 def test_format_datetime():
-    dt = datetime.datetime(2025, 1, 2, 3, 4, 5, 123456,tzinfo=datetime.UTC)
+    dt = datetime.datetime(2025, 1, 2, 3, 4, 5, 123456,tzinfo=datetime.timezone.utc)
 
     formatted = _manifest._format_datetime(dt)
 
