@@ -61,6 +61,7 @@ html_theme_options = {
 
 extensions = [
     "canonical_sphinx",
+    "sphinx_sitemap",
     "pydantic_kitbash",
 ]
 
@@ -121,6 +122,15 @@ intersphinx_mapping = {
 
 # Client-side page redirects.
 rediraffe_redirects = "redirects.txt"
+
+# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
+html_baseurl = "https://documentation.ubuntu.com/snapcraft/"
+
+if "READTHEDOCS_VERSION" in os.environ:
+    version = os.environ["READTHEDOCS_VERSION"]
+    sitemap_url_scheme = "{version}{link}"
+else:
+    sitemap_url_scheme = "latest/{link}"
 
 # endregion
 
