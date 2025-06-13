@@ -83,16 +83,17 @@ dev = [
     "pytest-subprocess",
 ]
 docs = [
-    "canonical-sphinx[full]>=0.4.0",
-    "docutils>=0.21",
+    "canonical-sphinx[full]~=0.4.0",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
-    "sphinxcontrib-details-directive",
     "sphinx-lint",
+    "sphinx-sitemap>=2.6.0",
     "sphinx-toolbox",
+    "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.2.7",
-    "pyspelling",
+    "docutils>=0.21",
     "pydantic-kitbash==0.0.3",
+    "pyspelling",
 ]
 lint = [
     "codespell[toml]",
