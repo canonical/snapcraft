@@ -16,7 +16,7 @@
 
 import pathlib
 import sys
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from textwrap import dedent
 
 import pytest
@@ -92,7 +92,7 @@ def test_project_local_plugin_location(tmp_work_path, location):
 
 
 def test_get_snapcraft_started():
-    assert Project()._get_start_time() < datetime.now(UTC)
+    assert Project()._get_start_time() < datetime.now(timezone.utc)
 
 
 @pytest.mark.parametrize(
