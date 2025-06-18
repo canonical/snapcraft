@@ -744,7 +744,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-oracular' and extra == 'group-9-snapcraft-dev-plucky')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-oracular' and extra == 'group-9-snapcraft-dev-plucky')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -1778,7 +1778,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-kitbash"
-version = "0.0.3"
+version = "0.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
@@ -1786,9 +1786,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/35/c4ad89e9a866c5473685afabaf1ce4dbcd7988b966d7f5b1eb6ac8463c06/pydantic_kitbash-0.0.3.tar.gz", hash = "sha256:d86c490f7aa31e465910e8d057ef6921fbe9ae001b3b84e8032a7e1f6687e43f", size = 116044, upload-time = "2025-04-24T17:49:43.896Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/b9/e2c676013cadbddd1c935dd18e15b7863f87257e9a69f1b2c72b15000652/pydantic_kitbash-0.0.5.tar.gz", hash = "sha256:550194b663ffda882db4496e109a6ac4dac191fcce4493026f06fea01f322c23", size = 123504, upload-time = "2025-06-06T21:22:40.929Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/db/4c4563ae8597425ea5d7e38aaa75ccdc0a3716a016c653448f5fe074acdd/pydantic_kitbash-0.0.3-py3-none-any.whl", hash = "sha256:d12f0ea24d95a26f96a3911b8ac9967ff26d4a0fc38b21f19132279231b82e96", size = 12279, upload-time = "2025-04-24T17:49:42.729Z" },
+    { url = "https://files.pythonhosted.org/packages/13/71/9d31ae8e94b9d324ed143d8d6982685669c680e9efe2214963e2f9a68fc9/pydantic_kitbash-0.0.5-py3-none-any.whl", hash = "sha256:05bcdbb96d59df832915c2ca3f6da9a505275badd351c06fc978e6954a317822", size = 12804, upload-time = "2025-06-06T21:22:39.511Z" },
 ]
 
 [[package]]
@@ -2783,7 +2783,7 @@ dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifi
 docs = [
     { name = "canonical-sphinx", extras = ["full"], specifier = ">=0.4.0" },
     { name = "docutils", specifier = ">=0.21" },
-    { name = "pydantic-kitbash", specifier = "==0.0.3" },
+    { name = "pydantic-kitbash", specifier = ">=0.0.5" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },
