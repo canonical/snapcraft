@@ -561,7 +561,7 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.10.0"
+version = "2.10.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "overrides" },
@@ -572,9 +572,9 @@ dependencies = [
     { name = "requests-unixsocket2" },
     { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-oracular' and extra == 'group-9-snapcraft-dev-plucky')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/e2/e447994c1436b0ae3a8c4987f96fa8d45b62330f363a6d77cf7e4f5bae16/craft_parts-2.10.0.tar.gz", hash = "sha256:62a0dbca7248769dc43ce1f8755aff65af1b2d1df1627ac27251325b4b9e5bce", size = 724364, upload-time = "2025-05-07T21:36:02.203Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/44/a0/e6c0161e47b400be08ea1dd4dbfa4858b6256d02ee5a5ba6fdc547928b5a/craft_parts-2.10.1.tar.gz", hash = "sha256:457a156b2c9746c849979518b865ebeb12472de1ed18f0ff24430d48fe00b0b2", size = 727545, upload-time = "2025-06-18T23:08:15.063Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/ed/6c0cf8e555887646c95b98e1741b10bf4a9c21eb27d7e23dd8530e72590f/craft_parts-2.10.0-py3-none-any.whl", hash = "sha256:d3c7fa6f47485906d658b36ee0f4998c5543ec7203c0f9c1907e7fc949b86cc7", size = 467444, upload-time = "2025-05-07T21:36:00.253Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/17/747866fd6914371958faff70395eaed7e5836acd869dc440d45b55bed87b/craft_parts-2.10.1-py3-none-any.whl", hash = "sha256:04126a2a534c0ac0658090100a2ce3e65696b6bdfb8bec356fc7242c60f0d2e9", size = 471386, upload-time = "2025-06-18T23:08:12.985Z" },
 ]
 
 [[package]]
@@ -2721,7 +2721,7 @@ requires-dist = [
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = "~=3.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
-    { name = "craft-parts", specifier = ">=2.10.0,<3.0.0" },
+    { name = "craft-parts", specifier = "==2.10.1" },
     { name = "craft-platforms", specifier = "~=0.7" },
     { name = "craft-providers", specifier = "~=2.2" },
     { name = "craft-store", specifier = "~=3.2" },
