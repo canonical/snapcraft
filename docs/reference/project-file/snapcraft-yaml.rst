@@ -173,13 +173,11 @@ detail how they're built.
 .. kitbash-field:: craft_parts.parts.PartSpec build_attributes
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec override_build
-    :prepend-name: parts.<part-name>
-
 The part's default behavior for executable patching is dependent on the base snap.
 The following options alter the behavior.
 
 .. list-table::
+    :header-rows: 1
 
     * - Value
       - Description
@@ -204,6 +202,9 @@ For more details on part processing for core22 and newer, see `Processing order 
 dependencies
 <https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
 
+.. kitbash-field:: craft_parts.parts.PartSpec override_build
+    :prepend-name: parts.<part-name>
+
 .. kitbash-field:: craft_parts.parts.PartSpec build_packages
     :prepend-name: parts.<part-name>
 
@@ -212,10 +213,6 @@ dependencies
 
 .. kitbash-field:: craft_parts.parts.PartSpec organize_files
     :prepend-name: parts.<part-name>
-
-Files from the build environment can be organized into specific partitions. The
-destination path must start with the partition name, enclosed parentheses (). Source
-paths always reference the default partition.
 
 .. Stage step keys
 
