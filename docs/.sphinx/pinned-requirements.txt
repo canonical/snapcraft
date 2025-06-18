@@ -31,4 +31,4 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.8
 sphinxcontrib-serializinghtml==1.1.10
 tornado==6.5
-urllib3==1.26.20
+urllib3==2.5.0
