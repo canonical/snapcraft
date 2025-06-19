@@ -214,6 +214,11 @@ dependencies
 .. kitbash-field:: craft_parts.parts.PartSpec organize_files
     :prepend-name: parts.<part-name>
 
+Files from the build environment can be organized into specific components. The
+destination path must start with ``(component/<component-name>)``, with the parentheses
+included. Source paths always reference the default build environment.
+
+
 .. Stage step keys
 
 .. kitbash-field:: craft_parts.parts.PartSpec stage_files
