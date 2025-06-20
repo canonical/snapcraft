@@ -183,9 +183,6 @@ git_describe_command = [
     "--exclude",
     "*[^0-9.]*",
 ]
-# Appends "+dirty" to the version when working dir is dirty
-# Necessary to avoid version numbers being too long
-local_scheme = "dirty-tag"
 
 [tool.setuptools.packages.find]
 include = ["snapcraft", "extensions", "keyrings", "schema", "snapcraft_legacy"]
