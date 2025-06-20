@@ -133,7 +133,8 @@ class Snapcraft(Application):
         super()._register_default_plugins()
 
         if self._known_core24:
-            # dotnet is disabled for core24 and newer because it is pending a rewrite
+            # core22 uses dotnet v1
+            # core24 and newer uses dotnet v2
             craft_parts.plugins.unregister("dotnet")
             craft_parts.plugins.register({"dotnet": DotnetV2Plugin})
 
