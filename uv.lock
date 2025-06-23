@@ -561,7 +561,7 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.10.1"
+version = "2.14.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "overrides" },
@@ -572,9 +572,9 @@ dependencies = [
     { name = "requests-unixsocket2" },
     { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-oracular' and extra == 'group-9-snapcraft-dev-plucky')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/44/a0/e6c0161e47b400be08ea1dd4dbfa4858b6256d02ee5a5ba6fdc547928b5a/craft_parts-2.10.1.tar.gz", hash = "sha256:457a156b2c9746c849979518b865ebeb12472de1ed18f0ff24430d48fe00b0b2", size = 727545, upload-time = "2025-06-18T23:08:15.063Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/8d/b29a99115db9df78c7edbb0538ec68ba66def63072c5e826d4ddce44e46e/craft_parts-2.14.0.tar.gz", hash = "sha256:5d073024d13ec603cb93705574ab9530db6367467088b0c6662b30a31f8f302a", size = 763516, upload-time = "2025-06-20T20:00:49.148Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/17/747866fd6914371958faff70395eaed7e5836acd869dc440d45b55bed87b/craft_parts-2.10.1-py3-none-any.whl", hash = "sha256:04126a2a534c0ac0658090100a2ce3e65696b6bdfb8bec356fc7242c60f0d2e9", size = 471386, upload-time = "2025-06-18T23:08:12.985Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/36/47380532f6336f1a949f5fb0600ced6a4769c039590abc760d411f7afd88/craft_parts-2.14.0-py3-none-any.whl", hash = "sha256:9fbbe3554fd212e69bfcdaa32a623beae1fc7cde24397a7c7ee150e6f2f201ca", size = 489497, upload-time = "2025-06-20T20:00:46.47Z" },
 ]
 
 [[package]]
