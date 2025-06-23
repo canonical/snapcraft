@@ -8,7 +8,7 @@ interface for altering snap behavior with user-defined environment variables.
 
 When you add the extension to individual apps inside a snap, you open the way for the
 user to `configure the snap <https://snapcraft.io/docs/configuration-in-snaps>`_ or
-affect its behaviour with environment variables.
+affect its behavior with environment variables.
 
 
 How it works

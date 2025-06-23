@@ -273,7 +273,7 @@ For a complete list of commits, check out the `8.5.1`_ release on GitHub.
 Core
 ====
 
-* Remove the Snapcraft Dockerfile in favour of the `snapcraft-rocks`_ registry.
+* Remove the Snapcraft Dockerfile in favor of the `snapcraft-rocks`_ registry.
   For more information, see the ``docker/README.md`` file.
 
 Bases
