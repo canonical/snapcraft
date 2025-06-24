@@ -27,8 +27,10 @@ from snapcraft.parts.yaml_utils import _SNAP_PROJECT_FILES
 
 @pytest.fixture()
 def init_service(fake_services):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import Init
+    from snapcraft.application import (  # noqa: PLC0415 (import-outside-top-level)
+        APP_METADATA,
+    )
+    from snapcraft.services import Init  # noqa: PLC0415 (import-outside-top-level)
 
     service = Init(app=APP_METADATA, services=fake_services)
 
