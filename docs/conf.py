@@ -98,7 +98,6 @@ exclude_patterns = [
     "common/craft-parts/explanation/dump_plugin.rst",
     "common/craft-parts/explanation/gradle_plugin.rst",
     "common/craft-parts/how-to/craftctl.rst",
-    "common/craft-parts/how-to/use_parts.rst",
     "common/craft-parts/how-to/override_build.rst",
     "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/part_properties.rst",
@@ -112,6 +111,15 @@ exclude_patterns = [
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
     "how-to/publishing/build-snaps-remotely.rst",
+    # Deprecated commands
+    "reference/commands/extensions.rst",
+    "reference/commands/list-registered.rst",
+    "reference/commands/list.rst",
+    "reference/commands/push.rst",
+    "reference/commands/plugins.rst",
+    "reference/commands/revisions.rst",
+    "reference/commands/snap.rst",
+    "reference/commands/tracks.rst",
 ]
 
 # region Options for extensions

@@ -21,4 +21,4 @@ jobs:
       lowest-python-platform: "ubuntu-24.04"
       fast-test-python-versions: '["3.12"]'
       slow-test-python-versions: '["3.12"]'
-      lowest-python-version: "3.12"
+      lowest-python-version: "3.10"

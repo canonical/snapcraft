@@ -90,12 +90,15 @@ values such as its confinement level and supported architectures.
 .. kitbash-field:: project.Project apps
 
 .. kitbash-field:: craft_application.models.project.Project parts
+    :override-type: dict[str, Part]
 
 .. kitbash-field:: craft_application.models.project.Project package_repositories
+    :override-type: list[dict[str, Any]]
 
 .. kitbash-field:: project.Project hooks
 
 .. kitbash-field:: project.Project components
+    :override-type: dict[str, Component]
 
 .. kitbash-field:: project.Project plugs
 
@@ -173,8 +176,12 @@ detail how they're built.
 .. kitbash-field:: craft_parts.parts.PartSpec build_attributes
     :prepend-name: parts.<part-name>
 
+**Description**
+
 The part's default behavior for executable patching is dependent on the base snap.
 The following options alter the behavior.
+
+**Values**
 
 .. list-table::
     :header-rows: 1
