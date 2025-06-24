@@ -20,11 +20,9 @@ TODO
 
 1. Update this guide as you go along, if something is unclear or missing.
 2. Use ruff.
-
     1. Pull in the bare minimum `pyproject.toml` needed to use ruff.
 
     2. Make your codebase pass with ruff. Commit after each step:
-
         1. `ruff check --fix`
         2. `ruff check --fix --unsafe-fixes`
         3. `ruff check --add-noqa`
@@ -36,9 +34,7 @@ TODO
 
 3. Modify top-level files in your project to match what's in Starbase as closely as
    possible.
-
     1. `Makefile` – Ensure you use `uv` and at least have the same targets:
-
         - `setup`
         - `lint`
         - `test-unit`
@@ -67,15 +63,12 @@ TODO
        sure to follow the comments in the template closely.
 
 4. Run all the linters with `make lint`.
-
     1. `mypy`:
-
         - Mypy checks the same things as `ruff`'s `ANNXXX` checks, but `ruff`'s `noqa`
           directives mean nothing to mypy. You'll need to fix these by hand, mostly by
           adding type annotations to function definitions.
 
     2. `pyright`:
-
         - For errors along the lines of "Stub file not found for $library", check for
           the existence of pip package `typing-$library` and add it as a dependency.
         - If you have lots of errors you may need to remove the
@@ -85,7 +78,6 @@ TODO
    them as close as possible and adding anything that makes sense upstream.
 
 6. Bring in remaining top-level files:
-
     - `.editorconfig`
     - `.pre-commit-config.yaml`
     - `.shellcheckrc`
@@ -95,7 +87,6 @@ TODO
    should use spread for integration tests.
 
 8. Finally, once all files are manually synced, actually sync the Git history:
-
     - `git remote add starbase git@github.com:canonical/starbase.git`
     - `git fetch starbase main`
     - `git merge --allow-unrelated-histories starbase/main`
@@ -112,7 +103,6 @@ TODO
    to create your repository.
 
 2. Sync the Git history with starbase to ease future merging:
-
     - `git clone <your-repo>`
     - `git remote add starbase git@github.com:canonical/starbase.git`
     - `git fetch starbase main`

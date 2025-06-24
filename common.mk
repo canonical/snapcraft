@@ -14,7 +14,7 @@ else
 	APT := apt-get
 endif
 
-PRETTIER=npm exec --package=prettier -- prettier --log-level warn
+PRETTIER=npm exec --package=prettier@3.6.0 -- prettier --log-level warn # renovate: datasource=npm
 PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 
 # Cutoff (in seconds) before a test is considered slow by pytest
