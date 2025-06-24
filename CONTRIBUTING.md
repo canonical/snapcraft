@@ -1,4 +1,4 @@
-# Contributing to Snapcraft
+# Contribute
 
 Snapcraft has a community from all over the world, and we welcome all contributions.
 
