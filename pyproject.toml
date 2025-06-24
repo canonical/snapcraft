@@ -87,7 +87,7 @@ docs = [
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
-    "sphinx-sitemap>=2.6.0",
+    "sphinx-sitemap~=2.7.0",
     "sphinx-toolbox",
     "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.2.7",
