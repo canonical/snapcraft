@@ -33,4 +33,5 @@ build:
       - make setup-docs UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}"
     build:
       html:
+        - pwd
         - make docs UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" DOCS_OUTPUT="$READTHEDOCS_OUTPUT/html/"

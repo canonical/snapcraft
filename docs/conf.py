@@ -145,7 +145,7 @@ else:
 git_untracked_check_dependencies = False
 if "READTHEDOCS_VERSION" in os.environ:
     git_exclude_patterns = [
-        "**/site-packages/*",
+        "${READTHEDOCS_VIRTUALENV_PATH}/*",
     ]
 
 # endregion
