@@ -43,7 +43,9 @@ class Package(PackageService):
     @override
     def setup(self) -> None:
         """Application-specific service setup."""
-        from snapcraft.services import Project
+        from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+            Project,
+        )
 
         super().setup()
         self._project_service = cast(Project, self._services.get("project"))

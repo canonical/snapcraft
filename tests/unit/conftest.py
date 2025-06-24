@@ -422,7 +422,9 @@ def extra_project_params():
 
 @pytest.fixture()
 def default_project(extra_project_params):
-    from snapcraft.models.project import Project
+    from snapcraft.models.project import (  # noqa: PLC0415 (import-outside-top-level)
+        Project,
+    )
 
     parts = extra_project_params.pop("parts", {})
 
@@ -453,8 +455,13 @@ def fake_services(
     fake_confdb_schemas_service_class,
     project_path,
 ):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import BuildPlan, SnapcraftServiceFactory
+    from snapcraft.application import (  # noqa: PLC0415 (import-outside-top-level)
+        APP_METADATA,
+    )
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        BuildPlan,
+        SnapcraftServiceFactory,
+    )
 
     services.SnapcraftServiceFactory.register("package", fake_package_service_class)
     services.SnapcraftServiceFactory.register("lifecycle", fake_lifecycle_service_class)
@@ -481,8 +488,14 @@ def fake_services(
 
 @pytest.fixture
 def fake_app(fake_services):
-    from snapcraft.application import APP_METADATA, Snapcraft
-    from snapcraft.cli import COMMAND_GROUPS, CORE24_LIFECYCLE_COMMAND_GROUP
+    from snapcraft.application import (  # noqa: PLC0415 (import-outside-top-level)
+        APP_METADATA,
+        Snapcraft,
+    )
+    from snapcraft.cli import (  # noqa: PLC0415 (import-outside-top-level)
+        COMMAND_GROUPS,
+        CORE24_LIFECYCLE_COMMAND_GROUP,
+    )
 
     app = Snapcraft(app=APP_METADATA, services=fake_services)
 
@@ -512,7 +525,7 @@ def setup_project(mocker, project_path):
     """A helper function to set up the project and build plan."""
 
     def _setup_services(project_services, project_data, *, write_project: bool = False):
-        from snapcraft import models
+        from snapcraft import models  # noqa: PLC0415 (import-outside-top-level)
 
         if write_project:
             _write_yaml(
@@ -534,7 +547,7 @@ def setup_project(mocker, project_path):
 
 @pytest.fixture()
 def fake_lifecycle_service_class(in_project_path):
-    from snapcraft.services import Lifecycle
+    from snapcraft.services import Lifecycle  # noqa: PLC0415 (import-outside-top-level)
 
     class FakeLifecycleService(Lifecycle):
         def __init__(
@@ -558,7 +571,7 @@ def fake_lifecycle_service_class(in_project_path):
 
 @pytest.fixture()
 def fake_provider_service_class(project_path):
-    from snapcraft.services import Provider
+    from snapcraft.services import Provider  # noqa: PLC0415 (import-outside-top-level)
 
     class FakeProviderService(Provider):
         def __init__(
@@ -602,7 +615,7 @@ def fake_project_service_class(fake_project) -> type[services.Project]:
 
 @pytest.fixture()
 def fake_package_service_class(default_project, snapcraft_yaml, tmp_path):
-    from snapcraft.services import Package
+    from snapcraft.services import Package  # noqa: PLC0415 (import-outside-top-level)
 
     class FakePackageService(Package):
         pass
@@ -612,11 +625,18 @@ def fake_package_service_class(default_project, snapcraft_yaml, tmp_path):
 
 @pytest.fixture()
 def fake_remote_build_service_class(mocker):
-    import lazr.restfulclient.resource
-    from craft_application import AppMetadata, services
-    from craft_application.launchpad.models import SnapRecipe
+    import lazr.restfulclient.resource  # noqa: PLC0415 (import-outside-top-level)
+    from craft_application import (  # noqa: PLC0415 (import-outside-top-level)
+        AppMetadata,
+        services,
+    )
+    from craft_application.launchpad.models import (  # noqa: PLC0415 (import-outside-top-level)
+        SnapRecipe,
+    )
 
-    from snapcraft.services import RemoteBuild
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        RemoteBuild,
+    )
 
     me = Mock(lazr.restfulclient.resource.Entry)
     me.name = "craft_test_user"
@@ -640,7 +660,9 @@ def fake_remote_build_service_class(mocker):
 
 @pytest.fixture()
 def fake_confdb_schemas_service_class(mocker):
-    from snapcraft.services import ConfdbSchemas
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        ConfdbSchemas,
+    )
 
     class FakeConfdbSchemasService(ConfdbSchemas):
         def setup(self) -> None:
@@ -656,7 +678,9 @@ def fake_confdb_schemas_service_class(mocker):
 @pytest.fixture()
 def fake_confdb_schema_assertion():
     """Returns a fake confdb-schema assertion with required fields."""
-    from snapcraft.models import ConfdbSchemaAssertion
+    from snapcraft.models import (  # noqa: PLC0415 (import-outside-top-level)
+        ConfdbSchemaAssertion,
+    )
 
     def _fake_confdb_schema_assertion(**kwargs) -> ConfdbSchemaAssertion:
         return ConfdbSchemaAssertion.unmarshal(

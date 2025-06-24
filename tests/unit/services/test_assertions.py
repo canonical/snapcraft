@@ -115,8 +115,10 @@ class FakeAssertion(CraftBaseModel):
 
 @pytest.fixture
 def fake_assertion_service(fake_services):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import Assertion
+    from snapcraft.application import (  # noqa: PLC0415 (import-outside-top-level)
+        APP_METADATA,
+    )
+    from snapcraft.services import Assertion  # noqa: PLC0415 (import-outside-top-level)
 
     class FakeAssertionService(Assertion):
         @property

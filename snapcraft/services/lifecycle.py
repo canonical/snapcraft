@@ -81,7 +81,9 @@ class Lifecycle(LifecycleService):
     @overrides
     def post_prime(self, step_info: StepInfo) -> bool:
         """Run post-prime parts steps for Snapcraft."""
-        from snapcraft.parts.plugins import python_common
+        from snapcraft.parts.plugins import (  # noqa: PLC0415 (import-outside-top-level)
+            python_common,
+        )
 
         project = cast(models.Project, self._project)
 
