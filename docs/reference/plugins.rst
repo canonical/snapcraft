@@ -9,6 +9,7 @@ This section contains an in-depth description of the plugins available in Snapcr
     :hidden:
 
     /common/craft-parts/reference/plugins/dotnet_plugin
+    /common/craft-parts/reference/plugins/dotnet_v2_plugin
     /common/craft-parts/reference/plugins/ant_plugin
     /common/craft-parts/reference/plugins/autotools_plugin
     /common/craft-parts/reference/plugins/cargo_use_plugin
