@@ -78,7 +78,7 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         supported_providers=_SUPPORTED_PROVIDERS,
     ),
     dict(
-        param_decls=["--debug"],
+        param_decls=["--debug", "-d"],
         is_flag=True,
         help="Shells into the environment if the build fails.",
         supported_providers=_ALL_PROVIDERS,

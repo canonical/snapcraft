@@ -6,15 +6,15 @@ dynamic = ["version"]
 dependencies = [
     "attrs",
     "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
-    "click==8.1.8",
-    "craft-application[remote]>=5.2.0,<6.0.0",
+    "click>=8.2",
+    "craft-application[remote]>=5.3.0,<6.0.0",
     "craft-archives~=2.1",
     "craft-cli~=3.0",
     "craft-grammar>=2.0.3,<3.0.0",
-    "craft-parts>=2.10.0,<3.0.0",
+    "craft-parts>=2.10.1,<3.0.0",
     "craft-platforms~=0.7",
     "craft-providers~=2.2",
-    "craft-store~=3.2",
+    "craft-store>=3.2.2,<4.0.0",
     "cryptography",
     "gnupg",
     "jsonschema==2.5.1",
@@ -83,16 +83,17 @@ dev = [
     "pytest-subprocess",
 ]
 docs = [
-    "canonical-sphinx[full]>=0.4.0",
-    "docutils>=0.21",
+    "canonical-sphinx[full]~=0.4.0",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
-    "sphinxcontrib-details-directive",
     "sphinx-lint",
+    "sphinx-sitemap>=2.6.0",
     "sphinx-toolbox",
+    "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.2.7",
+    "docutils>=0.21",
+    "pydantic-kitbash>=0.0.5",
     "pyspelling",
-    "pydantic-kitbash==0.0.3",
 ]
 lint = [
     "codespell[toml]",
@@ -101,8 +102,7 @@ lint = [
 types = [
     "mypy",
     "types-PyYAML",
-    # Pinned because any higher requires urllib3>=2
-    "types-requests==2.31.0.6",
+    "types-requests>=2.32",
     "types-setuptools",
     "types-simplejson",
     "types-tabulate",
@@ -276,14 +276,10 @@ lint.ignore = [
     # Most of these are probably worth enabling eventually.
 
     # Annotation issues appear to be mostly in older code, so could be eventually enabled.
-    # 39 instances of ANN001.
-    "ANN001",  # Missing type annotation for function argument
     # 5 instances of ANN201, 10 instances of ANN202
     "ANN201", "ANN202",  # Missing return type annotation for public/private function
     # 13 instances of ANN206 - probably mostly :noqa-able
     "ANN206",
-    # 4 instances - would break if run with optimization
-    "S101", # Use of assert detected
     # Comprehensions - IDK, these ones flagged and they really could go either way.
     "C405", "C408", "C414",
     "RET504", "RET506",  # Return value related.

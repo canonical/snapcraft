@@ -42,11 +42,11 @@ def _load_potentially_base64_config(config_content: str) -> configparser.ConfigP
         # The config may be base64-encoded, try decoding it
         try:
             decoded_config_content = base64.b64decode(config_content).decode()
-        except base64.binascii.Error as b64_error:  # type: ignore
+        except (base64.binascii.Error, UnicodeDecodeError) as err:  # type: ignore
             # It wasn't base64, so use the original error
             raise errors.LegacyCredentialsParseError(
                 f"Cannot parse config: {parser_error}"
-            ) from b64_error
+            ) from err
 
         try:
             parser.read_string(decoded_config_content)
@@ -58,12 +58,16 @@ def _load_potentially_base64_config(config_content: str) -> configparser.ConfigP
     return parser
 
 
-def _get_macaroons_from_conf(conf) -> dict[str, str]:
+def _get_macaroons_from_conf(conf: configparser.ConfigParser) -> dict[str, str]:
     """Format a macaroon and its associated discharge.
 
     :return: A string suitable to use in an Authorization header.
     """
     host = parse_url(os.getenv("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL)).host
+    if not host:
+        raise errors.SnapcraftError(
+            "Couldn't parse environment variable 'UBUNTU_ONE_SSO_URL'."
+        )
     try:
         root_macaroon_raw = conf.get(host, "macaroon")
         unbound_raw = conf.get(host, "unbound_discharge")
@@ -136,7 +140,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         return False
 
     @classmethod
-    def store_credentials(cls, config_content) -> None:
+    def store_credentials(cls, config_content: str) -> None:
         """Store legacy credentials."""
         # Check to see if the content is valid.
         get_auth(config_content)

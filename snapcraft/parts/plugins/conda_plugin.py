@@ -115,7 +115,7 @@ class CondaPlugin(plugins.Plugin):
         fi"""
         )
 
-    def _get_deploy_command(self, options) -> str:
+    def _get_deploy_command(self, options: CondaPluginProperties) -> str:
         conda_target_prefix = f"/snap/{self._part_info.project_name}/current"
 
         deploy_cmd = [

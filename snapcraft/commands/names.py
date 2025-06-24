@@ -16,6 +16,8 @@
 
 """Snapcraft Store Account management commands."""
 
+from __future__ import annotations
+
 import json
 import operator
 import textwrap
@@ -26,7 +28,7 @@ from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
 
-from snapcraft import store, utils
+from snapcraft import const, store, utils
 
 if TYPE_CHECKING:
     import argparse
@@ -59,7 +61,7 @@ _MESSAGE_REGISTER_SUCCESS = "Registered {!r}"
 _MESSAGE_REGISTER_NO = "Snap name {!r} not registered"
 
 
-def _set_nil(value):
+def _set_nil(value: str):
     """Return None when given the input "-", else the original input."""
     return None if value == "-" else value
 
@@ -76,7 +78,7 @@ class StoreRegisterCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap-name",
             type=str,
@@ -104,7 +106,7 @@ class StoreRegisterCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         # dest does not work when filling the parser so getattr instead
         snap_name = getattr(parsed_args, "snap-name")
 
@@ -136,7 +138,7 @@ class StoreNamesCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--format",
             type=str,
@@ -146,7 +148,7 @@ class StoreNamesCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         store_client = store.StoreClientCLI()
         snaps = store_client.get_names()
         snaps.sort(key=operator.itemgetter(0))
@@ -185,13 +187,24 @@ class StoreLegacyListCommand(StoreNamesCommand):
     hidden = True
 
     @overrides
-    def run(self, parsed_args):
-        emit.progress("This command is deprecated: use 'names' instead", permanent=True)
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
         super().run(parsed_args)
 
 
-class StoreLegacyListRegisteredCommand(StoreLegacyListCommand):
+class StoreLegacyListRegisteredCommand(StoreNamesCommand):
     """Legacy command to list the snap names registered with the current account."""
 
     name = "list-registered"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)

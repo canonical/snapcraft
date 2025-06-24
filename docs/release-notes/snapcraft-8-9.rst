@@ -169,6 +169,12 @@ Snapcraft 8.9.4
 - Retired legacy Ruby how-to guide.
 - Corrected the values in the description of the ``confinement`` key.
 
+Snapcraft 8.9.5
+~~~~~~~~~~~~~~~
+
+- Updated all part keys in the :ref:`snapcraft.yaml reference
+  <reference-snapcraft-yaml-part-keys>`.
+
 Contributors
 ------------
 

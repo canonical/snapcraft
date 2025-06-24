@@ -3,6 +3,7 @@
 
 SOURCES=$(wildcard *.py) $(PROJECT) tests
 DOCS=docs
+DOCS_OUTPUT=$(DOCS)/_build
 
 ifneq ($(OS),Windows_NT)
 	OS := $(shell uname)
@@ -221,11 +222,11 @@ test-find-slow:  ##- Identify slow tests. Set cutoff time in seconds with SLOW_C
 
 .PHONY: docs
 docs:  ## Build documentation
-	uv run $(UV_DOCS_GROUPS) sphinx-build -b html -W $(DOCS) $(DOCS)/_build
+	uv run $(UV_DOCS_GROUPS) sphinx-build -b dirhtml -W $(DOCS) $(DOCS_OUTPUT)
 
 .PHONY: docs-auto
 docs-auto:  ## Build and host docs with sphinx-autobuild
-	uv run --group docs sphinx-autobuild -b html --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS)/_build
+	uv run --group docs sphinx-autobuild -b dirhtml --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS_OUTPUT)
 
 .PHONY: pack-pip
 pack-pip:  ##- Build packages for pip (sdist, wheel)

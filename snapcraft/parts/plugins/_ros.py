@@ -44,7 +44,7 @@ class RosdepError(SnapcraftError):
 class RosdepUnexpectedResultError(RosdepError):
     """Error for unexpected rosdep results."""
 
-    def __init__(self, dependency, output):
+    def __init__(self, dependency: str, output: str):
         super().__init__(
             message="Received unexpected result from rosdep when trying to resolve "
             f"{dependency!r}:\n{output}"

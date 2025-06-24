@@ -81,7 +81,7 @@ class FlutterPlugin(plugins.Plugin):
             "PATH": f"{self.flutter_dir / 'bin'}:${{PATH}}",
         }
 
-    def _get_setup_flutter(self, options) -> list[str]:
+    def _get_setup_flutter(self, options: FlutterPluginProperties) -> list[str]:
         # TODO move to pull
         return [
             # TODO detect changes to plugin properties

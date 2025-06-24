@@ -308,6 +308,14 @@ class TestGetPartSnippet:
                     )
                     + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
                 },
+                {
+                    "CMAKE_PREFIX_PATH": (
+                        "$CRAFT_STAGE:"
+                        "/snap/gnome-42-2204-sdk/current"
+                        "${CMAKE_PREFIX_PATH:"
+                        "+:$CMAKE_PREFIX_PATH}"
+                    )
+                },
             ]
         }
 
@@ -386,6 +394,14 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                     ]
                 )
                 + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
+            },
+            {
+                "CMAKE_PREFIX_PATH": (
+                    "$CRAFT_STAGE:"
+                    "/snap/gnome-44-2204-sdk/current"
+                    "${CMAKE_PREFIX_PATH:"
+                    "+:$CMAKE_PREFIX_PATH}"
+                )
             },
         ]
     }

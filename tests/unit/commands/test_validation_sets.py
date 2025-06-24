@@ -495,3 +495,77 @@ def test_edit_yaml_error_no_retry(mocker, tmp_path, monkeypatch):
 
     assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
     assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)]
+
+
+@pytest.mark.parametrize(
+    "sequence_num",
+    [pytest.param(9, id="not incremented"), pytest.param(4, id="decremented")],
+)
+def test_edit_sequence_error_retry(
+    sequence_num, mocker, tmp_path, monkeypatch, emitter
+):
+    """Don't increment the sequence number, then amend and increment the sequence number."""
+    monkeypatch.setenv("EDITOR", "faux-vi")
+    kwargs: dict[str, Any] = {"sequence": 9}
+    tmp_file = tmp_path / "validation_sets_template"
+    confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=True)
+    expected_edited_assertion = validation_sets.EditableBuildAssertion.unmarshal(
+        {
+            "account-id": "test",
+            "name": "test",
+            "sequence": 10,
+            "snaps": [{"name": "core22"}],
+        }
+    )
+    yaml_original_sequence = f"{{'account-id': 'test', 'name': 'test', 'sequence': {sequence_num}, 'snaps': [{{'name': 'core22'}}]}}"
+    yaml_new_sequence = "{'account-id': 'test', 'name': 'test', 'sequence': 10, 'snaps': [{'name': 'core22'}]}"
+    data_write = [yaml_new_sequence, yaml_original_sequence]
+
+    def side_effect(*args, **kwargs):
+        tmp_file.write_text(data_write.pop(), encoding="utf-8")
+
+    subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
+
+    assert edit_validation_sets(tmp_file, **kwargs) == expected_edited_assertion
+    assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
+    assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)] * 2
+    emitter.assert_progress(
+        "Warning: The sequence number was not incremented. This prevents automatic reversions "
+        "to a valid state in the case of invalid changes or snap refresh failures.",
+        permanent=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "sequence_num",
+    [pytest.param(9, id="not incremented"), pytest.param(4, id="decremented")],
+)
+def test_edit_sequence_error_no_retry(
+    sequence_num, mocker, tmp_path, monkeypatch, emitter
+):
+    """Don't increment the sequence number and don't amend.
+
+    Users can disregard this warning and still submit the assertion, so no error is raised.
+    """
+    monkeypatch.setenv("EDITOR", "faux-vi")
+    kwargs: dict[str, Any] = {"sequence": 9}
+    tmp_file = tmp_path / "validation_sets_template"
+    confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
+
+    def side_effect(*args, **kwargs):
+        tmp_file.write_text(
+            f"{{'account-id': 'test', 'name': 'test', 'sequence': {sequence_num}, 'snaps': [{{'name': 'core22'}}]}}",
+            encoding="utf-8",
+        )
+
+    subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
+
+    edit_validation_sets(tmp_file, **kwargs)
+
+    assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
+    assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)]
+    emitter.assert_progress(
+        "Warning: The sequence number was not incremented. This prevents automatic reversions "
+        "to a valid state in the case of invalid changes or snap refresh failures.",
+        permanent=True,
+    )

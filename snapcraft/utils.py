@@ -138,7 +138,7 @@ def get_parallel_build_count() -> int:
     return build_count
 
 
-def confirm_with_user(prompt_text, default=False) -> bool:
+def confirm_with_user(prompt_text: str, default: bool = False) -> bool:
     """Query user for yes/no answer.
 
     If stdin is not a tty, the default value is returned.

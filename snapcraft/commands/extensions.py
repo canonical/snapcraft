@@ -16,7 +16,10 @@
 
 """Snapcraft extension commands."""
 
+from __future__ import annotations
+
 import textwrap
+from typing import TYPE_CHECKING
 
 import tabulate
 from craft_application.commands import AppCommand
@@ -25,7 +28,7 @@ from craft_platforms import DebianArchitecture
 from overrides import overrides
 from pydantic import BaseModel
 
-from snapcraft import extensions, models
+from snapcraft import const, extensions, models
 from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
@@ -36,6 +39,9 @@ from snapcraft_legacy.internal.project_loader import (
     find_extension,
     supported_extension_names,
 )
+
+if TYPE_CHECKING:
+    import argparse
 
 
 class ExtensionModel(BaseModel):
@@ -64,7 +70,7 @@ class ListExtensionsCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args) -> None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
         extension_presentation: dict[str, ExtensionModel] = {}
 
         # New extensions.
@@ -102,6 +108,14 @@ class ExtensionsCommand(ListExtensionsCommand):
     name = "extensions"
     hidden = True
 
+    @overrides
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)
+
 
 class ExpandExtensionsCommand(AppCommand):
     """Expand the extensions in the snapcraft.yaml file."""
@@ -116,7 +130,7 @@ class ExpandExtensionsCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         snap_project = get_snap_project()
 
         # load yaml file and trigger legacy behavior if base is core, core18, or core20

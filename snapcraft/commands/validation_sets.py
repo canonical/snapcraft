@@ -16,13 +16,15 @@
 
 """Snapcraft Store Validation Sets commands."""
 
+from __future__ import annotations
+
 import json
 import os
 import subprocess
 import tempfile
 import textwrap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import craft_application.util
 import yaml
@@ -82,17 +84,18 @@ class StoreEditValidationSetsCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--key-name", metavar="key-name", help="Key used to sign the assertion"
         )
         parser.add_argument("account_id", metavar="account-id")
         parser.add_argument("set_name", metavar="set-name")
-        parser.add_argument("sequence", metavar="sequence")
+        parser.add_argument("sequence", metavar="sequence", type=int)
 
     @overrides
-    def run(self, parsed_args: "argparse.Namespace"):
+    def run(self, parsed_args: argparse.Namespace):
         store_client = StoreClientCLI()
+        kwargs = {"sequence": parsed_args.sequence}
 
         asserted_validation_sets = store_client.get_validation_sets(
             name=parsed_args.set_name, sequence=str(parsed_args.sequence)
@@ -109,7 +112,7 @@ class StoreEditValidationSetsCommand(AppCommand):
             validation_sets_path = Path(temp_file.name)
 
         validation_sets_path.write_text(validation_sets_template, encoding="utf-8")
-        edited_validation_sets = edit_validation_sets(validation_sets_path)
+        edited_validation_sets = edit_validation_sets(validation_sets_path, **kwargs)
 
         if edited_validation_sets == validation_sets.EditableBuildAssertion(
             **yaml.safe_load(validation_sets_template)
@@ -132,7 +135,9 @@ class StoreEditValidationSetsCommand(AppCommand):
                         raise errors.SnapcraftError(
                             "operation aborted"
                         ) from validation_error
-                    edited_validation_sets = edit_validation_sets(validation_sets_path)
+                    edited_validation_sets = edit_validation_sets(
+                        validation_sets_path, **kwargs
+                    )
         finally:
             validation_sets_path.unlink()
 
@@ -199,9 +204,13 @@ def _generate_template(
 
 
 def edit_validation_sets(
-    validation_sets_path: Path,
+    validation_sets_path: Path, **kwargs: dict[str, Any]
 ) -> validation_sets.EditableBuildAssertion:
-    """Spawn an editor to modify the validation-sets."""
+    """Spawn an editor to modify the assertion.
+
+    :param validation_sets_path: The path to the assertion.
+    :param kwargs: Additional keyword arguments to use for validation.
+    """
     editor_cmd = os.getenv("EDITOR", "vi")
 
     while True:
@@ -218,11 +227,40 @@ def edit_validation_sets(
                     filepath=Path("validation-sets"),
                 )
             )
+            validate_assertion(edited_validation_sets, **kwargs)
             return edited_validation_sets
+        # assertions with warnings can be submitted
+        except errors.SnapcraftAssertionWarning as err:
+            emit.progress(f"{err!s}", permanent=True)
+            if utils.confirm_with_user("Do you wish to amend the validation set?"):
+                continue
+            return edited_validation_sets  # type: ignore[reportPossiblyUnboundVariable] # if there's a warning, then the assertion exists
+        # assertions with errors can't be submitted
         except (yaml.YAMLError, CraftValidationError) as err:
             emit.message(f"{err!s}")
             if not utils.confirm_with_user("Do you wish to amend the validation set?"):
                 raise errors.SnapcraftError("operation aborted") from err
+
+
+def validate_assertion(
+    assertion: validation_sets.EditableBuildAssertion, **kwargs: dict[str, Any]
+) -> None:
+    """Additional validation to perform on the assertion.
+
+    :param assertion: The assertion to validate.
+    :param kwargs: Additional keyword arguments to use for validation.
+
+    :raises SnapcraftAssertionWarning: If the assertion has non-critical warnings.
+    """
+    new_sequence = assertion.sequence
+    old_sequence = cast(int, kwargs.get("sequence", 0))
+    emit.debug(f"Sequence updated from {old_sequence} to {new_sequence}")
+
+    if new_sequence <= old_sequence:
+        raise errors.SnapcraftAssertionWarning(
+            "Warning: The sequence number was not incremented. This prevents automatic reversions to a valid state in "
+            "the case of invalid changes or snap refresh failures."
+        )
 
 
 def _sign_assertion(assertion: dict[str, Any], *, key_name: str | None) -> bytes:

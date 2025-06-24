@@ -73,6 +73,9 @@ class ConfdbSchema(models.CraftBaseModel):
 class Rules(models.CraftBaseModel):
     """A list of confdb schemas for a particular view."""
 
+    summary: str | None = None
+    """Optional summary for this view."""
+
     rules: list[ConfdbSchema]
 
 
@@ -84,6 +87,9 @@ class EditableConfdbSchemaAssertion(models.CraftBaseModel):
 
     name: str
     revision: int | None = 0
+
+    summary: str | None = None
+    """Optional summary for the entire confdb-schema."""
 
     views: dict[str, Rules]
     """A map of logical views of how the storage is accessed."""
