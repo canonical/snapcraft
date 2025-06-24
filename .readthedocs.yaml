@@ -34,4 +34,7 @@ build:
     build:
       html:
         - pwd
+        - echo ${READTHEDOCS_VIRTUALENV_PATH}
+        - export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
+        - echo ${GIT_DISCOVERY_ACROSS_FILESYSTEM}
         - make docs UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" DOCS_OUTPUT="$READTHEDOCS_OUTPUT/html/"
