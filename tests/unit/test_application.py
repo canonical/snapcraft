@@ -26,6 +26,8 @@ import craft_application.launchpad
 import craft_application.remote
 import craft_cli
 import craft_parts.plugins
+import craft_parts.plugins.dotnet_plugin
+import craft_parts.plugins.dotnet_v2_plugin
 import craft_store
 import pytest
 import yaml
@@ -315,44 +317,32 @@ def test_application_plugins():
 
 
 @pytest.mark.parametrize(
-    ("base", "build_base"),
+    ("base", "build_base", "expected_plugin"),
     [
-        ("core20", None),
-        ("core20", "core20"),
-        ("core20", "devel"),
-        ("core22", None),
-        ("core22", "core22"),
-        ("core22", "devel"),
+        ("core20", None, craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core20", "core20", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core20", "devel", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core22", None, craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core22", "core22", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core22", "devel", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core24", None, craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
+        ("core24", "core20", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
+        ("core24", "core22", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
+        ("core24", "core24", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
+        ("core24", "devel", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
     ],
 )
-def test_application_dotnet_registered(base, build_base, snapcraft_yaml):
-    """dotnet plugin is enabled for core22."""
+def test_application_dotnet_registered(
+    base, build_base, expected_plugin, snapcraft_yaml
+):
+    """dotnet plugin is enabled for core20 and later."""
     snapcraft_yaml(base=base, build_base=build_base)
     app = application.create_app()
 
     app._register_default_plugins()
 
     assert "dotnet" in craft_parts.plugins.get_registered_plugins()
-
-
-@pytest.mark.parametrize(
-    ("base", "build_base"),
-    [
-        ("core24", None),
-        ("core24", "core20"),
-        ("core24", "core22"),
-        ("core24", "core24"),
-        ("core24", "devel"),
-    ],
-)
-def test_application_dotnet_not_registered(base, build_base, snapcraft_yaml):
-    """dotnet plugin is disabled for core24 and newer bases."""
-    snapcraft_yaml(base=base, build_base=build_base)
-    app = application.create_app()
-
-    app._register_default_plugins()
-
-    assert "dotnet" not in craft_parts.plugins.get_registered_plugins()
+    assert craft_parts.plugins.get_plugin_class("dotnet") == expected_plugin
 
 
 def test_application_maven_use_not_registered(snapcraft_yaml):

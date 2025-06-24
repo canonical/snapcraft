@@ -30,6 +30,7 @@ import craft_store
 from craft_application import Application, AppMetadata, launchpad, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
+from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
 from craft_parts.plugins.plugins import PluginType
 from overrides import override
 
@@ -134,8 +135,10 @@ class Snapcraft(Application):
         craft_parts.plugins.unregister("maven-use")
 
         if self._known_core24:
-            # dotnet is disabled for core24 and newer because it is pending a rewrite
+            # core22 uses dotnet v1
+            # core24 and newer uses dotnet v2
             craft_parts.plugins.unregister("dotnet")
+            craft_parts.plugins.register({"dotnet": DotnetV2Plugin})
 
     @property
     def app_config(self) -> dict[str, Any]:
