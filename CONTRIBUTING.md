@@ -99,7 +99,7 @@ on its issue. The Snapcraft maintainers will review it for technical soundness. 
 proposal is accepted, they will assign you to the bounty pool, after which you can begin
 work.
 
-### Create a branch
+### Create a development branch
 
 Once you've settled on a topic to work on, it's time to set up a local branch.
 
