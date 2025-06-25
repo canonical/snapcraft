@@ -1,4 +1,4 @@
-# Contribute
+# Contributing
 
 Snapcraft has a community from all over the world, and we welcome all contributions.
 
@@ -99,7 +99,7 @@ on its issue. The Snapcraft maintainers will review it for technical soundness. 
 proposal is accepted, they will assign you to the bounty pool, after which you can begin
 work.
 
-### Create a feature branch
+### Create a branch
 
 Once you've settled on a topic to work on, it's time to set up a local branch.
 
@@ -151,8 +151,8 @@ git commit
 ```
 
 Format the commit message according to the [Conventional
-Commits](https://www.conventionalcommits.org/en/v1.0.0/) style. For our example of the
-sync method, an appropriate commit title would be:
+Commits](https://www.conventionalcommits.org/en/v1.0.0/) style. For the sanitizer
+example, an appropriate commit title would be:
 
 ```
 feat: add text sanitizer
@@ -173,8 +173,7 @@ done browsing, press `Q` to exit the interactive log.
 > commit. This can happen with test and docs, which can be used as either types or
 > scopes.
 >
-> Run down the following list and take note of which commits your change fit. Select the
-> type that's ranked highest:
+> Run down the following list and select the highest-ranked type that fits your change:
 >
 > - ci
 > - build
@@ -188,10 +187,10 @@ done browsing, press `Q` to exit the interactive log.
 > - chore
 
 Committing triggers the pre-commit hook, which runs the automatic code formatter and the
-faster linters.
+fast linters.
 
-If any of the files are reformatted, your commit was cancelled. Don't forget to restage
-the modified files with `git add -A` and commit again for it to stick.
+If the linters reformatted any of the files, the commit was cancelled. To make the
+changes stick, restage the modified files with `git add -A` and commit again.
 
 ### Test the change
 
@@ -232,9 +231,10 @@ them.
 
 ### Document the change
 
-Snapcraft has frequent documentation updates to both its user guide and its developer material.
+Snapcraft has frequent documentation updates to both its user guide and its developer
+material.
 
-Document feature changes and fixes in the relevant release notes.
+Document feature changes and fixes in the relevant [release notes](docs/release-notes/).
 
 For all documentation updates, build the site locally with:
 
@@ -276,9 +276,9 @@ it harder for maintainers to see code changes.
 ### Evaluating pull requests
 
 Oftentimes all you want to do is see if a given pull request solves the issue you were
-having. To make this easier, a snap is published for AMD64 on a channel named
+having. To make this easier, snaps are published for AMD64 and ARM64 on a channel named
 `latest/edge/pr-<PR-number>` where `PR number` is the number of the pull request.
 
-For feature branches, a snap is published for AMD64 on a channel named
+For feature branches, snaps are published for AMD64 and ARM64 on a channel named
 `latest/edge/<branch-name>`. For example, a branch named `feature/offline-mode` would be
 available on the channel `latest/edge/offline-mode`.
