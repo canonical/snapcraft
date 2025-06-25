@@ -276,6 +276,7 @@ ignore = [
     "A003",   # Class attribute shadowing built-in (reason: Class attributes don't often get bare references)
     "SIM117", # Use a single `with` statement with multiple contexts instead of nested `with` statements
     # (reason: this creates long lines that get wrapped and reduces readability)
+    "PLW1641", # eq-without-hash (most of our classes should be unhashable)
 
     # Ignored due to conflicts with ruff's formatter:
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
