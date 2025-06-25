@@ -304,6 +304,9 @@ def _setup_initrd_chroot_fnc_cmd(initrd_ubuntu_core_initramfs_deb: Optional[str]
                     run_chroot "${{UC_INITRD_ROOT}}" "apt-get install --no-install-recommends -y systemd"
                 else
                     run_chroot "${{UC_INITRD_ROOT}}" "apt-get install --no-install-recommends -y libsystemd-shared"
+                    if [ "${{CRAFT_ARCH_BUILD_FOR}}" = "amd64" ]; then
+                        run_chroot "${{UC_INITRD_CHROOT}}" "apt-get install --no-install-recommends -y intel-microcode amd64-microcode"
+                    fi
                 fi
                 chroot_add_snappy_dev_ppa "${{UBUNTU_SERIES}}" "${{ppa_fingerprint}}"
                 touch "${{work_dir}}/.${{UC_INITRD_ROOT_NAME}}.ppa"
