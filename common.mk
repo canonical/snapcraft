@@ -101,6 +101,10 @@ format-ruff: install-ruff  ##- Automatically format with ruff
 format-codespell:  ##- Fix spelling issues with codespell
 	uv run codespell --toml pyproject.toml --write-changes $(SOURCES)
 
+.PHONY: format-pre-commit
+format-pre-commit:  ##- Format the entire repository using pre-commit
+	uv tool run pre-commit run --all-files
+
 .PHONY: format-prettier
 format-prettier: install-npm  ##- Format files with prettier
 	$(PRETTIER) --write $(PRETTIER_FILES)
