@@ -39,6 +39,8 @@ dependencies = [
     "requests-toolbelt",
     "requests-unixsocket2",
     "requests>=2.32.4",
+    # setuptools >= 80.9 has a noisy warning about pkg_resources
+    "setuptools>=69.0,<80.9.0",
     "simplejson",
     "snap-helpers",
     "tabulate",
@@ -87,7 +89,8 @@ docs = [
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
-    "sphinx-sitemap>=2.6.0",
+    # sphinx-sitemap>=2.7 fails to build on RTD infra, likely due to https://github.com/jdillard/sphinx-sitemap/pull/95
+    "sphinx-sitemap~=2.6.0",
     "sphinx-toolbox",
     "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.2.7",
