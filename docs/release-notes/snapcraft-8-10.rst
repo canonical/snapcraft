@@ -34,7 +34,7 @@ Init profile for ROS 2 applications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A new init profile, ``ros2``, has been added. This profile makes it easier for developers
-to create a ROS 2 snap.
+to create an ROS 2 snap.
 
 
 Improved ``test`` command
@@ -53,11 +53,15 @@ Minor features
 Snapcraft 8.10 brings the following minor changes.
 
 
-``CMAKE_PREFIX_PATH`` for the GNOME extension
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Support for CMake in the GNOME extension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The GNOME extension now sets the ``CMAKE_PREFIX_PATH`` in the build-environment to the
-stage directory and the GNOME SDK snap.
+CMake projects using the :ref:`reference-gnome-extension` are now
+able to use libraries from the GNOME SDK snap with `find_library
+<https://cmake.org/cmake/help/latest/command/find_library.html>`_.
+
+During the build step, the GNOME extension now points the ``CMAKE_PREFIX_PATH``
+environment variable to the GNOME SDK snap and the stage directory.
 
 If a part using the :ref:`craft_parts_cmake_plugin` needs to override this variable,
 it should be done with the ``build-environment`` key instead of ``cmake-parameters:
@@ -91,8 +95,8 @@ We've added a feedback button to the top of all pages to make it easier to repor
 with the documentation.
 
 
-Documentation for setting up Snapcraft
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Updated guidance for setting up Snapcraft
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :ref:`how-to-set-up-snapcraft` page has been rewritten based on user feedback and
 testing.
@@ -107,11 +111,11 @@ The following features will be deprecated in a future major release:
 Old command aliases
 ~~~~~~~~~~~~~~~~~~~
 
-Previous Snapcraft releaeses have renamed commands and aliased the old command names to
+Previous Snapcraft releases renamed commands, and aliased the old command names to
 the new command names.
 
 This release adds a deprecation warning when an old command name is used. The old
-commands still work but will be removed in a future release.
+command names are still available, but will be removed in a future release.
 
 .. list-table::
     :header-rows: 1
@@ -181,12 +185,12 @@ this release.
 :literalref:`@edisile<https://github.com/edisile>`,
 :literalref:`@j-g00da<https://github.com/j-g00da>`,
 :literalref:`@jahn-junior<https://github.com/jahn-junior>`,
-:literalref:`@mdubelko<https://github.com/mdubelko>`,
+:literalref:`@medubelko<https://github.com/medubelko>`,
 :literalref:`@mr-cal<https://github.com/mr-cal>`,
 :literalref:`@lengau<https://github.com/lengau>`,
 :literalref:`@nandedamana<https://github.com/nandedamana>`,
 :literalref:`@panagiotisevaggelou<https://github.com/panagiotisevaggelou>`, and
-:literalref:`@pedro-avalos<https:/github.com/pedro-avalo>`,
+:literalref:`@pedro-avalos<https://github.com/pedro-avalos>`
 
 .. _#5161: https://github.com/canonical/snapcraft/issues/5161
 .. _#5167: https://github.com/canonical/snapcraft/issues/5167
