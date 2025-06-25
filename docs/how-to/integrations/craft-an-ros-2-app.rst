@@ -149,7 +149,7 @@ Example project file for ROS 2 Talker/Listener
 Add an ROS 2 app
 ----------------
 
-ROS 2 apps depend on special extensions that initialise the build- and run-time
+ROS 2 apps depend on special extensions that initialize the build- and run-time
 environments.
 
 To add an ROS 2 app:

@@ -326,14 +326,14 @@ Command line
 Init
 ====
 
-* Add a ``<project-dir>`` argument to initialise the project in a particular
+* Add a ``<project-dir>`` argument to initialize the project in a particular
   directory.
 
-* Add a ``--name <name>`` argument to set the ``name`` key in the initialised
+* Add a ``--name <name>`` argument to set the ``name`` key in the initialized
   ``snapcraft.yaml``. If ``--name`` isn't provided, the name of the project
   directory or current working directory is used.
 
-* Add a ``--profile <profile>`` argument to initialise a project for a specific
+* Add a ``--profile <profile>`` argument to initialize a project for a specific
   purpose. Currently, only the ``simple`` profile is supported.
 
 Store

@@ -3,7 +3,7 @@
 Release notes
 =============
 
-This page lists the notes for past releases of Snapcraft, which summarise new features,
+This page lists the notes for past releases of Snapcraft, which summarize new features,
 bug fixes and backwards-incompatible changes in each version. It also contains the
 release and support policies for Snapcraft.
 

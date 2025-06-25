@@ -34,7 +34,7 @@ Add an app that uses GNOME
 
 Apps that use GTK2 and GNOME as runtime libraries require a special script. It
 brings in the runtime environment and dependencies so that all desktop
-functionality is correctly initialised.
+functionality is correctly initialized.
 
 To add a GTK2 app:
 
