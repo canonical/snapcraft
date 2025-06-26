@@ -142,7 +142,7 @@ development keeps pace with the OS's new releases and support lifecycle.
   feedback.">
 
   <Paragraph 2: Present the new behavior or feature. In words, *show* what the feature
-  is and make a case for how the reader could benefit from it. Centre the user whenever
+  is and make a case for how the reader could benefit from it. Center the user whenever
   possible ("you"), and speak on behalf of Canonical ("we"). Prefer general, simple
   usage over complex applications. Use past tense, or the form "is now [x]" or "now
   [does x]". For example, "We understand that some authors may not want to have their
