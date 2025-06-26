@@ -51,7 +51,7 @@ targets:
 Adjust the Autotools configuration
 ----------------------------------
 
-When building for a particular architecture, Snapcraft will initialise the
+When building for a particular architecture, Snapcraft will initialize the
 ``CRAFT_ARCH_TRIPLET_BUILD_FOR`` environment variable in the build environment. This
 variable describes the platform and architecture that Autotools uses to configure
 cross-compilation. For more information on environment variables, see
@@ -99,7 +99,7 @@ To select the correct library for the target platform, include these packages in
 
 The ``build-packages`` and ``stage-packages`` keys additionally support the
 :ref:`advanced grammar <reference-advanced-grammar>` keys, which allow further
-customisation of packages installed per-platform.
+customization of packages installed per-platform.
 
 Build the snap
 --------------

@@ -33,7 +33,7 @@ Add an app that uses KDE
 
 Apps that use KDE runtime libraries require the :ref:`KDE neon extension
 <reference-kde-neon-extensions>`. The extension configures the runtime environment of
-the app so that all desktop functionality is correctly initialised. As desktop
+the app so that all desktop functionality is correctly initialized. As desktop
 environment apps, they also need special configuration for AppStream and ``.desktop``
 file compatibility.
 

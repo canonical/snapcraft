@@ -3,7 +3,7 @@
 Release notes
 =============
 
-This page lists the notes for past releases of Snapcraft, which summarise new features,
+This page lists the notes for past releases of Snapcraft, which summarize new features,
 bug fixes and backwards-incompatible changes in each version. It also contains the
 release and support policies for Snapcraft.
 
@@ -137,14 +137,14 @@ development keeps pace with the OS's new releases and support lifecycle.
   | Other important update                 | <Describe update>            | Mitigation for Heartbleed vulnerability |
   +----------------------------------------+------------------------------+-----------------------------------------+
 
-  <Paragraph 1, optional: Briefly cover the previous behaviour or the change in
+  <Paragraph 1, optional: Briefly cover the previous behavior or the change in
   circumstances. For example, "With Ubuntu 24.04 LTS, the Snap Store and App
   Center now collect public reviews for snaps and assign an averaged score to
   them to provide users and authors an avenue for discoverability and
   feedback.">
 
-  <Paragraph 2: Present the new behaviour or feature. In words, *show* what the feature
-  is and make a case for how the reader could benefit from it. Centre the user whenever
+  <Paragraph 2: Present the new behavior or feature. In words, *show* what the feature
+  is and make a case for how the reader could benefit from it. Center the user whenever
   possible ("you"), and speak on behalf of Canonical ("we"). Prefer general, simple
   usage over complex applications. Use past tense, or the form "is now [x]" or "now
   [does x]". For example, "We understand that some authors may not want to have their

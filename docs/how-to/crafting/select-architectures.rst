@@ -4,7 +4,7 @@ Select architectures
 ====================
 
 By default, Snapcraft builds a snap to run on the same architecture as the build
-environment. This behaviour can be modified with the top-level keys
+environment. This behavior can be modified with the top-level keys
 ``architectures`` and ``platforms`` in the snap's project file.
 
 The ``architectures`` and ``platforms`` keys are used to create a build

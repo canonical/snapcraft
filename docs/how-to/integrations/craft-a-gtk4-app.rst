@@ -35,7 +35,7 @@ Add an app that uses GNOME
 
 Apps that use GTK4 and GNOME as runtime libraries require the
 :ref:`reference-gnome-extension`. The extension configures the runtime environment of
-the app so that all desktop functionality is correctly initialised. As desktop
+the app so that all desktop functionality is correctly initialized. As desktop
 environment apps, they also need special configuration for AppStream and ``.desktop``
 file compatibility.
 
