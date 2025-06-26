@@ -1,1 +1,1 @@
-single-arch_1.0_amd64.snap
+single-arch_1.0_platform1.snap

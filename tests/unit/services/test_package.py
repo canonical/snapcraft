@@ -45,7 +45,7 @@ def test_pack(default_project, fake_services, setup_project, mocker):
         version="1.0",
         compression="xz",
         output=".",
-        target_arch="amd64",
+        target="amd64",
     )
 
 
@@ -67,7 +67,7 @@ def test_pack_target_arch(
 
     package_service.pack(prime_dir=tmp_path / "prime", dest=tmp_path)
 
-    assert mock_pack_snap.call_args.kwargs["target_arch"] == "s390x"
+    assert mock_pack_snap.call_args.kwargs["target"] == "s390x"
 
 
 def test_metadata(default_project, fake_services, setup_project):

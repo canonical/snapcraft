@@ -56,6 +56,7 @@ class Package(PackageService):
         # if the build plan exists first.
         if build_plan:
             self._build_for = build_plan[0].build_for
+            self._platform = build_plan[0].platform
 
     @override
     def _extra_project_updates(self) -> None:
@@ -108,7 +109,7 @@ class Package(PackageService):
                 compression=self._project.compression,
                 name=self._project.name,
                 version=process_version(self._project.version),
-                target_arch=self._build_for,
+                target=self._platform,
             )
         )
         component_map = self._pack_components(dest)
