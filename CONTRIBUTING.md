@@ -162,7 +162,8 @@ If you need help determining the type of conventional commit for your change, lo
 the history of the file in question with `git log --oneline <filename>` . When you're
 done browsing, press `Q` to exit the interactive log.
 
-> [!TIP]
+> **Tip**
+>
 > With complex changes, you might get stuck choosing a conventional commit type.
 >
 > This may signal that a commit is doing more than one thing and should be broken into
