@@ -75,7 +75,8 @@ to reconfigure your project as described by these guides.
 .. toctree::
     :hidden:
 
-    setup/index
+    set-up-snapcraft
+    select-a-build-provider
     crafting/index
     integrations/index
     extensions/index
