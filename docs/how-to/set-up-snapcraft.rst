@@ -3,8 +3,8 @@
 Set up Snapcraft
 ================
 
-Snapcraft can be installed on all popular Linux distributions with systemd,
-macOS, and Windows.
+Snapcraft can be installed on all popular Linux distributions compatible with systemd,
+as well as macOS and Windows.
 
 Before you begin installation and setup, make sure your system meets the
 :ref:`system requirements <reference-system-requirements>`.
