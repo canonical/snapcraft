@@ -468,9 +468,9 @@ class TestGetPartSnippet:
                 },
                 {
                     "CMAKE_PREFIX_PATH": (
-                        "$CRAFT_STAGE:"
-                        "/snap/kde-qt5-core22-sdk/current:"
-                        "/snap/kf5-core22-sdk/current:"
+                        "$CRAFT_STAGE/usr:"
+                        "/snap/kde-qt5-core22-sdk/current/usr:"
+                        "/snap/kf5-core22-sdk/current/usr:"
                         "/usr"
                         "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                     )
@@ -534,9 +534,9 @@ class TestGetPartSnippet:
                 },
                 {
                     "CMAKE_PREFIX_PATH": (
-                        "$CRAFT_STAGE:"
-                        "/snap/kde-qt5-core24-sdk/current:"
-                        "/snap/kf5-core24-sdk/current:"
+                        "$CRAFT_STAGE/usr:"
+                        "/snap/kde-qt5-core24-sdk/current/usr:"
+                        "/snap/kf5-core24-sdk/current/usr:"
                         "/usr"
                         "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                     )
@@ -587,9 +587,9 @@ def test_get_part_snippet_with_external_sdk(kde_neon_extension_with_build_snap):
             },
             {
                 "CMAKE_PREFIX_PATH": (
-                    "$CRAFT_STAGE:"
-                    "/snap/kde-qt5-core22-sdk/current:"
-                    "/snap/kf5-core22-sdk/current:"
+                    "$CRAFT_STAGE/usr:"
+                    "/snap/kde-qt5-core22-sdk/current/usr:"
+                    "/snap/kf5-core22-sdk/current/usr:"
                     "/usr"
                     "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                 )
@@ -647,9 +647,9 @@ def test_get_part_snippet_with_external_sdk_core24(
             },
             {
                 "CMAKE_PREFIX_PATH": (
-                    "$CRAFT_STAGE:"
-                    "/snap/kde-qt5-core24-sdk/current:"
-                    "/snap/kf5-core24-sdk/current:"
+                    "$CRAFT_STAGE/usr:"
+                    "/snap/kde-qt5-core24-sdk/current/usr:"
+                    "/snap/kf5-core24-sdk/current/usr:"
                     "/usr"
                     "${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
                 )
