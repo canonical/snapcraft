@@ -144,7 +144,7 @@ def main(docs_dir):
     # Delete obsolete .rst files that are not in the new list of commands.
     existing_files = {
         f.stem for f in commands_ref_dir.glob("*.rst")
-        if f.name not  in ["toc.rst"] and not f.name.endswith("-commands.rst")
+        if f.name not in ["toc.rst"] and not f.name.endswith("-commands.rst")
     }
     generated_files = set(toc)
 
