@@ -287,10 +287,7 @@ class ProviderErrorTest(ErrorsBaseTestCase):
         self.assertThat(self.print_exception_mock.call_count, Equals(1))
 
 
-    def _raise_exec_error(self):
-        self.call_handler(
-            ProviderExecError(provider_name="foo", command="bar", exit_code=2), False
-        )
+
 
     def _raise_other_error(self):
         self.call_handler(KeyError, False)
