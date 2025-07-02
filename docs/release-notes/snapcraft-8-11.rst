@@ -3,7 +3,7 @@
 Snapcraft 8.11 release notes
 ============================
 
-4 August 2024
+4 August 2025
 
 Learn about the new features, changes, and fixes introduced in Snapcraft 8.11.
 
