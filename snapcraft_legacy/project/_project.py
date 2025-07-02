@@ -16,7 +16,7 @@
 
 import hashlib
 import os
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Set
 
@@ -37,7 +37,7 @@ class Project(ProjectOptions):
         target_deb_arch=None,
         debug=False,
         snapcraft_yaml_file_path=None,
-        work_dir: str = None,
+        work_dir: str | None = None,
         is_managed_host: bool = False,
     ) -> None:
         project_dir = os.getcwd()
@@ -66,7 +66,7 @@ class Project(ProjectOptions):
         self._work_dir = work_dir
 
         self.local_plugins_dir = self._get_local_plugins_dir()
-        self._start_time = datetime.now(UTC)
+        self._start_time = datetime.now(timezone.utc)
 
         # XXX: (Re)set by Config because it mangles source data.
         # Ideally everywhere wold converge to operating on snap_meta, and ww

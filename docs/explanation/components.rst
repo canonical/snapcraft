@@ -22,7 +22,7 @@ debug symbols can download and install them as a component.
 Components and Partitions
 -------------------------
 
-Components utilise a `Craft Parts`_ feature called ``partitions``. This feature
+Components utilize a `Craft Parts`_ feature called ``partitions``. This feature
 is enabled only when the ``component`` key is defined in the project file.
 
 Each component has a namespaced partition ``component/<component-name>`` where

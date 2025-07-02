@@ -51,7 +51,7 @@ your base snap when searching.
 
 Don't include glibc or libc6 in your list of staged packages. Doing so is unnecessary as
 the base snap contains those libraries already, and bundling them into your snap can
-cause unexpected behaviour.
+cause unexpected behavior.
 
 
 Individual libraries

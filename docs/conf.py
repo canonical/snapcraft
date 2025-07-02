@@ -98,7 +98,6 @@ exclude_patterns = [
     "common/craft-parts/explanation/dump_plugin.rst",
     "common/craft-parts/explanation/gradle_plugin.rst",
     "common/craft-parts/how-to/craftctl.rst",
-    "common/craft-parts/how-to/use_parts.rst",
     "common/craft-parts/how-to/override_build.rst",
     "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/part_properties.rst",

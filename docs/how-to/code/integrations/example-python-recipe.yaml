@@ -5,7 +5,7 @@ summary: a status and control utility to for power, cooling and LED components
 version: "1.0"
 description: |
   liquidctl is a command-line tool to monitor and control the fan speed,
-  LED colour and pump volumes of specific power supplies, motherboards,
+  LED color and pump volumes of specific power supplies, motherboards,
   graphics cards and cooling solutions. The liquidctl snap unofficial and
   is not endorsed by the upstream project.
 base: core22
