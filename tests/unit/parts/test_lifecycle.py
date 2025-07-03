@@ -517,7 +517,7 @@ def test_lifecycle_run_local_destructive_mode(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=str(DebianArchitecture.from_host()),
+            target=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -582,7 +582,7 @@ def test_lifecycle_run_local_managed_mode(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=str(DebianArchitecture.from_host()),
+            target=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -647,7 +647,7 @@ def test_lifecycle_run_local_build_env(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=str(DebianArchitecture.from_host()),
+            target=str(DebianArchitecture.from_host()),
         )
     ]
 

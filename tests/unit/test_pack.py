@@ -205,12 +205,12 @@ def test_pack_snap_output_file_output_directory_existing_no_filename(mocker, new
     "parameters",
     [
         {"name": "hello", "version": "1.0"},
-        {"name": "hello", "target_arch": "armhf"},
-        {"version": "1.0", "target_arch": "armhf"},
+        {"name": "hello", "target": "armhf"},
+        {"version": "1.0", "target": "armhf"},
     ],
 )
 def test_pack_snap_file_name_missing_parameters(mocker, new_dir, parameters):
-    """If name, version, and target architecture are not all specified, then use
+    """If name, version, and target are not all specified, then use
     snap's default naming convention."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(new_dir, output=None, **parameters)
@@ -231,14 +231,14 @@ def test_pack_snap_file_name_missing_parameters(mocker, new_dir, parameters):
 
 
 def test_pack_snap_file_name_valid(mocker, new_dir):
-    """Passing name, version, and target_arch should produce a valid file name."""
+    """Passing name, version, and target should produce a valid file name."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(
         new_dir,
         output=None,
         name="hello",
         version="1.0",
-        target_arch="armhf",
+        target="armhf",
     )
     assert mock_run.mock_calls[:2] == [
         call(
@@ -257,14 +257,14 @@ def test_pack_snap_file_name_valid(mocker, new_dir):
 
 
 def test_pack_snap_use_output_name_over_name_version_arch(mocker, new_dir):
-    """Output filename takes priority over name, version, and target_arch parameters."""
+    """Output filename takes priority over name, version, and target parameters."""
     mock_run = mocker.patch("subprocess.run")
     pack.pack_snap(
         new_dir,
         output="test.snap",
         name="hello",
         version="1.0",
-        target_arch="armhf",
+        target="armhf",
     )
     assert mock_run.mock_calls[:2] == [
         call(

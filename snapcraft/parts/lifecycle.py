@@ -278,7 +278,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
             compression=project.compression,
             name=project.name,
             version=process_version(project.version),
-            target_arch=project.get_build_for(),
+            target=project.get_build_for(),
         )
         emit.progress(f"Created snap package {snap_filename}", permanent=True)
 

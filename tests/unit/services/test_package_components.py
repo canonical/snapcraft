@@ -85,7 +85,7 @@ def test_pack(default_project, fake_services, setup_project, mocker):
         version="1.0",
         compression="xz",
         output=".",
-        target_arch="amd64",
+        target="amd64",
     )
 
     mock_pack_component.assert_has_calls(
