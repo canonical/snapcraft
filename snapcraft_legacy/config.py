@@ -110,27 +110,6 @@ class CLIConfig:
             self.parser.add_section(section_name)
         self.parser.set(section_name, option_name, value)
 
-    def set_sentry_send_always(self, value: bool) -> None:
-        """Setter to define if errors should automatically be sent to sentry.
-
-        :param bool value: if true, errors should automatically be sent.
-        """
-        if value:
-            string_value = "true"
-        else:
-            string_value = "false"
-        self._set_option("Sentry", "always_send", string_value)
-
-    def get_sentry_send_always(self) -> bool:
-        """Getter to define if errors should automatically be sent to sentry.
-
-        :returns: True if errors should automatically be sent.
-        :rtype: bool.
-        """
-        string_value = self._get_option("Sentry", "always_send")
-        # Anything but "true" for string_value is considered False.
-        return string_value == "true"
-
     def set_outdated_step_action(self, action: OutdatedStepAction) -> None:
         """Setter to define action to take if outdated step is encountered.
 
