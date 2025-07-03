@@ -53,20 +53,24 @@ Minor features
 Snapcraft 8.10 brings the following minor changes.
 
 
-Support for CMake in the GNOME extension
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Support for CMake in the desktop extensions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CMake projects using the :ref:`reference-gnome-extension` are now
 able to use libraries from the GNOME SDK snap with `find_library
 <https://cmake.org/cmake/help/latest/command/find_library.html>`_.
 
 During the build step, the GNOME extension now points the ``CMAKE_PREFIX_PATH``
-environment variable to the GNOME SDK snap and the stage directory.
+environment variable to the ``usr`` directory in the GNOME SDK snap and the
+stage directory.
+
+The :ref:`reference-kde-neon-extensions` were already setting ``CMAKE_PREFIX_PATH``,
+but they have been updated to use the ``usr`` sub-directory in the KDE SDK snaps and
+the stage directory.
 
 If a part using the :ref:`craft_parts_cmake_plugin` needs to override this variable,
 it should be done with the ``build-environment`` key instead of ``cmake-parameters:
 [-DCMAKE_PREFIX_PATH]``.
-
 
 Summaries for confdb schemas
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,6 +176,16 @@ Snapcraft 8.10.0
   forwarded to managed instances.
 
 
+.. _release-notes-fixes-8.10.1:
+
+Snapcraft 8.10.1
+~~~~~~~~~~~~~~~~
+
+- `#5272`_ The ``CMAKE_PREFIX_PATH`` environment variable for the GNOME and KDE
+  extensions now point to the ``usr`` sub-directory inside the SDK snap and the stage
+  directories.
+
+
 Contributors
 ------------
 
@@ -195,3 +209,4 @@ this release.
 .. _#5161: https://github.com/canonical/snapcraft/issues/5161
 .. _#5167: https://github.com/canonical/snapcraft/issues/5167
 .. _#5539: https://github.com/canonical/snapcraft/issues/5539
+.. _#5272: https://github.com/canonical/snapcraft/issues/5272
