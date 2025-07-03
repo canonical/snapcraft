@@ -290,8 +290,8 @@ class KDENeonQt6(Extension):
                         "CMAKE_PREFIX_PATH": prepend_to_env(
                             "CMAKE_PREFIX_PATH",
                             [
-                                "$CRAFT_STAGE",
-                                f"/snap/{qt6_sdk_snap}/current",
+                                "$CRAFT_STAGE/usr",
+                                f"/snap/{qt6_sdk_snap}/current/usr",
                             ],
                             separator=":",
                         ),
@@ -356,8 +356,8 @@ class KDENeonQt6(Extension):
                     "CMAKE_PREFIX_PATH": prepend_to_env(
                         "CMAKE_PREFIX_PATH",
                         [
-                            "$CRAFT_STAGE",
-                            f"/snap/{qt6_sdk_snap}/current",
+                            "$CRAFT_STAGE/usr",
+                            f"/snap/{qt6_sdk_snap}/current/usr",
                         ],
                         separator=":",
                     ),
