@@ -22,3 +22,4 @@ and their implementation.
     remote-build
     /common/craft-parts/explanation/filesets
     classic-confinement
+    command-chain
