@@ -23,8 +23,8 @@ The following changes are incompatible with previous versions of Snapcraft.
 Snap file name changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The file name for core24 snaps now use the platform name instead of
-the build-for architecture.
+The file names for core24 snaps are now derived from the name of the entry in the
+``platforms`` key instead of the value of its ``build-for`` key.
 
 For example, consider the following snippet:
 
@@ -45,5 +45,5 @@ Previously, Snapcraft would build both snaps and use the same name,
 ``hello-world_1.0_arm64.snap``, for both snaps. This would result in the first snap
 being overwritten by the second snap.
 
-Now, Snapcraft builds 2 separate snaps, ``hello-world_1.0_rpi.snap`` and
+Now, Snapcraft builds two separate snaps, ``hello-world_1.0_rpi.snap`` and
 ``hello-world_1.0_rpi-debug.snap``.
