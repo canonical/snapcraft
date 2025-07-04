@@ -51,7 +51,7 @@ point is reached.
 Example
 -------
 
-Both ``bin/foo`` and ``bin/bar`` an be written as simple shell scripts or
+Both ``bin/foo`` and ``bin/bar`` can be written as simple shell scripts or
 comprehensive, compiled programs. A shell version might look like this.  Notice
 that the argument ``$0`` is the name of the program (command chain element),
 while remaining arguments, here represented as ``"$@"`` are executed to
