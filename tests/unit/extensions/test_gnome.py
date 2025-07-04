@@ -62,6 +62,18 @@ def gnome_extension_with_default_build_snap_from_latest_edge():
     )
 
 
+@pytest.fixture
+def gnome_extension_with_core24_build_snap_from_latest_edge():
+    return gnome.GNOME(
+        yaml_data={
+            "base": "core24",
+            "parts": {"part1": {"build-snaps": ["gnome-46-2404-sdk/latest/edge"]}},
+        },
+        arch="amd64",
+        target_arch="amd64",
+    )
+
+
 ###################
 # GNOME Extension #
 ###################
@@ -234,25 +246,35 @@ class TestGetPartSnippet:
             gnome_extension_with_default_build_snap_from_latest_edge
         )
 
+    def test_get_part_snippet_core24_latest_edge(
+        self, gnome_extension_with_core24_build_snap_from_latest_edge
+    ):
+        self.assert_get_part_snippet(
+            gnome_extension_with_core24_build_snap_from_latest_edge
+        )
+
     @staticmethod
     def assert_get_part_snippet(gnome_instance):
-        assert gnome_instance.get_part_snippet(plugin_name="autotools") == {
+        base = gnome_instance.yaml_data["base"]
+        sdk_snap = gnome_instance.gnome_snaps.sdk
+
+        expected_snippet = {
             "build-environment": [
-                {"PATH": "/snap/gnome-42-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
+                {"PATH": f"/snap/{sdk_snap}/current/usr/bin${{PATH:+:$PATH}}"},
                 {
                     "XDG_DATA_DIRS": (
-                        "$CRAFT_STAGE/usr/share:/snap/gnome-42-2204-sdk"
+                        f"$CRAFT_STAGE/usr/share:/snap/{sdk_snap}"
                         "/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
                     )
                 },
                 {
                     "LD_LIBRARY_PATH": ":".join(
                         [
-                            "/snap/gnome-42-2204-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
-                            "/snap/gnome-42-2204-sdk/current/usr/lib",
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/vala-current",
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/"
+                            f"/snap/{sdk_snap}/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
+                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR",
+                            f"/snap/{sdk_snap}/current/usr/lib",
+                            f"/snap/{sdk_snap}/current/usr/lib/vala-current",
+                            f"/snap/{sdk_snap}/current/usr/lib/"
                             "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio",
                         ]
                     )
@@ -260,37 +282,37 @@ class TestGetPartSnippet:
                 },
                 {
                     "PKG_CONFIG_PATH": (
-                        "/snap/gnome-42-2204-sdk/current/usr/lib/"
+                        f"/snap/{sdk_snap}/current/usr/lib/"
                         "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
-                        "/snap/gnome-42-2204-sdk/current/usr/lib/pkgconfig:"
-                        "/snap/gnome-42-2204-sdk/current/usr/share/pkgconfig"
+                        f"/snap/{sdk_snap}/current/usr/lib/pkgconfig:"
+                        f"/snap/{sdk_snap}/current/usr/share/pkgconfig"
                         "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
                     )
                 },
                 {
                     "GETTEXTDATADIRS": (
-                        "/snap/gnome-42-2204-sdk/current/usr/share/gettext-current"
+                        f"/snap/{sdk_snap}/current/usr/share/gettext-current"
                         "${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}"
                     )
                 },
                 {
                     "GDK_PIXBUF_MODULE_FILE": (
-                        "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
+                        f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
                         "/gdk-pixbuf-current/loaders.cache"
                     )
                 },
                 {
                     "ACLOCAL_PATH": (
-                        "/snap/gnome-42-2204-sdk/current/usr/share/aclocal"
+                        f"/snap/{sdk_snap}/current/usr/share/aclocal"
                         "${ACLOCAL_PATH:+:$ACLOCAL_PATH}"
                     )
                 },
                 {
                     "PYTHONPATH": ":".join(
                         [
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/python3.10",
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/python3/dist-packages",
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
+                            f"/snap/{sdk_snap}/current/usr/lib/python3.10",
+                            f"/snap/{sdk_snap}/current/usr/lib/python3/dist-packages",
+                            f"/snap/{sdk_snap}/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
                             "/gobject-introspection",
                         ]
                     )
@@ -299,9 +321,9 @@ class TestGetPartSnippet:
                 {
                     "GI_TYPELIB_PATH": ":".join(
                         [
-                            "/snap/gnome-42-2204-sdk/current/usr/lib/girepository-1.0",
+                            f"/snap/{sdk_snap}/current/usr/lib/girepository-1.0",
                             (
-                                "/snap/gnome-42-2204-sdk/current/usr/lib/"
+                                f"/snap/{sdk_snap}/current/usr/lib/"
                                 "$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0"
                             ),
                         ]
@@ -311,13 +333,29 @@ class TestGetPartSnippet:
                 {
                     "CMAKE_PREFIX_PATH": (
                         "$CRAFT_STAGE:"
-                        "/snap/gnome-42-2204-sdk/current"
+                        f"/snap/{sdk_snap}/current"
                         "${CMAKE_PREFIX_PATH:"
                         "+:$CMAKE_PREFIX_PATH}"
                     )
                 },
             ]
         }
+
+        if base != "core22":
+            expected_snippet["build-environment"].append(
+                {
+                    "C_INCLUDE_PATH": (
+                        "$CRAFT_STAGE/usr/include:"
+                        f"/snap/{sdk_snap}/current/usr/include:"
+                        f"/snap/{base}/current/include"
+                        "${C_INCLUDE_PATH:+:$C_INCLUDE_PATH}"
+                    )
+                }
+            )
+
+        assert (
+            gnome_instance.get_part_snippet(plugin_name="autotools") == expected_snippet
+        )
 
 
 def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
