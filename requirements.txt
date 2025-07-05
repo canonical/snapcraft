@@ -2,7 +2,7 @@ attrs==23.1.0
 catkin-pkg==0.5.2
 certifi==2023.5.7
 cffi==1.15.1
-chardet==5.1.0
+chardet==5.2.0
 charset-normalizer==3.1.0
 click==8.1.7
 craft-archives==1.1.3
