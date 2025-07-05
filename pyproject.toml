@@ -1,7 +1,6 @@
 [project]
 name = "snapcraft"
 description = "Create snaps"
-readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     "attrs",
@@ -63,6 +62,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 requires-python = ">=3.10"
+readme = { file = "README.md", content-type = "text/markdown" }
 
 [dependency-groups]
 dev = [
