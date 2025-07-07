@@ -26,7 +26,7 @@ def project_main_module() -> types.ModuleType:
     """
     try:
         # This should be the project's main package; downstream projects must update this.
-        import starcraft
+        import starcraft  # noqa: PLC0415
 
         main_module = starcraft
     except ImportError:
