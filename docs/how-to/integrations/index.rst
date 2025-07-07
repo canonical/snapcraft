@@ -3,8 +3,8 @@
 Integrations
 ============
 
-Snapcraft uses special :ref:`plugins` to integrate with different languages and
-frameworks.
+Snapcraft uses special :ref:`reference-plugins` to integrate with different languages
+and frameworks.
 
 Choose from the following guides to see example project files for the supported
 languages and frameworks. These guides are intended to provide you a good basis to learn
