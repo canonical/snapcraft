@@ -480,8 +480,10 @@ def _make_initrd_cmd(
     cmd_prepare_snap_bootstrap_feature = textwrap.dedent(
         """
         # seed snapd-info
-        uc_initrd_main_lib_snapd=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd
-        cp "${uc_initrd_main_lib_snapd}/info" "${CRAFT_PART_INSTALL}/snapd-info"
+        if [ "${UBUNTU_SERIES}" = "noble" ]; then
+            uc_initrd_main_lib_snapd=${UC_INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd
+            cp "${uc_initrd_main_lib_snapd}/info" "${CRAFT_PART_INSTALL}/snapd-info"
+        fi
         """
     )
 
