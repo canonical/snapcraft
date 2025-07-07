@@ -225,8 +225,10 @@ def _chroot_run_cmd_fnc_cmd() -> List[str]:
             done
             for m in dev/pts dev/null dev/zero dev/full dev/random dev/urandom dev/tty dev proc run sys
             do
-                if grep "${chroot_home}/${m}" /proc/self/mounts > /dev/null; then
-                    umount "${chroot_home}/${m}"
+                if grep "${chroot_home}/${m}" /proc/self/mounts; then
+                    # Lazy unmounting allows systemd to settle in the chroot before
+                    # unmounting happens, which should occur before snap builds end.
+                    umount --lazy "${chroot_home}/${m}"
                 fi
             done
             set -x
