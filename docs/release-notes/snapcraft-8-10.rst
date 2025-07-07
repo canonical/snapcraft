@@ -190,7 +190,7 @@ Snapcraft 8.10.1
 Snapcraft 8.10.2
 ~~~~~~~~~~~~~~~~
 
-- Updates craft-parts to fix an issue with building the documentation.
+- Bump Craft Parts dependency to fix the documentation build.
 
 
 Contributors
