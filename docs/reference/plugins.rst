@@ -6,7 +6,7 @@ Plugins
 This section contains an in-depth description of the plugins available in Snapcraft.
 
 .. toctree::
-    :hidden:
+    :maxdepth: 1
 
     /common/craft-parts/reference/plugins/dotnet_plugin
     /common/craft-parts/reference/plugins/dotnet_v2_plugin
