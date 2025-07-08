@@ -95,7 +95,7 @@ docs = [
     "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.2.7",
     "docutils>=0.21",
-    "pydantic-kitbash>=0.0.5",
+    "pydantic-kitbash==0.0.6",
     "pyspelling",
 ]
 lint = [
