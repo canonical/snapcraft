@@ -185,6 +185,13 @@ Snapcraft 8.10.1
   extensions now point to the ``usr`` sub-directory inside the SDK snap and the stage
   directories.
 
+.. _release-notes-fixes-8.10.2:
+
+Snapcraft 8.10.2
+~~~~~~~~~~~~~~~~
+
+- Bump Craft Parts dependency to fix the documentation build.
+
 
 Contributors
 ------------

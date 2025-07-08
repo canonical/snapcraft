@@ -9,9 +9,9 @@ that use the `colcon <https://colcon.readthedocs.io/en/released/>`_ build tool.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <part-properties-plugin>` and
-:ref:`sources <part-properties-sources>` keywords, this plugin provides the following
-plugin-specific keywords:
+In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
+:ref:`sources <reference-part-properties-source>` keywords, this plugin provides the
+following plugin-specific keywords:
 
 colcon-ament-cmake-args
 ~~~~~~~~~~~~~~~~~~~~~~~
