@@ -16,3 +16,4 @@ execute: |
   snapcraft init
   snapcraft init --profile=test
   snapcraft test
+  systemctl is-enabled unattended-upgrades.service && exit 1
