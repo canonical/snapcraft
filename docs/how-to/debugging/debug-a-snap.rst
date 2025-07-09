@@ -104,7 +104,7 @@ The following commands enable you to step into this encapsulated environment:
       - Builds your snap to the lifecycle step prior to the one specified, and opens a
         shell into the environment.
 
-        FFor example, running ``snapcraft prime --shell``
+        For example, running ``snapcraft prime --shell``
         will run up to the stage step, then open a shell.
     * - ``--shell-after``
       - Builds your snap to the lifecycle step specified, and opens a shell into the
