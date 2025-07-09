@@ -103,7 +103,7 @@ format-codespell:  ##- Fix spelling issues with codespell
 
 .PHONY: format-pre-commit
 format-pre-commit:  ##- Format the entire repository using pre-commit
-	uv tool run pre-commit run --all-files
+	uv tool run pre-commit run
 
 .PHONY: format-prettier
 format-prettier: install-npm  ##- Format files with prettier
