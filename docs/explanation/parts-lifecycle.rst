@@ -251,5 +251,3 @@ For more information about the parts lifecycle, see the following resources:
   variables that can be accessed at build time.
 - :ref:`Scriptlets <reference-external-package-scriptlets>` has
   more details on how to override steps.
-- :external+craft-parts:doc:`Lifecycle <common/craft-parts/explanation/lifecycle>`
-  in the Craft Parts documentation.
