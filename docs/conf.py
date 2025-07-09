@@ -117,7 +117,10 @@ exclude_patterns = [
 # region Options for extensions
 
 intersphinx_mapping = {
-    "craft-parts": ("https://canonical-craft-parts.readthedocs-hosted.com/en/latest/", None),
+    "craft-parts": (
+        "https://canonical-craft-parts.readthedocs-hosted.com/en/latest/",
+        None,
+    ),
 }
 
 # Client-side page redirects.
