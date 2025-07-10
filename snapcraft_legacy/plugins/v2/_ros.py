@@ -325,18 +325,18 @@ def stage_runtime_dependencies(
                     cmd,
                     check=True,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
+                    stderr=subprocess.PIPE,
                     env=dict(PATH=os.environ["PATH"]),
                 )
             except subprocess.CalledProcessError as error:
-                click.echo(f"failed to run {cmd!r}: {error.output}")
+                click.echo(f"failed to run {cmd!r}: {error.stdout}, {error.stderr}")
 
             parsed = _parse_rosdep_resolve_dependencies(
                 dep, proc.stdout.decode().strip()
             )
             apt_packages |= parsed.pop("apt", set())
 
-            if parsed:
+            if parsed:  # still non-empty after removing apt packages
                 click.echo(f"unhandled dependencies: {parsed!r}")
 
     build_snap_packages = get_installed_dependencies(
