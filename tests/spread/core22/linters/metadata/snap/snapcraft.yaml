@@ -1,0 +1,23 @@
+name: metadata-linter-test
+base: core22
+version: '0.1'
+summary: Raise linter warnings for various metadata fields.
+description: spread test
+
+confinement: strict
+
+lint:
+  ignore:
+    - classic
+    - library
+
+
+parts:
+  my-part:
+    plugin: nil
+    stage-packages:
+      - curl
+
+apps:
+  my-app:
+    command: /usr/bin/curl
