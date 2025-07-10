@@ -13,6 +13,7 @@ confinement: strict
 lint:
   ignore:
     - library
+    - metadata
 
 parts:
   my-part:

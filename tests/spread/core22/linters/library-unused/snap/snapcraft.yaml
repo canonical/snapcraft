@@ -7,6 +7,10 @@ description: spread test
 grade: devel
 confinement: strict
 
+lint:
+  ignore:
+    - metadata
+
 parts:
   my-part:
     plugin: nil

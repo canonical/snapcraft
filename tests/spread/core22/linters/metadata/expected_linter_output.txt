@@ -1,6 +1,4 @@
 Running linters...
-Running linter: classic
-Running linter: library
 Running linter: metadata
 Lint warnings:
 - metadata: Metadata field 'title' is missing or empty. (https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#title)
