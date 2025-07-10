@@ -9,6 +9,7 @@ confinement: strict
 
 lint:
   ignore:
+    - metadata
     - unused-library:
       - usr/lib/*/libpng16.so*
     - missing-library:
@@ -31,4 +32,3 @@ parts:
       - libcaca-dev
     override-build:
       gcc -o $CRAFT_PART_INSTALL/linter-test-missing test_missing.c -lcaca
-
