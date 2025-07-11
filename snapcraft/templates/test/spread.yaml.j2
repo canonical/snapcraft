@@ -8,7 +8,6 @@ backends:
       # Uncomment to test on more systems
       #- ubuntu-22.04
       #- ubuntu-20.04
-      #- fedora-40
 
 suites:
   spread/general/:
@@ -16,7 +15,7 @@ suites:
     prepare: |
       snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
     restore: |
-      snap remove {{ name }} --purge
+      snap remove {{ name }} --purge --terminate
 
 exclude:
   - .git
