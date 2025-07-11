@@ -1,0 +1,35 @@
+summary: Init and execute tests
+
+environment:
+  CI: "1"
+
+prepare: |
+  rm -rf test-snap
+
+restore: |
+  rm -rf test-snap
+  rm -rf ./*.snap
+
+execute: |
+  mkdir test-snap
+  cd test-snap
+  snapcraft init
+  snapcraft init --profile=test
+
+  rm -f ./*.snap
+  snapcraft pack 2>&1 | MATCH "Packing"
+
+  snapcraft test 2>&1 | MATCH "Skipping pack"
+
+  rm -f ./*.snap
+
+  snapcraft test 2>&1 | MATCH "Packing"
+
+  snapcraft pack 2>&1 | MATCH "Skipping pack"
+
+  echo "  new-part:" >> snap/snapcraft.yaml
+  echo "    plugin: nil" >> snap/snapcraft.yaml
+
+  snapcraft pack 2>&1 | MATCH "Packing"
+
+  snapcraft clean
