@@ -37,9 +37,11 @@ prepare() {
     snap wait system seed.loaded
     snap refresh --hold
 
-    if systemctl is-enabled unattended-upgrades.service; then
-        systemctl stop unattended-upgrades.service
-        systemctl mask unattended-upgrades.service
+    if systemctl show unattended-upgrades.service --property=LoadState | grep -q 'LoadState=loaded'; then
+        if systemctl is-enabled unattended-upgrades.service; then
+            systemctl stop unattended-upgrades.service
+            systemctl mask unattended-upgrades.service
+        fi
     fi
 }
 
