@@ -26,6 +26,7 @@ from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
 from .matter_sdk_plugin import MatterSdkPlugin
+from .ubuntu_core_initrd_plugin import UbuntuCoreInitrdPlugin
 from .ubuntu_kernel_plugin import UbuntuKernelPlugin
 
 
@@ -40,6 +41,7 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "flutter": FlutterPlugin,
         "matter-sdk": MatterSdkPlugin,
         "ubuntu-kernel": UbuntuKernelPlugin,
+        "ubuntu-core-initrd": UbuntuCoreInitrdPlugin,
     } | python_common.get_python_plugins()
 
     if core22:

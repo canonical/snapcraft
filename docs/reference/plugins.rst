@@ -38,4 +38,5 @@ This section contains an in-depth description of the plugins available in Snapcr
     /common/craft-parts/reference/plugins/rust_plugin
     /common/craft-parts/reference/plugins/scons_plugin
     plugins/ubuntu_kernel_plugin
+    plugins/ubuntu_core_initrd_plugin
     plugins/uv_plugin
