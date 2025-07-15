@@ -57,10 +57,10 @@ classifiers = [
     "Natural Language :: English",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Software Distribution",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
 ]
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 readme = { file = "README.md", content-type = "text/markdown" }
 
