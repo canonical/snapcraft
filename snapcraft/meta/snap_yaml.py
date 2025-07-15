@@ -25,7 +25,9 @@ from typing import Any, Literal, cast
 import pydantic
 import yaml
 from craft_application.models import BaseMetadata, SummaryStr, base, constraints
-from craft_application.models.constraints import SingleEntryDict
+from craft_application.models.constraints import (
+    SingleEntryDict,  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
+)
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
 

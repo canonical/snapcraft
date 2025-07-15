@@ -24,17 +24,21 @@ import pathlib
 import re
 import shutil
 import sys
-from collections.abc import Iterable
 from getpass import getpass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from craft_application.util import strtobool
 from craft_cli import emit
-from craft_parts import ProjectInfo
 from craft_parts.sources.git_source import GitSource
 from craft_platforms import DebianArchitecture
 
 from snapcraft import errors
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from craft_parts import ProjectInfo
 
 
 def get_supported_architectures() -> list[str]:

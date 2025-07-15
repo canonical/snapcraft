@@ -22,7 +22,6 @@ import itertools
 import operator
 import textwrap
 from collections import OrderedDict
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Final, cast
 
 from craft_application.commands import AppCommand
@@ -31,11 +30,17 @@ from overrides import overrides
 from tabulate import tabulate
 
 from snapcraft import const, store
-from snapcraft.store.channel_map import ChannelMap, MappedChannel, Revision, SnapChannel
 
 if TYPE_CHECKING:
     import argparse
+    from collections.abc import Sequence
 
+    from snapcraft.store.channel_map import (
+        ChannelMap,
+        MappedChannel,
+        Revision,
+        SnapChannel,
+    )
     from snapcraft_legacy.storeapi.v2.releases import Releases
 
 

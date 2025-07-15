@@ -22,7 +22,6 @@ import abc
 import argparse
 import os
 import textwrap
-from typing import TYPE_CHECKING
 
 from craft_application.util import strtobool
 from craft_cli import BaseCommand, emit
@@ -30,9 +29,6 @@ from overrides import overrides
 
 from snapcraft import const, pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
-
-if TYPE_CHECKING:
-    import argparse
 
 
 class _LifecycleCommand(BaseCommand, abc.ABC):
