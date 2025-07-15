@@ -1,7 +1,6 @@
 [project]
 name = "snapcraft"
 description = "Create snaps"
-readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     "attrs",
@@ -63,6 +62,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 requires-python = ">=3.10"
+readme = { file = "README.md", content-type = "text/markdown" }
 
 [dependency-groups]
 dev = [
@@ -248,6 +248,11 @@ lint.select = [
     "Q",  # Consistent quotations
     "RET",  # Return values
     "UP",  # pyupgrade
+    "TC001",  # Checks for first-party imports that are only used for type annotations
+    "TC002",  # Checks for third-party imports that are only used for type annotations
+    "TC003",  # Checks for standard library imports that are only used for type annotations
+    "TC004",  # Remove imports from type-checking guard blocks if used at runtime
+    "TC005",  # Delete empty type-checking blocks
 ]
 lint.ignore = [
     # These following copy the flake8 configuration

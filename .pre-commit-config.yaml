@@ -25,4 +25,4 @@ repos:
     hooks:
       - id: prettier
         additional_dependencies:
-          - prettier@3.4.2
+          - prettier@3.6.0 # renovate: datasource=npm
