@@ -193,9 +193,8 @@ Snapcraft 8.10.2
 - Bump Craft Parts dependency to fix the documentation build.
 - `#5600`_ The :ref:`reference-colcon-plugin` failed to build for core24 snaps due to an
   upstream change in the rosdep package.
-- `#5601`_ Minor bugfixes for the test profile for the :ref:`ref_commands_init` command.
-  The test profile now properly sets up the test environment and stops snaps before
-  removing them.
+- `#5601`_  The test profile for the :ref:`ref_commands_init` command now properly
+  sets up the test environment and stops snaps before removing them.
 
 
 Contributors
