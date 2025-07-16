@@ -191,6 +191,11 @@ Snapcraft 8.10.2
 ~~~~~~~~~~~~~~~~
 
 - Bump Craft Parts dependency to fix the documentation build.
+- `#5600`_ The :ref:`reference-colcon-plugin` failed to build for core24 snaps due to an
+  upstream change in the rosdep package.
+- `#5601`_ Minor bugfixes for the test profile for the :ref:`ref_commands_init` command.
+  The test profile now properly setups up the test environment and stops snaps before
+  removing them.
 
 
 Contributors
@@ -202,10 +207,12 @@ this release.
 :literalref:`@artivis<https://github.com/artivis>`,
 :literalref:`@astrojuanlu<https://github.com/astrojuanlu>`,
 :literalref:`@bepri<https://github.com/bepri>`,
+:literalref:`@bschimke95<https://github.com/bschimke95>`,
 :literalref:`@cmatsuoka<https://github.com/cmatsuoka>`,
 :literalref:`@edisile<https://github.com/edisile>`,
 :literalref:`@j-g00da<https://github.com/j-g00da>`,
 :literalref:`@jahn-junior<https://github.com/jahn-junior>`,
+:literalref:`@MirkoFerrati<https://github.com/MirkoFerrati>`,
 :literalref:`@medubelko<https://github.com/medubelko>`,
 :literalref:`@mr-cal<https://github.com/mr-cal>`,
 :literalref:`@lengau<https://github.com/lengau>`,
@@ -217,3 +224,5 @@ this release.
 .. _#5167: https://github.com/canonical/snapcraft/issues/5167
 .. _#5539: https://github.com/canonical/snapcraft/issues/5539
 .. _#5272: https://github.com/canonical/snapcraft/issues/5272
+.. _#5600: https://github.com/canonical/snapcraft/issues/5600
+.. _#5601: https://github.com/canonical/snapcraft/issues/5601
