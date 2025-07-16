@@ -20,22 +20,25 @@ from __future__ import annotations
 
 import re
 import textwrap
-from collections.abc import Iterable, Mapping
-from typing import Annotated, Any, Literal, cast
+from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import pydantic
 from craft_application import models
 from craft_application.errors import CraftValidationError
-from craft_application.models import SummaryStr, VersionStr
+from craft_application.models import (  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
+    SummaryStr,
+    VersionStr,
+)
 from craft_application.models.constraints import (
     SingleEntryDict,
     SingleEntryList,
     UniqueList,
 )
 from craft_cli import emit
-from craft_grammar.models import Grammar  # type: ignore[import-untyped]
+from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
+    Grammar,
+)
 from craft_platforms import DebianArchitecture
-from craft_providers import bases
 from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
 from typing_extensions import Self, override
 
@@ -45,6 +48,11 @@ from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
+
+    from craft_providers import bases
 
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
 

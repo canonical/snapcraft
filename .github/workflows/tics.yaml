@@ -3,8 +3,8 @@ on:
   push:
     branches:
       - "main"
-      # to easy test changes to the workflow
-      - "tiobe"
+      # For troubleshooting
+      - "work/tiobe**"
 
 jobs:
   TICS:
