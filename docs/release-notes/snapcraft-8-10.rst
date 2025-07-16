@@ -53,20 +53,24 @@ Minor features
 Snapcraft 8.10 brings the following minor changes.
 
 
-Support for CMake in the GNOME extension
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Support for CMake in the desktop extensions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CMake projects using the :ref:`reference-gnome-extension` are now
 able to use libraries from the GNOME SDK snap with `find_library
 <https://cmake.org/cmake/help/latest/command/find_library.html>`_.
 
 During the build step, the GNOME extension now points the ``CMAKE_PREFIX_PATH``
-environment variable to the GNOME SDK snap and the stage directory.
+environment variable to the ``usr`` directory in the GNOME SDK snap and the
+stage directory.
+
+The :ref:`reference-kde-neon-extensions` were already setting ``CMAKE_PREFIX_PATH``,
+but they have been updated to use the ``usr`` sub-directory in the KDE SDK snaps and
+the stage directory.
 
 If a part using the :ref:`craft_parts_cmake_plugin` needs to override this variable,
 it should be done with the ``build-environment`` key instead of ``cmake-parameters:
 [-DCMAKE_PREFIX_PATH]``.
-
 
 Summaries for confdb schemas
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,6 +176,27 @@ Snapcraft 8.10.0
   forwarded to managed instances.
 
 
+.. _release-notes-fixes-8.10.1:
+
+Snapcraft 8.10.1
+~~~~~~~~~~~~~~~~
+
+- `#5272`_ The ``CMAKE_PREFIX_PATH`` environment variable for the GNOME and KDE
+  extensions now point to the ``usr`` sub-directory inside the SDK snap and the stage
+  directories.
+
+.. _release-notes-fixes-8.10.2:
+
+Snapcraft 8.10.2
+~~~~~~~~~~~~~~~~
+
+- Bump Craft Parts dependency to fix the documentation build.
+- `#5600`_ The :ref:`reference-colcon-plugin` failed to build for core24 snaps due to an
+  upstream change in the rosdep package.
+- `#5601`_  The test profile for the :ref:`ref_commands_init` command now properly
+  sets up the test environment and stops snaps before removing them.
+
+
 Contributors
 ------------
 
@@ -181,10 +206,12 @@ this release.
 :literalref:`@artivis<https://github.com/artivis>`,
 :literalref:`@astrojuanlu<https://github.com/astrojuanlu>`,
 :literalref:`@bepri<https://github.com/bepri>`,
+:literalref:`@bschimke95<https://github.com/bschimke95>`,
 :literalref:`@cmatsuoka<https://github.com/cmatsuoka>`,
 :literalref:`@edisile<https://github.com/edisile>`,
 :literalref:`@j-g00da<https://github.com/j-g00da>`,
 :literalref:`@jahn-junior<https://github.com/jahn-junior>`,
+:literalref:`@MirkoFerrati<https://github.com/MirkoFerrati>`,
 :literalref:`@medubelko<https://github.com/medubelko>`,
 :literalref:`@mr-cal<https://github.com/mr-cal>`,
 :literalref:`@lengau<https://github.com/lengau>`,
@@ -195,3 +222,6 @@ this release.
 .. _#5161: https://github.com/canonical/snapcraft/issues/5161
 .. _#5167: https://github.com/canonical/snapcraft/issues/5167
 .. _#5539: https://github.com/canonical/snapcraft/issues/5539
+.. _#5272: https://github.com/canonical/snapcraft/issues/5272
+.. _#5600: https://github.com/canonical/snapcraft/issues/5600
+.. _#5601: https://github.com/canonical/snapcraft/issues/5601
