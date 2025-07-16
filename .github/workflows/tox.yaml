@@ -81,7 +81,7 @@ jobs:
       - name: Test with tox
         run: tox run --skip-pkg-install --result-json results/tox-${{ matrix.platform }}-${{ matrix.python_version }}.json -e test-${{ matrix.tox_python }},test-legacy-${{ matrix.tox_python }}
       - name: Upload code coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           directory: ./results/
           files: coverage*.xml
