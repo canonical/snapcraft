@@ -194,7 +194,7 @@ Snapcraft 8.10.2
 - `#5600`_ The :ref:`reference-colcon-plugin` failed to build for core24 snaps due to an
   upstream change in the rosdep package.
 - `#5601`_ Minor bugfixes for the test profile for the :ref:`ref_commands_init` command.
-  The test profile now properly setups up the test environment and stops snaps before
+  The test profile now properly sets up the test environment and stops snaps before
   removing them.
 
 
