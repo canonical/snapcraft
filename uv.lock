@@ -566,7 +566,7 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.16.0"
+version = "2.18.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "overrides" },
@@ -577,9 +577,9 @@ dependencies = [
     { name = "requests-unixsocket2" },
     { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-oracular' and extra == 'group-9-snapcraft-dev-plucky')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/42/cb/fad74f9cde2329c77c79d2dd7827414ab90e29a675251a78184456f5e666/craft_parts-2.16.0.tar.gz", hash = "sha256:a7237dd4526a045904571cdbbb57dbb77c881c642f8080b6cdb88f5148930581", size = 770848, upload-time = "2025-07-04T14:44:51.756Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/36/2f/6670bb15a65013643d00eddfa3ae6ee7be2c377fef2fb120062d8cb93f4a/craft_parts-2.18.0.tar.gz", hash = "sha256:bc1575f85f4f93385670adeb9348af7e4c5da068c3b98479de2243a34fe11bc0", size = 788990, upload-time = "2025-07-14T22:53:15.005Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/6a/8a08fdf7e009922d28b0bafe16db07eb9ea375af66d1e188d55e9352fcea/craft_parts-2.16.0-py3-none-any.whl", hash = "sha256:8ef1435937e2fd22094c860a6143ef0919e9e800244f5a338260a8663c5b0fc9", size = 489566, upload-time = "2025-07-04T14:44:49.223Z" },
+    { url = "https://files.pythonhosted.org/packages/37/ae/7a67fdecdd226e25bbd3d97ff109b78f70cbef5b1ec693a6c738ae449229/craft_parts-2.18.0-py3-none-any.whl", hash = "sha256:f6785d33d9c02c802938c6559836632dc6c52cf996e0fc21f3aba487e6a07338", size = 502232, upload-time = "2025-07-14T22:53:12.643Z" },
 ]
 
 [[package]]
@@ -1791,7 +1791,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-kitbash"
-version = "0.0.5"
+version = "0.0.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
@@ -1799,9 +1799,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/91/b9/e2c676013cadbddd1c935dd18e15b7863f87257e9a69f1b2c72b15000652/pydantic_kitbash-0.0.5.tar.gz", hash = "sha256:550194b663ffda882db4496e109a6ac4dac191fcce4493026f06fea01f322c23", size = 123504, upload-time = "2025-06-06T21:22:40.929Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/c0/48066291bb9db968d42d6419fa666be077c893d17cdca0eac44cedb2e3d1/pydantic_kitbash-0.0.6.tar.gz", hash = "sha256:60b18ce727f06b6c5a3f8db5675bb6c423449bb59832c3e04cfef4b1568a84e9", size = 124406, upload-time = "2025-07-03T19:24:33.841Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/13/71/9d31ae8e94b9d324ed143d8d6982685669c680e9efe2214963e2f9a68fc9/pydantic_kitbash-0.0.5-py3-none-any.whl", hash = "sha256:05bcdbb96d59df832915c2ca3f6da9a505275badd351c06fc978e6954a317822", size = 12804, upload-time = "2025-06-06T21:22:39.511Z" },
+    { url = "https://files.pythonhosted.org/packages/46/4e/4f492ee0d832eb9d8ebd9915e35bff6fd09d658bc6fdb1f31d70495492cf/pydantic_kitbash-0.0.6-py3-none-any.whl", hash = "sha256:e16fa65ebfebe7d295e9b476641e253e02b18686e52bedc2ec65c46421d9875d", size = 13156, upload-time = "2025-07-03T19:24:32.342Z" },
 ]
 
 [[package]]
@@ -2739,7 +2739,7 @@ requires-dist = [
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = "~=3.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
-    { name = "craft-parts", specifier = ">=2.16.0,<3.0.0" },
+    { name = "craft-parts", specifier = ">=2.17.0,<3.0.0" },
     { name = "craft-platforms", specifier = "~=0.7" },
     { name = "craft-providers", specifier = "~=2.2" },
     { name = "craft-store", specifier = ">=3.2.2,<4.0.0" },
@@ -2802,7 +2802,7 @@ dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifi
 docs = [
     { name = "canonical-sphinx", extras = ["full"], specifier = "~=0.4.0" },
     { name = "docutils", specifier = ">=0.21" },
-    { name = "pydantic-kitbash", specifier = ">=0.0.5" },
+    { name = "pydantic-kitbash", specifier = "==0.0.6" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },

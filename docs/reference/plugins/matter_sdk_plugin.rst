@@ -22,9 +22,7 @@ setup and configuration when creating a snapped Matter application.
 Keywords
 --------
 
-In addition to the common :ref:`plugin <reference-part-properties-plugin>` and
-:ref:`sources <reference-part-properties-source>` keywords, this plugin provides the
-following plugin-specific keyword:
+This plugin provides one unique key.
 
 
 matter-sdk-version
