@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import pathlib
 from typing import TYPE_CHECKING, Any, cast
 
 import craft_cli
@@ -33,6 +32,8 @@ from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
 
 if TYPE_CHECKING:
+    import pathlib
+
     import craft_parts
 
 
