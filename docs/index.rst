@@ -54,3 +54,4 @@ feedback.
     reference/index
     explanation/index
     release-notes/index
+    about-this-documentation
