@@ -21,18 +21,20 @@ Snapcraft 8.11 brings the following features, integrations, and improvements.
 Unified behavior for the pack command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When a new base is introduced in Snapcraft, major breaking changes are made only for the
-new base. This allows Snapcraft to introduce changes without breaking builds of existing
-snaps on older bases.
+When a new base is introduced in Snapcraft, it expects new vocabulary and expressions in
+the project file. Projects on old bases aren't affected, and can continue building using
+the older vocabulary. It's only when a crafter switches their existing project to a new
+base that the breaking changes are exposed, which leads to an in-depth migration.
 
-This strategy has its downsides. For example, the user experience can be inconsistent
-when building snaps with different bases. ``snapcraft pack`` would behave differently
+This strategy has downsides. In particular, the user experience can be inconsistent when
+building snaps with different bases. Running ``snapcraft pack`` would behave differently
 depending on the base.
 
-Now, the pack command for core20 snaps has been extended to have the same functionality
-as the pack command for core22 and core24 snaps. With no arguments, Snapcraft builds and
-packages a snap. If a directory is provided, Snapcraft will skip the build process and
-instead pack the directory as a snap.
+With this release, the pack command for core20 snaps is ported to have the same
+functionality as the pack command for core22 and core24 snaps. With no arguments,
+running ``snapcraft`` builds and packages the snap. If a directory is passed as the
+first positional argument, Snapcraft skips the build process and instead packs the
+directory as a snap.
 
 
 Backwards-incompatible changes
