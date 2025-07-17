@@ -22,7 +22,7 @@ Contributions
 -------------
 
 Because Snapcraft is open source and made possible by its community, it accommodates
-insights into its operation and documentation from everyone. That means you!
+insights into its operation and documentation from everyone. That includes you!
 
 The Snapcraft team welcomes changes, suggestions, and questions. If you want to help
 author the documentation, there are a few paths you can take:
@@ -57,7 +57,7 @@ an initiative led by the documentation team at Canonical.
 
 CODA provides:
 
-* A debut in the open source community
+* A space to debut in the open source community
 * Guidance in choosing a first task in Snapcraft
 * Direct support for contributions in Snapcraft and other projects
 * Skill development in documentation and writing
