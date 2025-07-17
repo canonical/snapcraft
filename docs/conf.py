@@ -90,22 +90,23 @@ exclude_patterns = [
     # documents (so they generate "duplicate label" errors) or they aren't
     # used in this documentation at all (so they generate "unreferenced"
     # errors).
+    "common/craft-parts/explanation/dump_plugin.rst",
+    "common/craft-parts/explanation/file-migration.rst",
+    "common/craft-parts/explanation/gradle_plugin.rst",
+    "common/craft-parts/explanation/how_parts_are_built.rst",
     "common/craft-parts/explanation/lifecycle.rst",
     "common/craft-parts/explanation/overlay_parameters.rst",
     "common/craft-parts/explanation/overlays.rst",
-    "common/craft-parts/explanation/how_parts_are_built.rst",
     "common/craft-parts/explanation/parts.rst",
-    "common/craft-parts/explanation/dump_plugin.rst",
-    "common/craft-parts/explanation/gradle_plugin.rst",
     "common/craft-parts/how-to/craftctl.rst",
     "common/craft-parts/how-to/override_build.rst",
-    "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/part_properties.rst",
+    "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",
+    "common/craft-parts/reference/plugins/maven_plugin.rst",
     "common/craft-parts/reference/plugins/poetry_plugin.rst",
     "common/craft-parts/reference/plugins/python_plugin.rst",
-    "common/craft-parts/reference/plugins/maven_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
@@ -115,13 +116,6 @@ exclude_patterns = [
 ]
 
 # region Options for extensions
-
-intersphinx_mapping = {
-    "craft-parts": (
-        "https://canonical-craft-parts.readthedocs-hosted.com/en/latest/",
-        None,
-    ),
-}
 
 # Client-side page redirects.
 rediraffe_redirects = "redirects.txt"
