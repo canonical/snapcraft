@@ -15,4 +15,6 @@ execute: |
   cd test-snap
   snapcraft init
   snapcraft init --profile=test
+  systemctl unmask unattended-upgrades.service
   snapcraft test
+  systemctl is-enabled unattended-upgrades.service | MATCH masked

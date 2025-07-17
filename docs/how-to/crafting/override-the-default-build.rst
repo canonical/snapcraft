@@ -1,3 +1,5 @@
+.. |app| replace:: Snapcraft
+
 .. _how-to-override-the-default-build:
 
 Override the default build
