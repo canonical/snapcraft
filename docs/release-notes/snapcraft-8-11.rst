@@ -70,3 +70,18 @@ being overwritten by the second snap.
 
 Now, Snapcraft builds two separate snaps, ``hello-world_1.0_rpi.snap`` and
 ``hello-world_1.0_rpi-debug.snap``.
+
+
+Scheduled feature deprecations
+------------------------------
+
+The following features will be deprecated in a future major release:
+
+Running Snapcraft without a command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If Snapcraft is run without a command (``snapcraft``), the default behavior is to
+pack a snap.
+
+This release adds a deprecation warning when Snapcraft is run without a command.
+``snapcraft pack`` should be used instead.
