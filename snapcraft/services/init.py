@@ -18,6 +18,7 @@
 
 import pathlib
 
+import craft_application.errors
 import craft_cli
 from craft_application import services
 from typing_extensions import override
@@ -54,8 +55,8 @@ class Init(services.InitService):
             template_dir=template_dir,
         )
         craft_cli.emit.message(
-            "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-            "information about the snapcraft.yaml format."
+            "See https://documentation.ubuntu.com/snapcraft/stable/reference/"
+            "project-file for reference information about the snapcraft.yaml format."
         )
 
     @override
@@ -65,17 +66,26 @@ class Init(services.InitService):
         project_dir: pathlib.Path,
         template_dir: pathlib.Path,
     ) -> None:
-        try:
-            craft_cli.emit.progress("Checking for an existing 'snapcraft.yaml'.")
-            project = get_snap_project(project_dir)
-        # the `ProjectMissing` error means a new project can be initialised
-        except errors.ProjectMissing:
-            craft_cli.emit.debug("Could not find an existing 'snapcraft.yaml'.")
-        else:
-            raise errors.SnapcraftError(
-                "Could not initialise a new snapcraft project because "
-                f"{str(project.project_file)!r} already exists"
-            )
+        init_profile = template_dir.name
+        if init_profile != "test":
+            try:
+                craft_cli.emit.progress("Checking for an existing 'snapcraft.yaml'.")
+                project = get_snap_project(project_dir)
+            # the `ProjectMissing` error means a new project can be initialised
+            except craft_application.errors.ProjectDirectoryTypeError:
+                raise errors.SnapcraftError(
+                    "Could not initialise a new snapcraft project because "
+                    "a file named 'snap' already exists.",
+                    details="The 'snap' name is reserved for the project directory.",
+                    resolution="Rename or remove the file named 'snap'.",
+                )
+            except craft_application.errors.ProjectFileError:
+                craft_cli.emit.debug("Could not find an existing 'snapcraft.yaml'.")
+            else:
+                raise errors.SnapcraftError(
+                    "Could not initialise a new snapcraft project because "
+                    f"{str(project.project_file)!r} already exists"
+                )
 
         super().check_for_existing_files(
             project_dir=project_dir,

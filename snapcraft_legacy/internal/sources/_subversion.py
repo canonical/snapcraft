@@ -69,7 +69,7 @@ class Subversion(Base):
             self._run(
                 [self.command, "update"] + opts,
                 cwd=self.source_dir,
-                **self._call_kwargs
+                **self._call_kwargs,
             )
         else:
             if os.path.isdir(self.source):
@@ -81,12 +81,12 @@ class Subversion(Base):
                         self.source_dir,
                     ]
                     + opts,
-                    **self._call_kwargs
+                    **self._call_kwargs,
                 )
             else:
                 self._run(
                     [self.command, "checkout", self.source, self.source_dir] + opts,
-                    **self._call_kwargs
+                    **self._call_kwargs,
                 )
 
         self.source_details = self._get_source_details()

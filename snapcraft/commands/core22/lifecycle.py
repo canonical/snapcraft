@@ -16,6 +16,8 @@
 
 """Snapcraft lifecycle commands."""
 
+from __future__ import annotations
+
 import abc
 import argparse
 import os
@@ -25,7 +27,7 @@ from craft_application.util import strtobool
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import pack, utils
+from snapcraft import const, pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 
@@ -33,7 +35,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
     """Lifecycle-related commands."""
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--destructive-mode",
@@ -130,7 +132,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
         parser.add_argument("--provider", help=argparse.SUPPRESS)
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         """Run the command."""
         if not self.name:
             raise RuntimeError("command name not specified")
@@ -143,7 +145,7 @@ class _LifecycleStepCommand(_LifecycleCommand):
     """Lifecycle step commands."""
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         super().fill_parser(parser)
         parser.add_argument(
             "parts",
@@ -235,7 +237,7 @@ class PackCommand(_LifecycleCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the pack command."""
         super().fill_parser(parser)
         parser.add_argument(
@@ -255,7 +257,7 @@ class PackCommand(_LifecycleCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         """Run the command."""
         if parsed_args.directory:
             snap_filename = pack.pack_snap(
@@ -281,7 +283,7 @@ class SnapCommand(_LifecycleCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the pack command."""
         super().fill_parser(parser)
         parser.add_argument(
@@ -291,6 +293,14 @@ class SnapCommand(_LifecycleCommand):
             type=str,
             help="Path to the resulting snap",
         )
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new="pack"),
+            permanent=True,
+        )
+        super().run(parsed_args)
 
 
 class CleanCommand(_LifecycleStepCommand):
@@ -319,7 +329,7 @@ class TryCommand(_LifecycleCommand):
     )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         """Overridden to give a helpful message when the lifecycle finishes."""
         super().run(parsed_args)
         if not utils.is_managed_mode():

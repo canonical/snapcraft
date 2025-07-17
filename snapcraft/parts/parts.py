@@ -19,20 +19,20 @@
 import pathlib
 import subprocess
 import types
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, cast
 
 import craft_parts
 from craft_archives import repo
 from craft_cli import emit
 from craft_parts import Action, ActionType, Step
 from craft_parts.packages import Repository
+from craft_platforms import DebianArchitecture
 from xdg import BaseDirectory  # type: ignore
 
 from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts.extract_metadata import extract_lifecycle_metadata
-from snapcraft.services.lifecycle import get_prime_dirs_from_project
-from snapcraft.utils import get_host_architecture
+from snapcraft.utils import get_prime_dirs_from_project
 
 _LIFECYCLE_STEPS = {
     "pull": Step.PULL,
@@ -58,24 +58,24 @@ class PartsLifecycle:
 
     def __init__(  # noqa PLR0913
         self,
-        all_parts: Dict[str, Any],
+        all_parts: dict[str, Any],
         *,
         work_dir: pathlib.Path,
         assets_dir: pathlib.Path,
         base: str,  # effective base
         project_base: str,
         confinement: str,
-        package_repositories: List[Dict[str, Any]],
+        package_repositories: list[dict[str, Any]],
         parallel_build_count: int,
-        part_names: Optional[List[str]],
-        adopt_info: Optional[str],
-        parse_info: Dict[str, List[str]],
+        part_names: list[str] | None,
+        adopt_info: str | None,
+        parse_info: dict[str, list[str]],
         project_name: str,
-        project_vars: Dict[str, str],
-        extra_build_snaps: Optional[List[str]] = None,
+        project_vars: dict[str, str],
+        extra_build_snaps: list[str] | None = None,
         target_arch: str,
         track_stage_packages: bool,
-        partitions: Optional[List[str]],
+        partitions: list[str] | None,
     ):
         self._work_dir = work_dir
         self._assets_dir = assets_dir
@@ -92,7 +92,7 @@ class PartsLifecycle:
         cache_dir = BaseDirectory.save_cache_path("snapcraft")
 
         if target_arch == "all":
-            target_arch = get_host_architecture()
+            target_arch = str(DebianArchitecture.from_host())
 
         try:
             self._lcm = craft_parts.LifecycleManager(
@@ -158,7 +158,7 @@ class PartsLifecycle:
         return self._lcm.project_info.arch_triplet
 
     @property
-    def project_vars(self) -> Dict[str, str]:
+    def project_vars(self) -> dict[str, str]:
         """Return the value of project variable ``version``."""
         return {
             "version": self._lcm.project_info.get_project_var("version"),
@@ -227,7 +227,8 @@ class PartsLifecycle:
             msg = err.strerror
             if err.filename:
                 msg = f"{err.filename}: {msg}"
-            raise errors.PartsLifecycleError(msg) from err
+            # Casting as a str as OSError should always contain an error message
+            raise errors.PartsLifecycleError(cast(str, msg)) from err
         except Exception as err:
             raise errors.PartsLifecycleError(str(err)) from err
 
@@ -254,7 +255,7 @@ class PartsLifecycle:
             self._lcm.refresh_packages_list()
         emit.progress("Installed package repositories", permanent=True)
 
-    def clean(self, *, part_names: Optional[List[str]] = None) -> None:
+    def clean(self, *, part_names: list[str] | None = None) -> None:
         """Remove lifecycle artifacts.
 
         :param part_names: The names of the parts to clean. If not
@@ -268,15 +269,15 @@ class PartsLifecycle:
         emit.progress(message)
         self._lcm.clean(part_names=part_names)
 
-    def extract_metadata(self) -> List[ExtractedMetadata]:
+    def extract_metadata(self) -> list[ExtractedMetadata]:
         """Obtain metadata information."""
         return extract_lifecycle_metadata(
             self._adopt_info, self._parse_info, self._work_dir, self._partitions
         )
 
-    def get_primed_stage_packages(self) -> List[str]:
+    def get_primed_stage_packages(self) -> list[str]:
         """Obtain the list of primed stage packages from all parts."""
-        primed_stage_packages: Set[str] = set()
+        primed_stage_packages: set[str] = set()
         for name in self._all_part_names:
             stage_packages = self._lcm.get_primed_stage_packages(part_name=name)
             if stage_packages:
@@ -285,12 +286,12 @@ class PartsLifecycle:
         package_list.sort()
         return package_list
 
-    def get_part_pull_assets(self, *, part_name: str) -> Optional[Dict[str, Any]]:
+    def get_part_pull_assets(self, *, part_name: str) -> dict[str, Any] | None:
         """Obtain the pull state assets."""
         return self._lcm.get_pull_assets(part_name=part_name)
 
 
-def launch_shell(*, cwd: Optional[pathlib.Path] = None) -> None:
+def launch_shell(*, cwd: pathlib.Path | None = None) -> None:
     """Launch a user shell for debugging environment.
 
     :param cwd: Working directory to start user in.

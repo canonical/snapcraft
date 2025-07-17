@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Create snap.yaml metadata file."""
+
 from __future__ import annotations
 
 import re
@@ -24,13 +25,15 @@ from typing import Any, Literal, cast
 import pydantic
 import yaml
 from craft_application.models import BaseMetadata, SummaryStr, base, constraints
-from craft_application.models.constraints import SingleEntryDict
+from craft_application.models.constraints import (
+    SingleEntryDict,  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
+)
 from craft_cli import emit
+from craft_platforms import DebianArchitecture
 
 from snapcraft import errors, models
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.utils import (
-    convert_architecture_deb_to_platform,
     get_ld_library_paths,
     process_version,
 )
@@ -120,14 +123,14 @@ class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is cras
 
     @pydantic.field_validator("target")
     @classmethod
-    def _validate_target_not_empty(cls, val):
+    def _validate_target_not_empty(cls, val: str) -> str:
         if val == "":
             raise ValueError("value cannot be empty")
         return val
 
     @pydantic.field_validator("default_provider")
     @classmethod
-    def _validate_default_provider(cls, default_provider):
+    def _validate_default_provider(cls, default_provider: str) -> str:
         if default_provider and "/" in default_provider:
             raise ValueError(
                 "Specifying a snap channel in 'default_provider' is not supported: "
@@ -191,7 +194,7 @@ class Links(SnapcraftMetadata):
         return result
 
     @classmethod
-    def from_project(cls, project: models.Project) -> "Links":
+    def from_project(cls, project: models.Project) -> Links:
         """Create Links from a Project."""
         return cls(
             contact=cls._normalize_value(project.contact),
@@ -230,7 +233,7 @@ class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin i
     )
 
     @classmethod
-    def from_component(cls, component: models.Component) -> "ComponentMetadata":
+    def from_component(cls, component: models.Component) -> ComponentMetadata:
         """Create a ComponentMetadata model from a Component model."""
         return cls.unmarshal(component.marshal())
 
@@ -443,7 +446,9 @@ def get_metadata_from_project(
     elif effective_base == "core22":
         arch_triplet = project.get_build_for_arch_triplet()
     else:
-        arch_triplet = get_arch_triplet(convert_architecture_deb_to_platform(arch))
+        arch_triplet = get_arch_triplet(
+            DebianArchitecture.from_machine(arch).to_platform_arch()
+        )
 
     environment = _populate_environment(
         project.environment, prime_dir, arch_triplet, project.confinement
@@ -503,7 +508,7 @@ def write(project: models.Project, prime_dir: Path, *, arch: str):
     snap_metadata.to_yaml_file(meta_dir / "snap.yaml")
 
 
-def _repr_str(dumper, data):
+def _repr_str(dumper: yaml.Dumper, data: str):
     """Multi-line string representer for the YAML dumper."""
     if "\n" in data:
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
@@ -558,7 +563,7 @@ def _populate_environment(
 
 
 def _process_components(
-    components: dict[str, models.Component] | None
+    components: dict[str, models.Component] | None,
 ) -> dict[str, ComponentMetadata] | None:
     """Convert Components from a project to ComponentMetadata for a snap.yaml.
 

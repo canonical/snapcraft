@@ -1,4 +1,4 @@
-name: test-snap-all-core20
+name: all-core20
 base: core20
 version: "1.0"
 summary: Test snap for remote build

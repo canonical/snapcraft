@@ -211,7 +211,7 @@ class BaseRepo:
     ) -> Set[str]:
         """Mark all files in sources_dir as coming from stage_package."""
         file_list = set()
-        for (root, dirs, files) in os.walk(sources_dir):
+        for root, dirs, files in os.walk(sources_dir):
             for file_name in files:
                 file_path = os.path.join(root, file_name)
 
@@ -346,6 +346,10 @@ def fix_pkg_config(
     - From snaps built locally: `<local-path-to-project>/stage`
     - Built during the build stage: the install directory
 
+    But if the prefix begins with `pcfiledir` variable, it must be kept as-is,
+    because that variable refers to the current location of the .pc file. It
+    allows to create "relocatable" pkgconfig files, so no changes are required.
+
     :param pkg_config_file: pkg-config (.pc) file to modify
     :param prefix_prepend: directory to prepend to the prefix
     :param prefix_trim: directory to remove from prefix
@@ -358,10 +362,17 @@ def fix_pkg_config(
         f"^prefix=(?P<trim>{'|'.join(prefixes_to_trim)})(?P<prefix>.*)"
     )
     pattern = re.compile("^prefix=(?P<prefix>.*)")
+    pattern_pcfiledir = re.compile("^prefix *= *[$]{pcfiledir}.*")
 
     # process .pc file
     with fileinput.input(pkg_config_file, inplace=True) as input_file:
         for line in input_file:
+            # If the prefix begins with ${pcfiledir} statement, this is
+            # a position-independent (thus, "relocatable") .pc file, so
+            # no changes are required.
+            if pattern_pcfiledir.search(line) is not None:
+                print(line, end="")
+                continue
             match = pattern.search(line)
             match_trim = pattern_trim.search(line)
 

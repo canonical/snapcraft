@@ -20,11 +20,10 @@ import base64
 import configparser
 import json
 import os
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence
 
 import craft_store
-import pymacaroons
 from craft_cli import emit
 from overrides import overrides
 from urllib3.util import parse_url
@@ -43,11 +42,11 @@ def _load_potentially_base64_config(config_content: str) -> configparser.ConfigP
         # The config may be base64-encoded, try decoding it
         try:
             decoded_config_content = base64.b64decode(config_content).decode()
-        except base64.binascii.Error as b64_error:  # type: ignore
+        except (base64.binascii.Error, UnicodeDecodeError) as err:  # type: ignore
             # It wasn't base64, so use the original error
             raise errors.LegacyCredentialsParseError(
                 f"Cannot parse config: {parser_error}"
-            ) from b64_error
+            ) from err
 
         try:
             parser.read_string(decoded_config_content)
@@ -59,19 +58,16 @@ def _load_potentially_base64_config(config_content: str) -> configparser.ConfigP
     return parser
 
 
-def _deserialize_macaroon(value) -> pymacaroons.Macaroon:
-    try:
-        return pymacaroons.Macaroon.deserialize(value)
-    except:  # noqa LP: #1733004
-        raise errors.LegacyCredentialsParseError("Failed to deserialize macaroon")
-
-
-def _get_macaroons_from_conf(conf) -> Dict[str, str]:
+def _get_macaroons_from_conf(conf: configparser.ConfigParser) -> dict[str, str]:
     """Format a macaroon and its associated discharge.
 
     :return: A string suitable to use in an Authorization header.
     """
     host = parse_url(os.getenv("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL)).host
+    if not host:
+        raise errors.SnapcraftError(
+            "Couldn't parse environment variable 'UBUNTU_ONE_SSO_URL'."
+        )
     try:
         root_macaroon_raw = conf.get(host, "macaroon")
         unbound_raw = conf.get(host, "unbound_discharge")
@@ -144,7 +140,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         return False
 
     @classmethod
-    def store_credentials(cls, config_content) -> None:
+    def store_credentials(cls, config_content: str) -> None:
         """Store legacy credentials."""
         # Check to see if the content is valid.
         get_auth(config_content)
@@ -161,7 +157,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         endpoints: craft_store.endpoints.Endpoints,
         application_name: str,
         user_agent: str,
-        environment_auth: Optional[str] = None,
+        environment_auth: str | None = None,
         ephemeral: bool = False,
     ) -> None:
         # Adapt to the JSON format if the environment has configparser based credentials.
@@ -198,8 +194,8 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         permissions: Sequence[str],
         description: str,
         ttl: int,
-        packages: Optional[Sequence[craft_store.endpoints.Package]] = None,
-        channels: Optional[Sequence[str]] = None,
+        packages: Sequence[craft_store.endpoints.Package] | None = None,
+        channels: Sequence[str] | None = None,
         **kwargs,
     ) -> str:
         raise errors.SnapcraftError(

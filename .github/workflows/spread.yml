@@ -12,6 +12,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # speed up build times by using wheels, when available
+      - name: Use wheels
+        run: |
+          yq eval 'del(.parts.snapcraft.build-environment[] | select(.PIP_NO_BINARY == ":all:"))' -i snap/snapcraft.yaml
+
       - name: Build snapcraft snap
         id: build-snapcraft
         uses: canonical/action-build@v1
@@ -59,6 +64,7 @@ jobs:
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UA_TOKEN: ${{ secrets.UA_TOKEN }}
+          RUN_UA_TESTS: ${{ ! github.event.pull_request.head.repo.fork }}
         run: spread ${{ matrix.spread-jobs }}
 
       - name: Discard spread workers

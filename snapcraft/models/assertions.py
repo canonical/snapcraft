@@ -48,13 +48,13 @@ def _to_string(data: Any) -> Any:
     if isinstance(data, abc.Collection):
         return [_to_string(i) for i in data]
 
-    if isinstance(data, (numbers.Number, bool)):
+    if isinstance(data, numbers.Number | bool):
         return str(data)
 
     return data
 
 
-class Registry(models.CraftBaseModel):
+class ConfdbSchema(models.CraftBaseModel):
     """Access and data definitions for a specific facet of a snap or system."""
 
     request: str | None = None
@@ -71,19 +71,25 @@ class Registry(models.CraftBaseModel):
 
 
 class Rules(models.CraftBaseModel):
-    """A list of registries for a particular view."""
+    """A list of confdb schemas for a particular view."""
 
-    rules: list[Registry]
+    summary: str | None = None
+    """Optional summary for this view."""
+
+    rules: list[ConfdbSchema]
 
 
-class EditableRegistryAssertion(models.CraftBaseModel):
-    """Subset of a registries assertion that can be edited by the user."""
+class EditableConfdbSchemaAssertion(models.CraftBaseModel):
+    """Subset of a confdb-schema assertion that can be edited by the user."""
 
     account_id: str
-    """Issuer of the registry assertion and owner of the signing key."""
+    """Issuer of the confdb-schema assertion and owner of the signing key."""
 
     name: str
     revision: int | None = 0
+
+    summary: str | None = None
+    """Optional summary for the entire confdb-schema."""
 
     views: dict[str, Rules]
     """A map of logical views of how the storage is accessed."""
@@ -96,13 +102,13 @@ class EditableRegistryAssertion(models.CraftBaseModel):
         return cast_dict_scalars_to_strings(self.marshal())
 
 
-class RegistryAssertion(EditableRegistryAssertion):
-    """A full registries assertion containing editable and non-editable fields."""
+class ConfdbSchemaAssertion(EditableConfdbSchemaAssertion):
+    """A full confdb-schema assertion containing editable and non-editable fields."""
 
-    type: Literal["registry"]
+    type: Literal["confdb-schema"]
 
     authority_id: str
-    """Issuer of the registry assertion and owner of the signing key."""
+    """Issuer of the confdb-schema assertion and owner of the signing key."""
 
     timestamp: str
     """Timestamp of when the assertion was issued."""
@@ -114,16 +120,18 @@ class RegistryAssertion(EditableRegistryAssertion):
     """Signing key ID."""
 
 
-class RegistriesList(models.CraftBaseModel):
-    """A list of registry assertions."""
+class ConfdbSchemasList(models.CraftBaseModel):
+    """A list of confdb assertions."""
 
-    registry_list: list[RegistryAssertion] = pydantic.Field(default_factory=list)
+    confdb_schema_list: list[ConfdbSchemaAssertion] = pydantic.Field(
+        default_factory=list
+    )
 
 
-# this will be a union for validation sets and registries once
+# this will be a union for validation sets and confdb schemas once
 # validation sets are migrated from the legacy codebase
-Assertion = RegistryAssertion
+Assertion = ConfdbSchemaAssertion
 
-# this will be a union for editable validation sets and editable registries once
+# this will be a union for editable validation sets and editable confdb schemas once
 # validation sets are migrated from the legacy codebase
-EditableAssertion = EditableRegistryAssertion
+EditableAssertion = EditableConfdbSchemaAssertion

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [[ "${PLATFORM_PLUG}" == "kf6-core24" ]]
+then
+    set -- "${SNAP}/kf6/command-chain/desktop-launch6" "$@"
+    # shellcheck source=/dev/null
+    source "${SNAP}/snap/command-chain/run"
+elif [[ "${PLATFORM_PLUG}" == "kf6-core22" ]]
+then
+    set -- "${SNAP}/kf6/command-chain/desktop-launch6" "$@"
+    # shellcheck source=/dev/null
+    source "${SNAP}/snap/command-chain/run"
+elif [[ "${PLATFORM_PLUG}" == "kde-qt6-core22" ]]
+then
+    set -- "${SNAP}/qt6/command-chain/desktop-launch6" "$@"
+    # shellcheck source=/dev/null
+    source "${SNAP}/snap/command-chain/run"
+elif [[ "${PLATFORM_PLUG}" == "kde-qt6-core24" ]]
+then
+    set -- "${SNAP}/qt6/command-chain/desktop-launch6" "$@"
+    # shellcheck source=/dev/null
+    source "${SNAP}/snap/command-chain/run"
+else
+    set -- "${SNAP}/kf5/command-chain/desktop-launch" "$@"
+    # shellcheck source=/dev/null
+    source "${SNAP}/snap/command-chain/run"
+fi

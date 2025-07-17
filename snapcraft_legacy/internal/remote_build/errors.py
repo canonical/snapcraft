@@ -25,7 +25,6 @@ class RemoteBuildBaseError(_SnapcraftError):
 
 
 class RemoteBuildNotFoundError(RemoteBuildBaseError):
-
     fmt = (
         "Remote build not found, please make sure project {name!r} and build "
         "number {req_number} are correct. If this is an old build, it may "
@@ -37,17 +36,14 @@ class RemoteBuildNotFoundError(RemoteBuildBaseError):
 
 
 class NoLaunchpadUsernameError(RemoteBuildBaseError):
-
     fmt = "Please set your Launchpad username using the '--user' option."
 
 
 class NotGitRepositoryError(RemoteBuildBaseError):
-
     fmt = "Current directory is not a git repository."
 
 
 class GitNotFoundVersionError(RemoteBuildBaseError):
-
     fmt = (
         "This remote-build project requires `git` to be installed "
         "because of it use of `version: git`.  Either install `git`, "
@@ -57,7 +53,6 @@ class GitNotFoundVersionError(RemoteBuildBaseError):
 
 
 class GitNotFoundProviderError(RemoteBuildBaseError):
-
     fmt = (
         "The remote build provider ({provider!r}) requires "
         "the use of the `git` utility, and `git` is not installed. "
@@ -69,7 +64,6 @@ class GitNotFoundProviderError(RemoteBuildBaseError):
 
 
 class BaseRequiredError(RemoteBuildBaseError):
-
     fmt = (
         "Remote build currently requires that the project uses bases.\n"
         "Please specify an appropriate `base` keyword and try again."
@@ -77,7 +71,6 @@ class BaseRequiredError(RemoteBuildBaseError):
 
 
 class RemoteBuilderNotSupportedError(RemoteBuildBaseError):
-
     fmt = (
         "Remote builder {provider!r} is not supported, please choose "
         "a different one and try again."
@@ -88,12 +81,10 @@ class RemoteBuilderNotSupportedError(RemoteBuildBaseError):
 
 
 class RemoteBuildTimeoutError(RemoteBuildBaseError):
-
     fmt = "Remote build exceeded configured timeout."
 
 
 class RemoteBuilderError(RemoteBuildBaseError):
-
     fmt = "Remote builder failed with error: {builder_error!r}"
 
     def __init__(self, *, builder_error: str) -> None:
@@ -101,7 +92,6 @@ class RemoteBuilderError(RemoteBuildBaseError):
 
 
 class UnsupportedArchitectureError(RemoteBuildBaseError):
-
     fmt = (
         "The following architectures are not supported by the remote builder: "
         "{archs}.\nPlease remove them from the architecture list "
@@ -113,7 +103,6 @@ class UnsupportedArchitectureError(RemoteBuildBaseError):
 
 
 class UnsupportedVersionScriptError(RemoteBuildBaseError):
-
     fmt = (
         "Remote-build does not support the use of `version-script`.\n"
         "Please use `snapcraftctl set-version` part scriptlet with "
@@ -122,7 +111,6 @@ class UnsupportedVersionScriptError(RemoteBuildBaseError):
 
 
 class AcceptPublicUploadError(RemoteBuildBaseError):
-
     fmt = (
         "Remote build needs explicit acknowledgement that data sent to build servers "
         "is public.\n"
@@ -151,6 +139,7 @@ class LaunchpadHttpsError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Verify connectivity to https://api.launchpad.net and retry build."
+
 
 class RemoteBuildFailedError(RemoteBuildBaseError):
     """Remote build failed."""

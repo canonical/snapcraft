@@ -16,12 +16,16 @@
 
 """Snapcraft discovery commands."""
 
-import textwrap
-from typing import TYPE_CHECKING, Optional
+from __future__ import annotations
 
+import textwrap
+from typing import TYPE_CHECKING
+
+import craft_application.errors
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_parts.plugins import get_registered_plugins
+from craft_platforms import DebianArchitecture
 from overrides import overrides
 
 from snapcraft import const, errors, models
@@ -31,7 +35,6 @@ from snapcraft.parts.yaml_utils import (
     get_snap_project,
     process_yaml,
 )
-from snapcraft.utils import get_host_architecture
 
 if TYPE_CHECKING:
     import argparse
@@ -49,7 +52,7 @@ class ListPluginsCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
             "--base",
@@ -59,12 +62,12 @@ class ListPluginsCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace) -> None:
         if parsed_args.base == "core20":
             raise errors.LegacyFallback()
 
         base = parsed_args.base
-        message: Optional[str] = None
+        message: str | None = None
 
         if base is None:
             try:
@@ -73,7 +76,7 @@ class ListPluginsCommand(AppCommand):
                 yaml_data = process_yaml(snap_project.project_file)
 
                 # process yaml before unmarshalling the data
-                arch = get_host_architecture()
+                arch = str(DebianArchitecture.from_host())
                 yaml_data_for_arch = apply_yaml(yaml_data, arch, arch)
                 # discard parse-info as it is not part of Project which we use to
                 # determine the base
@@ -84,7 +87,7 @@ class ListPluginsCommand(AppCommand):
                 message = (
                     f"Displaying plugins available to the current base {base!r} project"
                 )
-            except errors.ProjectMissing:
+            except craft_application.errors.ProjectFileError:
                 emit.trace("Defaulting to core24 because no project was found.")
                 base = "core24"
 
@@ -104,3 +107,11 @@ class PluginsCommand(ListPluginsCommand):
 
     name = "plugins"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)

@@ -114,9 +114,11 @@ class FakeAssertion(CraftBaseModel):
 
 
 @pytest.fixture
-def fake_assertion_service(default_factory):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import Assertion
+def fake_assertion_service(fake_services):
+    from snapcraft.application import (  # noqa: PLC0415 (import-outside-top-level)
+        APP_METADATA,
+    )
+    from snapcraft.services import Assertion  # noqa: PLC0415 (import-outside-top-level)
 
     class FakeAssertionService(Assertion):
         @property
@@ -195,13 +197,23 @@ def fake_assertion_service(default_factory):
         ) -> str:
             return "Success."
 
-    return FakeAssertionService(app=APP_METADATA, services=default_factory)
+        @override
+        def _validate_assertion(  # type: ignore[override]
+            self,
+            assertion: FakeAssertion,
+            **kwargs: dict[str, Any],
+        ) -> None:
+            """Add an simple custom validator."""
+            if kwargs.get("test-arg") == assertion.test_field_2:
+                raise errors.SnapcraftAssertionError("Custom validation failed.")
+
+    return FakeAssertionService(app=APP_METADATA, services=fake_services)
 
 
 def test_list_assertions_table(fake_assertion_service, emitter):
     """List assertions as a table."""
     fake_assertion_service.list_assertions(
-        output_format=const.OutputFormat.table, name="test-registry"
+        output_format=const.OutputFormat.table, name="test-confb"
     )
 
     emitter.assert_message(
@@ -217,7 +229,7 @@ def test_list_assertions_table(fake_assertion_service, emitter):
 def test_list_assertions_json(fake_assertion_service, emitter):
     """List assertions as json."""
     fake_assertion_service.list_assertions(
-        output_format=const.OutputFormat.json, name="test-registry"
+        output_format=const.OutputFormat.json, name="test-confb"
     )
 
     emitter.assert_message(
@@ -245,7 +257,7 @@ def test_list_assertions_unknown_format(fake_assertion_service):
 
     with pytest.raises(errors.FeatureNotImplemented, match=expected):
         fake_assertion_service.list_assertions(
-            output_format="unknown", name="test-registry"
+            output_format="unknown", name="test-confb"
         )
 
 
@@ -270,7 +282,7 @@ def test_edit_assertions_changes_made(
 
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id", key_name="test-key"
+        name="test-confb", account_id="test-account-id", key_name="test-key"
     )
 
     mock_post_assertion.assert_called_once_with(expected_assertion)
@@ -289,7 +301,7 @@ def test_edit_assertions_no_changes_made(
     """Edit an assertion but make no changes to the data."""
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id"
+        name="test-confb", account_id="test-account-id"
     )
 
     emitter.assert_message("No changes made.")
@@ -336,7 +348,7 @@ def test_edit_assertions_build_assertion_error(
 
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id", key_name="test-key"
+        name="test-confb", account_id="test-account-id", key_name="test-key"
     )
 
     assert mock_confirm_with_user.mock_calls == [
@@ -382,7 +394,7 @@ def test_edit_assertions_sign_assertion_error(
 
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id", key_name="test-key"
+        name="test-confb", account_id="test-account-id", key_name="test-key"
     )
 
     assert mock_confirm_with_user.mock_calls == [
@@ -428,7 +440,7 @@ def test_edit_assertions_post_assertion_error(
 
     fake_assertion_service.setup()
     fake_assertion_service.edit_assertion(
-        name="test-registry", account_id="test-account-id", key_name="test-key"
+        name="test-confb", account_id="test-account-id", key_name="test-key"
     )
 
     assert mock_confirm_with_user.mock_calls == [
@@ -543,3 +555,86 @@ def test_edit_error_no_retry(
         mock.call("Do you wish to amend the fake assertion?")
     ]
     assert write_text.mock_calls == [mock.call(["faux-vi", tmp_file], check=True)]
+
+
+@pytest.mark.parametrize(
+    "write_text",
+    [
+        [
+            "test-field-1: test-value-1-edited\ntest-field-2: 1000",
+            "test-field-1: test-value-1-edited\ntest-field-2: 999",
+        ],
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize("mock_confirm_with_user", [True], indirect=True)
+@pytest.mark.usefixtures("fake_sign_assertion")
+def test_edit_assertions_validate_assertion_error_retry(
+    fake_assertion_service,
+    emitter,
+    mock_confirm_with_user,
+    write_text,
+    mocker,
+    tmp_path,
+):
+    """Receive an error when validating an assertion, the re-edit and post the assertion."""
+    # this will trigger an error in FakeAssertion.validate_assertion
+    kwargs: dict[str, Any] = {"test-arg": 999}
+    expected_assertion = (
+        b'{"test_field_1": "test-value-1-edited-built", "test_field_2": "1000"}-signed'
+    )
+    mock_post_assertion = mocker.spy(fake_assertion_service, "_post_assertion")
+
+    fake_assertion_service.setup()
+    fake_assertion_service.edit_assertion(
+        name="test-confb", account_id="test-account-id", key_name="test-key", **kwargs
+    )
+
+    assert mock_confirm_with_user.mock_calls == [
+        mock.call("Do you wish to amend the fake assertion?")
+    ]
+    assert mock_post_assertion.mock_calls == [mock.call(expected_assertion)]
+    emitter.assert_trace(f"Signed assertion: {expected_assertion.decode()}")
+    emitter.assert_message("Success.")
+    assert not (tmp_path / "assertion-file").exists()
+
+
+@pytest.mark.parametrize(
+    "write_text",
+    [
+        [
+            "test-field-1: test-value-1-edited\ntest-field-2: 999",
+        ],
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize("mock_confirm_with_user", [False], indirect=True)
+@pytest.mark.usefixtures("fake_sign_assertion")
+def test_edit_assertions_validate_assertion_error(
+    fake_assertion_service,
+    emitter,
+    mock_confirm_with_user,
+    write_text,
+    mocker,
+    tmp_path,
+):
+    """Receive an error when validating an assertion and don't retry."""
+    # this will trigger an error in FakeAssertion.validate_assertion
+    kwargs: dict[str, Any] = {"test-arg": 999}
+    mock_post_assertion = mocker.spy(fake_assertion_service, "_post_assertion")
+
+    fake_assertion_service.setup()
+
+    with pytest.raises(errors.SnapcraftError, match="operation aborted"):
+        fake_assertion_service.edit_assertion(
+            name="test-confb",
+            account_id="test-account-id",
+            key_name="test-key",
+            **kwargs,
+        )
+
+    assert mock_confirm_with_user.mock_calls == [
+        mock.call("Do you wish to amend the fake assertion?")
+    ]
+    assert mock_post_assertion.mock_calls == []
+    assert not (tmp_path / "assertion-file").exists()

@@ -18,7 +18,6 @@ import snapcraft_legacy.internal.errors
 
 
 class NoSuchFileError(snapcraft_legacy.internal.errors.SnapcraftError):
-
     fmt = (
         "Failed to find part that provided path: {path!r} does not "
         "exist.\n"
@@ -37,7 +36,6 @@ class SnapcraftInspectError(snapcraft_legacy.internal.errors.SnapcraftError):
 
 
 class ProvidesInvalidFilePathError(SnapcraftInspectError):
-
     fmt = (
         "Failed to find part that provides path: {path!r} is not in the "
         "staging or priming area.\n"
@@ -49,7 +47,6 @@ class ProvidesInvalidFilePathError(SnapcraftInspectError):
 
 
 class UntrackedFileError(SnapcraftInspectError):
-
     fmt = "No known parts provided {path!r}. It may have been provided by a scriptlet."
 
     def __init__(self, path):

@@ -21,6 +21,7 @@ import textwrap
 from unittest import mock
 
 import fixtures
+import pytest
 import testtools
 from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import Equals
@@ -30,6 +31,8 @@ from snapcraft_legacy.internal import errors
 from tests.legacy import unit
 from tests.legacy.unit.commands import CommandBaseTestCase
 
+
+pytestmark = [pytest.mark.slow]
 
 class ScriptletCommandsTestCase(CommandBaseTestCase):
     def setUp(self):

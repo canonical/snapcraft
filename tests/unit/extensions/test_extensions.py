@@ -38,9 +38,9 @@ def test_apply_extension():
         "parts": {"fake-part": {"source": ".", "plugin": "dump"}},
     }
 
-    assert extensions.apply_extensions(
-        yaml_data, arch="amd64", target_arch="amd64"
-    ) == {
+    extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
+
+    assert yaml_data == {
         "name": "fake-snap",
         "summary": "fake summary",
         "description": "fake description",
@@ -83,9 +83,9 @@ def test_apply_extension_plugin_dependent():
         },
     }
 
-    assert extensions.apply_extensions(
-        yaml_data, arch="amd64", target_arch="amd64"
-    ) == {
+    extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
+
+    assert yaml_data == {
         "name": "fake-snap",
         "summary": "fake summary",
         "description": "fake description",
@@ -127,9 +127,9 @@ def test_apply_multiple_extensions():
         "parts": {"fake-part": {"source": ".", "plugin": "dump"}},
     }
 
-    assert extensions.apply_extensions(
-        yaml_data, arch="amd64", target_arch="amd64"
-    ) == {
+    extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
+
+    assert yaml_data == {
         "name": "fake-snap",
         "summary": "fake summary",
         "description": "fake description",
@@ -239,7 +239,10 @@ def test_apply_extension_experimental():
     assert (
         str(raised.value) == "Extension is experimental: 'fake-extension-experimental'"
     )
-    assert raised.value.docs_url == "https://snapcraft.io/docs/supported-extensions"
+    assert (
+        raised.value.docs_url
+        == "https://documentation.ubuntu.com/snapcraft/stable/reference/extensions"
+    )
 
 
 @pytest.mark.usefixtures("fake_extension_experimental")

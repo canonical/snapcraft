@@ -16,23 +16,26 @@
 
 """Snapcraft Store uploading related commands."""
 
+from __future__ import annotations
+
 import pathlib
 import textwrap
-from collections import abc
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
-from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from snapcraft import errors, store, utils
+from snapcraft import const, errors, store, utils
 from snapcraft.meta import SnapMetadata
 from snapcraft_legacy._store import get_data_from_snap_file
 
 if TYPE_CHECKING:
     import argparse
+    from collections import abc
+
+    from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 
 class ComponentOption:
@@ -75,7 +78,7 @@ class StoreUploadCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
             metavar="snap-file",
@@ -102,12 +105,12 @@ class StoreUploadCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace) -> None:
         snap_file = pathlib.Path(parsed_args.snap_file)
         if not snap_file.exists() or not snap_file.is_file():
             raise ArgumentParsingError(f"{str(snap_file)!r} is not a valid file")
 
-        channels: Optional[List[str]] = None
+        channels: list[str] | None = None
         if parsed_args.channels:
             channels = parsed_args.channels.split(",")
 
@@ -216,3 +219,11 @@ class StoreLegacyPushCommand(StoreUploadCommand):
 
     name = "push"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)

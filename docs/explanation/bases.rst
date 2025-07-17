@@ -1,7 +1,10 @@
+.. _explanation-bases:
+
 Bases
 =====
 
 .. include:: /reuse/bases-intro.rst
+
 
 ``base`` and ``build-base``
 ---------------------------
@@ -23,13 +26,17 @@ the `Ubuntu buildd image server`_.
 For ``base: bare`` snaps, a ``build-base`` is required to determine the feature
 set, build environment, and ``snapcraft.yaml`` schema.
 
+
+.. _base-snaps:
+
 Base snaps
 ----------
 
 A base snap is a special kind of snap that provides a run-time environment with
-a cardinal set of libraries that are common to most applications. They’re
+a cardinal set of libraries that are common to most applications. They're
 transparent to users, but they need to be considered and specified when building
 a snap.
+
 
 Mounting
 --------
@@ -38,29 +45,30 @@ For strictly confined snaps, the base snap mounts itself as the root filesystem
 within a snap's runtime environment. When an application runs, the base's
 library paths are searched directly after the paths for that snap.
 
-For classic confined snaps, the base snap is not mounted as the root
-filesystem. The base snap is mounted as ``/snap/<base>/``, so the snap can
-still load libraries from the base snap. For more information, see the
-documentation for `classic confinement`_.
+For :ref:`classically-confined <explanation-classic-confinement>` snaps, the base snap
+is not mounted as the root filesystem. The base snap is mounted as ``/snap/<base>/``, so
+the snap can still load libraries from the base snap.
+
 
 Choosing a base
 ---------------
 
 ``core24`` is the recommended base for most snaps. Much like choosing a
 distribution base for a project or server, the best base for an application is
-dependent on an application’s requirements and which plugins or extensions a
+dependent on an application's requirements and which plugins or extensions a
 base supports. If there are specific dependencies that cannot be easily met
 then the next newest base ``core22`` is a valid and supported alternative.
 
-Snapcraft `extensions`_ enable bundling a set of common requirements into a
-snap, such as for running KDE Plasma or GNOME applications. Extensions support
-specific bases. See `supported extensions`_ for a list of which extensions
-support which bases.
+Snapcraft :ref:`explanation-extensions` enable bundling a set of common requirements
+into a snap, such as for running KDE Plasma or GNOME applications. Extensions support
+specific bases. :ref:`how-to-list-extensions` to view the latest extensions and which
+bases they're compatible with.
 
 ``bare`` is the recommended base for fully statically linked snaps because they
 will not have access to a base snap when running. The snap will have a smaller
 footprint at runtime because it does not require a base snap to be downloaded,
 installed, and mounted.
+
 
 .. _base-snap-explanation:
 
@@ -80,6 +88,3 @@ include ``systemd``.
 
 
 .. _`Ubuntu buildd image server`: https://cloud-images.ubuntu.com/buildd/daily/
-.. _`classic confinement`: https://snapcraft.io/docs/classic-confinement
-.. _`extensions`: https://snapcraft.io/docs/snapcraft-extensions
-.. _`supported extensions`: https://snapcraft.io/docs/supported-extensions

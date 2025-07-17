@@ -20,7 +20,6 @@ import configparser
 import os
 import shlex
 from pathlib import Path
-from typing import Optional
 
 from craft_cli import emit
 
@@ -32,7 +31,7 @@ class DesktopFile:
 
     :param snap_name: The snap package name.
     :param app_name: The name of the app using the desktop file.
-    :param filename: The desktop file name.
+    :param filename: The desktop file path.
     :param prime_dir: The prime directory path.
 
     :raises DesktopFileError: If the desktop file does not exist.
@@ -57,7 +56,7 @@ class DesktopFile:
         self._parser.optionxform = str  # type: ignore
         self._parser.read(file_path, encoding="utf-8")
 
-    def _parse_and_reformat_section_exec(self, section):
+    def _parse_and_reformat_section_exec(self, section: str):
         exec_value = self._parser[section]["Exec"]
         exec_split = shlex.split(exec_value, posix=False)
 
@@ -69,7 +68,9 @@ class DesktopFile:
 
         self._parser[section]["Exec"] = " ".join(exec_split)
 
-    def _parse_and_reformat_section(self, *, section, icon_path: Optional[str] = None):
+    def _parse_and_reformat_section(
+        self, *, section: str, icon_path: str | None = None
+    ):
         if "Exec" not in self._parser[section]:
             raise errors.DesktopFileError(self._filename, "missing 'Exec' key")
 
@@ -97,7 +98,7 @@ class DesktopFile:
                     f"not found in prime directory."
                 )
 
-    def _parse_and_reformat(self, *, icon_path: Optional[str] = None) -> None:
+    def _parse_and_reformat(self, *, icon_path: str | None = None) -> None:
         if "Desktop Entry" not in self._parser.sections():
             raise errors.DesktopFileError(
                 self._filename, "missing 'Desktop Entry' section"
@@ -106,7 +107,7 @@ class DesktopFile:
         for section in self._parser.sections():
             self._parse_and_reformat_section(section=section, icon_path=icon_path)
 
-    def write(self, *, gui_dir: Path, icon_path: Optional[str] = None) -> None:
+    def write(self, *, gui_dir: Path, icon_path: str | None = None) -> None:
         """Write the desktop file.
 
         :param gui_dir: The desktop file destination directory.
@@ -116,9 +117,15 @@ class DesktopFile:
 
         gui_dir.mkdir(parents=True, exist_ok=True)
 
-        # Rename the desktop file to match the app name. This will help
-        # unity8 associate them (https://launchpad.net/bugs/1659330).
-        target = gui_dir / f"{self._app_name}.desktop"
+        desktop_filename = os.path.basename(self._filename)
+
+        # Stop renaming the desktop file. From snapd 2.66 onwards,
+        # users can declare custom desktop file names which snapd will not rename
+        # in the format of {SNAP_NAME}_{APP_NAME}.desktop
+        # https://snapcraft.io/docs/desktop-interface
+        target = gui_dir / desktop_filename
+        if not (desktop_filename.endswith(".desktop")):
+            target = gui_dir / f"{desktop_filename}.desktop"
 
         if target.exists():
             # Unlikely. A desktop file in meta/gui/ already existed for

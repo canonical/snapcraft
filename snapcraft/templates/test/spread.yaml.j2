@@ -1,0 +1,23 @@
+project: {{ name }}
+
+backends:
+  craft:
+    type: craft
+    systems:
+      - ubuntu-24.04
+      # Uncomment to test on more systems
+      #- ubuntu-22.04
+      #- ubuntu-20.04
+
+suites:
+  spread/general/:
+    summary: General integration tests
+    prepare: |
+      snap install "$CRAFT_ARTIFACT" --dangerous --jailmode
+    restore: |
+      snap remove {{ name }} --purge --terminate
+
+exclude:
+  - .git
+
+kill-timeout: 1h

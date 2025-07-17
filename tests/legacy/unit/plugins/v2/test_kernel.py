@@ -85,7 +85,7 @@ class TestPluginKernel(TestCase):
         kernelcompilerparameters=None,
         kernelenablezfssupport=False,
         kernelenableperf=False,
-        kernelusellvm: Union[bool, str] = False,
+        kernelusellvm: bool | str = False,
         arch=platform.machine(),
     ):
         @dataclass

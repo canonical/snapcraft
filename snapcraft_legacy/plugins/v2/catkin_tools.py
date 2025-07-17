@@ -16,19 +16,19 @@
 
 """The catkin tools plugin for ROS 1 parts.
 
-    - catkin-tools-packages:
-      (list of strings)
-      List of catkin packages to build. If not specified, all packages in the
-      workspace will be built. If set to an empty list ([]), no packages will
-      be built, which could be useful if you only want ROS debs in the snap.
+- catkin-tools-packages:
+  (list of strings)
+  List of catkin packages to build. If not specified, all packages in the
+  workspace will be built. If set to an empty list ([]), no packages will
+  be built, which could be useful if you only want ROS debs in the snap.
 
-    - catkin-tools-cmake-args:
-      (list of strings)
-      Arguments to pass to cmake projects.
+- catkin-tools-cmake-args:
+  (list of strings)
+  Arguments to pass to cmake projects.
 
-    This plugin requires certain variables that are specified by the `ros1-noetic`
-    extension. If you're not using the extension, set these in your `build-environment`:
-      - ROS_DISTRO: "noetic"
+This plugin requires certain variables that are specified by the `ros1-noetic`
+extension. If you're not using the extension, set these in your `build-environment`:
+  - ROS_DISTRO: "noetic"
 """
 
 from typing import Any, Dict, List, Set
@@ -108,12 +108,16 @@ class CatkinToolsPlugin(_ros.RosPlugin):
         if self.options.ros_build_snaps:
             for ros_build_snap in self.options.ros_build_snaps:
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
-                activation_commands.extend(self._get_source_command(f"/snap/{snap_name}/current"))
+                activation_commands.extend(
+                    self._get_source_command(f"/snap/{snap_name}/current")
+                )
             activation_commands.append("")
 
         # Source ROS ws in stage-snaps next
         activation_commands.append("## Sourcing ROS ws in stage snaps")
-        activation_commands.extend(self._get_source_command("${SNAPCRAFT_PART_INSTALL}"))
+        activation_commands.extend(
+            self._get_source_command("${SNAPCRAFT_PART_INSTALL}")
+        )
         activation_commands.append("")
 
         # Finally source system's ROS ws
@@ -166,15 +170,16 @@ class CatkinToolsPlugin(_ros.RosPlugin):
             '"${SNAPCRAFT_PART_INSTALL}/opt/ros/${ROS_DISTRO}"',
         ]
 
-        if self.options.catkin_tools_cmake_args or self.options.ros_content_sharing_extension_cmake_args:
+        if (
+            self.options.catkin_tools_cmake_args
+            or self.options.ros_content_sharing_extension_cmake_args
+        ):
             cmake_args = []
             if self.options.catkin_tools_cmake_args:
                 cmake_args.extend(self.options.catkin_tools_cmake_args)
             if self.options.ros_content_sharing_extension_cmake_args:
                 cmake_args.extend(self.options.ros_content_sharing_extension_cmake_args)
-            catkin_config_command.extend(
-                ["--cmake-args", *cmake_args]
-            )
+            catkin_config_command.extend(["--cmake-args", *cmake_args])
 
         commands.append(" ".join(catkin_config_command))
 

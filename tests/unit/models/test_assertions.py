@@ -19,7 +19,11 @@
 
 import pytest
 
-from snapcraft.models import EditableRegistryAssertion, Registry, RegistryAssertion
+from snapcraft.models import (
+    ConfdbSchema,
+    ConfdbSchemaAssertion,
+    EditableConfdbSchemaAssertion,
+)
 from snapcraft.models.assertions import cast_dict_scalars_to_strings
 
 
@@ -55,18 +59,18 @@ def test_cast_dict_scalars_to_strings(input_dict, expected_dict):
     assert actual == expected_dict
 
 
-def test_registry_defaults(check):
-    """Test default values of the Registry model."""
-    registry = Registry.unmarshal({"storage": "test-storage"})
+def test_confdb_schema_defaults(check):
+    """Test default values of the ConfdbSchema model."""
+    confdb_schema = ConfdbSchema.unmarshal({"storage": "test-storage"})
 
-    check.is_none(registry.request)
-    check.is_none(registry.access)
-    check.is_none(registry.content)
+    check.is_none(confdb_schema.request)
+    check.is_none(confdb_schema.access)
+    check.is_none(confdb_schema.content)
 
 
-def test_registry_nested(check):
-    """Test that nested registries are supported."""
-    registry = Registry.unmarshal(
+def test_confdb_schema_nested(check):
+    """Test that nested confdb schemas are supported."""
+    confdb_schema = ConfdbSchema.unmarshal(
         {
             "request": "test-request",
             "storage": "test-storage",
@@ -81,21 +85,25 @@ def test_registry_nested(check):
         }
     )
 
-    check.equal(registry.request, "test-request")
-    check.equal(registry.storage, "test-storage")
-    check.equal(registry.access, "read")
+    check.equal(confdb_schema.request, "test-request")
+    check.equal(confdb_schema.storage, "test-storage")
+    check.equal(confdb_schema.access, "read")
     check.equal(
-        registry.content,
-        [Registry(request="nested-request", storage="nested-storage", access="write")],
+        confdb_schema.content,
+        [
+            ConfdbSchema(
+                request="nested-request", storage="nested-storage", access="write"
+            )
+        ],
     )
 
 
-def test_editable_registry_assertion_defaults(check):
-    """Test default values of the EditableRegistryAssertion model."""
-    assertion = EditableRegistryAssertion.unmarshal(
+def test_editable_confdb_schema_assertion_defaults(check):
+    """Test default values of the EditableConfdbSchemaAssertion model."""
+    assertion = EditableConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -112,12 +120,12 @@ def test_editable_registry_assertion_defaults(check):
     check.is_none(assertion.body)
 
 
-def test_editable_registry_assertion_marshal_as_str():
+def test_editable_confdb_schema_assertion_marshal_as_str():
     """Cast all scalars to string when marshalling."""
-    assertion = EditableRegistryAssertion.unmarshal(
+    assertion = EditableConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "revision": 10,
             "views": {
                 "wifi-setup": {
@@ -136,15 +144,15 @@ def test_editable_registry_assertion_marshal_as_str():
     assert assertion_dict["revision"] == "10"
 
 
-def test_registry_assertion_defaults(check):
-    """Test default values of the RegistryAssertion model."""
-    assertion = RegistryAssertion.unmarshal(
+def test_confdb_schema_assertion_defaults(check):
+    """Test default values of the ConfdbSchemaAssertion model."""
+    assertion = ConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "timestamp": "2024-01-01T10:20:30Z",
-            "type": "registry",
+            "type": "confdb-schema",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -153,7 +161,7 @@ def test_registry_assertion_defaults(check):
                             "request": "ssids",
                             "storage": "wifi.ssids",
                         }
-                    ]
+                    ],
                 }
             },
         }
@@ -163,18 +171,20 @@ def test_registry_assertion_defaults(check):
     check.is_none(assertion.body_length)
     check.is_none(assertion.sign_key_sha3_384)
     check.equal(assertion.revision, 0)
+    check.is_none(assertion.summary)
+    check.is_none(assertion.views["wifi-setup"].summary)
 
 
-def test_registry_assertion_marshal_as_str():
+def test_confdb_schema_assertion_marshal_as_str():
     """Cast all scalars to strings when marshalling."""
-    assertion = RegistryAssertion.unmarshal(
+    assertion = ConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "revision": 10,
             "timestamp": "2024-01-01T10:20:30Z",
-            "type": "registry",
+            "type": "confdb-schema",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -190,3 +200,32 @@ def test_registry_assertion_marshal_as_str():
     assertion_dict = assertion.marshal_scalars_as_strings()
 
     assert assertion_dict["revision"] == "10"
+
+
+def test_confdb_schema_assertion_with_summary(check):
+    """Test that summaries are set correctly when provided."""
+    assertion = ConfdbSchemaAssertion.unmarshal(
+        {
+            "account_id": "test-account-id",
+            "authority_id": "test-authority-id",
+            "name": "test-confdb",
+            "summary": "This is a test confdb-schema summary.",
+            "timestamp": "2024-01-01T10:20:30Z",
+            "type": "confdb-schema",
+            "views": {
+                "wifi-setup": {
+                    "summary": "This is a test views summary.",
+                    "rules": [
+                        {
+                            "access": "read-write",
+                            "request": "ssids",
+                            "storage": "wifi.ssids",
+                        }
+                    ],
+                }
+            },
+        }
+    )
+
+    check.equal(assertion.summary, "This is a test confdb-schema summary.")
+    check.equal(assertion.views["wifi-setup"].summary, "This is a test views summary.")

@@ -23,7 +23,6 @@ from snapcraft_legacy.internal.errors import SnapcraftError, SnapcraftException
 
 
 class MissingSnapcraftYamlError(SnapcraftError):
-
     fmt = (
         "Could not find {snapcraft_yaml_file_path}. Are you sure you are "
         "in the right directory?\n"
@@ -35,7 +34,6 @@ class MissingSnapcraftYamlError(SnapcraftError):
 
 
 class DuplicateSnapcraftYamlError(SnapcraftError):
-
     fmt = (
         "Found a {snapcraft_yaml_file_path!r} and a "
         "{other_snapcraft_yaml_file_path!r}.\n"
@@ -87,4 +85,4 @@ class UnsupportedBaseError(SnapcraftException):
             return "Ensure a valid base is set in 'snapcraft.yaml'."
 
     def get_docs_url(self) -> Optional[str]:
-        return "https://snapcraft.io/docs/base-snaps"
+        return "https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base"

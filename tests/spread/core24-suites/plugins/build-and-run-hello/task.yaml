@@ -1,0 +1,105 @@
+summary: >-
+  Build, clean, build, modify and rebuild, and run hello
+  with different plugin configurations
+
+environment:
+  SNAP/conda: conda-hello
+  SNAP/flutter: flutter-hello
+  SNAP/npm: npm-hello
+  # https://github.com/canonical/snapcraft/issues/5207
+  # SNAP/python: python-hello
+  SNAP/poetry: poetry-hello
+  SNAP/qmake: qmake-hello
+  SNAP/maven: maven-hello
+  SNAP/uv: uv-hello
+  SNAP/dotnet: dotnet-hello
+
+prepare: |
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+
+  # Undo changes to hello
+  [ -f hello ] && git checkout hello
+  [ -f hello.c ] && git checkout hello.c
+  [ -f hello.cs ] && git checkout hello.cs
+  [ -f subdir/hello.c ] && git checkout subdir/hello.c
+  [ -f hello.js ] && git checkout hello.js
+  [ -f main.go ] && git checkout main.go
+  [ -f src/main.rs ] && git checkout src/main.rs
+  [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
+  [ -f lib/main.dart ] && git checkout lib/main.dart
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
+execute: |
+  cd "${SNAP}"
+
+  # Make sure expand-extensions works
+  snapcraft expand-extensions
+
+  # Ensure we can run individual plugin steps
+  snapcraft pull
+  snapcraft build
+
+  # Build what we have and verify the snap runs as expected.
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  if [ "${SNAP}" != "flutter-hello" ]; then
+    [ "$($SNAP)" = "hello world" ]
+  fi
+
+  # Clean the hello part, then build and run again.
+  snapcraft clean hello
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  if [ "${SNAP}" != "flutter-hello" ]; then
+    [ "$($SNAP)" = "hello world" ]
+  fi
+
+  # Make sure that what we built runs with the changes applied.
+  if [ -f hello ]; then
+    modified_file=hello
+  elif [ -f hello.c ]; then
+    modified_file=hello.c
+  elif [ -f hello.cs ]; then
+    modified_file=hello.cs
+  elif [ -f subdir/hello.c ]; then
+    modified_file=subdir/hello.c
+  elif [ -f hello.js ]; then
+    modified_file=hello.js
+  elif [ -f main.go ]; then
+    modified_file=main.go
+  elif [ -f src/main.rs ]; then
+    modified_file=src/main.rs
+  elif [ -f say/src/lib.rs ]; then
+    modified_file=say/src/lib.rs
+  elif [ -f lib/main.dart ]; then
+    modified_file=lib/main.dart
+  elif [ -f src/hello/__init__.py ]; then
+    modified_file=src/hello/__init__.py
+  elif [ -f src/main/java/com/example/hello/Main.java ]; then
+    modified_file=src/main/java/com/example/hello/Main.java
+  elif [ -f src/Program.cs ]; then
+    modified_file=src/Program.cs
+  else
+    FATAL "Cannot setup ${SNAP} for rebuilding"
+  fi
+
+  sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
+
+  snapcraft
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  if [ "${SNAP}" != "flutter-hello" ]; then
+    [ "$($SNAP)" = "hello rebuilt world" ]
+  fi

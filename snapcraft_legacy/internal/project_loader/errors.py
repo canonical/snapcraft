@@ -20,12 +20,10 @@ import snapcraft_legacy.internal.errors
 
 
 class ProjectLoaderError(snapcraft_legacy.internal.errors.SnapcraftError):
-
     fmt = ""
 
 
 class VariableEvaluationError(ProjectLoaderError):
-
     fmt = (
         "Cannot evaluate project variable {variable!r}: {reason}\n"
         "For more information, check out: {docs_url}"
@@ -36,12 +34,10 @@ class VariableEvaluationError(ProjectLoaderError):
 
 
 class InvalidEpochError(ProjectLoaderError):
-
     fmt = "epochs are positive integers followed by an optional asterisk"
 
 
 class DuplicateAliasError(ProjectLoaderError):
-
     fmt = "Multiple parts have the same alias defined: {aliases!r}"
 
     def __str__(self):
@@ -52,7 +48,6 @@ class DuplicateAliasError(ProjectLoaderError):
 
 
 class SnapcraftLogicError(ProjectLoaderError):
-
     fmt = "Issue detected while analyzing snapcraft.yaml: {message}"
 
     def __init__(self, message):
@@ -121,7 +116,6 @@ class ExtensionMissingDocumentationError(ProjectLoaderError):
 
 
 class SnapcraftAfterPartMissingError(ProjectLoaderError):
-
     fmt = (
         "Failed to get part information: "
         "Cannot find the definition for part {after_part_name!r}, required by part "

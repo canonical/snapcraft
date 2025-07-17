@@ -1,5 +1,7 @@
-Snapcraft commands
-==================
+.. _reference-commands:
+
+Commands
+========
 
 .. Use a hidden table of contents to ensure that documentation is read.
 
@@ -60,7 +62,7 @@ Store validation sets
 
 .. include:: commands/store-validation-sets-commands.rst
 
-Store registries
-----------------
+Store confdb schemas
+--------------------
 
-.. include:: commands/store-registries-commands.rst
+.. include:: commands/store-confdb-schemas-commands.rst

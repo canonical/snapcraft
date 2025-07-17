@@ -88,7 +88,7 @@ def _validate_replacement(attr: str, variable: str, value: Optional[str]) -> Non
 
     # expand to shell syntax for variables (`$item` and `${item}`)
     expanded_variables_to_validate = (
-        *(f"${item}" for item in variables_to_validate ),
+        *(f"${item}" for item in variables_to_validate),
         *(f"${{{item}}}" for item in variables_to_validate),
     )
 
@@ -96,5 +96,5 @@ def _validate_replacement(attr: str, variable: str, value: Optional[str]) -> Non
         raise VariableEvaluationError(
             variable=variable,
             reason="the build-for architecture could not be determined",
-            docs_url="https://snapcraft.io/docs/architectures",
+            docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/select-architectures",
         )

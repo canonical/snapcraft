@@ -1,0 +1,214 @@
+# Diff between snapcraft.yaml and `snapcraft expand-extensions`, showing the differences
+# that the GNOME extension applies to a project file.
+ name: gnome-system-monitor
+ adopt-info: gnome-system-monitor
+ summary: System Monitor
+ description: |
+   GNOME System Monitor is a GNOME process viewer and system monitor with
+   an attractive, easy-to-use interface, It has features, such as a tree
+   view for process dependencies, icons for processes, the ability to hide
+   processes that you don't want to see, graphical time histories of
+   CPU/memory/swap usage, the ability to kill/renice processes needing root
+   access, as well as the standard features that you might expect from a
+   process viewer.
+
+ grade: stable
+ confinement: strict
+ base: core24
+
+-build-snaps:
+-  - gnome-46-2404/latest/candidate
+
+ parts:
+   gnome-system-monitor:
+     source: https://gitlab.gnome.org/GNOME/gnome-system-monitor.git
+     source-type: git
+     source-tag: "46.0"
+     source-depth: 1
+     plugin: meson
+-    parse-info: [usr/share/metainfo/gnome-system-monitor.appdata.xml]
+     meson-parameters:
+       - --prefix=/snap/gnome-system-monitor/current/usr
+       - --buildtype=release
+       - -Dsystemd=true
+     organize:
+       snap/gnome-system-monitor/current/usr: usr
+     override-pull: |
+       craftctl default
+       craftctl set version=$(git describe --tags --abbrev=10)
+       sed -i.bak -e 's|Icon=@APP_ID@$|Icon=${SNAP}/meta/gui/org.gnome.SystemMonitor.svg|g'  ./data/org.gnome.SystemMonitor.desktop.in.in
+       sed -i.bak -E -e 's|^(NotShowIn=.*)$|# \1|g' ./data/org.gnome.SystemMonitor.desktop.in.in
+     override-build: |
+       craftctl default
+       mkdir -p $CRAFT_PART_INSTALL/meta/gui/
+       cp $CRAFT_PART_BUILD/data/org.gnome.SystemMonitor.desktop $CRAFT_PART_INSTALL/meta/gui/
+       cp $CRAFT_PART_SRC/data/icons/public/hicolor/scalable/apps/org.gnome.SystemMonitor.svg $CRAFT_PART_INSTALL/meta/gui/
+     build-packages:
+       - desktop-file-utils
+       - docbook-to-man
+       - libgtop2-dev
+       - libsigc++-2.0-dev
+       - libsystemd-dev
+       - policykit-1
+       - yelp-tools
+     stage-packages:
+       - libsigc++-2.0-0v5
+     build-snaps:
+       - gnome-46-2404-sdk/latest/candidate
+
++    build-environment:
++      - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
++      - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-46-2404-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
++      - LD_LIBRARY_PATH: /snap/gnome-46-2404-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib:/snap/gnome-46-2404-sdk/current/usr/lib/vala-current:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
++      - PKG_CONFIG_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/lib/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
++      - GETTEXTDATADIRS: /snap/gnome-46-2404-sdk/current/usr/share/gettext-current${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}
++      - GDK_PIXBUF_MODULE_FILE: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gdk-pixbuf-current/loaders.cache
++      - ACLOCAL_PATH: /snap/gnome-46-2404-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}
++      - PYTHONPATH: /snap/gnome-46-2404-sdk/current/usr/lib/python3.10:/snap/gnome-46-2404-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
++      - GI_TYPELIB_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/girepository-1.0:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
+   libraries:
+     after:
+       - gnome-system-monitor
+     plugin: nil
+     stage-packages:
+       - libgtop-2.0-11
+     prime:
+   # Find files provided by the base and platform snap and ensure they aren't
+   # duplicated in this snap
+       - usr/lib/*/libgtop*
+       - usr/lib/*/libsigc-2.0.so.0*
++    build-environment:
++      - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
++      - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-46-2404-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
++      - LD_LIBRARY_PATH: /snap/gnome-46-2404-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib:/snap/gnome-46-2404-sdk/current/usr/lib/vala-current:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
++      - PKG_CONFIG_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/lib/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
++      - GETTEXTDATADIRS: /snap/gnome-46-2404-sdk/current/usr/share/gettext-current${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}
++      - GDK_PIXBUF_MODULE_FILE: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gdk-pixbuf-current/loaders.cache
++      - ACLOCAL_PATH: /snap/gnome-46-2404-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}
++      - PYTHONPATH: /snap/gnome-46-2404-sdk/current/usr/lib/python3.10:/snap/gnome-46-2404-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
++      - GI_TYPELIB_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/girepository-1.0:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
+   cleanup:
+     after:
+       - libraries
+     plugin: nil
+     build-snaps:
+       - core24
+       - gnome-46-2404
+     override-prime: |
+       set -eux
+       for snap in "core24" "gnome-46-2404"; do
+         cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$CRAFT_PRIME/{}" \;
+       done
++    build-environment:
++      - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
++      - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-46-2404-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
++      - LD_LIBRARY_PATH: /snap/gnome-46-2404-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib:/snap/gnome-46-2404-sdk/current/usr/lib/vala-current:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
++      - PKG_CONFIG_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/lib/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
++      - GETTEXTDATADIRS: /snap/gnome-46-2404-sdk/current/usr/share/gettext-current${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}
++      - GDK_PIXBUF_MODULE_FILE: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gdk-pixbuf-current/loaders.cache
++      - ACLOCAL_PATH: /snap/gnome-46-2404-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}
++      - PYTHONPATH: /snap/gnome-46-2404-sdk/current/usr/lib/python3.10:/snap/gnome-46-2404-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
++      - GI_TYPELIB_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/girepository-1.0:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
++  snapcraft/core:
++    build-snaps:
++      - gnome-46-2404/latest/candidate
++    plugin: nil
++    build-environment:
++      - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
++      - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-46-2404-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
++      - LD_LIBRARY_PATH: /snap/gnome-46-2404-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib:/snap/gnome-46-2404-sdk/current/usr/lib/vala-current:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
++      - PKG_CONFIG_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/lib/pkgconfig:/snap/gnome-46-2404-sdk/current/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
++      - GETTEXTDATADIRS: /snap/gnome-46-2404-sdk/current/usr/share/gettext-current${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}
++      - GDK_PIXBUF_MODULE_FILE: /snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gdk-pixbuf-current/loaders.cache
++      - ACLOCAL_PATH: /snap/gnome-46-2404-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}
++      - PYTHONPATH: /snap/gnome-46-2404-sdk/current/usr/lib/python3.10:/snap/gnome-46-2404-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
++      - GI_TYPELIB_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/girepository-1.0:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
++  gnome/sdk:
++    source: /snap/snapcraft/13181/share/snapcraft/extensions/desktop/command-chain
++    plugin: make
++    make-parameters:
++      - GPU_WRAPPER=gpu-2404-wrapper
++
++layout:
++  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0:
++    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0
++  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1:
++    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1
++  /usr/share/xml/iso-codes:
++    bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
++  /usr/share/libdrm:
++    bind: $SNAP/gpu-2404/libdrm
++  /usr/share/drirc.d:
++    symlink: $SNAP/gpu-2404/drirc.d
++  /usr/share/X11/XErrorDB:
++    symlink: $SNAP/gpu-2404/X11/XErrorDB
++assumes:
++  - snapd2.43
++hooks:
++  configure:
++    command-chain:
++      - snap/command-chain/hooks-configure-fonts
++    plugs:
++      - desktop
+
+ apps:
+   gnome-system-monitor:
+-    extensions: [ gnome ]
+     command: usr/bin/gnome-system-monitor
+     desktop: usr/share/applications/org.gnome.SystemMonitor.desktop
+     plugs:
++      - desktop
++      - desktop-legacy
++      - gsettings
++      - opengl
++      - wayland
++      - x11
+       - unity7
+       - mount-observe
+       - network-observe
+       - hardware-observe
+       - system-observe
+       - process-control
+       - run-systemd-sessions
++    command-chain:
++      - snap/command-chain/gpu-2404-wrapper
++      - snap/command-chain/desktop-launch
+
+ plugs:
+   run-systemd-sessions:
+     interface: system-files
+     read:
+       - /run/systemd/sessions
++  desktop:
++    mount-host-font-cache: false
++  gtk-3-themes:
++    interface: content
++    target: $SNAP/data-dir/themes
++    default-provider: gtk-common-themes
++  icon-themes:
++    interface: content
++    target: $SNAP/data-dir/icons
++    default-provider: gtk-common-themes
++  sound-themes:
++    interface: content
++    target: $SNAP/data-dir/sounds
++    default-provider: gtk-common-themes
++  gnome-46-2404:
++    interface: content
++    target: $SNAP/gnome-platform
++    default-provider: gnome-46-2404
++  gpu-2404:
++    interface: content
++    target: $SNAP/gpu-2404
++    default-provider: mesa-2404
+
+ slots:
+   gnome-system-monitor:
+   # for GtkApplication registration
+     interface: dbus
+     bus: session
+     name: org.gnome.SystemMonitor
+
++environment:
++  SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
++  GTK_USE_PORTAL: "1"

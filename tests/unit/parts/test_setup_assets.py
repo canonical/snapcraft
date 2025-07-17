@@ -17,7 +17,7 @@
 import shutil
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import call
 
 import pytest
@@ -53,7 +53,7 @@ def desktop_file():
 
 @pytest.fixture
 def yaml_data():
-    def _yaml_data(extra_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _yaml_data(extra_data: dict[str, Any]) -> dict[str, Any]:
         return {
             "name": "test-project",
             "base": "core22",
@@ -247,7 +247,7 @@ class TestSetupAssets:
         )
 
         # desktop file should be in meta/gui and named after app
-        desktop_path = Path("prime/meta/gui/app1.desktop")
+        desktop_path = Path("prime/meta/gui/test.desktop")
         assert desktop_path.is_file()
 
         # desktop file content should make icon relative to ${SNAP}
@@ -379,7 +379,7 @@ class TestSetupAssets:
         )
 
         # desktop file should be in meta/gui and named after app
-        desktop_path = Path("prime/meta/gui/app1.desktop")
+        desktop_path = Path("prime/meta/gui/test.desktop")
         assert desktop_path.is_file()
 
         # desktop file content should make icon relative to ${SNAP}
@@ -449,7 +449,7 @@ class TestSetupAssets:
         )
 
         # desktop file should be in meta/gui and named after app
-        desktop_path = Path("prime/meta/gui/app1.desktop")
+        desktop_path = Path("prime/meta/gui/test.desktop")
         assert desktop_path.is_file()
 
         # desktop file content should make icon relative to ${SNAP}

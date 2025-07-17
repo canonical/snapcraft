@@ -1,3 +1,5 @@
+.. _reference-bases:
+
 Bases
 =====
 
@@ -50,7 +52,7 @@ See `Snapcraft and ESM`_ for details bases built from ESM releases.
 ``base``
 --------
 
-The ``base`` keyword in a ``snapcraft.yaml`` file:
+The ``base`` key in a project file:
 
 * defines the feature set used by Snapcraft
 * the ``snapcraft.yaml`` schema
@@ -64,7 +66,7 @@ The ``base`` keyword in a ``snapcraft.yaml`` file:
 ``build-base``
 --------------
 
-The ``build-base`` keyword defines the environment where the snap will be
+The ``build-base`` key defines the environment where the snap will be
 built.
 
 ``build-base`` can only be defined for the following scenarios:
@@ -78,13 +80,15 @@ Bare base snaps
 Devel builds
 ^^^^^^^^^^^^
 
-``build-base`` must be ``devel`` must be defined when ``base`` is unstable.
+``build-base`` must be ``devel`` when ``base`` is unstable.
 
 *Unstable* means that the base snap has not been released to the ``stable``
 channel.
 
 Snaps with a ``devel`` build base must have a ``grade`` of ``devel`` and cannot
 be promoted to ``stable`` or ``candidate`` channels.
+
+.. _kernel-snap-reference:
 
 Kernel snaps
 ^^^^^^^^^^^^

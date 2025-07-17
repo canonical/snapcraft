@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """The flutter plugin."""
+
 from typing import Literal, cast
 
 from craft_parts import infos, plugins
@@ -80,11 +81,15 @@ class FlutterPlugin(plugins.Plugin):
             "PATH": f"{self.flutter_dir / 'bin'}:${{PATH}}",
         }
 
-    def _get_setup_flutter(self, options) -> list[str]:
+    def _get_setup_flutter(self, options: FlutterPluginProperties) -> list[str]:
         # TODO move to pull
         return [
             # TODO detect changes to plugin properties
             f"git clone --depth 1 -b {options.flutter_channel} {FLUTTER_REPO} {self.flutter_dir}",
+            # Workaround for flutter#163308
+            # Deletion of this file avoids an if statement that causes the following commands to
+            # fail
+            f"rm {self.flutter_dir}/engine/src/.gn",
             "flutter precache --linux",
             "flutter pub get",
         ]

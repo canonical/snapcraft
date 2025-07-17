@@ -19,14 +19,17 @@
 import os
 import platform
 import time
+from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, cast
 
 import craft_store
+import distro
 import pydantic
 import requests
 from craft_application.util.error_formatting import format_pydantic_errors
 from craft_cli import emit
+from craft_platforms import DebianArchitecture
 from overrides import overrides
 
 from snapcraft import __version__, errors, models, utils
@@ -46,12 +49,12 @@ _HUMAN_STATUS = {
 }
 
 
-def build_user_agent(
-    version=__version__,
-    os_platform: utils.OSPlatform = utils.get_os_platform(),  # noqa: B008
-):
+def build_user_agent(version: str = __version__):
     """Build Snapcraft's user agent."""
-    return f"snapcraft/{version} {os_platform!s}"
+    dist_id = distro.id()
+    dist_version = distro.version()
+    dist_arch = DebianArchitecture.from_host().to_platform_arch()
+    return f"snapcraft/{version} {dist_id}/{dist_version} ({dist_arch})"
 
 
 def use_candid() -> bool:
@@ -82,7 +85,7 @@ def get_store_login_url() -> str:
     return os.getenv("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL)
 
 
-def _prompt_login() -> Tuple[str, str]:
+def _prompt_login() -> tuple[str, str]:
     emit.message("Enter your Ubuntu One e-mail address and password.")
     emit.message(
         "If you do not have an Ubuntu One account, you can create one "
@@ -95,9 +98,7 @@ def _prompt_login() -> Tuple[str, str]:
 
 
 def _get_hostname(
-    hostname: Optional[
-        str
-    ] = platform.node(),  # noqa: B008 Function call in arg defaults
+    hostname: str | None = platform.node(),  # noqa: B008 Function call in arg defaults
 ) -> str:
     """Return the computer's network name or UNNKOWN if it cannot be determined."""
     if not hostname:
@@ -169,7 +170,7 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
 class LegacyStoreClientCLI:
     """A BaseClient implementation considering command line prompts."""
 
-    def __init__(self, ephemeral=False):
+    def __init__(self, ephemeral: bool = False):
         self.store_client = get_client(ephemeral=ephemeral)
         self._base_url = get_store_url()
 
@@ -177,9 +178,9 @@ class LegacyStoreClientCLI:
         self,
         *,
         ttl: int = int(timedelta(days=365).total_seconds()),  # noqa: B008
-        acls: Optional[Sequence[str]] = None,
-        packages: Optional[Sequence[str]] = None,
-        channels: Optional[Sequence[str]] = None,
+        acls: Sequence[str] | None = None,
+        packages: Sequence[str] | None = None,
+        channels: Sequence[str] | None = None,
         **kwargs,
     ) -> str:
         """Log in to the Snap Store and prompt if required."""
@@ -278,7 +279,7 @@ class LegacyStoreClientCLI:
         snap_name: str,
         *,
         is_private: bool = False,
-        store_id: Optional[str] = None,
+        store_id: str | None = None,
     ) -> None:
         """Register snap_name with the Snap Store.
 
@@ -314,7 +315,7 @@ class LegacyStoreClientCLI:
 
     def get_account_info(
         self,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return account information."""
         return self.request(
             "GET",
@@ -322,11 +323,11 @@ class LegacyStoreClientCLI:
             headers={"Accept": "application/json"},
         ).json()
 
-    def get_names(self) -> List[Tuple[str, str, str, str]]:
+    def get_names(self) -> list[tuple[str, str, str, str]]:
         """Return a table with the registered names and status."""
         account_info = self.get_account_info()
 
-        snaps: List[Tuple[str, str, str, str]] = [
+        snaps: list[tuple[str, str, str, str]] = [
             (
                 name,
                 info["since"],
@@ -348,7 +349,7 @@ class LegacyStoreClientCLI:
         *,
         revision: int,
         channels: Sequence[str],
-        progressive_percentage: Optional[int] = None,
+        progressive_percentage: int | None = None,
     ) -> None:
         """Register snap_name with the Snap Store.
 
@@ -357,7 +358,7 @@ class LegacyStoreClientCLI:
         :param channels: the channels to release to
         :param progressive_percentage: enable progressive releases up to a given percentage
         """
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "name": snap_name,
             "revision": str(revision),
             "channels": channels,
@@ -416,15 +417,15 @@ class LegacyStoreClientCLI:
             },
         )
 
-    def notify_upload(  # noqa: PLR0913[too-many-arguments]
+    def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
         snap_name: str,
         upload_id: str,
         snap_file_size: int,
-        built_at: Optional[str],
-        channels: Optional[Sequence[str]],
-        components: Optional[Dict[str, str]],
+        built_at: str | None,
+        channels: Sequence[str] | None,
+        components: dict[str, str] | None,
     ) -> int:
         """Notify an upload to the Snap Store.
 
@@ -498,29 +499,31 @@ class LegacyStoreClientCLI:
         return Revisions.unmarshal(response.json())
 
     @staticmethod
-    def _unmarshal_registries_set(registries_data) -> models.RegistryAssertion:
-        """Unmarshal a registries set.
+    def _unmarshal_confdb_schema(
+        confdb_schema_data: dict[str, Any],
+    ) -> models.ConfdbSchemaAssertion:
+        """Unmarshal a confdb schema.
 
-        :raises StoreAssertionError: If the registries set cannot be unmarshalled.
+        :raises StoreAssertionError: If the confdb schema cannot be unmarshalled.
         """
         try:
-            return models.RegistryAssertion.unmarshal(registries_data)
+            return models.ConfdbSchemaAssertion.unmarshal(confdb_schema_data)
         except pydantic.ValidationError as err:
             raise errors.SnapcraftAssertionError(
-                message="Received invalid registries set from the store",
+                message="Received invalid confdb schema from the store",
                 # this is an unexpected failure that the user can't fix, so hide
                 # the response in the details
-                details=f"{format_pydantic_errors(err.errors(), file_name='registries set')}",
+                details=f"{format_pydantic_errors(err.errors(), file_name='confdb schema')}",
             ) from err
 
-    def list_registries(
+    def list_confdb_schemas(
         self, *, name: str | None = None
-    ) -> list[models.RegistryAssertion]:
-        """Return a list of registries.
+    ) -> list[models.ConfdbSchemaAssertion]:
+        """Return a list of confdb schemas.
 
-        :param name: If specified, only list the registry set with that name.
+        :param name: If specified, only list the confdb schema with that name.
         """
-        endpoint = f"{self._base_url}/api/v2/registries"
+        endpoint = f"{self._base_url}/api/v2/confdb-schemas"
         if name:
             endpoint += f"/{name}"
 
@@ -533,66 +536,68 @@ class LegacyStoreClientCLI:
             },
         )
 
-        registry_assertions = []
+        confdb_assertions = []
         if assertions := response.json().get("assertions"):
             for assertion_data in assertions:
                 # move body into model
                 assertion_data["headers"]["body"] = assertion_data.get("body")
 
-                assertion = self._unmarshal_registries_set(assertion_data["headers"])
-                registry_assertions.append(assertion)
-                emit.debug(f"Parsed registries set: {assertion.model_dump_json()}")
+                assertion = self._unmarshal_confdb_schema(assertion_data["headers"])
+                confdb_assertions.append(assertion)
+                emit.debug(f"Parsed confdb schema: {assertion.model_dump_json()}")
 
-        return registry_assertions
+        return confdb_assertions
 
-    def build_registries(
-        self, *, registries: models.EditableRegistryAssertion
-    ) -> models.RegistryAssertion:
-        """Build a registries set.
+    def build_confdb_schema(
+        self, *, confdb_schema: models.EditableConfdbSchemaAssertion
+    ) -> models.ConfdbSchemaAssertion:
+        """Build a confdb schema.
 
-        Sends an edited registries set to the store, which validates the data,
-        populates additional fields, and returns the registries set.
+        Sends an edited confdb schema to the store, which validates the data,
+        populates additional fields, and returns the confdb schema.
 
-        :param registries: The registries set to build.
+        :param confdb_schema: The confdb schema to build.
 
-        :returns: The built registries set.
+        :returns: The built confdb schema.
         """
         response = self.request(
             "POST",
-            f"{self._base_url}/api/v2/registries/build-assertion",
+            f"{self._base_url}/api/v2/confdb-schemas/build-assertion",
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
-            json=registries.marshal(),
+            json=confdb_schema.marshal(),
         )
 
-        assertion = self._unmarshal_registries_set(response.json())
-        emit.debug(f"Built registries set: {assertion.model_dump_json()}")
+        assertion = self._unmarshal_confdb_schema(response.json())
+        emit.debug(f"Built confdb schema: {assertion.model_dump_json()}")
         return assertion
 
-    def post_registries(self, *, registries_data: bytes) -> models.RegistryAssertion:
-        """Send a registries set to be published.
+    def post_confdb_schema(
+        self, *, confdb_schema_data: bytes
+    ) -> models.ConfdbSchemaAssertion:
+        """Send a confdb schema to be published.
 
-        :param registries_data: A signed registries set represented as bytes.
+        :param confdb_schema_data: A signed confdb schema represented as bytes.
 
         :returns: The published assertion.
         """
         response = self.request(
             "POST",
-            f"{self._base_url}/api/v2/registries",
+            f"{self._base_url}/api/v2/confdb-schemas",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/x.ubuntu.assertion",
             },
-            data=registries_data,
+            data=confdb_schema_data,
         )
 
         assertions = response.json().get("assertions")
 
         if not assertions or len(assertions) != 1:
             raise errors.SnapcraftAssertionError(
-                message="Received invalid registries set from the store",
+                message="Received invalid confdb schema from the store",
                 # this is an unexpected failure that the user can't fix, so hide
                 # the response in the details
                 details=f"Received data: {assertions}",
@@ -601,8 +606,8 @@ class LegacyStoreClientCLI:
         # move body into model
         assertions[0]["headers"]["body"] = assertions[0]["body"]
 
-        assertion = self._unmarshal_registries_set(assertions[0]["headers"])
-        emit.debug(f"Published registries set: {assertion.model_dump_json()}")
+        assertion = self._unmarshal_confdb_schema(assertions[0]["headers"])
+        emit.debug(f"Published confdb schema: {assertion.model_dump_json()}")
         return assertion
 
 
@@ -622,15 +627,15 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         emit.debug(f"Skipping verification for {snap_name!r}")
 
     @overrides
-    def notify_upload(  # noqa: PLR0913[too-many-arguments]
+    def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
         snap_name: str,
         upload_id: str,
         snap_file_size: int,
-        built_at: Optional[str],
-        channels: Optional[Sequence[str]],
-        components: Optional[Dict[str, str]],
+        built_at: str | None,
+        channels: Sequence[str] | None,
+        components: dict[str, str] | None,
     ) -> int:
         if channels:
             raise errors.SnapcraftError("Releasing during currently unsupported")
@@ -639,8 +644,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
                 "Components are currently unsupported for on-prem stores"
             )
         emit.debug(
-            f"Ignoring snap_file_size of {snap_file_size!r} and "
-            f"built_at {built_at!r}"
+            f"Ignoring snap_file_size of {snap_file_size!r} and built_at {built_at!r}"
         )
 
         revision_request = cast(
@@ -677,9 +681,9 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         self,
         snap_name: str,
         *,
-        revision: Optional[int],
+        revision: int | None,
         channels: Sequence[str],
-        progressive_percentage: Optional[int] = None,
+        progressive_percentage: int | None = None,
     ) -> None:
         if progressive_percentage is not None:
             raise errors.SnapcraftError("Progressive percentage currently unsupported")
@@ -693,7 +697,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
     @overrides
-    def close(self, snap_name: str, channel) -> None:
+    def close(self, snap_name: str, channel: str) -> None:
         self.release(snap_name=snap_name, revision=None, channels=[channel])
 
     @overrides

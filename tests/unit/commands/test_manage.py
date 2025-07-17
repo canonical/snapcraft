@@ -70,8 +70,8 @@ def fake_store_get_account_info(mocker):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_release(emitter, fake_store_release):
-    cmd = commands.StoreReleaseCommand(None)
+def test_release(emitter, fake_store_release, fake_app_config):
+    cmd = commands.StoreReleaseCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -92,8 +92,8 @@ def test_release(emitter, fake_store_release):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_release_multiple_channels(emitter, fake_store_release):
-    cmd = commands.StoreReleaseCommand(None)
+def test_release_multiple_channels(emitter, fake_store_release, fake_app_config):
+    cmd = commands.StoreReleaseCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -119,8 +119,8 @@ def test_release_multiple_channels(emitter, fake_store_release):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_release_progressive(emitter, fake_store_release):
-    cmd = commands.StoreReleaseCommand(None)
+def test_release_progressive(emitter, fake_store_release, fake_app_config):
+    cmd = commands.StoreReleaseCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -146,8 +146,8 @@ def test_release_progressive(emitter, fake_store_release):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_close(emitter, fake_store_close):
-    cmd = commands.StoreCloseCommand(None)
+def test_close(emitter, fake_store_close, fake_app_config):
+    cmd = commands.StoreCloseCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(name="test-snap", channel="edge"))
 
@@ -162,8 +162,8 @@ def test_close(emitter, fake_store_close):
 
 
 @pytest.mark.usefixtures("memory_keyring", "fake_store_get_account_info")
-def test_close_no_snap_id(emitter):
-    cmd = commands.StoreCloseCommand(None)
+def test_close_no_snap_id(emitter, fake_app_config):
+    cmd = commands.StoreCloseCommand(fake_app_config)
 
     with pytest.raises(errors.SnapcraftError) as raised:
         cmd.run(argparse.Namespace(name="test-unknown-snap", channel="edge"))

@@ -19,6 +19,7 @@ import io
 import pathlib
 from textwrap import dedent
 
+import craft_application.errors
 import pytest
 
 from snapcraft import errors
@@ -26,11 +27,10 @@ from snapcraft.parts import yaml_utils
 
 
 def test_yaml_load():
-    assert (
-        yaml_utils.load(
-            io.StringIO(
-                dedent(
-                    """\
+    assert yaml_utils.load(
+        io.StringIO(
+            dedent(
+                """\
         base: core22
         entry:
             sub-entry:
@@ -38,17 +38,15 @@ def test_yaml_load():
               - list2
         scalar: scalar-value
     """
-                )
             )
         )
-        == {
-            "base": "core22",
-            "entry": {
-                "sub-entry": ["list1", "list2"],
-            },
-            "scalar": "scalar-value",
-        }
-    )
+    ) == {
+        "base": "core22",
+        "entry": {
+            "sub-entry": ["list1", "list2"],
+        },
+        "scalar": "scalar-value",
+    }
 
 
 def test_yaml_load_duplicates_errors():
@@ -96,22 +94,19 @@ def test_yaml_load_unhashable_errors():
 
 
 def test_yaml_load_build_base():
-    assert (
-        yaml_utils.load(
-            io.StringIO(
-                dedent(
-                    """\
+    assert yaml_utils.load(
+        io.StringIO(
+            dedent(
+                """\
         base: foo
         build-base: core22
     """
-                )
             )
         )
-        == {
-            "base": "foo",
-            "build-base": "core22",
-        }
-    )
+    ) == {
+        "base": "foo",
+        "build-base": "core22",
+    }
 
 
 def test_yaml_load_not_core22_base():
@@ -261,3 +256,15 @@ def test_get_snap_project(project, project_dir, new_dir):
     actual_project = yaml_utils.get_snap_project(project_dir)
 
     assert actual_project == project
+
+
+@pytest.mark.parametrize("project_dir", [None, "test-project-dir"])
+def test_get_snap_project_snap_not_a_directory(project_dir, new_dir):
+    project_dir = pathlib.Path(project_dir) if project_dir else new_dir
+    project_dir.mkdir(parents=True, exist_ok=True)
+    (project_dir / "snap").touch()
+
+    with pytest.raises(craft_application.errors.ProjectDirectoryTypeError) as raised:
+        yaml_utils.get_snap_project(project_dir)
+
+    assert "Given project directory path is not a directory:" in str(raised.value)

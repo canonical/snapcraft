@@ -17,7 +17,6 @@
 """Classic linter implementation."""
 
 from pathlib import Path
-from typing import List
 
 from overrides import overrides
 
@@ -25,14 +24,14 @@ from snapcraft.elf import ElfFile, Patcher, SonameCache, elf_utils, errors
 
 from .base import Linter, LinterIssue, LinterResult
 
-_HELP_URL = "https://snapcraft.io/docs/linters-classic"
+_HELP_URL = "https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-classic-linter"
 
 
 class ClassicLinter(Linter):
     """Linter for classic snaps."""
 
     @overrides
-    def run(self) -> List[LinterIssue]:
+    def run(self) -> list[LinterIssue]:
         if not self._snap_metadata.base or self._snap_metadata.base == "bare":
             return []
 
@@ -97,7 +96,7 @@ class ClassicLinter(Linter):
         return issues
 
     def _check_elf_interpreter(
-        self, elf_file: ElfFile, *, linker: str, issues: List[LinterIssue]
+        self, elf_file: ElfFile, *, linker: str, issues: list[LinterIssue]
     ) -> None:
         """Check ELF executable interpreter is set to base or snap linker."""
         if elf_file.interp and elf_file.interp != linker:
@@ -115,7 +114,7 @@ class ClassicLinter(Linter):
         elf_file: ElfFile,
         *,
         patcher: Patcher,
-        issues: List[LinterIssue],
+        issues: list[LinterIssue],
     ) -> None:
         """Check if the ELF executable rpath points to base or current snap."""
         current_rpath = patcher.get_current_rpath(elf_file)

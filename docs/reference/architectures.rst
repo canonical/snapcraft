@@ -1,25 +1,28 @@
+.. _reference-architectures:
+
 Architectures
 =============
 
 snapcraft.yaml
 --------------
 
-The :doc:`architectures how-to</howto/architectures>` provides examples of how
-to use the ``platforms`` and ``architectures`` keyword.
+The :ref:`architectures how-to guide <how-to-select-architectures>` provides examples of
+how to use the ``platforms`` and ``architectures`` key.
 
 core24
 ^^^^^^
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-  platforms:
-      <platform 1>:
-          build-on: [<arch 1>, <arch 2>]
-          build-for: [<arch 1>]
-      <platform 2>:
-          build-on: [<arch 3>]
-          build-for: [<arch 4>]
-      ...
+    platforms:
+        <platform 1>:
+            build-on: [<arch 1>, <arch 2>]
+            build-for: [<arch 1>]
+        <platform 2>:
+            build-on: [<arch 3>]
+            build-for: [<arch 4>]
+        ...
 
 platform
 """"""""
@@ -50,27 +53,29 @@ architecture where the snap should run.
 If the platform name is a valid architecture, then ``build-for`` will
 assume the platform name.
 
-``build-for: [all]`` is a special keyword to denote an architecture-independent
-snap. If the ``all`` keyword is used, no other ``build-on/build-for`` pairs can
+``build-for: [all]`` is a special key to denote an architecture-independent
+snap. If the ``all`` key is used, no other ``build-on/build-for`` pairs can
 be defined. See :ref:`this page<how-to-arch-build-for-all>` to learn how to
-use the ``all`` keyword.
+use the ``all`` key.
 
 ``all`` cannot be used for ``build-on``.
+
+.. _reference-architectures-core22:
 
 core22
 ^^^^^^
 
-The root keyword ``architectures`` defines a list of ``build-on->build-for``
+The root key ``architectures`` defines a list of ``build-on->build-for``
 pairs with the following syntax:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-  architectures:
-    - build-on: [<arch 1>, <arch 2>]
-      build-for: [<arch 1>]
-    - build-on: [<arch 3>]
-      build-for: [<arch 4>]
-      ...
+    architectures:
+      - build-on: [<arch 1>, <arch 2>]
+        build-for: [<arch 1>]
+      - build-on: [<arch 3>]
+        build-for: [<arch 4>]
 
 See :ref:`here<supported-architectures>` for a list of supported architectures.
 
@@ -81,18 +86,20 @@ If the value is a single item, it can be written as a single element list or a
 scalar. For example:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-  architectures:
-    - build-on: amd64
-      build-for: arm64
+    architectures:
+      - build-on: amd64
+        build-for: arm64
 
 is equivalent to:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-  architectures:
-    - build-on: [amd64]
-      build-for: [arm64]
+    architectures:
+      - build-on: [amd64]
+        build-for: [arm64]
 
 .. note::
 
@@ -112,10 +119,10 @@ The ``build-for`` field is optional and should be a single element list. If it
 is not defined, the ``build-for`` will be set the ``build-on`` for each build
 in the :ref:`build plan<build-plans>`.
 
-``build-for: [all]`` is a special keyword to denote an architecture-independent
-snap. If the ``all`` keyword is used, no other ``build-on/build-for`` pairs can
+``build-for: [all]`` is a special key to denote an architecture-independent
+snap. If the ``all`` key is used, no other ``build-on/build-for`` pairs can
 be defined. See :ref:`this page<how-to-arch-build-for-all>` to learn how to
-use the ``all`` keyword.
+use the ``all`` key.
 
 ``all`` cannot be used for ``build-on``.
 
@@ -137,21 +144,25 @@ support a shorthand format can be used for simple ``build-on/run-on``
 pairs. The following shorthand:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-  architectures: [amd64, arm64]
+    architectures: [amd64, arm64]
 
 is equivalent to:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
-  architectures:
-    - build-on: [amd64]
-      run-on: [amd64]
-    - build-on: [arm64]
-      run-on: [arm64]
+    architectures:
+      - build-on: [amd64]
+        run-on: [amd64]
+      - build-on: [arm64]
+        run-on: [arm64]
 
 The explicit and shorthand format cannot be mixed.
 
+
+.. _architectures-project-variables:
 
 Project variables
 -----------------
@@ -204,7 +215,7 @@ core20
 ^^^^^^
 
 ``core20`` snaps use the terminology ``run-on`` in the ``architectures`` field
-in ``snapcraft.yaml``. The project variables and documentation use the
+in the project file. The project variables and documentation use the
 preferred term ``build-for``.
 
 +--------------------------------------+---------------------------------------+
@@ -294,8 +305,7 @@ core20
 
 ``--target-arch=<arch>`` is used for cross-compiling in ``core20``. It adds
 repositories for the target arch, which are used for ``stage-packages``. The
-target arch does not need to be listed in the ``snapcraft.yaml``
-``architectures`` keyword.
+target arch does not need to be listed in the ``architectures`` key.
 
 The ``--target-arch`` argument can only be used in destructive mode and with
 ``--enable-experimental-target-arch`` or the environment variable

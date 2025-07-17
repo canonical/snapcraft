@@ -15,151 +15,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Utilities for snapcraft."""
+
 from __future__ import annotations
 
 import multiprocessing
 import os
 import pathlib
-import platform
 import re
 import shutil
 import sys
-from dataclasses import dataclass
 from getpass import getpass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import TYPE_CHECKING
 
 from craft_application.util import strtobool
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
+from craft_platforms import DebianArchitecture
 
 from snapcraft import errors
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
-@dataclass
-class OSPlatform:
-    """Platform definition for a given host."""
-
-    system: str
-    release: str
-    machine: str
-
-    def __str__(self) -> str:
-        """Return the string representation of an OSPlatform."""
-        return f"{self.system}/{self.release} ({self.machine})"
+    from craft_parts import ProjectInfo
 
 
-# architecture translations from the platform syntax to the deb/snap syntax
-# These two architecture mappings are almost inverses of each other, except one map is
-# not reversible (same value for different keys)
-_ARCH_TRANSLATIONS_PLATFORM_TO_DEB = {
-    "aarch64": "arm64",
-    "armv7l": "armhf",
-    "i686": "i386",
-    "ppc": "powerpc",
-    "ppc64le": "ppc64el",
-    "x86_64": "amd64",
-    "AMD64": "amd64",  # Windows support
-    "s390x": "s390x",
-    "riscv64": "riscv64",
-}
-
-# architecture translations from the deb/snap syntax to the platform syntax
-_ARCH_TRANSLATIONS_DEB_TO_PLATFORM = {
-    "arm64": "aarch64",
-    "armhf": "armv7l",
-    "i386": "i686",
-    "powerpc": "ppc",
-    "ppc64el": "ppc64le",
-    "amd64": "x86_64",
-    "s390x": "s390x",
-    "riscv64": "riscv64",
-}
-
-_32BIT_USERSPACE_ARCHITECTURE = {
-    "aarch64": "armv7l",
-    "armv8l": "armv7l",
-    "ppc64le": "ppc",
-    "x86_64": "i686",
-}
-
-
-def get_os_platform(
-    filepath=pathlib.Path(  # noqa: B008 Function call in arg defaults
-        "/etc/os-release"
-    ),
-):
-    """Determine a system/release combo for an OS using /etc/os-release if available."""
-    system = platform.system()
-    release = platform.release()
-    machine = platform.machine()
-
-    if system == "Linux":
-        try:
-            with filepath.open("rt", encoding="utf-8") as release_file:
-                lines = release_file.readlines()
-        except FileNotFoundError:
-            emit.debug("Unable to locate 'os-release' file, using default values")
-        else:
-            os_release = {}
-            for line in lines:
-                line = line.strip()  # noqa PLW2901
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, value = line.rstrip().split("=", 1)
-                if value[0] == value[-1] and value[0] in ('"', "'"):
-                    value = value[1:-1]
-                os_release[key] = value
-            system = os_release.get("ID", system)
-            release = os_release.get("VERSION_ID", release)
-
-    return OSPlatform(system=system, release=release, machine=machine)
-
-
-def get_host_architecture():
-    """Get host architecture in deb format suitable for base definition."""
-    os_platform_machine = get_os_platform().machine
-
-    if platform.architecture()[0] == "32bit":
-        userspace = _32BIT_USERSPACE_ARCHITECTURE.get(os_platform_machine)
-        if userspace:
-            os_platform_machine = userspace
-
-    return _ARCH_TRANSLATIONS_PLATFORM_TO_DEB.get(
-        os_platform_machine, os_platform_machine
-    )
-
-
-def is_architecture_supported(architecture: str) -> bool:
-    """Check if an debian-syntax architecture is supported.
-
-    :param architecture: architecture to check
-
-    :returns: True if the architecture is supported by snapcraft.
-    """
-    return architecture in list(_ARCH_TRANSLATIONS_DEB_TO_PLATFORM)
-
-
-def get_supported_architectures() -> List[str]:
-    """Get a list of architectures supported by snapcraft.
-
-    :returns: A list of architectures.
-    """
-    return list(_ARCH_TRANSLATIONS_DEB_TO_PLATFORM.keys())
-
-
-def convert_architecture_deb_to_platform(architecture: str) -> str:
-    """Convert an architecture from deb/snap syntax to platform syntax.
-
-    :param architecture: architecture string in debian/snap syntax
-    :return: architecture in platform syntax
-    :raises InvalidArchitecture: if architecture is not valid
-    """
-    platform_arch = _ARCH_TRANSLATIONS_DEB_TO_PLATFORM.get(architecture)
-    if not platform_arch:
-        raise errors.InvalidArchitecture(architecture)
-
-    return platform_arch
+def get_supported_architectures() -> list[str]:
+    """Get list of supported architectures for building."""
+    return [arch.value for arch in DebianArchitecture]
 
 
 def is_managed_mode() -> bool:
@@ -185,7 +69,7 @@ def get_managed_environment_log_path():
     )
 
 
-def get_managed_environment_snap_channel() -> Optional[str]:
+def get_managed_environment_snap_channel() -> str | None:
     """User-specified channel to use when installing Snapcraft snap from Snap Store.
 
     :returns: Channel string if specified, else None.
@@ -195,12 +79,12 @@ def get_managed_environment_snap_channel() -> Optional[str]:
 
 def get_effective_base(
     *,
-    base: Optional[str],
-    build_base: Optional[str],
-    project_type: Optional[str],
-    name: Optional[str],
+    base: str | None,
+    build_base: str | None,
+    project_type: str | None,
+    name: str | None,
     translate_devel: bool = True,
-) -> Optional[str]:
+) -> str | None:
     """Return the base to use to create the snap.
 
     Return the build-base if set.
@@ -258,7 +142,7 @@ def get_parallel_build_count() -> int:
     return build_count
 
 
-def confirm_with_user(prompt_text, default=False) -> bool:
+def confirm_with_user(prompt_text: str, default: bool = False) -> bool:
     """Query user for yes/no answer.
 
     If stdin is not a tty, the default value is returned.
@@ -343,9 +227,7 @@ def humanize_list(
     return f"{humanized} {conjunction} {quoted_items[-1]}"
 
 
-def get_common_ld_library_paths(
-    prime_dir: Path, arch_triplet: Optional[str]
-) -> List[str]:
+def get_common_ld_library_paths(prime_dir: Path, arch_triplet: str | None) -> list[str]:
     """Return common existing PATH entries for a snap.
 
     :param prime_dir: Path to the prime directory.
@@ -370,7 +252,7 @@ def get_common_ld_library_paths(
     return [str(p) for p in paths if p.exists()]
 
 
-def get_ld_library_paths(prime_dir: Path, arch_triplet: Optional[str]) -> str:
+def get_ld_library_paths(prime_dir: Path, arch_triplet: str | None) -> str:
     """Return a usable in-snap LD_LIBRARY_PATH variable.
 
     :param prime_dir: Path to the prime directory.
@@ -436,7 +318,7 @@ def get_snap_tool(command_name: str) -> str:
     return command_path
 
 
-def _find_command_path_in_root(root: str, command_name: str) -> Optional[str]:
+def _find_command_path_in_root(root: str, command_name: str) -> str | None:
     for bin_directory in (
         "usr/local/sbin",
         "usr/local/bin",
@@ -452,7 +334,7 @@ def _find_command_path_in_root(root: str, command_name: str) -> Optional[str]:
     return None
 
 
-def process_version(version: Optional[str]) -> str:
+def process_version(version: str | None) -> str:
     """Handle special version strings."""
     if version is None:
         raise ValueError("version cannot be None")
@@ -471,3 +353,22 @@ def process_version(version: Optional[str]) -> str:
 def is_snapcraft_running_from_snap() -> bool:
     """Check if snapcraft is running from the snap."""
     return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
+
+
+def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:
+    """Get a mapping of component names to prime directories from a ProjectInfo.
+
+    'None' maps to the default prime directory.
+
+    :param project_info: The ProjectInfo to get the prime directory mapping from.
+    """
+    partition_prime_dirs = project_info.prime_dirs
+    component_prime_dirs: dict[str | None, Path] = {None: project_info.prime_dir}
+
+    # strip 'component/' prefix so that the component name is the key
+    for partition, prime_dir in partition_prime_dirs.items():
+        if partition and partition.startswith("component/"):
+            component = partition.split("/", 1)[1]
+            component_prime_dirs[component] = prime_dir
+
+    return component_prime_dirs

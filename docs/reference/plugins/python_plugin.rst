@@ -1,3 +1,4 @@
+.. _python_plugin:
 
 .. include:: /common/craft-parts/reference/plugins/python_plugin.rst
    :end-before: .. _python-details-begin:

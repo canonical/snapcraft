@@ -1,5 +1,8 @@
 summary: Test manifest file creation
 
+systems:
+  - ubuntu-24.04*
+
 environment:
   CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft --destructive-mode
 
@@ -42,6 +45,9 @@ execute: |
   for key in "${!expected[@]}"; do
     test "${!key}" = "${expected[$key]}"
   done
+
+  # regression test for #5413
+  echo -n $snapcraft_started_at | grep -E "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+Z"
 
   # account for hello package version change and possible 'build' or 'ubuntu' patch
   echo -n "$parts_my_part_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+\(build[0-9]\+\|ubuntu[0-9]\+\)\?$'

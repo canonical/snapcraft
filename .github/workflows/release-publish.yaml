@@ -1,0 +1,23 @@
+name: Release
+on:
+  push:
+    tags:
+      # These tags should be protected, remember to enable the rule:
+      # https://github.com/canonical/starbase/settings/tag_protection
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    runs-on: [self-hosted]
+    steps:
+      - name: Create a Prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          # Generate release notes on the new GH release
+          generate_release_notes: true
+          # Mark this new release as a pre-release, to be marked manually
+          # as the latest stable release later.
+          prerelease: true

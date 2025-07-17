@@ -3,12 +3,10 @@ summary: Verify --ua-token functionality
 environment:
   SNAP_DIR: snaps/ua-token-test
   SNAPCRAFT_UA_TOKEN: "$(HOST: echo ${UA_TOKEN})"
+  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  RUN_UA_TESTS: "$(HOST: echo ${RUN_UA_TESTS})"
 
 prepare: |
-  if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
-      exit 0
-  fi
-
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
 
@@ -16,12 +14,9 @@ prepare: |
   set_base "snap/snapcraft.yaml"
 
 restore: |
-  if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
-      exit 0
-  fi
-
-  if [ "$SPREAD_SYSTEM" = "ubuntu-16.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-      export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
+  # core20 will use multipass if this isn't set
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+    export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
   fi
 
   cd "$SNAP_DIR"
@@ -34,23 +29,30 @@ restore: |
 
 execute: |
   if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
-      echo "Skipping UA token test, no token found."
+    # This test has to run in the main repo's workflow and can be skipped in other environments.
+    if [ -z "$RUN_UA_TESTS" ] || [ "$RUN_UA_TESTS" = "false" ]; then
+      echo "Skipping test because UA_TOKEN isn't set."
       exit 0
+    else
+      echo "Can't run test because UA_TOKEN isn't set."
+      exit 1
+    fi
   fi
 
-  if [ "$SPREAD_SYSTEM" = "ubuntu-18.04-64" ] || [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-      export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
+  # core20 will use multipass if this isn't set
+  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
+    export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
   fi
 
   cd "$SNAP_DIR"
 
-  output="$(snapcraft)"
+  output="$(snapcraft 2>&1)"
   echo "$output" | MATCH "Attaching specified UA token..."
   echo "$output" | MATCH "Detaching specified UA token..."
 
   # Break the build and ensure token gets detached.
   sed -i 's|sleep 0|exit 1|g' snap/snapcraft.yaml
 
-  output="$(snapcraft || true)"
+  output="$(snapcraft 2>&1 || true)"
   echo "$output" | MATCH "Attaching specified UA token..."
   echo "$output" | MATCH "Detaching specified UA token..."

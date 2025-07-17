@@ -16,7 +16,7 @@
 
 import argparse
 import json
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import call
 
 import pytest
@@ -124,7 +124,7 @@ def fake_dashboard_get_validation_sets(fake_validation_sets, mocker):
 
 @pytest.fixture
 def fake_snap_sign(mocker):
-    def sign(assertion: Dict[str, Any], *, key_name: str) -> bytes:
+    def sign(assertion: dict[str, Any], *, key_name: str) -> bytes:
         return (json.dumps(assertion) + f"\n\nSIGNED{key_name}").encode()
 
     return mocker.patch(
@@ -253,13 +253,14 @@ def test_edit_validation_sets_with_no_changes_to_existing_set(
     edit_return_value,
     fake_edit_validation_sets,
     emitter,
+    fake_app_config,
 ):
     # Make it look like there were no edits.
     edit_return_value.sequence = 9
     edit_return_value.snaps[0].presence = "optional"
     fake_edit_validation_sets.return_value = edit_return_value
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.StoreEditValidationSetsCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -289,8 +290,9 @@ def test_edit_validation_sets_with_changes_to_existing_set(
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
     key_name,
+    fake_app_config,
 ):
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.StoreEditValidationSetsCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -331,6 +333,7 @@ def test_edit_validation_sets_with_errors_to_amend(
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
     mocker,
+    fake_app_config,
 ):
     fake_dashboard_post_validation_sets_build_assertion.side_effect = [
         StoreValidationSetsError(
@@ -345,7 +348,7 @@ def test_edit_validation_sets_with_errors_to_amend(
     ]
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=True)
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.StoreEditValidationSetsCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -387,6 +390,7 @@ def test_edit_validation_sets_with_errors_not_amended(
     fake_dashboard_post_validation_sets,
     fake_snap_sign,
     mocker,
+    fake_app_config,
 ):
     fake_dashboard_post_validation_sets_build_assertion.side_effect = (
         StoreValidationSetsError(
@@ -400,7 +404,7 @@ def test_edit_validation_sets_with_errors_not_amended(
     )
     confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
 
-    cmd = commands.StoreEditValidationSetsCommand(None)
+    cmd = commands.StoreEditValidationSetsCommand(fake_app_config)
 
     with pytest.raises(errors.SnapcraftError):
         cmd.run(
@@ -491,3 +495,77 @@ def test_edit_yaml_error_no_retry(mocker, tmp_path, monkeypatch):
 
     assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
     assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)]
+
+
+@pytest.mark.parametrize(
+    "sequence_num",
+    [pytest.param(9, id="not incremented"), pytest.param(4, id="decremented")],
+)
+def test_edit_sequence_error_retry(
+    sequence_num, mocker, tmp_path, monkeypatch, emitter
+):
+    """Don't increment the sequence number, then amend and increment the sequence number."""
+    monkeypatch.setenv("EDITOR", "faux-vi")
+    kwargs: dict[str, Any] = {"sequence": 9}
+    tmp_file = tmp_path / "validation_sets_template"
+    confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=True)
+    expected_edited_assertion = validation_sets.EditableBuildAssertion.unmarshal(
+        {
+            "account-id": "test",
+            "name": "test",
+            "sequence": 10,
+            "snaps": [{"name": "core22"}],
+        }
+    )
+    yaml_original_sequence = f"{{'account-id': 'test', 'name': 'test', 'sequence': {sequence_num}, 'snaps': [{{'name': 'core22'}}]}}"
+    yaml_new_sequence = "{'account-id': 'test', 'name': 'test', 'sequence': 10, 'snaps': [{'name': 'core22'}]}"
+    data_write = [yaml_new_sequence, yaml_original_sequence]
+
+    def side_effect(*args, **kwargs):
+        tmp_file.write_text(data_write.pop(), encoding="utf-8")
+
+    subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
+
+    assert edit_validation_sets(tmp_file, **kwargs) == expected_edited_assertion
+    assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
+    assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)] * 2
+    emitter.assert_progress(
+        "Warning: The sequence number was not incremented. This prevents automatic reversions "
+        "to a valid state in the case of invalid changes or snap refresh failures.",
+        permanent=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "sequence_num",
+    [pytest.param(9, id="not incremented"), pytest.param(4, id="decremented")],
+)
+def test_edit_sequence_error_no_retry(
+    sequence_num, mocker, tmp_path, monkeypatch, emitter
+):
+    """Don't increment the sequence number and don't amend.
+
+    Users can disregard this warning and still submit the assertion, so no error is raised.
+    """
+    monkeypatch.setenv("EDITOR", "faux-vi")
+    kwargs: dict[str, Any] = {"sequence": 9}
+    tmp_file = tmp_path / "validation_sets_template"
+    confirm_mock = mocker.patch("snapcraft.utils.confirm_with_user", return_value=False)
+
+    def side_effect(*args, **kwargs):
+        tmp_file.write_text(
+            f"{{'account-id': 'test', 'name': 'test', 'sequence': {sequence_num}, 'snaps': [{{'name': 'core22'}}]}}",
+            encoding="utf-8",
+        )
+
+    subprocess_mock = mocker.patch("subprocess.run", side_effect=side_effect)
+
+    edit_validation_sets(tmp_file, **kwargs)
+
+    assert confirm_mock.mock_calls == [call("Do you wish to amend the validation set?")]
+    assert subprocess_mock.mock_calls == [call(["faux-vi", tmp_file], check=True)]
+    emitter.assert_progress(
+        "Warning: The sequence number was not incremented. This prevents automatic reversions "
+        "to a valid state in the case of invalid changes or snap refresh failures.",
+        permanent=True,
+    )

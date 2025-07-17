@@ -15,10 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generic GNOME extension to support core22 and onwards."""
+
 import dataclasses
 import functools
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from overrides import overrides
 
@@ -71,21 +72,21 @@ class GNOME(Extension):
 
     @staticmethod
     @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
     @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
     @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         return False
 
     @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
             command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
@@ -107,7 +108,7 @@ class GNOME(Extension):
         base = self.yaml_data["base"]
         sdk_snap = _SDK_SNAP[base]
 
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
@@ -126,7 +127,7 @@ class GNOME(Extension):
         return GNOMESnaps(sdk=sdk_snap, content=content, builtin=builtin)
 
     @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         platform_snap = self.gnome_snaps.content
         base = self.yaml_data["base"]
 
@@ -214,7 +215,7 @@ class GNOME(Extension):
         }
 
     @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         sdk_snap = self.gnome_snaps.sdk
 
         return {
@@ -306,11 +307,21 @@ class GNOME(Extension):
                         ],
                     )
                 },
+                {
+                    "CMAKE_PREFIX_PATH": prepend_to_env(
+                        "CMAKE_PREFIX_PATH",
+                        [
+                            "$CRAFT_STAGE/usr",
+                            f"/snap/{sdk_snap}/current/usr",
+                        ],
+                        separator=":",
+                    ),
+                },
             ],
         }
 
     @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         """Get the parts snippet for the GNOME extension.
 
         If the GNOME SDK is not built into the content snap, the add the

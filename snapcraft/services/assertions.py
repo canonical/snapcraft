@@ -267,15 +267,21 @@ class Assertion(base.AppService):
         return signed_assertion
 
     def edit_assertion(
-        self, *, name: str, account_id: str, key_name: str | None = None
+        self,
+        *,
+        name: str,
+        account_id: str,
+        key_name: str | None = None,
+        **kwargs: dict[str, Any],
     ) -> None:
         """Edit, sign and upload an assertion.
 
          If the assertion does not exist, a new assertion is created from a template.
 
         :param name: The name of the assertion to edit.
-        :param account_id: The account ID associated with the registries set.
+        :param account_id: The account ID associated with the confdb schema.
         :param key_name: Name of the key to sign the assertion.
+        :param kwargs: Additional keyword arguments to use for validation.
         """
         yaml_data = self._get_yaml_data(name=name, account_id=account_id)
         yaml_file = self._write_to_file(yaml_data)
@@ -294,6 +300,7 @@ class Assertion(base.AppService):
                     craft_cli.emit.progress(f"Building {self._assertion_name}.")
                     built_assertion = self._build_assertion(edited_assertion)
                     craft_cli.emit.progress(f"Built {self._assertion_name}.")
+                    self._validate_assertion(built_assertion, **kwargs)
 
                     signed_assertion = self._sign_assertion(built_assertion, key_name)
                     published_assertion = self._post_assertion(signed_assertion)
@@ -314,3 +321,18 @@ class Assertion(base.AppService):
                         ) from assertion_error
         finally:
             self._remove_temp_file(yaml_file)
+
+    def _validate_assertion(
+        self, assertion: models.Assertion, **kwargs: dict[str, Any]
+    ) -> None:
+        """Additional validation to perform on the assertion after building.
+
+        Child classes should override this method if they need to perform
+        custom validation.
+
+        :param assertion: The assertion to validate.
+        :param kwargs: Additional keyword arguments to use for validation.
+
+        :raises SnapcraftAssertionError: If the assertion is invalid.
+        """
+        pass

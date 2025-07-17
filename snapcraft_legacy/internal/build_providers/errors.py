@@ -27,7 +27,6 @@ class ProviderBaseError(_SnapcraftError):
 
 
 class ProviderNotSupportedError(ProviderBaseError):
-
     fmt = (
         "The {provider!r} provider is not supported, please choose a "
         "different one and try again."
@@ -38,7 +37,6 @@ class ProviderNotSupportedError(ProviderBaseError):
 
 
 class ProviderNotFound(ProviderBaseError):
-
     fmt = "You need {provider!r} set-up to build snaps: {error_message}."
 
     def __init__(
@@ -54,7 +52,6 @@ class ProviderNotFound(ProviderBaseError):
 
 
 class _GenericProviderError(ProviderBaseError):
-
     _FMT_ERROR_MESSAGE_AND_EXIT_CODE = (
         "An error occurred with the instance when trying to {action} with "
         "{provider_name!r}: returned exit code {exit_code!r}: {error_message}.\n"
@@ -101,7 +98,6 @@ class _GenericProviderError(ProviderBaseError):
 
 
 class ProviderCommunicationError(ProviderBaseError):
-
     fmt = (
         "An error occurred when trying to communicate with the "
         "{provider_name!r} provider: {message}."
@@ -139,7 +135,7 @@ class ProviderInvalidBaseError(_SnapcraftException):
         return "Ensure build-base or base are correct in the snapcraft.yaml file."
 
     def get_docs_url(self) -> str:
-        return "https://snapcraft.io/docs/base-snaps"
+        return "https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base"
 
 
 class ProviderStartError(_GenericProviderError):
@@ -191,7 +187,6 @@ class ProviderDeleteError(_GenericProviderError):
 
 
 class ProviderExecError(ProviderBaseError):
-
     fmt = (
         "An error occurred when trying to execute {command_string!r} with "
         "{provider_name!r}: returned exit code {exit_code!r}."
@@ -280,7 +275,6 @@ class ProviderFileCopyError(_GenericProviderError):
 
 
 class ProviderInfoError(ProviderBaseError):
-
     fmt = (
         "An error occurred when using {provider_name!r} to "
         "query the status of the instance: returned exit code {exit_code!r}: {stderr!s}."
@@ -293,7 +287,6 @@ class ProviderInfoError(ProviderBaseError):
 
 
 class ProviderInstanceNotFoundError(ProviderBaseError):
-
     fmt = "Cannot find an instance named {instance_name!r}."
 
     def __init__(self, *, instance_name: str) -> None:
@@ -301,7 +294,6 @@ class ProviderInstanceNotFoundError(ProviderBaseError):
 
 
 class ProviderInfoDataKeyError(ProviderBaseError):
-
     fmt = (
         "The data returned by {provider_name!r} was not expected. "
         "It is missing a required key {missing_key!r} in {data!r}."
@@ -316,7 +308,6 @@ class ProviderInfoDataKeyError(ProviderBaseError):
 
 
 class ProviderBadDataError(ProviderBaseError):
-
     fmt = (
         "The data returned by {provider_name!r} was not expected "
         "or in the wrong format: {data!r}."

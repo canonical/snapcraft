@@ -105,6 +105,14 @@ def test_store_credentials_not_configparser_based_fails(
         LegacyUbuntuOne.store_credentials("not config parser")
 
 
+def test_store_credentials_unicode_decode_error(
+    legacy_config_path, legacy_config_credentials
+):
+    """Catch UnicodeDecode errors."""
+    with pytest.raises(errors.LegacyCredentialsParseError):
+        LegacyUbuntuOne.store_credentials("\\\\nfoo")
+
+
 def test_legacy_credentials_in_env(monkeypatch, legacy_config_credentials):
     monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", legacy_config_credentials)
 
@@ -121,7 +129,7 @@ def test_logout(legacy_config_path):
     assert LegacyUbuntuOne.has_legacy_credentials() is True
 
     client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,
@@ -135,7 +143,7 @@ def test_logout(legacy_config_path):
 
 def test_logout_file_missing(legacy_config_path):
     u1_client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,
@@ -149,7 +157,7 @@ def test_logout_file_missing(legacy_config_path):
 
 def test_login():
     client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,
@@ -185,7 +193,7 @@ def test_request(mocker, legacy_config_path, fake_get_auth):
     assert LegacyUbuntuOne.env_has_legacy_credentials() is False
 
     client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,
@@ -227,7 +235,7 @@ def test_request_with_env(
     assert LegacyUbuntuOne.env_has_legacy_credentials() is True
 
     client = LegacyUbuntuOne(
-        base_url="",
+        base_url="https://example.com",
         storage_base_url="",
         auth_url="",
         endpoints=craft_store.endpoints.U1_SNAP_STORE,

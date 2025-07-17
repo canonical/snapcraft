@@ -19,8 +19,9 @@
 import abc
 import os
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple, final
+from typing import Any, final
 
 from craft_cli import emit
 
@@ -39,7 +40,7 @@ class Extension(abc.ABC):
     """
 
     def __init__(
-        self, *, yaml_data: Dict[str, Any], arch: str, target_arch: str
+        self, *, yaml_data: dict[str, Any], arch: str, target_arch: str
     ) -> None:
         """Create a new Extension."""
         self.yaml_data = yaml_data
@@ -48,36 +49,36 @@ class Extension(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def get_supported_bases() -> Tuple[str, ...]:
+    def get_supported_bases() -> tuple[str, ...]:
         """Return a tuple of supported bases."""
 
     @staticmethod
     @abc.abstractmethod
-    def get_supported_confinement() -> Tuple[str, ...]:
+    def get_supported_confinement() -> tuple[str, ...]:
         """Return a tuple of supported confinement settings."""
 
     @staticmethod
     @abc.abstractmethod
-    def is_experimental(base: Optional[str]) -> bool:
+    def is_experimental(base: str | None) -> bool:
         """Return whether or not this extension is unstable for given base."""
 
     @abc.abstractmethod
-    def get_root_snippet(self) -> Dict[str, Any]:
+    def get_root_snippet(self) -> dict[str, Any]:
         """Return the root snippet to apply."""
 
     @abc.abstractmethod
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         """Return the app snippet to apply.
 
         :param app_name: the name of the app where the snippet will be applied
         """
 
     @abc.abstractmethod
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         """Return the part snippet to apply to existing parts."""
 
     @abc.abstractmethod
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    def get_parts_snippet(self) -> dict[str, Any]:
         """Return the parts to add to parts."""
 
     @final
@@ -88,14 +89,14 @@ class Extension(abc.ABC):
         :raises errors.ExtensionError: if the extension is incompatible with the project.
         """
         base: str = self.yaml_data["base"]
-        confinement: Optional[str] = self.yaml_data.get("confinement")
+        confinement: str | None = self.yaml_data.get("confinement")
 
         if self.is_experimental(base) and not os.getenv(
             "SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS"
         ):
             raise errors.ExtensionError(
                 f"Extension is experimental: {extension_name!r}",
-                docs_url="https://snapcraft.io/docs/supported-extensions",
+                docs_url="https://documentation.ubuntu.com/snapcraft/stable/reference/extensions",
             )
 
         if self.is_experimental(base):

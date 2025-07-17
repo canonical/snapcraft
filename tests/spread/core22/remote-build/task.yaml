@@ -4,11 +4,12 @@ kill-timeout: 180m
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
-  SNAP: no-architectures
+  SNAP: no-archs
   SNAP/all: all
-  SNAP/no_architectures: no-architectures
-  SNAP/architectures: architectures
-  SNAP/build_for_arg: build-for-arg
+  SNAP/no_archs: no-archs
+  SNAP/archs: archs
+  SNAP/build_for: build-for
+  SNAP/build_for_with_archs: build-for-with-archs
   SNAPCRAFT_REMOTE_BUILD_STRATEGY: disable-fallback
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
   CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
@@ -30,12 +31,20 @@ prepare: |
 
   # set up launchpad token
   mkdir -p "$(dirname "$CREDENTIALS_FILE")"
-  echo -e "$LAUNCHPAD_TOKEN" >> "$CREDENTIALS_FILE"
+  echo -e "$LAUNCHPAD_TOKEN" > "$CREDENTIALS_FILE"
+
+  # build ids are based on the project contents
+  # adding a date ensures each test has a unique build id
+  date > date.txt
 
 restore: |
   cd "./snaps/$SNAP"
 
-  rm -f ./*.snap ./*.txt
+  # remove snaps, logs, and date files
+  rm -f ./*.snap ./snapcraft-*.txt ./date.txt
+
+  # remove the temporary git repository
+  rm -rf .git
 
 execute: |
   cd "./snaps/$SNAP"

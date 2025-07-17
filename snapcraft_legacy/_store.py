@@ -430,9 +430,7 @@ def list_keys():
             headers=["", "Name", "SHA3-384 fingerprint", ""],
             tablefmt="plain",
         )
-        print(
-            "The following keys are available on this system:"
-        )
+        print("The following keys are available on this system:")
         print(tabulated_keys)
     else:
         print(
@@ -502,9 +500,9 @@ def save_key(func):
             return func(*args, **kwargs)
         finally:
             if credentials:
-                os.environ[
-                    storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS
-                ] = credentials
+                os.environ[storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS] = (
+                    credentials
+                )
 
     return wrapped_env
 

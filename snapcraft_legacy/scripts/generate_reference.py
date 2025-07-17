@@ -47,9 +47,9 @@ class Reference:
         self.topics = []
         self.plugins = []
         self.output_file = output_file
-        assert os.path.isdir(
-            os.path.dirname(self.output_file)
-        ), "Directory {} does not exist.".format(os.path.dirname(self.output_file))
+        assert os.path.isdir(os.path.dirname(self.output_file)), (
+            "Directory {} does not exist.".format(os.path.dirname(self.output_file))
+        )
         self._read()
         self._write()
 
@@ -81,9 +81,7 @@ snappy. It's a reference of `snapcraft`'s plugins and internals.
             reference_text += """
 ### Topic: {}
 
-{}""".format(
-                entry[0].title(), entry[1].replace("# ", "#### ")
-            )
+{}""".format(entry[0].title(), entry[1].replace("# ", "#### "))
         reference_text += """
 
 ## snapcraft's Plugins
@@ -95,9 +93,7 @@ and their options.
             reference_text += """
 ### The {} plugin
 
-{}""".format(
-                entry[0], entry[1]
-            )
+{}""".format(entry[0], entry[1])
         with open(os.path.join(self.output_file), "w") as f:
             f.write(str(reference_text))
 

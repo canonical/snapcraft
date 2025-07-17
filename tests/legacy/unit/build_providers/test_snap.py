@@ -20,6 +20,7 @@ from textwrap import dedent
 from unittest.mock import ANY, call, patch
 
 import fixtures
+import pytest
 from testtools.matchers import Contains, Equals, FileContains, Not
 
 from snapcraft_legacy.internal.build_providers._snap import (
@@ -280,6 +281,7 @@ class SnapInjectionTest(unit.TestCase):
             ),
         )
 
+    @pytest.mark.slow
     def test_snapcraft_installed_on_host_from_store_but_injection_disabled(self):
         self.useFixture(fixture_setup.FakeStore())
 
@@ -319,6 +321,7 @@ class SnapInjectionTest(unit.TestCase):
             ),
         )
 
+    @pytest.mark.slow
     def test_snapcraft_installed_on_host_in_parallel_install_from_store(self):
         """Handle a parallel-installed snapcraft and install from the store."""
         self.useFixture(fixture_setup.FakeStore())
@@ -479,6 +482,7 @@ class SnapInjectionTest(unit.TestCase):
             ),
         )
 
+    @pytest.mark.slow
     def test_snapcraft_not_installed_on_host(self):
         self.useFixture(fixture_setup.FakeStore())
 
@@ -517,6 +521,7 @@ class SnapInjectionTest(unit.TestCase):
             ),
         )
 
+    @pytest.mark.slow
     def test_snapcraft_not_installed_on_host_with_channel_from_environment(self):
         self.useFixture(fixture_setup.FakeStore())
         self.useFixture(
@@ -560,6 +565,7 @@ class SnapInjectionTest(unit.TestCase):
             ),
         )
 
+    @pytest.mark.slow
     def test_no_registry(self):
         self.useFixture(fixture_setup.FakeStore())
 
@@ -651,6 +657,7 @@ class SnapInjectionTest(unit.TestCase):
 
         self.provider.run_mock.assert_not_called()
 
+    @pytest.mark.slow
     def test_snapcraft_installed_on_host_from_store_rerun_refreshes(self):
         self.useFixture(fixture_setup.FakeStore())
 
@@ -684,6 +691,7 @@ class SnapInjectionTest(unit.TestCase):
             ]
         )
 
+    @pytest.mark.slow
     def test_snapd_not_on_host_installs_from_store(self):
         self.useFixture(fixture_setup.FakeStore())
 

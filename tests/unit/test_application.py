@@ -20,16 +20,21 @@ import os
 import re
 import sys
 from textwrap import dedent
+from typing import cast
 
+import craft_application.launchpad
 import craft_application.remote
 import craft_cli
 import craft_parts.plugins
+import craft_parts.plugins.dotnet_plugin
+import craft_parts.plugins.dotnet_v2_plugin
 import craft_store
 import pytest
 import yaml
 from craft_application import util
 from craft_application.commands import get_other_command_group
 from craft_parts.packages import snaps
+from craft_platforms import DebianArchitecture
 from craft_providers import bases
 
 from snapcraft import application, cli, const, services
@@ -51,13 +56,6 @@ def architectures(request):
 
 
 @pytest.fixture()
-def mock_confirm(mocker):
-    return mocker.patch(
-        "snapcraft.commands.remote.confirm_with_user", return_value=True
-    )
-
-
-@pytest.fixture()
 def mock_remote_build_run(mocker):
     _mock_remote_build_run = mocker.patch(
         "snapcraft.commands.remote.RemoteBuildCommand._run"
@@ -73,7 +71,9 @@ def mock_run_legacy(mocker):
 @pytest.fixture()
 def mock_remote_build_argv(mocker):
     """Mock `snapcraft remote-build` cli."""
-    return mocker.patch.object(sys, "argv", ["snapcraft", "remote-build"])
+    return mocker.patch.object(
+        sys, "argv", ["snapcraft", "remote-build", "--launchpad-accept-public-upload"]
+    )
 
 
 @pytest.mark.parametrize("env_vars", application.MAPPED_ENV_VARS.items())
@@ -88,6 +88,7 @@ def test_application_map_build_on_env_var(monkeypatch, env_vars):
     monkeypatch.setenv(snapcraft_var, env_val)
     assert os.getenv(craft_var) is None
 
+    services.register_snapcraft_services()
     snapcraft_services = services.SnapcraftServiceFactory(app=application.APP_METADATA)
     application.Snapcraft(app=application.APP_METADATA, services=snapcraft_services)
 
@@ -134,8 +135,6 @@ def extension_source(default_project):
 
 @pytest.mark.usefixtures("fake_extension")
 def test_application_expand_extensions(emitter, monkeypatch, extension_source, new_dir):
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
-
     (new_dir / "snap").mkdir()
     (new_dir / "snap/snapcraft.yaml").write_text(json.dumps(extension_source))
 
@@ -170,9 +169,14 @@ def test_application_extra_yaml_transforms(
     monkeypatch, extension_source, new_dir, emitter
 ):
     """Test that extra_yaml_transforms applies root keywords and expands extensions."""
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
     extension_source["build-packages"] = [{"to s390x": "test-package"}]
     extension_source["build-snaps"] = [{"to s390x": "test-snap"}]
+    extension_source["platforms"] = {
+        "s390x": {
+            "build-on": str(DebianArchitecture.from_host()),
+            "build-for": "s390x",
+        },
+    }
 
     project_path = new_dir / "snap/snapcraft.yaml"
     (new_dir / "snap").mkdir()
@@ -187,14 +191,13 @@ def test_application_extra_yaml_transforms(
     app = application.create_app()
     app.run()
 
-    project = app.get_project()
+    project = app.services.get("project").get()
     assert "fake-extension/fake-part" in project.parts
     assert project.parts["snapcraft/core"]["build-packages"] == ["test-package"]
     assert project.parts["snapcraft/core"]["build-snaps"] == ["test-snap"]
 
 
 def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
     monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
 
     (new_dir / "snap").mkdir()
@@ -231,21 +234,20 @@ PARSE_INFO_PROJECT = dedent(
 )
 
 
-def test_get_project_parse_info(new_dir):
+def test_get_project_parse_info(in_project_path):
     """Test that parse-info data is correctly extracted and stored when loading
     the project from a YAML file."""
-    snap_dir = new_dir / "snap"
+    snap_dir = in_project_path / "snap"
     snap_dir.mkdir()
     project_yaml = snap_dir / "snapcraft.yaml"
     project_yaml.write_text(PARSE_INFO_PROJECT)
 
     app = application.create_app()
-    assert app._parse_info == {}
+    app.services.update_kwargs("project", project_dir=in_project_path)
+    project_service = cast(services.Project, app.services.get("project"))
+    parse_info = project_service.get_parse_info()
 
-    _project = app.get_project()
-    assert app._parse_info == {
-        "parse-info-part": ["usr/share/metainfo/app.metainfo.xml"]
-    }
+    assert parse_info == {"parse-info-part": ["usr/share/metainfo/app.metainfo.xml"]}
 
 
 APPSTREAM_CONTENTS = dedent(
@@ -315,44 +317,42 @@ def test_application_plugins():
 
 
 @pytest.mark.parametrize(
-    ("base", "build_base"),
+    ("base", "build_base", "expected_plugin"),
     [
-        ("core20", None),
-        ("core20", "core20"),
-        ("core20", "devel"),
-        ("core22", None),
-        ("core22", "core22"),
-        ("core22", "devel"),
+        ("core20", None, craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core20", "core20", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core20", "devel", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core22", None, craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core22", "core22", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core22", "devel", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
+        ("core24", None, craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
+        ("core24", "core20", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
+        ("core24", "core22", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
+        ("core24", "core24", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
+        ("core24", "devel", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
     ],
 )
-def test_application_dotnet_registered(base, build_base, snapcraft_yaml):
-    """dotnet plugin is enabled for core22."""
+def test_application_dotnet_registered(
+    base, build_base, expected_plugin, snapcraft_yaml
+):
+    """dotnet plugin is enabled for core20 and later."""
     snapcraft_yaml(base=base, build_base=build_base)
     app = application.create_app()
 
     app._register_default_plugins()
 
     assert "dotnet" in craft_parts.plugins.get_registered_plugins()
+    assert craft_parts.plugins.get_plugin_class("dotnet") == expected_plugin
 
 
-@pytest.mark.parametrize(
-    ("base", "build_base"),
-    [
-        ("core24", None),
-        ("core24", "core20"),
-        ("core24", "core22"),
-        ("core24", "core24"),
-        ("core24", "devel"),
-    ],
-)
-def test_application_dotnet_not_registered(base, build_base, snapcraft_yaml):
-    """dotnet plugin is disabled for core24 and newer bases."""
-    snapcraft_yaml(base=base, build_base=build_base)
+def test_application_maven_use_not_registered(snapcraft_yaml):
+    """maven-use plugin is disabled."""
+    snapcraft_yaml(base="core24")
     app = application.create_app()
 
     app._register_default_plugins()
 
-    assert "dotnet" not in craft_parts.plugins.get_registered_plugins()
+    assert "maven-use" not in craft_parts.plugins.get_registered_plugins()
 
 
 def test_default_command_integrated(monkeypatch, mocker, new_dir):
@@ -418,9 +418,23 @@ def test_esm_pass(mocker, snapcraft_yaml, base):
         mock_dispatch.assert_called_once()
 
 
+def test_yaml_syntax_error(in_project_path, monkeypatch, capsys):
+    """Provide a user friendly error on yaml syntax errors."""
+    (in_project_path / "snapcraft.yaml").write_text("bad:\nyaml")
+    monkeypatch.setattr("sys.argv", ["snapcraft"])
+
+    application.main()
+
+    _, err = capsys.readouterr()
+    assert re.match(
+        "^error parsing 'snapcraft\\.yaml': .*\nDetailed information:",
+        err,
+    )
+
+
 @pytest.mark.parametrize("envvar", ["disable-fallback", None])
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_remote_build_core24(
     monkeypatch,
     snapcraft_yaml,
@@ -445,13 +459,12 @@ def test_run_remote_build_core24(
 
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_remote_build_core24_error(monkeypatch, snapcraft_yaml, base, capsys):
     """Error if using force-fallback for core24 or newer."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "force-fallback")
-    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
 
     application.main()
 
@@ -465,11 +478,10 @@ def test_run_remote_build_core24_error(monkeypatch, snapcraft_yaml, base, capsys
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch, capsys):
     """core20 bases cannot use the new remote-build."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
-    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
 
@@ -485,7 +497,7 @@ def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch, c
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_force_fallback_core22(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
 ):
@@ -501,7 +513,7 @@ def test_run_envvar_force_fallback_core22(
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_force_fallback_unset_core20(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
 ):
@@ -517,7 +529,7 @@ def test_run_envvar_force_fallback_unset_core20(
 
 
 @pytest.mark.parametrize("base", {"core22"})
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_force_fallback_empty_core22(
     snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
 ):
@@ -533,11 +545,10 @@ def test_run_envvar_force_fallback_empty_core22(
 
 
 @pytest.mark.parametrize("base", const.LEGACY_BASES | const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_confirm", "mock_remote_build_argv")
+@pytest.mark.usefixtures("mock_remote_build_argv")
 def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch, capsys):
     """core20 and core22 bases raise an error if the envvar is invalid."""
     monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "badvalue")
-    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build"])
 
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
@@ -697,18 +708,25 @@ def test_store_key_error(mocker, capsys):
             """\
             No keyring found to store or retrieve credentials from.
             Recommended resolution: Ensure the keyring is working or SNAPCRAFT_STORE_CREDENTIALS is correctly exported into the environment
-            For more information, check out: https://snapcraft.io/docs/snapcraft-authentication
+            For more information, check out: https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate
         """
             # pylint: enable=[line-too-long]
         )
     )
 
 
-def test_remote_build_error(mocker, capsys):
+@pytest.mark.parametrize(
+    "error_class",
+    [
+        craft_application.remote.RemoteBuildError,
+        craft_application.launchpad.LaunchpadError,
+    ],
+)
+def test_remote_build_error(mocker, capsys, error_class):
     """Catch remote build errors and include a documentation link."""
     mocker.patch(
         "snapcraft.application.Application._run_inner",
-        side_effect=craft_application.remote.RemoteBuildError(message="test-error"),
+        side_effect=error_class("test-error"),
     )
 
     return_code = application.main()
@@ -742,7 +760,7 @@ def test_get_argv_command(command, monkeypatch):
         "sys.argv",
         [
             "snapcraft",
-            "--verbosity" "trace",
+            "--verbositytrace",
             "--build-for=armhf",
             "--shell-after",
             command,

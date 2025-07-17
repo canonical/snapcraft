@@ -12,9 +12,6 @@ systems:
 
 environment:
   SNAP_DIR/7z: snaps/7z
-  SNAP_DIR/bzr_commit: snaps/bzr-commit
-  SNAP_DIR/bzr_head: snaps/bzr-head
-  SNAP_DIR/bzr_tag: snaps/bzr-tag
   SNAP_DIR/deb: snaps/deb
   SNAP_DIR/deb_with_checksum: snaps/deb-with-checksum
   SNAP_DIR/deb_with_symlink: snaps/deb-with-symlink

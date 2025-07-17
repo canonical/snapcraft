@@ -15,23 +15,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snapcraft Store Account management commands."""
+
+from __future__ import annotations
+
 import itertools
 import operator
 import textwrap
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence, Set, Tuple, cast
+from typing import TYPE_CHECKING, Final, cast
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
-from typing_extensions import Final
 
-from snapcraft import store
-from snapcraft.store.channel_map import ChannelMap, MappedChannel, Revision, SnapChannel
+from snapcraft import const, store
 
 if TYPE_CHECKING:
     import argparse
+    from collections.abc import Sequence
+
+    from snapcraft.store.channel_map import (
+        ChannelMap,
+        MappedChannel,
+        Revision,
+        SnapChannel,
+    )
+    from snapcraft_legacy.storeapi.v2.releases import Releases
 
 
 class StoreStatusCommand(AppCommand):
@@ -47,7 +57,7 @@ class StoreStatusCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
             type=str,
@@ -71,7 +81,7 @@ class StoreStatusCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace) -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
         )
@@ -94,7 +104,7 @@ class StoreStatusCommand(AppCommand):
             if not architectures:
                 return
 
-        tracks: List[str] = []
+        tracks: list[str] = []
         if parsed_args.track:
             tracks = cast(list, parsed_args.track)
             existing_tracks = {
@@ -126,7 +136,9 @@ class _HINTS:
     UNKNOWN: Final[str] = "?"
 
 
-def _get_channel_order(snap_channels, tracks: Sequence[str]) -> OrderedDict:
+def _get_channel_order(
+    snap_channels: list[SnapChannel], tracks: Sequence[str]
+) -> OrderedDict:
     channel_order: OrderedDict = OrderedDict()
 
     if tracks:
@@ -151,12 +163,12 @@ def _get_channel_order(snap_channels, tracks: Sequence[str]) -> OrderedDict:
 
 def _get_channel_line(
     *,
-    mapped_channel: Optional[MappedChannel],
-    revision: Optional[Revision],
+    mapped_channel: MappedChannel | None,
+    revision: Revision | None,
     channel_info: SnapChannel,
     hint: str,
     progress_string: str,
-) -> List[str]:
+) -> list[str]:
     version_string = hint
     revision_string = hint
     expiration_date_string = ""
@@ -188,13 +200,13 @@ def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
     channel_name: str,
     architecture: str,
     current_tick: str,
-) -> Tuple[str, List[List[str]]]:
-    channel_lines: List[List[str]] = []
+) -> tuple[str, list[list[str]]]:
+    channel_lines: list[list[str]] = []
 
     channel_info = snap_channel_map.get_channel_info(channel_name)
 
     try:
-        progressive_mapped_channel: Optional[MappedChannel] = (
+        progressive_mapped_channel: MappedChannel | None = (
             snap_channel_map.get_mapped_channel(
                 channel_name=channel_name, architecture=architecture, progressive=True
             )
@@ -238,7 +250,7 @@ def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
         progress_string = _HINTS.NO_PROGRESS
 
     try:
-        mapped_channel: Optional[MappedChannel] = snap_channel_map.get_mapped_channel(
+        mapped_channel: MappedChannel | None = snap_channel_map.get_mapped_channel(
             channel_name=channel_name, architecture=architecture, progressive=False
         )
     except ValueError:
@@ -284,7 +296,7 @@ def _get_channel_lines_for_channel(  # noqa: C901 (complex-structure)
 
 
 def _has_channels_for_architecture(
-    snap_channel_map, architecture: str, channels: List[str]
+    snap_channel_map: ChannelMap, architecture: str, channels: list[str]
 ) -> bool:
     progressive = (False, True)
     # channel_query = (channel_name, progressive)
@@ -306,7 +318,7 @@ def _has_channels_for_architecture(
 
 
 def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
-    snap_channel_map,
+    snap_channel_map: ChannelMap,
     *,
     architectures: Sequence[str],
     tracks: Sequence[str],
@@ -383,7 +395,7 @@ class StoreListTracksCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
             type=str,
@@ -391,13 +403,13 @@ class StoreListTracksCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace) -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
         )
 
         # Iterate over the entries, replace None with - for consistent presentation
-        track_table: List[List[str]] = [
+        track_table: list[list[str]] = [
             [
                 track.name,
                 track.status,
@@ -423,6 +435,14 @@ class StoreTracksCommand(StoreListTracksCommand):
     name = "tracks"
     hidden = True
 
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)
+
 
 class StoreListRevisionsCommand(AppCommand):
     """List revisions of a published snap."""
@@ -440,7 +460,7 @@ class StoreListRevisionsCommand(AppCommand):
     )
 
     @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_name",
             metavar="snap-name",
@@ -452,12 +472,12 @@ class StoreListRevisionsCommand(AppCommand):
         )
 
     @overrides
-    def run(self, parsed_args):
+    def run(self, parsed_args: argparse.Namespace):
         releases = store.StoreClientCLI().list_revisions(
             snap_name=parsed_args.snap_name
         )
 
-        parsed_revisions = []
+        parsed_revisions: list[tuple[str, ...]] = []
         for rev in releases.revisions:
             if parsed_args.arch and parsed_args.arch not in rev.architectures:
                 continue
@@ -502,13 +522,15 @@ class StoreListRevisionsCommand(AppCommand):
 
         emit.message(tabulated_revisions)
 
-    def _get_channels_for_revision(self, releases, revision: int) -> List[str]:
+    def _get_channels_for_revision(
+        self, releases: Releases, revision: int
+    ) -> list[str]:
         # channels: the set of channels revision was released to, active or not.
-        channels: Set[str] = set()
+        channels: set[str] = set()
         # seen_channel: applies to channels regardless of revision.
         # The first channel that shows up for each architecture is to
         # be marked as the active channel, all others are historic.
-        seen_channel: Dict[str, Set[str]] = {}
+        seen_channel: dict[str, set[str]] = {}
 
         for release in releases.releases:
             if release.architecture not in seen_channel:
@@ -540,3 +562,11 @@ class StoreRevisionsCommand(StoreListRevisionsCommand):
 
     name = "revisions"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)

@@ -29,6 +29,4 @@ class ExtensionImpl(RosNoeticMetaBase):
     @functools.cached_property
     @overrides
     def ros_noetic_snaps(self) -> ROS2NoeticSnaps:
-        return ROS2NoeticSnaps(
-            content="ros-noetic-robot", sdk="ros-noetic-robot-dev"
-        )
+        return ROS2NoeticSnaps(content="ros-noetic-robot", sdk="ros-noetic-robot-dev")

@@ -19,36 +19,25 @@
 import argparse
 import os
 import textwrap
-import time
-from collections.abc import Collection, Mapping
-from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
-import lazr.restfulclient.errors
-from craft_application import errors
-from craft_application.commands import ExtensibleCommand
-from craft_application.errors import RemoteBuildError
-from craft_application.launchpad.models import Build, BuildState
-from craft_application.remote.utils import get_build_id
-from craft_application.util import humanize_list
+import craft_application.errors
+import craft_platforms
+from craft_application.commands import RemoteBuild
+from craft_application.util import humanize_list, safe_yaml_load
 from craft_cli import emit
-from overrides import overrides
+from craft_platforms import DebianArchitecture
+from overrides import override
 
-from snapcraft import models
+from snapcraft import errors
 from snapcraft.const import SUPPORTED_ARCHS
-from snapcraft.utils import confirm_with_user
-
-_CONFIRMATION_PROMPT = (
-    "All data sent to remote builders will be publicly available. "
-    "Are you sure you want to continue?"
-)
+from snapcraft.parts import yaml_utils
+from snapcraft.services import BuildPlan
 
 
-class RemoteBuildCommand(ExtensibleCommand):
+class RemoteBuildCommand(RemoteBuild):
     """Command passthrough for the remote-build command."""
 
-    always_load_project = True
-    name = "remote-build"
     help_msg = "Build a snap remotely on Launchpad."
     overview = textwrap.dedent(
         """
@@ -57,15 +46,20 @@ class RemoteBuildCommand(ExtensibleCommand):
         architecture are retrieved and will be available in the
         local filesystem.
 
-        If not specified in the snapcraft.yaml file, the list of
-        architectures to build can be set using the --platforms option.
-        If both are specified, an error will occur.
+        If the project contains a ``platforms`` or ``architectures`` key,
+        then the project's build plan is used. The build plan can be filtered
+        using the ``--build-for`` argument.
+
+        If the project doesn't contain a ``platforms`` or ``architectures`` key,
+        then the architectures to build for are defined by the ``--build-for``
+        argument.
+
+        If there are no architectures defined in the project file or with
+        ``--build-for``, then the default behavior is to build for the host
+        architecture of the local machine.
 
         Interrupted remote builds can be resumed using the --recover
-        option, followed by the build number informed when the remote
-        build was originally dispatched. The current state of the
-        remote build for each architecture can be checked using the
-        --status option.
+        option.
 
         To set a timeout on the remote-build command, use the option
         ``--launchpad-timeout=<seconds>``. The timeout is local, so the build on
@@ -74,43 +68,11 @@ class RemoteBuildCommand(ExtensibleCommand):
         """
     )
 
-    @overrides
+    @override
     def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "--recover", action="store_true", help="Recover an interrupted build"
-        )
-        parser.add_argument(
-            "--launchpad-accept-public-upload",
-            action="store_true",
-            help="Acknowledge that uploaded code will be publicly available",
-        )
-        parser.add_argument(
-            "--launchpad-timeout",
-            type=int,
-            default=0,
-            metavar="<seconds>",
-            help="Time in seconds to wait for launchpad to build",
-        )
+        super()._fill_parser(parser)
 
         parser.add_argument(
-            "--status", action="store_true", help="Display remote build status"
-        )
-        parser.add_argument(
-            "--build-id", metavar="build-id", help="Specific build ID to retrieve"
-        )
-
-        group = parser.add_mutually_exclusive_group()
-        group.add_argument(
-            "--platform",
-            type=lambda arg: [arch.strip() for arch in arg.split(",")],
-            metavar="name",
-            default=os.getenv("CRAFT_PLATFORM"),
-            help="Comma-separated list of platforms to build for",
-            # '--platform' needs to be handled differently since remote-build can
-            # build for an architecture that is not in the project metadata
-            dest="remote_build_platforms",
-        )
-        group.add_argument(
             "--build-for",
             type=lambda arg: [arch.strip() for arch in arg.split(",")],
             metavar="arch",
@@ -120,113 +82,48 @@ class RemoteBuildCommand(ExtensibleCommand):
             # build for architecture that is not in the project metadata
             dest="remote_build_build_fors",
         )
-        parser.add_argument(
-            "--project", help="Upload to the specified Launchpad project"
-        )
 
-    def _validate(self, parsed_args: argparse.Namespace) -> None:
-        """Do pre-build validation."""
-        if os.getenv("SUDO_USER") and os.geteuid() == 0:
-            emit.progress(
-                "Running with 'sudo' may cause permission errors and is discouraged.",
-                permanent=True,
-            )
-            # Give the user a bit of time to process this before proceeding.
-            time.sleep(1)
+    @override
+    def _pre_build(self, parsed_args: argparse.Namespace):
+        """Perform pre-build validation.
 
-        if (
-            not parsed_args.launchpad_accept_public_upload
-            and (
-                not parsed_args.project
-                or not self._services.remote_build.is_project_private()
-            )
-            and not confirm_with_user(_CONFIRMATION_PROMPT, default=False)
-        ):
-            raise errors.RemoteBuildError(
-                "Remote build needs explicit acknowledgement that data sent to build servers "
-                "is public.",
-                details=(
-                    "In non-interactive runs, please use the option "
-                    "`--launchpad-accept-public-upload`."
-                ),
-                doc_slug="/explanation/remote-build.html",
-                reportable=False,
-                retcode=os.EX_NOPERM,
-            )
-
-        build_fors = parsed_args.remote_build_build_fors or None
-        platforms = parsed_args.remote_build_platforms or None
-        parameter = "--build-for" if build_fors else "--platform" if platforms else None
-        keyword = (
-            "architectures"
-            if self.project._architectures_in_yaml
-            else "platforms" if self.project.platforms else None
-        )
-
-        if keyword and parameter:
-            raise errors.RemoteBuildError(
-                f"{parameter!r} cannot be used when {keyword!r} is in the snapcraft.yaml.",
-                resolution=f"Remove {parameter!r} from the command line or remove {keyword!r} in the snapcraft.yaml.",
-                doc_slug="/explanation/remote-build.html",
-                retcode=os.EX_CONFIG,
-            )
-
-        if platforms:
-            if self.project.get_effective_base() == "core22":
-                raise errors.RemoteBuildError(
-                    "'--platform' cannot be used for core22 snaps.",
-                    resolution="Use '--build-for' instead.",
+        :param parsed_args: Argument namespace to validate
+        :raises RemoteBuildError: If an unsupported architecture is specified, or multiple
+        artifacts will be created for the same build-on.
+        """
+        for build_for in cast(list[str], parsed_args.remote_build_build_fors) or []:
+            if build_for not in [*SUPPORTED_ARCHS, "all"]:
+                raise craft_application.errors.RemoteBuildError(
+                    f"Unsupported build-for architecture {build_for!r}",
+                    resolution=(
+                        "Use a supported Debian architecture. Supported "
+                        f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
+                    ),
                     doc_slug="/explanation/remote-build.html",
                     retcode=os.EX_CONFIG,
                 )
-            for platform in platforms:
-                if platform not in SUPPORTED_ARCHS:
-                    raise errors.RemoteBuildError(
-                        f"Unsupported platform {platform!r}.",
-                        resolution=(
-                            "Use a supported debian architecture. Supported "
-                            f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
-                        ),
-                        doc_slug="/explanation/remote-build.html",
-                        retcode=os.EX_CONFIG,
-                    )
 
-        if build_fors:
-            for build_for in build_fors:
-                if build_for not in SUPPORTED_ARCHS:
-                    raise errors.RemoteBuildError(
-                        f"Unsupported build-for architecture {build_for!r}.",
-                        resolution=(
-                            "Use a supported debian architecture. Supported "
-                            f"architectures are: {humanize_list(SUPPORTED_ARCHS, 'and')}"
-                        ),
-                        doc_slug="/explanation/remote-build.html",
-                        retcode=os.EX_CONFIG,
-                    )
+        build_plan_service = cast(BuildPlan, self._services.get("build_plan"))
+        build_plan = build_plan_service.create_launchpad_build_plan(
+            platforms=None, build_for=None, build_on=None
+        )
 
-        self._validate_single_artifact_per_build_on()
-
-    def _validate_single_artifact_per_build_on(self) -> None:
-        """Validate that only one artifact will be created for each build-on.
-
-        :raise RemoteBuildError: If multiple artifacts will be created for the same build-on.
-        """
         # mapping of `build-on` to `build-for` architectures
         build_map: dict[str, list[str]] = {}
-        for build_info in self.build_plan:
+        for build_info in build_plan:
             build_map.setdefault(build_info.build_on, []).append(build_info.build_for)
 
         # assemble a list so all errors are shown at once
-        build_on_errors = list()
+        build_on_errors = []
         for build_on, build_fors in build_map.items():
             if len(build_fors) > 1:
                 build_on_errors.append(
-                    f"\n  - Building on {build_on!r} will create snaps for "
-                    f"{humanize_list(build_fors, 'and')}."
+                    f"\n  - Building on {build_on} will create snaps for "
+                    f"{humanize_list(build_fors, 'and', item_format='{!s}')}."
                 )
 
         if build_on_errors:
-            raise errors.RemoteBuildError(
+            raise craft_application.errors.RemoteBuildError(
                 message=(
                     "Remote build does not support building multiple snaps on the "
                     f"same architecture:{''.join(build_on_errors)}"
@@ -239,180 +136,92 @@ class RemoteBuildCommand(ExtensibleCommand):
                 retcode=os.EX_CONFIG,
             )
 
-    def _run(  # noqa: PLR0915 [too-many-statements]
-        self, parsed_args: argparse.Namespace, **kwargs: Any
-    ) -> int | None:
-        """Run the remote-build command.
+        _validate_build_for_and_platforms(parsed_args.remote_build_build_fors)
 
-        :param parsed_args: Snapcraft's argument namespace.
-
-        :raises AcceptPublicUploadError: If the user does not agree to upload data.
-        """
-        if parsed_args.project:
-            self._services.remote_build.set_project(parsed_args.project)
-
-        emit.progress(
-            "remote-build is experimental and is subject to change. Use with caution.",
-            permanent=True,
-        )
-
-        builder = self._services.remote_build
-        self.project = cast(models.Project, self._services.project)
-
-        self.build_plan = self._app.BuildPlannerClass.unmarshal(
-            self.project.marshal()
-        ).get_build_plan()
-        emit.debug(f"Build plan: {self.build_plan}")
-
-        config = cast(dict[str, Any], self.config)
-        project_dir = (
-            Path(config.get("global_args", {}).get("project_dir") or ".")
-            .expanduser()
-            .resolve()
-        )
-
-        emit.trace(f"Project directory: {project_dir}")
-        self._validate(parsed_args)
-
+    @override
+    def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
+        project = self._services.get("project").get_raw()
         if parsed_args.remote_build_build_fors:
-            architectures = parsed_args.remote_build_build_fors
-        elif parsed_args.remote_build_platforms:
-            architectures = parsed_args.remote_build_platforms
+            build_fors: list[DebianArchitecture | Literal["all"]] | None = [
+                "all" if arch == "all" else craft_platforms.DebianArchitecture(arch)
+                for arch in parsed_args.remote_build_build_fors
+            ]
         else:
-            architectures = self._get_project_build_fors()
+            build_fors = None
 
-        emit.debug(f"Architectures to build for: {architectures}")
-
-        if parsed_args.launchpad_timeout:
-            emit.debug(f"Setting timeout to {parsed_args.launchpad_timeout} seconds")
-            builder.set_timeout(parsed_args.launchpad_timeout)
-
-        build_id = get_build_id(self._app.name, self.project.name, project_dir)
-        if parsed_args.recover:
-            emit.progress(f"Recovering build {build_id}")
-            builds = builder.resume_builds(build_id)
-        else:
-            emit.progress(
-                "Starting new build. It may take a while to upload large projects."
+        archs: list[DebianArchitecture | Literal["all"]] = []
+        if project.get("platforms") or project.get("architectures"):
+            build_plan_service = cast(BuildPlan, self._services.get("build_plan"))
+            build_plan = build_plan_service.create_launchpad_build_plan(
+                platforms=None, build_for=build_fors or None, build_on=None
             )
-            try:
-                builds = builder.start_builds(
-                    project_dir, architectures=architectures or None
-                )
-            except RemoteBuildError:
-                emit.progress("Starting build failed.", permanent=True)
-                emit.progress("Cleaning up")
-                builder.cleanup()
-                raise
-            except lazr.restfulclient.errors.Conflict:
-                emit.progress("Remote repository already exists.", permanent=True)
-                emit.progress("Cleaning up")
-                builder.cleanup()
-                return os.EX_TEMPFAIL
-
-        try:
-            returncode = self._monitor_and_complete(build_id, builds)
-        except KeyboardInterrupt:
-            if confirm_with_user("Cancel builds?", default=True):
-                emit.progress("Cancelling builds.")
-                builder.cancel_builds()
-                emit.progress("Cleaning up.")
-                builder.cleanup()
-            return os.EX_OK
-        except Exception:  # noqa: BLE001 [blind-except]
-            returncode = 1  # General error on any other exception
-
-        if returncode != os.EX_TEMPFAIL:
-            emit.progress("Cleaning up")
-            builder.cleanup()
-        return returncode
-
-    # noqa for too-many-branches and too-many-statements
-    def _monitor_and_complete(  # noqa: PLR0912, PLR0915
-        self, build_id: str | None, builds: Collection[Build]
-    ) -> int:
-        builder = self._services.remote_build
-        emit.progress("Monitoring build")
-        states: Mapping[str, BuildState] = {}
-        try:
-            for states in builder.monitor_builds():
-                building: set[str] = set()
-                succeeded: set[str] = set()
-                uploading: set[str] = set()
-                pending: set[str] = set()
-                not_building: set[str] = set()
-                for arch, build_state in states.items():
-                    if build_state.is_running:
-                        building.add(arch)
-                    elif build_state == BuildState.SUCCESS:
-                        succeeded.add(arch)
-                    elif build_state == BuildState.UPLOADING:
-                        uploading.add(arch)
-                    elif build_state == BuildState.PENDING:
-                        pending.add(arch)
-                    else:
-                        not_building.add(arch)
-                progress_parts: list[str] = []
-                if not_building:
-                    progress_parts.append("Stopped: " + ",".join(sorted(not_building)))
-                if building:
-                    progress_parts.append("Building: " + ", ".join(sorted(building)))
-                if uploading:
-                    progress_parts.append("Uploading: " + ",".join(sorted(uploading)))
-                if succeeded:
-                    progress_parts.append("Succeeded: " + ", ".join(sorted(succeeded)))
-                if pending:
-                    progress_parts.append("Pending: " + ", ".join(sorted(pending)))
-                emit.progress("; ".join(progress_parts))
-        except TimeoutError:
-            if build_id:
-                resume_command = (
-                    f"{self._app.name} remote-build --recover --build-id={build_id}"
-                )
+            # if the project has platforms, then `--build-for` acts as a filter
+            if build_fors:
+                emit.debug("Filtering the build plan using the '--build-for' argument.")
+                # Launchpad's API only accepts a list of architectures but doesn't
+                # have a concept of 'build-on' vs 'build-for'.
+                # Passing the build-on archs is safe because:
+                # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
+                # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
+                archs.extend([info.build_on for info in build_plan])
+                if not archs:
+                    raise craft_application.errors.EmptyBuildPlanError()
             else:
-                resume_command = f"{self._app.name} remote-build --recover"
-            emit.message(
-                f"Timed out waiting for build.\nTo resume, run {resume_command!r}"
-            )
-            return 75  # Temporary failure
-
-        return_code = 0
-
-        for arch, build_state in states.items():
-            if build_state == BuildState.FAILED:
-                emit.progress(f"Build for architecture {arch} failed.", permanent=True)
-                return_code = 1
-
-        emit.progress(f"Fetching {len(builds)} build logs...")
-        logs = builder.fetch_logs(Path.cwd())
-        if not logs:
-            return_code = 1
-            emit.progress("No log files downloaded from Launchpad.", permanent=True)
-
-        emit.progress("Fetching build artifacts...")
-        artifacts = builder.fetch_artifacts(Path.cwd())
-        if not artifacts:
-            return_code = 1
-            emit.progress(
-                "No build artifacts downloaded from Launchpad.", permanent=True
+                emit.debug("Using the project's build plan")
+                archs = [build_info.build_on for build_info in build_plan]
+        # No architectures in the project means '--build-for' no longer acts as a filter.
+        # Instead, it defines the architectures to build on, and for.
+        elif build_fors:
+            emit.debug("Using '--build-for' as the list of architectures to build for")
+            archs = build_fors
+        # default is to build on, and for, the host architecture
+        else:
+            archs = [DebianArchitecture.from_host()]
+            emit.debug(
+                f"Using host architecture {archs[0]} because no architectures were "
+                "defined in the project or as a command-line argument."
             )
 
-        log_names = sorted(path.name for path in logs.values() if path)
-        artifact_names = sorted(path.name for path in artifacts)
+        emit.debug(f"Architectures to build for: {humanize_list(archs, 'and')}")
+        return {"architectures": archs}
 
-        emit.message(
-            "Build completed.\n"
-            f"Log files: {', '.join(log_names)}\n"
-            f"Artifacts: {', '.join(artifact_names)}"
+
+def _validate_build_for_and_platforms(build_for: list[str]):
+    """Ensure --build-for and shorthand platforms are not used together.
+
+    This combination fails in Launchpad with an unhelpful error, so Snapcraft will
+    fail early with a user-friendly error. See LP#2077005 and LP#2098811 for details.
+
+    This validator can be removed when LP#2077005 and LP#2098811 are resolved or when
+    Launchpad uses craft-platforms to orchestrate snap builds.
+
+    :param build_for: The list of architectures to build for from the command line.
+
+    :raises RemoteBuildError: If --build-for and shorthand platforms are used together.
+    """
+    if not build_for:
+        return
+
+    try:
+        project_file = yaml_utils.get_snap_project().project_file
+        with project_file.open() as file:
+            data = safe_yaml_load(file)
+    except (errors.ProjectMissing, craft_application.errors.YamlError) as err:
+        # the project has to exist by this point, but this is a non-critical
+        # validator so log the problem and move on
+        emit.debug("Couldn't find or parse the project's snapcraft.yaml")
+        emit.debug(f"Error: {err}")
+        return
+
+    if data.get("platforms") and any(not v for v in data["platforms"].values()):
+        raise craft_application.errors.RemoteBuildError(
+            message=(
+                "Launchpad can't build snaps when using '--build-for' with "
+                "a shorthand platforms entry in the project's snapcraft.yaml."
+            ),
+            resolution=(
+                "Use full platform entries or remove the '--build-for' argument."
+            ),
+            doc_slug="/explanation/remote-build.html",
+            retcode=os.EX_CONFIG,
         )
-        return return_code
-
-    def _get_project_build_fors(self) -> list[str]:
-        """Get a unique list of build-for architectures from the project.
-
-        :returns: A list of architectures.
-        """
-        build_fors = set({build_info.build_for for build_info in self.build_plan})
-        emit.debug(f"Parsed build-for architectures from build plan: {build_fors}")
-
-        return list(build_fors)

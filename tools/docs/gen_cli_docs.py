@@ -103,6 +103,8 @@ def main(docs_dir):
         g = group_path.open("w")
 
         for cmd_class in sorted(group.commands, key=lambda c: c.name):
+            if cmd_class.hidden:
+                continue
             cmd = cmd_class(app.app_config)
             p = _CustomArgumentParser(help_builder)
             cmd.fill_parser(p)
@@ -138,6 +140,17 @@ def main(docs_dir):
 
             # Add an entry in the table of contents.
             toc.append(cmd.name)
+
+    # Delete obsolete .rst files that are not in the new list of commands.
+    existing_files = {
+        f.stem for f in commands_ref_dir.glob("*.rst")
+        if f.name not in ["toc.rst"] and not f.name.endswith("-commands.rst")
+    }
+    generated_files = set(toc)
+
+    obsolete_files = existing_files - generated_files
+    for name in obsolete_files:
+        (commands_ref_dir / (name + os.extsep + "rst")).unlink(missing_ok=True)
 
     toc_path = commands_ref_dir / "toc.rst"
     f = toc_path.open("w")

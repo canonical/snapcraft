@@ -1,0 +1,25 @@
+# wethr recipe, an example Node-based app
+
+name: wethr
+version: git
+summary: Command line weather tool.
+description: |
+  Get current weather:-
+    $ wethr
+  Get current weather in metric units
+    $ wethr --metric
+  Get current weather in imperial units
+    $ wethr --imperial
+
+confinement: strict
+base: core20
+
+apps:
+  wethr:
+    command: bin/wethr
+
+parts:
+  wethr:
+    source: .
+    plugin: npm
+    npm-node-version: 14.16.1

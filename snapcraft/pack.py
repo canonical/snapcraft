@@ -17,9 +17,9 @@
 """Snap file packing."""
 
 import subprocess
+from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
-from typing import List, Optional, Union
 
 from craft_cli import emit
 
@@ -33,7 +33,7 @@ def _verify_snap(directory: Path) -> None:
             ["snap", "pack", "--check-skeleton", directory],
             capture_output=True,
             check=True,
-            universal_newlines=True,
+            text=True,
         )
     except subprocess.CalledProcessError as err:
         stderr = None
@@ -45,7 +45,7 @@ def _verify_snap(directory: Path) -> None:
         raise errors.SnapcraftError(msg, details=f"{err!s}") from err
 
 
-def _get_directory(output: Optional[str]) -> Path:
+def _get_directory(output: str | None) -> Path:
     """Get directory to output the snap file to.
 
     If no directory is provided, return current working directory.
@@ -64,11 +64,11 @@ def _get_directory(output: Optional[str]) -> Path:
 
 
 def _get_filename(
-    output: Optional[str],
-    name: Optional[str] = None,
-    version: Optional[str] = None,
-    target_arch: Optional[str] = None,
-) -> Optional[str]:
+    output: str | None,
+    name: str | None = None,
+    version: str | None = None,
+    target: str | None = None,
+) -> str | None:
     """Get output filename of the snap file.
 
     If `output` is not a file, then the filename will be <name>_<version>_<target_arch>.snap
@@ -76,7 +76,7 @@ def _get_filename(
     :param output: Snap file name or directory.
     :param name: Name of snap project.
     :param version: Version of snap project.
-    :param target_arch: Target architecture the snap project is built to.
+    :param target: Target platform or architecture of the snap.
 
     :return: The filename of the snap file if output or name/version/target_arch are specified.
     """
@@ -85,8 +85,8 @@ def _get_filename(
         if not output_path.is_dir():
             return output_path.name
 
-    if all(i is not None for i in [name, version, target_arch]):
-        return f"{name}_{version}_{target_arch}.snap"
+    if all(i is not None for i in [name, version, target]):
+        return f"{name}_{version}_{target}.snap"
 
     return None
 
@@ -94,21 +94,21 @@ def _get_filename(
 def _pack(
     directory: Path,
     output_dir: Path,
-    output_file: Optional[str],
-    compression: Optional[str],
+    output_file: str | None,
+    compression: str | None,
 ) -> str:
     """Pack a directory with `snap pack` as a snap or component.
 
     :param directory: Directory to pack.
-    :param output_dir: Directory to output the artefact to.
-    :param output_file: Name of the artefact.
+    :param output_dir: Directory to output the artifact to.
+    :param output_file: Name of the artifact.
     :param compression: Compression type to use, None for default.
 
     :returns: The filename of the packed snap or component.
 
     :raises SnapcraftError: If the directory cannot be packed.
     """
-    command: List[Union[str, Path]] = ["snap", "pack"]
+    command: list[str | Path] = ["snap", "pack"]
 
     if output_file:
         command.extend(["--filename", output_file])
@@ -118,24 +118,17 @@ def _pack(
 
     emit.debug(f"Pack command: {command}")
     try:
-        proc = subprocess.run(
-            command, capture_output=True, check=True, universal_newlines=True
-        )
+        proc = subprocess.run(command, capture_output=True, check=True, text=True)
     except subprocess.CalledProcessError as err:
-        msg = str(err)
-        details = None
-        if err.stderr:
-            details = err.stderr.strip()
-        raise errors.SnapcraftError(msg, details=details) from err
+        raise errors.SnapPackError(err) from err
 
     return Path(str(proc.stdout).partition(":")[2].strip()).name
 
 
-def _retry_with_newer_snapd(func):
-
+def _retry_with_newer_snapd(func: Callable) -> Callable:
     @wraps(func)
     def retry_with_edge_snapd(
-        directory: Path, output_dir: Path, compression: Optional[str] = None
+        directory: Path, output_dir: Path, compression: str | None = None
     ) -> str:
         try:
             return func(directory, output_dir, compression)
@@ -164,7 +157,7 @@ def _retry_with_newer_snapd(func):
 
 @_retry_with_newer_snapd
 def pack_component(
-    directory: Path, output_dir: Path, compression: Optional[str] = None
+    directory: Path, output_dir: Path, compression: str | None = None
 ) -> str:
     """Pack a directory containing component data.
 
@@ -198,11 +191,11 @@ def pack_component(
 def pack_snap(
     directory: Path,
     *,
-    output: Optional[str],
-    compression: Optional[str] = None,
-    name: Optional[str] = None,
-    version: Optional[str] = None,
-    target_arch: Optional[str] = None,
+    output: str | None,
+    compression: str | None = None,
+    name: str | None = None,
+    version: str | None = None,
+    target: str | None = None,
 ) -> str:
     """Pack snap contents with `snap pack`.
 
@@ -221,7 +214,7 @@ def pack_snap(
     :param compression: Compression type to use, None for defaults.
     :param name: Name of snap project.
     :param version: Version of snap project.
-    :param target_arch: Target architecture the snap project is built to.
+    :param target: Target platform or architecture of the snap.
 
     :returns: The filename of the packed snap.
 
@@ -233,7 +226,7 @@ def pack_snap(
     _verify_snap(directory)
 
     output_dir = _get_directory(output)
-    output_file = _get_filename(output, name, version, target_arch)
+    output_file = _get_filename(output, name, version, target)
 
     emit.progress("Creating snap package...")
     return _pack(

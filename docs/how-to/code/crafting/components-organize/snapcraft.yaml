@@ -1,0 +1,24 @@
+name: hello-components
+version: "1.0"
+summary: A snap with a component
+description: A simple snap with a component containing translations
+base: core24
+confinement: strict
+
+components:
+  translations:
+    type: standard
+    summary: Translations modules
+    description: Translations modules
+    version: "1.0"
+
+parts:
+  application:
+    source: src
+    plugin: dump
+
+  translations:
+    source: translations
+    plugin: dump
+    organize:
+      la: (component/translations)

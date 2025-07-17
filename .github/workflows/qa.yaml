@@ -1,0 +1,24 @@
+name: QA
+on:
+  push:
+    branches:
+      - "main"
+      - "feature/*"
+      - "hotfix/*"
+      - "release/*"
+      - "renovate/*"
+  pull_request:
+
+jobs:
+  lint:
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
+  test:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      # Snapcraft currently only tests on Python 3.12 on Ubuntu 24.04
+      fast-test-platforms: '["ubuntu-24.04"]'
+      slow-test-platforms: '["ubuntu-24.04"]'
+      lowest-python-platform: "ubuntu-24.04"
+      fast-test-python-versions: '["3.12"]'
+      slow-test-python-versions: '["3.12"]'
+      lowest-python-version: "3.10"

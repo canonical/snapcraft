@@ -35,7 +35,7 @@ def cast_dict_scalars_to_strings(data: dict) -> dict[str, Any]:
 
 
 def _to_string(
-    data: dict | list | str | int | float | str | bool | None
+    data: dict | list | str | int | float | str | bool | None,
 ) -> dict[str, Any] | list | str | None:
     """Recurse through nested dicts and lists and cast scalar values to strings.
 
@@ -56,7 +56,9 @@ def _to_string(
 
     return data
 
+
 Presence = Literal["required", "optional", "invalid"]
+
 
 class Component(models.CraftBaseModel):
     """Represent a Component in a Validation Set."""
@@ -66,6 +68,7 @@ class Component(models.CraftBaseModel):
 
     revision: int | None = None
     """Component revision"""
+
 
 class Snap(models.CraftBaseModel):
     """Represent a Snap in a Validation Set."""
@@ -85,11 +88,13 @@ class Snap(models.CraftBaseModel):
     components: dict[str, Presence | Component] | None = None
     """Snap components"""
 
+
 class EditableBuildAssertion(models.CraftBaseModel):
     """Subset of a build assertion that can be edited by the user.
 
     https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#request-json-schema
     """
+
     account_id: str
     """The "account-id" assertion header"""
 
@@ -116,6 +121,7 @@ class BuildAssertion(EditableBuildAssertion):
 
     https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#response-json-schema
     """
+
     authority_id: str
     """The "authority-id" assertion header"""
 
@@ -145,6 +151,7 @@ class BuildAssertion(EditableBuildAssertion):
 
 class Headers(models.CraftBaseModel):
     """Assertion headers for a validation set."""
+
     headers: BuildAssertion
     """Assertion headers"""
 
@@ -154,5 +161,6 @@ class ValidationSets(models.CraftBaseModel):
 
     https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#id4
     """
+
     assertions: list[Headers]
     """List of validation-set assertions"""

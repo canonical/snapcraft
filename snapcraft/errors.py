@@ -16,7 +16,7 @@
 
 """Snapcraft error definitions."""
 
-from typing import Optional
+import subprocess
 
 from craft_cli import CraftError
 
@@ -146,20 +146,20 @@ class MaintenanceBase(SnapcraftError):
     """Error for bases under ESM and no longer supported in this release."""
 
     def __init__(self, base: str) -> None:
-        channel: Optional[str] = None
+        channel: str | None = None
         if base == "core":
             channel = "4.x"
         elif base == "core18":
             channel = "7.x"
 
-        resolution: Optional[str] = None
+        resolution: str | None = None
         if channel:
             resolution = f"Install from or refresh to the {channel!r} channel."
 
         super().__init__(
             f"{base!r} is not supported on this version of Snapcraft.",
             resolution=resolution,
-            docs_url="https://snapcraft.io/docs/base-snaps",
+            docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base",
         )
         self.base = base
 
@@ -171,12 +171,38 @@ class StoreCredentialsUnauthorizedError(SnapcraftError):
         super().__init__(
             message,
             resolution=resolution,
-            docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+            docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate",
         )
 
 
 class SnapcraftAssertionError(SnapcraftError):
-    """Error raised when an assertion (validation or registries set) is invalid.
+    """Error raised when an assertion (validation set or confdb schema) is invalid.
 
     Not to be confused with Python's built-in AssertionError.
     """
+
+
+class SnapcraftAssertionWarning(SnapcraftAssertionError):
+    """Error raised when there is a non-critical warning for the assertion."""
+
+
+class SnapPackError(SnapcraftError):
+    """Snapd packing error."""
+
+    def _get_error_string_from_stderr(self, stderr: str | None) -> str | None:
+        if stderr is None:
+            return "snapd did not report an error"
+
+        error_lines = (err for err in stderr.splitlines() if err.startswith("error: "))
+        clean_error_lines = [err[len("error: ") :] for err in error_lines]
+        # There shall only be one
+        try:
+            return clean_error_lines[-1]
+        except IndexError:
+            return "snapd did not report an error"
+
+    def __init__(self, call_error: subprocess.CalledProcessError) -> None:
+        super().__init__(
+            message="Snapd failed to pack",
+            details=self._get_error_string_from_stderr(call_error.stderr),
+        )

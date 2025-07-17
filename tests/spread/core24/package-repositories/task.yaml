@@ -29,7 +29,7 @@ execute: |
   cd "$SNAP"
 
   # Build what we have.
-  snapcraft --verbose
+  snapcraft
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous
@@ -41,7 +41,7 @@ execute: |
   rm -f ./*.snap
 
   # Also build in destructive mode.
-  snapcraft --verbose --destructive-mode
+  snapcraft --destructive-mode
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous

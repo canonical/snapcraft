@@ -16,42 +16,42 @@
 
 """The colcon plugin for ROS 2 parts.
 
-    - colcon-packages:
-      (list of strings)
-      List of colcon packages to build. If not specified, all packages in the
-      workspace will be built. If set to an empty list ([]), no packages will
-      be built, which could be useful if you only want ROS debs in the snap.
+- colcon-packages:
+  (list of strings)
+  List of colcon packages to build. If not specified, all packages in the
+  workspace will be built. If set to an empty list ([]), no packages will
+  be built, which could be useful if you only want ROS debs in the snap.
 
-    - colcon-packages-ignore:
-      (list of strings)
-      List of colcon packages to ignore. If not specified or set to an empty
-      list ([]), no packages will be ignored.
+- colcon-packages-ignore:
+  (list of strings)
+  List of colcon packages to ignore. If not specified or set to an empty
+  list ([]), no packages will be ignored.
 
-    - colcon-cmake-args:
-      (list of strings)
-      Arguments to pass to cmake projects. Note that any arguments here which match
-      colcon arguments need to be prefixed with a space. This can be done by quoting
-      each argument with a leading space.
+- colcon-cmake-args:
+  (list of strings)
+  Arguments to pass to cmake projects. Note that any arguments here which match
+  colcon arguments need to be prefixed with a space. This can be done by quoting
+  each argument with a leading space.
 
-    - colcon-catkin-cmake-args:
-      (list of strings)
-      Arguments to pass to catkin packages. Note that any arguments here which match
-      colcon arguments need to be prefixed with a space. This can be done by quoting
-      each argument with a leading space.
+- colcon-catkin-cmake-args:
+  (list of strings)
+  Arguments to pass to catkin packages. Note that any arguments here which match
+  colcon arguments need to be prefixed with a space. This can be done by quoting
+  each argument with a leading space.
 
-    - colcon-ament-cmake-args:
-      (list of strings)
-      Arguments to pass to ament_cmake packages. Note that any arguments here which
-      match colcon arguments need to be prefixed with a space. This can be done by
-      quoting each argument with a leading space.
+- colcon-ament-cmake-args:
+  (list of strings)
+  Arguments to pass to ament_cmake packages. Note that any arguments here which
+  match colcon arguments need to be prefixed with a space. This can be done by
+  quoting each argument with a leading space.
 
-    This plugin expects the build-environment `ROS_DISTRO` and `ROS_BUILD_BASE`
-    to be populated by the `ros2-<distro>` extension.
+This plugin expects the build-environment `ROS_DISTRO` and `ROS_BUILD_BASE`
+to be populated by the `ros2-<distro>` extension.
 
-    This plugin also expects certain variables that are specified by the extension,
-    specific to the ROS distro.  If not using the extension, set these in your
-    `build-environment`:
-      - ROS_DISTRO: "foxy"
+This plugin also expects certain variables that are specified by the extension,
+specific to the ROS distro.  If not using the extension, set these in your
+`build-environment`:
+  - ROS_DISTRO: "foxy"
 """
 
 from typing import Any, Dict, List, Set
@@ -180,7 +180,6 @@ class ColconPlugin(_ros.RosPlugin):
         return activation_commands
 
     def _get_build_commands(self) -> List[str]:
-
         build_command = [
             "colcon",
             "build",
@@ -194,36 +193,45 @@ class ColconPlugin(_ros.RosPlugin):
         ]
 
         if self.options.colcon_packages_ignore:
-            build_command.extend(["--packages-ignore", *self.options.colcon_packages_ignore])
+            build_command.extend(
+                ["--packages-ignore", *self.options.colcon_packages_ignore]
+            )
 
         if self.options.colcon_packages:
             build_command.extend(["--packages-select", *self.options.colcon_packages])
 
         # compile in release only if user did not set the build type in cmake-args
         if not any("-DCMAKE_BUILD_TYPE=" in s for s in self.options.colcon_cmake_args):
-            build_command.extend(["--cmake-args", "-DCMAKE_BUILD_TYPE=Release",
-                *self.options.colcon_cmake_args
-                ])
-        elif len(self.options.colcon_cmake_args)>0:
+            build_command.extend(
+                [
+                    "--cmake-args",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                    *self.options.colcon_cmake_args,
+                ]
+            )
+        elif len(self.options.colcon_cmake_args) > 0:
             build_command.extend(["--cmake-args", *self.options.colcon_cmake_args])
 
         if self.options.colcon_ament_cmake_args:
-            build_command.extend(["--ament-cmake-args", *self.options.colcon_ament_cmake_args])
+            build_command.extend(
+                ["--ament-cmake-args", *self.options.colcon_ament_cmake_args]
+            )
 
         if self.options.colcon_catkin_cmake_args:
-            build_command.extend(["--catkin-cmake-args", *self.options.colcon_catkin_cmake_args])
+            build_command.extend(
+                ["--catkin-cmake-args", *self.options.colcon_catkin_cmake_args]
+            )
 
         # Specify the number of workers
-        build_command.extend(["--parallel-workers", '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"'])
-
-        return (
-            ["## Build command", " ".join(build_command)]
-            + [
-                "## Post build command",
-                # Remove the COLCON_IGNORE marker so that, at staging,
-                # catkin can crawl the entire folder to look up for packages.
-                'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
-                'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
-                "fi",
-            ]
+        build_command.extend(
+            ["--parallel-workers", '"${SNAPCRAFT_PARALLEL_BUILD_COUNT}"']
         )
+
+        return ["## Build command", " ".join(build_command)] + [
+            "## Post build command",
+            # Remove the COLCON_IGNORE marker so that, at staging,
+            # catkin can crawl the entire folder to look up for packages.
+            'if [ -f "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE ]; then',
+            'rm "${SNAPCRAFT_PART_INSTALL}"/opt/ros/snap/COLCON_IGNORE',
+            "fi",
+        ]

@@ -90,8 +90,9 @@ def test_default(
     fake_store_verify_upload,
     snap_file,
     command_class,
+    fake_app_config,
 ):
-    cmd = command_class(None)
+    cmd = command_class(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -101,6 +102,12 @@ def test_default(
         )
     )
 
+    if command_class.hidden:
+        emitter.assert_progress(
+            f"The '{command_class.name}' command was renamed to 'upload'. Use 'upload' instead. "
+            "The old name will be removed in a future release.",
+            permanent=True,
+        )
     assert fake_store_verify_upload.mock_calls == [call(ANY, snap_name="basic")]
     assert fake_store_notify_upload.mock_calls == [
         call(
@@ -127,8 +134,9 @@ def test_built_at(
     fake_store_verify_upload,
     snap_file_with_started_at,
     command_class,
+    fake_app_config,
 ):
-    cmd = command_class(None)
+    cmd = command_class(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -155,9 +163,13 @@ def test_built_at(
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_default_channels(
-    emitter, fake_store_notify_upload, fake_store_verify_upload, snap_file
+    emitter,
+    fake_store_notify_upload,
+    fake_store_verify_upload,
+    snap_file,
+    fake_app_config,
 ):
-    cmd = commands.StoreUploadCommand(None)
+    cmd = commands.StoreUploadCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -184,8 +196,8 @@ def test_default_channels(
     )
 
 
-def test_invalid_file():
-    cmd = commands.StoreUploadCommand(None)
+def test_invalid_file(fake_app_config):
+    cmd = commands.StoreUploadCommand(fake_app_config)
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError) as raised:
         cmd.run(

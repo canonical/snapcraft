@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Utilities to extract project metadata from lifecycle directories."""
+
 from __future__ import annotations
 
 import pathlib
-from typing import Sequence
+from collections.abc import Sequence
 
 from craft_cli import emit
 from craft_parts import Part, ProjectDirs
@@ -34,7 +35,7 @@ def extract_lifecycle_metadata(
     """Obtain metadata information.
 
     :param adopt_info: the Project's ``adopt-info``
-    :param parse_info: the ``parse-info`` information from the Project, organised
+    :param parse_info: the ``parse-info`` information from the Project, organized
       as a dict of "part-name" to "list of files providing metadata".
     :param work_dir: the lifecycle's working directory.
     """

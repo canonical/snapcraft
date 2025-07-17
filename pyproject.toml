@@ -1,14 +1,201 @@
-[tool.black]
-extend-exclude = '''
-/(
-  | snapcraft_legacy
-  | tools
-  | docs/sphinx-resources
-)/
-'''
-# Targeting future versions as well so we don't have black reformatting code
-# en masse later.
-target_version = ["py310", "py311"]
+[project]
+name = "snapcraft"
+description = "Create snaps"
+dynamic = ["version"]
+dependencies = [
+    "attrs",
+    "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
+    "click>=8.2",
+    "craft-application[remote]>=5.4.0,<6.0.0",
+    "craft-archives~=2.1",
+    "craft-cli~=3.0",
+    "craft-grammar>=2.0.3,<3.0.0",
+    "craft-parts>=2.17.0,<3.0.0",
+    "craft-platforms~=0.7",
+    "craft-providers~=2.2",
+    "craft-store>=3.2.2,<4.0.0",
+    "cryptography",
+    "gnupg",
+    "jsonschema==2.5.1",
+    "launchpadlib",
+    "lazr.restfulclient",
+    "lxml",
+    "macaroonbakery",
+    "mypy-extensions",
+    "overrides",
+    "packaging",
+    "progressbar",
+    "pydantic~=2.8",
+    "pyelftools",
+    # Pygit2 and libgit2 need to match versions.
+    # Further info: https://www.pygit2.org/install.html#version-numbers
+    "pygit2~=1.13.0",
+    "pylxd ; sys_platform == 'linux'",
+    "python-debian ; sys_platform == 'linux'",
+    "pyxdg",
+    "pyyaml",
+    "raven",
+    "requests-toolbelt",
+    "requests-unixsocket2",
+    "requests>=2.32.4",
+    # setuptools >= 80.9 has a noisy warning about pkg_resources
+    "setuptools>=69.0,<80.9.0",
+    "simplejson",
+    "snap-helpers",
+    "tabulate",
+    "toml",
+    "tinydb",
+    "typing-extensions",
+    "validators>=0.28.3",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Natural Language :: English",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Software Distribution",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+readme = { file = "README.md", content-type = "text/markdown" }
+
+[dependency-groups]
+dev = [
+    "coverage[toml]",
+    "pyflakes",
+    "fixtures",
+    "mccabe",
+    "testscenarios",
+    "pexpect",
+    "pip",
+    "pycodestyle",
+    "pyftpdlib",
+    "pyinstaller ; sys_platform == 'win32'",
+    "pymacaroons",
+    "pyramid",
+    "pytest",
+    "pytest-cov",
+    "pytest-check",
+    "pytest-mock",
+    "pytest-subprocess",
+]
+docs = [
+    "canonical-sphinx[full]~=0.4.0",
+    "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+    "sphinx-lint",
+    # sphinx-sitemap>=2.7 fails to build on RTD infra, likely due to https://github.com/jdillard/sphinx-sitemap/pull/95
+    "sphinx-sitemap~=2.6.0",
+    "sphinx-toolbox",
+    "sphinxcontrib-details-directive",
+    "sphinxext-rediraffe==0.2.7",
+    "docutils>=0.21",
+    "pydantic-kitbash==0.0.6",
+    "pyspelling",
+]
+lint = [
+    "codespell[toml]",
+    { include-group = "types" },
+]
+types = [
+    "mypy",
+    "types-PyYAML",
+    "types-requests>=2.32",
+    "types-setuptools",
+    "types-simplejson",
+    "types-tabulate",
+    "types-toml",
+]
+dev-jammy = [
+    # Stay on 2.4 for Jammy
+    "python-apt~=2.4.0;sys_platform=='linux'",
+]
+dev-noble = [
+    # 2.7 for Noble
+    "python-apt~=2.7.0;sys_platform=='linux'",
+]
+dev-oracular = [
+    # 2.9 for Oracular+
+    "python-apt>=2.9.0,<2.9.9;sys_platform=='linux'",
+]
+dev-plucky = [
+    # 2.9 for Oracular+
+    "python-apt>=2.9.0;sys_platform=='linux'",
+]
+tics = ["flake8", "pylint"]
+
+[tool.uv]
+conflicts = [
+    [
+        { group = "dev-jammy" },
+        { group = "dev-noble" },
+        { group = "dev-oracular" },
+        { group = "dev-plucky" },
+    ]
+]
+
+[[tool.uv.index]]
+name = "python-apt-wheels"
+url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"  # workaround to get python-apt to install across multiple platforms
+explicit = true
+
+[tool.uv.sources]
+python-apt = { index = "python-apt-wheels" }
+
+[project.scripts]
+snapcraft = "snapcraft.application:main"
+snapcraft_legacy = "snapcraft_legacy.cli.__main__:run"
+
+[build-system]
+requires = [
+    "setuptools>=69.0",
+    "setuptools_scm[toml]>=7.1",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+script-files = ["bin/snapcraftctl", "bin/snapcraftctl-compat"]
+
+[tool.setuptools_scm]
+write_to = "snapcraft/_version.py"
+# the version comes from the latest annotated git tag formatted as 'X.Y.Z'
+# version scheme:
+#   - X.Y.Z.post<commits since tag>+g<hash>.d<%Y%m%d>
+# parts of scheme:
+#   - X.Y.Z - most recent git tag
+#   - post<commits since tag>+g<hash> - present when current commit is not tagged
+#   - +dirty - present when working dir is dirty
+# version scheme when no tags exist:
+#   - 0.0.post<total commits>+g<hash>
+version_scheme = "post-release"
+# deviations from the default 'git describe' command:
+# - only match annotated tags
+# - only match tags formatted as 'X.Y.Z'
+git_describe_command = [
+    "git",
+    "describe",
+    "--dirty",
+    "--long",
+    "--match",
+    "[0-9]*.[0-9]*.[0-9]*",
+    "--exclude",
+    "*[^0-9.]*",
+]
+# Appends "+dirty" to the version when working dir is dirty
+# Necessary to avoid version numbers being too long
+local_scheme = "dirty-tag"
+
+[tool.setuptools.packages.find]
+include = ["snapcraft", "extensions", "keyrings", "schema", "snapcraft_legacy"]
+namespaces = true
+
+[tool.setuptools.package-data]
+snapcraft = ["templates/*"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -31,11 +218,6 @@ include = ["snapcraft", "tests"]
 exclude = ["build", "tests/legacy", "tests/spread"]
 pythonVersion = "3.10"
 
-[tool.pytest.ini_options]
-minversion = "7.0"
-required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.10", "pytest-subprocess>=1.4"]
-addopts = ["--cov=snapcraft"]
-
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
 target-version = "py310"
@@ -45,6 +227,7 @@ extend-exclude = [
     "__pycache__",
     "legacy",
     "tests/legacy",
+    "snapcraft/_version.py",  # setuptools_scm generates old-style type annotations and single quotes
 ]
 lint.select = [
     "E", "F",  # The rules built into Flake8
@@ -64,24 +247,34 @@ lint.select = [
     "ICN",  # Unconventional import aliases.
     "Q",  # Consistent quotations
     "RET",  # Return values
+    "UP",  # pyupgrade
+    "TC001",  # Checks for first-party imports that are only used for type annotations
+    "TC002",  # Checks for third-party imports that are only used for type annotations
+    "TC003",  # Checks for standard library imports that are only used for type annotations
+    "TC004",  # Remove imports from type-checking guard blocks if used at runtime
+    "TC005",  # Delete empty type-checking blocks
 ]
 lint.ignore = [
     # These following copy the flake8 configuration
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
-    "E501",  # Line too long
+    "E501",  # Line too long (reason: ruff will automatically fix this for us)
     # The following copy our pydocstyle configuration
     "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
     "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
     "D203",  # 1 blank line required before class docstring (reason: pep257 default)
     "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
     "D215",  # Section underline is over-indented (reason: pep257 default)
+    "PLW1641", # eq-without-hash (most of our classes should be unhashable)
 
+    # Ignored due to conflicts with ruff's formatter:
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "COM812", # Missing trailing comma - mostly the same, but marginal differences.
+    "ISC001", # Single-line implicit string concatenation.
 
     # Stricter type checking rules that that are disabled.
     "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
     "N818",  # Exception names ending with suffix `Error`
     "ANN002",  "ANN003",  # Missing type annotation for *args and **kwargs
-    "ANN101", "ANN102",  # Type annotations for `self` and `cls` in methods
     "ANN204",  # Missing type annotations for magic methods
     "ANN401",  # Disallowing `typing.Any`
     "B904",  # Within an except clause, always explicitly `raise` an exception `from` something.
@@ -92,14 +285,10 @@ lint.ignore = [
     # Most of these are probably worth enabling eventually.
 
     # Annotation issues appear to be mostly in older code, so could be eventually enabled.
-    # 39 instances of ANN001.
-    "ANN001",  # Missing type annotation for function argument
     # 5 instances of ANN201, 10 instances of ANN202
     "ANN201", "ANN202",  # Missing return type annotation for public/private function
     # 13 instances of ANN206 - probably mostly :noqa-able
     "ANN206",
-    # 4 instances - would break if run with optimization
-    "S101", # Use of assert detected
     # Comprehensions - IDK, these ones flagged and they really could go either way.
     "C405", "C408", "C414",
     "RET504", "RET506",  # Return value related.
@@ -109,26 +298,80 @@ lint.ignore = [
     "S607",  # Partial executable path for subprocess calls
 ]
 
-[tool.ruff.lint.pylint]
-max-args = 6
-max-branches = 16
-
 [tool.ruff.lint.per-file-ignores]
-"tests/**.py" = [
-    "D",  # Ignore docstring rules in tests
-    "ANN", # Ignore type annotations in tests
-    "S101",  # Yeah of course we assert in tests
-    "B009",  # Allow calling `getattr` in tests since it can be used to make the test clearer.
-    "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
-    "S105", # Allow Possible hardcoded password.
-    "S106", # Allow Possible hardcoded password.
-    "S108", # Allow Probable insecure usage of temporary file or directory.
-    "PLR0913",  # Allow many arguments to tests
+"tests/**.py" = [ # Some things we want for the main project are unnecessary in tests.
+    "D",       # Ignore docstring rules in tests
+    "ANN",     # Ignore type annotations in tests
+    "ARG",     # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
+    "S101",    # Allow assertions in tests
+    "S103",    # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+    "S105",    # Allow Possible hardcoded password.
+    "S106",    # Allow Possible hardcoded password.
+    "S108",    # Allow Probable insecure usage of temporary file or directory
+    "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
+    "PLR2004", # Allow magic values in tests
+    "SLF",     # Allow accessing private members from tests.
 ]
 "tests/unit/parts/plugins/test_kernel.py" = [
     "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
 ]
-"__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
+"__init__.py" = [
+    "I001", # isort leaves init files alone by default, this makes ruff ignore them too.
+    "F401", # Allows unused imports in __init__ files.
+]
 
 [tool.ruff.lint.flake8-annotations]
-suppress-none-returning = true  # We don't need to explicitly point out that a function doesn't return anything
+allow-star-arg-any = true
+
+[tool.ruff.lint.flake8-builtins]
+strict-checking = true
+
+[tool.ruff.lint.pydocstyle]
+ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
+    "typing.overload", # Default configuration
+    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
+    "overrides.override",
+    "overrides.overrides",
+    "typing.override",
+    "typing_extensions.override",
+]
+
+[tool.ruff.lint.pylint]
+max-args = 8
+max-branches = 16
+
+[tool.ruff.lint.pep8-naming]
+# Allow Pydantic's `@validator` decorator to trigger class method treatment.
+classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = "tests"
+xfail_strict = true
+addopts = "--ignore=tests/spread"
+markers = ["slow: slow tests"]
+
+[tool.coverage.run]
+branch = true
+omit = ["test/**"]
+
+[tool.coverage.report]
+skip_empty = true
+exclude_also = [
+    "if (typing\\.)?TYPE_CHECKING:",
+]
+
+[tool.codespell]
+ignore-words-list = [
+    "buildd",
+    "crate",
+    "assertIn",
+    "socio-economic",
+]
+skip = [
+    # Keyrings aren't code
+    "*.asc",
+    # These tests include some non-English text
+    "*/test_appstream.py",
+    "*/test_update_metadata.py",
+]

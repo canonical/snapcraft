@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital@0;1&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Ubuntu:ital@0;1&display=swap");
 
 body {
     font-family: Ubuntu, "times new roman", times, roman, serif;
@@ -8,7 +8,7 @@ div .toctree-wrapper {
     column-count: 2;
 }
 
-div .toctree-wrapper>ul {
+div .toctree-wrapper > ul {
     margin: 0;
 }
 
