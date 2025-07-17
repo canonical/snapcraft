@@ -324,7 +324,7 @@ def complex_project():
           app1:
             command: bin/mytest
             autostart: test-app.desktop
-            common-id: test-common-id
+            common-id: org.test.app
             bus-name: test-bus-name
             completer: test-completer
             stop-command: test-stop-command
@@ -470,7 +470,7 @@ def test_complex_snap_yaml(complex_project, new_dir):
           app1:
             command: bin/mytest
             autostart: test-app.desktop
-            common-id: test-common-id
+            common-id: org.test.app
             bus-name: test-bus-name
             completer: test-completer
             stop-command: test-stop-command
