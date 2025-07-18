@@ -76,16 +76,18 @@ run:
 
 ```bash
 git clone git@github.com:<username>/snapcraft.git --recurse-submodules
+cd snapcraft
 git remote add upstream git@github.com:canonical/snapcraft.git
 git fetch upstream
 ```
 
-If you don't authenticate with SSH, clone with
+If you don’t authenticate with SSH, clone with
 [HTTPS](https://docs.github.com/en/get-started/git-basics/about-remote-repositories#cloning-with-https-urls)
 instead:
 
 ```bash
 git clone https://github.com/<username>/snapcraft --recurse-submodules
+cd snapcraft
 git remote add upstream https://github.com/canonical/snapcraft.git
 git fetch upstream
 ```
@@ -110,9 +112,9 @@ Snapcraft.
 
 All significant work in Snapcraft should be tied to an existing issue or ticket.
 
-Once you find an issue that you'd like to work on, it's best to reach out so that a
+Once you find an issue that you’d like to work on, it’s best to reach out so that a
 Snapcraft maintainer can assign the ticket to you before starting. This process varies
-depending on the issue's complexity and scope.
+depending on the issue’s complexity and scope.
 
 #### Minor changes
 
@@ -121,22 +123,31 @@ others have reported it. If they have, look into the current status of the topic
 one else is working on it, add a comment stating that you'd like to take it on, and the
 Starcraft team will assign it to you.
 
-If you don't find a related issue, [open
-one](https://github.com/canonical/snapcraft/issues/new/choose) and indicate that you're
+If you don’t find a related issue, [open
+one](https://github.com/canonical/snapcraft/issues/new/choose) and indicate that you’re
 interested in taking it on. When creating the issue, be sure to add any relevant labels.
 A Snapcraft maintainer will then review the issue and assign it to you.
 
 #### Major changes
 
-Once you've found or [created an
-issue](https://docs.github.com/articles/creating-an-issue) you'd like to take on,
-propose your solution in the issue's thread. In your proposal, describe a plan for the
+If there's a large feature or fix you'd like to work on, contact us and the rest of the
+community on the [Snapcraft Matrix channel](https://matrix.to/#/#snapcraft:ubuntu.com).
+It's possible that work on it has been started, or that it fits into an existing plan.
+Often, you will save time and effort by checking for prior work.
+
+For changes that requires coordination with the Snap Store or snapd, create a post on
+the [forum](https://forum.snapcraft.io), which serves as a central point for all teams
+in the snap ecosystem.
+
+Once you’ve found or [created an
+issue](https://docs.github.com/articles/creating-an-issue) you’d like to take on,
+propose your solution in the issue’s thread. In your proposal, describe a plan for the
 change, its tests, and its documentation. If the feature warrants a new page in the
 documentation, propose a [Diátaxis](https://diataxis.fr) category for the page. The
 Starcraft team will review your proposal and, if everything looks complete, assign the
 issue to you.
 
-Certain high-value issues are allocated monetary bounties. If you're interested in
+Certain high-value issues are allocated monetary bounties. If you’re interested in
 taking one on, we welcome you to [apply](?tab=t.0#heading=h.byuybwuu1qf).
 
 ### Create a development branch
@@ -165,11 +176,11 @@ make setup
 
 The new branch name should be brief, at no more than 80 characters. If you're working on
 a ticket, format your branch name as `<ticket-id>-<description>`. For example, if you're
-working on GitHub issue \#235, and it's about adding a string sanitizer, you'd name your
+working on GitHub issue \#235, and it's about adding a string sanitizer, you’d name your
 branch `issue-235-add-string-sanitizer-method`.
 
 If you have a small ad-hoc change with no ticket, make the name distinct and meaningful.
-For example, if you're fixing a typo, you'd name your branch
+For example, if you're fixing a typo, you’d name your branch
 `string-sanitizer-fix-typo`.
 
 ### Commit a change
@@ -229,8 +240,8 @@ changes stick, restage the modified files with `git add -A` and commit again.
 
 All nontrivial code changes should be accompanied by a reasonable set of tests.
 
-Snapcraft's test suite includes unit, integration, and
-[Spread](https://github.com/canonical/spread/blob/master/README.md) tests. If you're not
+Snapcraft's test suite includes both unit and
+[Spread](https://github.com/canonical/spread/blob/master/README.md) tests. If you’re not
 sure which tests you should add, go with your best judgement – additional tests can be
 added during the [review process](?tab=t.0#heading=h.ahvkx7vrs5d0).
 
@@ -277,7 +288,7 @@ Most small changes call for updates to the existing pages that describe the curr
 behavior. Look for how-to guides and references that mention the affected feature, and
 make any necessary changes.
 
-Major changes require new documentation describing the feature's usage and
+Major changes require new documentation describing the feature’s usage and
 specifications. For example, if you implement a new CLI command, describe its usage in
 one of the how-to guides and create a new reference for its options and flags.
 
@@ -290,7 +301,7 @@ Once you've updated the documentation, build the site locally with:
 make docs
 ```
 
-Check for problems in the documentation with:
+Check for errors in the documentation with:
 
 ```bash
 make lint-docs
@@ -312,7 +323,7 @@ assigned automatically to your work.
 ### Follow up for the review
 
 The Snapcraft maintainers try to review every PR in a timely manner, typically within a
-week for contributions that resolve an approved issue. While they can't guarantee
+week for contributions that resolve an approved issue. While they can’t guarantee
 immediate feedback, they aim to ensure that all contributions are reviewed thoroughly
 and thoughtfully.
 
