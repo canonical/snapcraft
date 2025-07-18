@@ -290,7 +290,7 @@ Once you've updated the documentation, build the site locally with:
 make docs
 ```
 
-Check for errors in the documentation with:
+Check for problems in the documentation with:
 
 ```bash
 make lint-docs
