@@ -408,21 +408,26 @@ def snap(directory, output, **kwargs):
 
 
 @lifecyclecli.command()
-@click.argument("directory")
+@add_provider_options()
+@click.argument("directory", required=False)
 @click.option("--output", "-o", help="path to the resulting snap.")
 def pack(directory, output, **kwargs):
-    """Create a snap from a directory holding a valid snap.
+    """Create a snap.
 
-    The layout of <directory> should contain a valid meta/snap.yaml in
-    order to be a valid snap.
+    Process parts and create a snap file containing the project payload
+    with the provided metadata. If a directory is specified, pack its
+    contents instead.
 
     \b
     Examples:
+        snapcraft pack
         snapcraft pack my-snap-directory
         snapcraft pack my-snap-directory --output renamed-snap.snap
-
     """
-    _pack(directory, output=output)
+    if directory:
+        _pack(directory, output=output)
+    else:
+        _execute(steps.PRIME, parts=tuple(), pack_project=True, output=output, **kwargs)
 
 
 @lifecyclecli.command()

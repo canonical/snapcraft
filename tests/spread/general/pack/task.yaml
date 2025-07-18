@@ -6,9 +6,13 @@ systems:
   - ubuntu-24.04*
 
 environment:
+  COMPRESSION: xz
   COMPRESSION/lzo: lzo
   COMPRESSION/xz: xz
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  COMMAND: "pack"
+  COMMAND/default: ""
+  COMMAND/pack: "pack"
 
 prepare: |
   mkdir test-snap
@@ -29,10 +33,10 @@ execute: |
   cd test-snap
 
   # First with lxd
-  snapcraft --use-lxd
+  snapcraft $COMMAND --use-lxd
   unsquashfs -s ./*.snap | grep Compression | MATCH "${COMPRESSION}"
   rm ./*.snap
 
   # Then on host.
-  snapcraft --destructive-mode
+  snapcraft $COMMAND --destructive-mode
   unsquashfs -s ./*.snap | grep Compression | MATCH "${COMPRESSION}"

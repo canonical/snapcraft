@@ -24,9 +24,9 @@ Application cryptography`_ documentation.
 Downloading build dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:ref:`Plugins <plugins>` use build tools to download and verify build dependencies. Some
-plugins can provision their own build tools, while others require the build tools to be
-available on the system.
+:ref:`Plugins <reference-plugins>` use build tools to download and verify build
+dependencies. Some plugins can provision their own build tools, while others require the
+build tools to be available on the system.
 
 For more information on the use of cryptography for plugins provided by Craft Parts, see
 the `Craft Parts cryptography`_ documentation.
@@ -143,11 +143,11 @@ Downloading source files
 When a part sources a ``.deb``, ``.rpm``, ``.snap``, ``.tar``, ``.zip``, ``.7z``, or an
 executable file, Snapcraft calls the Requests library to download it.
 
-If the part has the :ref:`source_checksum` key, then the integrity
-of the source file will be verified.  The checksum is verified
-using hashlib, so all `algorithms available to the hashlib library
-<https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available>`_ can
-be used.
+If the part has the :ref:`source-type <snapcraft-yaml-source-type>` key, then the
+integrity of the source file will be verified. The checksum is verified using hashlib,
+so all `algorithms available to the hashlib library
+<https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available>`_ can be
+used.
 
 Dependencies
 ~~~~~~~~~~~~
