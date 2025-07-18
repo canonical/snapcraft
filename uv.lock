@@ -537,7 +537,7 @@ wheels = [
 
 [[package]]
 name = "craft-cli"
-version = "3.1.0"
+version = "3.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -546,9 +546,9 @@ dependencies = [
     { name = "pywin32", marker = "sys_platform == 'win32' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-oracular' and extra == 'group-9-snapcraft-dev-plucky')" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/85/a9bd8b236f726fad86e372cb9adb4ceeb71d33439e3ea2371856810b2b53/craft_cli-3.1.0.tar.gz", hash = "sha256:93821985ea358332cde59d3ab39ed682d3ff7158686aa9707cb4b8372f73b6ac", size = 195396, upload-time = "2025-07-17T21:31:58.218Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3b/55/94f6e7767ebb13d234cb5d67a0c059c701d3c7f39c77e42ebf0464188ee5/craft_cli-3.1.1.tar.gz", hash = "sha256:157e1923d673461012313b38779554ea081ed402dfb54a86491c168b1717cc7a", size = 195416, upload-time = "2025-07-18T19:02:38.138Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/dd/b0c79d8575482044a8a30668e420a6c9bddd11b83af82112898fa45258d5/craft_cli-3.1.0-py3-none-any.whl", hash = "sha256:2ed862a840d37d227f512eb216ad84586670c979bb49e7d5787ff32581b2d28e", size = 46713, upload-time = "2025-07-17T21:31:56.504Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/20/185d18e86da8326b9f542091abe1ba604e37bcdd176a10d41124d106820d/craft_cli-3.1.1-py3-none-any.whl", hash = "sha256:7ba88233eee093d30b16c5b7fe6d48692535c53aec84e7008eb49acc12dbcdf6", size = 46714, upload-time = "2025-07-18T19:02:36.252Z" },
 ]
 
 [[package]]
@@ -2737,7 +2737,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.2" },
     { name = "craft-application", extras = ["remote"], specifier = ">=5.4.0,<6.0.0" },
     { name = "craft-archives", specifier = "~=2.1" },
-    { name = "craft-cli", specifier = "~=3.1" },
+    { name = "craft-cli", specifier = ">=3.1.1,<4.0.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
     { name = "craft-parts", specifier = ">=2.17.0,<3.0.0" },
     { name = "craft-platforms", specifier = "~=0.7" },
