@@ -174,14 +174,10 @@ git checkout -b <new-branch-name>
 make setup
 ```
 
-The new branch name should be brief, at no more than 80 characters. If you're working on
-a ticket, format your branch name as `<ticket-id>-<description>`. For example, if you're
-working on GitHub issue \#235, and it's about adding a string sanitizer, you’d name your
-branch `issue-235-add-string-sanitizer-method`.
-
-If you have a small ad-hoc change with no ticket, make the name distinct and meaningful.
-For example, if you're fixing a typo, you’d name your branch
-`string-sanitizer-fix-typo`.
+The new branch name should be brief, at no more than 80 characters. Format your branch
+name as `<ticket-id>-<description>`. For example, if you're working on GitHub issue
+\#235, and it's about adding a string sanitizer, you’d name your branch
+`issue-235-add-string-sanitizer-method`.
 
 ### Commit a change
 
