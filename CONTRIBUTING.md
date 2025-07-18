@@ -323,8 +323,8 @@ If the comment is a request, accommodate it by pushing one or more additional co
 the branch. It's simplest to add the commits locally and push, rather than in the GitHub
 interface, as it leads to fewer potential conflicts with syncs.
 
-Don't force-push changes to the branch. It destroys the history of the review and makes
-it harder for maintainers to see code changes.
+Don’t force-push further changes to the branch after your PR is fully approved. It makes
+it harder for reviewers to see whether any additional changes were made.
 
 ### Evaluating pull requests
 
