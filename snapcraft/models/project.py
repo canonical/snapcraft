@@ -1019,6 +1019,20 @@ class App(models.CraftBaseModel):
 
         return aliases
 
+    @pydantic.field_validator("common_id")
+    @classmethod
+    def _validate_common_id(cls, common_id: str):
+        common_id_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$")
+        if not common_id_re.match(common_id):
+            raise ValueError(
+                f"{common_id!r} is not a valid common id. Common IDs must be"
+                " reverse DNS ids. Checkout the freedesktop specs for more info"
+                " https://www.freedesktop.org/software/appstream/docs/"
+                "sect-Metadata-Application.html#tag-id-desktopapp"
+            )
+
+        return common_id
+
 
 class Hook(models.CraftBaseModel):
     """Snapcraft project hook definition."""
