@@ -537,18 +537,14 @@ wheels = [
 
 [[package]]
 name = "craft-cli"
-version = "3.0.0"
-source = { registry = "https://pypi.org/simple" }
+version = "3.1.1.post1+ge3c11f1"
+source = { git = "https://github.com/canonical/craft-cli?rev=work%2FCRAFT-4666-stop-errors-in-tests#e3c11f136ad38a426d81a57b0d34125b4f6535a6" }
 dependencies = [
     { name = "jinja2" },
     { name = "overrides" },
     { name = "platformdirs" },
     { name = "pywin32", marker = "sys_platform == 'win32' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-oracular') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-oracular' and extra == 'group-9-snapcraft-dev-plucky')" },
     { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/96/64/86c6310c29a2b58470ee2ddef188a03250bdb2cffa07229e55776b63ac8c/craft_cli-3.0.0.tar.gz", hash = "sha256:9dd847d62648fd312284e63237386ff99fc4d24f1adfa0100fe08b003abfe6d9", size = 120469, upload-time = "2025-03-27T17:43:50.279Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8e/16/edbd11dd952300973231b0efa6af27469bcb3f6cc55647f6179c1135bfe4/craft_cli-3.0.0-py3-none-any.whl", hash = "sha256:8a3395ad8df17f70bd80752a60488b52f8fa1ef694576801bfec0b2e9f1f6c4e", size = 46521, upload-time = "2025-03-27T17:43:48.853Z" },
 ]
 
 [[package]]
@@ -2737,7 +2733,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.2" },
     { name = "craft-application", extras = ["remote"], specifier = ">=5.4.0,<6.0.0" },
     { name = "craft-archives", specifier = "~=2.1" },
-    { name = "craft-cli", specifier = "~=3.0" },
+    { name = "craft-cli", git = "https://github.com/canonical/craft-cli?rev=work%2FCRAFT-4666-stop-errors-in-tests" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
     { name = "craft-parts", specifier = ">=2.17.0,<3.0.0" },
     { name = "craft-platforms", specifier = "~=0.7" },
