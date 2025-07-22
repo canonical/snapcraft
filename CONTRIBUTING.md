@@ -139,16 +139,14 @@ For changes that requires coordination with the Snap Store or snapd, create a po
 the [forum](https://forum.snapcraft.io), which serves as a central point for all teams
 in the snap ecosystem.
 
-Once you've found or [created an
-issue](https://docs.github.com/articles/creating-an-issue) you'd like to take on,
-propose your solution in the issue's thread. In your proposal, describe a plan for the
-change, its tests, and its documentation. If the feature warrants a new page in the
-documentation, propose a [Diátaxis](https://diataxis.fr) category for the page. The
-Starcraft team will review your proposal and, if everything looks complete, assign the
-issue to you.
+Once you've found or created an issue you'd like to take on, propose your solution in
+the issue's thread. In your proposal, describe a plan for the change, its tests, and its
+documentation. If the feature warrants a new page in the documentation, propose a
+[Diátaxis](https://diataxis.fr) category for the page. The Starcraft team will review
+your proposal and, if everything looks complete, assign the issue to you.
 
 Certain high-value issues are allocated monetary bounties. If you're interested in
-taking one on, we welcome you to [apply](#apply-for-a-bounty).
+taking one on, we welcome you to apply.
 
 ### Create a development branch
 
@@ -210,7 +208,7 @@ done browsing, press `Q` to exit the interactive log.
 > bug. That should be two separate commits.
 >
 > In other scenarios, multiple types could be appropriate because of the nature of the
-> commit. This can happen with test and docs, which can be used as either types or
+> commit. This can happen with `test` and `docs`, which can be used as either types or
 > scopes.
 >
 > Run down the following list and select the highest-ranked type that fits your change:
@@ -239,9 +237,9 @@ All nontrivial code changes should be accompanied by a reasonable set of tests.
 Snapcraft's test suite includes both unit and
 [Spread](https://github.com/canonical/spread/blob/master/README.md) tests. If you're not
 sure which tests you should add, go with your best judgement – additional tests can be
-added during the [review process](#follow-up-for-the-review).
+added during the review process.
 
-For low-complexity changes that require basic unit testing, run the fast tests:
+For low-complexity changes that require basic testing, run the fast tests:
 
 ```bash
 make test-fast
@@ -266,7 +264,7 @@ In rare instances, tests can fail in unpredictable ways, regardless of the state
 code. In such cases, it's best to delete your virtual environment and start over:
 
 ```bash
-rm -rf ./.venv
+rm -rf .venv
 make clean
 make setup
 ```
