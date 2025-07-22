@@ -384,7 +384,7 @@ def test_esm_error(snapcraft_yaml, base, monkeypatch, capsys):
     """Test that an error is raised when using an ESM base."""
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
-    monkeypatch.setattr("sys.argv", ["snapcraft"])
+    monkeypatch.setattr("sys.argv", ["snapcraft", "pack"])
 
     application.main()
 
