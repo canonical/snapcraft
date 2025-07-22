@@ -68,7 +68,7 @@ is provided on GitHub for continuous integration and delivery.
 Start by [creating a personal fork](https://github.com/canonical/snapcraft/fork) of the
 repository on GitHub.
 
-Next, on your host system, clone your fork and sync it with the upstream repository:
+Next, on your host system, clone your fork and sync it with the upstream repository.
 
 If you authenticate your GitHub account with
 [SSH](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account),
@@ -148,7 +148,7 @@ Starcraft team will review your proposal and, if everything looks complete, assi
 issue to you.
 
 Certain high-value issues are allocated monetary bounties. If you're interested in
-taking one on, we welcome you to [apply](?tab=t.0#heading=h.byuybwuu1qf).
+taking one on, we welcome you to [apply](#apply-for-a-bounty).
 
 ### Create a development branch
 
@@ -239,7 +239,7 @@ All nontrivial code changes should be accompanied by a reasonable set of tests.
 Snapcraft's test suite includes both unit and
 [Spread](https://github.com/canonical/spread/blob/master/README.md) tests. If you're not
 sure which tests you should add, go with your best judgement – additional tests can be
-added during the [review process](?tab=t.0#heading=h.ahvkx7vrs5d0).
+added during the [review process](#follow-up-for-the-review).
 
 For low-complexity changes that require basic unit testing, run the fast tests:
 
