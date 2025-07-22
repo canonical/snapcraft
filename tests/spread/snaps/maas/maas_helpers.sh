@@ -37,11 +37,11 @@ execute() {
     fi
 
     pushd repo
-    snapcraft "${PROVIDER_OPTION}"
+    snapcraft pack "${PROVIDER_OPTION}"
     snap install --dangerous maas_*.snap
     popd
 
     output=$(maas init --help)
     echo "${output}" | head -1 | MATCH "usage: maas init"
-    
+
 }

@@ -22,6 +22,6 @@ restore: |
 
 execute: |
   cd repo
-  snapcraft "${PROVIDER_OPTION}"
+  snapcraft pack "${PROVIDER_OPTION}"
 
   snap install --dangerous --classic microk8s_*.snap

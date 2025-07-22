@@ -22,7 +22,7 @@ restore: |
 
 execute: |
   cd repo
-  snapcraft "${PROVIDER_OPTION}"
+  snapcraft pack "${PROVIDER_OPTION}"
 
   # TODO LXD is a special snow flake. Enabling this needs removal on restore.
   # snap install --dangerous lxd_*.snap

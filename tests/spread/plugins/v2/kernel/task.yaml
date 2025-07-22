@@ -2,7 +2,7 @@ summary: V2 kernel plugin test
 manual: true
 kill-timeout: 180m
 
-systems: 
+systems:
   - ubuntu-22.04-64
 
 restore: |
@@ -14,5 +14,5 @@ execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   rm -f ./*.snap
-  snapcraft --use-lxd --enable-experimental-plugins
+  snapcraft pack --use-lxd --enable-experimental-plugins
   ls -l pc-kernel_*_amd64.snap

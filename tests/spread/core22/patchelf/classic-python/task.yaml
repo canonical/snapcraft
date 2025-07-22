@@ -25,7 +25,7 @@ execute: |
 
   # Build the core22 snap
   unset SNAPCRAFT_BUILD_ENVIRONMENT
-  snapcraft --use-lxd
+  snapcraft pack --use-lxd
 
   # Install the new snap
   sudo snap install --classic --dangerous example-python-ctypes*.snap

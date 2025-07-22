@@ -11,10 +11,10 @@ execute: |
   cd "${SNAP}"
 
   # build the test snap destructively to save time
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
 
   snapcraft lint lint-file_0.1_*.snap 2> output.txt || {
-    lxc --project snapcraft start snapcraft-linter && 
+    lxc --project snapcraft start snapcraft-linter &&
     sleep 10 &&
     lxc --project snapcraft exec snapcraft-linter -- snap install --edge core24 &&
     snapcraft lint lint-file_0.1_*.snap 2> output.txt

@@ -51,7 +51,7 @@ execute: |
   host_arch_triplet="$(gcc -dumpmachine)"
 
   # First build for armhf.
-  snapcraft --target-arch armhf --enable-experimental-target-arch
+  snapcraft pack --target-arch armhf --enable-experimental-target-arch
 
   [ -f cross-compile-stage-package-test_0.1_armhf.snap ]
   [ -f prime/usr/lib/arm-linux-gnueabihf/libjq.so.1 ]
@@ -75,7 +75,7 @@ execute: |
   rm "cross-compile-stage-package-test_0.1_$host_arch.snap"
 
   # Re-build for armhf.
-  snapcraft --target-arch armhf --enable-experimental-target-arch
+  snapcraft pack --target-arch armhf --enable-experimental-target-arch
 
   [ -f cross-compile-stage-package-test_0.1_armhf.snap ]
   [ -f prime/usr/lib/arm-linux-gnueabihf/libjq.so.1 ]
