@@ -354,6 +354,18 @@
                     "uniqueItems": true
                   }
                 ]
+              },
+              "build-for": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                ]
               }
             }
           }
