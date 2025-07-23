@@ -20,7 +20,7 @@ restore: |
   fi
 
   cd "$SNAP_DIR"
-  snapcraft pack clean
+  snapcraft clean
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
