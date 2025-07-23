@@ -22,7 +22,7 @@ restore: |
 
 execute: |
   cd "$SNAP"
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
   TESTBIN="${SNAP##*test-}"
   snap install craftctl-*.snap --dangerous
   $TESTBIN | grep hello

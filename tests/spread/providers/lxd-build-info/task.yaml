@@ -30,7 +30,7 @@ execute: |
   export SNAPCRAFT_BUILD_INFO=1
   export SNAPCRAFT_IMAGE_INFO='{"build_url":"http://example.com/"}'
 
-  snapcraft --use-lxd
+  snapcraft pack --use-lxd
   sudo snap install make-hello_*.snap --dangerous
 
   # Check that the snap includes build info

@@ -26,10 +26,10 @@ execute: |
   cd "$SNAP_DIR"
 
   # make sure we can create the snap using a build provider...
-  snapcraft --use-lxd
+  snapcraft pack --use-lxd
 
   # and also in destructive mode
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
 
   if [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
       expected_snap_yaml="$PWD/../../appstream-desktop/expected_snap_core22.yaml"

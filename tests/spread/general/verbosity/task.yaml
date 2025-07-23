@@ -15,7 +15,7 @@ execute: |
   unset SNAPCRAFT_ENABLE_DEVELOPER_DEBUG
 
   # run with the default command
-  snapcraft --verbose
+  snapcraft pack --verbose
 
   # run with an argument after a lifecycle command
   snapcraft pull --verbose

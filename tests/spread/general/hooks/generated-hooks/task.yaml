@@ -16,7 +16,7 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
 
   # verify wrappers were created for generated hooks
   if [[ ! -f prime/meta/hooks/configure ]] && [[ ! -f prime/meta/hooks/install ]]; then

@@ -29,12 +29,12 @@ execute: |
   cd test-snap
 
   # First with lxd
-  snapcraft --use-lxd
+  snapcraft pack --use-lxd
   ls -l
   test -f test-snap_5.5-dirty_amd64.snap
   rm ./*.snap
 
   # Then on host.
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
   ls -l
   test -f test-snap_5.5-dirty_amd64.snap
