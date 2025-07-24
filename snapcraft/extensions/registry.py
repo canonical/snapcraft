@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 
 from snapcraft import errors
 
+from .dotnet import DotnetExtension
 from .env_injector import EnvInjector
 from .gnome import GNOME
 from .kde_neon import KDENeon
@@ -40,6 +41,7 @@ if TYPE_CHECKING:
     ExtensionType = type[Extension]
 
 _EXTENSIONS: dict[str, "ExtensionType"] = {
+    "dotnet": DotnetExtension,
     "env-injector": EnvInjector,
     "gnome": GNOME,
     "ros2-humble": ROS2HumbleExtension,
