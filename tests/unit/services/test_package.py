@@ -329,7 +329,7 @@ def test_update_project_parse_info(
         default_project.adopt_info, parse_info, tmp_path, partitions=None
     )
     mocked_update.assert_called_once_with(
-        default_project,
+        fake_services.get("project").get(),
         metadata_list=[fake_metadata],
         assets_dir=in_project_path / "snap",
         prime_dir=tmp_path / "prime",

@@ -1969,12 +1969,6 @@ class Project(models.Project):
             name=self.name,
         )
         if base == "core22":
-            if self.platforms:
-                raise ValueError(
-                    f"'platforms' key is not supported for base {base!r}. "
-                    "Use 'architectures' key instead."
-                )
-
             # this is a one-shot - the value should not change when re-validating
             if self.architectures and self._architectures_in_yaml is None:
                 # record if architectures are defined in the yaml for remote-build (#4881)
