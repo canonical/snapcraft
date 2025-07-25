@@ -20,6 +20,7 @@ import sys
 import pytest
 
 from snapcraft_legacy.cli._runner import run
+from snapcraft_legacy.internal import errors
 
 
 @pytest.fixture
@@ -27,17 +28,40 @@ def mock_configure(mocker):
     yield mocker.patch("snapcraft_legacy.internal.log.configure")
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_runner(mocker):
     """Mock commands run by the snapcraft_legacy."""
     mocker.patch("snapcraft_legacy.cli.lifecycle._execute")
     mocker.patch("snapcraft_legacy.cli._runner.configure_requests_ca")
 
 
+@pytest.mark.parametrize(
+    "argument",
+    ["-v", "--verbose", "--quiet", "--verbosity=brief"],
+)
 @pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
-def test_verbosity_debug(command, mock_configure, mock_runner, mocker):
-    """`--enable-developer-debug` should set the verbosity."""
+@pytest.mark.parametrize("flip_order", [True, False])
+def test_ignore_verbosity_args(argument, command, flip_order, mock_configure, mocker, monkeypatch):
+    """Command line args don't determine the verbosity, except for `--enable-developer-debug`."""
+    monkeypatch.setenv("CRAFT_VERBOSITY_LEVEL", "TRACE")
+
+    args = [command, argument] if flip_order else [argument, command]
+
+    mocker.patch.object(sys, "argv", args)
+    with pytest.raises(SystemExit) as raised:
+        run()
+
+    assert raised.value.code == 0
+    # use the verbosity set in CRAFT_VERBOSITY_LEVEL
+    mock_configure.assert_called_once_with(log_level=logging.DEBUG)
+
+
+@pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
+def test_verbosity_enable_developer_debug(command, mock_configure, mocker, monkeypatch):
+    """`--enable-developer-debug` sets the verbosity."""
+    monkeypatch.delenv("CRAFT_VERBOSITY_LEVEL", raising=False)
     mocker.patch.object(sys, "argv", [command, "--enable-developer-debug"])
+
     with pytest.raises(SystemExit) as raised:
         run()
 
@@ -45,79 +69,73 @@ def test_verbosity_debug(command, mock_configure, mock_runner, mocker):
     mock_configure.assert_called_once_with(log_level=logging.DEBUG)
 
 
+@pytest.mark.parametrize(
+    ["verbosity", "level"],
+    [
+        ["quiet", logging.CRITICAL],
+        ["QUIET", logging.CRITICAL],
+        [None, logging.INFO],
+        ["brief", logging.INFO],
+        ["BRIEF", logging.INFO],
+        ["verbose", logging.INFO],
+        ["VERBOSE", logging.INFO],
+        ["debug", logging.DEBUG],
+        ["DEBUG", logging.DEBUG],
+        ["trace", logging.DEBUG],
+        ["TRACE", logging.DEBUG],
+    ]
+)
 @pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
-def test_verbosity_verbose_long(command, mock_configure, mock_runner, mocker):
-    """`--verbose` should set the verbosity."""
-    mocker.patch.object(sys, "argv", ["pull", "--verbose"])
+def test_verbosity_env(command, verbosity, level, mock_configure, mocker, monkeypatch):
+    """`CRAFT_VERBOSITY_LEVEL` sets the verbosity."""
+    if verbosity:
+        monkeypatch.setenv("CRAFT_VERBOSITY_LEVEL", verbosity)
+    else:
+        monkeypatch.delenv("CRAFT_VERBOSITY_LEVEL", raising=False)
+    mocker.patch.object(sys, "argv", [command])
+
     with pytest.raises(SystemExit) as raised:
         run()
 
     assert raised.value.code == 0
-    mock_configure.assert_called_once_with(log_level=logging.INFO)
+    mock_configure.assert_called_once_with(log_level=level)
 
 
 @pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
-def test_verbosity_verbose_long_before_command(
-    command, mock_configure, mock_runner, mocker
-):
-    """`--verbose` can precede the command."""
-    mocker.patch.object(sys, "argv", [command, "--verbose"])
-    with pytest.raises(SystemExit) as raised:
+def test_verbosity_env_error(command, mock_configure, mocker, monkeypatch):
+    """Error if `CRAFT_VERBOSITY_LEVEL` is invalid."""
+    monkeypatch.setenv("CRAFT_VERBOSITY_LEVEL", "UNKNOWN")
+    mocker.patch.object(sys, "argv", [command])
+
+    with pytest.raises(errors.SnapcraftVerbosityError) as raised:
         run()
 
-    assert raised.value.code == 0
-    mock_configure.assert_called_once_with(log_level=logging.INFO)
-
-
-@pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
-def test_verbosity_verbose_short(command, mock_configure, mock_runner, mocker):
-    """`-v` should set the verbosity."""
-    mocker.patch.object(sys, "argv", [command, "-v"])
-    with pytest.raises(SystemExit) as raised:
-        run()
-
-    assert raised.value.code == 0
-    mock_configure.assert_called_once_with(log_level=logging.INFO)
-
-
-@pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
-def test_verbosity_verbose_short_before_command(
-    command, mock_configure, mock_runner, mocker
-):
-    """`-v` can precede the command."""
-    mocker.patch.object(sys, "argv", [command, "-v"])
-    with pytest.raises(SystemExit) as raised:
-        run()
-
-    assert raised.value.code == 0
-    mock_configure.assert_called_once_with(log_level=logging.INFO)
-
-
-@pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
-def test_verbosity_verbose_long_and_debug_error(
-    capsys, command, mock_configure, mock_runner, mocker
-):
-    mocker.patch.object(sys, "argv", [command, "--verbose", "--enable-developer-debug"])
-    with pytest.raises(SystemExit) as raised:
-        run()
-
-    assert raised.value.code == 2
-    assert (
-        "Error: The 'enable-developer-debug' and 'verbose' options are mutually exclusive."
-        in capsys.readouterr().err
+    assert str(raised.value) == (
+        "Invalid verbosity level 'UNKNOWN'. Valid levels are: QUIET, BRIEF, VERBOSE, DEBUG, TRACE."
     )
 
 
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["-v", "--enable-developer-debug"],
+        ["--verbose", "--enable-developer-debug"],
+        ["--quiet", "--enable-developer-debug"],
+        ["--quiet", "--verbosity", "trace"],
+    ]
+)
 @pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
-def test_verbosity_verbose_short_and_debug_error(
-    capsys, command, mock_configure, mock_runner, mocker
+def test_verbosity_mutually_exclusive_error(
+    capsys, command, arguments, mock_configure, mocker
 ):
-    mocker.patch.object(sys, "argv", [command, "-v", "--enable-developer-debug"])
+    """Error when mutually exclusive arguments are provided."""
+    mocker.patch.object(sys, "argv", [command, *arguments])
     with pytest.raises(SystemExit) as raised:
         run()
 
     assert raised.value.code == 2
     assert (
-        "Error: The 'enable-developer-debug' and 'verbose' options are mutually exclusive."
+        "The 'verbose', 'quiet', 'verbosity', and 'enable-developer-debug' "
+        "options are mutually exclusive."
         in capsys.readouterr().err
     )

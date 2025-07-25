@@ -19,6 +19,7 @@ These methods, which are named after common logging levels, wrap around
 click.echo adding the corresponding color codes for each level.
 """
 
+import logging
 import os
 import shutil
 import sys
@@ -28,6 +29,9 @@ import click
 from craft_application.util import strtobool
 
 from snapcraft_legacy.internal import common
+
+
+logger = logging.getLogger(__name__)
 
 
 def is_tty_connected() -> bool:
@@ -44,25 +48,28 @@ def wrapped(msg: str) -> None:
     The maximum wrapping is determined by
     snapcraft_legacy.internal.common.MAX_CHARACTERS_WRAP
     """
-    click.echo(
-        click.formatting.wrap_text(
-            msg, width=common.MAX_CHARACTERS_WRAP, preserve_paragraphs=True
+    if logger.getEffectiveLevel() < logging.CRITICAL:
+        click.echo(
+            click.formatting.wrap_text(
+                msg, width=common.MAX_CHARACTERS_WRAP, preserve_paragraphs=True
+            )
         )
-    )
 
 
 def info(msg: str) -> None:
     """Output msg as informative to stdout.
     If the terminal supports colors the output will be green.
     """
-    click.echo("\033[0;32m{}\033[0m".format(msg))
+    if logger.getEffectiveLevel() < logging.CRITICAL:
+        click.echo("\033[0;32m{}\033[0m".format(msg))
 
 
 def warning(msg: str) -> None:
     """Output msg as a warning to stdout.
     If the terminal supports color the output will be yellow.
     """
-    click.echo("\033[1;33m{}\033[0m".format(msg), err=True)
+    if logger.getEffectiveLevel() < logging.CRITICAL:
+        click.echo("\033[1;33m{}\033[0m".format(msg), err=True)
 
 
 def error(msg: str) -> None:
@@ -74,17 +81,18 @@ def error(msg: str) -> None:
 
 def echo_with_pager_if_needed(msg: str) -> None:
     """Output msg to stdout using pager if output is too large for terminal."""
-    term_size = shutil.get_terminal_size()
-    split_output = msg.splitlines()
+    if logger.getEffectiveLevel() < logging.CRITICAL:
+        term_size = shutil.get_terminal_size()
+        split_output = msg.splitlines()
 
-    # Account for final newline when checking row counts.
-    output_lines = len(split_output) + 1
-    if output_lines > term_size.lines or any(
-        len(line) > term_size.columns for line in split_output
-    ):
-        click.echo_via_pager(msg)
-    else:
-        click.echo(msg)
+        # Account for final newline when checking row counts.
+        output_lines = len(split_output) + 1
+        if output_lines > term_size.lines or any(
+            len(line) > term_size.columns for line in split_output
+        ):
+            click.echo_via_pager(msg)
+        else:
+            click.echo(msg)
 
 
 def exit_error(

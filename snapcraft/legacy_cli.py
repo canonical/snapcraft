@@ -17,6 +17,7 @@
 """Handle re-execution into legacy code."""
 
 import logging
+import os
 
 from craft_cli import emit
 
@@ -36,6 +37,11 @@ def run_legacy(err: Exception | None = None):
         logger.setLevel(_ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name])
 
     snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
+
+    # For a consistent UX, we rely on craft-cli to determine the verbosity level
+    # rather than recomputing it with Click in snapcraft_legacy.
+    # We use an envvar because we can't pass kwargs to a click-decorated function.
+    os.environ["CRAFT_VERBOSITY_LEVEL"] = emit.get_mode().name
 
     # Legacy does not use craft-cli
     if err is not None:

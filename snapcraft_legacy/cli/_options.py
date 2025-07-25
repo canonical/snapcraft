@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import sys
 from typing import Any, Dict, List, Optional
@@ -25,6 +26,16 @@ from snapcraft_legacy.cli.echo import confirm, prompt, warning
 from snapcraft_legacy.internal import common, errors
 from snapcraft_legacy.internal.meta.snap import Snap
 from snapcraft_legacy.project import Project, get_snapcraft_yaml
+
+
+# A mapping of Craft CLI verbosity levels to logger verbosity levels
+_CRAFT_TO_LOGGER_VERBOSITY = {
+    "QUIET": logging.CRITICAL,
+    "BRIEF": logging.INFO,
+    "VERBOSE": logging.INFO,
+    "DEBUG": logging.DEBUG,
+    "TRACE": logging.DEBUG,
+}
 
 
 class PromptOption(click.Option):
@@ -220,6 +231,18 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         help="Show debug information and be more verbose.",
         supported_providers=_ALL_PROVIDERS,
     ),
+    dict(
+        param_decls=["--quiet"],
+        is_flag=True,
+        help="Only show warnings and errors, not progress",
+        supported_providers=_ALL_PROVIDERS,
+    ),
+    dict(
+        param_decls=["--verbosity"],
+        help="Set the verbosity level to 'quiet', 'brief', 'verbose', 'debug' or 'trace'",
+        type=click.Choice(_CRAFT_TO_LOGGER_VERBOSITY, case_sensitive=False),
+        supported_providers=_ALL_PROVIDERS,
+    ),
 ]
 
 
@@ -406,7 +429,28 @@ def get_build_provider_flags(build_provider: str, **kwargs) -> Dict[str, str]:
             if envvar is not None and key_formatted in kwargs:
                 build_provider_flags[envvar] = kwargs[key_formatted]
 
+    # the verbosity should always be set
+    build_provider_flags["CRAFT_VERBOSITY_LEVEL"] = get_craft_verbosity(**kwargs)
+
     return build_provider_flags
+
+
+def get_log_level(**kwargs) -> int:
+    """Get the log level from the command line args and environment."""
+    return _CRAFT_TO_LOGGER_VERBOSITY[get_craft_verbosity(**kwargs)]
+
+
+def get_craft_verbosity(**kwargs) -> str:
+    """Get the Craft CLI verbosity."""
+    if kwargs.get("enable_developer_debug"):
+        return "DEBUG"
+
+    if verbosity := os.getenv("CRAFT_VERBOSITY_LEVEL"):
+        verbosity = verbosity.strip().upper()
+        if verbosity not in _CRAFT_TO_LOGGER_VERBOSITY:
+            raise errors.SnapcraftVerbosityError(verbosity)
+
+    return verbosity or "BRIEF"
 
 
 def get_project(*, is_managed_host: bool = False, **kwargs):
