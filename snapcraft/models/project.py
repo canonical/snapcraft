@@ -451,13 +451,16 @@ class App(models.CraftBaseModel):
     common_id: str | None = pydantic.Field(
         default=None,
         description="The identifier to a desktop ID within an external appstream file.",
-        examples=["org.canonical.foo"],
+        examples=["org.canonical.foo", "org.kde.ghostwriter", "io.github.user.project"],
     )
-    """The identifier to a desktop ID within an external appstream file.
+    """The unique identifier for a project.
+
+    The common-id must be in reverse DNS format and consist only of alphanumeric characters and the
+    following special characters: ``., _, -``.
 
     See `Configure package information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_
-    for more information.
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_ and the `Appstream specification
+    <https://www.freedesktop.org/software/appstream/docs/sect-Metadata-Application.html#tag-id-desktopapp>`_ for more information.
     """
 
     bus_name: str | None = pydantic.Field(
@@ -1018,6 +1021,20 @@ class App(models.CraftBaseModel):
                 )
 
         return aliases
+
+    @pydantic.field_validator("common_id")
+    @classmethod
+    def _validate_common_id(cls, common_id: str):
+        common_id_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$")
+        if not common_id_re.match(common_id):
+            raise ValueError(
+                f"{common_id!r} is not a valid common id. Common IDs must be"
+                " reverse DNS ids. Checkout the freedesktop specs for more info"
+                " https://www.freedesktop.org/software/appstream/docs/"
+                "sect-Metadata-Application.html#tag-id-desktopapp"
+            )
+
+        return common_id
 
 
 class Hook(models.CraftBaseModel):
