@@ -41,6 +41,11 @@ The placeholder values looks similar to this:
       my-part:
         plugin: nil
 
+    apps:
+      my-app:
+        command: usr/bin/my-app
+        common-id: org.test.myapp
+
 When crafting a snap, fill these keys as follows:
 
 .. For help on choosing a name and registering it on the Snap Store, see `Registering your app name <>`_.
@@ -86,6 +91,11 @@ When crafting a snap, fill these keys as follows:
         case where your snap needs higher levels of system access, like a traditional
         unsandboxed package, you can :ref:`enable classic confinement
         <how-to-enable-classic-confinement>`.
+    * - ``common-id``
+      - Set a common id for your app(s). This common id is a reverse dns id used as
+        an appstream id of that app. This id useful in appstream centric stores. Please
+        look into `the documentation
+        <https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-id-generic>`_ for more info.
 
 
 .. _configure-package-information-reuse-information:
