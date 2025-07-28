@@ -847,14 +847,6 @@ class TestPlatforms:
         with pytest.raises(pydantic.ValidationError, match=error):
             Platform(**{"build-for": [const.SnapArch.amd64]})  # type: ignore[reportArgumentType]
 
-    def test_platforms_not_allowed_core22(self, project_yaml_data):
-        error = (
-            "'platforms' key is not supported for base 'core22'. "
-            "Use 'architectures' key instead."
-        )
-        with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(platforms={"amd64": None}))
-
     @pytest.mark.parametrize(
         ("architectures", "expected"),
         [
