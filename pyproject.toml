@@ -6,7 +6,7 @@ dependencies = [
     "attrs",
     "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
     "click>=8.2",
-    "craft-application[remote]>=5.4.0,<6.0.0",
+    "craft-application[remote]>=5.6.1,<6.0.0",
     "craft-archives~=2.1",
     "craft-cli>=3.1.2,<4.0.0",
     "craft-grammar>=2.0.3,<3.0.0",
