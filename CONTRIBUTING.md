@@ -88,7 +88,7 @@ instead:
 ```bash
 git clone https://github.com/<username>/snapcraft --recurse-submodules
 cd snapcraft
-git remote add upstream https://github.com/canonical/snapcraft.git
+git remote add upstream https://github.com/canonical/snapcraft
 git fetch upstream
 ```
 
