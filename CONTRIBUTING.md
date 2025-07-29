@@ -75,9 +75,9 @@ If you authenticate your GitHub account with
 run:
 
 ```bash
-git clone git@github.com:<username>/snapcraft.git --recurse-submodules
+git clone git@github.com:<username>/snapcraft --recurse-submodules
 cd snapcraft
-git remote add upstream git@github.com:canonical/snapcraft.git
+git remote add upstream git@github.com:canonical/snapcraft
 git fetch upstream
 ```
 
