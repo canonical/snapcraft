@@ -1,0 +1,21 @@
+/* Style for legacy announcement */
+
+.announcement-content a {
+    color: #06c !important;
+    text-decoration-color: #06c !important;
+}
+
+body {
+    --color-announcement-background: #e3d2e2;
+    --color-announcement-text: var(--color-foreground-primary);
+}
+
+body[data-theme="dark"] {
+    --color-announcement-background: #411934;
+}
+
+@media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+        --color-announcement-background: #411934;
+    }
+}
