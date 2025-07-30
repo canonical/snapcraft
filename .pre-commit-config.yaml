@@ -24,5 +24,6 @@ repos:
     rev: "" # Intentionally blank, despite the warning.
     hooks:
       - id: prettier
+        exclude: ^.*\.js$ # Exclude javascript files
         additional_dependencies:
           - prettier@3.6.0 # renovate: datasource=npm
