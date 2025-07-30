@@ -78,41 +78,8 @@ extensions.extend(
     )
 )
 
-rst_epilog = """
-.. include:: /reuse/links.txt
-"""
-
 exclude_patterns = [
     "sphinx-resources",
-    # Excluded because Snapcraft doesn't use overlays
-    "common/craft-parts/overlay_parameters.rst",
-    # Excluded here because they are either included explicitly in other
-    # documents (so they generate "duplicate label" errors) or they aren't
-    # used in this documentation at all (so they generate "unreferenced"
-    # errors).
-    "common/craft-parts/explanation/dump_plugin.rst",
-    "common/craft-parts/explanation/file-migration.rst",
-    "common/craft-parts/explanation/gradle_plugin.rst",
-    "common/craft-parts/explanation/how_parts_are_built.rst",
-    "common/craft-parts/explanation/lifecycle.rst",
-    "common/craft-parts/explanation/overlay_parameters.rst",
-    "common/craft-parts/explanation/overlays.rst",
-    "common/craft-parts/explanation/parts.rst",
-    "common/craft-parts/how-to/craftctl.rst",
-    "common/craft-parts/how-to/override_build.rst",
-    "common/craft-parts/reference/part_properties.rst",
-    "common/craft-parts/reference/parts_steps.rst",
-    "common/craft-parts/reference/step_execution_environment.rst",
-    "common/craft-parts/reference/step_output_directories.rst",
-    "common/craft-parts/reference/plugins/maven_plugin.rst",
-    "common/craft-parts/reference/plugins/poetry_plugin.rst",
-    "common/craft-parts/reference/plugins/python_plugin.rst",
-    "common/craft-parts/reference/plugins/uv_plugin.rst",
-    # Extra non-craft-parts exclusions can be added after this comment
-    # Staged files for Discourse migration
-    "how-to/crafting/add-a-part.rst",
-    "how-to/publishing/build-snaps-remotely.rst",
-    "release-notes/snapcraft-8-11.rst",
 ]
 
 # region Options for extensions
@@ -142,20 +109,5 @@ sys.path.append(str(model_dir.absolute()))
 
 library_dir = (project_dir / ".venv/lib/python3.12/site-packages").resolve()
 sys.path.append(str(library_dir.absolute()))
-
-def generate_cli_docs(nil):
-    gen_cli_docs_path = (project_dir / "tools/docs/gen_cli_docs.py").resolve()
-    os.system("%s %s" % (gen_cli_docs_path, project_dir / "docs"))
-
-def setup(app):
-    app.connect("builder-inited", generate_cli_docs)
-
-# Setup libraries documentation snippets for use in snapcraft docs.
-common_docs_path = pathlib.Path(__file__).parent / "common"
-craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-parts"
-(common_docs_path / "craft-parts").unlink(missing_ok=True)
-(common_docs_path / "craft-parts").symlink_to(
-    craft_parts_docs_path, target_is_directory=True
-)
 
 # endregion
