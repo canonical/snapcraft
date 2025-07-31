@@ -1,7 +1,7 @@
-.. _about-this-documentation:
+.. _contribute-to-this-documentation:
 
-About this documentation
-========================
+Contribute to this documentation
+================================
 
 The documentation is Snapcraft's first-person account of itself to the world. It
 provides knowledge and guidance to people who use, study, and develop the project.
@@ -34,7 +34,7 @@ author the documentation, there are a few paths you can take:
 * Discuss your ideas on the `Snapcraft forum <https://forum.snapcraft.io>`_.
 * Bring your experience and ideas to the `Snapcraft Matrix channel
   <https://matrix.to/#/#snapcraft:ubuntu.com>`_.
-* Volunteer for a task in the :ref:`about-this-documentation-coda`.
+* Volunteer for a task in the :ref:`contribute-to-this-documentation-coda`.
 
 Your contributions to the project are valuable. The team sees authorship as being on
 equal footing with development.
@@ -46,7 +46,7 @@ Canonical employees in a public and visible way. Lastly, all contributors receiv
 recognition in the Snapcraft release that they work on.
 
 
-.. _about-this-documentation-coda:
+.. _contribute-to-this-documentation-coda:
 
 Canonical Open Documentation Academy
 ------------------------------------
