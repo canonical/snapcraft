@@ -57,7 +57,7 @@ html_context = {
 # Target repository for the edit button on pages
 html_theme_options = {
     "source_edit_link": "https://github.com/canonical/snapcraft",
-    "announcement": "<strong>This is legacy documentation for Snapcraft 7</strong>. For up-to-date features and documentation, consider migrating to <a href='https://documentation.ubuntu.com/snapcraft'>Snapcraft 8</a>.",
+    "announcement": "<strong>Snapcraft 7 has ended standard support</strong>. For the latest features and documentation, upgrade to <a href='https://documentation.ubuntu.com/snapcraft'>Snapcraft 8</a>.",
 }
 
 html_static_path = ["_static"]
