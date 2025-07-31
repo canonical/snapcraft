@@ -24,5 +24,6 @@ repos:
     rev: "" # Intentionally blank, despite the warning.
     hooks:
       - id: prettier
+        files: ^(.\/?)*\.(yaml|yml|json|json5|css|md)$
         additional_dependencies:
           - prettier@3.6.0 # renovate: datasource=npm
