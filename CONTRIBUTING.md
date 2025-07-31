@@ -120,8 +120,8 @@ depending on the issue's complexity and scope.
 
 If you'd like to add a small feature or fix, check the project's GitHub issues to see if
 others have reported it. If they have, look into the current status of the topic. If no
-one else is working on it, add a comment stating that you'd like to take it on, and the
-Starcraft team will assign it to you.
+one else is working on it, add a comment stating that you'd like to take it on, and a
+Snapcraft maintainer will assign it to you.
 
 If you don't find a related issue, [open
 one](https://github.com/canonical/snapcraft/issues/new/choose) and indicate that you're
@@ -142,8 +142,8 @@ in the snap ecosystem.
 Once you've found or created an issue you'd like to take on, propose your solution in
 the issue's thread. In your proposal, describe a plan for the change, its tests, and its
 documentation. If the feature warrants a new page in the documentation, propose a
-[Diátaxis](https://diataxis.fr) category for the page. The Starcraft team will review
-your proposal and, if everything looks complete, assign the issue to you.
+[Diátaxis](https://diataxis.fr) category for the page. A Snapcraft maintainer will
+review your proposal and, if everything looks complete, assign the issue to you.
 
 Certain high-value issues are allocated monetary bounties. If you're interested in
 taking one on, we welcome you to apply.
