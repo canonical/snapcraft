@@ -20,7 +20,11 @@ execute: |
   # run with an argument after a lifecycle command
   snapcraft pull --verbose
   snapcraft pull -v
+  snapcraft pull --quiet
+  snapcraft pull --verbosity=trace
 
   # run with an argument before a lifecycle command
   snapcraft --verbose pull
   snapcraft -v pull
+  snapcraft --quiet pull
+  snapcraft --verbosity=verbose pull

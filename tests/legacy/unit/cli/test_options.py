@@ -27,13 +27,13 @@ from tests.legacy import unit
 
 class TestProviderOptions:
     scenarios = [
-        ("host empty", dict(provider="host", kwargs=dict(), flags=dict())),
+        ("host empty", dict(provider="host", kwargs=dict(), flags=dict(CRAFT_VERBOSITY_LEVEL="BRIEF"))),
         (
             "host http proxy",
             dict(
                 provider="host",
                 kwargs=dict(http_proxy="1.1.1.1"),
-                flags=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -41,7 +41,7 @@ class TestProviderOptions:
             dict(
                 provider="host",
                 kwargs=dict(https_proxy="1.1.1.1"),
-                flags=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -49,19 +49,19 @@ class TestProviderOptions:
             dict(
                 provider="host",
                 kwargs=dict(enable_manifest=True),
-                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True, CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
             "host build info off",
-            dict(provider="host", kwargs=dict(enable_manifest=False), flags=dict()),
+            dict(provider="host", kwargs=dict(enable_manifest=False), flags=dict(CRAFT_VERBOSITY_LEVEL="BRIEF")),
         ),
         (
             "host image info",
             dict(
                 provider="host",
                 kwargs=dict(manifest_image_information="{}"),
-                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -74,17 +74,17 @@ class TestProviderOptions:
                     offline=True,
                 ),
                 flags=dict(
-                    http_proxy="1.1.1.1", https_proxy="1.1.1.1", SNAPCRAFT_OFFLINE=True
+                    http_proxy="1.1.1.1", https_proxy="1.1.1.1", SNAPCRAFT_OFFLINE=True, CRAFT_VERBOSITY_LEVEL="BRIEF"
                 ),
             ),
         ),
-        ("lxd empty", dict(provider="lxd", kwargs=dict(), flags=dict())),
+        ("lxd empty", dict(provider="lxd", kwargs=dict(), flags=dict(CRAFT_VERBOSITY_LEVEL="BRIEF"))),
         (
             "lxd http proxy",
             dict(
                 provider="lxd",
                 kwargs=dict(http_proxy="1.1.1.1"),
-                flags=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -92,7 +92,7 @@ class TestProviderOptions:
             dict(
                 provider="lxd",
                 kwargs=dict(https_proxy="1.1.1.1"),
-                flags=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -100,7 +100,7 @@ class TestProviderOptions:
             dict(
                 provider="lxd",
                 kwargs=dict(enable_manifest=True),
-                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True, CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -108,7 +108,7 @@ class TestProviderOptions:
             dict(
                 provider="lxd",
                 kwargs=dict(manifest_image_information="{}"),
-                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -128,19 +128,20 @@ class TestProviderOptions:
                     SNAPCRAFT_BUILD_INFO=True,
                     SNAPCRAFT_IMAGE_INFO="{}",
                     SNAPCRAFT_OFFLINE=True,
+                    CRAFT_VERBOSITY_LEVEL="BRIEF",
                 ),
             ),
         ),
         (
             "managed-host empty",
-            dict(provider="managed-host", kwargs=dict(), flags=dict()),
+            dict(provider="managed-host", kwargs=dict(), flags=dict(CRAFT_VERBOSITY_LEVEL="BRIEF")),
         ),
         (
             "managed-host http proxy",
             dict(
                 provider="managed-host",
                 kwargs=dict(http_proxy="1.1.1.1"),
-                flags=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -148,7 +149,7 @@ class TestProviderOptions:
             dict(
                 provider="managed-host",
                 kwargs=dict(https_proxy="1.1.1.1"),
-                flags=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -156,7 +157,7 @@ class TestProviderOptions:
             dict(
                 provider="managed-host",
                 kwargs=dict(enable_manifest=True),
-                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True, CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -164,7 +165,7 @@ class TestProviderOptions:
             dict(
                 provider="managed-host",
                 kwargs=dict(manifest_image_information="{}"),
-                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -184,16 +185,17 @@ class TestProviderOptions:
                     SNAPCRAFT_BUILD_INFO=True,
                     SNAPCRAFT_IMAGE_INFO="{}",
                     SNAPCRAFT_OFFLINE=True,
-                ),
+                    CRAFT_VERBOSITY_LEVEL="BRIEF",
+               ),
             ),
         ),
-        ("multipass empty", dict(provider="multipass", kwargs=dict(), flags=dict())),
+        ("multipass empty", dict(provider="multipass", kwargs=dict(), flags=dict(CRAFT_VERBOSITY_LEVEL="BRIEF"))),
         (
             "multipass http proxy",
             dict(
                 provider="multipass",
                 kwargs=dict(http_proxy="1.1.1.1"),
-                flags=dict(http_proxy="1.1.1.1"),
+                flags=dict(http_proxy="1.1.1.1", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -201,7 +203,7 @@ class TestProviderOptions:
             dict(
                 provider="multipass",
                 kwargs=dict(https_proxy="1.1.1.1"),
-                flags=dict(https_proxy="1.1.1.1"),
+                flags=dict(https_proxy="1.1.1.1", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -209,7 +211,7 @@ class TestProviderOptions:
             dict(
                 provider="multipass",
                 kwargs=dict(enable_manifest=True),
-                flags=dict(SNAPCRAFT_BUILD_INFO=True),
+                flags=dict(SNAPCRAFT_BUILD_INFO=True, CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -217,7 +219,7 @@ class TestProviderOptions:
             dict(
                 provider="multipass",
                 kwargs=dict(manifest_image_information="{}"),
-                flags=dict(SNAPCRAFT_IMAGE_INFO="{}"),
+                flags=dict(SNAPCRAFT_IMAGE_INFO="{}", CRAFT_VERBOSITY_LEVEL="BRIEF"),
             ),
         ),
         (
@@ -237,7 +239,8 @@ class TestProviderOptions:
                     SNAPCRAFT_BUILD_INFO=True,
                     SNAPCRAFT_IMAGE_INFO="{}",
                     SNAPCRAFT_OFFLINE=True,
-                ),
+                    CRAFT_VERBOSITY_LEVEL="BRIEF",
+               ),
             ),
         ),
     ]
@@ -258,7 +261,7 @@ class TestInvalidBuildProviderFlags(unit.TestCase):
 
         flags = options.get_build_provider_flags("lxd", **kwargs)
 
-        self.assertThat(flags, Equals(dict()))
+        self.assertThat(flags, Equals(dict(CRAFT_VERBOSITY_LEVEL="BRIEF")))
 
     def test_host_missing_destructive_mode(self):
         kwargs = dict(http_proxy="192.168.1.1")
