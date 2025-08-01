@@ -147,13 +147,6 @@ else:
 project_dir = pathlib.Path(__file__).parents[1].resolve()
 sys.path.insert(0, str(project_dir.absolute()))
 
-# Add directories to sys path to simplify kitbash arguments
-model_dir = (project_dir / "snapcraft/models").resolve()
-sys.path.append(str(model_dir.absolute()))
-
-library_dir = (project_dir / ".venv/lib/python3.12/site-packages").resolve()
-sys.path.append(str(library_dir.absolute()))
-
 def generate_cli_docs(nil):
     gen_cli_docs_path = (project_dir / "tools/docs/gen_cli_docs.py").resolve()
     os.system("%s %s" % (gen_cli_docs_path, project_dir / "docs"))
