@@ -21,86 +21,104 @@ how it builds.
 Top-level details include a snap's name, version and description, alongside operational
 values such as its confinement level and supported architectures.
 
-.. kitbash-field:: project.Project name
+.. py:currentmodule:: snapcraft.models.project
 
-.. kitbash-field:: craft_application.models.project.Project title
+.. kitbash-field:: Project name
 
-.. kitbash-field:: project.Project version
+.. py:currentmodule:: craft_application.models.project
 
-.. kitbash-field:: craft_application.models.project.Project license
+.. kitbash-field:: Project title
 
-.. kitbash-field:: craft_application.models.project.Project summary
+.. py:currentmodule:: snapcraft.models.project
 
-.. kitbash-field:: craft_application.models.project.Project description
+.. kitbash-field:: Project version
 
-.. kitbash-field:: project.Project adopt_info
+.. py:currentmodule:: craft_application.models.project
 
-.. kitbash-field:: project.Project type
+.. kitbash-field:: Project license
 
-.. kitbash-field:: craft_application.models.project.Project base
+.. kitbash-field:: Project summary
 
-.. kitbash-field:: project.Project build_base
+.. kitbash-field:: Project description
 
-.. kitbash-field:: project.Project grade
+.. py:currentmodule:: snapcraft.models.project
 
-.. kitbash-field:: project.Project confinement
+.. kitbash-field:: Project adopt_info
 
-.. kitbash-field:: project.Project source_code
+.. kitbash-field:: Project type
 
-.. kitbash-field:: project.Project contact
+.. py:currentmodule:: craft_application.models.project
 
-.. kitbash-field:: project.Project website
+.. kitbash-field:: Project base
 
-.. kitbash-field:: project.Project issues
+.. py:currentmodule:: snapcraft.models.project
 
-.. kitbash-field:: project.Project donation
+.. kitbash-field:: Project build_base
 
-.. kitbash-field:: project.Project compression
+.. kitbash-field:: Project grade
 
-.. kitbash-field:: project.Project icon
+.. kitbash-field:: Project confinement
 
-.. kitbash-field:: project.Project layout
+.. kitbash-field:: Project source_code
 
-.. kitbash-field:: project.Project passthrough
+.. kitbash-field:: Project contact
 
-.. kitbash-field:: project.Project assumes
+.. kitbash-field:: Project website
 
-.. kitbash-field:: project.Project slots
+.. kitbash-field:: Project issues
 
-.. kitbash-field:: project.Project lint
+.. kitbash-field:: Project donation
 
-.. kitbash-field:: project.Project epoch
+.. kitbash-field:: Project compression
 
-.. kitbash-field:: project.Project system_usernames
+.. kitbash-field:: Project icon
 
-.. kitbash-field:: project.Project environment
+.. kitbash-field:: Project layout
 
-.. kitbash-field:: project.Project build_packages
+.. kitbash-field:: Project passthrough
 
-.. kitbash-field:: project.Project build_snaps
+.. kitbash-field:: Project assumes
 
-.. kitbash-field:: project.Project ua_services
+.. kitbash-field:: Project slots
 
-.. kitbash-field:: project.Project provenance
+.. kitbash-field:: Project lint
 
-.. kitbash-field:: project.Project platforms
+.. kitbash-field:: Project epoch
 
-.. kitbash-field:: project.Project architectures
+.. kitbash-field:: Project system_usernames
 
-.. kitbash-field:: project.Project apps
+.. kitbash-field:: Project environment
 
-.. kitbash-field:: craft_application.models.project.Project parts
+.. kitbash-field:: Project build_packages
+
+.. kitbash-field:: Project build_snaps
+
+.. kitbash-field:: Project ua_services
+
+.. kitbash-field:: Project provenance
+
+.. kitbash-field:: Project platforms
+
+.. kitbash-field:: Project architectures
+
+.. kitbash-field:: Project apps
+
+.. py:currentmodule:: craft_application.models.project
+
+.. kitbash-field:: Project parts
     :override-type: dict[str, Part]
 
-.. kitbash-field:: craft_application.models.project.Project package_repositories
+.. kitbash-field:: Project package_repositories
     :override-type: list[dict[str, Any]]
 
-.. kitbash-field:: project.Project hooks
+.. py:currentmodule:: snapcraft.models.project
 
-.. kitbash-field:: project.Project components
+.. kitbash-field:: Project hooks
+
+.. kitbash-field:: Project components
     :override-type: dict[str, Component]
 
-.. kitbash-field:: project.Project plugs
+.. kitbash-field:: Project plugs
 
 
 .. _reference-snapcraft-yaml-app-keys:
@@ -111,7 +129,7 @@ App keys
 The ``apps`` key declares the programs and services that a snap operates on the host,
 and details how they're executed and which resources they can access.
 
-.. kitbash-model:: project.App
+.. kitbash-model:: App
     :prepend-name: apps.<app-name>
 
 
@@ -123,57 +141,59 @@ Part keys
 The ``parts`` key and its values declare the snap's :ref:`parts <explanation-parts>` and
 detail how they're built.
 
+.. py:currentmodule:: craft_parts.parts
+
 .. Main keys
 
-.. kitbash-field:: craft_parts.parts.PartSpec plugin
+.. kitbash-field:: PartSpec plugin
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec after
+.. kitbash-field:: PartSpec after
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec disable_parallel
+.. kitbash-field:: PartSpec disable_parallel
     :prepend-name: parts.<part-name>
 
 .. Source keys
 
-.. kitbash-field:: craft_parts.parts.PartSpec source
+.. kitbash-field:: PartSpec source
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec source_type
+.. kitbash-field:: PartSpec source_type
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec source_checksum
+.. kitbash-field:: PartSpec source_checksum
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec source_branch
+.. kitbash-field:: PartSpec source_branch
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec source_tag
+.. kitbash-field:: PartSpec source_tag
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec source_commit
+.. kitbash-field:: PartSpec source_commit
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec source_depth
+.. kitbash-field:: PartSpec source_depth
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec source_submodules
+.. kitbash-field:: PartSpec source_submodules
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec source_subdir
+.. kitbash-field:: PartSpec source_subdir
     :prepend-name: parts.<part-name>
 
 .. Pull step keys
 
-.. kitbash-field:: craft_parts.parts.PartSpec override_pull
+.. kitbash-field:: PartSpec override_pull
     :prepend-name: parts.<part-name>
 
 .. Build step keys
 
-.. kitbash-field:: craft_parts.parts.PartSpec build_environment
+.. kitbash-field:: PartSpec build_environment
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec build_attributes
+.. kitbash-field:: PartSpec build_attributes
     :prepend-name: parts.<part-name>
 
 **Description**
@@ -209,16 +229,16 @@ For more details on part processing for core22 and newer, see `Processing order 
 dependencies
 <https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
 
-.. kitbash-field:: craft_parts.parts.PartSpec override_build
+.. kitbash-field:: PartSpec override_build
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec build_packages
+.. kitbash-field:: PartSpec build_packages
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec build_snaps
+.. kitbash-field:: PartSpec build_snaps
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec organize_files
+.. kitbash-field:: PartSpec organize_files
     :prepend-name: parts.<part-name>
 
 Files from the build environment can be organized into specific components. The
@@ -228,69 +248,73 @@ included. Source paths always reference the default build environment.
 
 .. Stage step keys
 
-.. kitbash-field:: craft_parts.parts.PartSpec stage_files
+.. kitbash-field:: PartSpec stage_files
     :prepend-name: parts.<part-name>
     :override-type: list[str]
 
-.. kitbash-field:: craft_parts.parts.PartSpec stage_packages
+.. kitbash-field:: PartSpec stage_packages
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec stage_snaps
+.. kitbash-field:: PartSpec stage_snaps
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.parts.PartSpec override_stage
+.. kitbash-field:: PartSpec override_stage
     :prepend-name: parts.<part-name>
 
 .. Prime step keys
 
-.. kitbash-field:: craft_parts.parts.PartSpec prime_files
+.. kitbash-field:: PartSpec prime_files
     :prepend-name: parts.<part-name>
     :override-type: list[str]
 
-.. kitbash-field:: craft_parts.parts.PartSpec override_prime
+.. kitbash-field:: PartSpec override_prime
     :prepend-name: parts.<part-name>
 
 .. Permission keys
 
-.. kitbash-field:: craft_parts.parts.PartSpec permissions
+.. kitbash-field:: PartSpec permissions
     :prepend-name: parts.<part-name>
 
-.. kitbash-field:: craft_parts.permissions.Permissions path
+.. py:currentmodule:: craft_parts.permissions
+
+.. kitbash-field:: Permissions path
     :prepend-name: parts.<part-name>.permissions.<permission>
 
-.. kitbash-field:: craft_parts.permissions.Permissions owner
+.. kitbash-field:: Permissions owner
     :prepend-name: parts.<part-name>.permissions.<permission>
 
-.. kitbash-field:: craft_parts.permissions.Permissions group
+.. kitbash-field:: Permissions group
     :prepend-name: parts.<part-name>.permissions.<permission>
 
-.. kitbash-field:: craft_parts.permissions.Permissions mode
+.. kitbash-field:: Permissions mode
     :prepend-name: parts.<part-name>.permissions.<permission>
 
 
 Socket keys
 -----------
 
-.. kitbash-model:: project.Socket
+.. py:currentmodule:: snapcraft.models.project
+
+.. kitbash-model:: Socket
     :prepend-name: sockets.<socket-name>
 
 
 Hook keys
 ---------
 
-.. kitbash-model:: project.Hook
+.. kitbash-model:: Hook
     :prepend-name: hooks.<hook-type>
 
 
 Component keys
 --------------
 
-.. kitbash-model:: project.Component
+.. kitbash-model:: Component
     :prepend-name: components.<component-name>
 
 
 Content plug keys
 -----------------
 
-.. kitbash-model:: project.ContentPlug
+.. kitbash-model:: ContentPlug
     :prepend-name: plugs.<plug-name>
