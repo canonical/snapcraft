@@ -42,7 +42,13 @@ def mock_runner(mocker):
 @pytest.mark.parametrize("command", ["pull", "build", "stage", "prime", "snap"])
 @pytest.mark.parametrize("flip_order", [True, False])
 def test_ignore_verbosity_args(argument, command, flip_order, mock_configure, mocker, monkeypatch):
-    """Command line args don't determine the verbosity, except for `--enable-developer-debug`."""
+    """Command line args don't determine the verbosity.
+
+    Modern Snapcraft passes the verbosity with CRAFT_VERBOSITY_LEVEL, so legacy snapcraft
+    ignores command line args that set verbosity and instead uses the env var.
+
+    The exception is `--enable-developer-debug`, which is still used.
+    """
     monkeypatch.setenv("CRAFT_VERBOSITY_LEVEL", "TRACE")
 
     args = [command, argument] if flip_order else [argument, command]
