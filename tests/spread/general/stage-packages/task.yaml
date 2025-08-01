@@ -27,4 +27,4 @@ restore: |
 execute: |
   cd "./snaps/$SNAP"
 
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode

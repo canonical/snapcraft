@@ -384,7 +384,7 @@ def test_esm_error(snapcraft_yaml, base, monkeypatch, capsys):
     """Test that an error is raised when using an ESM base."""
     snapcraft_yaml_dict = {"base": base}
     snapcraft_yaml(**snapcraft_yaml_dict)
-    monkeypatch.setattr("sys.argv", ["snapcraft"])
+    monkeypatch.setattr("sys.argv", ["snapcraft", "pack"])
 
     application.main()
 
@@ -421,7 +421,7 @@ def test_esm_pass(mocker, snapcraft_yaml, base):
 def test_yaml_syntax_error(in_project_path, monkeypatch, capsys):
     """Provide a user friendly error on yaml syntax errors."""
     (in_project_path / "snapcraft.yaml").write_text("bad:\nyaml")
-    monkeypatch.setattr("sys.argv", ["snapcraft"])
+    monkeypatch.setattr("sys.argv", ["snapcraft", "pack"])
 
     application.main()
 

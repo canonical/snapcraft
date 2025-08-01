@@ -30,7 +30,7 @@ execute: |
   cd "$SNAP"
 
   # Build what we have.
-    snapcraft --use-lxd
+    snapcraft pack --use-lxd
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous

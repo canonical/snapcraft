@@ -4,7 +4,7 @@ systems:
   - ubuntu-24.04*
 
 environment:
-  CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft --destructive-mode
+  CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft pack --destructive-mode
 
 prepare: |
   snap install review-tools

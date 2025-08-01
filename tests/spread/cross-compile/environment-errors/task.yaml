@@ -16,7 +16,7 @@ restore: |
 execute: |
   cd "./snaps/$SNAP"
 
-  if snapcraft --destructive-mode; then
+  if snapcraft pack --destructive-mode; then
     echo "snapcraft did not fail but should have"
     exit 1
   fi

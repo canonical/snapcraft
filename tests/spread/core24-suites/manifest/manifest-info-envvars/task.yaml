@@ -16,7 +16,7 @@ execute: |
   export SNAPCRAFT_IMAGE_INFO='{"test-var": "value"}'
 
   # If this next line fails, delete it and replace it with the one following it
-  snapcraft --use-lxd
+  snapcraft pack --use-lxd
 
   unsquashfs manifest_0.1_*.snap
   grep '^  test-var: value' squashfs-root/snap/manifest.yaml
@@ -27,7 +27,7 @@ execute: |
   rm ~/manifest_0.1_*.snap
 
   # also test in destructive mode
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
 
   grep '^  test-var: value' prime/snap/manifest.yaml
 
