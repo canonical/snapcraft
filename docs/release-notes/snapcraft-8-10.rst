@@ -196,6 +196,12 @@ Snapcraft 8.10.2
 - `#5601`_  The test profile for the :ref:`ref_commands_init` command now properly
   sets up the test environment and stops snaps before removing them.
 
+.. _release-notes-fixes-8.10.3:
+
+Snapcraft 8.10.3
+~~~~~~~~~~~~~~~~
+
+- Add a :ref:`contribute-to-this-documentation` page.
 
 Contributors
 ------------
