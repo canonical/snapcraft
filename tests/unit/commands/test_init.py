@@ -110,9 +110,8 @@ def test_init_existing_yaml_invalid(yaml_content, emitter, valid_new_dir, mocker
     mocker.patch.object(sys, "argv", cmd)
 
     # Write snapcraft.yaml content
-    snapcraft_yaml.parent.mkdir()
-    with open(snapcraft_yaml, "w") as f:
-        f.write(yaml_content)
+    snapcraft_yaml.parent.mkdir(exist_ok=True)
+    snapcraft_yaml.write_text(yaml_content)
 
     app = application.create_app()
     app.run()
