@@ -150,7 +150,7 @@ Configure =package-repositories= in snapcraft.yaml.
   - *Description:* Key server to fetch key =<key-id>= from.
 
   - *Default:* If unspecified, Snapcraft will attempt to fetch a specified key
-    from keyserver.ubuntu.com.
+    from hkp://keyserver.ubuntu.com:80.
 
   - *Format:* Key server URL supported by =gpg --keyserver=.
 
@@ -253,7 +253,7 @@ package-repositories:
 
    - If =<key-id[0:8]>.asc= file does not exist, continue to step 2.
 
-2. =<key-id>= will be queried from the =<key-server>=, defaulting to =keyserver.ubuntu.com=.
+2. =<key-id>= will be queried from the =<key-server>=, defaulting to =hkp://keyserver.ubuntu.com:80=.
 
    - If key is found, the key will be imported.
 

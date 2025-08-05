@@ -1296,7 +1296,7 @@ def add_snappy_ppa(with_sudo=False) -> None:  # noqa: C901
             [
                 "adv",
                 "--keyserver",
-                "keyserver.ubuntu.com",
+                "hkp://keyserver.ubuntu.com:80",
                 "--recv-keys",
                 _SNAPPY_DEV_KEY_FINGERPRINT,
             ],

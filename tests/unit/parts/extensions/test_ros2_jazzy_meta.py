@@ -95,7 +95,7 @@ class TestExtensionROS2JazzyMetaExtensions:
                     "components": ["main"],
                     "formats": ["deb"],
                     "key-id": "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
-                    "key-server": "keyserver.ubuntu.com",
+                    "key-server": "hkp://keyserver.ubuntu.com:80",
                     "suites": ["noble"],
                 }
             ],

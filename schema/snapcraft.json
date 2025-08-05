@@ -206,7 +206,7 @@
         },
         "key-server": {
           "type": "string",
-          "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
+          "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to hkp://keyserver.ubuntu.com:80 if key is not found in project."
         },
         "path": {
           "type": "string",

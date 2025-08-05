@@ -335,5 +335,5 @@ def test_install_package_repository_key_ppa_from_keyserver(
 
     assert updated is True
     assert mock_install_key_from_keyserver.mock_calls == [
-        call(key_id="FAKE-PPA-SIGNING-KEY", key_server="keyserver.ubuntu.com")
+        call(key_id="FAKE-PPA-SIGNING-KEY", key_server="hkp://keyserver.ubuntu.com:80")
     ]

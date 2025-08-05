@@ -28,6 +28,7 @@ from . import apt_ppa, errors
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_APT_KEYSERVER = "hkp://keyserver.ubuntu.com:80"
 
 class AptKeyManager:
     def __init__(
@@ -146,7 +147,7 @@ class AptKeyManager:
         logger.debug(f"Installed apt repository key:\n{key}")
 
     def install_key_from_keyserver(
-        self, *, key_id: str, key_server: str = "keyserver.ubuntu.com"
+        self, *, key_id: str, key_server: str = DEFAULT_APT_KEYSERVER
     ) -> None:
         """Install key from specified key server.
 
@@ -193,7 +194,7 @@ class AptKeyManager:
         1) If key is already installed, return False.
         2) Install key from local asset, if available.
         3) Install key from key server, if available. An unspecified
-           keyserver will default to using keyserver.ubuntu.com.
+           keyserver will default to using hkp://keyserver.ubuntu.com:80.
 
         :param package_repo: Apt PackageRepository configuration.
 
@@ -220,7 +221,7 @@ class AptKeyManager:
             self.install_key(key=key_path.read_text())
         else:
             if key_server is None:
-                key_server = "keyserver.ubuntu.com"
+                key_server = DEFAULT_APT_KEYSERVER
             self.install_key_from_keyserver(key_id=key_id, key_server=key_server)
 
         return True
