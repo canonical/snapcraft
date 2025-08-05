@@ -85,7 +85,7 @@ dev = [
     "pytest-subprocess",
 ]
 docs = [
-    "canonical-sphinx[full]~=0.4.0",
+    "canonical-sphinx[full]~=0.5.1",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
@@ -103,7 +103,7 @@ lint = [
     { include-group = "types" },
 ]
 types = [
-    "mypy",
+    "mypy~=1.17.1",
     "types-PyYAML",
     "types-requests>=2.32",
     "types-setuptools",
