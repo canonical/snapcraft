@@ -118,7 +118,7 @@ class Snapcraft(Application):
             return False
 
         # When snapcraft.yaml exists but is empty
-        if type(_snapcraft_yaml_data) is not dict:
+        if not isinstance(_snapcraft_yaml_data, dict):
             return False
 
         base = _snapcraft_yaml_data.get("base")
