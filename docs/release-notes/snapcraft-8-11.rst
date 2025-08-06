@@ -141,6 +141,7 @@ Snapcraft 8.11.0
 ~~~~~~~~~~~~~~~~
 
 - Multi-line details in error messages now start on a new line.
+- If the project file is empty, Snapcraft now emits an error instead of a traceback.
 
 
 Contributors
@@ -151,7 +152,8 @@ this release.
 
 :literalref:`@ahkazak23<https://github.com/ahkazak23>`,
 :literalref:`@bepri<https://github.com/bepri>`,
-:literalref:`@jahn-junior<https://github.com/jahn-junior>`,,
+:literalref:`@steinbro<https://github.com/steinbro`,
+:literalref:`@jahn-junior<https://github.com/jahn-junior>`,
 :literalref:`@lengau<https://github.com/lengau>`,
 :literalref:`@medubelko<https://github.com/medubelko>`,
 :literalref:`@mr-cal<https://github.com/mr-cal>`, and
