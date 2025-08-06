@@ -408,6 +408,7 @@ def fake_provider(mock_instance):
             build_base: str | None = None,
             instance_name: str,
             allow_unstable: bool = False,
+            shutdown_delay_mins: int | None = None,
         ):
             yield mock_instance
 

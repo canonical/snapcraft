@@ -89,7 +89,9 @@ docs = [
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
     "sphinx-lint",
-    # sphinx-sitemap>=2.7 fails to build on RTD infra, likely due to https://github.com/jdillard/sphinx-sitemap/pull/95
+    # sphinx-prompt >=1.9.0 needs Sphinx 8 but apparently doesn't declare it
+    "sphinx-prompt~=1.8.0",
+    # sphinx-sitemap>=2.7 fails to build on RTD infra due to https://github.com/jdillard/sphinx-sitemap/pull/95
     "sphinx-sitemap~=2.6.0",
     "sphinx-toolbox",
     "sphinxcontrib-details-directive",
