@@ -46,10 +46,9 @@ arguments ``--quiet``, ``--verbose``,  and ``--verbosity <level>`` or the enviro
 variable ``CRAFT_VERBOSITY_LEVEL``.
 
 However, these options weren't supported by all commands or when building core20 snaps.
-This led to an inconsistent user experience.
-
-Now, these verbosity options can be used for all commands and when building snaps with
-core20, core22, and core24 bases.
+This led to an inconsistent user experience. To remedy this, we've made these verbosity
+options available for all commands when building snaps with core20, core22, and
+core24 bases.
 
 
 Minor features
@@ -60,8 +59,8 @@ Contribution guidelines
 
 In an effort to improve the contributor experience, we've updated our `contribution
 guidelines <https://github.com/canonical/snapcraft/blob/main/CONTRIBUTING.md>`_ and
-added a new :ref:`contribute-to-this-documentation` page, which explains the philosophy
-behind Snapcraft's documentation and how to get involved.
+added a new :ref:`contribute-to-this-documentation` page, which explains the Snapcraft
+documentation's design principles and how to get involved.
 
 Extra modules parameter for the jlink plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,8 +111,8 @@ users to submit an anonymous report to Sentry.
 This has been removed in favor of submitting bug reports to Snapcraft's `GitHub issues
 <https://github.com/canonical/snapcraft/issues>`_ page.
 
-Accordingly, the environment variables ``SNAPCRAFT_ENABLE_ERROR_REPORTING`` and
-``SNAPCRAFT_ENABLE_SILENT_REPORT`` are no longer used.
+As a result, the ``SNAPCRAFT_ENABLE_ERROR_REPORTING`` and
+``SNAPCRAFT_ENABLE_SILENT_REPORT`` environment variables are no longer in use.
 
 
 Scheduled feature deprecations
