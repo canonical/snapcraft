@@ -16,6 +16,7 @@ Current releases
 Snapcraft 8
 ~~~~~~~~~~~
 
+- :ref:`Snapcraft 8.11 <release-8.11>`
 - :ref:`Snapcraft 8.10 <release-8.10>`
 - :ref:`Snapcraft 8.9 <release-8.9>`
 - :ref:`Snapcraft 8.8 <release-8.8>`
@@ -84,6 +85,7 @@ development keeps pace with the OS's new releases and support lifecycle.
 .. toctree::
     :hidden:
 
+    Snapcraft 8.11 <snapcraft-8-11>
     Snapcraft 8.10 <snapcraft-8-10>
     Snapcraft 8.9 <snapcraft-8-9>
     Snapcraft 8.8 <snapcraft-8-8>
@@ -270,6 +272,7 @@ development keeps pace with the OS's new releases and support lifecycle.
 
   The following issues have been resolved in Snapcraft 2.0.
 
+  .. _release-notes-fixes-2.0.0:
 
   Snapcraft 2.0.0
   ~~~~~~~~~~~~~~~
@@ -277,6 +280,8 @@ development keeps pace with the OS's new releases and support lifecycle.
   - `ID <link>`_ <Title>
   - `ID <link>`_ <Title>
 
+
+  .. _release-notes-fixes-2.0.1:
 
   Snapcraft 2.0.1
   ~~~~~~~~~~~~~~~
