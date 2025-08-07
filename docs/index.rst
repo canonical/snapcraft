@@ -43,8 +43,9 @@ Snapcraft is a member of the Canonical family. It's an open source project that 
 welcomes community projects, contributions, suggestions, fixes and constructive
 feedback.
 
-- `Ubuntu Code of Conduct <https://ubuntu.com/community/code-of-conduct>`_
-- `Canonical contributor license agreement <https://ubuntu.com/legal/contributors>`_
+* `Ubuntu Code of Conduct <https://ubuntu.com/community/ethos/code-of-conduct>`_
+* `Canonical contributor licenses agreement
+  <https://ubuntu.com/legal/contributors>`_
 
 .. toctree::
     :hidden:
@@ -53,4 +54,5 @@ feedback.
     how-to/index
     reference/index
     explanation/index
+    contribute-to-this-documentation
     release-notes/index

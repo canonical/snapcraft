@@ -87,6 +87,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/_linkcheck/
 docs/spelling/
 
 # PyBuilder

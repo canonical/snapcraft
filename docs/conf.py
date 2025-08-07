@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+
 
 import datetime
 import os
@@ -59,6 +59,17 @@ html_theme_options = {
     "source_edit_link": "https://github.com/canonical/snapcraft",
 }
 
+html_static_path = ["_static"]
+templates_path = ["_templates"]
+
+html_css_files = [
+    'css/cookie-banner.css'
+]
+
+html_js_files = [
+    'js/bundle.js',
+]
+
 extensions = [
     "canonical_sphinx",
     "sphinx_sitemap",
@@ -90,35 +101,32 @@ exclude_patterns = [
     # documents (so they generate "duplicate label" errors) or they aren't
     # used in this documentation at all (so they generate "unreferenced"
     # errors).
+    "common/craft-parts/explanation/dump_plugin.rst",
+    "common/craft-parts/explanation/file-migration.rst",
+    "common/craft-parts/explanation/gradle_plugin.rst",
+    "common/craft-parts/explanation/how_parts_are_built.rst",
     "common/craft-parts/explanation/lifecycle.rst",
     "common/craft-parts/explanation/overlay_parameters.rst",
     "common/craft-parts/explanation/overlays.rst",
-    "common/craft-parts/explanation/how_parts_are_built.rst",
     "common/craft-parts/explanation/parts.rst",
-    "common/craft-parts/explanation/dump_plugin.rst",
-    "common/craft-parts/explanation/gradle_plugin.rst",
     "common/craft-parts/how-to/craftctl.rst",
     "common/craft-parts/how-to/override_build.rst",
-    "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/part_properties.rst",
+    "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",
+    "common/craft-parts/reference/plugins/maven_plugin.rst",
+    "common/craft-parts/reference/plugins/maven_use_plugin.rst",
     "common/craft-parts/reference/plugins/poetry_plugin.rst",
     "common/craft-parts/reference/plugins/python_plugin.rst",
-    "common/craft-parts/reference/plugins/maven_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
     "how-to/publishing/build-snaps-remotely.rst",
-    "release-notes/snapcraft-8-11.rst",
 ]
 
 # region Options for extensions
-
-intersphinx_mapping = {
-    "craft-parts": ("https://canonical-craft-parts.readthedocs-hosted.com/en/latest/", None),
-}
 
 # Client-side page redirects.
 rediraffe_redirects = "redirects.txt"
@@ -138,13 +146,6 @@ else:
 
 project_dir = pathlib.Path(__file__).parents[1].resolve()
 sys.path.insert(0, str(project_dir.absolute()))
-
-# Add directories to sys path to simplify kitbash arguments
-model_dir = (project_dir / "snapcraft/models").resolve()
-sys.path.append(str(model_dir.absolute()))
-
-library_dir = (project_dir / ".venv/lib/python3.12/site-packages").resolve()
-sys.path.append(str(library_dir.absolute()))
 
 def generate_cli_docs(nil):
     gen_cli_docs_path = (project_dir / "tools/docs/gen_cli_docs.py").resolve()

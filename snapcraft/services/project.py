@@ -16,13 +16,13 @@
 
 from __future__ import annotations
 
-import pathlib
 from typing import TYPE_CHECKING, Any, cast
 
 import craft_cli
 import craft_platforms
 import craft_providers.bases
 from craft_application import ProjectService
+from craft_application.errors import CraftValidationError
 from overrides import override
 
 from snapcraft.extensions import apply_extensions
@@ -33,6 +33,8 @@ from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
 
 if TYPE_CHECKING:
+    import pathlib
+
     import craft_parts
 
 
@@ -89,6 +91,12 @@ class Project(ProjectService):
     @override
     def _app_render_legacy_platforms(self) -> dict[str, craft_platforms.PlatformDict]:
         project = self.get_raw()
+        if project.get("base") == "core22" and "platforms" in project:
+            raise CraftValidationError(
+                "'platforms' key is not supported for base 'core22'.",
+                resolution="Use 'architectures' key instead.",
+            )
+
         effective_base = SNAPCRAFT_BASE_TO_PROVIDER_BASE.get(
             str(
                 get_effective_base(

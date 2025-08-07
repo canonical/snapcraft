@@ -236,7 +236,7 @@ class MultipassCommand:
         cmd = [self.provider_cmd, "exec", instance_name, "--"] + list(command)
         output = None
         try:
-            if hide_output:
+            if hide_output or logger.level >= logging.CRITICAL:
                 output = _run_output(cmd)
             else:
                 _run(cmd, stdin=None)

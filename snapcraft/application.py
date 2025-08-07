@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import craft_application.errors
 import craft_cli
@@ -31,7 +31,6 @@ from craft_application import Application, AppMetadata, launchpad, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
 from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
-from craft_parts.plugins.plugins import PluginType
 from overrides import override
 
 import snapcraft
@@ -43,6 +42,9 @@ from snapcraft_legacy.cli import legacy
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
 from .parts import plugins
 from .parts.yaml_utils import get_snap_project
+
+if TYPE_CHECKING:
+    from craft_parts.plugins.plugins import PluginType
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
@@ -113,6 +115,10 @@ class Snapcraft(Application):
             craft_application.errors.ProjectFileError,
             craft_application.errors.YamlError,
         ):
+            return False
+
+        # When snapcraft.yaml exists but is empty
+        if not isinstance(_snapcraft_yaml_data, dict):
             return False
 
         base = _snapcraft_yaml_data.get("base")

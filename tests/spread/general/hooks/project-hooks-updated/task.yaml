@@ -16,7 +16,7 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
 
   # verify hooks were staged
   if [[ ! -f prime/meta/hooks/configure ]] && [[ ! -f prime/meta/hooks/install ]]; then
@@ -38,7 +38,7 @@ execute: |
   sed -i 's/I am a/I am an updated/g' snap/hooks/*
 
   # re-execute snapcraft
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
 
   # verify hooks are still staged
   if [[ ! -f prime/meta/hooks/configure ]] && [[ ! -f prime/meta/hooks/install ]]; then

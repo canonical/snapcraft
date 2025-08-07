@@ -28,7 +28,7 @@ execute: |
 
   SQUID_PROXY_URL="http://$(hostname -I | awk '{print $1}'):3128"
 
-  http_proxy=${SQUID_PROXY_URL} snapcraft
+  http_proxy=${SQUID_PROXY_URL} snapcraft pack
 
   # Verify that squid's logs aren't empty
   [ -s /var/log/squid/access.log ]
@@ -46,7 +46,7 @@ execute: |
 
   sudo apt-get clean
 
-  http_proxy=${SQUID_PROXY_URL} snapcraft
+  http_proxy=${SQUID_PROXY_URL} snapcraft pack
 
   # On second call the package is cached, we thus hit the memory
   grep -E "TCP_MEM_HIT/200.*GET.*archive.ubuntu.com/ubuntu/pool/main/h/hello/hello_.*.deb " ${SQUID_PROXY_LOG} || \

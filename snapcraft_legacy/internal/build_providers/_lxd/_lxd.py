@@ -171,7 +171,7 @@ class LXD(Provider):
 
         output = None
         try:
-            if hide_output:
+            if hide_output or logger.level >= logging.CRITICAL:
                 output = subprocess.check_output(cmd)
             else:
                 subprocess.check_call(cmd)
