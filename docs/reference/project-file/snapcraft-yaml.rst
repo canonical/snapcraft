@@ -55,12 +55,12 @@ values such as its confinement level and supported architectures.
 
 The base snap to be used as the run-time environment.
 
-If the ``build-base`` key is unset, then the ``base`` key also
-determines the build environment. For example, ``base: core24``
-builds the snap in an Ubuntu 24.04 environment.
+If the ``build-base`` key is unset, then the ``base`` key also determines the build
+environment. For example, ``base: core24`` builds the snap in an Ubuntu 24.04
+environment.
 
-For more information about the ``base`` and ``build-base`` keys,
-see :ref:`reference-bases`.
+For more information about the ``base`` and ``build-base`` keys, see
+:ref:`reference-bases`.
 
 **Examples**
 
