@@ -510,8 +510,8 @@ remote = [
 
 [[package]]
 name = "craft-archives"
-version = "2.1.0.post24+g4f26ada"
-source = { git = "http://github.com/canonical/craft-archives?rev=work%2FCRAFT-4560-Consider-changing-keyserver-to-hkp-keyserver.ubuntu.com-80#4f26ada989c606673664c53edec48c8825b1ffc2" }
+version = "2.1.0.post25+ga0c2673"
+source = { git = "http://github.com/canonical/craft-archives?rev=work%2FCRAFT-4560-Consider-changing-keyserver-to-hkp-keyserver.ubuntu.com-80#a0c2673fc316fdf172d6fabe6c2acd02fd18d408" }
 dependencies = [
     { name = "distro" },
     { name = "launchpadlib" },
