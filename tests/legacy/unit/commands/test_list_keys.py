@@ -26,7 +26,6 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
     command_name = "list-keys"
 
     def test_command_without_login_must_ask(self):
-        # TODO: look into why this many calls are done inside snapcraft_legacy.storeapi
         self.fake_store_account_info.mock.side_effect = [
             FAKE_UNAUTHORIZED_ERROR,
             {"account_id": "abcd", "account_keys": list()},
@@ -42,7 +41,6 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
 
     def test_command_without_login_must_ask_verbose(self):
-        # TODO: look into why this many calls are done inside snapcraft_legacy.storeapi
         self.fake_store_account_info.mock.side_effect = [
             FAKE_UNAUTHORIZED_ERROR,
             {"account_id": "abcd", "account_keys": list()},
