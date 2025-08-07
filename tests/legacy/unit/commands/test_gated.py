@@ -37,6 +37,15 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
 
         self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
 
+    def test_gated_unknown_snap_verbose(self):
+        raised = self.assertRaises(
+            snapcraft_legacy.storeapi.errors.SnapNotFoundError,
+            self.run_command,
+            ["gated", "notfound", "--verbosity", "trace"],
+        )
+
+        self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
+
     def test_gated_success(self):
         result = self.run_command(["gated", "core"])
 

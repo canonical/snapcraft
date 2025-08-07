@@ -100,6 +100,21 @@ class UploadMetadataCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains("The metadata has been uploaded"))
         self.assert_expected_metadata_calls(force=False)
 
+    def test_simple_verbose(self):
+        # upload metadata
+        with mock.patch("snapcraft_legacy.storeapi._status_tracker.StatusTracker"):
+            result = self.run_command(
+                ["upload-metadata", self.snap_file, "--verbosity", "trace"]
+            )
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertThat(
+            result.output,
+            Not(Contains("Uploading metadata to the Store (force=False)")),
+        )
+        self.assertThat(result.output, Contains("The metadata has been uploaded"))
+        self.assert_expected_metadata_calls(force=False)
+
     def test_with_license_and_title(self):
         self.snap_file = os.path.join(
             os.path.dirname(tests.legacy.__file__),

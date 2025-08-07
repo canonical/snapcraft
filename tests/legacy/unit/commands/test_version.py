@@ -23,8 +23,16 @@ class VersionCommandTestCase(CommandBaseTestCase):
         result = self.run_command(["--version"])
         self.assertThat(result.exit_code, Equals(0))
 
+    def test_has_version_verbose(self):
+        result = self.run_command(["--version", "--verbosity", "trace"])
+        self.assertThat(result.exit_code, Equals(0))
+
     def test_has_version_without_hyphens(self):
         result = self.run_command(["version"])
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_has_version_without_hyphens_version(self):
+        result = self.run_command(["version", "--verbosity", "trace"])
         self.assertThat(result.exit_code, Equals(0))
 
     def test_method_return_same_value(self):

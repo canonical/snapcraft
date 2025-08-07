@@ -24,7 +24,7 @@ from snapcraft_legacy.internal import errors, sources
 from snapcraft_legacy.project import errors as project_errors
 
 from . import echo
-from ._options import get_project
+from ._options import add_verbosity_options, get_project
 
 _TOPICS = {"sources": sources, "plugins": snapcraft_legacy}
 
@@ -45,8 +45,9 @@ def helpcli():
     help="Show help for specific base",
     type=click.Choice(["core18", "core20"]),
 )
+@add_verbosity_options()
 @click.pass_context
-def help_command(ctx, topic, devel, base):
+def help_command(ctx, topic, devel, base, **kwargs):
     """Obtain help for a certain topic, plugin or command.
 
     The <topic> can either be a plugin name or one of:

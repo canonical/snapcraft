@@ -36,6 +36,13 @@ class CreateKeyTestCase(FakeStoreCommandsBaseTestCase):
 
         self.assertThat(str(raised), Equals("The key 'default' already exists"))
 
+    def test_create_key_already_exists_verbose(self):
+        raised = self.assertRaises(
+            storeapi.errors.KeyAlreadyExistsError, self.run_command, ["create-key", "--verbosity", "trace"]
+        )
+
+        self.assertThat(str(raised), Equals("The key 'default' already exists"))
+
     def test_create_key_already_registered(self):
         self.fake_store_account_info.mock.side_effect = [
             {
