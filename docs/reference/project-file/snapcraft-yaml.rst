@@ -51,6 +51,23 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project base
 
+**Description**
+
+The base snap to be used as the run-time environment.
+
+If the ``build-base`` key is unset, then the ``base`` key also
+determines the build environment. For example, ``base: core24``
+builds the snap in an Ubuntu 24.04 environment.
+
+For more information about the ``base`` and ``build-base`` keys,
+see :ref:`reference-bases`.
+
+**Examples**
+
+.. code-block:: yaml
+
+    base: core24
+
 .. py:currentmodule:: snapcraft.models.project
 
 .. kitbash-field:: Project build_base
