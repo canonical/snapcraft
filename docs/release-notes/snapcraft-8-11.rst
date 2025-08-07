@@ -86,6 +86,7 @@ For example, consider the following snippet:
   :caption: snapcraft.yaml
 
   name: hello-world
+  base: core24
   version: 1.0
   platforms:
     rpi:
@@ -152,7 +153,7 @@ this release.
 
 :literalref:`@ahkazak23<https://github.com/ahkazak23>`,
 :literalref:`@bepri<https://github.com/bepri>`,
-:literalref:`@steinbro<https://github.com/steinbro`,
+:literalref:`@steinbro<https://github.com/steinbro>`,
 :literalref:`@jahn-junior<https://github.com/jahn-junior>`,
 :literalref:`@lengau<https://github.com/lengau>`,
 :literalref:`@medubelko<https://github.com/medubelko>`,
