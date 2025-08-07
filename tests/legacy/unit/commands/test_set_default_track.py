@@ -58,3 +58,13 @@ class SetDefaultTrackCommandTestCase(FakeStoreCommandsBaseTestCase):
         self.fake_metadata.mock.assert_called_once_with(
             snap_name="snap-test", metadata=dict(default_track="2.0"), force=True
         )
+
+    def test_set_default_track_verbose(self):
+        result = self.run_command(
+            ["set-default-track", "snap-test", "2.0", "--verbosity", "trace"]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.fake_metadata.mock.assert_called_once_with(
+            snap_name="snap-test", metadata=dict(default_track="2.0"), force=True
+        )

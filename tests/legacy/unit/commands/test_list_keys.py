@@ -41,6 +41,22 @@ class ListKeysCommandTestCase(FakeStoreCommandsBaseTestCase):
             result.output, Contains("You are required to login before continuing.")
         )
 
+    def test_command_without_login_must_ask_verbose(self):
+        # TODO: look into why this many calls are done inside snapcraft_legacy.storeapi
+        self.fake_store_account_info.mock.side_effect = [
+            FAKE_UNAUTHORIZED_ERROR,
+            {"account_id": "abcd", "account_keys": list()},
+            {"account_id": "abcd", "account_keys": list()},
+            {"account_id": "abcd", "account_keys": list()},
+        ]
+
+        result = self.run_command(
+            [self.command_name, "--verbosity", "trace"], input="user@example.com\nsecret\n"
+        )
+        self.assertThat(
+            result.output, Contains("You are required to login before continuing.")
+        )
+
     def test_list_keys_successfully(self):
         self.fake_store_account_info.mock.return_value = {
             "account_id": "abcd",

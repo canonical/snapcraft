@@ -243,6 +243,49 @@ class SignBuildTestCase(FakeStoreCommandsBaseTestCase):
 
     @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
     @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
+    def test_sign_build_locally_successfully_verbose(
+        self,
+        mock_get_snap_data,
+        mock_get_account_info,
+    ):
+        mock_get_account_info.return_value = {
+            "account_id": "abcd",
+            "snaps": {"16": {"test-snap": {"snap-id": "snap-id"}}},
+        }
+        mock_get_snap_data.return_value = {"name": "test-snap", "grade": "stable"}, None
+        fake_check_output = fixtures.MockPatch(
+            "subprocess.check_output",
+            side_effect=mock_check_output,
+        )
+        self.useFixture(fake_check_output)
+
+        result = self.run_command(
+            ["sign-build", self.snap_test.snap_path, "--local", "--verbosity", "trace"],
+            input="1\n",
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        snap_build_path = self.snap_test.snap_path + "-build"
+        self.assertThat(
+            result.output,
+            Contains("Build assertion {} saved to disk.".format(snap_build_path)),
+        )
+        self.assertThat(snap_build_path, FileExists())
+        fake_check_output.mock.assert_called_with(
+            [
+                mock.ANY,
+                "sign-build",
+                "--developer-id=abcd",
+                "--snap-id=snap-id",
+                "--grade=stable",
+                "-k",
+                "default",
+                self.snap_test.snap_path,
+            ]
+        )
+
+    @mock.patch.object(storeapi._dashboard_api.DashboardAPI, "get_account_information")
+    @mock.patch("snapcraft_legacy._store.get_data_from_snap_file")
     def test_sign_build_missing_grade(
         self,
         mock_get_snap_data,

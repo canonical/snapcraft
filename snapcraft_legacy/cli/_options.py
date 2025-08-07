@@ -225,6 +225,8 @@ _PROVIDER_OPTIONS: List[Dict[str, Any]] = [
         envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_UA_SERVICES",
         supported_providers=_ALL_PROVIDERS,
     ),
+]
+_VERBOSITY_OPTIONS = [
     dict(
         param_decls=["--verbose", "-v"],
         is_flag=True,
@@ -265,9 +267,16 @@ def _add_options(options, func, hidden):
 
 def add_provider_options(hidden=False):
     def _add_provider_options(func):
-        return _add_options(_PROVIDER_OPTIONS, func, hidden)
+        return _add_options([*_PROVIDER_OPTIONS, *_VERBOSITY_OPTIONS], func, hidden)
 
     return _add_provider_options
+
+
+def add_verbosity_options(hidden=False):
+    def _add_verbosity_options(func):
+        return _add_options(_VERBOSITY_OPTIONS, func, hidden)
+
+    return _add_verbosity_options
 
 
 def _sanity_check_build_provider_flags(build_provider: str, **kwargs) -> None:
