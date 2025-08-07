@@ -149,7 +149,7 @@ Snapcraft 8.11.0
 Snapcraft 8.11.1
 ~~~~~~~~~~~~~~~~
 
-- `#5298`_ Verbosity arguments are parsed for all non-lifecycle commands.
+- `#5298`_ Verbosity arguments are now parsed for all non-lifecycle commands.
 
 
 Contributors
