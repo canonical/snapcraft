@@ -65,7 +65,7 @@ class TestClass:
                     "components": ["main"],
                     "formats": ["deb"],
                     "key-id": "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
-                    "key-server": "hkp://keyserver.ubuntu.com:80",
+                    "key-server": "keyserver.ubuntu.com",
                     "suites": ["focal"],
                     "type": "apt",
                     "url": "http://repo.ros2.org/ubuntu/main",
