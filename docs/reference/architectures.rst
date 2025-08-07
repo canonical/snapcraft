@@ -31,7 +31,7 @@ The platform name describes a ``build-on``/``build-for`` pairing. If the
 platform name is a valid debian architecture, then ``build-on`` and
 ``build-for`` can be omitted (see below for details).
 
-See here for a list of supported architectures.
+See :ref:`here<supported-architectures>` for a list of supported architectures.
 
 The recommended platform name is the ``build-for`` arch.
 
