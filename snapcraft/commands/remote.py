@@ -24,14 +24,12 @@ from typing import Any, Literal, cast
 import craft_application.errors
 import craft_platforms
 from craft_application.commands import RemoteBuild
-from craft_application.util import humanize_list, safe_yaml_load
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
 from overrides import override
 
-from snapcraft import errors
 from snapcraft.const import SUPPORTED_ARCHS
-from snapcraft.parts import yaml_utils
 from snapcraft.services import BuildPlan
 
 
@@ -136,8 +134,6 @@ class RemoteBuildCommand(RemoteBuild):
                 retcode=os.EX_CONFIG,
             )
 
-        _validate_build_for_and_platforms(parsed_args.remote_build_build_fors)
-
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
         project = self._services.get("project").get_raw()
@@ -184,44 +180,3 @@ class RemoteBuildCommand(RemoteBuild):
 
         emit.debug(f"Architectures to build for: {humanize_list(archs, 'and')}")
         return {"architectures": archs}
-
-
-def _validate_build_for_and_platforms(build_for: list[str]):
-    """Ensure --build-for and shorthand platforms are not used together.
-
-    This combination fails in Launchpad with an unhelpful error, so Snapcraft will
-    fail early with a user-friendly error. See LP#2077005 and LP#2098811 for details.
-
-    This validator can be removed when LP#2077005 and LP#2098811 are resolved or when
-    Launchpad uses craft-platforms to orchestrate snap builds.
-
-    :param build_for: The list of architectures to build for from the command line.
-
-    :raises RemoteBuildError: If --build-for and shorthand platforms are used together.
-    """
-    if not build_for:
-        return
-
-    try:
-        project_file = yaml_utils.get_snap_project().project_file
-        with project_file.open() as file:
-            data = safe_yaml_load(file)
-    except (errors.ProjectMissing, craft_application.errors.YamlError) as err:
-        # the project has to exist by this point, but this is a non-critical
-        # validator so log the problem and move on
-        emit.debug("Couldn't find or parse the project's snapcraft.yaml")
-        emit.debug(f"Error: {err}")
-        return
-
-    if data.get("platforms") and any(not v for v in data["platforms"].values()):
-        raise craft_application.errors.RemoteBuildError(
-            message=(
-                "Launchpad can't build snaps when using '--build-for' with "
-                "a shorthand platforms entry in the project's snapcraft.yaml."
-            ),
-            resolution=(
-                "Use full platform entries or remove the '--build-for' argument."
-            ),
-            doc_slug="/explanation/remote-build.html",
-            retcode=os.EX_CONFIG,
-        )
