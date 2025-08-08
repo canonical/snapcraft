@@ -124,6 +124,7 @@ exclude_patterns = [
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
     "how-to/publishing/build-snaps-remotely.rst",
+    "release-notes/snapcraft-8-12.rst",
 ]
 
 # region Options for extensions
