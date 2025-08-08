@@ -573,15 +573,6 @@ _setup_ubuntu_base_chroot_fnc = [
             mkdir -p "${UC_INITRD_ROOT}"
             tar --extract --file "${ubuntu_base}" --directory "${UC_INITRD_ROOT}"
             cp --no-dereference /etc/resolv.conf "${UC_INITRD_ROOT}/etc/resolv.conf"
-            # if not running as root, setup build root env with fakechroot, fakeroot
-            if [ "$(whoami)" != "root" ]; then
-                cp --no-dereference --recursive \\
-                    /usr/lib/"${CRAFT_ARCH_TRIPLET_BUILD_FOR}"/fakechroot \\
-                    "${UC_INITRD_ROOT}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
-                cp --no-dereference --recursive \\
-                    /usr/lib/"${CRAFT_ARCH_TRIPLET_BUILD_FOR}"/libfakeroot \\
-                    "${UC_INITRD_ROOT}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
-            fi
             # setup /dev/null as it's used to mask systemd service files
             touch "${UC_INITRD_ROOT}/dev/null"
         }
@@ -676,43 +667,15 @@ _chroot_run_cmd_fnc = [
             set -x
         }
 
-        # run command in true chroot
-        _run_truechroot() {
-            set +x
-            local chroot_home="${1}"
-            local cmd="${2}"
-            trap "_clean_chroot ${chroot_home}" EXIT
-            _setup_chroot "${chroot_home}"
-            chroot "${chroot_home}" /bin/bash -c "${cmd}"
-            set -x
-        }
-
-        # run command in fake chroot
-        _run_fakechroot() {
-            set +x
-            local chroot_home="${1}"
-            local cmd="${2}"
-            if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
-                ld_path="${LD_LIBRARY_PATH}:/usr/lib/systemd:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/fakechroot:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfakeroot"
-            else
-                ld_path="${LD_LIBRARY_PATH}:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/systemd:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/fakechroot:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfakeroot"
-            fi
-            LD_LIBRARY_PATH="${ld_path}" fakechroot fakeroot chroot "${chroot_home}" /bin/bash -c "${cmd}"
-            set -x
-        }
-
         # run command with chroot
         # 1: chroot home, 2: command to run
         run_chroot() {
             set +x
             local chroot_home="${1}"
             local cmd="${2}"
-            # use true chroot if we have root permissions
-            if [ "$(whoami)" = "root" ]; then
-                _run_truechroot "${chroot_home}" "${cmd}"
-            else
-                _run_fakechroot "${chroot_home}" "${cmd}"
-            fi
+            trap "_clean_chroot ${chroot_home}" EXIT
+            _setup_chroot "${chroot_home}"
+            chroot "${chroot_home}" /bin/bash -c "${cmd}"
             set -x
         }
         """
@@ -760,7 +723,7 @@ _setup_initrd_chroot_fnc = [
             if [ ! -e "${work_dir}/.${UC_INITRD_ROOT_NAME}.ppa" ]; then
                 run_chroot "${UC_INITRD_ROOT}" "apt-get update"
                 run_chroot "${UC_INITRD_ROOT}" "apt-get dist-upgrade -y"
-                run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y ca-certificates gpg dirmngr gpg-agent debconf-utils libfakeroot lz4 xz-utils zstd"
+                run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y ca-certificates gpg dirmngr gpg-agent debconf-utils lz4 xz-utils zstd"
                 if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
                     run_chroot "${UC_INITRD_ROOT}" "apt-get install --no-install-recommends -y systemd"
                 else
@@ -987,13 +950,6 @@ _initrd_tool_workaroud_cmd = [
             -e 's/"cp", "-ar", args./"cp", "-lR", args./g' \\
             -e 's/"cp", "-aR", args./"cp", "-lR", args./g' \\
             ${UC_INITRD_ROOT}/usr/bin/ubuntu-core-initramfs
-        if [ "$(whoami)" != "root" ]; then
-            # ubuntu-core-initramfs unsets LD_PRELOAD before invoking dracut
-            # this leads to escaping of fakechroot, disable this
-            sed -i \\
-                -e 's/\\(.*\\)proc_env\\["LD_PRELOAD"\\]\\(.*\\)/\\1# proc_env\\["LD_PRELOAD"\\]\\2/g' \\
-                ${UC_INITRD_ROOT}/usr/bin/ubuntu-core-initramfs
-        fi
         """
     )
 ]
