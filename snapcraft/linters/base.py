@@ -41,6 +41,7 @@ class LinterResult(str, enum.Enum):
     WARNING = "warning"
     ERROR = "error"
     FATAL = "fatal"
+    INFO = "info"
     IGNORED = "ignored"
 
     def __str__(self):
