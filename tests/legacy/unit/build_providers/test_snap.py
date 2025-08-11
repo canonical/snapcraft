@@ -122,7 +122,6 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_has_calls(get_assertion_calls)
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "system", ANY]),
                 call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "ack", "/var/tmp/snapd.assert"]),
@@ -240,7 +239,6 @@ class SnapInjectionTest(unit.TestCase):
         self.get_assertion_mock.assert_has_calls(get_assertion_calls)
         self.provider.run_mock.assert_has_calls(
             [
-                call(["snap", "set", "system", "experimental.snapd-snap=true"]),
                 call(["snap", "set", "system", ANY]),
                 call(["snap", "watch", "--last=auto-refresh?"]),
                 call(["snap", "ack", "/var/tmp/snapd.assert"]),
