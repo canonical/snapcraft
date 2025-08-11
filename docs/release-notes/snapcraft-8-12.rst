@@ -30,6 +30,5 @@ Previously, the :ref:`remote builder <explanation-remote-build>` couldn't accept
 ``--build-for`` argument when building core24 snaps with a shorthand :ref:`platforms
 <reference_architectures>` definition.
 
-Due to upstream improvements in Launchpad, this restriction has been lifted in
-Snapcraft. Now, ``--build-for`` can be used for any core24 project.
-
+Due to improvements made by the Launchpad team, ``--build-for`` can now be used when
+building core24 snaps remotely.
