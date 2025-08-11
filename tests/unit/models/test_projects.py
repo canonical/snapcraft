@@ -1293,6 +1293,56 @@ class TestAppValidation:
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
+    @pytest.mark.parametrize(
+        "success_exit_status",
+        [
+            [0],
+            [0, 1, 2],
+            [255],
+            ["SIGTERM"],
+            ["SIGKILL", "SIGINT"],
+            [0, "SIGTERM", 1],
+            ["SIGHUP", "SIGUSR1", "SIGUSR2"],
+        ],
+    )
+    def test_app_success_exit_status_valid(self, success_exit_status, app_yaml_data):
+        data = app_yaml_data(success_exit_status=success_exit_status)
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+        assert project.apps["app1"].success_exit_status == success_exit_status
+
+    @pytest.mark.parametrize(
+        "success_exit_status,expected_error",
+        [
+            (
+                [256],
+                "Exit code 256 is out of range. Exit codes must be between 0 and 255.",
+            ),
+            (
+                [-1],
+                "Exit code -1 is out of range. Exit codes must be between 0 and 255.",
+            ),
+            (
+                ["INVALID_SIGNAL"],
+                "'INVALID_SIGNAL' is not a valid exit code",
+            ),
+            (
+                [1.5],
+                "'1.5' is not a valid exit code",
+            ),
+            (
+                "not a list",
+                "Input should be a valid list",
+            ),
+        ],
+    )
+    def test_app_success_exit_status_invalid(
+        self, success_exit_status, expected_error, app_yaml_data
+    ):
+        data = app_yaml_data(success_exit_status=success_exit_status)
+        with pytest.raises(pydantic.ValidationError, match=expected_error):
+            Project.unmarshal(data)
+
     def test_app_valid_aliases(self, app_yaml_data):
         data = app_yaml_data(aliases=["i", "am", "a", "list"])
 

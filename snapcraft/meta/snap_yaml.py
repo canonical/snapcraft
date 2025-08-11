@@ -94,6 +94,7 @@ class SnapApp(SnapcraftMetadata):
     refresh_mode: str | None = None
     stop_mode: str | None = None
     restart_condition: str | None = None
+    success_exit_status: list[int | str] | None = None
     install_mode: str | None = None
     plugs: list[str] | None = None
     slots: list[str] | None = None
@@ -379,6 +380,7 @@ def _create_snap_app(app: models.App, assumes: set[str]) -> SnapApp:
         refresh_mode=app.refresh_mode,
         stop_mode=app.stop_mode,
         restart_condition=app.restart_condition,
+        success_exit_status=app.success_exit_status,
         install_mode=app.install_mode,
         plugs=app.plugs,
         slots=app.slots,

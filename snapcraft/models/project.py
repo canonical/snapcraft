@@ -787,6 +787,26 @@ class App(models.CraftBaseModel):
     reference for more information.
     """
 
+    success_exit_status: list[int | str] | None = pydantic.Field(
+        default=None,
+        description="The list of exit codes and signals that are considered successful.",
+        examples=["['TEMPFAIL', 250, 'SIGKILL']"],
+    )
+    """The list of exit codes and signals that are considered successful.
+
+    This field corresponds to the ``SuccessExitStatus=`` directive in systemd
+    service definitions.
+    See the `systemd manual
+    <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#SuccessExitStatus=>`_
+    for more information.
+
+    Requires the ``daemon`` key to be specified for the app.
+
+    See the `daemon key
+    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
+    reference for more information.
+    """
+
     install_mode: Literal["enable", "disable"] | None = pydantic.Field(
         default=None,
         description="Whether snapd can automatically start the service when the snap is installed.",
@@ -1052,6 +1072,145 @@ class App(models.CraftBaseModel):
                 f"Valid extensions are {valid_extensions!r}."
             )
         return extensions
+
+    @pydantic.field_validator("success_exit_status")
+    @classmethod
+    def _validate_success_exit_status(
+        cls, status_list: list[int | str]
+    ) -> list[int | str]:
+        if not status_list:
+            return status_list
+
+        # List of signal names, as per https://man7.org/linux/man-pages/man7/signal.7.html
+        signals = [
+            "SIGABRT",
+            "SIGALRM",
+            "SIGBUS",
+            "SIGCHLD",
+            "SIGCLD",
+            "SIGCONT",
+            "SIGEMT",
+            "SIGFPE",
+            "SIGHUP",
+            "SIGILL",
+            "SIGINFO",
+            "SIGINT",
+            "SIGIO",
+            "SIGIOT",
+            "SIGKILL",
+            "SIGLOST",
+            "SIGPIPE",
+            "SIGPOLL",
+            "SIGPROF",
+            "SIGPWR",
+            "SIGQUIT",
+            "SIGSEGV",
+            "SIGSTKFLT",
+            "SIGSTOP",
+            "SIGSYS",
+            "SIGTERM",
+            "SIGTRAP",
+            "SIGTSTP",
+            "SIGTTIN",
+            "SIGTTOU",
+            "SIGUNUSED",
+            "SIGURG",
+            "SIGUSR1",
+            "SIGUSR2",
+            "SIGVTALRM",
+            "SIGXCPU",
+            "SIGXFSZ",
+            "SIGWINCH",
+        ]
+
+        # List of process exit codes, as per https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#Process%20Exit%20Codes
+        process_exit_codes = [
+            # basic C library exit codes
+            "SUCCESS",
+            "FAILURE",
+            # LSB service exit codes
+            "INVALIDARGUMENT",
+            "NOTIMPLEMENTED",
+            "NOPERMISSION",
+            "NOTINSTALLED",
+            "NOTCONFIGURED",
+            "NOTRUNNING",
+            # systemd-specific exit codes
+            "CHDIR",
+            "NICE",
+            "FDS",
+            "EXEC",
+            "MEMORY",
+            "LIMITS",
+            "OOM_ADJUST",
+            "SIGNAL_MASK",
+            "STDIN",
+            "STDOUT",
+            "CHROOT",
+            "IOPRIO",
+            "TIMERSLACK",
+            "SECUREBITS",
+            "SETSCHEDULER",
+            "CPUAFFINITY",
+            "GROUP",
+            "USER",
+            "CAPABILITIES",
+            "CGROUP",
+            "SETSID",
+            "CONFIRM",
+            "STDERR",
+            "PAM",
+            "NETWORK",
+            "NAMESPACE",
+            "NO_NEW_PRIVILEGES",
+            "SECCOMP",
+            "SELINUX_CONTEXT",
+            "PERSONALITY",
+            "APPARMOR_PROFILE",
+            "ADDRESS_FAMILIES",
+            "RUNTIME_DIRECTORY",
+            "CHOWN",
+            "SMACK_PROCESS_LABEL",
+            "KEYRING",
+            "STATE_DIRECTORY",
+            "CACHE_DIRECTORY",
+            "LOGS_DIRECTORY",
+            "CONFIGURATION_DIRECTORY",
+            "NUMA_POLICY",
+            "CREDENTIALS",
+            "BPF",
+            # BSD exit codes
+            "USAGE",
+            "DATAERR",
+            "NOINPUT",
+            "NOUSER",
+            "NOHOST",
+            "UNAVAILABLE",
+            "SOFTWARE",
+            "OSERR",
+            "OSFILE",
+            "CANTCREAT",
+            "IOERR",
+            "TEMPFAIL",
+            "PROTOCOL",
+            "NOPERM",
+            "CONFIG",
+        ]
+
+        valid_string = [*signals, *process_exit_codes]
+
+        for status in status_list:
+            if isinstance(status, int):
+                if not 0 <= status <= 255:
+                    raise ValueError(
+                        f"Exit code {status} is out of range. Exit codes must be between 0 and 255."
+                    )
+            elif status not in valid_string:
+                raise ValueError(
+                    f"'{status}' is not a valid exit code. Valid exit codes are: {', '.join(valid_string)}"
+                )
+
+        return status_list
 
 
 class Hook(models.CraftBaseModel):
