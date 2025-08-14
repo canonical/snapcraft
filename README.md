@@ -43,7 +43,7 @@ You can report any issues or bugs on the project's [GitHub
 repository](https://github.com/canonical/starcraft/issues).
 
 Starcraft is covered by the [Ubuntu Code of
-Conduct](https://ubuntu.com/community/ethos/code-of-conduct).
+Conduct](https://ubuntu.com/community/docs/ethos/code-of-conduct).
 
 ## Contribute to Starcraft
 
