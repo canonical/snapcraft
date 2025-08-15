@@ -116,32 +116,6 @@ The second mode of operation is when there isn't a ``platforms`` or
 ``architectures`` key in the project file. In this scenario, ``--build-for``
 defines the architectures to build for.
 
-Launchpad can't parse shorthand :doc:`platforms </reference/architectures>` in
-the project file when ``--build-for`` is provided (`LP#2077005`_,
-`LP#2098811`_). For example, ``--build-for`` can't be used with the following
-project file:
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    platforms:
-      amd64:
-      riscv64:
-
-To use ``--build-for``, expand the platforms entries so that the project file
-can be parsed by Launchpad:
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    platforms:
-      amd64:
-        build-on: [amd64]
-        build-for: [amd64]
-      riscv64:
-        build-on: [riscv64]
-        build-for: [riscv64]
-
 ``--launchpad-accept-public-upload``
 ************************************
 
@@ -247,5 +221,3 @@ Launchpad is not able to parse this notation (`LP#2042167`_).
 .. _`LP#2042167`: https://bugs.launchpad.net/snapcraft/+bug/2042167
 .. _`#4885`: https://github.com/canonical/snapcraft/issues/4885
 .. _`#4995`: https://github.com/canonical/snapcraft/issues/4995
-.. _`LP#2077005`: https://bugs.launchpad.net/snapcraft/+bug/2077005
-.. _`LP#2098811`: https://bugs.launchpad.net/snapcraft/+bug/2098811
