@@ -36,9 +36,9 @@ def snap_yaml_data():
             "confinement": "strict",
             "icon": "icon.png",
             "contact": "Hello@h.com",
-            "donation": {
+            "donation": [
                 "https://donate1.com",
-            },
+            ],
             "parts": {},
             "apps": {
                 "app1": {
