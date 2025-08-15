@@ -16,7 +16,7 @@ jobs:
       - name: Install uv
         run: |
           sudo snap install --classic astral-uv
-          sudo apt install python3-venv
+          sudo apt --yes install python3-venv
       - name: Checkout
         uses: actions/checkout@v5
       - name: Fetch tag annotations
