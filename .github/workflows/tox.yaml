@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Setup Python
@@ -57,7 +57,7 @@ jobs:
             tox_python: py310
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Set up Python version ${{ matrix.python_version }} on ${{ matrix.platform }}
@@ -81,7 +81,7 @@ jobs:
       - name: Test with tox
         run: tox run --skip-pkg-install --result-json results/tox-${{ matrix.platform }}-${{ matrix.python_version }}.json -e test-${{ matrix.tox_python }},test-legacy-${{ matrix.tox_python }}
       - name: Upload code coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           directory: ./results/
           files: coverage*.xml
