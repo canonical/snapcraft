@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       # speed up build times by using wheels, when available
@@ -46,12 +46,12 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
       - name: Download snap artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: snap
           path: tests
@@ -69,12 +69,12 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
       - name: Download snap artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: snap
           path: tests
@@ -98,12 +98,12 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
       - name: Download snap artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: snap
           path: tests
@@ -123,12 +123,12 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
       - name: Download snap artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: snap
           path: tests
@@ -150,12 +150,12 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
       - name: Download snap artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: snap
           path: tests
@@ -173,12 +173,12 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
       - name: Download snap artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: snap
           path: tests
