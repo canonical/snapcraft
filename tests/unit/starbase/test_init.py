@@ -19,26 +19,27 @@
 from unittest import mock
 
 import starcraft
+from pytest_mock import MockerFixture
 
 
 def test_version():
     assert starcraft.__version__ is not None
 
 
-def test_hello(mocker):
-    mocker.patch("builtins.print")
+def test_hello(mocker: MockerFixture):
+    mock_print = mocker.patch("builtins.print")
 
     starcraft.hello()
 
-    print.assert_called_once_with("Hello *craft team!")
+    mock_print.assert_called_once_with("Hello *craft team!")
 
 
-def test_hello_people(mocker):
-    mocker.patch("builtins.print")
+def test_hello_people(mocker: MockerFixture):
+    mock_print = mocker.patch("builtins.print")
 
     starcraft.hello(["people"])
 
-    print.assert_has_calls(
+    mock_print.assert_has_calls(
         [
             mock.call("Hello *craft team!"),
             mock.call("Hello people!"),
