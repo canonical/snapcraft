@@ -156,8 +156,8 @@ Snapcraft 8.11.1
 Snapcraft 8.11.2
 ~~~~~~~~~~~~~~~~
 
-- `#5635`_ Snapcraft wouldn't use the proxy to install GPG keys for a package
-  repository.
+- `#5635`_ If installing a GPG key from a keyserver for a package repository fails,
+  Snapcraft now retries installing the key using the proxy.
 
 Contributors
 ------------
