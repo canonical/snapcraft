@@ -151,6 +151,13 @@ Snapcraft 8.11.1
 
 - `#5298`_ Verbosity arguments are now parsed for all non-lifecycle commands.
 
+.. _release-notes-fixes-8.11.2:
+
+Snapcraft 8.11.2
+~~~~~~~~~~~~~~~~
+
+- `#5635`_ Snapcraft wouldn't use the proxy to install GPG keys for a package
+  repository.
 
 Contributors
 ------------
@@ -168,3 +175,4 @@ this release.
 :literalref:`@upils<https://github.com/upils>`.
 
 .. _#5298: https://github.com/canonical/snapcraft/issues/5298
+.. _#5635: https://github.com/canonical/snapcraft/issues/5635
