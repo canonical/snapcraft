@@ -22,3 +22,5 @@ Snapcraft runs the following linters:
 - :ref:`Library <how-to-use-the-library-linter>`. Verifies that no ELF file
   dependencies, such as libraries, are missing, and that no extra libraries are included
   in the snap package.
+- :ref:`Metadata <how-to-use-the-metadata-linter>`. Verifies that the snap contains all the
+  :ref:`metadata <reference-anatomy-of-snapcraft-yaml>` needed for a better listing in the snap store.

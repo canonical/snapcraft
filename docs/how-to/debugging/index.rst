@@ -10,6 +10,7 @@ Debugging
     debug-a-snap
     use-the-classic-linter
     use-the-library-linter
+    use-the-metadata-linter
     disable-a-linter
     debug-with-gdb
     Classic confinement <debug-classic-confinement>

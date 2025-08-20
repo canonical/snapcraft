@@ -31,6 +31,7 @@ from snapcraft.meta import snap_yaml
 from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
 from .library_linter import LibraryLinter
+from .metadata_linter import MetadataLinter
 
 LinterType = type[Linter]
 
@@ -38,6 +39,7 @@ LinterType = type[Linter]
 LINTERS: dict[str, LinterType] = {
     "classic": ClassicLinter,
     "library": LibraryLinter,
+    "metadata": MetadataLinter,
 }
 
 
@@ -49,12 +51,14 @@ class LinterStatus(enum.IntEnum):
     FATAL = 1
     ERRORS = 2
     WARNINGS = 3
+    INFO = 4
 
 
 _lint_reports: dict[LinterResult, str] = {
     LinterResult.OK: "Lint OK",
     LinterResult.WARNING: "Lint warnings",
     LinterResult.ERROR: "Lint errors",
+    LinterResult.INFO: "Lint information",
 }
 
 
@@ -106,6 +110,8 @@ def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
         status = LinterStatus.ERRORS
     elif result == LinterResult.WARNING and status == LinterStatus.OK:
         status = LinterStatus.WARNINGS
+    elif result == LinterResult.INFO and status != LinterStatus.OK:
+        status = LinterStatus.INFO
 
     return status
 

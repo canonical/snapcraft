@@ -13,6 +13,7 @@ confinement: classic
 
 lint:
   ignore:
+    - metadata
     - library
 
 parts:
