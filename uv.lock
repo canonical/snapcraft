@@ -514,7 +514,7 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "5.6.3"
+version = "5.6.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
@@ -534,9 +534,9 @@ dependencies = [
     { name = "snap-helpers" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/52/a10254329bea99df8f6bda74d6d9be4c49d7b91690d5f600d2aabffd2f02/craft_application-5.6.3.tar.gz", hash = "sha256:27a5e9cff4b02bddea03e13e400bd1e9565db4c60eff06b86303253fca7b86a5", size = 409074, upload-time = "2025-08-05T17:40:38.797Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/b3/2efb81f3bef0ac82d6a8ab675a39e0ac2f657681ef5e785488d44a964fd8/craft_application-5.6.5.tar.gz", hash = "sha256:bfbcd93d1b5475984cbad513283c10f7f6e3f2665ab77272f501a32e3deb6ebd", size = 409926, upload-time = "2025-08-20T14:14:29.476Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/4d/3d4c0473e3dc14245eafad96860297c545405bff772969faede04de5c57c/craft_application-5.6.3-py3-none-any.whl", hash = "sha256:24d0748bde9a31c24eabd47bae4e3e208845344269c471c410f100403ab07c2c", size = 180431, upload-time = "2025-08-05T17:40:36.763Z" },
+    { url = "https://files.pythonhosted.org/packages/00/bb/805a6eaaa9f94cdc6575f4de6b9f45a10597efa56d684a07b6aa2ba4e97b/craft_application-5.6.5-py3-none-any.whl", hash = "sha256:192e6241f6a6a5834dff65c564465dafeda5685048c19387fd457760ad369e28", size = 180494, upload-time = "2025-08-20T14:14:27.555Z" },
 ]
 
 [package.optional-dependencies]
@@ -2763,7 +2763,7 @@ requires-dist = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.0.0" },
     { name = "click", specifier = ">=8.2" },
-    { name = "craft-application", extras = ["remote"], specifier = ">=5.6.1,<6.0.0" },
+    { name = "craft-application", extras = ["remote"], specifier = ">=5.6.5,<6.0.0" },
     { name = "craft-archives", specifier = ">=2.1.1,<3.0.0" },
     { name = "craft-cli", specifier = ">=3.1.2,<4.0.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
