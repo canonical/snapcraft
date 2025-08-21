@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import itertools
 import operator
+import sys
 import textwrap
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Final, cast
@@ -118,12 +119,12 @@ class StoreStatusCommand(AppCommand):
             # nothing to do here.
             if not tracks:
                 return
-
         emit.message(
             get_tabulated_channel_map(
                 snap_channel_map,
                 architectures=list(architectures),
                 tracks=tracks,
+                repeat=not sys.stdout.isatty(),
             )
         )
 
@@ -322,6 +323,7 @@ def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
     *,
     architectures: Sequence[str],
     tracks: Sequence[str],
+    repeat: bool,
 ):
     """Return a tabulated channel map."""
     channel_order = _get_channel_order(snap_channel_map.snap.channels, tracks)
@@ -337,13 +339,13 @@ def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
             architecture_mentioned = False
             next_tick = _HINTS.CLOSED
             for channel_name in channel_order[track_name]:
-                if not track_mentioned:
+                if repeat or not track_mentioned:
                     track_mentioned = True
                     track_string = track_name
                 else:
                     track_string = ""
 
-                if not architecture_mentioned:
+                if repeat or not architecture_mentioned:
                     architecture_mentioned = True
                     architecture_string = architecture
                 else:
@@ -370,7 +372,13 @@ def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
     else:
         headers.append("")
 
-    return tabulate(channel_lines, numalign="left", headers=headers, tablefmt="plain")
+    return tabulate(
+        channel_lines,
+        numalign="left",
+        disable_numparse=True,
+        headers=headers,
+        tablefmt="plain",
+    )
 
 
 class StoreListTracksCommand(AppCommand):
