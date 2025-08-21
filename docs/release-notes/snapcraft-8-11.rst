@@ -158,6 +158,8 @@ Snapcraft 8.11.2
 
 - `#5635`_ If installing a GPG key from a keyserver for a package repository fails,
   Snapcraft now retries installing the key using the proxy.
+- Snap builds no longer fail when reusing build instances created by prior
+  versions of Snapcraft.
 
 Contributors
 ------------
