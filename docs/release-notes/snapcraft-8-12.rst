@@ -54,12 +54,9 @@ Prior to the change, the output was formatted as follows:
                       edge/pr-5700  8.11.1.post7              15681       -           2025-09-13T00:00:00Z
                       edge/pr-5699  8.11.1.post4              15666       -           2025-09-13T00:00:00Z
 
-
 The same status query now produces the following output:
 
-
 .. terminal::
-
     :input: snapcraft status snapcraft | grep pr- | head
 
     latest   amd64    edge/pr-5718  8.11.1.post15             15744       -           2025-09-19T00:00:00Z
