@@ -58,11 +58,11 @@ must be set to ``noetic`` with the ``build-environment`` key.
 
 During the build step, the plugin performs the following actions:
 
-* Install any missing project dependencies using ``rosdep``.
 * Source `Catkin workspaces <http://wiki.ros.org/catkin/workspaces>`_ in any declared
   build snaps, stage snaps, and on the host system.
-* Run ``catkin_make_isolated`` to build each item in the sourced workspaces, taking
-  into account any plugin-specific keys declared in the part.
+* Install any missing project dependencies using ``rosdep``.
+* Run ``catkin_make_isolated`` to build each item in the sourced workspaces, taking into
+  account any plugin-specific keys declared in the part.
 
 
 Example
