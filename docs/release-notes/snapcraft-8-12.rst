@@ -34,15 +34,15 @@ Due to improvements made by the Launchpad team, ``--build-for`` can now be used 
 building core24 snaps remotely.
 
 
-Better usability when piping ``status`` output
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Improved usability when piping ``status`` output
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A previously existing feature was brought for better output parsing. ``snapcraft status``
-went from:
+The output of ``snapcraft status`` was reworked to allow for easier parsing.
+Prior to the change, the output was formatted as follows:
 
-.. code-block:: shell
-
-    # snapcraft status snapcraft | grep pr- | head
+.. terminal::
+    :input: snapcraft status snapcraft | grep pr- | head
+    
                       edge/pr-5718  8.11.1.post15             15744       -           2025-09-19T00:00:00Z
                       edge/pr-5715  8.11.1.post10             15719       -           2025-09-18T00:00:00Z
                       edge/pr-5714  8.11.1.post10             15712       -           2025-09-18T00:00:00Z
@@ -55,12 +55,13 @@ went from:
                       edge/pr-5699  8.11.1.post4              15666       -           2025-09-13T00:00:00Z
 
 
-to:
+The same status query now produces the following output:
 
 
-.. code-block:: shell
+.. terminal::
 
-    # snapcraft status snapcraft | grep pr- | head
+    :input: snapcraft status snapcraft | grep pr- | head
+
     latest   amd64    edge/pr-5718  8.11.1.post15             15744       -           2025-09-19T00:00:00Z
     latest   amd64    edge/pr-5715  8.11.1.post10             15719       -           2025-09-18T00:00:00Z
     latest   amd64    edge/pr-5714  8.11.1.post10             15712       -           2025-09-18T00:00:00Z
