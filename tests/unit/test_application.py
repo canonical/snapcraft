@@ -432,6 +432,49 @@ def test_yaml_syntax_error(in_project_path, monkeypatch, capsys):
     )
 
 
+@pytest.mark.parametrize(
+    "bad_yaml",
+    [
+        """
+            name: test
+            base: core24
+            confinement: strict
+
+            apps:
+              # items under `test-app` are missing leading dashes
+              test-app:
+                foo
+                bar
+              plugs:
+                - home
+                - network
+        """,
+        """
+            name: test
+            base: core24
+            confinement: strict
+
+            apps:
+                # `plugs` should be indented under `test-app`
+                test-app:
+                  command: test-part
+                plugs:
+                  - home
+                  - network
+        """,
+    ],
+)
+def test_yaml_indentation_error(bad_yaml, in_project_path, monkeypatch, capsys):
+    """Provide a user friendly error message on schema errors that are not YAML syntax errors."""
+    (in_project_path / "snapcraft.yaml").write_text(dedent(bad_yaml))
+    monkeypatch.setattr("sys.argv", ["snapcraft", "pack"])
+
+    application.main()
+
+    _, err = capsys.readouterr()
+    assert err.startswith("Bad snapcraft.yaml content:")
+
+
 @pytest.mark.parametrize("envvar", ["disable-fallback", None])
 @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
 @pytest.mark.usefixtures("mock_remote_build_argv")
