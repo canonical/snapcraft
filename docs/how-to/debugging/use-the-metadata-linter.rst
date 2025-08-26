@@ -5,10 +5,9 @@ Use the metadata linter
 
 The following guidelines describe how to address issues flagged by the metadata linter.
 
-To resolve a missing metadata field, add the missing field to the snap's
-``snapcraft.yaml`` file.
+To resolve a missing metadata key, add it to the snap's project file.
 
-Currently these following metadata fields are linted:
+The following metadata keys are linted:
 
 - ``title``
 - ``contact``
@@ -20,4 +19,6 @@ Currently these following metadata fields are linted:
 
 See the :ref:`reference-snapcraft-yaml-top-level-keys` for more information about these keys.
 
-To ignore the metadata field, add the field to the ``lint.ignore.metadata`` key. See :ref:`how-to-disable-a-linter-ignore-specific-keys-of-metadata-linter` for more information.
+To ignore a key, add it to the ``lint.ignore.metadata`` key.
+
+See :ref:`how-to-disable-a-linter-ignore-specific-keys-of-metadata-linter` for more information.

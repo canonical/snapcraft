@@ -36,6 +36,8 @@ Several :ref:`top-level keys <reference-snapcraft-yaml-top-level-keys>` define a
 describe the snap.
 
 
+.. _reference-anatomy-of-snapcraft-yaml-metadata:
+
 Metadata
 ^^^^^^^^
 
