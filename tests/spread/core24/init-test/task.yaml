@@ -2,7 +2,6 @@ summary: Init and execute tests
 
 environment:
   CI: "1"
-  CRAFT_IDLE_MINS: "2"
 
 prepare: |
   rm -rf test-snap
