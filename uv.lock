@@ -515,7 +515,7 @@ toml = [
 [[package]]
 name = "craft-application"
 version = "5.4.0.post6+gccee65e"
-source = { git = "https://github.com/canonical/craft-application.git?rev=work%2Fdelayed-shutdown#ccee65e103d21b3fff6cc661dd897dfe2808db5a" }
+source = { git = "https://github.com/canonical/craft-application.git?rev=ccee65e103d21b3fff6cc661dd897dfe2808db5a#ccee65e103d21b3fff6cc661dd897dfe2808db5a" }
 dependencies = [
     { name = "annotated-types" },
     { name = "craft-archives" },
@@ -2759,7 +2759,7 @@ requires-dist = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.0.0" },
     { name = "click", specifier = ">=8.2" },
-    { name = "craft-application", extras = ["remote"], git = "https://github.com/canonical/craft-application.git?rev=work%2Fdelayed-shutdown" },
+    { name = "craft-application", extras = ["remote"], git = "https://github.com/canonical/craft-application.git?rev=ccee65e103d21b3fff6cc661dd897dfe2808db5a" },
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = ">=3.1.2,<4.0.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
