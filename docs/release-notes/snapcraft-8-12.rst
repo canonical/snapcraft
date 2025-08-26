@@ -42,7 +42,6 @@ Prior to the change, the output was formatted as follows:
 
 .. terminal::
     :input: snapcraft status snapcraft | grep pr- | head
-    
                       edge/pr-5718  8.11.1.post15             15744       -           2025-09-19T00:00:00Z
                       edge/pr-5715  8.11.1.post10             15719       -           2025-09-18T00:00:00Z
                       edge/pr-5714  8.11.1.post10             15712       -           2025-09-18T00:00:00Z
