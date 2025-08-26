@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import re
 import textwrap
+from enum import Enum
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import pydantic
@@ -50,7 +51,7 @@ from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Callable, Iterable, Mapping
 
     from craft_providers import bases
 
@@ -1950,48 +1951,6 @@ class Project(models.Project):
 
         return components
 
-    @pydantic.model_validator(mode="after")
-    def _validate_platforms_and_architectures(self) -> Self:
-        """Validate usage of platforms and architectures.
-
-        core22 base:
-         - can optionally define architectures
-         - cannot define platforms
-
-        core24 and newer bases:
-         - cannot define architectures
-         - can optionally define platforms
-        """
-        base = get_effective_base(
-            base=self.base,
-            build_base=self.build_base,
-            project_type=self.type,
-            name=self.name,
-        )
-        if base == "core22":
-            # this is a one-shot - the value should not change when re-validating
-            if self.architectures and self._architectures_in_yaml is None:
-                # record if architectures are defined in the yaml for remote-build (#4881)
-                self._architectures_in_yaml = True
-            elif not self.architectures:
-                self._architectures_in_yaml = False
-                # set default value
-                host_arch = str(DebianArchitecture.from_host())
-                self.architectures = [
-                    Architecture(
-                        build_on=[host_arch],
-                        build_for=[host_arch],
-                    )
-                ]
-
-        elif self.architectures:
-            raise ValueError(
-                f"'architectures' key is not supported for base {base!r}. "
-                "Use 'platforms' key instead."
-            )
-
-        return self
-
     @pydantic.field_validator("platforms")
     @classmethod
     def _validate_all_platforms(
@@ -2066,14 +2025,6 @@ class Project(models.Project):
 
         return epoch
 
-    @pydantic.field_validator("architectures")
-    @classmethod
-    def _validate_architecture_data(
-        cls, architectures: list[str | Architecture], info: pydantic.ValidationInfo
-    ) -> list[Architecture]:
-        """Validate architecture data."""
-        return validate_architectures(architectures)
-
     @pydantic.field_validator("provenance")
     @classmethod
     def _validate_provenance(cls, provenance: str) -> str:
@@ -2092,6 +2043,12 @@ class Project(models.Project):
         if isinstance(field_value, str):
             field_value = cast(UniqueList[str], [field_value])
         return field_value
+
+    @override
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]):
+        """Create a Snapcraft project from a dictionary of data."""
+        return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)
 
     def _get_content_plugs(self) -> list[ContentPlug]:
         """Get list of content plugs."""
@@ -2197,6 +2154,123 @@ class Project(models.Project):
         or None if no components are defined.
         """
         return _get_partitions_from_components(self.components)
+
+
+class BaseEnum(Enum):
+    BARE = "bare"
+    CORE22 = "core22"
+    CORE24 = "core24"
+    UNIMPLEMENTED = "UNIMPLEMENTED"
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        return cls.UNIMPLEMENTED
+
+
+class BuildBaseEnum(Enum):
+    CORE22 = "core22"
+    CORE24 = "core24"
+    UNIMPLEMENTED = "UNIMPLEMENTED"
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        return cls.UNIMPLEMENTED
+
+
+def _custom_error(error_msg: str):
+    def _validator(v: Any, next_: Any, ctx: pydantic.ValidationInfo):
+        try:
+            return next_(v, ctx)
+        except Exception as exc:
+            raise ValueError(error_msg) from exc
+
+    return pydantic.WrapValidator(_validator)
+
+
+class BaseProject(Project): ...
+
+
+class BareProject(BaseProject): ...
+
+
+class Core22Project(BaseProject):
+    platforms: dict[str, Platform] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        default=None,
+        description="The platforms key is only used in core24 and newer snaps. For core22 and older snaps, use "
+        "the ``architectures`` key.",
+    )
+
+    @pydantic.model_validator(mode="after")
+    def _validate_platforms_and_architectures(self) -> Self:
+        """Validate usage of platforms and architectures.
+
+        - can optionally define architectures
+        - cannot define platforms
+        """
+        # this is a one-shot - the value should not change when re-validating
+        if self.architectures and self._architectures_in_yaml is None:
+            # record if architectures are defined in the yaml for remote-build (#4881)
+            self._architectures_in_yaml = True
+
+        elif not self.architectures:
+            self._architectures_in_yaml = False
+            # set default value
+            host_arch = str(DebianArchitecture.from_host())
+            self.architectures = [
+                Architecture(
+                    build_on=[host_arch],
+                    build_for=[host_arch],
+                )
+            ]
+
+        return self
+
+    @pydantic.field_validator("architectures")
+    @classmethod
+    def _validate_architecture_data(
+        cls, architectures: list[str | Architecture], info: pydantic.ValidationInfo
+    ) -> list[Architecture]:
+        """Validate architecture data."""
+        return validate_architectures(architectures)
+
+
+class BareCore22Project(Core22Project): ...
+
+
+class Core24Project(BaseProject):
+    architectures: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
+        None,
+        _custom_error(
+            "'architectures' key is not supported for base 'core24'. Use 'platforms' key instead."
+        ),
+    ] = pydantic.Field(
+        default=None,
+        description="The architectures key is only used in core22 snaps. For core24 and newer snaps, use the ``platforms`` key.",
+    )
+
+
+class BareCore24Project(Core24Project): ...
+
+
+def _discriminator(enum: type[Enum], key: str) -> Callable[[dict], str]:
+    return lambda data: enum(data.get(key)).value
+
+
+_BareProject = Annotated[
+    Annotated[BareProject, pydantic.Tag(BuildBaseEnum.UNIMPLEMENTED.value)]
+    | Annotated[BareCore22Project, pydantic.Tag(BuildBaseEnum.CORE22.value)]
+    | Annotated[BareCore24Project, pydantic.Tag(BuildBaseEnum.CORE24.value)],
+    pydantic.Discriminator(_discriminator(BuildBaseEnum, "build_base")),
+]
+
+
+SnapcraftProject = Annotated[
+    Annotated[Core22Project, pydantic.Tag(BaseEnum.CORE22.value)]
+    | Annotated[Core24Project, pydantic.Tag(BaseEnum.CORE24.value)]
+    | Annotated[_BareProject, pydantic.Tag(BaseEnum.BARE.value)]
+    | Annotated[BaseProject, pydantic.Tag(BaseEnum.UNIMPLEMENTED.value)],
+    pydantic.Discriminator(_discriminator(BaseEnum, "base")),
+]
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
