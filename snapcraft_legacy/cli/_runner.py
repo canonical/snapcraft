@@ -31,11 +31,9 @@ from .assertions import assertionscli
 from .containers import containerscli
 from .discovery import discoverycli
 from .extensions import extensioncli
-from .help import helpcli
 from .lifecycle import lifecyclecli
 from .remote import remotecli
 from .store import storecli
-from .version import SNAPCRAFT_VERSION_TEMPLATE, versioncli
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +42,8 @@ command_groups = [
     assertionscli,
     containerscli,
     discoverycli,
-    helpcli,
     lifecyclecli,
     extensioncli,
-    versioncli,
     remotecli,
 ]
 
@@ -86,14 +82,13 @@ def configure_requests_ca() -> None:
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
 @click.version_option(
-    message=SNAPCRAFT_VERSION_TEMPLATE,
     version=snapcraft_legacy.__version__,  # type: ignore
 )
 @click.pass_context
 @add_provider_options(hidden=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
-     # control and use quiet/verbose/verbosity/enable-developer-debug options
+    # control and use quiet/verbose/verbosity/enable-developer-debug options
     if (
         sum(
             1
