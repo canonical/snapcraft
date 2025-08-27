@@ -31,7 +31,7 @@ Access project variables across parts and components
 ----------------------------------------------------
 
 You can further use craftctl to get and set custom variables within different
-components using a combination of the ``adopt-info`` tag and a dot syntax. For example:
+components using a combination of the ``adopt-info`` tag and a selector syntax. For example:
 
 .. code-block:: yaml
     :caption: Project file
