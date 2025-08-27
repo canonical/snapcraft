@@ -2253,7 +2253,7 @@ class BareCore24Project(Core24Project): ...
 
 
 def _discriminator(enum: type[Enum], key: str) -> Callable[[dict], str]:
-    return lambda data: enum(data.get(key)).value
+    return lambda data: enum(data.get(key, data.get("build-base"))).value
 
 
 _BareProject = Annotated[

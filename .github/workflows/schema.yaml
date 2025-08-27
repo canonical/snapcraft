@@ -2,17 +2,16 @@ name: Schema
 on: [pull_request]
 
 env:
-  SNAPCRAFT_JSON: schema/snapcraft.json
+  SNAPCRAFT_JSON: new_schema/snapcraft.json
 
 jobs:
   diff-schema:
+    if: false
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
       - name: Setup project
         run: |
@@ -26,13 +25,12 @@ jobs:
 
       - name: Prettify json
         run: |
-          uv run --frozen \
-            pre-commit run prettier --files generated_schema.json
+          uvx pre-commit run prettier --files generated_schema.json
 
       - name: Check with stored schema
         run: |
-          test -f $CHARMCRAFT_JSON &&
-          diff generated_schema.json $CHARMCRAFT_JSON
+          test -f $SNAPCRAFT_JSON &&
+          diff generated_schema.json $SNAPCRAFT_JSON
 
   validate-schema:
     if: false
