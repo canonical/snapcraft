@@ -37,16 +37,16 @@ components using a combination of the ``adopt-info`` tag and a dot syntax. For e
     :caption: Project file
 
     version: "1.0"
-    adopt-info: part-1
+    adopt-info: my-library
 
     components:
-      component-1:
-        type: test
-        adopt-info: part-2
+      debug-symbols:
+        type: standard
+        adopt-info: my-binary
 
     parts:
-      part-1:
-        source: src-1
+      my-library:
+        source: ./lib
         plugin: dump
         override-pull: |
           craftctl set version="$(cat VERSION.txt)"
@@ -54,16 +54,16 @@ components using a combination of the ``adopt-info`` tag and a dot syntax. For e
         override-build: |
           craftctl get version
 
-      part-2:
-        source: src-2
+      my-binary:
+        source: ./src
         plugin: dump
         override-pull: |
-          craftctl set components.component-1.version="$(cat VERSION.txt)"
+          craftctl set components.debug-symbols.version="$(cat VERSION.txt)"
           craftctl default
 
-The ``components.component-1.version`` selector picks up the component's version, 
-which is distinct from the ``version`` variable set in ``part-1``.
+The ``components.debug-symbols.version`` selector picks up the component's version,
+which is distinct from the ``version`` variable set in the ``my-library`` part.
 
 Note also how we use ``adopt-info`` at both the top level, and within a component.
-In this example, the project variables set in ``part-2`` will be included in the
-scope of ``component-1``.
+In this example, the project variables set in the ``my-binary`` part will be included
+in the scope of the ``debug-symbols`` component.
