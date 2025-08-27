@@ -27,8 +27,8 @@ Example solutions
     :end-before: Expose part variables in apps
 
 
-Accessing project variables across parts and components
--------------------------------------------------------
+Access project variables across parts and components
+----------------------------------------------------
 
 You can further use craftctl to get and set custom variables within different
 components using a combination of the ``adopt-info`` tag and a dot syntax. For example:
@@ -61,8 +61,8 @@ components using a combination of the ``adopt-info`` tag and a dot syntax. For e
           craftctl set components.component-1.version="$(cat VERSION.txt)"
           craftctl default
 
-Note the syntax ``components.component-1.version``, which is a distinct value from
-the ``version`` variable referenced in ``part-1``.
+The ``components.component-1.version`` selector picks up the component's version, 
+which is distinct from the ``version`` variable set in ``part-1``.
 
 Note also how we use ``adopt-info`` at both the top level, and within a component.
 In this example, the project variables set in ``part-2`` will be included in the
