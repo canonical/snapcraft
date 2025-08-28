@@ -7,15 +7,15 @@ The Catkin Tools plugin builds `ROS 1 <https://www.ros.org/>`_ parts using the `
 CLI tool <https://catkin-tools.readthedocs.io/en/latest/>`_.
 
 In Snapcraft 8, this plugin depends on the :ref:`reference-catkin-plugin` for
-configuration. This plugin can be used in tandem with the
+configuration. Both these plugins can be used in combination with the
 :ref:`reference-ros-1-extension` to build core20 snaps.
 
 
 Keywords
 --------
 
-This plugin uses the same keys as the Catkin plugin, and provides the following
-unique keys for core20 snaps.
+This plugin uses the same keys as the Catkin plugin, and provides the following unique
+keys for core20 snaps.
 
 
 catkin-tools-packages
@@ -24,9 +24,9 @@ catkin-tools-packages
 **Type**: list of strings
 **Default**: all workspace packages
 
-The list of catkin packages to build. If not set, all packages in the workspace are
-built. If set to an empty list, no packages are built, which could be useful if you only
-want ROS 1 debs in the snap.
+The list of catkin packages to build. If not set, all packages in the catkin workspace
+are built. If set to an empty list, no packages are built, and the snap will only
+contain Debian packages for ROS 1.
 
 
 catkin-tools-cmake-args
@@ -61,6 +61,9 @@ The Catkin plugin is designed to work alongside the :ref:`reference-ros-1-extens
 
 During the build step, the plugin performs the following actions:
 
+#. Source `catkin workspaces <http://wiki.ros.org/catkin/workspaces>`_ in any declared
+   build snaps, stage snaps, and on the host system.
+#. Install any missing project dependencies with rosdep.
 #. Initialize the workspace to use catkin tools.
 #. Overwrite the default catkin build, so that builds aren't affected by profile
    changes.
@@ -72,7 +75,7 @@ During the build step, the plugin performs the following actions:
 Example snap
 ------------
 
-The tests in Snapcraft have a `catkin-tools-noetic-hello snap`_ built with the Catkin
-Tools plugin.
+The test suite in Snapcraft has a `catkin-tools-noetic-hello snap`_ built with the
+Catkin Tools plugin.
 
 .. _catkin-tools-noetic-hello snap: https://github.com/canonical/snapcraft/blob/2e9e72ab8a6531dbd1c576688255eae5da048bf8/tests/spread/plugins/v2/snaps/catkin-tools-noetic-hello/snap/snapcraft.yaml
