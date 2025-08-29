@@ -544,7 +544,7 @@ def setup_project(mocker, project_path):
         )
         project_services.get("project").configure(platform=None, build_for=None)
 
-        return models.Project.model_validate(project_data)
+        return models.Project.unmarshal(project_data)
 
     return _setup_services
 
