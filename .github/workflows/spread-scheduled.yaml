@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Build snap
-        uses: snapcore/action-build@v1
+        uses: canonical/action-build@v1
         id: snapcraft
       - name: Upload snap artifact
         uses: actions/upload-artifact@v4
@@ -37,7 +37,7 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
