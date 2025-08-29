@@ -48,7 +48,7 @@ execute: |
   fi
 
   # Remove the snap try and clean again
-  snap remove make-hello
+  snap remove make-hello --purge
   $SUDO_CMD bash -c "cd $SNAP_DIR && snapcraft clean --use-lxd"
   if [ -d prime ]; then
       echo "The prime directory should have been removed"

@@ -19,6 +19,10 @@ prepare: |
   mv snap build-aux
 
 restore: |
+  pushd test-snap
+  snapcraft clean
+  popd
+
   rm -rf test-snap
 
 execute: |
