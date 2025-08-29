@@ -14,10 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import importlib
 import logging
-import sys
 from pathlib import Path
 
 import jsonschema
