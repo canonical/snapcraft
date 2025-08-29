@@ -12,6 +12,7 @@ prepare: |
 
 restore: |
   cd "$SNAP"
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
   rm -Rf work
 

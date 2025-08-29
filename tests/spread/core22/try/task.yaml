@@ -1,5 +1,9 @@
 summary: Test "snapcraft try" in core22
 
+restore: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  snapcraft clean --use-lxd
+
 execute: |
   # TODO if we let `snapcraft try` create the dir, we get a permission error
   # when trying to write to it from the instance.
@@ -17,4 +21,4 @@ execute: |
   
   snap try prime
   hello-try | MATCH "Hello, world"
-  snap remove hello-try
+  snap remove hello-try --purge
