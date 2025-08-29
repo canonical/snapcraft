@@ -8,6 +8,7 @@ prepare: |
   set_base snap/snapcraft.yaml
 
 restore: |
+  snapcraft clean
   rm -rf test-snap
   rm -rf ./*.snap
 

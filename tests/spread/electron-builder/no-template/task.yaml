@@ -15,7 +15,7 @@ prepare: |
   snap install node --classic --channel "19/stable"
 
 restore: |
-  snap remove node
+  snap remove node --purge
 
   cd "$SNAP_DIR"
   rm -rf dist node_modules package-lock.json

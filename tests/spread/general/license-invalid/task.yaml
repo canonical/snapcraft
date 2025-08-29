@@ -12,6 +12,10 @@ prepare: |
   echo "license: boo-license" >> snap/snapcraft.yaml
 
 restore: |
+  pushd test-snap
+  snapcraft clean
+  popd
+
   rm -rf test-snap
 
 execute: |

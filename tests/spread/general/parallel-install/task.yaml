@@ -25,6 +25,10 @@ restore: |
   . "$TOOLS_DIR/prepare.sh"
 
   if [[ $SPREAD_REBOOT = 0 ]]; then
+    # use lxd so snapcraft_a gets injected
+    unset SNAPCRAFT_BUILD_ENVIRONMENT
+    snapcraft_a clean --use-lxd
+
     # remove the parallel installed snapcraft
     snap remove snapcraft_a --purge
 

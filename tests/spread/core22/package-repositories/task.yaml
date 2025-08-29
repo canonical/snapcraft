@@ -14,7 +14,7 @@ restore: |
   rm -f ./*.snap
   snapcraft clean
   snapcraft clean --destructive-mode
-  snap remove "${SNAP}"
+  snap remove "${SNAP}" --purge
 
 execute: |
   cd "$SNAP"

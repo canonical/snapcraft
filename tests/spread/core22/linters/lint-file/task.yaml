@@ -1,6 +1,7 @@
 summary: Run snapcraft lint on a snap file.
 
 restore: |
+  snapcraft clean
   rm -f ./*.snap ./*.assert
 
 execute: |

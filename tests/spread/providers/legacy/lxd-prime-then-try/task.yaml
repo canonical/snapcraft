@@ -46,4 +46,4 @@ execute: |
   snap try prime
   [ "$(make-hello)" = "hello world" ]
 
-  snap remove make-hello
+  snap remove make-hello --purge

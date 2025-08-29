@@ -8,13 +8,13 @@ jobs:
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Build snapcraft snap
         id: build-snapcraft
-        uses: snapcore/action-build@v1
+        uses: canonical/action-build@v1
 
       - name: Upload snapcraft snap
         uses: actions/upload-artifact@v4
@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
@@ -59,6 +59,7 @@ jobs:
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UA_TOKEN: ${{ secrets.UA_TOKEN }}
+          RUN_UA_TESTS: ${{ ! github.event.pull_request.head.repo.fork }}
         run: spread ${{ matrix.spread-jobs }}
 
       - name: Discard spread workers
@@ -94,7 +95,7 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
