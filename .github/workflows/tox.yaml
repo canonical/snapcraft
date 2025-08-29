@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false  # Run all the tests to their conclusions.
       matrix:
-        platform: [ubuntu-20.04, ubuntu-22.04]
+        platform: [ubuntu-22.04]
         python_version: ["3.8", "3.10"]
         include:
           - python_version: "3.8"
@@ -80,11 +80,6 @@ jobs:
         run: tox run-parallel --parallel auto --parallel-no-spinner --parallel-live -e test-${{ matrix.tox_python }},test-legacy-${{ matrix.tox_python }} --notest
       - name: Test with tox
         run: tox run --skip-pkg-install --result-json results/tox-${{ matrix.platform }}-${{ matrix.python_version }}.json -e test-${{ matrix.tox_python }},test-legacy-${{ matrix.tox_python }}
-      - name: Upload code coverage
-        uses: codecov/codecov-action@v3
-        with:
-          directory: ./results/
-          files: coverage*.xml
       - name: Upload test results
         if: success() || failure()
         uses: actions/upload-artifact@v4
