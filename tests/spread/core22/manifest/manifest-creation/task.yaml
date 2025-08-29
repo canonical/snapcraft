@@ -9,6 +9,7 @@ prepare: |
 
 restore: |
   snapcraft clean
+  snap remove review-tools --purge
   rm -f ./*.snap
   rm -f ~/manifest_0.1_*.snap
 
