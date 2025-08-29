@@ -1,6 +1,7 @@
 summary: Run snapcraft init
 
 restore: |
+  snapcraft clean
   rm -f ./*.snap
 
 execute: |
