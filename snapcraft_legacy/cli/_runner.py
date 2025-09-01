@@ -136,6 +136,15 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
         snap_command.invoke(ctx)
 
 
+# ---- legacy compatibility: `snapcraft version` subcommand (shim) ----
+@click.command("version")
+def _legacy_version_cmd() -> None:
+    """Show Snapcraft version (legacy shim for tests)."""
+    click.echo(f"snapcraft, version {snapcraft_legacy.__version__}")
+
+
+# ---- end legacy compatibility ----
+
 # This would be much easier if they were subcommands
 for command_group in command_groups:
     for command in command_group.commands:
