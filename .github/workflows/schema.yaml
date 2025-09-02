@@ -6,7 +6,6 @@ env:
 
 jobs:
   diff-schema:
-    if: false
     runs-on: ubuntu-latest
 
     steps:
