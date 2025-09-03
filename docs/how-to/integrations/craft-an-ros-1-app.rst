@@ -106,9 +106,7 @@ To add an ROS 1 app based on core20:
 Add a part written for ROS 1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. SNAPCRAFT-1125: Missing link to catkin plugin.
-
-ROS 1 parts are built with the catkin plugin.
+ROS 1 parts are built with the :ref:`reference-catkin-plugin`.
 
 To add an ROS 1 part:
 
