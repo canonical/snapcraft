@@ -59,11 +59,11 @@ class Package(PackageService):
 
     @property
     def _project(self) -> models.Project:
-    """Get the project.
+        """Get the project.
     
-    This can be replaced with an upstream helper after 
-    https://github.com/canonical/craft-application/issues/878 is completed.
-    """
+        This can be replaced with an upstream helper after 
+        https://github.com/canonical/craft-application/issues/878 is completed.
+        """
         return cast(models.Project, self._project_service.get())
 
     @override
