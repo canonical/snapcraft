@@ -2187,13 +2187,7 @@ def _custom_error(error_msg: str):
     return pydantic.WrapValidator(_validator)
 
 
-class BaseProject(Project): ...
-
-
-class BareProject(BaseProject): ...
-
-
-class Core22Project(BaseProject):
+class Core22Project(Project):
     platforms: dict[str, Platform] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
         description="The platforms key is only used in core24 and newer snaps. For core22 and older snaps, use "
@@ -2234,10 +2228,11 @@ class Core22Project(BaseProject):
         return validate_architectures(architectures)
 
 
-class BareCore22Project(Core22Project): ...
+class BareCore22Project(Core22Project):
+    base: Literal["bare"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
-class Core24Project(BaseProject):
+class Core24Project(Project):
     architectures: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
         None,
         _custom_error(
@@ -2249,7 +2244,8 @@ class Core24Project(BaseProject):
     )
 
 
-class BareCore24Project(Core24Project): ...
+class BareCore24Project(Core24Project):
+    base: Literal["bare"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
 def _discriminator(enum: type[Enum], key: str) -> Callable[[dict], str]:
@@ -2257,7 +2253,7 @@ def _discriminator(enum: type[Enum], key: str) -> Callable[[dict], str]:
 
 
 _BareProject = Annotated[
-    Annotated[BareProject, pydantic.Tag(BuildBaseEnum.UNIMPLEMENTED.value)]
+    Annotated[Project, pydantic.Tag(BuildBaseEnum.UNIMPLEMENTED.value)]
     | Annotated[BareCore22Project, pydantic.Tag(BuildBaseEnum.CORE22.value)]
     | Annotated[BareCore24Project, pydantic.Tag(BuildBaseEnum.CORE24.value)],
     pydantic.Discriminator(_discriminator(BuildBaseEnum, "build_base")),
@@ -2268,7 +2264,7 @@ SnapcraftProject = Annotated[
     Annotated[Core22Project, pydantic.Tag(BaseEnum.CORE22.value)]
     | Annotated[Core24Project, pydantic.Tag(BaseEnum.CORE24.value)]
     | Annotated[_BareProject, pydantic.Tag(BaseEnum.BARE.value)]
-    | Annotated[BaseProject, pydantic.Tag(BaseEnum.UNIMPLEMENTED.value)],
+    | Annotated[Project, pydantic.Tag(BaseEnum.UNIMPLEMENTED.value)],
     pydantic.Discriminator(_discriminator(BaseEnum, "base")),
 ]
 
