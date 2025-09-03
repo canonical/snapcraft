@@ -515,7 +515,7 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "5.8.0"
+version = "5.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
@@ -536,9 +536,9 @@ dependencies = [
     { name = "snap-helpers" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/a3/6e487bb73f3b74eee8a38691510796b7326211d4981547c0ed45d0325aee/craft_application-5.8.0.tar.gz", hash = "sha256:0d01b9792535b3dad51f3501f0f476daa3936b8b3c68ba8274f20cf5c25fd184", size = 428203, upload-time = "2025-08-28T15:27:34.599Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/e6/b56e46970422a9a286f8c03ac7fee04d8f2db9d745ffec2b647546169292/craft_application-5.9.0.tar.gz", hash = "sha256:0b6ec0f8e0a17328a5d441902c251f06b2f17eea34aba60d683c3c2d8da8fcfb", size = 432586, upload-time = "2025-08-29T22:22:40.942Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/64/71ced1b59c27f45506c9fb0172461984b86c86052f761ec1fc212ec83755/craft_application-5.8.0-py3-none-any.whl", hash = "sha256:f5706d549a93c19cc4a832019806c5e8579c15297f5cdf5234ad96a6994cba2c", size = 186669, upload-time = "2025-08-28T15:27:32.829Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/36/baa317ed32d41b8cd67d0981aeee6e80de83fb531de30eae8d649c272d69/craft_application-5.9.0-py3-none-any.whl", hash = "sha256:8bcb42fec28cdd2a317dc0cb5d1668495484c50bc4cdb1ad9ea23a78ae57077f", size = 187286, upload-time = "2025-08-29T22:22:39.515Z" },
 ]
 
 [package.optional-dependencies]
@@ -794,7 +794,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -2816,7 +2816,7 @@ requires-dist = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.0.0" },
     { name = "click", specifier = ">=8.2" },
-    { name = "craft-application", extras = ["remote"], specifier = ">=5.7.0,<5.9.0" },
+    { name = "craft-application", extras = ["remote"], specifier = ">=5.9.0,<5.10.0" },
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = ">=3.1.2,<4.0.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
