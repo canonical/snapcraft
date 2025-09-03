@@ -18,6 +18,7 @@ import base64
 import contextlib
 import io
 import textwrap
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
@@ -409,6 +410,8 @@ def fake_provider(mock_instance):
             instance_name: str,
             allow_unstable: bool = False,
             shutdown_delay_mins: int | None = None,
+            use_base_instance: bool = True,
+            prepare_instance: Callable[[Executor], None] | None = None,
         ):
             yield mock_instance
 
