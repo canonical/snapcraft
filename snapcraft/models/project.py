@@ -1275,6 +1275,25 @@ class Component(models.CraftBaseModel):
         examples=["{configure: {plugs: [home]}}"],
     )
 
+    adopt_info: str | None = pydantic.Field(
+        default=None,
+        description=textwrap.dedent(
+            """\
+        Selects a part to inherit metadata from and reuse for the component's metadata.
+
+        Only the component's version can be set.
+            """
+        ),
+        examples=["foo-part"],
+    )
+    """Selects a part to inherit metadata from and reuse for the component's metadata.
+
+    Only the component's version can be set.
+
+    Metadata can be set using the 'craftctl set' command in an 'override-' script.
+    For example, ``craftctl set components.my-component.version=$(git describe)``.
+    """
+
 
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
