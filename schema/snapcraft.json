@@ -1,0 +1,1091 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "grammar-string": {
+      "oneOf": [
+        {
+          "type": "string",
+          "usage": "<string>"
+        },
+        {
+          "type": "array",
+          "items": {
+            "minitems": 1,
+            "uniqueItems": true,
+            "oneOf": [
+              {
+                "type": "object",
+                "usage": "on <selector>[,<selector>...]:",
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^on\\s+.+$": {
+                    "$ref": "#/definitions/grammar-string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "usage": "to <selector>[,<selector>...]:",
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^to\\s+.+$": {
+                    "$ref": "#/definitions/grammar-string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "usage": "try:",
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^try$": {
+                    "$ref": "#/definitions/grammar-string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "usage": "else:",
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^else$": {
+                    "$ref": "#/definitions/grammar-string"
+                  }
+                }
+              },
+              {
+                "type": "string",
+                "pattern": "else fail"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "grammar-array": {
+      "type": "array",
+      "minitems": 1,
+      "uniqueItems": true,
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "usage": "<string>"
+          },
+          {
+            "type": "object",
+            "usage": "on <selector>[,<selector>...]:",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^on\\s+.+$": {
+                "$ref": "#/definitions/grammar-array"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "usage": "to <selector>[,<selector>...]:",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^to\\s+.+$": {
+                "$ref": "#/definitions/grammar-array"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "usage": "try:",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^try$": {
+                "$ref": "#/definitions/grammar-array"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "usage": "else:",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^else$": {
+                "$ref": "#/definitions/grammar-array"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "build-environment-grammar": {
+      "type": "array",
+      "minitems": 1,
+      "uniqueItems": true,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          {
+            "type": "object",
+            "usage": "on <selector>[,<selector>...]:",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^on\\s+.+$": {
+                "$ref": "#/definitions/build-environment-grammar"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "usage": "to <selector>[,<selector>...]:",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^to\\s+.+$": {
+                "$ref": "#/definitions/build-environment-grammar"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "usage": "else:",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^else$": {
+                "$ref": "#/definitions/build-environment-grammar"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "apt-deb": {
+      "type": "object",
+      "description": "deb repositories",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["apt"]
+        },
+        "architectures": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "description": "Architectures to enable, or restrict to, for this repository.  Defaults to host architecture."
+          }
+        },
+        "formats": {
+          "type": "array",
+          "description": "deb types to enable.  Defaults to [deb, deb-src].",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["deb", "deb-src"]
+          }
+        },
+        "components": {
+          "type": "array",
+          "minItems": 0,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "description": "Deb repository components to enable, e.g. 'main, multiverse, unstable'"
+          }
+        },
+        "key-id": {
+          "type": "string",
+          "description": "GPG key identifier / fingerprint. May be used to identify key file in <project>/snap/keys/<key-id>.asc",
+          "pattern": "^[A-Z0-9]{40}$"
+        },
+        "key-server": {
+          "type": "string",
+          "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
+        },
+        "path": {
+          "type": "string",
+          "description": "Exact path to repository (relative to URL). Cannot be used with suites or components."
+        },
+        "suites": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security')."
+          }
+        },
+        "url": {
+          "type": "string",
+          "description": "Deb repository URL, e.g. 'http://archive.canonical.com/ubuntu'."
+        }
+      },
+      "required": ["type", "key-id", "url"],
+      "validation-failure": "{!r} is not properly configured deb repository"
+    },
+    "apt-ppa": {
+      "type": "object",
+      "description": "PPA repository",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["apt"]
+        },
+        "ppa": {
+          "type": "string",
+          "description": "ppa path: e.g. 'canonical-kernel-team/unstable'"
+        }
+      },
+      "required": ["type", "ppa"],
+      "validation-failure": "{!r} is not properly configured PPA repository"
+    },
+    "system-username-scope": {
+      "type": "string",
+      "description": "short-form user configuration (<username>: <scope>)",
+      "enum": ["shared"],
+      "validation-failure": "{!r} is not a valid user scope. Valid scopes include: 'shared'"
+    },
+    "environment": {
+      "type": "object",
+      "description": "environment entries",
+      "minItems": 1,
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "number"
+          }
+        ]
+      }
+    }
+  },
+  "title": "snapcraft schema",
+  "type": "object",
+  "properties": {
+    "build-packages": {
+      "$ref": "#/definitions/grammar-array",
+      "description": "top level build packages."
+    },
+    "adopt-info": {
+      "type": "string",
+      "description": "name of the part that provides source files that will be parsed to extract snap metadata information"
+    },
+    "name": {
+      "description": "name of the snap package",
+      "allOf": [
+        {
+          "$comment": "string, but not too long. the failure message avoids printing repr of the thing, as it could be huge",
+          "type": "string",
+          "validation-failure": "snap names need to be strings.",
+          "maxLength": 40
+        },
+        {
+          "pattern": "^[a-z0-9-]*[a-z][a-z0-9-]*$",
+          "validation-failure": "{.instance!r} is not a valid snap name. Snap names can only use ASCII lowercase letters, numbers, and hyphens, and must have at least one letter."
+        },
+        {
+          "pattern": "^[^-]",
+          "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot start with a hyphen."
+        },
+        {
+          "pattern": "[^-]$",
+          "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot end with a hyphen."
+        },
+        {
+          "not": {
+            "pattern": "--"
+          },
+          "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot have two hyphens in a row."
+        }
+      ]
+    },
+    "title": {
+      "$comment": "https://forum.snapcraft.io/t/title-length-in-snapcraft-yaml-snap-yaml/8625/10",
+      "description": "title for the snap",
+      "type": "string",
+      "maxLength": 40
+    },
+    "architectures": {
+      "description": "architectures on which to build, and on which the resulting snap runs",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "format": "architectures",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["build-on"],
+            "properties": {
+              "build-on": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                ]
+              },
+              "run-on": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "version": {
+      "description": "package version",
+      "allOf": [
+        {
+          "type": "string",
+          "validation-failure": "snap versions need to be strings. They must also be wrapped in quotes when the value will be interpreted by the YAML parser as a non-string. Examples: '1', '1.2', '1.2.3', git (will be replaced by a git describe based version string)."
+        },
+        {
+          "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$",
+          "maxLength": 32,
+          "validation-failure": "{.instance!r} is not a valid snap version string. Snap versions consist of upper- and lower-case alphanumeric characters, as well as periods, colons, plus signs, tildes, and hyphens. They cannot begin with a period, colon, plus sign, tilde, or hyphen. They cannot end with a period, colon, or hyphen."
+        }
+      ]
+    },
+    "version-script": {
+      "type": "string",
+      "description": "a script that echoes the version to set."
+    },
+    "license": {
+      "type": "string",
+      "description": "the license the package holds"
+    },
+    "icon": {
+      "type": "string",
+      "description": "path to a 512x512 icon representing the package.",
+      "format": "icon-path"
+    },
+    "summary": {
+      "type": "string",
+      "description": "one line summary for the package",
+      "maxLength": 78
+    },
+    "description": {
+      "type": "string",
+      "description": "long description of the package",
+      "pattern": ".+",
+      "validation-failure": "{.instance!r} is not a valid description string."
+    },
+    "assumes": {
+      "type": "array",
+      "description": "featureset the snap requires in order to work.",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": [
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "type": {
+      "type": "string",
+      "description": "the snap type, the implicit type is 'app'",
+      "enum": ["app", "base", "gadget", "kernel", "snapd"]
+    },
+    "frameworks": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": [
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "confinement": {
+      "type": "string",
+      "description": "the type of confinement supported by the snap",
+      "default": "strict",
+      "enum": ["classic", "devmode", "strict"]
+    },
+    "grade": {
+      "type": "string",
+      "description": "the quality grade of the snap",
+      "default": "stable",
+      "enum": ["stable", "devel"]
+    },
+    "base": {
+      "type": "string",
+      "description": "the base snap to use"
+    },
+    "build-base": {
+      "type": "string",
+      "description": "force a build environment based on base to create a snap"
+    },
+    "epoch": {
+      "description": "the snap epoch, used to specify upgrade paths",
+      "format": "epoch"
+    },
+    "compression": {
+      "description": "compression to use for snap archive - default is otherwise determined by 'snap pack'",
+      "type": "string",
+      "enum": ["lzo", "xz"]
+    },
+    "environment": {
+      "description": "environment entries for the snap as a whole",
+      "$ref": "#/definitions/environment"
+    },
+    "passthrough": {
+      "type": "object",
+      "description": "properties to be passed into snap.yaml as-is"
+    },
+    "layout": {
+      "type": "object",
+      "description": "layout property to be passed into the snap.yaml as-is"
+    },
+    "package-repositories": {
+      "type": "array",
+      "description": "additional repository configuration.",
+      "minItems": 0,
+      "uniqueItems": true,
+      "items": [
+        {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/apt-deb"
+            },
+            {
+              "$ref": "#/definitions/apt-ppa"
+            }
+          ]
+        }
+      ]
+    },
+    "system-usernames": {
+      "type": "object",
+      "description": "system username",
+      "additionalProperties": false,
+      "validation-failure": "{!r} is not a valid system-username.",
+      "patternProperties": {
+        "^snap_(daemon|microk8s|aziotedge|aziotdu)$": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/system-username-scope"
+            },
+            {
+              "type": "object",
+              "description": "long-form user configuration",
+              "additionalProperties": false,
+              "properties": {
+                "scope": {
+                  "$ref": "#/definitions/system-username-scope"
+                }
+              },
+              "required": ["scope"]
+            }
+          ]
+        }
+      }
+    },
+    "donation": {
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": [
+            {
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "issues": {
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": [
+            {
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "contact": {
+      "oneOf": [
+        {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": [
+            {
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "source-code": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "apps": {
+      "type": "object",
+      "additionalProperties": false,
+      "validation-failure": "{!r} is not a valid app name. App names consist of upper- and lower-case alphanumeric characters and hyphens. They cannot start or end with a hyphen.",
+      "patternProperties": {
+        "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$": {
+          "type": "object",
+          "required": ["command"],
+          "dependencies": {
+            "bus-name": ["daemon"],
+            "activates-on": ["daemon"],
+            "refresh-mode": ["daemon"],
+            "stop-mode": ["daemon"],
+            "stop-command": ["daemon"],
+            "start-timeout": ["daemon"],
+            "stop-timeout": ["daemon"],
+            "watchdog-timeout": ["daemon"],
+            "restart-delay": ["daemon"],
+            "post-stop-command": ["daemon"],
+            "reload-command": ["daemon"],
+            "restart-condition": ["daemon"],
+            "before": ["daemon"],
+            "after": ["daemon"],
+            "timer": ["daemon"],
+            "install-mode": ["daemon"]
+          },
+          "additionalProperties": false,
+          "properties": {
+            "autostart": {
+              "type": "string",
+              "description": "Name of the desktop file placed by the application in $SNAP_USER_DATA/.config/autostart to indicate that application should be started with the user's desktop session.",
+              "pattern": "^[A-Za-z0-9. _#:$-]+\\.desktop$",
+              "validation-failure": "{.instance!r} is not a valid desktop file name (e.g. myapp.desktop)"
+            },
+            "common-id": {
+              "type": "string",
+              "description": "common identifier across multiple packaging formats"
+            },
+            "bus-name": {
+              "type": "string",
+              "description": "D-Bus name this service is reachable as",
+              "pattern": "^[A-Za-z0-9/. _#:$-]*$",
+              "validation-failure": "{.instance!r} is not a valid bus name."
+            },
+            "activates-on": {
+              "type": "array",
+              "description": "dbus interface slots this service activates on",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "desktop": {
+              "type": "string",
+              "description": "path to a desktop file representing the app, relative to the prime directory"
+            },
+            "command": {
+              "type": "string",
+              "description": "command executed to run the binary"
+            },
+            "completer": {
+              "type": "string",
+              "description": "bash completion script relative to the prime directory"
+            },
+            "stop-command": {
+              "type": "string",
+              "description": "command executed to stop a service"
+            },
+            "post-stop-command": {
+              "type": "string",
+              "description": "command executed after stopping a service"
+            },
+            "start-timeout": {
+              "type": "string",
+              "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+              "validation-failure": "{.instance!r} is not a valid timeout value.",
+              "description": "Optional time to wait for daemon to start - <n>ns | <n>us | <n>ms | <n>s | <n>m"
+            },
+            "stop-timeout": {
+              "type": "string",
+              "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+              "validation-failure": "{.instance!r} is not a valid timeout value.",
+              "description": "Optional time to wait for daemon to stop - <n>ns | <n>us | <n>ms | <n>s | <n>m"
+            },
+            "watchdog-timeout": {
+              "type": "string",
+              "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+              "validation-failure": "{.instance!r} is not a valid timeout value.",
+              "description": "Service watchdog timeout - <n>ns | <n>us | <n>ms | <n>s | <n>m"
+            },
+            "reload-command": {
+              "type": "string",
+              "description": "Command to use to ask the service to reload its configuration."
+            },
+            "restart-delay": {
+              "type": "string",
+              "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
+              "validation-failure": "{.instance!r} is not a valid delay value.",
+              "description": "Delay between service restarts - <n>ns | <n>us | <n>ms | <n>s | <n>m. Defaults to unset. See the systemd.service manual on RestartSec for details."
+            },
+            "timer": {
+              "type": "string",
+              "description": "The service is activated by a timer, app must be a daemon. (systemd.time calendar event string)"
+            },
+            "daemon": {
+              "type": "string",
+              "description": "signals that the app is a service.",
+              "enum": ["simple", "forking", "oneshot", "notify", "dbus"]
+            },
+            "after": {
+              "type": "array",
+              "description": "List of applications that are ordered to be started after the current one",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "before": {
+              "type": "array",
+              "description": "List of applications that are ordered to be started before the current one",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "refresh-mode": {
+              "type": "string",
+              "description": "controls if the app should be restarted at all",
+              "enum": ["endure", "restart", "ignore-running"]
+            },
+            "stop-mode": {
+              "type": "string",
+              "description": "controls how the daemon should be stopped",
+              "enum": ["sigterm", "sigterm-all", "sighup", "sighup-all", "sigusr1", "sigusr1-all", "sigusr2", "sigusr2-all", "sigint", "sigint-all"]
+            },
+            "restart-condition": {
+              "type": "string",
+              "enum": ["on-success", "on-failure", "on-abnormal", "on-abort", "on-watchdog", "always", "never"]
+            },
+            "install-mode": {
+              "type": "string",
+              "enum": ["enable", "disable"]
+            },
+            "slots": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "plugs": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "aliases": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9][-_.a-zA-Z0-9]*$",
+                "validation-failure": "{.instance!r} is not a valid alias. Aliases must be strings, begin with an ASCII alphanumeric character, and can only use ASCII alphanumeric characters and the following special characters: . _ -"
+              }
+            },
+            "environment": {
+              "description": "environment entries for the specific app.",
+              "$ref": "#/definitions/environment"
+            },
+            "adapter": {
+              "$comment": "Full should be the default, but it requires command-chain which isn't available in snapd until 2.36, which isn't yet stable. Until 2.36 is generally available, continue with legacy as the default.",
+              "type": "string",
+              "description": "What kind of wrapper to generate for the given command",
+              "enum": ["none", "legacy", "full"],
+              "default": "legacy"
+            },
+            "command-chain": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9/._#:$-]*$",
+                "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries must be strings, and can only use ASCII alphanumeric characters and the following special characters: / . _ # : $ -"
+              }
+            },
+            "sockets": {
+              "type": "object",
+              "additionalProperties": false,
+              "validation-failure": "{!r} is not a valid socket name. Socket names consist of lower-case alphanumeric characters and hyphens.",
+              "patternProperties": {
+                "^[a-z][a-z0-9_-]*$": {
+                  "type": "object",
+                  "required": ["listen-stream"],
+                  "description": "Sockets for automatic service activation",
+                  "additionalProperties": false,
+                  "properties": {
+                    "listen-stream": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "usage": "port number, an integer between 1 and 65535",
+                          "minimum": 1,
+                          "maximum": 65535
+                        },
+                        {
+                          "type": "string",
+                          "usage": "socket path, a string"
+                        }
+                      ]
+                    },
+                    "socket-mode": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "passthrough": {
+              "type": "object",
+              "description": "properties to be passed into snap.yaml as-is"
+            },
+            "extensions": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": ["env-injector", "flutter-stable", "flutter-beta", "flutter-dev", "flutter-master", "gnome", "gnome-3-28", "gnome-3-34", "gnome-3-38", "kde-neon", "kde-neon-6", "ros1-noetic", "ros1-noetic-desktop", "ros1-noetic-perception", "ros1-noetic-robot", "ros1-noetic-ros-base", "ros1-noetic-ros-core", "ros2-foxy", "ros2-foxy-ros-base", "ros2-foxy-ros-core", "ros2-foxy-desktop", "ros2-humble", "ros2-humble-ros-base", "ros2-humble-ros-core", "ros2-humble-desktop"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "validation-failure": "{!r} is not a valid hook name. Hook names consist of lower-case alphanumeric characters and hyphens. They cannot start or end with a hyphen.",
+      "patternProperties": {
+        "^[a-z](?:-?[a-z0-9])*$": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "command-chain": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9/._#:$-]*$",
+                "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries must be strings, and can only use ASCII alphanumeric characters and the following special characters: / . _ # : $ -"
+              }
+            },
+            "environment": {
+              "description": "environment entries for this hook",
+              "$ref": "#/definitions/environment"
+            },
+            "plugs": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "passthrough": {
+              "type": "object",
+              "description": "properties to be passed into snap.yaml as-is"
+            }
+          }
+        }
+      }
+    },
+    "parts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "validation-failure": "{!r} is not a valid part name. Part names consist of lower-case alphanumeric characters, hyphens and plus signs. As a special case, 'plugins' is also not a valid part name.",
+      "patternProperties": {
+        "^(?!plugins$)[a-z0-9][a-z0-9+-]*$": {
+          "type": ["object", "null"],
+          "minProperties": 1,
+          "required": ["plugin"],
+          "properties": {
+            "plugin": {
+              "type": "string",
+              "description": "plugin name"
+            },
+            "source": {
+              "$ref": "#/definitions/grammar-string"
+            },
+            "source-checksum": {
+              "type": "string",
+              "default": ""
+            },
+            "source-branch": {
+              "type": "string",
+              "default": ""
+            },
+            "source-commit": {
+              "type": "string",
+              "default": ""
+            },
+            "source-depth": {
+              "type": "integer",
+              "default": 0
+            },
+            "source-submodules": {
+              "type": "array",
+              "minItems": 0,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "description": "submodules to fetch, by pathname in source tree"
+              }
+            },
+            "source-subdir": {
+              "type": "string",
+              "default": ""
+            },
+            "source-tag": {
+              "type": "string",
+              "default": ""
+            },
+            "source-type": {
+              "type": "string",
+              "default": "",
+              "enum": ["bzr", "git", "hg", "mercurial", "subversion", "svn", "tar", "zip", "deb", "rpm", "7z", "local"]
+            },
+            "disable-parallel": {
+              "type": "boolean",
+              "default": false
+            },
+            "after": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            },
+            "stage-snaps": {
+              "$comment": "For some reason 'default' doesn't work if in the ref",
+              "$ref": "#/definitions/grammar-array",
+              "default": []
+            },
+            "stage-packages": {
+              "$comment": "For some reason 'default' doesn't work if in the ref",
+              "$ref": "#/definitions/grammar-array",
+              "default": []
+            },
+            "build-snaps": {
+              "$comment": "For some reason 'default' doesn't work if in the ref",
+              "$ref": "#/definitions/grammar-array",
+              "default": []
+            },
+            "build-packages": {
+              "$comment": "For some reason 'default' doesn't work if in the ref",
+              "$ref": "#/definitions/grammar-array",
+              "default": []
+            },
+            "build-environment": {
+              "$ref": "#/definitions/build-environment-grammar",
+              "default": []
+            },
+            "build-attributes": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": ["core22-step-dependencies", "enable-patchelf", "no-patchelf", "no-install", "debug", "keep-execstack"]
+              },
+              "default": []
+            },
+            "organize": {
+              "type": "object",
+              "default": {},
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "filesets": {
+              "type": "object",
+              "default": {},
+              "additionalProperties": {
+                "type": "array",
+                "minitems": 1
+              }
+            },
+            "stage": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              },
+              "default": ["*"]
+            },
+            "prime": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              },
+              "default": ["*"]
+            },
+            "override-pull": {
+              "type": "string",
+              "default": "snapcraftctl pull"
+            },
+            "override-build": {
+              "type": "string",
+              "default": "snapcraftctl build"
+            },
+            "override-stage": {
+              "type": "string",
+              "default": "snapcraftctl stage"
+            },
+            "override-prime": {
+              "type": "string",
+              "default": "snapcraftctl prime"
+            },
+            "parse-info": {
+              "type": "array",
+              "minitems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            }
+          }
+        }
+      }
+    },
+    "plugs": {
+      "type": "object"
+    },
+    "slots": {
+      "type": "object"
+    },
+    "ua-services": {
+      "type": "array",
+      "description": "UA services to enable.",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": [
+        {
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "usage": "type: <base|kernel|snapd> (without a base)",
+          "properties": {
+            "type": {
+              "enum": ["base", "kernel", "snapd"]
+            }
+          },
+          "allOf": [
+            {
+              "required": ["type"]
+            },
+            {
+              "not": {
+                "required": ["base"]
+              }
+            }
+          ]
+        },
+        {
+          "usage": "base: <base> and type: <app|gadget>",
+          "properties": {
+            "type": {
+              "enum": ["app", "gadget"]
+            }
+          },
+          "allOf": [
+            {
+              "required": ["base"]
+            }
+          ]
+        },
+        {
+          "usage": "base: bare (with a build-base)",
+          "properties": {
+            "base": {
+              "enum": ["bare"]
+            }
+          },
+          "required": ["build-base"]
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": ["summary", "description", "version"]
+        },
+        {
+          "required": ["adopt-info"]
+        }
+      ]
+    }
+  ],
+  "required": ["name", "parts"],
+
+  "dependencies": {
+    "license-agreement": ["license"],
+    "license-version": ["license"]
+  },
+  "additionalProperties": false
+}
