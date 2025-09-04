@@ -687,7 +687,7 @@ def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
 
 
 @pytest.mark.parametrize(
-    ("base", "build_base", "is_known_core24"),
+    ("base", "build_base", "_use_craftapp_lib"),
     [
         ("core20", None, False),
         ("core20", "core20", False),
@@ -699,14 +699,17 @@ def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
         ("core24", None, True),
         ("core24", "core24", True),
         ("core24", "devel", True),
+        ("core26", None, True),
+        ("core26", "core26", True),
+        ("core26", "devel", True),
     ],
 )
-def test_known_core24(snapcraft_yaml, base, build_base, is_known_core24):
+def test_use_craftapp_lib(snapcraft_yaml, base, build_base, _use_craftapp_lib):
     snapcraft_yaml(base=base, build_base=build_base)
 
     app = application.create_app()
 
-    assert app._known_core24 == is_known_core24
+    assert app._use_craftapp_lib == _use_craftapp_lib
 
 
 @pytest.mark.parametrize(
