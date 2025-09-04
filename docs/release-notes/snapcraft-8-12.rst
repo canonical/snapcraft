@@ -19,6 +19,14 @@ What's new
 
 Snapcraft 8.12 brings the following features, integrations, and improvements.
 
+New metadata linter
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A new linter has been added to help identify problems in the metadata of a snap
+project. For projects with ``grade: stable``, a linter warning will be emitted if the
+``title``, ``contact``, or ``license`` keys are missing or malformed. In addition,
+an informational message will be emitted if the ``donation``, ``issues``,
+``source-code``, or ``website`` keys are missing or malformed.
 
 Minor features
 --------------
@@ -32,7 +40,6 @@ Previously, the :ref:`remote builder <explanation-remote-build>` couldn't accept
 
 Due to improvements made by the Launchpad team, ``--build-for`` can now be used when
 building core24 snaps remotely.
-
 
 Improved usability when piping ``status`` output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,3 +75,34 @@ The same status query now produces the following output:
     latest   amd64    edge/pr-5701  8.11.1.post7              15686       -           2025-09-14T00:00:00Z
     latest   amd64    edge/pr-5700  8.11.1.post7              15681       -           2025-09-13T00:00:00Z
     latest   amd64    edge/pr-5699  8.11.1.post4              15666       -           2025-09-13T00:00:00Z
+
+Fixed bugs and issues
+---------------------
+
+The following issues have been resolved in Snapcraft 8.12.
+
+.. _release-notes-fixes-8.12.0:
+
+Snapcraft 8.12.0
+~~~~~~~~~~~~~~~~
+
+- `#5696`_: For certain invalid project files, a helpful error is given instead of
+  crashing.
+- Improved handling of package repositories when building on an EOL base.
+- The overlay directory is now removed when running ``snapcraft clean``.
+
+Contributors
+------------
+
+We would like to express a big thank you to all the people who contributed to
+this release.
+
+:literalref:`@cmatsuoka<https://github.com/cmatsuoka>`
+:literalref:`@jahn-junior<https://github.com/jahn-junior>`
+:literalref:`@medubelko<https://github.com/medubelko>`
+:literalref:`@mr-cal<https://github.com/mr-cal>`
+:literalref:`@sergiusens<https://github.com/sergiusens>`
+:literalref:`@soumyaDghosh<https://github.com/soumyaDghosh>`
+:literalref:`@steinbro<https://github.com/steinbro>`
+
+.. _#5696: https://github.com/canonical/snapcraft/issues/5696

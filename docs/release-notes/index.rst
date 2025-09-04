@@ -16,6 +16,7 @@ Current releases
 Snapcraft 8
 ~~~~~~~~~~~
 
+- :ref:`Snapcraft 8.12 <release-8.12>`
 - :ref:`Snapcraft 8.11 <release-8.11>`
 - :ref:`Snapcraft 8.10 <release-8.10>`
 - :ref:`Snapcraft 8.9 <release-8.9>`
