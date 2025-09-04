@@ -3,7 +3,7 @@
 Snapcraft 8.12 release notes
 ============================
 
-.. add date here, once scheduled
+4 September 2025
 
 Learn about the new features, changes, and fixes introduced in Snapcraft 8.12.
 
@@ -36,7 +36,7 @@ Remote builds: ``--build-for`` and shorthand platforms
 
 Previously, the :ref:`remote builder <explanation-remote-build>` couldn't accept the
 ``--build-for`` argument when building core24 snaps with a shorthand :ref:`platforms
-<reference_architectures>` definition.
+<reference-architectures>` definition.
 
 Due to improvements made by the Launchpad team, ``--build-for`` can now be used when
 building core24 snaps remotely.
