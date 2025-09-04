@@ -793,7 +793,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -2475,15 +2475,15 @@ wheels = [
 
 [[package]]
 name = "requests-unixsocket2"
-version = "1.0.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e3/7b/8f398d91382a2bbae06530389f74d6296a4da04827144a3015f34b7d82c4/requests_unixsocket2-1.0.0.tar.gz", hash = "sha256:8c6cad0326369658db931b4c36f03cd1cccb7668e081e7fb3972b500a93bb563", size = 6161, upload-time = "2025-04-03T14:55:53.643Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/04/e5c07a329a0087f8a342231b6e054d83279c17ccc81da5aa18071c8ea75e/requests_unixsocket2-1.0.1.tar.gz", hash = "sha256:87953038ae42befb6efbdf504d6dda2554a0b0d13b65e42f7319793b5527a303", size = 44440, upload-time = "2025-09-03T20:13:54.235Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/3d/17006603e3ef2ace6e23dbf2f51784621807a52807139be79dde26cc27d8/requests_unixsocket2-1.0.0-py3-none-any.whl", hash = "sha256:11c70219366a8d1e2cf0ec7694317f11b44977fb9647378651f7ae95a451c024", size = 7730, upload-time = "2025-04-03T14:55:52.227Z" },
+    { url = "https://files.pythonhosted.org/packages/19/18/19221b6242e8135abef8f5859d8ea53e69c503042e6639852fa2865825e3/requests_unixsocket2-1.0.1-py3-none-any.whl", hash = "sha256:bdb2ba5bcd9d2f3c1dd1e099e5dba8e1d50b9eeef7985edd72f957da22304b92", size = 7731, upload-time = "2025-09-03T20:13:52.792Z" },
 ]
 
 [[package]]
