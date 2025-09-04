@@ -20,13 +20,17 @@ What's new
 Snapcraft 8.12 brings the following features, integrations, and improvements.
 
 New metadata linter
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
-A new linter has been added to help identify problems in the metadata of a snap
-project. For projects with ``grade: stable``, a linter warning will be emitted if the
-``title``, ``contact``, or ``license`` keys are missing or malformed. In addition,
-an informational message will be emitted if the ``donation``, ``issues``,
-``source-code``, or ``website`` keys are missing or malformed.
+A :ref:`new linter <how-to-use-the-metadata-linter>` has been added to help identify
+problems in the metadata of a snap project. For projects with ``grade: stable``, a
+linter warning will be emitted if the ``title``, ``contact``, or ``license`` keys are
+missing or malformed. In addition, an informational message will be emitted if the
+``donation``, ``issues``, ``source-code``, or ``website`` keys are missing or
+malformed.
+
+See :ref:`how-to-disable-a-linter-ignore-specific-keys-of-metadata-linter` for guidance
+on customizing the behavior of this linter.
 
 Minor features
 --------------
@@ -89,7 +93,6 @@ Snapcraft 8.12.0
 - `#5696`_: For certain invalid project files, a helpful error is given instead of
   crashing.
 - Improved handling of package repositories when building on an EOL base.
-- The overlay directory is now removed when running ``snapcraft clean``.
 
 Contributors
 ------------
