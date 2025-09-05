@@ -3,7 +3,7 @@
 Snapcraft 8.12 release notes
 ============================
 
-.. add date here, once scheduled
+4 September 2025
 
 Learn about the new features, changes, and fixes introduced in Snapcraft 8.12.
 
@@ -19,6 +19,17 @@ What's new
 
 Snapcraft 8.12 brings the following features, integrations, and improvements.
 
+New metadata linter
+~~~~~~~~~~~~~~~~~~~
+
+A :ref:`new linter <how-to-use-the-metadata-linter>` is available to help identify
+problems in a project's metadata keys. If your project has a stable grade, the linter
+warns you if the ``title``, ``contact``, or ``license`` keys are missing or
+malformed. Likewise, if the ``donation``, ``issues``, ``source-code``, or ``website``
+keys are missing or malformed, the linter logs it.
+
+See :ref:`how-to-disable-a-linter-ignore-specific-keys-of-metadata-linter` for guidance
+on customizing the behavior of this linter.
 
 Minor features
 --------------
@@ -28,11 +39,10 @@ Remote builds: ``--build-for`` and shorthand platforms
 
 Previously, the :ref:`remote builder <explanation-remote-build>` couldn't accept the
 ``--build-for`` argument when building core24 snaps with a shorthand :ref:`platforms
-<reference_architectures>` definition.
+<reference-architectures>` definition.
 
 Due to improvements made by the Launchpad team, ``--build-for`` can now be used when
 building core24 snaps remotely.
-
 
 Improved usability when piping ``status`` output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,3 +78,31 @@ The same status query now produces the following output:
     latest   amd64    edge/pr-5701  8.11.1.post7              15686       -           2025-09-14T00:00:00Z
     latest   amd64    edge/pr-5700  8.11.1.post7              15681       -           2025-09-13T00:00:00Z
     latest   amd64    edge/pr-5699  8.11.1.post4              15666       -           2025-09-13T00:00:00Z
+
+Fixed bugs and issues
+---------------------
+
+The following issues have been resolved in Snapcraft 8.12.
+
+.. _release-notes-fixes-8.12.0:
+
+Snapcraft 8.12.0
+~~~~~~~~~~~~~~~~
+
+- `#5696`_ YAML structure is not validated before preprocessing
+
+Contributors
+------------
+
+We would like to express a big thank you to all the people who contributed to
+this release.
+
+:literalref:`@cmatsuoka <https://github.com/cmatsuoka>`
+:literalref:`@jahn-junior <https://github.com/jahn-junior>`
+:literalref:`@medubelko <https://github.com/medubelko>`
+:literalref:`@mr-cal <https://github.com/mr-cal>`
+:literalref:`@sergiusens <https://github.com/sergiusens>`
+:literalref:`@soumyaDghosh <https://github.com/soumyaDghosh>`
+:literalref:`@steinbro <https://github.com/steinbro>`
+
+.. _#5696: https://github.com/canonical/snapcraft/issues/5696
