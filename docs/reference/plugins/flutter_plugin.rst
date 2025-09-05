@@ -4,7 +4,7 @@ Flutter plugin
 ==============
 
 The Flutter plugin simplifies the building of applications that employ the `Flutter
-<https://flutter.dev/>`_ app framework.
+<https://flutter.dev/>`_ UI toolkit.
 
 
 Keywords
