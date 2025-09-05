@@ -75,6 +75,17 @@ Starting with Snapcraft 8.7.0, information about releases can be found in the
 
   For a complete list of commits, check out the `X.Y.Z`_ release on GitHub.
 
+7.5.9 (2025-Sep-05)
+-------------------
+
+Core
+====
+
+* Fix a bug where Snapcraft would fail to re-use an existing build environment to pack
+a snap.
+
+For a complete list of commits, check out the `7.5.9`_ release on GitHub.
+
 8.6.3 (2025-Feb-20)
 -------------------
 
@@ -1641,6 +1652,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 .. _7.5.6: https://github.com/canonical/snapcraft/releases/tag/7.5.6
 .. _7.5.7: https://github.com/canonical/snapcraft/releases/tag/7.5.7
 .. _7.5.8: https://github.com/canonical/snapcraft/releases/tag/7.5.8
+.. _7.5.9: https://github.com/canonical/snapcraft/releases/tag/7.5.9
 .. _8.0.0: https://github.com/canonical/snapcraft/releases/tag/8.0.0
 .. _8.0.1: https://github.com/canonical/snapcraft/releases/tag/8.0.1
 .. _8.0.2: https://github.com/canonical/snapcraft/releases/tag/8.0.2
