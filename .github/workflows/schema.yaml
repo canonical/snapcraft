@@ -35,7 +35,7 @@ jobs:
     if: false
     runs-on: ubuntu-latest
     env:
-      SPREAD_FILES_GLOB: tests/spread/smoketests/basic/charmcraft* #! Must be replaced
+      SPREAD_FILES_GLOB: tests/spread/core2{2,4}/**/snapcraft.yaml
 
     steps:
       - name: Checkout
