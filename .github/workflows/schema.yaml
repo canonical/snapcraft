@@ -32,7 +32,6 @@ jobs:
           diff generated_schema.json $SNAPCRAFT_JSON
 
   validate-schema:
-    if: false
     runs-on: ubuntu-latest
     env:
       SPREAD_FILES_GLOB: tests/spread/core2{2,4}/**/snapcraft.yaml
