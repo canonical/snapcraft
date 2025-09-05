@@ -60,7 +60,7 @@ How it works
    downloaded in the previous step.
 #. Create a conda environment in the part's install directory with ``conda create``.
    This environment contains any conda packages declared with ``conda-packages`` and
-   the Python version declared by ``conda-python-version``.
+   the Python version declared with ``conda-python-version``.
 
 
 Example
