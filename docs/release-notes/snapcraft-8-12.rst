@@ -22,12 +22,11 @@ Snapcraft 8.12 brings the following features, integrations, and improvements.
 New metadata linter
 ~~~~~~~~~~~~~~~~~~~
 
-A :ref:`new linter <how-to-use-the-metadata-linter>` has been added to help identify
-problems in the metadata of a snap project. For projects with ``grade: stable``, a
-linter warning will be emitted if the ``title``, ``contact``, or ``license`` keys are
-missing or malformed. In addition, an informational message will be emitted if the
-``donation``, ``issues``, ``source-code``, or ``website`` keys are missing or
-malformed.
+A :ref:`new linter <how-to-use-the-metadata-linter>` is available to help identify
+problems in a project's metadata keys. If your project has a stable grade, the linter
+warns you if the ``title``, ``contact``, or ``license`` keys are missing or
+malformed. Likewise, if the ``donation``, ``issues``, ``source-code``, or ``website``
+keys are missing or malformed, the linter logs it.
 
 See :ref:`how-to-disable-a-linter-ignore-specific-keys-of-metadata-linter` for guidance
 on customizing the behavior of this linter.
