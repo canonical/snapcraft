@@ -90,4 +90,4 @@ and the component file for the ``translations`` component.
 
 The store expects a snap and its components to be uploaded together. However, the component
 may have a different version than the snap. To dynamically set the component version,
-see :ref:`how-to-access-project-variables-across-parts-and-components`.
+see :ref:`how-to-customize-the-build-and-part-variables-access-project-variables`.

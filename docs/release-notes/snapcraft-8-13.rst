@@ -26,10 +26,10 @@ Set component versions dynamically
 .. include:: /reuse/bases-intro.rst
 
 Similar to setting the top-level version, a component's version can now be set
-dynamically with ``craftctl``.
+dynamically with craftctl.
 
-Additionally, the version for each component can be set by a different part. This is
+Additionally, the version for each component can be set by a unique part. This is
 controlled with a new ``adopt-info`` key for each component.
 
-For more information, see
+For detailed guidance, see
 :ref:`how-to-access-project-variables-across-parts-and-components`.
