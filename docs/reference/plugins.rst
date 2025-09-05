@@ -17,6 +17,7 @@ This section contains an in-depth description of the plugins available in Snapcr
     plugins/catkin_tools_plugin
     /common/craft-parts/reference/plugins/cmake_plugin
     plugins/colcon_plugin
+    plugins/conda_plugin
     /common/craft-parts/reference/plugins/dump_plugin
     plugins/flutter_plugin
     /common/craft-parts/reference/plugins/go_plugin
