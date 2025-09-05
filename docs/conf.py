@@ -126,6 +126,7 @@ exclude_patterns = [
     "how-to/crafting/add-a-part.rst",
     "how-to/publishing/build-snaps-remotely.rst",
     "release-notes/snapcraft-8-12.rst",
+    "release-notes/snapcraft-8-13.rst",
 ]
 
 # region Options for extensions
