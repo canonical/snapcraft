@@ -2188,6 +2188,7 @@ def _custom_error(error_msg: str):
 
 
 class Core22Project(Project):
+    base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
     platforms: dict[str, Platform] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
         description="The platforms key is only used in core24 and newer snaps. For core22 and older snaps, use "
@@ -2230,9 +2231,12 @@ class Core22Project(Project):
 
 class BareCore22Project(Core22Project):
     base: Literal["bare"]  # type: ignore[reportIncompatibleVariableOverride]
+    build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
 class Core24Project(Project):
+    base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
+
     architectures: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
         None,
         _custom_error(
@@ -2246,6 +2250,7 @@ class Core24Project(Project):
 
 class BareCore24Project(Core24Project):
     base: Literal["bare"]  # type: ignore[reportIncompatibleVariableOverride]
+    build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
 def _discriminator(enum: type[Enum], key: str) -> Callable[[dict], str]:
