@@ -90,9 +90,7 @@ The following issues have been resolved in Snapcraft 8.12.
 Snapcraft 8.12.0
 ~~~~~~~~~~~~~~~~
 
-- `#5696`_: For certain invalid project files, a helpful error is given instead of
-  crashing.
-- Improved handling of package repositories when building on an EOL base.
+- `#5696`_ YAML structure is not validated before preprocessing
 
 Contributors
 ------------
@@ -100,12 +98,12 @@ Contributors
 We would like to express a big thank you to all the people who contributed to
 this release.
 
-:literalref:`@cmatsuoka<https://github.com/cmatsuoka>`
-:literalref:`@jahn-junior<https://github.com/jahn-junior>`
-:literalref:`@medubelko<https://github.com/medubelko>`
-:literalref:`@mr-cal<https://github.com/mr-cal>`
-:literalref:`@sergiusens<https://github.com/sergiusens>`
-:literalref:`@soumyaDghosh<https://github.com/soumyaDghosh>`
-:literalref:`@steinbro<https://github.com/steinbro>`
+:literalref:`@cmatsuoka <https://github.com/cmatsuoka>`
+:literalref:`@jahn-junior <https://github.com/jahn-junior>`
+:literalref:`@medubelko <https://github.com/medubelko>`
+:literalref:`@mr-cal <https://github.com/mr-cal>`
+:literalref:`@sergiusens <https://github.com/sergiusens>`
+:literalref:`@soumyaDghosh <https://github.com/soumyaDghosh>`
+:literalref:`@steinbro <https://github.com/steinbro>`
 
 .. _#5696: https://github.com/canonical/snapcraft/issues/5696
