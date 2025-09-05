@@ -28,7 +28,11 @@ from overrides import override
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import ComponentProject, Platform, apply_root_packages
 from snapcraft.parts import set_global_environment
-from snapcraft.parts.yaml_utils import extract_parse_info, get_snap_project
+from snapcraft.parts.yaml_utils import (
+    create_project_vars,
+    extract_parse_info,
+    get_snap_project,
+)
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
 
@@ -136,3 +140,9 @@ class Project(ProjectService):
         """Set global environment variables."""
         super().update_project_environment(info)
         set_global_environment(info)
+
+    @override
+    def _create_project_vars(
+        self, project: dict[str, Any]
+    ) -> craft_parts.ProjectVarInfo:
+        return create_project_vars(project)
