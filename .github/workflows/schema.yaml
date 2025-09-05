@@ -2,7 +2,7 @@ name: Schema
 on: [pull_request]
 
 env:
-  SNAPCRAFT_JSON: new_schema/snapcraft.json
+  SNAPCRAFT_JSON: schema/snapcraft.json
 
 jobs:
   diff-schema:

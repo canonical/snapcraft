@@ -106,4 +106,4 @@ install-lint-build-deps:
 
 .PHONY: schema
 schema: install-uv
-	uv run tools/schema.py > new_schema/snapcraft.json
+	uv run tools/schema.py > schema/snapcraft.json
