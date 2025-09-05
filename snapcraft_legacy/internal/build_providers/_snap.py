@@ -339,14 +339,6 @@ class SnapInjector:
         logger.debug("Waiting for pending snap auto refreshes.")
         self._runner(["snap", "watch", "--last=auto-refresh?"], hide_output=True)
 
-    def _enable_snapd_snap(self) -> None:
-        # Required to not install the core snap when building using
-        # other bases.
-        logger.debug("Enable use of snapd snap.")
-        self._runner(
-            ["snap", "set", "system", "experimental.snapd-snap=true"], hide_output=True
-        )
-
     def _get_latest_revision(self, snap_name) -> Optional[str]:
         try:
             return self._registry_data[snap_name][-1]["revision"]
@@ -374,10 +366,6 @@ class SnapInjector:
     def apply(self) -> None:
         if all((s.get_op() == _SnapOp.NOP for s in self._snaps)):
             return
-
-        # Allow using snapd from the snapd snap to leverage newer snapd features.
-        if any(s.snap_instance_name == "snapd" for s in self._snaps):
-            self._enable_snapd_snap()
 
         # Disable refreshes so they do not interfere with installation ops.
         self._disable_and_wait_for_refreshes()
