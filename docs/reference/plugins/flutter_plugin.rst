@@ -3,13 +3,14 @@
 Flutter plugin
 ==============
 
-The Flutter plugin builds `Flutter <https://flutter.dev/>`_-based parts
+The Flutter plugin simplifies the building of applications that employ the `Flutter
+<https://flutter.dev/>`_ framework.
 
 
 Keywords
 --------
 
-This plugin provides the following unique keys for core22 and core24 snaps.
+This plugin provides the following unique keys for core22 and newer snaps.
 
 
 flutter-channel
@@ -33,7 +34,7 @@ The flutter target to build.
 Dependencies
 ------------
 
-For core22 and core24 snaps, this plugin installs ``clang``, ``curl``, ``git``,
+For core22 and newer snaps, this plugin installs ``clang``, ``curl``, ``git``,
 ``cmake``, ``ninja-build``, and ``unzip``.
 
 
@@ -45,8 +46,6 @@ During the build step, the plugin performs the following actions:
 #. Clone `Flutter's GitHub repository <https://github.com/flutter/flutter>`_, using the
    channel declared by the ``flutter-channel`` key. If a channel isn't specified, the
    ``stable`` channel is cloned.
-#. Remove ``flutter-distro/engine/src/.gn`` from the part's build directory so that
-   subsequent commands run successfully.
 #. Populate Flutter's cache of binary artifacts with ``flutter precache``.
 #. Download any dependencies listed in the Flutter project's ``pubspec.yaml`` with
    ``flutter pub get``.
