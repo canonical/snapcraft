@@ -14,6 +14,11 @@ prepare: |
   echo "compression: ${COMPRESSION}" >> snap/snapcraft.yaml
 
 restore: |
+  pushd test-snap
+  snapcraft clean --use-lxd
+  snapcraft clean --destructive-mode
+  popd
+
   rm -rf test-snap
   rm -rf ./*.snap
 

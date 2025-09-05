@@ -417,11 +417,12 @@ suites:
    - ubuntu-18.04-amd64
  tests/spread/plugins/v1/flutter/:
    summary: tests of snapcraft's Flutter plugin
-   # Keep this 18.04 as the tests makes use of the GNOME 3.28 extension.
+   # There are core18 tests, but 18.04 GCE runners only have 10GB of disk space.
+   # We use 22.04 runners because they have 16GB of disk.
    systems:
-   - ubuntu-18.04
-   - ubuntu-18.04-64
-   - ubuntu-18.04-amd64
+   - ubuntu-22.04
+   - ubuntu-22.04-64
+   - ubuntu-22.04-amd64
  tests/spread/plugins/v1/go/:
    summary: tests of snapcraft's Go plugin
    systems:

@@ -5,7 +5,8 @@ kill-timeout: 30m
 environment:
   # fails due to upstream bug: https://github.com/flutter/flutter/issues/133881
   # FLUTTER/dev: dev
-  FLUTTER/master: master
+  # master now requires git>=2.36 (https://github.com/flutter/flutter/issues/174355#issuecomment-3225380324)
+  # FLUTTER/master: master
   FLUTTER/beta: beta
   FLUTTER/stable: stable
   SNAP_DIR: ../snaps/flutter_hello
@@ -14,14 +15,18 @@ prepare: |
   cp "snapcraft-$FLUTTER.yaml" "$SNAP_DIR/snap/snapcraft.yaml"
 
 restore: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   cd "$SNAP_DIR"
-  snapcraft clean
+  snapcraft clean --use-lxd
   rm -f ./*.snap
   rm -f ./snap/snapcraft.yaml
 
 execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   cd "$SNAP_DIR"
-  snapcraft
+  snapcraft --use-lxd
   snap install flutter-hello_*.snap --dangerous
 
   # newer flutter built applications no longer display --help
