@@ -21,6 +21,7 @@ from textwrap import dedent
 
 import craft_application.errors
 import pytest
+from craft_parts import ProjectVar, ProjectVarInfo
 
 from snapcraft import errors
 from snapcraft.parts import yaml_utils
@@ -268,3 +269,79 @@ def test_get_snap_project_snap_not_a_directory(project_dir, new_dir):
         yaml_utils.get_snap_project(project_dir)
 
     assert "Given project directory path is not a directory:" in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        pytest.param(
+            {},
+            ProjectVarInfo.unmarshal(
+                {
+                    "version": ProjectVar().marshal(),
+                    "grade": ProjectVar().marshal(),
+                }
+            ),
+            id="minimal",
+        ),
+        pytest.param(
+            {
+                "version": "1.0",
+                "grade": "stable",
+                "adopt-info": "part1",
+                "components": {
+                    "my-component": {
+                        "version": "2.0",
+                        "adopt-info": "part2",
+                    },
+                    "your-component": {
+                        "version": "3.0",
+                        "adopt-info": "part3",
+                    },
+                },
+            },
+            ProjectVarInfo.unmarshal(
+                {
+                    "version": ProjectVar(
+                        value="1.0",
+                        part_name="part1",
+                    ).marshal(),
+                    "grade": ProjectVar(
+                        value="stable",
+                        part_name="part1",
+                    ).marshal(),
+                    "components": {
+                        "my-component": {
+                            "version": ProjectVar(
+                                value="2.0",
+                                part_name="part2",
+                            ).marshal(),
+                        },
+                        "your-component": {
+                            "version": ProjectVar(
+                                value="3.0",
+                                part_name="part3",
+                            ).marshal(),
+                        },
+                    },
+                }
+            ),
+            id="complex",
+        ),
+    ],
+)
+def test_create_project_vars(data, expected):
+    """Create a minimal project var."""
+    project_vars = yaml_utils.create_project_vars(
+        {
+            "name": "name",
+            "base": "core22",
+            "confinement": "strict",
+            "summary": "summary",
+            "description": "description",
+            "parts": {"nil": {}},
+            **data,
+        }
+    )
+
+    assert project_vars == expected

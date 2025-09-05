@@ -119,7 +119,7 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
     (prime_dir / "assets/file.desktop").touch()
 
     prj_vars = {"version": "0.1", "grade": "stable"}
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -137,7 +137,9 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
     assert project.website == ["website1"]  # already set in project
     assert project.source_code == ["vcs-browser"]
     assert project.icon == "assets/icon.png"
-    assert project.apps["app3"].desktop == "assets/file.desktop"
+    assert (
+        project.apps["app3"].desktop == "assets/file.desktop"  # pyright: ignore[reportOptionalSubscript]
+    )
 
 
 @pytest.mark.parametrize(
@@ -190,9 +192,9 @@ def test_update_project_metadata_fields(
         title="metadata title",
         grade="devel",
     )
-    prj_vars = {"version": "", "grade": ""}
+    prj_vars = {"version": None, "grade": None}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -273,9 +275,9 @@ def test_update_project_metadata_multiple(
         issues=["issues2", "issues3"],
         donation=["donation2"],
     )
-    prj_vars = {"version": "", "grade": ""}
+    prj_vars = {"version": None, "grade": None}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[
@@ -327,8 +329,8 @@ def test_update_project_metadata_overriding_appstream(new_dir):
         issues=["https://example.com/issues", "https://example.com/issues2"],
         donation=["https://buyme.coffee", "https://github.com/sponsors"],
     )
-    prj_vars = {"version": "", "grade": ""}
-    update_project_metadata(
+    prj_vars = {"version": None, "grade": None}
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -393,9 +395,9 @@ def test_update_project_metadata_icon(
         Path("assets/gui").mkdir(parents=True)
         Path("assets/gui/icon.svg").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -515,9 +517,9 @@ def test_update_project_metadata_desktop(
         Path("assets/gui").mkdir(parents=True)
         Path("assets/gui/foo.desktop").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -554,9 +556,9 @@ def test_update_project_metadata_desktop_multiple(project_yaml_data, new_dir):
     Path("metadata/foo.desktop").touch()
     Path("metadata/bar.desktop").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -601,9 +603,9 @@ def test_update_project_metadata_multiple_apps(project_yaml_data, new_dir):
     Path("metadata/foo.desktop").touch()
     Path("metadata/bar.desktop").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata1, metadata2],
@@ -635,9 +637,9 @@ def test_update_project_metadata_desktop_no_apps(project_yaml_data, new_dir):
     Path("metadata/foo.desktop").touch()
     Path("metadata/bar.desktop").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],

@@ -52,7 +52,7 @@ class Validator:
 
     def _load_schema(self):
         schema_file = os.path.abspath(
-            os.path.join(common.get_schemadir(), "snapcraft.json")
+            os.path.join(common.get_schemadir(), "snapcraft-legacy.json")
         )
         try:
             with open(schema_file) as fp:
