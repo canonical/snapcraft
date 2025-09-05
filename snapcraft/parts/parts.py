@@ -24,7 +24,7 @@ from typing import Any, cast
 import craft_parts
 from craft_archives import repo
 from craft_cli import emit
-from craft_parts import Action, ActionType, Step
+from craft_parts import Action, ActionType, ProjectVarInfo, Step
 from craft_parts.packages import Repository
 from craft_platforms import DebianArchitecture
 from xdg import BaseDirectory  # type: ignore
@@ -49,7 +49,7 @@ class PartsLifecycle:
     :param all_parts: A dictionary containing the parts defined in the project.
     :param work_dir: The working directory for parts processing.
     :param assets_dir: The directory containing project assets.
-    :param adopt_info: The name of the part containing metadata do adopt.
+    :param adopt_info: The name of the part containing top-level metadata to adopt.
     :param extra_build_snaps: A list of additional build snaps to install.
     :param partitions: A list of partitions for the project.
 
@@ -71,7 +71,7 @@ class PartsLifecycle:
         adopt_info: str | None,
         parse_info: dict[str, list[str]],
         project_name: str,
-        project_vars: dict[str, str],
+        project_vars: ProjectVarInfo,
         extra_build_snaps: list[str] | None = None,
         target_arch: str,
         track_stage_packages: bool,
@@ -107,7 +107,6 @@ class PartsLifecycle:
                 track_stage_packages=track_stage_packages,
                 parallel_build_count=parallel_build_count,
                 project_name=project_name,
-                project_vars_part_name=adopt_info,
                 project_vars=project_vars,
                 # custom arguments
                 project_base=project_base,
@@ -159,11 +158,8 @@ class PartsLifecycle:
 
     @property
     def project_vars(self) -> dict[str, str]:
-        """Return the value of project variable ``version``."""
-        return {
-            "version": self._lcm.project_info.get_project_var("version"),
-            "grade": self._lcm.project_info.get_project_var("grade"),
-        }
+        """Return a dict of of the project variables values."""
+        return self._lcm.project_info.project_vars.marshal("value")
 
     def run(
         self,
@@ -249,7 +245,7 @@ class PartsLifecycle:
             emit.progress("Refreshing package repositories...")
             # TODO: craft-parts API for: force_refresh=refresh_required
 
-            from craft_parts.packages import deb
+            from craft_parts.packages import deb  # noqa: PLC0415
 
             deb.Ubuntu.refresh_packages_list.cache_clear()
             self._lcm.refresh_packages_list()
