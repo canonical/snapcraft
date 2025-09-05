@@ -4,7 +4,7 @@ Flutter plugin
 ==============
 
 The Flutter plugin simplifies the building of applications that employ the `Flutter
-<https://flutter.dev/>`_ framework.
+<https://flutter.dev/>`_ app framework.
 
 
 Keywords
@@ -19,7 +19,7 @@ flutter-channel
 
 **Default**: ``stable``
 
-The default flutter channel to use for the build.
+The flutter channel to use for the build.
 
 
 flutter-target
@@ -28,14 +28,20 @@ flutter-target
 
 **Default**: ``lib/main.dart``
 
-The flutter target to build.
+The path to the app's entrypoint ``.dart`` file.
 
 
 Dependencies
 ------------
 
-For core22 and newer snaps, this plugin installs ``clang``, ``curl``, ``git``,
-``cmake``, ``ninja-build``, and ``unzip``.
+For core22 and newer snaps, this plugin installs:
+
+* ``clang``
+* ``curl``
+* ``git``
+* ``cmake``
+* ``ninja-build``
+* ``unzip``.
 
 
 How it works
@@ -49,8 +55,7 @@ During the build step, the plugin performs the following actions:
 #. Populate Flutter's cache of binary artifacts with ``flutter precache``.
 #. Download any dependencies listed in the Flutter project's ``pubspec.yaml`` with
    ``flutter pub get``.
-#. Build the target declared by ``flutter-target`` with ``flutter build``. If no target
-   is specified, ``lib/main.dart`` is built.
+#. Build the app with ``flutter build``.
 #. Copy the resulting artifacts to the part's install directory.
 
 
