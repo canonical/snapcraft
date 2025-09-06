@@ -61,7 +61,7 @@ else:
 
 dev_requires = [
     "black==23.1.0",
-    "codespell[toml]==2.2.4",
+    "codespell[toml]==2.4.1",
     "coverage[toml]",
     "pyflakes",
     "fixtures",
