@@ -1,7 +1,7 @@
 astroid==2.15.8
 attrs==23.1.0
 black==23.3.0
-cachetools==5.3.0
+cachetools==5.5.2
 catkin-pkg==0.5.2
 certifi==2023.5.7
 cffi==1.15.1
