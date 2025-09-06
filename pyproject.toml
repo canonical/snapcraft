@@ -97,7 +97,7 @@ docs = [
     "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.2.7",
     "docutils>=0.21",
-    "pydantic-kitbash==0.0.7",
+    "pydantic-kitbash==0.0.8",
     "pyspelling",
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
