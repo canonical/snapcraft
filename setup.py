@@ -60,7 +60,7 @@ else:
     scripts = []
 
 dev_requires = [
-    "black==23.1.0",
+    "black==23.12.1",
     "codespell[toml]==2.2.4",
     "coverage[toml]",
     "pyflakes",
