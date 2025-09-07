@@ -1,4 +1,4 @@
-<img src="https://dashboard.snapcraft.io/site_media/appmedia/2018/04/Snapcraft-logo-bird.png" alt="Snapcraft logo" style="height: 128px; display: block">
+<img src="https://dashboard.snapcraft.io/site_media/appmedia/2018/04/Snapcraft-logo-bird.png" alt="Snapcraft logo" style="height: 128px; display>
 
 # Snapcraft
 
@@ -10,7 +10,7 @@
 
 **Snapcraft** is the command-line build tool for packaging and distributing software and
 apps in the snap container format. It solves the problems of dependency management and
-architecture support by bundling all of a software's libraries into the container
+architecture support bundling all of a software's libraries into the container
 itself, and gives developers a way to package any app, program, toolkit, or library for
 all major Linux distributions and IoT devices.
 
