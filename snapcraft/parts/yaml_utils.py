@@ -23,8 +23,10 @@ from pathlib import Path
 from typing import Any, TextIO, cast
 
 import craft_application.errors
+import craft_cli
 import yaml
 import yaml.error
+from craft_parts import ProjectVar, ProjectVarInfo
 
 from snapcraft import const, errors, utils
 from snapcraft.extensions import apply_extensions
@@ -300,3 +302,37 @@ def process_yaml(project_file: Path) -> dict[str, Any]:
         raise errors.SnapcraftError(cast(str, msg)) from err
 
     return yaml_data
+
+
+def create_project_vars(project: dict[str, Any]) -> ProjectVarInfo:
+    """Create project variables for the version, grade, and each component's version.
+
+    :param project: The project data.
+
+    :returns: The project variables.
+    """
+    # always create project vars for the top-level version and grade
+    project_vars: dict[str, Any] = {
+        "version": ProjectVar(
+            value=project.get("version"),
+            part_name=project.get("adopt-info"),
+        ).marshal(),
+        "grade": ProjectVar(
+            value=project.get("grade"),
+            part_name=project.get("adopt-info"),
+        ).marshal(),
+    }
+
+    # if components are defined, create a project var for each component's version
+    # (which are different than the top-level version)
+    if components := project.get("components"):
+        project_vars["components"] = {}
+        for name, component in components.items():
+            project_vars["components"][name] = {}
+            project_vars["components"][name]["version"] = ProjectVar(
+                value=component.get("version"),
+                part_name=component.get("adopt-info"),
+            ).marshal()
+
+    craft_cli.emit.debug(f"Created project variables {project_vars}.")
+    return ProjectVarInfo.unmarshal(project_vars)

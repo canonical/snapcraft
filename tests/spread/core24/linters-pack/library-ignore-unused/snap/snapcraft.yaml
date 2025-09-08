@@ -8,6 +8,7 @@ confinement: strict
 
 lint:
   ignore:
+    - metadata
     - library:
       - usr/lib/*/libpng16.so*
 

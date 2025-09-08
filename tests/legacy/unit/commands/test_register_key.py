@@ -62,6 +62,40 @@ class RegisterKeyTestCase(FakeStoreCommandsBaseTestCase):
             ).format(get_sample_key("default")["sha3-384"])
         )
 
+    def test_register_key_verbose(self):
+        result = self.run_command(
+            ["register-key", "default", "--verbosity", "trace"], input="user@example.com\nsecret\n"
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains("Registering key ..."))
+        self.assertThat(
+            result.output,
+            Contains(
+                'Done. The key "default" ({}) may be used to sign your '
+                "assertions.".format(get_sample_key("default")["sha3-384"])
+            ),
+        )
+        self.fake_store_login.mock.assert_called_once_with(
+            email="user@example.com",
+            password="secret",
+            acls=["modify_account_key"],
+            packages=None,
+            channels=None,
+            # one day
+            ttl=86400,
+        )
+        self.fake_store_register_key.mock.call_once_with(
+            dedent(
+                """\
+                type: account-key-request
+                account-id: abcd
+                name: default
+                public-key-sha3-384: {}
+                """
+            ).format(get_sample_key("default")["sha3-384"])
+        )
+
     def test_register_key_no_keys(self):
         self.fake_check_output.mock.side_effect = [json.dumps([]).encode()]
 

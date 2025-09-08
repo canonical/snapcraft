@@ -25,7 +25,7 @@ import tabulate
 from snapcraft_legacy import yaml_utils
 from snapcraft_legacy.internal import project_loader
 
-from ._options import get_project
+from ._options import add_verbosity_options, get_project
 
 
 @click.group()
@@ -34,6 +34,7 @@ def extensioncli(**kwargs):
 
 
 @extensioncli.command("list-extensions")
+@add_verbosity_options()
 def list_extensions(**kwargs):
     """List available extensions.
 
@@ -62,6 +63,7 @@ def list_extensions(**kwargs):
 @extensioncli.command()
 @click.pass_context
 @click.argument("name")
+@add_verbosity_options()
 def extension(ctx, name, **kwargs):
     """Show contents of extension."""
 
@@ -83,6 +85,7 @@ def extension(ctx, name, **kwargs):
     is_flag=True,
     envvar="SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS",
 )
+@add_verbosity_options()
 def expand_extensions(**kwargs):
     """Display snapcraft.yaml with all extensions applied."""
     if kwargs.get("enable_experimental_extensions"):

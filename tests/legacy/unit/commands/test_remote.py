@@ -64,6 +64,18 @@ class RemoteBuildTests(CommandBaseTestCase):
         mock_confirm.assert_not_called()
 
     @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
+    def test_remote_build_with_accept_option_doesnt_prompt_verbose(self, mock_confirm):
+        result = self.run_command(
+              ["remote-build", "--launchpad-accept-public-upload", "--verbosity", "trace"],
+          )
+
+        self.mock_lc.start_build.assert_called_once()
+        self.mock_lc.cleanup.assert_called_once()
+        self.assertThat(result.output, Contains("Building snap package for i386."))
+        self.assertThat(result.exit_code, Equals(0))
+        mock_confirm.assert_not_called()
+
+    @mock.patch("snapcraft_legacy.cli.remote.echo.confirm")
     def test_remote_build_core20_no_deprecation_warning(self, mock_confirm):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
             self.path,

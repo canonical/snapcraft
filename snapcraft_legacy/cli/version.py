@@ -18,6 +18,8 @@ import click
 
 import snapcraft_legacy
 
+from ._options import add_verbosity_options
+
 SNAPCRAFT_VERSION_TEMPLATE = "snapcraft %(version)s"
 
 
@@ -28,7 +30,8 @@ def versioncli():
 
 
 @versioncli.command("version")
-def version():
+@add_verbosity_options()
+def version(**kwargs):
     """Obtain snapcraft's version number.
 
     Examples:

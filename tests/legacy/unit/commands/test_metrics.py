@@ -86,6 +86,30 @@ class MetricsCommandTestCase(FakeStoreCommandsBaseTestCase):
         )
         assert result.exit_code == 0
 
+    def test_status_table_format_verbose(self):
+        result = self.run_command(
+            [
+                "metrics",
+                "snap-test",
+                "--name",
+                "daily_device_change",
+                "--format",
+                "table",
+                "--verbosity",
+                "trace"
+            ]
+        )
+
+        assert result.output == dedent(
+            """\
+               Devices    2021-01-01  2021-01-02  2021-01-03
+               Continued  10          11          12
+               Lost       1           2           3
+               New        2           3           4
+            """
+        )
+        assert result.exit_code == 0
+
     def test_status_table_json(self):
         result = self.run_command(
             [

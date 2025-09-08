@@ -117,6 +117,26 @@ class PromoteCommandTestCase(FakeStoreCommandsBaseTestCase):
             snap_name="snap-test", revision="2", channels=["candidate"]
         )
 
+    def test_promote_confirm_yes_verbose(self):
+        result = self.run_command(
+            [
+                "promote",
+                "snap-test",
+                "--from-channel",
+                "beta",
+                "--to-channel",
+                "candidate",
+                "--verbosity",
+                "trace"
+            ],
+            input="y\n",
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.fake_store_release.mock.assert_called_once_with(
+            snap_name="snap-test", revision="2", channels=["candidate"]
+        )
+
     def test_promote_yes_option(self):
         result = self.run_command(
             [

@@ -65,6 +65,62 @@ class ExtensionsCommandTest(CommandBaseTestCase):
             ),
         )
 
+    @mock.patch(
+        "pkgutil.iter_modules",
+        return_value=(
+            (None, "test1", None),
+            (None, "test2", None),
+            (None, "test3", None),
+            (None, "_test4", None),
+        ),
+    )
+    def test_list_extensions_verbose(self, fake_iter_modules):
+        result = self.run_command(["extensions", "--verbosity=trace"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                textwrap.dedent(
+                    """\
+                    Extension name    Supported bases
+                    ----------------  -----------------
+                    test1             core20
+                    test2             core20
+                    test3             core18, core20
+                    """
+                )
+            ),
+        )
+
+    @mock.patch(
+        "pkgutil.iter_modules",
+        return_value=(
+            (None, "test1", None),
+            (None, "test2", None),
+            (None, "test3", None),
+            (None, "_test4", None),
+        ),
+    )
+    def test_list_extensions_alias_verbose(self, fake_iter_modules):
+        result = self.run_command(["list-extensions", "--verbosity", "trace"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                textwrap.dedent(
+                    """\
+                    Extension name    Supported bases
+                    ----------------  -----------------
+                    test1             core20
+                    test2             core20
+                    test3             core18, core20
+                    """
+                )
+            ),
+        )
+
     def test_extension(self):
         result = self.run_command(["extension", "test1"])
 
@@ -139,6 +195,62 @@ class ExtensionsCommandTest(CommandBaseTestCase):
         )
 
         result = self.run_command(["expand-extensions"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output,
+            Equals(
+                textwrap.dedent(
+                    """\
+                    name: test
+                    version: '1'
+                    summary: test
+                    description: test
+                    base: core20
+                    grade: stable
+                    confinement: strict
+                    apps:
+                      test-app:
+                        command: echo "hello"
+                        environment:
+                          EXTENSION_NAME: test1
+                    parts:
+                      test-part:
+                        plugin: nil
+                        after:
+                        - extension-part
+                      extension-part:
+                        plugin: nil
+                    """
+                )
+            ),
+        )
+
+    def test_expand_extensions_verbose(self):
+        self.make_snapcraft_yaml(
+            textwrap.dedent(
+                """\
+                name: test
+                version: '1'
+                summary: test
+                description: test
+                base: core20
+                grade: stable
+                confinement: strict
+
+                apps:
+                    test-app:
+                        command: echo "hello"
+                        extensions: [test1]
+
+                parts:
+                    test-part:
+                        plugin: nil
+                """
+            )
+        )
+
+        result = self.run_command(["expand-extensions", "--verbosity", "trace"])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(

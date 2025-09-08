@@ -144,6 +144,22 @@ Snapcraft 8.11.0
 - Multi-line details in error messages now start on a new line.
 - If the project file is empty, Snapcraft now emits an error instead of a traceback.
 
+.. _release-notes-fixes-8.11.1:
+
+Snapcraft 8.11.1
+~~~~~~~~~~~~~~~~
+
+- `#5298`_ Verbosity arguments are now parsed for all non-lifecycle commands.
+
+.. _release-notes-fixes-8.11.2:
+
+Snapcraft 8.11.2
+~~~~~~~~~~~~~~~~
+
+- `#5635`_ If installing a GPG key from a keyserver for a package repository fails,
+  Snapcraft now retries installing the key using the proxy.
+- Snap builds no longer fail when reusing build instances created by prior
+  versions of Snapcraft.
 
 Contributors
 ------------
@@ -159,3 +175,6 @@ this release.
 :literalref:`@medubelko<https://github.com/medubelko>`,
 :literalref:`@mr-cal<https://github.com/mr-cal>`, and
 :literalref:`@upils<https://github.com/upils>`.
+
+.. _#5298: https://github.com/canonical/snapcraft/issues/5298
+.. _#5635: https://github.com/canonical/snapcraft/issues/5635

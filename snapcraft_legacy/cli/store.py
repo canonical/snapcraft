@@ -31,6 +31,7 @@ from snapcraft_legacy.storeapi import metrics as metrics_module
 
 from . import echo
 from ._metrics import convert_metrics_to_table
+from ._options import add_verbosity_options
 
 
 @click.group()
@@ -83,7 +84,8 @@ def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
     metavar="<snap-file>",
     type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
 )
-def upload_metadata(snap_file, force):
+@add_verbosity_options()
+def upload_metadata(snap_file, force, **kwargs):
     """Upload metadata from <snap-file> to the store.
 
     The following information will be retrieved from <snap-file> and used
@@ -121,7 +123,8 @@ def upload_metadata(snap_file, force):
     help="The channel to promote to.",
 )
 @click.option("--yes", is_flag=True, help="Do not prompt for confirmation.")
-def promote(snap_name, from_channel, to_channel, yes):
+@add_verbosity_options()
+def promote(snap_name, from_channel, to_channel, yes, **kwargs):
     """Promote a build set from to a channel.
 
     A build set is a set of commonly tagged revisions, the most simple
@@ -206,7 +209,8 @@ def promote(snap_name, from_channel, to_channel, yes):
 @storecli.command()
 @click.argument("snap-name", metavar="<snap-name>")
 @click.argument("track_name", metavar="<track>")
-def set_default_track(snap_name: str, track_name: str):
+@add_verbosity_options()
+def set_default_track(snap_name: str, track_name: str, **kwargs):
     """Set the default track for <snap-name> to <track>.
 
     The track must be a valid active track for this operation to be successful.
@@ -252,7 +256,8 @@ _YESTERDAY = str(date.today() - timedelta(days=1))
     type=click.Choice(["table", "json"]),
     required=True,
 )
-def metrics(snap_name: str, name: str, start: str, end: str, format: str):
+@add_verbosity_options()
+def metrics(snap_name: str, name: str, start: str, end: str, format: str, **kwargs):
     """Get metrics for <snap-name>."""
     store = storeapi.StoreClient()
     account_info = store.get_account_information()

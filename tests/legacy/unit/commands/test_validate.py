@@ -48,6 +48,19 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
             result.output, Contains("Signing validations assertion for test-snap=4")
         )
 
+    def test_validate_success_verbose(self):
+        result = self.run_command(
+            ["validate", "core", "core=3", "test-snap=4", "--verbosity", "trace"]
+        )
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output, Contains("Signing validations assertion for core=3")
+        )
+        self.assertThat(
+            result.output, Contains("Signing validations assertion for test-snap=4")
+        )
+
     def test_validate_with_key(self):
         result = self.run_command(
             ["validate", "core", "core=3", "test-snap=4", "--key-name=keyname"]
