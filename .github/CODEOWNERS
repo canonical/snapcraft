@@ -6,7 +6,7 @@
 * @bepri
 
 # Documentation owners
-/docs/ @jahn-junior @medubelko @bepri
+/docs/ @canonical/starcraft-authors @bepri
 
-# Finally, all CODEOWNERS changes need to be approved by The Man, Himself.
-/.github/CODEOWNERS @steinbro
+# Finally, all CODEOWNERS changes need to be approved by a maintainer
+/.github/CODEOWNERS @starcraft-maintainers
