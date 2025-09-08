@@ -51,8 +51,7 @@ APP_METADATA = AppMetadata(
     summary="Package, distribute, and update snaps for Linux and IoT",
     ProjectClass=models.Project,
     source_ignore_patterns=["*.snap"],
-    project_variables=["version", "grade"],
-    mandatory_adoptable_fields=["version", "summary", "description"],
+    mandatory_adoptable_fields=list(models.MANDATORY_ADOPTABLE_FIELDS),
     docs_url="https://documentation.ubuntu.com/snapcraft/{version}",
 )
 

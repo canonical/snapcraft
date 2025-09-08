@@ -6,6 +6,10 @@ description: spread test
 
 confinement: strict
 
+lint:
+  ignore:
+    - metadata
+
 parts:
   my-part:
     plugin: nil

@@ -62,6 +62,7 @@ html_theme_options = {
 html_static_path = ["_static"]
 templates_path = ["_templates"]
 
+# Static resources for Google Analytics
 html_css_files = [
     'css/cookie-banner.css'
 ]
@@ -124,7 +125,6 @@ exclude_patterns = [
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
     "how-to/publishing/build-snaps-remotely.rst",
-    "release-notes/snapcraft-8-12.rst",
 ]
 
 # region Options for extensions
