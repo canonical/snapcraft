@@ -54,6 +54,17 @@ for command line and UX changes
 
 For a complete list of commits, check out the `X.Y.Z`_ release on GitHub. -->
 
+(7.5.9_changelog)=
+
+## 7.5.9 (2025-Sep-08)
+
+### Core
+
+- Fix a bug where Snapcraft would fail to re-use an existing build environment to pack
+  a snap ([#5693]).
+
+For a complete list of commits, check out the [7.5.9] release on GitHub.
+
 (7.5.8_changelog)=
 
 ## 7.5.8 (2024-Oct-24)
@@ -92,6 +103,8 @@ For a complete list of commits, check out the [7.5.6] release on GitHub.
 [#4683]: https://github.com/canonical/snapcraft/issues/4683
 [#4927]: https://github.com/canonical/snapcraft/issues/4927
 [#5077]: https://github.com/canonical/snapcraft/issues/5077
+[#5693]: https://github.com/canonical/snapcraft/issues/5693
 [7.5.6]: https://github.com/canonical/snapcraft/releases/tag/7.5.6
 [7.5.7]: https://github.com/canonical/snapcraft/releases/tag/7.5.7
 [7.5.8]: https://github.com/canonical/snapcraft/releases/tag/7.5.8
+[7.5.9]: https://github.com/canonical/snapcraft/releases/tag/7.5.9
