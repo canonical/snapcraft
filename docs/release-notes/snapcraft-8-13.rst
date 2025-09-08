@@ -23,13 +23,12 @@ Snapcraft 8.13 brings the following features, integrations, and improvements.
 Set component versions dynamically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. include:: /reuse/bases-intro.rst
+.. include:: /reuse/components-intro.rst
 
-Similar to setting the top-level version, a component's version can now be set
-dynamically with craftctl.
+Previously, a component could only set its version statically, when first declared.
 
-Additionally, the version for each component can be set by a unique part. This is
-controlled with a new ``adopt-info`` key for each component.
+Parts can now set a component versions dynamically. If a component points to a part with
+the ``adopt-info`` key, the part can call craftctl to set the version.
 
 For detailed guidance, see
 :ref:`how-to-access-project-variables-across-parts-and-components`.
