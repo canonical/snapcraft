@@ -23,8 +23,6 @@ Snapcraft 8.13 brings the following features, integrations, and improvements.
 Set component versions dynamically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. include:: /reuse/components-intro.rst
-
 Previously, a component could only set its version statically, when first declared.
 
 Parts can now set a component versions dynamically. If a component points to a part with
