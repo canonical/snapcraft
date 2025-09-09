@@ -1703,6 +1703,20 @@
           "description": "The configuration for the component's hooks.",
           "examples": ["{configure: {plugs: [home]}}"],
           "title": "Hooks"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the component's metadata.\n\nOnly the component's version can be set.\n",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
         }
       },
       "required": ["summary", "description", "type"],
@@ -2963,30 +2977,10 @@
                   }
                 ]
               },
-              "run-on": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "array",
-                    "minItems": 1,
-                    "uniqueItems": true
-                  }
-                ]
-              },
-              "build-for": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "array",
-                    "minItems": 1,
-                    "uniqueItems": true
-                  }
-                ]
-              }
+              "type": "object"
+            },
+            {
+              "type": "null"
             }
           ],
           "default": null,
