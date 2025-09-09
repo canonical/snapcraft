@@ -2995,10 +2995,30 @@
                   }
                 ]
               },
-              "type": "object"
-            },
-            {
-              "type": "null"
+              "run-on": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                ]
+              },
+              "build-for": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true
+                  }
+                ]
+              }
             }
           ],
           "default": null,
