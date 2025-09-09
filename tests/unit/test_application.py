@@ -704,12 +704,12 @@ def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
         ("core26", "devel", True),
     ],
 )
-def test_use_craftapp_lib(snapcraft_yaml, base, build_base, _use_craftapp_lib):
+def test_use_craftapp_lib(snapcraft_yaml, base, build_base, use_craftapp_lib):
     snapcraft_yaml(base=base, build_base=build_base)
 
     app = application.create_app()
 
-    assert app._use_craftapp_lib == _use_craftapp_lib
+    assert app._use_craftapp_lib == use_craftapp_lib
 
 
 @pytest.mark.parametrize(
