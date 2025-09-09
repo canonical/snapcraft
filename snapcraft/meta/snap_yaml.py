@@ -438,12 +438,10 @@ def get_metadata_from_project(
     if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
         assumes.add("command-chain")
 
-    effective_base = project.get_effective_base()
-
     if arch == "all":
         # if arch is "all", do not include architecture-specific paths in the environment
         arch_triplet: str | None = None
-    elif effective_base == "core22":
+    elif isinstance(project, models.Core22Project):
         arch_triplet = project.get_build_for_arch_triplet()
     else:
         arch_triplet = get_arch_triplet(

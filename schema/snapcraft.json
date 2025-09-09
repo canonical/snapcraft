@@ -568,22 +568,6 @@
           "title": "Build-Base",
           "type": "string"
         },
-        "platforms": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "$ref": "#/$defs/Platform"
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The platforms key is only used in core24 and newer snaps. For core22 and older snaps, use the ``architectures`` key.",
-          "title": "Platforms"
-        },
         "contact": {
           "anyOf": [
             {
@@ -1866,22 +1850,6 @@
           "description": "The build environment to use when building the snap",
           "examples": ["core20", "core22", "core24", "devel"],
           "title": "Build-Base"
-        },
-        "platforms": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "$ref": "#/$defs/Platform"
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "The platforms key is only used in core24 and newer snaps. For core22 and older snaps, use the ``architectures`` key.",
-          "title": "Platforms"
         },
         "contact": {
           "anyOf": [

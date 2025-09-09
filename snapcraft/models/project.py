@@ -41,6 +41,7 @@ from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-impor
 )
 from craft_platforms import DebianArchitecture
 from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
+from pydantic.json_schema import SkipJsonSchema  # noqa: TC002
 from typing_extensions import Self, override
 
 from snapcraft import utils
@@ -2121,6 +2122,13 @@ class Project(models.Project):
 
         return base
 
+    def get_component_names(self) -> list[str]:
+        """Get a list of component names.
+
+        :returns: A list of component names.
+        """
+        return list(self.components.keys()) if self.components else []
+
     def get_build_on(self) -> str:
         """Get the first build_on architecture from the project for core22."""
         if (
@@ -2144,27 +2152,6 @@ class Project(models.Project):
 
         # will not happen after schema validation
         raise RuntimeError("cannot determine build-for architecture")
-
-    def get_build_for_arch_triplet(self) -> str | None:
-        """Get the architecture triplet for the first build-for architecture for core22.
-
-        :returns: The build-for arch triplet. If build-for is "all", then return None.
-        """
-        arch = self.get_build_for()
-
-        if arch != "all":
-            return get_arch_triplet(
-                DebianArchitecture.from_machine(arch).to_platform_arch()
-            )
-
-        return None
-
-    def get_component_names(self) -> list[str]:
-        """Get a list of component names.
-
-        :returns: A list of component names.
-        """
-        return list(self.components.keys()) if self.components else []
 
     def get_partitions(self) -> list[str] | None:
         """Get a list of partitions based on the project's components.
@@ -2208,10 +2195,11 @@ def _custom_error(error_msg: str):
 
 class Core22Project(Project):
     base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
-    platforms: dict[str, Platform] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
-        description="The platforms key is only used in core24 and newer snaps. For core22 and older snaps, use "
-        "the ``architectures`` key.",
+        description="Not available for core22. Use the `architectures` key.",
+        exclude=True,
+        repr=False,
     )
 
     @pydantic.model_validator(mode="after")
@@ -2246,6 +2234,20 @@ class Core22Project(Project):
     ) -> list[Architecture]:
         """Validate architecture data."""
         return validate_architectures(architectures)
+
+    def get_build_for_arch_triplet(self) -> str | None:
+        """Get the architecture triplet for the first build-for architecture for core22.
+
+        :returns: The build-for arch triplet. If build-for is "all", then return None.
+        """
+        arch = self.get_build_for()
+
+        if arch != "all":
+            return get_arch_triplet(
+                DebianArchitecture.from_machine(arch).to_platform_arch()
+            )
+
+        return None
 
 
 class BareCore22Project(Core22Project):
