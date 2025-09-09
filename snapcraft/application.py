@@ -105,7 +105,7 @@ class Snapcraft(Application):
                 os.environ[craft_var] = env_val
 
     def _should_use_craftapp_lib(self) -> bool:
-        """Return true if the project is known to be core24 or newer."""
+        """Return true if the project is known to use Craft Application to build."""
         try:
             snapcraft_yaml_path = get_snap_project(self.project_dir).project_file
             with snapcraft_yaml_path.open() as file:
