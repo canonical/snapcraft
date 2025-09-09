@@ -687,7 +687,7 @@ def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
 
 
 @pytest.mark.parametrize(
-    ("base", "build_base", "_use_craftapp_lib"),
+    ("base", "build_base", "use_craftapp_lib"),
     [
         ("core20", None, False),
         ("core20", "core20", False),
