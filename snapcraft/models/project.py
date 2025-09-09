@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import re
 import textwrap
-from enum import Enum
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import pydantic
@@ -52,7 +51,7 @@ from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Mapping
+    from collections.abc import Iterable, Mapping
 
     from craft_providers import bases
 
@@ -2066,9 +2065,17 @@ class Project(models.Project):
 
     @override
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]):
+    def unmarshal(cls, data: dict[str, Any]) -> Project:
         """Create a Snapcraft project from a dictionary of data."""
-        return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)
+        try:
+            model: Project = pydantic.TypeAdapter(SnapcraftProject).validate_python(
+                data
+            )
+            return getattr(model, "root", model)
+        except pydantic.ValidationError as exc:
+            if exc.errors()[0]["type"] in {"union_tag_invalid", "union_tag_not_found"}:
+                return cls.model_validate(data)
+            raise
 
     def _get_content_plugs(self) -> list[ContentPlug]:
         """Get list of content plugs."""
@@ -2153,6 +2160,20 @@ class Project(models.Project):
         # will not happen after schema validation
         raise RuntimeError("cannot determine build-for architecture")
 
+    def get_build_for_arch_triplet(self) -> str | None:
+        """Get the architecture triplet for the first build-for architecture for core22.
+
+        :returns: The build-for arch triplet. If build-for is "all", then return None.
+        """
+        arch = self.get_build_for()
+
+        if arch != "all":
+            return get_arch_triplet(
+                DebianArchitecture.from_machine(arch).to_platform_arch()
+            )
+
+        return None
+
     def get_partitions(self) -> list[str] | None:
         """Get a list of partitions based on the project's components.
 
@@ -2160,27 +2181,6 @@ class Project(models.Project):
         or None if no components are defined.
         """
         return _get_partitions_from_components(self.components)
-
-
-class BaseEnum(Enum):
-    BARE = "bare"
-    CORE22 = "core22"
-    CORE24 = "core24"
-    UNIMPLEMENTED = "UNIMPLEMENTED"
-
-    @classmethod
-    def _missing_(cls, value: Any):
-        return cls.UNIMPLEMENTED
-
-
-class BuildBaseEnum(Enum):
-    CORE22 = "core22"
-    CORE24 = "core24"
-    UNIMPLEMENTED = "UNIMPLEMENTED"
-
-    @classmethod
-    def _missing_(cls, value: Any):
-        return cls.UNIMPLEMENTED
 
 
 def _custom_error(error_msg: str):
@@ -2235,20 +2235,6 @@ class Core22Project(Project):
         """Validate architecture data."""
         return validate_architectures(architectures)
 
-    def get_build_for_arch_triplet(self) -> str | None:
-        """Get the architecture triplet for the first build-for architecture for core22.
-
-        :returns: The build-for arch triplet. If build-for is "all", then return None.
-        """
-        arch = self.get_build_for()
-
-        if arch != "all":
-            return get_arch_triplet(
-                DebianArchitecture.from_machine(arch).to_platform_arch()
-            )
-
-        return None
-
 
 class BareCore22Project(Core22Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
@@ -2274,24 +2260,12 @@ class BareCore24Project(Core24Project):
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
-def _discriminator(enum: type[Enum], key: str) -> Callable[[dict], str]:
-    return lambda data: enum(data.get(key, data.get("build-base"))).value
-
-
-_BareProject = Annotated[
-    Annotated[Project, pydantic.Tag(BuildBaseEnum.UNIMPLEMENTED.value)]
-    | Annotated[BareCore22Project, pydantic.Tag(BuildBaseEnum.CORE22.value)]
-    | Annotated[BareCore24Project, pydantic.Tag(BuildBaseEnum.CORE24.value)],
-    pydantic.Discriminator(_discriminator(BuildBaseEnum, "build_base")),
-]
+class _BareProject(pydantic.RootModel):
+    root: BareCore22Project | BareCore24Project
 
 
 SnapcraftProject = Annotated[
-    Annotated[Core22Project, pydantic.Tag(BaseEnum.CORE22.value)]
-    | Annotated[Core24Project, pydantic.Tag(BaseEnum.CORE24.value)]
-    | Annotated[_BareProject, pydantic.Tag(BaseEnum.BARE.value)]
-    | Annotated[Project, pydantic.Tag(BaseEnum.UNIMPLEMENTED.value)],
-    pydantic.Discriminator(_discriminator(BaseEnum, "base")),
+    Core22Project | Core24Project | _BareProject, pydantic.Discriminator("base")
 ]
 
 
