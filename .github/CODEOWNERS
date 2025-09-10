@@ -3,10 +3,10 @@
 # Remember, the last match takes precedence.
 
 # Global owner, used as a last resort.
-* @mr-cal
+* @bepri
 
 # Documentation owners
-/docs/ @jahn-junior @medubelko @mr-cal
+/docs/ @canonical/starcraft-authors @bepri
 
-# Finally, all CODEOWNERS changes need to be approved by The Man, Himself.
-/.github/CODEOWNERS @sergiusens
+# Finally, all CODEOWNERS changes need to be approved by a maintainer
+/.github/CODEOWNERS @canonical/starcraft-maintainers
