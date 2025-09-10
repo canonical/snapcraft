@@ -279,6 +279,13 @@ suites:
     environment:
       SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
+  tests/spread/core26/:
+    summary: core26 specific tests
+    systems:
+      - ubuntu-24.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
+
   # General, core suite
   tests/spread/general/:
     summary: tests of snapcraft core functionality

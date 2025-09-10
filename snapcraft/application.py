@@ -87,7 +87,7 @@ def _get_esm_error_for_base(base: str) -> None:
 class Snapcraft(Application):
     """Snapcraft application definition."""
 
-    _known_core24: bool
+    _use_craftapp_lib: bool
     """True if the project should use the core24/craft-application codepath."""
 
     def __init__(self, *args, **kwargs) -> None:
@@ -97,14 +97,14 @@ class Snapcraft(Application):
         # compatibility with previous versions of the snapcraft codebase, and in
         # the package service to copy the project file into the snap payload if
         # manifest generation is enabled.
-        self._known_core24 = self._get_known_core24()
+        self._use_craftapp_lib = self._should_use_craftapp_lib()
 
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
 
-    def _get_known_core24(self) -> bool:
-        """Return true if the project is known to be core24."""
+    def _should_use_craftapp_lib(self) -> bool:
+        """Return true if the project is known to use Craft Application to build."""
         try:
             snapcraft_yaml_path = get_snap_project(self.project_dir).project_file
             with snapcraft_yaml_path.open() as file:
@@ -123,11 +123,11 @@ class Snapcraft(Application):
         base = _snapcraft_yaml_data.get("base")
         build_base = _snapcraft_yaml_data.get("build-base")
 
-        # We know for sure that we're handling a core24 project
-        if "core24" in (base, build_base) or build_base == "devel":
-            return True
-
-        return False
+        # Check for bases known *not* to use craft-application
+        return all(
+            non_craftapp_base not in (base, build_base)
+            for non_craftapp_base in ("core18", "core20", "core22")
+        )
 
     def _get_app_plugins(self) -> dict[str, PluginType]:
         return plugins.get_plugins(core22=False)
@@ -139,7 +139,7 @@ class Snapcraft(Application):
 
         craft_parts.plugins.unregister("maven-use")
 
-        if self._known_core24:
+        if self._use_craftapp_lib:
             # core22 uses dotnet v1
             # core24 and newer uses dotnet v2
             craft_parts.plugins.unregister("dotnet")
@@ -149,7 +149,7 @@ class Snapcraft(Application):
     def app_config(self) -> dict[str, Any]:
         """Overridden to add "core" knowledge to the config."""
         config = super().app_config
-        config["core24"] = self._known_core24
+        config["use_craftapp_lib"] = self._use_craftapp_lib
         return config
 
     @override
