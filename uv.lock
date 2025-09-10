@@ -514,8 +514,8 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "5.7.0.post6+g61aec61"
-source = { git = "https://github.com/canonical/craft-application.git?rev=61aec610c6c9ea74a1cd5d130ac4217439831d9f#61aec610c6c9ea74a1cd5d130ac4217439831d9f" }
+version = "5.10.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
     { name = "craft-archives" },
@@ -534,6 +534,10 @@ dependencies = [
     { name = "requests" },
     { name = "snap-helpers" },
     { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f7/87/87c57fe65ae2f067395d9a73d2b7d0e429a2671027024e2821334fdeefaa/craft_application-5.10.0.tar.gz", hash = "sha256:6e7bf28bc4f117257b837331a0591a5928b469f2c1344695061040a6e5cc9ea0", size = 435907, upload-time = "2025-09-10T19:57:48.905Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/36/f1631782b681a6aea7c1b6cb297a73a05d624ec37e03f4c65591f3111b5c/craft_application-5.10.0-py3-none-any.whl", hash = "sha256:0c6f9777d509af8c08d96c023acf131a9d0d03d30deb66ce6e7119aa3dbc6c0c", size = 188758, upload-time = "2025-09-10T19:57:46.942Z" },
 ]
 
 [package.optional-dependencies]
@@ -561,7 +565,7 @@ wheels = [
 
 [[package]]
 name = "craft-cli"
-version = "3.1.2"
+version = "3.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -570,41 +574,41 @@ dependencies = [
     { name = "pywin32", marker = "sys_platform == 'win32' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/79/f5/1ef63100f984130aefcaf11c896ad1116438d96bb2020ea934d0f02dd285/craft_cli-3.1.2.tar.gz", hash = "sha256:f5d7281f278ddd867fc67e63e48e96333d187005a7569a226434527c3ccfbd2b", size = 196022, upload-time = "2025-07-21T20:49:42.576Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/0a/f1612fe57295b6a69ff256dbd0826b90f70b27dda90988f972fa6f8968cc/craft_cli-3.2.0.tar.gz", hash = "sha256:557345bf1d82e93d6525f35837ddd2b216de4152f5572306ec59d805231d348b", size = 198962, upload-time = "2025-09-09T20:13:02.372Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/0d/388a3d82be0771fb55701553619e50a53a56970ea670c4c03193d2220e7a/craft_cli-3.1.2-py3-none-any.whl", hash = "sha256:9b3718eef5fc830afa8d2d0c0cd0eaec32360a862f028f93f308f7263d642305", size = 46758, upload-time = "2025-07-21T20:49:40.147Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/b4/a1ced3b96007d84792a4b031d71f1007e274794747f2597f79e3071853f0/craft_cli-3.2.0-py3-none-any.whl", hash = "sha256:4889c0f4a8275703e86b7fa7ce6fbdb65f6fb47158d4f8d24b0fcbb63fa25afa", size = 46959, upload-time = "2025-09-09T20:13:00.659Z" },
 ]
 
 [[package]]
 name = "craft-grammar"
-version = "2.0.3"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "overrides" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4f/75/f4851b02aacbf77ff581c4e09f338920ed0786cf4846c16ae3a65534b9fd/craft_grammar-2.0.3.tar.gz", hash = "sha256:90bb9a8a2bf97df866798e634ec6d365c3bee01183c2e1a16394282b411b96a7", size = 49775, upload-time = "2025-03-18T07:23:48.294Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/aa/70b1e455d01268de803711385bd4111596a18a2183baeb18ea40ad857401/craft_grammar-2.2.0.tar.gz", hash = "sha256:e91f65c6c9d0f08a2783a9fcf946ece80888cee3c85f4120df204f08cef1d486", size = 146191, upload-time = "2025-08-26T16:14:54.117Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/37/b6/297d522164e1900eca2f37fed4f804c2028cc2fa18013f927835ad912df6/craft_grammar-2.0.3-py3-none-any.whl", hash = "sha256:bed81cda7381f522251c3f2424f7cb9ae2398659d0c018de518c74ae0f215801", size = 24879, upload-time = "2025-03-18T07:23:46.812Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/60/d7dbb8ccf3188793c4d36576a1efec5e18e656c8fb290ffe0fad1da932e1/craft_grammar-2.2.0-py3-none-any.whl", hash = "sha256:be910b3eb8452812cc976ccbce1ca52e7a407c44823e51bcf4a99dec2a2cb544", size = 27167, upload-time = "2025-08-26T16:14:52.613Z" },
 ]
 
 [[package]]
 name = "craft-parts"
-version = "2.20.0"
+version = "2.22.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
-    { name = "overrides" },
     { name = "pydantic" },
     { name = "pyxdg" },
     { name = "pyyaml" },
     { name = "requests" },
     { name = "requests-unixsocket2" },
+    { name = "semver" },
     { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/90/bd/445ea92cb9f17a288d45b2b349b1469e71b9800b03c3bfce65f99cd4a2d9/craft_parts-2.20.0.tar.gz", hash = "sha256:e1099252509eecfe56b841de16ed2430df6effbd271c9899756e17af66314b55", size = 798993, upload-time = "2025-08-04T18:00:37.142Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/8d/15f82ac980a29fb5f0f1316410dc070317f9d42595e81b8e8efe3ab6dece/craft_parts-2.22.1.tar.gz", hash = "sha256:b0d698cba4f9c2eb550ecd851dcf442f6ece433c81cc6d43d3fe9d14f1255082", size = 854451, upload-time = "2025-09-10T17:59:43.097Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/fb/217fe2188184179aeaf370d191902274f267fa963ab4e0347f75f7acd68d/craft_parts-2.20.0-py3-none-any.whl", hash = "sha256:7b43007c7487b7b08f329f714399d8c52941f5f891a25071c18821dba52880e5", size = 507126, upload-time = "2025-08-04T18:00:34.481Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/e4/6ae74682819841dd9f3df0bf61815d54dd9430d7d9160b3054eb73e4b070/craft_parts-2.22.1-py3-none-any.whl", hash = "sha256:c7dd7df90bf5a96ce0076c2bb57e865338a840b02d733f1e2b2bf45faacb2283", size = 513535, upload-time = "2025-09-10T17:59:41.219Z" },
 ]
 
 [[package]]
@@ -2551,6 +2555,15 @@ wheels = [
 ]
 
 [[package]]
+name = "semver"
+version = "3.0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/72/d1/d3159231aec234a59dd7d601e9dd9fe96f3afff15efd33c1070019b26132/semver-3.0.4.tar.gz", hash = "sha256:afc7d8c584a5ed0a11033af086e8af226a9c0b206f313e0301f8dd7b6b589602", size = 269730, upload-time = "2025-01-24T13:19:27.617Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/24/4d91e05817e92e3a61c8a21e08fd0f390f5301f1c448b137c57c4bc6e543/semver-3.0.4-py3-none-any.whl", hash = "sha256:9c824d87ba7f7ab4a1890799cec8596f15c1241cb473404ea1cb0c55e4b04746", size = 17912, upload-time = "2025-01-24T13:19:24.949Z" },
+]
+
+[[package]]
 name = "setuptools"
 version = "80.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2772,7 +2785,7 @@ requires-dist = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.0.0" },
     { name = "click", specifier = ">=8.2" },
-    { name = "craft-application", extras = ["remote"], git = "https://github.com/canonical/craft-application.git?rev=61aec610c6c9ea74a1cd5d130ac4217439831d9f" },
+    { name = "craft-application", extras = ["remote"], specifier = ">=5.10.0,<6.0.0" },
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = ">=3.1.2,<4.0.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
