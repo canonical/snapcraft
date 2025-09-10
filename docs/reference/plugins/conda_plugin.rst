@@ -3,7 +3,7 @@
 Conda plugin
 ============
 
-The Conda plugin builds parts that employ packages sourced with the `conda
+The Conda plugin builds parts by retrieving packages with the `conda
 <https://docs.conda.io/>`_ package manager. Though conda is language-agnostic, the
 plugin is most commonly used to incorporate Python packages into snaps.
 
@@ -18,7 +18,7 @@ conda-packages
 ~~~~~~~~~~~~~~
 **Type**: list of strings
 
-**Default**: ``[]``
+**Default**: ``unset``
 
 The conda packages to install.
 
@@ -27,12 +27,12 @@ conda-python-version
 ~~~~~~~~~~~~~~~~~~~~
 **Type**: string
 
-**Default**: ``""``
+**Default**: ``unset``
 
 The Python version to install in the `conda environment
 <https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_,
-specified with both a major and minor version (e.g., 3.12). If unset, Python isn't
-installed in the environment.
+specified with both a major and minor version (for example, 3.12). If unset, Python
+isn't installed in the environment.
 
 
 conda-miniconda-version
@@ -42,7 +42,7 @@ conda-miniconda-version
 **Default**: ``latest``
 
 The version of `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_ to
-bootstrap. If unset, the latest release will be bootstrapped.
+bootstrap. If unset, the latest release is bootstrapped.
 
 
 Dependencies
@@ -56,10 +56,9 @@ How it works
 
 #. Download the Miniconda installation script with ``curl``, respecting the version
    declared with ``conda-miniconda-version``.
-#. Install Miniconda in the part's build environment with the ``miniconda.sh`` script
-   downloaded in the previous step.
-#. Create a conda environment in the part's install directory with ``conda create``.
-   This environment contains any conda packages declared with ``conda-packages`` and
+#. Install Miniconda in the part's build environment with the ``miniconda.sh`` script.
+#. Create a conda environment in the part's install directory with ``conda create``. In
+   this environment, conda installs any packages declared with ``conda-packages`` and
    the Python version declared with ``conda-python-version``.
 
 
