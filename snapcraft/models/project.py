@@ -2252,7 +2252,7 @@ class BareCore22Project(Core22Project):
 
 class BaseCore22Project(Core22Project):
     type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: None  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: SkipJsonSchema[None]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
@@ -2292,7 +2292,7 @@ class BareCore24Project(Core24Project):
 
 class BaseCore24Project(Core24Project):
     type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: None  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: SkipJsonSchema[None]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
 

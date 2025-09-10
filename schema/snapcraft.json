@@ -1740,10 +1740,6 @@
           "description": "The full description of the project.",
           "title": "Description"
         },
-        "base": {
-          "title": "Base",
-          "type": "null"
-        },
         "build-base": {
           "const": "core22",
           "title": "Build-Base",
@@ -2247,7 +2243,7 @@
           "title": "Components"
         }
       },
-      "required": ["name", "base", "build-base", "parts", "type", "confinement"],
+      "required": ["name", "build-base", "parts", "type", "confinement"],
       "title": "BaseCore22Project",
       "type": "object"
     },
@@ -2324,10 +2320,6 @@
           "default": null,
           "description": "The full description of the project.",
           "title": "Description"
-        },
-        "base": {
-          "title": "Base",
-          "type": "null"
         },
         "build-base": {
           "const": "core24",
@@ -2838,7 +2830,7 @@
           "title": "Components"
         }
       },
-      "required": ["name", "base", "build-base", "parts", "type", "confinement"],
+      "required": ["name", "build-base", "parts", "type", "confinement"],
       "title": "BaseCore24Project",
       "type": "object"
     },
