@@ -257,5 +257,5 @@ def _raise_formatted_validation_error(err: pydantic.ValidationError):
     if not (loc and msg) or not isinstance(loc, tuple):
         return
 
-    varname = ".".join(x for x in loc if isinstance(x, str))
+    varname = ".".join(x for x in loc[2:] if isinstance(x, str))
     raise errors.SnapcraftError(f"error setting {varname}: {msg}")

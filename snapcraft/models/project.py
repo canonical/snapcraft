@@ -1156,12 +1156,12 @@ class ContentPlug(models.CraftBaseModel):
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
-    build_on: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
+    build_on: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[assignment]
         description="The architectures on which the snap can be built.",
         examples=["[amd64, riscv64]"],
         min_length=1,
     )
-    build_for: SingleEntryList | None = pydantic.Field(  # type: ignore[assignment]
+    build_for: SingleEntryList | str | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
         description="The single element list containing the architecture the snap is built for.",
         examples=["[amd64]", "[riscv64]"],
@@ -1380,7 +1380,7 @@ class Project(models.Project):
     for details.
     """
 
-    donation: UniqueList[str] | None = pydantic.Field(
+    donation: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The snap's donation links.",
         examples=["[donate@example.com, https://example.com/donate]"],
@@ -1395,7 +1395,7 @@ class Project(models.Project):
     """
 
     # snapcraft's `source_code` is more general than craft-application
-    source_code: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
+    source_code: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
         description="The links to the source code of the snap or the original project.",
         examples=["[https://example.com/source-code]"],
@@ -1409,7 +1409,7 @@ class Project(models.Project):
     for details.
     """
 
-    contact: UniqueList[str] | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    contact: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
         default=None,
         description="The snap author's contact links and email addresses.",
         examples=["[contact@example.com, https://example.com/contact]"],
@@ -1423,7 +1423,7 @@ class Project(models.Project):
     for details.
     """
 
-    issues: UniqueList[str] | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    issues: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
         default=None,
         description="The links and email addresses for submitting issues, bugs, and feature requests.",
         examples=["[issues@email.com, https://example.com/issues]"],
@@ -1438,7 +1438,7 @@ class Project(models.Project):
     for details.
     """
 
-    website: UniqueList[str] | None = pydantic.Field(
+    website: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The links to the original software's web pages.",
         examples=["[https://example.com]"],
@@ -2068,12 +2068,13 @@ class Project(models.Project):
     def unmarshal(cls, data: dict[str, Any]) -> Project:
         """Create a Snapcraft project from a dictionary of data."""
         try:
+            data.setdefault("base", None)
             model: Project = pydantic.TypeAdapter(SnapcraftProject).validate_python(
                 data
             )
             return getattr(model, "root", model)
         except pydantic.ValidationError as exc:
-            if exc.errors()[0]["type"] in {"union_tag_invalid", "union_tag_not_found"}:
+            if exc.errors()[0]["type"] in {"union_tag_invalid", "missing"}:
                 return cls.model_validate(data)
             raise
 
@@ -2194,7 +2195,15 @@ def _custom_error(error_msg: str):
 
 
 class Core22Project(Project):
+    type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        Literal["app", "gadget", "kernel", "snapd", None],
+        _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
+    ] = pydantic.Field(
+        default=None, description="The snap's type.", examples=["kernel"]
+    )
+
     base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+
     platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
         description="Not available for core22. Use the `architectures` key.",
@@ -2241,7 +2250,20 @@ class BareCore22Project(Core22Project):
     build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
+class BaseCore22Project(Core22Project):
+    type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: None  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+
+
 class Core24Project(Project):
+    type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        Literal["app", "gadget", "kernel", "snapd", None],
+        _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
+    ] = pydantic.Field(
+        default=None, description="The snap's type.", examples=["kernel"]
+    )
+
     base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
     architectures: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
@@ -2254,9 +2276,23 @@ class Core24Project(Project):
         description="The architectures key is only used in core22 snaps. For core24 and newer snaps, use the ``platforms`` key.",
     )
 
+    platforms: dict[str, Platform | None] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        default=None,
+        description="The platforms where the snap can be built and where the resulting snap can run.",
+        examples=[
+            "{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"
+        ],
+    )
+
 
 class BareCore24Project(Core24Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
+
+
+class BaseCore24Project(Core24Project):
+    type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
@@ -2264,8 +2300,27 @@ class _BareProject(pydantic.RootModel):
     root: BareCore22Project | BareCore24Project
 
 
-SnapcraftProject = Annotated[
+class _BaseProject(pydantic.RootModel):
+    root: BaseCore22Project | BaseCore24Project
+
+
+_CoreProject = Annotated[
     Core22Project | Core24Project | _BareProject, pydantic.Discriminator("base")
+]
+
+
+def _type_discriminator(data: dict):
+    match data.get("type"):
+        case "base":
+            return "base"
+        case _:
+            return "core"
+
+
+SnapcraftProject = Annotated[
+    Annotated[_CoreProject, pydantic.Tag("core")]
+    | Annotated[_BaseProject, pydantic.Tag("base")],
+    pydantic.Discriminator(_type_discriminator),
 ]
 
 

@@ -811,7 +811,7 @@ def test_lifecycle_pack_metadata_error(cmd, snapcraft_yaml, new_dir, mocker):
         )
 
     assert str(raised.value) == (
-        "error setting core22.grade: Input should be 'stable' or 'devel'"
+        "error setting grade: Input should be 'stable' or 'devel'"
     )
     assert run_mock.mock_calls == [
         call("prime", shell=False, shell_after=False, rerun_step=False)
