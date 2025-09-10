@@ -2785,7 +2785,7 @@ requires-dist = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.0.0" },
     { name = "click", specifier = ">=8.2" },
-    { name = "craft-application", extras = ["remote"], specifier = ">=5.10.0,<6.0.0" },
+    { name = "craft-application", extras = ["remote"], specifier = "~=5.10" },
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = ">=3.1.2,<4.0.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
