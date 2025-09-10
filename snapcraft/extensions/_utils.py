@@ -38,7 +38,15 @@ def apply_extensions(yaml_data: dict[str, Any], *, arch: str, target_arch: str) 
     # applied.
     declared_extensions: dict[str, set[str]] = collections.defaultdict(set)
 
-    for app_name, app_definition in yaml_data.get("apps", {}).items():
+    # Need to be careful since YAML data is not validated yet.
+    apps = yaml_data.get("apps", {})
+    if not isinstance(apps, dict):
+        return
+
+    for app_name, app_definition in apps.items():
+        if not isinstance(app_definition, dict):
+            continue
+
         extension_names = app_definition.get("extensions", [])
 
         for extension_name in extension_names:

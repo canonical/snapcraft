@@ -49,7 +49,6 @@ class Package(PackageService):
 
         super().setup()
         self._project_service = cast(Project, self._services.get("project"))
-        self._project = cast(models.Project, self._project_service.get())
         build_plan = self._services.get("build_plan").plan()
         # The build plan will be empty if the project can't build on the host arch.
         # This may happen in commands that don't run the lifecycle, so we have to check
@@ -57,6 +56,15 @@ class Package(PackageService):
         if build_plan:
             self._build_for = build_plan[0].build_for
             self._platform = build_plan[0].platform
+
+    @property
+    def _project(self) -> models.Project:
+        """Get the project.
+
+        This can be replaced with an upstream helper after
+        https://github.com/canonical/craft-application/issues/878 is completed.
+        """
+        return cast(models.Project, self._project_service.get())
 
     @override
     def _extra_project_updates(self) -> None:

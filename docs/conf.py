@@ -62,6 +62,7 @@ html_theme_options = {
 html_static_path = ["_static"]
 templates_path = ["_templates"]
 
+# Static resources for Google Analytics
 html_css_files = [
     'css/cookie-banner.css'
 ]
