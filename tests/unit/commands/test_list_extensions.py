@@ -47,7 +47,7 @@ def test_command(emitter, command, fake_app_config):
         Extension name          Supported bases
         ----------------------  ------------------------------
         env-injector            core24
-        fake-extension          core22, core24
+        fake-extension          core22, core24, core26
         flutter-beta            core18
         flutter-dev             core18
         flutter-master          core18

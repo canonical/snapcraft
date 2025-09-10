@@ -105,21 +105,21 @@ How to bootstrap a base snap
 
 The ``build-base`` key is used to bootstrap and create new bases.
 
-To bootstrap the ``core26`` base snap, use the following project file
+To bootstrap the ``core28`` base snap, use the following project file
 snippet:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
 
-    name: core26
+    name: core28
     type: base
-    build-base: core24
+    build-base: core26
 
 This snippet will do the following:
 
-* ``name: core26`` sets the snap's name to ``core26``.
+* ``name: core28`` sets the snap's name to ``core28``.
 * ``type: base`` creates a base snap.
-* ``build-base: core24`` builds the snap inside an Ubuntu 24.04 build
+* ``build-base: core26`` builds the snap inside an Ubuntu 26.04 build
   environment.
 * ``base`` cannot be set in the project file
 

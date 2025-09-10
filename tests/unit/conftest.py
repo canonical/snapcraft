@@ -117,7 +117,7 @@ def fake_extension():
 
         @staticmethod
         def get_supported_bases() -> tuple[str, ...]:
-            return ("core22", "core24")
+            return ("core22", "core24", "core26")
 
         @staticmethod
         def get_supported_confinement() -> tuple[str, ...]:
