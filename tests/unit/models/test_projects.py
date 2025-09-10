@@ -2231,6 +2231,7 @@ class TestComponents:
 
     @pytest.fixture
     def stub_component_data(self):
+        """Component with simple data."""
         data = {
             "type": "test",
             "summary": "test summary",
@@ -2240,11 +2241,33 @@ class TestComponents:
         }
         return data
 
-    def test_components_valid(self, project, project_yaml_data, stub_component_data):
-        component_data = {"foo": stub_component_data, "bar": stub_component_data}
+    @pytest.fixture
+    def stub_component_complex_data(self):
+        """Component with all keys set."""
+        data = {
+            "type": "test",
+            "summary": "test summary",
+            "description": "test description",
+            "version": "1.0",
+            "adopt-info": "my-part",
+            "hooks": {"my-hook": {"command-chain": ["baz"], "plugs": ["baz"]}},
+        }
+        return data
+
+    def test_components_valid(
+        self,
+        project,
+        project_yaml_data,
+        stub_component_data,
+        stub_component_complex_data,
+    ):
+        component_data = {
+            "foo": stub_component_data,
+            "bar": stub_component_complex_data,
+        }
         components = {
             "foo": snapcraft.models.Component.unmarshal(stub_component_data),
-            "bar": snapcraft.models.Component.unmarshal(stub_component_data),
+            "bar": snapcraft.models.Component.unmarshal(stub_component_complex_data),
         }
 
         test_project = project.unmarshal(project_yaml_data(components=component_data))
