@@ -2101,16 +2101,7 @@ class Project(models.Project):
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> Project:
         """Create a Snapcraft project from a dictionary of data."""
-        try:
-            data.setdefault("base", None)
-            model: Project = pydantic.TypeAdapter(SnapcraftProject).validate_python(
-                data
-            )
-            return getattr(model, "root", model)
-        except pydantic.ValidationError as exc:
-            if exc.errors()[0]["type"] in {"union_tag_invalid", "missing"}:
-                return cls.model_validate(data)
-            raise
+        return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)
 
     def _get_content_plugs(self) -> list[ContentPlug]:
         """Get list of content plugs."""
@@ -2330,15 +2321,17 @@ class BaseCore24Project(Core24Project):
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
-class _BareProject(pydantic.RootModel):
-    root: BareCore22Project | BareCore24Project
+class _BuildBaseProjectEnum(Enum):
+    CORE22 = "core22"
+    CORE24 = "core24"
+    UNIMPLEMENTED = "UNIMPLEMENTED"
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        return cls.UNIMPLEMENTED
 
 
-class _BaseProject(pydantic.RootModel):
-    root: BaseCore22Project | BaseCore24Project
-
-
-class _CoreProjectEnum(Enum):
+class _BaseProjectEnum(Enum):
     CORE22 = "core22"
     CORE24 = "core24"
     BARE = "bare"
@@ -2349,33 +2342,53 @@ class _CoreProjectEnum(Enum):
         return cls.UNIMPLEMENTED
 
 
-def _core_project_discriminator(data: dict):
-    return _CoreProjectEnum(data.get("base")).value
+class _TypeProjectEnum(Enum):
+    BASE = "base"
+    UNIMPLEMENTED = "UNIMPLEMENTED"
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        return cls.UNIMPLEMENTED
 
 
-_CoreProject = Annotated[
-    Annotated[Core22Project, pydantic.Tag(_CoreProjectEnum.CORE22.value)]
-    | Annotated[Core24Project, pydantic.Tag(_CoreProjectEnum.CORE24.value)]
-    | Annotated[_BareProject, pydantic.Tag(_CoreProjectEnum.BARE.value)]
+def _discriminator(enum: type[Enum], key: str):
+    return lambda data: enum(data.get(key)).value
+
+
+_BareProject = Annotated[
+    Annotated[BareCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
+    | Annotated[BareCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
     | Annotated[
-        SkipJsonSchema[Project], pydantic.Tag(_CoreProjectEnum.UNIMPLEMENTED.value)
+        SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
     ],
-    pydantic.Discriminator(_core_project_discriminator),
+    pydantic.Discriminator(_discriminator(_BuildBaseProjectEnum, "build_base")),
 ]
 
 
-def _type_discriminator(data: dict):
-    match data.get("type"):
-        case "base":
-            return "base"
-        case _:
-            return "core"
+_BaseProject = Annotated[
+    Annotated[BaseCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
+    | Annotated[BaseCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
+    | Annotated[
+        SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
+    ],
+    pydantic.Discriminator(_discriminator(_BuildBaseProjectEnum, "build_base")),
+]
+
+_CoreProject = Annotated[
+    Annotated[Core22Project, pydantic.Tag(_BaseProjectEnum.CORE22.value)]
+    | Annotated[Core24Project, pydantic.Tag(_BaseProjectEnum.CORE24.value)]
+    | Annotated[_BareProject, pydantic.Tag(_BaseProjectEnum.BARE.value)]
+    | Annotated[
+        SkipJsonSchema[Project], pydantic.Tag(_BaseProjectEnum.UNIMPLEMENTED.value)
+    ],
+    pydantic.Discriminator(_discriminator(_BaseProjectEnum, "base")),
+]
 
 
 SnapcraftProject = Annotated[
-    Annotated[_CoreProject, pydantic.Tag("core")]
-    | Annotated[_BaseProject, pydantic.Tag("base")],
-    pydantic.Discriminator(_type_discriminator),
+    Annotated[_CoreProject, pydantic.Tag(_TypeProjectEnum.UNIMPLEMENTED.value)]
+    | Annotated[_BaseProject, pydantic.Tag(_TypeProjectEnum.BASE.value)],
+    pydantic.Discriminator(_discriminator(_TypeProjectEnum, "type")),
 ]
 
 
