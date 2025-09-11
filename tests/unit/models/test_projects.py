@@ -30,6 +30,8 @@ from snapcraft.models import (
     Architecture,
     BareCore22Project,
     BareCore24Project,
+    BaseCore22Project,
+    BaseCore24Project,
     ComponentProject,
     ContentPlug,
     Core22Project,
@@ -761,22 +763,25 @@ class TestProjectValidation:
         ]
 
     @pytest.mark.parametrize(
-        "base,project_class",
-        [("core22", Core22Project), ("core24", Core24Project), ("bare", None)],
-    )
-    @pytest.mark.parametrize(
-        "build_base,bare_project_class",
-        [("core22", BareCore22Project), ("core24", BareCore24Project)],
+        "base,build_base,type_,project_class",
+        [
+            ("core22", None, None, Core22Project),
+            ("core24", None, None, Core24Project),
+            ("bare", "core22", None, BareCore22Project),
+            ("bare", "core24", None, BareCore24Project),
+            (None, "core22", "base", BaseCore22Project),
+            (None, "core24", "base", BaseCore24Project),
+        ],
     )
     def test_project_unmarshalling(
-        self, base, project_class, build_base, bare_project_class, project_yaml_data
+        self, base, build_base, type_, project_class, project_yaml_data
     ):
         """Project.unmarshall should return the right sub model."""
-        data = project_yaml_data(base=base, build_base=build_base)
+        data = project_yaml_data(base=base, build_base=build_base, type=type_)
 
         project = Project.unmarshal(data)
 
-        assert isinstance(project, project_class or bare_project_class)
+        assert isinstance(project, project_class)
 
 
 class TestHookValidation:
