@@ -2277,7 +2277,7 @@ class BareCore22Project(Core22Project):
 
 class BaseCore22Project(Core22Project):
     type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: SkipJsonSchema[None]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
@@ -2317,7 +2317,7 @@ class BareCore24Project(Core24Project):
 
 class BaseCore24Project(Core24Project):
     type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: SkipJsonSchema[None]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
@@ -2352,7 +2352,11 @@ class _TypeProjectEnum(Enum):
 
 
 def _discriminator(enum: type[Enum], key: str):
-    return lambda data: enum(data.get(key)).value
+    def discriminator(data: dict):
+        data[key] = data.pop(key.replace("_", "-"), None) or data[key]
+        return enum(data.get(key)).value
+
+    return discriminator
 
 
 _BareProject = Annotated[
