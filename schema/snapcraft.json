@@ -4381,14 +4381,6 @@
   },
   "oneOf": [
     {
-      "discriminator": {
-        "mapping": {
-          "bare": "#/$defs/_BareProject",
-          "core22": "#/$defs/Core22Project",
-          "core24": "#/$defs/Core24Project"
-        },
-        "propertyName": "base"
-      },
       "oneOf": [
         {
           "$ref": "#/$defs/Core22Project"

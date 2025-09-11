@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import re
 import textwrap
+from enum import Enum
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import pydantic
@@ -47,6 +48,7 @@ from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
+from snapcraft.extensions.registry import get_extension_names
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
 
@@ -968,6 +970,27 @@ class App(models.CraftBaseModel):
     details.
     """
 
+    extensions: UniqueList[str] | None = pydantic.Field(
+        default=None,
+        description="The extensions to add to the project.",
+        examples=["[gnome]", "[ros2-humble]"],
+    )
+    """The extensions to add to the project
+
+    Snapcraft extensions enable you to easily incorporate a set of common
+    requirements into a snap, saving time spent replicating the same general
+    requirements shared across similar apps.
+
+    Extensions instruct Snapcraft to operate on the project file prior to
+    build, causing it to add any needed scaffolding and boilerplate keys to
+    enable a particular technology. The procedure is merely a postprocessor
+    acting on the project’s keys in memory – the actual project file on
+    disk is unaffected.
+
+    For guidance on specific extensions, see `Extensions
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/extensions/#how-to-extensions>`_.
+    """
+
     @pydantic.field_validator("autostart")
     @classmethod
     def _validate_autostart_name(cls, name: str) -> str:
@@ -1019,6 +1042,17 @@ class App(models.CraftBaseModel):
                 )
 
         return aliases
+
+    @pydantic.field_validator("extensions")
+    @classmethod
+    def _validate_extensions(cls, extensions: list[str]) -> list[str]:
+        valid_extensions = set(get_extension_names())
+        for extension in extensions:
+            if extension not in valid_extensions:
+                raise ValueError(
+                    f"{extension!r} is not a valid extension. Valid extensions are {valid_extensions!r}."
+                )
+        return extensions
 
 
 class Hook(models.CraftBaseModel):
@@ -2304,8 +2338,29 @@ class _BaseProject(pydantic.RootModel):
     root: BaseCore22Project | BaseCore24Project
 
 
+class _CoreProjectEnum(Enum):
+    CORE22 = "core22"
+    CORE24 = "core24"
+    BARE = "bare"
+    UNIMPLEMENTED = "UNIMPLEMENTED"
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        return cls.UNIMPLEMENTED
+
+
+def _core_project_discriminator(data: dict):
+    return _CoreProjectEnum(data.get("base")).value
+
+
 _CoreProject = Annotated[
-    Core22Project | Core24Project | _BareProject, pydantic.Discriminator("base")
+    Annotated[Core22Project, pydantic.Tag(_CoreProjectEnum.CORE22.value)]
+    | Annotated[Core24Project, pydantic.Tag(_CoreProjectEnum.CORE24.value)]
+    | Annotated[_BareProject, pydantic.Tag(_CoreProjectEnum.BARE.value)]
+    | Annotated[
+        SkipJsonSchema[Project], pydantic.Tag(_CoreProjectEnum.UNIMPLEMENTED.value)
+    ],
+    pydantic.Discriminator(_core_project_discriminator),
 ]
 
 
