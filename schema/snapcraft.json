@@ -431,6 +431,24 @@
           "description": "The attributes to pass to the snap's metadata file for the app.",
           "examples": ["{daemon: complex}"],
           "title": "Passthrough"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The extensions to add to the project.",
+          "examples": ["[gnome]", "[ros2-humble]"],
+          "title": "Extensions"
         }
       },
       "required": ["command"],
