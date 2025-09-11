@@ -2155,13 +2155,6 @@ class Project(models.Project):
 
         return base
 
-    def get_component_names(self) -> list[str]:
-        """Get a list of component names.
-
-        :returns: A list of component names.
-        """
-        return list(self.components.keys()) if self.components else []
-
     def get_build_on(self) -> str:
         """Get the first build_on architecture from the project for core22."""
         if (
@@ -2199,6 +2192,13 @@ class Project(models.Project):
             )
 
         return None
+
+    def get_component_names(self) -> list[str]:
+        """Get a list of component names.
+
+        :returns: A list of component names.
+        """
+        return list(self.components.keys()) if self.components else []
 
     def get_partitions(self) -> list[str] | None:
         """Get a list of partitions based on the project's components.
