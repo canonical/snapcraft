@@ -2353,7 +2353,7 @@ class _TypeProjectEnum(Enum):
 
 def _discriminator(enum: type[Enum], key: str):
     def discriminator(data: dict):
-        data[key] = data.pop(key.replace("_", "-"), None) or data[key]
+        data[key] = data.pop(key.replace("_", "-"), data[key])
         return enum(data.get(key)).value
 
     return discriminator
