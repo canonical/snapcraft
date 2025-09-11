@@ -4373,28 +4373,6 @@
       "required": ["listen-stream"],
       "title": "Socket",
       "type": "object"
-    },
-    "_BareProject": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/BareCore22Project"
-        },
-        {
-          "$ref": "#/$defs/BareCore24Project"
-        }
-      ],
-      "title": "_BareProject"
-    },
-    "_BaseProject": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/BaseCore22Project"
-        },
-        {
-          "$ref": "#/$defs/BaseCore24Project"
-        }
-      ],
-      "title": "_BaseProject"
     }
   },
   "oneOf": [
@@ -4407,12 +4385,26 @@
           "$ref": "#/$defs/Core24Project"
         },
         {
-          "$ref": "#/$defs/_BareProject"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/BareCore22Project"
+            },
+            {
+              "$ref": "#/$defs/BareCore24Project"
+            }
+          ]
         }
       ]
     },
     {
-      "$ref": "#/$defs/_BaseProject"
+      "oneOf": [
+        {
+          "$ref": "#/$defs/BaseCore22Project"
+        },
+        {
+          "$ref": "#/$defs/BaseCore24Project"
+        }
+      ]
     }
   ]
 }
