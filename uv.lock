@@ -514,8 +514,8 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "5.10.0"
-source = { registry = "https://pypi.org/simple" }
+version = "5.10.0.post2+g67e3045"
+source = { git = "https://github.com/canonical/craft-application.git?rev=work%2Fdont-catch-base#67e3045152c77b3c863236935315c161ca241e26" }
 dependencies = [
     { name = "annotated-types" },
     { name = "craft-archives" },
@@ -534,15 +534,6 @@ dependencies = [
     { name = "requests" },
     { name = "snap-helpers" },
     { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f7/87/87c57fe65ae2f067395d9a73d2b7d0e429a2671027024e2821334fdeefaa/craft_application-5.10.0.tar.gz", hash = "sha256:6e7bf28bc4f117257b837331a0591a5928b469f2c1344695061040a6e5cc9ea0", size = 435907, upload-time = "2025-09-10T19:57:48.905Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/03/36/f1631782b681a6aea7c1b6cb297a73a05d624ec37e03f4c65591f3111b5c/craft_application-5.10.0-py3-none-any.whl", hash = "sha256:0c6f9777d509af8c08d96c023acf131a9d0d03d30deb66ce6e7119aa3dbc6c0c", size = 188758, upload-time = "2025-09-10T19:57:46.942Z" },
-]
-
-[package.optional-dependencies]
-remote = [
-    { name = "launchpadlib" },
 ]
 
 [[package]]
@@ -2666,7 +2657,7 @@ dependencies = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
     { name = "click" },
-    { name = "craft-application", extra = ["remote"] },
+    { name = "craft-application" },
     { name = "craft-archives" },
     { name = "craft-cli" },
     { name = "craft-grammar" },
@@ -2781,7 +2772,7 @@ requires-dist = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.0.0" },
     { name = "click", specifier = ">=8.2" },
-    { name = "craft-application", extras = ["remote"], specifier = "~=5.10" },
+    { name = "craft-application", git = "https://github.com/canonical/craft-application.git?rev=work%2Fdont-catch-base" },
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = ">=3.1.2,<4.0.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },

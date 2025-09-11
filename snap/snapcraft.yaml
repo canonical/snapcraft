@@ -214,7 +214,7 @@ parts:
     build-snaps:
       - astral-uv
     override-build: |
-      uv export --no-dev --no-emit-workspace --output-file uv-requirements.txt
+      uv export --no-dev --no-emit-workspace --output-file uv-requirements.txt --no-hashes
       ${SNAP}/libexec/snapcraft/craftctl default
 
       version=$(PYTHONPATH=$CRAFT_PART_INSTALL/lib/python3.12/site-packages python3 -c "import snapcraft;print(snapcraft.__version__)")
