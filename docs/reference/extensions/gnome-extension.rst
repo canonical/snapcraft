@@ -145,6 +145,7 @@ The paths differ slightly between core24 and core22 bases.
                 :caption: snapcraft.yaml
 
                 build-environment:
+                  - SNAPCRAFT_GNOME_SDK: /snap/gnome-46-2404-sdk/current/
                   - PATH: /snap/gnome-46-2404-sdk/current/usr/bin${PATH:+:$PATH}
                   - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-46-2404-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
                   - LD_LIBRARY_PATH: /snap/gnome-46-2404-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-46-2404-sdk/current/usr/lib:/snap/gnome-46-2404-sdk/current/usr/lib/vala-current:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
