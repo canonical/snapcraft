@@ -2352,11 +2352,8 @@ class _TypeProjectEnum(Enum):
 
 
 def _discriminator(enum: type[Enum], key: str):
-    def discriminator(data: dict):
-        data[key] = data.pop(key.replace("_", "-"), data.get(key))
-        return enum(data[key]).value
-
-    return discriminator
+    kebab_cased_key = key.replace("_", "-")
+    return lambda data: enum(data.get(key, data.get(kebab_cased_key))).value
 
 
 _BareProject = Annotated[
