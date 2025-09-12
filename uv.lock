@@ -585,8 +585,8 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.22.1.post2+g8d712ba"
-source = { git = "https://github.com/canonical/craft-parts.git?rev=work%2Frepo-proxy#8d712bac37ec416877ae281105b37899af91bb66" }
+version = "2.22.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
     { name = "pydantic" },
@@ -596,6 +596,10 @@ dependencies = [
     { name = "requests-unixsocket2" },
     { name = "semver" },
     { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/02/8d/15f82ac980a29fb5f0f1316410dc070317f9d42595e81b8e8efe3ab6dece/craft_parts-2.22.1.tar.gz", hash = "sha256:b0d698cba4f9c2eb550ecd851dcf442f6ece433c81cc6d43d3fe9d14f1255082", size = 854451, upload-time = "2025-09-10T17:59:43.097Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9e/e4/6ae74682819841dd9f3df0bf61815d54dd9430d7d9160b3054eb73e4b070/craft_parts-2.22.1-py3-none-any.whl", hash = "sha256:c7dd7df90bf5a96ce0076c2bb57e865338a840b02d733f1e2b2bf45faacb2283", size = 513535, upload-time = "2025-09-10T17:59:41.219Z" },
 ]
 
 [[package]]
@@ -2776,7 +2780,7 @@ requires-dist = [
     { name = "craft-archives", specifier = "~=2.1" },
     { name = "craft-cli", specifier = ">=3.1.2,<4.0.0" },
     { name = "craft-grammar", specifier = ">=2.0.3,<3.0.0" },
-    { name = "craft-parts", git = "https://github.com/canonical/craft-parts.git?rev=work%2Frepo-proxy" },
+    { name = "craft-parts", specifier = "~=2.21" },
     { name = "craft-platforms", specifier = "~=0.7" },
     { name = "craft-providers", specifier = ">=3.0.0,<4.0.0" },
     { name = "craft-store", specifier = ">=3.2.2,<4.0.0" },
