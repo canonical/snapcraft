@@ -328,7 +328,7 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
     mocker.patch(
         "craft_archives.repo.apt_preferences_manager.AptPreferencesManager.write"
     )
-    mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
+    mocker.patch("craft_parts.packages.deb.Ubuntu.refresh_packages_list")
 
     parts_lifecycle = PartsLifecycle(
         parts_data,
