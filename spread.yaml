@@ -37,6 +37,9 @@ environment:
   CRAFT_DEBUG: 1
   CRAFT_VERBOSITY_LEVEL: trace
 
+  # Speed up the tests by not shutting down the instance.
+  CRAFT_IDLE_MINS: 2
+
 backends:
   lxd:
     systems:

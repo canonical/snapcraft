@@ -25,7 +25,6 @@ from unittest import mock
 
 import pytest
 import pytest_subprocess
-from craft_parts.packages import Repository
 from craft_platforms import DebianArchitecture
 
 import snapcraft.parts
@@ -262,10 +261,10 @@ def package_repositories_params(extra_project_params):
 def test_lifecycle_installs_gpg_dirmngr(
     default_project, fake_services, setup_project, mocker
 ):
-    mock_is_installed = mocker.patch.object(
-        Repository, "is_package_installed", return_value=False
+    mock_is_installed = mocker.patch(
+        "craft_parts.packages.deb.Ubuntu.is_package_installed", return_value=False
     )
-    mock_install = mocker.patch.object(Repository, "install_packages")
+    mock_install = mocker.patch("craft_parts.packages.deb.Ubuntu.install_packages")
     setup_project(fake_services, default_project.marshal())
 
     fake_services.get("lifecycle")

@@ -377,8 +377,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
                 proc = subprocess.run(
                     cmd,
                     check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    capture_output=True,
                     env={"PATH": os.environ["PATH"]},
                 )
             except subprocess.CalledProcessError as error:
