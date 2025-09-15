@@ -16,7 +16,8 @@ eggs/
 .eggs/
 lib/
 lib64/
-parts/
+# Only top level parts dir, otherwise this conflicts with inner dirs called parts.
+/parts/
 sdist/
 var/
 wheels/
