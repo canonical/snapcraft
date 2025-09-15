@@ -31,6 +31,9 @@ dependencies = [
     # Further info: https://www.pygit2.org/install.html#version-numbers
     "pygit2~=1.13.0",
     "pylxd ; sys_platform == 'linux'",
+    # So that launchpadlib can use proxies.
+    # See: https://github.com/httplib2/httplib2/issues/251
+    "pysocks~=1.7",
     "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
