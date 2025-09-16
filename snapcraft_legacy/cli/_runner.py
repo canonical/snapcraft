@@ -37,8 +37,6 @@ from .store import storecli
 
 logger = logging.getLogger(__name__)
 
-SNAPCRAFT_VERSION_TEMPLATE = "snapcraft %(version)s"
-
 command_groups = [
     storecli,
     assertionscli,
@@ -82,10 +80,6 @@ def configure_requests_ca() -> None:
     cls=SnapcraftGroup,
     invoke_without_command=True,
     context_settings=dict(help_option_names=["-h", "--help"]),
-)
-@click.version_option(
-    message=SNAPCRAFT_VERSION_TEMPLATE,
-    version=snapcraft_legacy.__version__,  # type: ignore
 )
 @click.pass_context
 @add_provider_options(hidden=True)
