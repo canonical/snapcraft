@@ -54,6 +54,14 @@ snap](https://documentation.ubuntu.com/snapcraft/stable/tutorials/craft-a-snap).
 
 ## Installation
 
+# Quick Start Example
+After installing Snapcraft, try building a snap from an example project:
+
+```bash
+git clone https://github.com/snapcore/snapcraft-demo.git
+cd snapcraft-demo
+snapcraft
+
 Snapcraft is available on all major Linux distributions, Windows, and macOS.
 
 Snapcraft itself has first-class support as a snap. On snap-ready systems, you can install it on the command line with:
