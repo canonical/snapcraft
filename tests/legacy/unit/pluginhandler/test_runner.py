@@ -274,45 +274,4 @@ class RunnerFailureTestCase(unit.TestCase):
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
 
-    def test_snapcraftctl_no_alias_if_not_snap(self):
-        os.mkdir("builddir")
 
-        runner = _runner.Runner(
-            part_properties={"override-build": "alias snapcraftctl 2> /dev/null"},
-            partdir=self.partdir,
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={},
-            env_generator=lambda step: "export FOO=BAR",
-        )
-
-        self.assertRaises(errors.ScriptletRunError, runner.build)
-
-    def test_snapcraftctl_errors_on_exception(self):
-        os.mkdir("primedir")
-
-        class _TestException(errors.ScriptletBaseError):
-            fmt = "I'm an error"
-
-        def _raise():
-            raise _TestException()
-
-        runner = _runner.Runner(
-            part_properties={"override-prime": "snapcraftctl prime"},
-            partdir=self.partdir,
-            sourcedir="sourcedir",
-            builddir="builddir",
-            stagedir="stagedir",
-            primedir="primedir",
-            builtin_functions={"prime": _raise},
-            env_generator=lambda step: "export FOO=BAR",
-        )
-
-        silent_popen = functools.partial(
-            subprocess.Popen, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-
-        with mock.patch("subprocess.Popen", wraps=silent_popen):
-            self.assertRaises(_TestException, runner.prime)

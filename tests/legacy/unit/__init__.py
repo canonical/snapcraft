@@ -228,7 +228,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.useFixture(
             fixtures.EnvironmentVariable("SNAPCRAFT_ENABLE_DEVELOPER_DEBUG")
         )
-        self.useFixture(fixture_setup.FakeSnapcraftctl())
+        # FakeSnapcraftctl removed - snapcraftctl deprecated in core22 in favor of craftctl
 
         # Don't let host SNAPCRAFT_BUILD_INFO variable leak into tests
         self.useFixture(fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_INFO"))

@@ -161,14 +161,7 @@ class PluginHandler:
             stagedir=self._project.stage_dir,
             primedir=self._project.prime_dir,
             env_generator=env_generator,
-            builtin_functions={
-                steps.PULL.name: self._do_pull,
-                steps.BUILD.name: build_step_run_callable,
-                steps.STAGE.name: self._do_stage,
-                steps.PRIME.name: self._do_prime,
-                "set-version": self._set_version,
-                "set-grade": self._set_grade,
-            },
+            # builtin_functions removed - snapcraftctl deprecated in core22
             shell=self._shell,
             shell_flags=self._shell_flags,
         )

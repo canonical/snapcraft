@@ -992,19 +992,19 @@
             },
             "override-pull": {
               "type": "string",
-              "default": "snapcraftctl pull"
+              "default": "craftctl default"
             },
             "override-build": {
               "type": "string",
-              "default": "snapcraftctl build"
+              "default": "craftctl default"
             },
             "override-stage": {
               "type": "string",
-              "default": "snapcraftctl stage"
+              "default": "craftctl default"
             },
             "override-prime": {
               "type": "string",
-              "default": "snapcraftctl prime"
+              "default": "craftctl default"
             },
             "parse-info": {
               "type": "array",

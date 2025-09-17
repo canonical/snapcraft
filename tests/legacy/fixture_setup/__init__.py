@@ -12,7 +12,6 @@ try:
         FakePlugin,
         FakeProjectOptions,
         FakeSnapCommand,
-        FakeSnapcraftctl,
     )
 except ImportError as import_error:
     if os.path.exists(os.path.join(os.path.dirname(__file__), "..", "snapcraft")):
