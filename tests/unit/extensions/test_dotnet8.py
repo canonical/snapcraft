@@ -21,6 +21,7 @@ from snapcraft.extensions.extension import get_extensions_data_dir
 
 _DOTNET_RUNTIME_PLUG_NAME = "dotnet-runtime"
 _DOTNET_RUNTIME_CONTENT_SNAP_NAME = "dotnet-runtime-80"
+_VERSIONED_PLUGIN_NAME = "dotnet8"
 
 ############
 # Fixtures #
@@ -84,7 +85,7 @@ def test_get_app_snippet(dotnet_extension):
 
 def test_get_parts_snippet(dotnet_extension):
     assert dotnet_extension.get_parts_snippet() == {
-        "dotnet/launcher": {
+        f"{_VERSIONED_PLUGIN_NAME}/launcher": {
             "plugin": "dump",
             "source": f"{get_extensions_data_dir()}/dotnet",
             "override-build": """
@@ -95,7 +96,7 @@ cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
                 "bin/command-chain/launcher.sh",
             ],
         },
-        "dotnet/prereqs": {
+        f"{_VERSIONED_PLUGIN_NAME}/prereqs": {
             "plugin": "nil",
             "stage-packages": [
                 "libicu74",

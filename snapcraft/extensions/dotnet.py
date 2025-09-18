@@ -36,6 +36,12 @@ class DotnetExtensionBase(Extension):
         """The name of the .NET runtime content snap."""
         raise NotImplementedError("Subclasses must implement runtime_content_snap_name")
 
+    @property
+    @abstractmethod
+    def versioned_plugin_name(self) -> str:
+        """The name of the versioned .NET extension (e.g dotnet8)"""
+        raise NotImplementedError("Subclasses must implement versioned_plugin_name")
+
     @staticmethod
     @overrides
     def get_supported_bases() -> tuple[str, ...]:
@@ -88,7 +94,7 @@ class DotnetExtensionBase(Extension):
         parts = {}
         base = self.yaml_data["base"]
 
-        parts["dotnet/launcher"] = {
+        parts[f"{self.versioned_plugin_name}/launcher"] = {
             "plugin": "dump",
             "source": f"{get_extensions_data_dir()}/dotnet",
             "override-build": """
@@ -106,7 +112,7 @@ cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
             case _:
                 raise AssertionError(f"Unsupported base: {base}")
 
-        parts["dotnet/prereqs"] = {
+        parts[f"{self.versioned_plugin_name}/prereqs"] = {
             "plugin": "nil",
             "stage-packages": [
                 f"libicu{libicu_version}",
