@@ -4,7 +4,7 @@ description = "Create snaps"
 dynamic = ["version"]
 dependencies = [
     "attrs",
-    "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
+    "catkin-pkg==1.1.0; sys_platform == 'linux'",
     "click>=8.2",
     "craft-application[remote]~=5.10,!=5.10.0",
     "craft-archives~=2.1",
