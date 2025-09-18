@@ -64,7 +64,7 @@ def test_get_root_snippet(dotnet_extension):
                 "interface": "content",
                 "default-provider": _DOTNET_RUNTIME_CONTENT_SNAP_NAME,
                 "content": _DOTNET_RUNTIME_CONTENT_SNAP_NAME,
-                "target": "$SNAP/usr/lib",
+                "target": f"$SNAP/opt/{_VERSIONED_PLUGIN_NAME}",
             }
         }
     }
@@ -77,7 +77,7 @@ def test_get_app_snippet(dotnet_extension):
             "DOTNET_EXT_CONTENT_SNAP": _DOTNET_RUNTIME_CONTENT_SNAP_NAME,
             "DOTNET_EXT_SNAP_NAME": "test",
             "DOTNET_EXT_PLUG_NAME": _DOTNET_RUNTIME_PLUG_NAME,
-            "DOTNET_ROOT": "$SNAP/usr/lib/dotnet",
+            "DOTNET_ROOT": f"$SNAP/opt/{_VERSIONED_PLUGIN_NAME}/dotnet",
         },
         "plugs": [_DOTNET_RUNTIME_PLUG_NAME],
     }

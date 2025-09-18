@@ -64,7 +64,7 @@ class DotnetExtensionBase(Extension):
                 "interface": "content",
                 "default-provider": self.runtime_content_snap_name,
                 "content": self.runtime_content_snap_name,
-                "target": "$SNAP/usr/lib",
+                "target": f"$SNAP/opt/{self.versioned_plugin_name}",
             }
         }
 
@@ -78,7 +78,7 @@ class DotnetExtensionBase(Extension):
                 "DOTNET_EXT_CONTENT_SNAP": self.runtime_content_snap_name,
                 "DOTNET_EXT_SNAP_NAME": self.yaml_data["name"],
                 "DOTNET_EXT_PLUG_NAME": _DOTNET_RUNTIME_PLUG_NAME,
-                "DOTNET_ROOT": "$SNAP/usr/lib/dotnet",
+                "DOTNET_ROOT": f"$SNAP/opt/{self.versioned_plugin_name}/dotnet",
             },
             "plugs": [
                 _DOTNET_RUNTIME_PLUG_NAME,

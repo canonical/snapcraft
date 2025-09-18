@@ -8,7 +8,7 @@
 
 from overrides import override
 
-from .dotnet import DotnetExtensionBase
+from .dotnet_base import DotnetExtensionBase
 
 
 class Dotnet10Extension(DotnetExtensionBase):
