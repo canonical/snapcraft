@@ -292,7 +292,9 @@ class TestUpdateStatus:
             assert _update_status(status, LinterResult.ERROR) == LinterStatus.ERRORS
 
     @pytest.mark.parametrize(("status"), LinterStatus)
-    def test_update_status_warning_upgrades_from_ok_and_info_only(self, status: LinterStatus):
+    def test_update_status_warning_upgrades_from_ok_and_info_only(
+        self, status: LinterStatus
+    ):
         """WARNING result should only upgrade from OK and INFO."""
         if status in (LinterStatus.OK, LinterStatus.INFO):
             assert _update_status(status, LinterResult.WARNING) == LinterStatus.WARNINGS
@@ -361,11 +363,12 @@ class TestUpdateStatus:
         """Test the specific bug case mentioned in the issue."""
         # Original bug: ERRORS + INFO incorrectly became INFO
         result = _update_status(LinterStatus.ERRORS, LinterResult.INFO)
-        assert result == LinterStatus.ERRORS, "Bug fix failed: ERRORS + INFO should stay ERRORS"
+        assert result == LinterStatus.ERRORS, (
+            "Bug fix failed: ERRORS + INFO should stay ERRORS"
+        )
         # Another case: WARNINGS + INFO should stay WARNINGS
         result = _update_status(LinterStatus.WARNINGS, LinterResult.INFO)
         assert result == LinterStatus.WARNINGS, "WARNINGS + INFO should stay WARNINGS"
         # FATAL + INFO should stay FATAL
         result = _update_status(LinterStatus.FATAL, LinterResult.INFO)
         assert result == LinterStatus.FATAL, "FATAL + INFO should stay FATAL"
-
