@@ -94,7 +94,7 @@ Snapcraft 8.12.0
 Snapcraft 8.12.1
 ~~~~~~~~~~~~~~~~
 
-- Launchpad requests are bypassing ``HTTP_PROXY``
+- Launchpad requests ignore ``HTTP_PROXY``
 
 Contributors
 ------------
