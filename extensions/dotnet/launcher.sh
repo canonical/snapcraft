@@ -11,11 +11,10 @@ if ! snapctl is-connected ${DOTNET_EXT_PLUG_NAME}; then
   exit 1
 fi
 
-DOTNET_HOST_PATH="$SNAP/usr/lib/dotnet/dotnet"
-
-if [[ -f $DOTNET_HOST_PATH ]]; then
+if [[ -f ${DOTNET_ROOT}/dotnet ]]; then
   exec "$@"
 else
   echo "No .NET Runtime found."
+  echo "DOTNET_ROOT is set to '${DOTNET_ROOT}'"
   exit 1
 fi
