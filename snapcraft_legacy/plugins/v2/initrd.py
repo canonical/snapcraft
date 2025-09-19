@@ -17,77 +17,28 @@
 
 """The initrd plugin for building kernel snaps.
 
-The following initramfs-specific options are provided by this plugin:
+This plugin uses the following plugin-specific keywords:
 
     - initrd-modules:
-      (array of string; default: none)
-      list of modules to include in initrd.
-      Note that kernel snaps do not provide the core boot logic which
-      comes from the Ubuntu Core base snap. Include all modules you need
-      for mounting the rootfs here. If installed module(s) have any
-      dependencies, they are automatically installed.
-
-    - initrd-configured-modules:
-      (array of string; default: none)
-      list of modules to be added to the initrd
-      /lib/modules-load.d/ubuntu-core-initramfs.conf config
-      to be automatically loaded.
-      Configured modules are automatically added to initrd-modules.
-      If module in question is not supported by the kernel, it is ignored.
+      (list of strings; default: none)
+      List of modules by name to include in the initrd. If specified module(s)
+      have any dependencies, they are also installed.
 
     - initrd-firmware:
-      (array of string; default: none)
-      list of firmware files to be included in the initrd; these need to be
-      relative paths to stage directory.
-      <stage/part install dir>/firmware/* -> initrd:/lib/firmware/*
-
-    - initrd-compression:
-      (string; default: as defined in ubuntu-core-initrd(lz4)
-      initrd compression to use; the only supported values now are
-      'lz4', 'xz', 'gz', 'zstd'.
-
-    - initrd-compression-options:
-      Optional list of parameters to be passed to compressor used for initrd
-      (array of string): defaults are
-        gz:  -7
-        lz4: -9 -l
-        xz:  -7
-        zstd: -1 -T0
+      (list of strings; default: none)
+      List of firmware files to include in the initrd. Provided as relative
+      paths to the stage directory.
 
     - initrd-overlay
       (string; default: none)
-      Optional overlay to be applied to built initrd.
-      This option is designed to provide easy way to apply initrd overlay for
-      cases modifies initrd scripts for pre uc20 initrds.
-      Value is relative path, in stage directory. and related part needs to be
-      built before initrd part. During build it will be expanded to
-      ${SNAPCRAFT_STAGE}/{initrd-overlay}
-      Default: none
+      Any modifications to be done to the initrd, specifically for initrds
+      before Ubuntu Core 20. These modify the initrd boot scripts. Provided as
+      a relative path to the stage directory.
 
     - initrd-addons
-      (array of string; default: none)
-      Optional list of files to be added to the initrd.
-      Function is similar to initrd-overlay, only it works on per file
-      selection without a need to have overlay in dedicated directory.
-      This option is designed to provide easy way to add additional content
-      to initrd for cases like full disk encryption support, when device
-      specific hook needs to be added to the initrd.
-      Values are relative path from stage directory, so related part(s)
-      need to be built before kernel part.
-      During build it will be expanded to
-      ${SNAPCRAFT_STAGE}/{initrd-addon}
-      Default: none
-
-    - initrd-ubuntu-core-initramfs-deb
-      (string; default: none)
-      Optional path to the initrd-ubuntu-core-initramfs deb package.
-      This package would be installed instead of the release version from PPA.
-      This option os meant for development, to test custom builds of the
-      initrd-ubuntu-core-initramfs package.
-
-This plugin support cross compilation, for which plugin expects
-the build-environment is configured accordingly and has foreign architectures
-setup accordingly.
+      (list of strings; default: none)
+      A specified list of files to include in the initrd. Provided as a
+      relative path to the stage directory.
 """
 
 import logging
@@ -99,8 +50,6 @@ from overrides import overrides
 
 from snapcraft_legacy.plugins.v2 import PluginV2
 from snapcraft_legacy.project._project_options import ProjectOptions
-
-from . import _initrd_build
 
 logger = logging.getLogger(__name__)
 
@@ -122,25 +71,7 @@ class InitrdPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "initrd-configured-modules": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                },
                 "initrd-firmware": {
-                    "type": "array",
-                    "minitems": 1,
-                    "uniqueItems": True,
-                    "items": {"type": "string"},
-                    "default": [],
-                },
-                "initrd-compression": {
-                    "type": "string",
-                    "enum": ["lz4", "xz", "gz", "zstd"],
-                },
-                "initrd-compression-options": {
                     "type": "array",
                     "minitems": 1,
                     "uniqueItems": True,
@@ -158,10 +89,6 @@ class InitrdPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "initrd-ubuntu-core-initramfs-deb": {
-                    "type": "string",
-                    "default": "",
-                },
             },
         }
 
@@ -177,7 +104,12 @@ class InitrdPlugin(PluginV2):
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
-        return set()
+        base = self._part_info.base
+
+        build_snaps = {
+            base,
+        }
+        return build_snaps
 
     @overrides
     def get_build_packages(self) -> Set[str]:
@@ -212,22 +144,6 @@ class InitrdPlugin(PluginV2):
             "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
         }
 
-    @overrides
-    def get_build_commands(self) -> List[str]:
-        logger.info("Getting build commands...")
-        return _initrd_build.get_build_commands(
-            initrd_modules=self.options.initrd_modules,
-            initrd_configured_modules=self.options.initrd_configured_modules,
-            initrd_compression=self.options.initrd_compression,
-            initrd_compression_options=self.options.initrd_compression_options,
-            initrd_firmware=self.options.initrd_firmware,
-            initrd_addons=self.options.initrd_addons,
-            initrd_overlay=self.options.initrd_overlay,
-            initrd_ubuntu_core_initramfs_deb=self.options.initrd_ubuntu_core_initramfs_deb,
-            initrd_ko_use_workaround=True,
-            initrd_default_compression="lz4 -9 -l",
-        )
-
     @property
     def out_of_source_build(self):
         """Return whether the plugin performs out-of-source-tree builds."""
@@ -252,3 +168,11 @@ def _get_target_architecture() -> str:
         target_arch = ProjectOptions().deb_arch
 
     return target_arch
+
+    # TODO: finalize initrd_build.sh location
+    @overrides
+    def get_build_commands(self) -> List[str]:
+        logger.info("Getting build commands...")
+        return [
+            f"$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh initrd-modules={self.options.initrd_modules} initrd-firmware={self.options.initrd_firmware} initrd-addons={self.options.initrd_addons} initrd-overlay={self.options.initrd_overlay}"
+        ]
