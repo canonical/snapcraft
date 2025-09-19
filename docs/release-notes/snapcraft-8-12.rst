@@ -91,6 +91,11 @@ Snapcraft 8.12.0
 
 - `#5696`_ YAML structure is not validated before preprocessing
 
+Snapcraft 8.12.1
+~~~~~~~~~~~~~~~~
+
+- Launchpad requests are bypassing ``HTTP_PROXY``
+
 Contributors
 ------------
 
