@@ -341,6 +341,7 @@ class GNOME(Extension):
                     "source": str(source),
                     "plugin": "make",
                     "build-snaps": [sdk_snap],
+                    "make-parameters": ["PLATFORM_PLUG=gnome-platform"],
                     **gpu_opts,
                 },
             }
