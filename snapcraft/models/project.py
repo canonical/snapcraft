@@ -811,11 +811,10 @@ class App(models.CraftBaseModel):
             was installed without a service, then the snap is refreshed to include a
             service. This will start the service too.
         * - ``disable``
-          - The service is not automatically started. Instead, the service will be
-            started with `craftctl
-            <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/customize-lifecycle-steps-and-part-variables>`_
-            and another management agent, which is most commonly a `hook
-            <https://documentation.ubuntu.com/snapcraft/stable/reference/hooks>`_.
+          - The service is not automatically started. Instead, the service can be
+            started with `snapctl <https://snapcraft.io/docs/using-snapctl>`_
+            (most commonly from a `hook <https://documentation.ubuntu.com/snapcraft/stable/reference/hooks/>`_)
+            or another management agent.
 
     """
 
