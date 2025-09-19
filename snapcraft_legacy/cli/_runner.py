@@ -81,6 +81,10 @@ def configure_requests_ca() -> None:
     invoke_without_command=True,
     context_settings=dict(help_option_names=["-h", "--help"]),
 )
+@click.version_option(
+    message="snapcraft %(version)s",
+    version=snapcraft_legacy.__version__,
+)
 @click.pass_context
 @add_provider_options(hidden=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
@@ -132,6 +136,12 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
             ctx.params["output"] = None
         snap_command.invoke(ctx)
 
+
+# Add minimal version subcommand for backward compatibility
+@run.command()
+def version():
+    """Show the snapcraft version."""
+    click.echo(f"snapcraft {snapcraft_legacy.__version__}")
 
 # This would be much easier if they were subcommands
 for command_group in command_groups:
