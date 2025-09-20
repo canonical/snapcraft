@@ -113,27 +113,17 @@ class Runner:
     def _run_scriptlet(
         self, scriptlet_name: str, scriptlet: str, workdir: str, step: steps.Step
     ) -> None:
-        # snapcraftctl compatibility removed - deprecated in core22
-        snapcraftctl_env = ""
-
-        # FIFO handling removed with snapcraftctl compatibility
-        
         script = textwrap.dedent(
             """\
             set -e
             export SNAPCRAFT_INTERPRETER={interpreter}
-            {snapcraftctl_env}
-
             {env}
-
             {shell_flags}
-
             {scriptlet}"""
         ).format(
             shell_flags=self._shell_flags,
             interpreter=sys.executable,
             scriptlet=scriptlet,
-            snapcraftctl_env=snapcraftctl_env,
             env=self._env_generator(step),
         )
 

@@ -105,7 +105,7 @@ class RosPlugin(PluginV2):
         the build step, so these commands can affect the commands that
         follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
@@ -119,7 +119,7 @@ class RosPlugin(PluginV2):
         of the build step, so these commands can be affected by the commands
         preceding it, and can affect those that follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
