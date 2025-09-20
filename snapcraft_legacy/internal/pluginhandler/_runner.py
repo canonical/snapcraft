@@ -50,7 +50,6 @@ class Runner:
         :param str builddir: The build directory for this part.
         :param str stagedir: The staging area.
         :param str primedir: The priming area.
-        # builtin_functions removed - snapcraftctl deprecated in core22
         :param str env_generator: a callable to provide environment settings
                                   for the part.
         """
@@ -59,7 +58,6 @@ class Runner:
         self._builddir = builddir
         self._stagedir = stagedir
         self._primedir = primedir
-        # _builtin_functions removed - snapcraftctl deprecated in core22
         self._env_generator = env_generator
 
         self._override_pull_scriptlet = part_properties.get("override-pull")
