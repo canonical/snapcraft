@@ -73,6 +73,6 @@ class PluginV2(abc.ABC):
         These commands are run in a single shell instance. This means
         that commands run before do affect the commands that follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """

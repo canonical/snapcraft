@@ -15,7 +15,7 @@ Snapcraft has moved to a more general syntactical mechanism that can be used
 consistently across the \*craft ecosystem. Most of the following changes are a
 reflection of that alignment.
 
-While ``snapcraftctl`` is still supported, ``craftctl`` is now preferred.
+``snapcraftctl`` is deprecated in core22. Use ``craftctl`` instead.
 
 
 Override pull
@@ -24,7 +24,7 @@ Override pull
 .. code-block:: yaml
 
     override-pull: |
-      snapcraftctl pull
+      craftctl default
 
 translates to:
 
@@ -40,7 +40,7 @@ Override build
 .. code-block:: yaml
 
     override-pull: |
-      snapcraftctl build
+      craftctl default
 
 translates to:
 
@@ -56,7 +56,7 @@ Override stage
 .. code-block:: yaml
 
     override-pull: |
-      snapcraftctl stage
+      craftctl default
 
 translates to:
 
@@ -72,7 +72,7 @@ Override prime
 .. code-block:: yaml
 
     override-pull: |
-      snapcraftctl prime
+      craftctl default
 
 translates to:
 
@@ -88,7 +88,7 @@ Set a version
 .. code-block:: yaml
 
     override-<step>: |
-      snapcraftctl set-version 1.0.0
+      craftctl set version=1.0.0
 
 translates to:
 
@@ -104,7 +104,7 @@ Set a grade
 .. code-block:: yaml
 
     override-<step>: |
-      snapcraftctl set-grade stable
+      craftctl set grade=stable
 
 translates to:
 
