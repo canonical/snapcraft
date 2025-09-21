@@ -122,8 +122,8 @@ def test_get_snapcraft_started():
             "amd64",
             "x86_64-linux-gnu",
         ),
-        # multi-arch builds - build-for arch cannot be determined
-        (["arm64", "amd64"], None, None),
+        # shorthand form now correctly identifies matching host architecture
+        (["arm64", "amd64"], "arm64", "aarch64-linux-gnu"),
         ([{"build-on": ["arm64", "amd64"]}], None, None),
         ([{"build-on": "arm64", "run-on": ["arm64", "amd64"]}], None, None),
         ([{"build-on": ["arm64"], "run-on": ["arm64", "amd64"]}], None, None),
