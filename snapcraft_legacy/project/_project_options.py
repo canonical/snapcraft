@@ -313,9 +313,13 @@ class ProjectOptions:
         if not isinstance(architectures, list):
             return None
 
-        # if a list of strings was provided, then the architecture can be decoded
         if isinstance(architectures[0], str):
-            return self._determine_build_for_architecture(architectures)
+            # For shorthand form, find the architecture that matches the host
+            for arch in architectures:
+                if self.__host_info["deb"] == arch:
+                    return self._determine_build_for_architecture(arch)
+            # If no architecture matches the host, return None to indicate no compatible arch
+            return None
 
         # otherwise, parse through the 'build-on' and 'run-on' (build-for) fields
         for item in architectures:

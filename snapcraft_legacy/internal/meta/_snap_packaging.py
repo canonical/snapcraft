@@ -363,7 +363,12 @@ class _SnapPackaging:
         # TODO: create_snap_packaging managles config data, so we create
         # a new private instance of snap_meta.  Longer term, this needs
         # to converge with project's snap_meta.
-        self._snap_meta = Snap.from_dict(project_config.data)
+        
+        snap_data = project_config.data.copy()
+        if project_config.project.deb_arch:
+            snap_data["architectures"] = [project_config.project.deb_arch]
+        
+        self._snap_meta = Snap.from_dict(snap_data)
 
     def cleanup(self):
         if os.path.exists(self.meta_gui_dir):
