@@ -102,7 +102,7 @@ docs = [
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
 types = [
-    "mypy~=1.17.1",
+    "mypy~=1.18.2",
     "types-PyYAML",
     "types-requests>=2.32",
     "types-setuptools",
