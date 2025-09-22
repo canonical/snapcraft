@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import re
 import textwrap
+from enum import Enum
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import pydantic
@@ -40,12 +41,14 @@ from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-impor
 )
 from craft_platforms import DebianArchitecture
 from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
+from pydantic.json_schema import SkipJsonSchema  # noqa: TC002
 from typing_extensions import Self, override
 
 from snapcraft import utils
 from snapcraft.const import SUPPORTED_ARCHS
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
+from snapcraft.extensions.registry import get_extension_names
 from snapcraft.providers import SNAPCRAFT_BASE_TO_PROVIDER_BASE
 from snapcraft.utils import get_effective_base
 
@@ -967,6 +970,27 @@ class App(models.CraftBaseModel):
     details.
     """
 
+    extensions: UniqueList[str] | None = pydantic.Field(
+        default=None,
+        description="The extensions to add to the project.",
+        examples=["[gnome]", "[ros2-humble]"],
+    )
+    """The extensions to add to the project
+
+    Snapcraft extensions enable you to easily incorporate a set of common
+    requirements into a snap, saving time spent replicating the same general
+    requirements shared across similar apps.
+
+    Extensions instruct Snapcraft to operate on the project file prior to
+    build, causing it to add any needed scaffolding and boilerplate keys to
+    enable a particular technology. The procedure is merely a postprocessor
+    acting on the project’s keys in memory – the actual project file on
+    disk is unaffected.
+
+    For guidance on specific extensions, see `Extensions
+    <https://documentation.ubuntu.com/snapcraft/stable/how-to/extensions/#how-to-extensions>`_.
+    """
+
     @pydantic.field_validator("autostart")
     @classmethod
     def _validate_autostart_name(cls, name: str) -> str:
@@ -1018,6 +1042,17 @@ class App(models.CraftBaseModel):
                 )
 
         return aliases
+
+    @pydantic.field_validator("extensions")
+    @classmethod
+    def _validate_extensions(cls, extensions: list[str]) -> list[str]:
+        valid_extensions = set(get_extension_names())
+        for extension in extensions:
+            if extension not in valid_extensions:
+                raise ValueError(
+                    f"{extension!r} is not a valid extension. Valid extensions are {valid_extensions!r}."
+                )
+        return extensions
 
 
 class Hook(models.CraftBaseModel):
@@ -1155,12 +1190,12 @@ class ContentPlug(models.CraftBaseModel):
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
-    build_on: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
+    build_on: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[assignment]
         description="The architectures on which the snap can be built.",
         examples=["[amd64, riscv64]"],
         min_length=1,
     )
-    build_for: SingleEntryList | None = pydantic.Field(  # type: ignore[assignment]
+    build_for: SingleEntryList | str | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
         description="The single element list containing the architecture the snap is built for.",
         examples=["[amd64]", "[riscv64]"],
@@ -1379,7 +1414,7 @@ class Project(models.Project):
     for details.
     """
 
-    donation: UniqueList[str] | None = pydantic.Field(
+    donation: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The snap's donation links.",
         examples=["[donate@example.com, https://example.com/donate]"],
@@ -1394,7 +1429,7 @@ class Project(models.Project):
     """
 
     # snapcraft's `source_code` is more general than craft-application
-    source_code: UniqueList[str] | None = pydantic.Field(  # type: ignore[assignment]
+    source_code: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
         description="The links to the source code of the snap or the original project.",
         examples=["[https://example.com/source-code]"],
@@ -1408,7 +1443,7 @@ class Project(models.Project):
     for details.
     """
 
-    contact: UniqueList[str] | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    contact: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
         default=None,
         description="The snap author's contact links and email addresses.",
         examples=["[contact@example.com, https://example.com/contact]"],
@@ -1422,7 +1457,7 @@ class Project(models.Project):
     for details.
     """
 
-    issues: UniqueList[str] | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    issues: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
         default=None,
         description="The links and email addresses for submitting issues, bugs, and feature requests.",
         examples=["[issues@email.com, https://example.com/issues]"],
@@ -1437,7 +1472,7 @@ class Project(models.Project):
     for details.
     """
 
-    website: UniqueList[str] | None = pydantic.Field(
+    website: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The links to the original software's web pages.",
         examples=["[https://example.com]"],
@@ -1969,48 +2004,6 @@ class Project(models.Project):
 
         return components
 
-    @pydantic.model_validator(mode="after")
-    def _validate_platforms_and_architectures(self) -> Self:
-        """Validate usage of platforms and architectures.
-
-        core22 base:
-         - can optionally define architectures
-         - cannot define platforms
-
-        core24 and newer bases:
-         - cannot define architectures
-         - can optionally define platforms
-        """
-        base = get_effective_base(
-            base=self.base,
-            build_base=self.build_base,
-            project_type=self.type,
-            name=self.name,
-        )
-        if base == "core22":
-            # this is a one-shot - the value should not change when re-validating
-            if self.architectures and self._architectures_in_yaml is None:
-                # record if architectures are defined in the yaml for remote-build (#4881)
-                self._architectures_in_yaml = True
-            elif not self.architectures:
-                self._architectures_in_yaml = False
-                # set default value
-                host_arch = str(DebianArchitecture.from_host())
-                self.architectures = [
-                    Architecture(
-                        build_on=[host_arch],
-                        build_for=[host_arch],
-                    )
-                ]
-
-        elif self.architectures:
-            raise ValueError(
-                f"'architectures' key is not supported for base {base!r}. "
-                "Use 'platforms' key instead."
-            )
-
-        return self
-
     @pydantic.field_validator("platforms")
     @classmethod
     def _validate_all_platforms(
@@ -2085,14 +2078,6 @@ class Project(models.Project):
 
         return epoch
 
-    @pydantic.field_validator("architectures")
-    @classmethod
-    def _validate_architecture_data(
-        cls, architectures: list[str | Architecture], info: pydantic.ValidationInfo
-    ) -> list[Architecture]:
-        """Validate architecture data."""
-        return validate_architectures(architectures)
-
     @pydantic.field_validator("provenance")
     @classmethod
     def _validate_provenance(cls, provenance: str) -> str:
@@ -2111,6 +2096,12 @@ class Project(models.Project):
         if isinstance(field_value, str):
             field_value = cast(UniqueList[str], [field_value])
         return field_value
+
+    @override
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]) -> Project:
+        """Create a Snapcraft project from a dictionary of data."""
+        return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)
 
     def _get_content_plugs(self) -> list[ContentPlug]:
         """Get list of content plugs."""
@@ -2216,6 +2207,190 @@ class Project(models.Project):
         or None if no components are defined.
         """
         return _get_partitions_from_components(self.components)
+
+
+def _custom_error(error_msg: str):
+    def _validator(v: Any, next_: Any, ctx: pydantic.ValidationInfo):
+        try:
+            return next_(v, ctx)
+        except Exception as exc:
+            raise ValueError(error_msg) from exc
+
+    return pydantic.WrapValidator(_validator)
+
+
+class Core22Project(Project):
+    type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        Literal["app", "gadget", "kernel", "snapd", None],
+        _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
+    ] = pydantic.Field(
+        default=None, description="The snap's type.", examples=["kernel"]
+    )
+
+    base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+
+    platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        default=None,
+        description="Not available for core22. Use the `architectures` key.",
+        exclude=True,
+        repr=False,
+    )
+
+    @pydantic.model_validator(mode="after")
+    def _validate_platforms_and_architectures(self) -> Self:
+        """Validate usage of platforms and architectures.
+
+        - can optionally define architectures
+        - cannot define platforms
+        """
+        # this is a one-shot - the value should not change when re-validating
+        if self.architectures and self._architectures_in_yaml is None:
+            # record if architectures are defined in the yaml for remote-build (#4881)
+            self._architectures_in_yaml = True
+
+        elif not self.architectures:
+            self._architectures_in_yaml = False
+            # set default value
+            host_arch = str(DebianArchitecture.from_host())
+            self.architectures = [
+                Architecture(
+                    build_on=[host_arch],
+                    build_for=[host_arch],
+                )
+            ]
+
+        return self
+
+    @pydantic.field_validator("architectures")
+    @classmethod
+    def _validate_architecture_data(
+        cls, architectures: list[str | Architecture], info: pydantic.ValidationInfo
+    ) -> list[Architecture]:
+        """Validate architecture data."""
+        return validate_architectures(architectures)
+
+
+class BareCore22Project(Core22Project):
+    base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+
+
+class BaseCore22Project(Core22Project):
+    type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+
+
+class Core24Project(Project):
+    type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        Literal["app", "gadget", "kernel", "snapd", None],
+        _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
+    ] = pydantic.Field(
+        default=None, description="The snap's type.", examples=["kernel"]
+    )
+
+    base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
+
+    architectures: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
+        None,
+        _custom_error(
+            "'architectures' key is not supported for base 'core24'. Use 'platforms' key instead."
+        ),
+    ] = pydantic.Field(
+        default=None,
+        description="The architectures key is only used in core22 snaps. For core24 and newer snaps, use the ``platforms`` key.",
+    )
+
+    platforms: dict[str, Platform | None] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        default=None,
+        description="The platforms where the snap can be built and where the resulting snap can run.",
+        examples=[
+            "{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"
+        ],
+    )
+
+
+class BareCore24Project(Core24Project):
+    base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
+
+
+class BaseCore24Project(Core24Project):
+    type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
+
+
+class _BuildBaseProjectEnum(Enum):
+    CORE22 = "core22"
+    CORE24 = "core24"
+    UNIMPLEMENTED = "UNIMPLEMENTED"
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        return cls.UNIMPLEMENTED
+
+
+class _BaseProjectEnum(Enum):
+    CORE22 = "core22"
+    CORE24 = "core24"
+    BARE = "bare"
+    UNIMPLEMENTED = "UNIMPLEMENTED"
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        return cls.UNIMPLEMENTED
+
+
+class _TypeProjectEnum(Enum):
+    BASE = "base"
+    UNIMPLEMENTED = "UNIMPLEMENTED"
+
+    @classmethod
+    def _missing_(cls, value: Any):
+        return cls.UNIMPLEMENTED
+
+
+def _discriminator(enum: type[Enum], key: str):
+    kebab_cased_key = key.replace("_", "-")
+    return lambda data: enum(data.get(key, data.get(kebab_cased_key))).value
+
+
+_BareProject = Annotated[
+    Annotated[BareCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
+    | Annotated[BareCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
+    | Annotated[
+        SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
+    ],
+    pydantic.Discriminator(_discriminator(_BuildBaseProjectEnum, "build_base")),
+]
+
+
+_BaseProject = Annotated[
+    Annotated[BaseCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
+    | Annotated[BaseCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
+    | Annotated[
+        SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
+    ],
+    pydantic.Discriminator(_discriminator(_BuildBaseProjectEnum, "build_base")),
+]
+
+_CoreProject = Annotated[
+    Annotated[Core22Project, pydantic.Tag(_BaseProjectEnum.CORE22.value)]
+    | Annotated[Core24Project, pydantic.Tag(_BaseProjectEnum.CORE24.value)]
+    | Annotated[_BareProject, pydantic.Tag(_BaseProjectEnum.BARE.value)]
+    | Annotated[
+        SkipJsonSchema[Project], pydantic.Tag(_BaseProjectEnum.UNIMPLEMENTED.value)
+    ],
+    pydantic.Discriminator(_discriminator(_BaseProjectEnum, "base")),
+]
+
+
+SnapcraftProject = Annotated[
+    Annotated[_CoreProject, pydantic.Tag(_TypeProjectEnum.UNIMPLEMENTED.value)]
+    | Annotated[_BaseProject, pydantic.Tag(_TypeProjectEnum.BASE.value)],
+    pydantic.Discriminator(_discriminator(_TypeProjectEnum, "type")),
+]
 
 
 class _GrammarAwareModel(pydantic.BaseModel):
