@@ -3,11 +3,6 @@ version: "1.0"
 summary: simple flutter application
 description: build a flutter application using core24
 base: core24
-platforms:
-  amd64:
-    build-on: [amd64]
-    run-on: [amd64]
-
 confinement: strict
 
 apps:
