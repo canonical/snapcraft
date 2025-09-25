@@ -37,7 +37,7 @@ _DEPRECATION_MESSAGES = {
     "dn8": "The 'build' keyword has been replaced by 'override-build'",
     "dn9": "The 'install' keyword has been replaced by 'override-build'",
     "dn10": "The 'version-script' keyword has been deprecated in favour of "
-    "the 'craftctl set version' part scriptlet.",
+    "'craftctl set version' in a scriptlet.",
     "dn11": "The 'push' set of commands have been replaced with 'upload'.",
     "dn12": "The 'registered' and 'list-registered' commands have with replaced with 'list'.",
     # dn14 is the next available slot.

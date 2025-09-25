@@ -47,8 +47,8 @@ class GitNotFoundVersionError(RemoteBuildBaseError):
     fmt = (
         "This remote-build project requires `git` to be installed "
         "because of it use of `version: git`.  Either install `git`, "
-        "set the `version` statically, or use the `craftctl set version` "
-        "part scriptlet with `adopt-info`."
+        "set the `version` statically, or use `craftctl set version=<version>` "
+        "in a part scriptlet in combination with `adopt-info`."
     )
 
 
@@ -105,8 +105,8 @@ class UnsupportedArchitectureError(RemoteBuildBaseError):
 class UnsupportedVersionScriptError(RemoteBuildBaseError):
     fmt = (
         "Remote-build does not support the use of `version-script`.\n"
-        "Please use `craftctl set version` part scriptlet with "
-        "`adopt-info`, or set `version` statically."
+        "Please call `craftctl set version=<version>` in a part scriptlet in "
+        "combination with `adopt-info`, or set `version` statically."
     )
 
 

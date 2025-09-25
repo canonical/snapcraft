@@ -194,7 +194,6 @@ parts:
       # Put craftctl into its own directory that can be included in the PATH
       # without including other binaries.
       bin/craftctl: libexec/snapcraft/craftctl
-      # snapcraftctl removed - deprecated in core22 in favor of craftctl
       # Include general data in the share directory
       "**/site-packages/extensions": share/snapcraft/extensions
       "**/site-packages/keyrings": share/snapcraft/keyrings

@@ -15,7 +15,8 @@ Snapcraft has moved to a more general syntactical mechanism that can be used
 consistently across the \*craft ecosystem. Most of the following changes are a
 reflection of that alignment.
 
-``snapcraftctl`` is deprecated in core22. Use ``craftctl`` instead.
+The snapcraftctl utility is deprecated in core22. Use its drop-in replacement, craftctl,
+instead.
 
 
 Override pull
