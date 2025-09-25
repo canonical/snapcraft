@@ -311,10 +311,10 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
     mocker, parts_data, new_dir, project_vars
 ):
     mocker.patch(
-        "craft_parts.packages.Repository.is_package_installed", return_value=False
+        "craft_parts.packages.deb.Ubuntu.is_package_installed", return_value=False
     )
     install_packages_mock = mocker.patch(
-        "craft_parts.packages.Repository.install_packages"
+        "craft_parts.packages.deb.Ubuntu.install_packages"
     )
     mocker.patch(
         "craft_archives.repo.apt_key_manager."
@@ -328,7 +328,7 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_not_installed
     mocker.patch(
         "craft_archives.repo.apt_preferences_manager.AptPreferencesManager.write"
     )
-    mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
+    mocker.patch("craft_parts.packages.deb.Ubuntu.refresh_packages_list")
 
     parts_lifecycle = PartsLifecycle(
         parts_data,
@@ -366,10 +366,10 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
     mocker, parts_data, new_dir, project_vars
 ):
     mocker.patch(
-        "craft_parts.packages.Repository.is_package_installed", return_value=True
+        "craft_parts.packages.deb.Ubuntu.is_package_installed", return_value=True
     )
     install_packages_mock = mocker.patch(
-        "craft_parts.packages.Repository.install_packages"
+        "craft_parts.packages.deb.Ubuntu.install_packages"
     )
     mocker.patch(
         "craft_archives.repo.apt_key_manager.AptKeyManager.install_package_repository_key",
@@ -382,7 +382,7 @@ def test_parts_lifecycle_initialize_with_package_repositories_deps_installed(
     mocker.patch(
         "craft_archives.repo.apt_preferences_manager.AptPreferencesManager.write"
     )
-    mocker.patch("craft_parts.packages.Repository.refresh_packages_list")
+    mocker.patch("craft_parts.packages.deb.Ubuntu.refresh_packages_list")
 
     parts_lifecycle = PartsLifecycle(
         parts_data,
