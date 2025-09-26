@@ -73,7 +73,7 @@ class MesonPlugin(PluginV2):
         return dict()
 
     @property
-    def out_of_source_build(self):
+    def out_of_source_build(self) -> bool:
         return True
 
     def get_build_commands(self) -> List[str]:
