@@ -56,8 +56,7 @@ How it works
 
 * Build the Crystal project with ``shards build``, taking into account any build options
   declared with ``crystal-build-options``.
-* Copy the built executable from the snap's ``bin`` directory to the part's install directory.
-* Stage the Crystal binary's runtime dependencies.
+* Stage the Crystal project's binary and dependencies in ``/.bin``.
 
 
 Example
