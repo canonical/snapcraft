@@ -95,7 +95,7 @@ rst_epilog = """
 """
 
 exclude_patterns = [
-    "sphinx-resources",
+    "sphinx-docs-starter-pack",
     # Excluded because Snapcraft doesn't use overlays
     "common/craft-parts/overlay_parameters.rst",
     # Excluded here because they are either included explicitly in other
