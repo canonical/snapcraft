@@ -2,5 +2,5 @@
 	path = tests/spread/tools/snapd-testing-tools
 	url = https://github.com/canonical/snapd-testing-tools.git
 [submodule "docs/sphinx-resources"]
-	path = docs/sphinx-resources
+	path = docs/sphinx-docs-starter-pack
 	url = https://github.com/canonical/sphinx-docs-starter-pack.git
