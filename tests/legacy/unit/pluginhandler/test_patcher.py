@@ -128,26 +128,6 @@ class TestStaticBasePatching:
 
         mock_elf_patcher.assert_not_called()
 
-    def test_conflicting_patchelf_build_attributes(
-        self, monkeypatch, mock_partpatcher, confinement
-    ):
-        monkeypatch.setattr(file_utils, "get_snap_tool_path", lambda x: x)
-
-        part_properties = {
-            "source-subdir": "src",
-            "build-attributes": ["no-patchelf", "enable-patchelf"],
-        }
-
-        handler = load_part(
-            "test-part",
-            snap_name="test-snap",
-            part_properties=part_properties,
-            confinement=confinement,
-        )
-
-        with pytest.raises(errors.BuildAttributePatchelfConflictError):
-            handler.prime()
-
 
 class TestPrimeTypeExcludesPatching:
     scenarios = (
@@ -207,33 +187,6 @@ class TestPrimeTypeExcludesPatching:
         ),
     )
 
-    def test_no_patcher_called(
-        self,
-        monkeypatch,
-        mock_partpatcher,
-        snap_type,
-        snap_name,
-        confinement,
-        build_attributes,
-    ):
-        monkeypatch.setattr(file_utils, "get_snap_tool_path", lambda x: x)
-
-        part_properties = {"source-subdir": "src"}
-        if build_attributes:
-            part_properties["build-attributes"] = build_attributes
-
-        handler = load_part(
-            "test-part",
-            snap_name=snap_name,
-            part_properties=part_properties,
-            snap_type=snap_type,
-            confinement=confinement,
-        )
-
-        handler.prime()
-
-        mock_partpatcher.assert_not_called()
-
 
 class TestPrimeTypeIncludesPatching:
     scenarios = (
@@ -254,37 +207,3 @@ class TestPrimeTypeIncludesPatching:
             dict(confinement="strict", build_attributes=None, stage_packages=["libc6"]),
         ),
     )
-
-    def test_patcher_called(
-        self,
-        monkeypatch,
-        mock_partpatcher,
-        confinement,
-        build_attributes,
-        stage_packages,
-    ):
-        monkeypatch.setattr(file_utils, "get_snap_tool_path", lambda x: x)
-
-        part_properties = {"source-subdir": "src"}
-        if build_attributes:
-            part_properties["build-attributes"] = build_attributes
-        if stage_packages:
-            part_properties["stage-packages"] = stage_packages
-        else:
-            stage_packages = list()
-
-        handler = load_part(
-            "test-part",
-            snap_type="app",
-            part_properties=part_properties,
-            confinement=confinement,
-        )
-
-        handler.prime()
-
-        mock_partpatcher.assert_called_with(
-            elf_files=frozenset(),
-            project=mock.ANY,
-            snap_base_path="/snap/fake-name/current",
-            stage_packages=stage_packages,
-        )

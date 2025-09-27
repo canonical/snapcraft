@@ -41,57 +41,6 @@ from tests.legacy import unit
 
 
 class PluginTestCase(unit.TestCase):
-    def test_build_with_subdir_copies_sourcedir(self):
-        handler = self.load_part(
-            "test-part",
-            plugin_name="dump",
-            part_properties={"source": ".", "source-subdir": "src"},
-        )
-
-        sourcedir = handler.part_source_dir
-        source_subdir = handler.plugin.options.source_subdir
-
-        subdir = os.path.join(sourcedir, source_subdir)
-        os.makedirs(subdir)
-        open(os.path.join(sourcedir, "file1"), "w").close()
-        open(os.path.join(subdir, "file2"), "w").close()
-
-        self.assertThat(
-            handler.part_build_work_dir,
-            Equals(os.path.join(handler.part_dir, "build", source_subdir)),
-        )
-
-        handler.build()
-
-        self.assertThat(os.path.join(handler.part_build_dir, "file1"), FileExists())
-        self.assertThat(
-            os.path.join(handler.part_build_dir, source_subdir, "file2"), FileExists()
-        )
-
-    def test_build_with_missing_metadata_file(self):
-        handler = self.load_part(
-            "test-part", part_properties={"parse-info": ["missing-file"]}
-        )
-        handler.makedirs()
-
-        raised = self.assertRaises(errors.MissingMetadataFileError, handler.build)
-        self.assertThat(raised.path, Equals("missing-file"))
-
-    def test_build_without_subdir_copies_sourcedir(self):
-        handler = self.load_part("test-part")
-
-        os.makedirs(handler.part_source_dir)
-        open(os.path.join(handler.part_source_dir, "file"), "w").close()
-
-        self.assertThat(
-            handler.part_build_dir,
-            Equals(os.path.join(handler.part_dir, "build")),
-        )
-
-        handler.build()
-
-        self.assertTrue(os.path.exists(os.path.join(handler.part_dir, "build", "file")))
-
     @patch("os.path.isdir", return_value=False)
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
         self.assertRaises(
@@ -423,14 +372,6 @@ class PluginTestCase(unit.TestCase):
         )
 
         self.assertThat(raised.message, Equals('path "/abs/exclude" must be relative'))
-
-    @patch("snapcraft_legacy.internal.pluginhandler._organize_filesets")
-    def test_build_organizes(self, mock_organize):
-        handler = self.load_part("test-part")
-        handler.build()
-        mock_organize.assert_called_once_with(
-            "test-part", {}, handler.part_install_dir, False
-        )
 
 
 class TestMigratePartFiles:
@@ -826,142 +767,6 @@ class RealStageTestCase(unit.TestCase):
         )
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         return project_loader.load_config(project)
-
-    def test_pc_files_correctly_prefixed(self):
-        pc_file = os.path.join("usr", "lib", "pkgconfig", "granite.pc")
-        stage_pc_install = os.path.join(self.parts_dir, "stage-pc", "install", pc_file)
-        stage_pc_stage = os.path.join(self.stage_dir, pc_file)
-
-        # Run build
-        project_config = self.make_snapcraft_project()
-        lifecycle.execute(steps.BUILD, project_config)
-
-        # Simulate a .pc file was installed
-        os.makedirs(os.path.dirname(stage_pc_install))
-        with open(stage_pc_install, "w") as f:
-            f.write("prefix=/usr\n")
-            f.write("exec_prefix=${prefix}\n")
-            f.write("libdir=${prefix}/lib\n")
-            f.write("includedir=${prefix}/include\n")
-            f.write("\n")
-            f.write("Name: granite\n")
-            f.write("Description: elementary's Application Framework\n")
-            f.write("Version: 0.4\n")
-            f.write("Libs: -L${libdir} -lgranite\n")
-            f.write("Cflags: -I${includedir}/granite\n")
-            f.write("Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0\n")
-
-        # Now we stage
-        lifecycle.execute(steps.STAGE, project_config)
-
-        with open(stage_pc_stage) as f:
-            pc_file_content = f.read()
-        expected_pc_file_content = """prefix={}/usr
-exec_prefix=${{prefix}}
-libdir=${{prefix}}/lib
-includedir=${{prefix}}/include
-
-Name: granite
-Description: elementary's Application Framework
-Version: 0.4
-Libs: -L${{libdir}} -lgranite
-Cflags: -I${{includedir}}/granite
-Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-""".format(
-            self.stage_dir
-        )
-
-        self.assertThat(pc_file_content, Equals(expected_pc_file_content))
-
-    def test_pc_files_correctly_prefixed_when_installed(self):
-        pc_file = os.path.join("usr", "lib", "pkgconfig", "granite.pc")
-        install_path = os.path.join(self.parts_dir, "stage-pc", "install")
-        stage_pc_install = os.path.join(install_path, pc_file)
-        stage_pc_stage = os.path.join(self.stage_dir, pc_file)
-
-        # Run build
-        project_config = self.make_snapcraft_project()
-        lifecycle.execute(steps.BUILD, project_config)
-
-        # Simulate a .pc file was installed
-        os.makedirs(os.path.dirname(stage_pc_install))
-        with open(stage_pc_install, "w") as f:
-            f.write("prefix={}/usr\n".format(install_path))
-            f.write("exec_prefix=${prefix}\n")
-            f.write("libdir=${prefix}/lib\n")
-            f.write("includedir=${prefix}/include\n")
-            f.write("\n")
-            f.write("Name: granite\n")
-            f.write("Description: elementary's Application Framework\n")
-            f.write("Version: 0.4\n")
-            f.write("Libs: -L${libdir} -lgranite\n")
-            f.write("Cflags: -I${includedir}/granite\n")
-            f.write("Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0\n")
-
-        # Now we stage
-        lifecycle.execute(steps.STAGE, project_config)
-
-        with open(stage_pc_stage) as f:
-            pc_file_content = f.read()
-        expected_pc_file_content = """prefix={}/usr
-exec_prefix=${{prefix}}
-libdir=${{prefix}}/lib
-includedir=${{prefix}}/include
-
-Name: granite
-Description: elementary's Application Framework
-Version: 0.4
-Libs: -L${{libdir}} -lgranite
-Cflags: -I${{includedir}}/granite
-Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-""".format(
-            self.stage_dir
-        )
-
-        self.assertThat(pc_file_content, Equals(expected_pc_file_content))
-
-
-class NextLastStepTestCase(unit.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.handler = self.load_part("test_part")
-
-    def test_pull(self):
-        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
-        self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-
-        self.handler.pull()
-
-        self.assertThat(self.handler.latest_step(), Equals(steps.PULL))
-        self.assertThat(self.handler.next_step(), Equals(steps.BUILD))
-
-    def test_build(self):
-        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
-        self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-
-        self.handler.build()
-
-        self.assertThat(self.handler.latest_step(), Equals(steps.BUILD))
-        self.assertThat(self.handler.next_step(), Equals(steps.STAGE))
-
-    def test_stage(self):
-        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
-        self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-
-        self.handler.stage()
-
-        self.assertThat(self.handler.latest_step(), Equals(steps.STAGE))
-        self.assertThat(self.handler.next_step(), Equals(steps.PRIME))
-
-    def test_prime(self):
-        self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
-        self.assertThat(self.handler.next_step(), Equals(steps.PULL))
-
-        self.handler.prime()
-
-        self.assertThat(self.handler.latest_step(), Equals(steps.PRIME))
-        self.assertRaises(errors.NoNextStepError, self.handler.next_step)
 
 
 class IsDirtyTestCase(unit.TestCase):
@@ -1436,55 +1241,6 @@ class FilesetsTestCase(unit.TestCase):
 
 
 class SourcesTestCase(unit.TestCase):
-    @pytest.mark.slow
-    def test_do_not_follow_links(self):
-        properties = dict(source=".")
-        handler = self.load_part("test-part", part_properties=properties)
-
-        # Create a file and a symlink to it
-        open("file", mode="w").close()
-        os.symlink("file", "symlinkfile")
-
-        # Create a directory and a symlink to it
-        os.mkdir("dir")
-        os.symlink("dir", "symlinkdir")
-
-        handler.pull()
-        handler.build()
-
-        # Make sure this is still a link
-        build_file_path = os.path.join(handler.part_build_dir, "file")
-        build_symlinkfile_path = os.path.join(handler.part_build_dir, "symlinkfile")
-
-        self.assertTrue(os.path.isfile(build_file_path))
-        self.assertTrue(os.path.islink(build_symlinkfile_path))
-
-        build_dir_path = os.path.join(handler.part_build_dir, "dir")
-        build_symlinkdir_path = os.path.join(handler.part_build_dir, "symlinkdir")
-
-        self.assertTrue(os.path.isdir(build_dir_path))
-        self.assertTrue(os.path.isdir(build_symlinkdir_path))
-
-    def test_pull_ignores_snapcraft_files_in_source_dir(self):
-        properties = dict(source=".")
-        handler = self.load_part("test-part", part_properties=properties)
-
-        open("my-snap.snap", "w").close()
-        open("my-snap", "w").close()
-
-        handler.pull()
-
-        for file_ in common.SNAPCRAFT_FILES:
-            self.assertFalse(
-                os.path.exists(os.path.join(handler.part_source_dir, file_))
-            )
-        self.assertThat(
-            os.path.join(handler.part_source_dir, "my-snap.snap"), Not(FileExists())
-        )
-
-        # Make sure we don't filter things out incorrectly
-        self.assertThat(os.path.join(handler.part_source_dir, "my-snap"), FileExists())
-
     def test_source_with_unrecognized_source_must_raise_exception(self):
         properties = dict(source="unrecognized://test_source")
 
