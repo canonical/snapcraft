@@ -55,7 +55,7 @@ class PluginV2(abc.ABC):
         """
 
     @property
-    def out_of_source_build(self):
+    def out_of_source_build(self) -> bool:
         """Set to True if the plugin performs out-of-source-tree builds.
 
         In practice, this controls whether the PluginHandler code will
