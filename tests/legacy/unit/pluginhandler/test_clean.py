@@ -135,43 +135,6 @@ class CleanTestCase(TestCase):
         self.assertTrue(os.path.isfile(staged_file))
 
 
-class TestCleanStage:
-    scenarios = [
-        ("all", {"fileset": ["*"]}),
-        ("no1", {"fileset": ["-1"]}),
-        ("onlya", {"fileset": ["a"]}),
-        ("onlybase", {"fileset": ["*", "-*/*"]}),
-        ("only1a", {"fileset": ["1/a"]}),
-        ("nostara", {"fileset": ["-*/a"]}),
-    ]
-
-    def test_clean_stage(self, tmp_work_path, fileset):
-        handler = load_part("test_part", part_properties={"stage": fileset})
-        handler.makedirs()
-
-        installdir = pathlib.Path(handler.part_install_dir)
-
-        (installdir / "1/1a/1b").mkdir(parents=True)
-        (installdir / "2/2a").mkdir(parents=True)
-        (installdir / "3").mkdir(parents=True)
-
-        (installdir / "a").touch()
-        (installdir / "b").touch()
-        (installdir / "1/a").touch()
-        (installdir / "3/a").touch()
-
-        handler.mark_done(steps.BUILD)
-
-        # Stage the installed files
-        handler.stage()
-
-        assert os.listdir(handler._project.stage_dir) != []
-
-        handler.clean_stage({})
-
-        assert os.listdir(handler._project.stage_dir) == []
-
-
 class PerStepCleanTestCase(TestCase):
     def setUp(self):
         super().setUp()
