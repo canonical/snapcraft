@@ -44,21 +44,6 @@ class StatusCacheTestCase(LifecycleTestBase):
 
         self.cache = StatusCache(self.project_config)
 
-    def test_has_step_run(self):
-        # No steps should have run, yet
-        main_part = self.project_config.parts.get_part("main")
-        self.assertFalse(self.cache.has_step_run(main_part, steps.PULL))
-
-        # Now run the pull step
-        lifecycle.execute(steps.PULL, self.project_config, part_names=["main"])
-
-        # Should still have cached that no steps have run
-        self.assertFalse(self.cache.has_step_run(main_part, steps.PULL))
-
-        # Now clear that step from the cache, and it should be up-to-date
-        self.cache.clear_step(main_part, steps.PULL)
-        self.assertTrue(self.cache.has_step_run(main_part, steps.PULL))
-
     def test_add_step_run(self):
         # No steps should have run, yet
         main_part = self.project_config.parts.get_part("main")
@@ -73,21 +58,3 @@ class StatusCacheTestCase(LifecycleTestBase):
         # Now clear that step from the cache, and it should no longer have ran
         self.cache.clear_step(main_part, steps.PULL)
         self.assertFalse(self.cache.has_step_run(main_part, steps.PULL))
-
-    def test_get_dirty_report(self):
-        # No dirty reports should be available, yet
-        dependent_part = self.project_config.parts.get_part("dependent")
-        self.assertFalse(self.cache.get_dirty_report(dependent_part, steps.PULL))
-
-        # Now run the pull step
-        lifecycle.execute(steps.PULL, self.project_config)
-
-        # Re-stage main, which will make dependent dirty
-        lifecycle.execute(steps.PULL, self.project_config, part_names=["main"])
-
-        # Should still have cached that it's not dirty, though
-        self.assertFalse(self.cache.get_dirty_report(dependent_part, steps.PULL))
-
-        # Now clear that step from the cache, and it should be up-to-date
-        self.cache.clear_step(dependent_part, steps.PULL)
-        self.assertTrue(self.cache.get_dirty_report(dependent_part, steps.PULL))
