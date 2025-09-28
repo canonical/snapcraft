@@ -113,7 +113,6 @@ def test_list_validation_sets_with_options(mocker, legacy_run):
 
 def test_snapcraft_legacy_version_direct_access():
     """Test that snapcraft_legacy --version works when called directly.
-    
     This test demonstrates that the snapcraft_legacy script entry point
     can be accessed directly, which would fail if version commands are
     removed from the legacy codebase.
@@ -125,13 +124,13 @@ def test_snapcraft_legacy_version_direct_access():
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
-        
         # If this succeeds, it means the legacy entry point is accessible
         # and version functionality should be preserved
         assert result.returncode == 0
         assert "snapcraft" in result.stdout.lower()
-        
+
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         # If snapcraft_legacy is not found or times out, skip the test
         # This might happen in CI or development environments
@@ -140,7 +139,6 @@ def test_snapcraft_legacy_version_direct_access():
 
 def test_snapcraft_legacy_version_command_direct_access():
     """Test that snapcraft_legacy version command works when called directly.
-    
     This test demonstrates that the version subcommand in legacy code
     is accessible and would break if removed.
     """
@@ -151,12 +149,12 @@ def test_snapcraft_legacy_version_command_direct_access():
             capture_output=True,
             text=True,
             timeout=10,
+            check=False,
         )
-        
         # If this succeeds, it means the legacy version command is accessible
         assert result.returncode == 0
         assert "snapcraft" in result.stdout.lower()
-        
+
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         # If snapcraft_legacy is not found or times out, skip the test
         pytest.skip(f"snapcraft_legacy command not available: {e}")
