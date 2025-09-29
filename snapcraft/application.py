@@ -262,7 +262,7 @@ class Snapcraft(Application):
           6. Running a lifecycle command for a core22 snap
           7. Remote builds for a core22 snap with the `force-fallback` strategy
 
-        Exception: If `--version` or `-V` is passed, do not use the classic fallback.
+        Exception: If `--version`, `-V`, `--help`, or `-h` is passed, do not use the classic fallback.
 
         If none of the above conditions are met, then the default craft-application
         code path should be used.
@@ -272,8 +272,8 @@ class Snapcraft(Application):
         argv_command = self._get_argv_command()
         build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
 
-        # Exception: If `--version` or `-V` is passed, do not use the classic fallback.
-        if {"--version", "-V"}.intersection(sys.argv):
+        # Exception: If `--version`, `-V`, `--help`, or `-h` is passed, do not use the classic fallback.
+        if {"--version", "-V", "--help", "-h"}.intersection(sys.argv):
             return
 
         if project := self._get_project_raw():

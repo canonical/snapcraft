@@ -686,6 +686,23 @@ def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
     mock_dispatch.assert_called_once()
 
 
+@pytest.mark.parametrize("help_flag", ["--help", "-h"])
+def test_remote_build_help_no_fallback(help_flag, mocker, monkeypatch, snapcraft_yaml):
+    """remote-build --help should not trigger classic fallback in core20 projects."""
+    monkeypatch.setattr("sys.argv", ["snapcraft", "remote-build", help_flag])
+    snapcraft_yaml(base="core20")
+    mock_dispatch = mocker.patch(
+        "craft_application.application.Application._get_dispatcher"
+    )
+
+    app = application.create_app()
+    # Should NOT raise ClassicFallback
+    app.run()
+
+    # Should use modern dispatcher, not fallback
+    mock_dispatch.assert_called_once()
+
+
 @pytest.mark.parametrize(
     ("base", "build_base", "use_craftapp_lib"),
     [
