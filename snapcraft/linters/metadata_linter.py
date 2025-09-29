@@ -91,7 +91,7 @@ _FIELDS: list[MetadataField] = [
     MetadataField(
         "source-code",
         LinterResult.INFO,
-        lambda meta: _get_links_attr(meta, "source-code"),
+        lambda meta: _get_links_attr(meta, "source_code"),
         f"{_HELP_URL}#source-code",
     ),
     MetadataField(
