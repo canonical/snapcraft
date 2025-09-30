@@ -5,7 +5,7 @@ if [ -z "${SNAP}" ]; then
   exit 1
 fi
 
-if ! snapctl is-connected ${DOTNET_EXT_PLUG_NAME}; then
+if ! snapctl is-connected "${DOTNET_EXT_PLUG_NAME}"; then
   >&2 echo "Plug '${DOTNET_EXT_PLUG_NAME}' isn't connected."
   >&2 echo "Please run: 'snap connect ${DOTNET_EXT_SNAP_NAME}:${DOTNET_EXT_PLUG_NAME} ${DOTNET_EXT_CONTENT_SNAP}:${DOTNET_EXT_PLUG_NAME}'."
   exit 1
