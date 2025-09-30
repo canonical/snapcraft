@@ -21,8 +21,6 @@ from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir
 
-_DOTNET_RUNTIME_PLUG_NAME = "dotnet-runtime"
-
 
 class DotnetExtensionBase(Extension):
     """
@@ -42,6 +40,11 @@ class DotnetExtensionBase(Extension):
         """The name of the versioned .NET extension (e.g dotnet8)"""
         raise NotImplementedError("Subclasses must implement versioned_plugin_name")
 
+    @property
+    def runtime_plug_name(self) -> str:
+        """The name of the plug used to connect to the .NET runtime content snap."""
+        return f"{self.versioned_plugin_name}-runtime"
+
     @staticmethod
     @overrides
     def get_supported_bases() -> tuple[str, ...]:
@@ -60,7 +63,7 @@ class DotnetExtensionBase(Extension):
     @overrides
     def get_root_snippet(self) -> dict[str, Any]:
         runtime_plugs = {
-            _DOTNET_RUNTIME_PLUG_NAME: {
+            self.runtime_plug_name: {
                 "interface": "content",
                 "default-provider": self.runtime_content_snap_name,
                 "content": self.runtime_content_snap_name,
@@ -77,11 +80,11 @@ class DotnetExtensionBase(Extension):
             "environment": {
                 "DOTNET_EXT_CONTENT_SNAP": self.runtime_content_snap_name,
                 "DOTNET_EXT_SNAP_NAME": self.yaml_data["name"],
-                "DOTNET_EXT_PLUG_NAME": _DOTNET_RUNTIME_PLUG_NAME,
+                "DOTNET_EXT_PLUG_NAME": self.runtime_plug_name,
                 "DOTNET_ROOT": f"$SNAP/opt/{self.versioned_plugin_name}/dotnet",
             },
             "plugs": [
-                _DOTNET_RUNTIME_PLUG_NAME,
+                self.runtime_plug_name,
             ],
         }
 
