@@ -19,7 +19,7 @@ import pytest
 from snapcraft.extensions.dotnet9 import Dotnet9Extension
 from snapcraft.extensions.extension import get_extensions_data_dir
 
-_DOTNET_RUNTIME_PLUG_NAME = "dotnet-runtime"
+_DOTNET_RUNTIME_PLUG_NAME = "dotnet9-runtime"
 _DOTNET_RUNTIME_CONTENT_SNAP_NAME = "dotnet-runtime-90"
 _VERSIONED_PLUGIN_NAME = "dotnet9"
 
@@ -100,6 +100,10 @@ cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
             "plugin": "nil",
             "stage-packages": [
                 "libicu74",
+                "libunwind8",
+                "libssl3t64",
+                "liblttng-ust1t64",
+                "libbrotli1",
             ],
         },
     }

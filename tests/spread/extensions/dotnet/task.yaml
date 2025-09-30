@@ -15,6 +15,9 @@ environment:
   DOTNET_CONTENT_SNAP/dotnet8: dotnet-runtime-80
   DOTNET_CONTENT_SNAP/dotnet9: dotnet-runtime-90
   DOTNET_CONTENT_SNAP/dotnet10: dotnet-runtime-100
+  DOTNET_RUNTIME_PLUG/dotnet8: dotnet8-runtime
+  DOTNET_RUNTIME_PLUG/dotnet9: dotnet9-runtime
+  DOTNET_RUNTIME_PLUG/dotnet10: dotnet10-runtime
 
 restore: |
 
@@ -38,6 +41,6 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   # Connect dotnet-runtime slot
-  snap connect "${SNAP}":dotnet-runtime "${DOTNET_CONTENT_SNAP}":dotnet-runtime || exit 1
+  snap connect "${SNAP}":"${DOTNET_RUNTIME_PLUG}" "${DOTNET_CONTENT_SNAP}":dotnet-runtime || exit 1
 
   ${SNAP}.hello || exit 1
