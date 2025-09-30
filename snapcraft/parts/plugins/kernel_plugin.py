@@ -19,7 +19,7 @@
 The following kernel-specific options are provided by this plugin:
 
     - kernel-kdefconfig:
-      (list of kdefconfigs, default: none))
+      (list of strings, default: none))
       defconfig target to use as the base configuration. default: "defconfig"
 
     - kernel-kconfigflavour:
@@ -35,15 +35,6 @@ The following kernel-specific options are provided by this plugin:
       config definitions.  If you don't want default for one or more implicit
       configs coming out of these, just add them to this list as well.
 
-    - kernel-image-target:
-      (yaml object, string or null for default target)
-      the default target is bzImage and can be set to any specific
-      target.
-      For more complex cases where one would want to use
-      the same snapcraft.yaml to target multiple architectures a
-      yaml object can be used. This yaml object would be a map of
-      debian architecture and kernel image build targets.
-
     - kernel-enable-zfs-support
       (boolean; default: False)
       use this flag to build in zfs support through extra ko modules
@@ -58,14 +49,10 @@ architectures set up accordingly.
 """
 
 import logging
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
-import pydantic
 from craft_parts import infos, plugins
 from overrides import overrides
-from typing_extensions import Self
-
-from snapcraft_legacy.plugins.v2 import _kernel_build
 
 logger = logging.getLogger(__name__)
 
@@ -75,24 +62,11 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
     plugin: Literal["kernel"] = "kernel"
 
-    kernel_kconfigs: list[str] | None = None
+    kernel_kconfigs: list[str] = []
     kernel_kconfigflavour: str = "generic"
-    kernel_kdefconfig: list[str] | None = None
-    kernel_image_target: str | dict[str, Any] | None = None
+    kernel_kdefconfig: list[str] = ["defconfig"]
     kernel_enable_zfs_support: bool = False
     kernel_enable_perf: bool = False
-
-    # part properties required by the plugin
-    @pydantic.model_validator(mode="after")
-    def validate_plugin_options(self) -> Self:
-        """If kernel-image-target is defined, it has to be string or dictionary."""
-        if self.kernel_image_target:
-            if not isinstance(self.kernel_image_target, str):
-                if not isinstance(self.kernel_image_target, dict):
-                    raise ValueError(
-                        f"kernel-image-target is in invalid format(type{type(self.kernel_image_target)}). It should be either string or dictionary."
-                    )
-        return self
 
 
 class KernelPlugin(plugins.Plugin):
@@ -107,8 +81,6 @@ class KernelPlugin(plugins.Plugin):
         self.options = cast(KernelPluginProperties, self._options)
 
         target_arch = self._part_info.target_arch
-        self._deb_arch = _kernel_build.get_deb_architecture(target_arch)
-        self._kernel_arch = _kernel_build.get_kernel_architecture(target_arch)
         self._target_arch = target_arch
 
         # check if we are cross building
@@ -119,24 +91,12 @@ class KernelPlugin(plugins.Plugin):
         ):
             self._cross_building = True
 
-        # set kernel targets
-        if not self.options.kernel_image_target:
-            self.kernel_image_target = _kernel_build.default_kernel_image_target[
-                self._deb_arch
-            ]
-        elif isinstance(self.options.kernel_image_target, str):
-            self.kernel_image_target = self.options.kernel_image_target
-        elif self._deb_arch in self.options.kernel_image_target:
-            self.kernel_image_target = self.options.kernel_image_target[self._deb_arch]
-
     @overrides
     def get_build_snaps(self) -> set[str]:  # pylint: disable=missing-function-docstring
         return set()
 
     @overrides
-    def get_build_packages(
-        self,
-    ) -> set[str]:  # pylint: disable=missing-function-docstring
+    def get_build_packages(self) -> set[str]:  # pylint: disable=missing-function-docstring
         build_packages = {
             "bc",
             "binutils",
@@ -173,34 +133,50 @@ class KernelPlugin(plugins.Plugin):
         return build_packages
 
     @overrides
-    def get_build_environment(
-        self,
-    ) -> dict[str, str]:  # pylint: disable=missing-function-docstring
+    def get_build_environment(self) -> dict[str, str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build env...")
+        if self._part_info.target_arch == "amd64":
+            _kernel_arch = "x86"
+            _kernel_image = "bzImage"
+            _kernel_target = "modules"
+        if self._part_info.target_arch == "arm64":
+            _kernel_arch = "arm64"
+            _kernel_image = "Image"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "armhf":
+            _kernel_arch = "arm"
+            _kernel_image = "zImage"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "ppc64el":
+            _kernel_arch = "powerpc"
+            _kernel_image = "vmlinux.strip"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "powerpc":
+            _kernel_arch = "powerpc"
+            _kernel_image = "uImage"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "riscv64":
+            _kernel_arch = "riscv"
+            _kernel_image = "Image"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "s390x":
+            _kernel_arch = "s390"
+            _kernel_image = "bzImage"
+            _kernel_target = "modules dtbs"
+
         return {
             "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-            "ARCH": self._kernel_arch,
-            "DEB_ARCH": "${CRAFT_TARGET_ARCH}",
-            "KERNEL_BUILD_ARCH_DIR": f"${{CRAFT_PART_BUILD}}/arch/{self._kernel_arch}/boot",
-            "KERNEL_IMAGE_TARGET": self.kernel_image_target,
+            "ARCH": _kernel_arch,
+            "KERNEL_IMAGE": _kernel_image,
+            "KERNEL_TARGET": _kernel_target,
         }
 
     @overrides
-    def get_build_commands(
-        self,
-    ) -> list[str]:  # pylint: disable=missing-function-docstring
+    def get_build_commands(self) -> list[str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build commands...")
-        kconfigflavour = self.options.kernel_kconfigflavour
-        if self.options.kernel_kdefconfig:
-            kconfigflavour = ""
-        return _kernel_build.get_build_commands(
-            kernel_arch=self._kernel_arch,
-            config_flavour=kconfigflavour,
-            defconfig=self.options.kernel_kdefconfig,
-            configs=self.options.kernel_kconfigs,
-            enable_zfs_support=self.options.kernel_enable_zfs_support,
-            enable_perf=self.options.kernel_enable_perf,
-        )
+        return [
+            f"$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh flavour={self.options.kernel_kconfigflavour} defconfig={' '.join(self.options.kernel_kdefconfig)} configs={','.join(self.options.kernel_kconfigs)} enable-zfs={self.options.kernel_enable_zfs_support} enable-perf={self.options.kernel_enable_perf}"
+        ]
 
     @classmethod
     def get_out_of_source_build(cls) -> bool:
