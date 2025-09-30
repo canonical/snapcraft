@@ -25,7 +25,7 @@ from unittest import mock
 
 import pytest
 import pytest_subprocess
-from craft_platforms import DebianArchitecture
+from craft_platforms import DebianArchitecture, DistroBase
 
 import snapcraft.parts
 from snapcraft import __version__, models, os_release
@@ -42,6 +42,11 @@ def lifecycle_service(default_project, fake_services, setup_project):
 
 def test_lifecycle_installs_base(lifecycle_service, mocker):
     install_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
+
+    mocker.patch(
+        "craft_platforms.DistroBase.from_linux_distribution",
+        return_value=DistroBase("ubuntu", "24.04"),
+    )
 
     lifecycle_service.run("pull")
 
