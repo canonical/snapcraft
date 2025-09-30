@@ -116,6 +116,10 @@ cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
             "plugin": "nil",
             "stage-packages": [
                 f"libicu{libicu_version}",
+                "libunwind8",
+                "libssl3t64",
+                "liblttng-ust1t64",
+                "libbrotli1",
             ],
         }
 
