@@ -338,10 +338,6 @@ install_addons() {
 create_initrd() {
   # uc_initrd_main_lib_snapd="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd"
 
-  # Ensure chroot has been setup
-  [ -e "${BASE_CREATED}"    ] || chroot_setup
-  [ -e "${BASE_CONFIGURED}" ] || chroot_configure
-
   if [ -e "${CRAFT_PART_INSTALL}/initrd.img" ]; then
     rm -f "${CRAFT_PART_INSTALL}/initrd.img"
   fi
@@ -392,10 +388,6 @@ prep_sign() {
     fi
   done || echo "Using snakoil key and cert"
 
-  # Ensure chroot has been setup
-  [ -e "${BASE_CREATED}"    ] || chroot_setup
-  [ -e "${BASE_CONFIGURED}" ] || chroot_configure
-
   cp --link "${key}"  "${INITRD_ROOT}/root/${key##*/}"
   cp --link "${cert}" "${INITRD_ROOT}/root/${cert##*/}"
 }
@@ -403,10 +395,6 @@ prep_sign() {
 create_efi() {
   key="$1"
   cert="$2"
-
-  # Ensure chroot has been setup
-  [ -e "${BASE_CREATED}"    ] || chroot_setup
-  [ -e "${BASE_CONFIGURED}" ] || chroot_configure
 
   rm -f                             "${INITRD_ROOT}/boot/kernel.efi"*
   ln -f "${CRAFT_STAGE}/kernel.img" "${INITRD_ROOT}/boot/kernel.img-${KERNEL_VERSION}"
@@ -430,7 +418,6 @@ create_efi() {
 }
 
 run() {
-
   # Ensure building the initrd in a native environment, so build within a chroot
   # Build within CRAFT_PART_SRC to avoid issues related to iterative builds
   printf 'Preparing to build initrd for arch %s using series %s in %s\n' \
