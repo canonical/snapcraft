@@ -164,7 +164,18 @@ class InitrdPlugin(plugins.Plugin):
     def get_build_commands(self) -> list[str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build commands...")
         return [
-            f"$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh modules={','.join(self.options.initrd_modules)} firmware={','.join(self.options.initrd_firmware)} addons={','.join(self.options.initrd_addons)} overlay={self.options.initrd_overlay} efi-image={self.options.initrd_build_efi_image} efi-image-key={self.options.initrd_efi_image_key} efi-image-cert={self.options.initrd_efi_image_cert}"
+            " ".join(
+                [
+                    "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh",
+                    f"initrd-modules={','.join(self.options.initrd_modules)}",
+                    f"initrd-firmware={','.join(self.options.initrd_firmware)}",
+                    f"initrd-addons={','.join(self.options.initrd_addons)}",
+                    f"initrd-overlay={self.options.initrd_overlay}",
+                    f"initrd-build-efi-image={self.options.initrd_build_efi_image}",
+                    f"initrd-efi-image-key={self.options.initrd_efi_image_key}",
+                    f"initrd-efi-image-cert={self.options.initrd_efi_image_cert}",
+                ]
+            )
         ]
 
     @classmethod
