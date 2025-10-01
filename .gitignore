@@ -171,5 +171,5 @@ dmypy.json
 /.kdev4/
 
 # .NET build artifacts
-**/bin/
-**/obj/
+/tests/**/bin/
+/tests/**/obj/
