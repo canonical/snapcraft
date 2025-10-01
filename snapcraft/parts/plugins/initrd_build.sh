@@ -57,9 +57,6 @@ clean() {
   umnt "${INITRD_ROOT}/proc"
   umnt "${INITRD_ROOT}/run"
   umnt "${INITRD_ROOT}/sys"
-
-  rm -f "${BASE_CREATED}" \
-        "${BASE_CONFIGURED}"
 }
 
 # setup necessary mounts for the chroot function
