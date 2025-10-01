@@ -411,8 +411,9 @@ run() {
                               "${KERNEL_MODULES}"  \
                               "${INITRD_ROOT}/usr/lib"
 
-  # Cleanup dangling link
-  rm -rf "${INITRD_ROOT}/usr/lib/modules/"*/build
+  # Cleanup dangling links if they exist
+  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build"
+  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/source"
 
   # Add modules to initrd
   # This should run even if none are supplied

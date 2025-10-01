@@ -310,10 +310,10 @@ cp -f "${CRAFT_PART_BUILD}/System.map" "${CRAFT_PART_INSTALL}/System.map-${kver}
 printf 'Copying kernel config...\n'
 cp -f "${CRAFT_PART_BUILD}/.config" "${CRAFT_PART_INSTALL}/config-${kver}"
 
-# Do some final cleanup for Ubuntu Core
-# Remove symlinks modules/*/build and modules/*/source
-rm -rf "${CRAFT_PART_INSTALL}/modules/"*/build \
-       "${CRAFT_PART_INSTALL}/modules/"*/source
+### Cleanup
+# Remove symlinks lib/modules/$kver/{build,source}
+unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/build"
+unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/source"
 
 printf 'Finalizing install directory...\n'
 # Usually under $INSTALL_MOD_PATH/lib/ but snapd expects modules/
