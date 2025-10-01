@@ -174,8 +174,21 @@ class KernelPlugin(plugins.Plugin):
     @overrides
     def get_build_commands(self) -> list[str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build commands...")
+        kconfigflavour = self.options.kernel_kconfigflavour
+        if self.options.kernel_kdefconfig != "defconfig":
+            kconfigflavour = ""
+
         return [
-            f"$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh flavour={self.options.kernel_kconfigflavour} defconfig={' '.join(self.options.kernel_kdefconfig)} configs={','.join(self.options.kernel_kconfigs)} enable-zfs={self.options.kernel_enable_zfs_support} enable-perf={self.options.kernel_enable_perf}"
+            " ".join(
+                [
+                    "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh",
+                    f"flavour={kconfigflavour}",
+                    f"defconfig={' '.join(self.options.kernel_kdefconfig)}",
+                    f"configs={','.join(self.options.kernel_kconfigs)}",
+                    f"enable-zfs={self.options.kernel_enable_zfs_support}",
+                    f"enable-perf={self.options.kernel_enable_perf}",
+                ]
+            )
         ]
 
     @classmethod

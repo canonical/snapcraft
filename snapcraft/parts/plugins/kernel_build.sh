@@ -240,8 +240,8 @@ fi
 printf 'Checking config for expected options...'
 check_config
 
-# Set release ABI information
-release_info
+# Set release ABI information if a flavour is specified
+[ -z "$flavour" ] || release_info
 
 ### Build
 printf 'Building kernel...\n'
