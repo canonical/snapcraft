@@ -303,6 +303,8 @@ install_overlay() {
 
 # Add arbitrary files to initrd
 install_addons() {
+  ramdisk_overlay_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay"
+
   echo "Installing specified initrd additions..."
   IFS=,
   for a in ${initrd_addons}; do
