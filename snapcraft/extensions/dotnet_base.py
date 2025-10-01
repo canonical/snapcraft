@@ -17,7 +17,7 @@
 from abc import abstractmethod
 from typing import Any
 
-from overrides import overrides
+from typing_extensions import override
 
 from .extension import Extension, get_extensions_data_dir
 
@@ -46,21 +46,21 @@ class DotnetExtensionBase(Extension):
         return f"{self.versioned_plugin_name}-runtime"
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_bases() -> tuple[str, ...]:
         return ("core24",)
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
-    @overrides
+    @override
     def is_experimental(base: str | None) -> bool:
         return True
 
-    @overrides
+    @override
     def get_root_snippet(self) -> dict[str, Any]:
         runtime_plugs = {
             self.runtime_plug_name: {
@@ -73,7 +73,7 @@ class DotnetExtensionBase(Extension):
 
         return {"plugs": runtime_plugs}
 
-    @overrides
+    @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         return {
             "command-chain": ["bin/command-chain/launcher.sh"],
@@ -88,11 +88,11 @@ class DotnetExtensionBase(Extension):
             ],
         }
 
-    @overrides
+    @override
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         return {}
 
-    @overrides
+    @override
     def get_parts_snippet(self) -> dict[str, Any]:
         parts = {}
         base = self.yaml_data["base"]
