@@ -31,8 +31,7 @@ umnt() {
 
 # clean any existing mounts for the chroot function
 clean() {
-  # NOTE: Do we need this? We statically define $INITRD_ROOT
-  if [ -z "${INITRD_ROOT}" ]; then
+  if [ ! -d "${INITRD_ROOT}" ]; then
     echo "No chroot to clean"
     return
   fi
