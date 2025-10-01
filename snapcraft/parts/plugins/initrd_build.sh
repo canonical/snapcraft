@@ -421,8 +421,8 @@ run() {
 
   # TOOD: consolidate into a single function; they're pretty simple
   [ -z "${initrd_firmware}" ] || install_firmware "${initrd_firmware}"
-  [ -n "${initrd_addons}"   ] || install_addons   "${initrd_addons}"
-  [ -n "${initrd_overlay}"  ] || install_overlay  "${initrd_overlay}"
+  [ -z "${initrd_addons}"   ] || install_addons   "${initrd_addons}"
+  [ -z "${initrd_overlay}"  ] || install_overlay  "${initrd_overlay}"
 
   # Configure chroot
   chroot_configure
