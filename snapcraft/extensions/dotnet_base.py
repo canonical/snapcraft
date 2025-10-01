@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any
 
 from typing_extensions import override
@@ -22,7 +22,7 @@ from typing_extensions import override
 from .extension import Extension, get_extensions_data_dir
 
 
-class DotnetExtensionBase(Extension):
+class DotnetExtensionBase(Extension, ABC):
     """
     An extension that eases the creation of snaps that integrate with
     the .NET content snaps.
@@ -31,14 +31,12 @@ class DotnetExtensionBase(Extension):
     @property
     @abstractmethod
     def runtime_content_snap_name(self) -> str:
-        """The name of the .NET runtime content snap."""
-        raise NotImplementedError("Subclasses must implement runtime_content_snap_name")
+        """The name of the .NET runtime content snap the extension will interface with."""
 
     @property
     @abstractmethod
     def versioned_plugin_name(self) -> str:
-        """The name of the versioned .NET extension (e.g dotnet8)"""
-        raise NotImplementedError("Subclasses must implement versioned_plugin_name")
+        """The name of the versioned .NET extension (such as 'dotnet8')"""
 
     @property
     def runtime_plug_name(self) -> str:
