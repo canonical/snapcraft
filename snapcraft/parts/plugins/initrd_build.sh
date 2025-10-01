@@ -5,13 +5,13 @@ parse_args() {
   # --build-efi-image|--efi-image-{key,cert} are from snapcraft/parts/plugins/v2/initrd.py
   for arg; do
     case "${arg}" in
-      modules=*)        ramdisk_modules="${arg#*=}"  ;; # valid: list, for mod.ko pass mod
-      firmware=*)       ramdisk_firmware="${arg#*=}" ;; # valid: list, relative path to "${CRAFT_STAGE}"
-      addons=*)         ramdisk_addons="${arg#*=}"   ;; # valid: list, relative path to "${CRAFT_STAGE}"
-      overlay=*)        ramdisk_overlay="${arg#*=}"  ;; # valid: list, relative path to "${CRAFT_STAGE}"
-      efi-image=*)      efi_image="${arg#*=}"        ;; # valid: True|False
-      efi-image-key=*)  efi_image_key="${arg#*=}"    ;; # valid: path/to/key.key
-      efi-image-cert=*) efi_image_cert="${arg#*=}"   ;; # valid: path/to/cert.pem
+      initrd-modules=*)         initrd_modules="${arg#*=}"         ;; # valid: list, for mod.ko pass mod
+      initrd-firmware=*)        initrd_firmware="${arg#*=}"        ;; # valid: list, relative path to "${CRAFT_STAGE}"
+      initrd-addons=*)          initrd_addons="${arg#*=}"          ;; # valid: list, relative path to "${CRAFT_STAGE}"
+      initrd-overlay=*)         initrd_overlay="${arg#*=}"         ;; # valid: list, relative path to "${CRAFT_STAGE}"
+      initrd-build-efi-image=*) initrd_build_efi_image="${arg#*=}" ;; # valid: True|False
+      initrd-efi-image-key=*)   initrd_efi_image_key="${arg#*=}"   ;; # valid: path/to/key.key
+      initrd-efi-image-cert=*)  initrd_efi_image_cert="${arg#*=}"  ;; # valid: path/to/cert.pem
       *)                echo "err: invalid option: '${arg}'" ;;
     esac
   done
@@ -305,7 +305,7 @@ install_firmware() {
   echo "Installing specified initrd firmware files..."
   (
     IFS=,
-    for fw in ${ramdisk_firmware}; do
+    for fw in ${initrd_firmware}; do
       # firmware can be from kernel build or from stage
       # firmware from kernel build takes preference
       link_files "${CRAFT_STAGE}"        "${fw}" "${ramdisk_firmware_path}/usr/lib" ||
@@ -319,14 +319,14 @@ install_firmware() {
 # Add arbitrary file hierarchies to initrd
 install_overlay() {
   ramdisk_overlay_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay"
-  link_files "${CRAFT_STAGE}/${ramdisk_overlay}" '*' "${ramdisk_overlay_path}"
+  link_files "${CRAFT_STAGE}/${initrd_overlay}" '*' "${ramdisk_overlay_path}"
 }
 
 # Add arbitrary files to initrd
 install_addons() {
   echo "Installing specified initrd additions..."
   IFS=,
-  for a in ${ramdisk_addons}; do
+  for a in ${initrd_addons}; do
     echo "Copy overlay: ${a}"
     link_files "${CRAFT_STAGE}" "${a}" "${ramdisk_overlay_path}"
   done
@@ -435,12 +435,12 @@ run() {
 
   # Add modules to initrd
   # This should run even if none are supplied
-  add_modules "${ramdisk_modules}"
+  add_modules "${initrd_modules}"
 
   # TOOD: consolidate into a single function; they're pretty simple
-  [ -z "${ramdisk_firmware}" ] || install_firmware "${ramdisk_firmware}"
-  [ -n "${ramdisk_addons}"   ] || install_addons   "${ramdisk_addons}"
-  [ -n "${ramdisk_overlay}"  ] || install_overlay  "${ramdisk_overlay}"
+  [ -z "${initrd_firmware}" ] || install_firmware "${initrd_firmware}"
+  [ -n "${initrd_addons}"   ] || install_addons   "${initrd_addons}"
+  [ -n "${initrd_overlay}"  ] || install_overlay  "${initrd_overlay}"
 
   # Configure chroot
   chroot_configure
@@ -449,9 +449,9 @@ run() {
   create_initrd
 
   # Build the EFI image if requested
-  [ "${efi_image}" = "False" ] || {
-    prep_sign  "${efi_image_key}" "${efi_image_cert}"
-    create_efi "${efi_image_key}" "${efi_image_cert}"
+  [ "${initrd_build_efi_image}" = "False" ] || {
+    prep_sign  "${initrd_efi_image_key}" "${initrd_efi_image_cert}"
+    create_efi "${initrd_efi_image_key}" "${initrd_efi_image_cert}"
   }
 }
 
