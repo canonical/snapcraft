@@ -240,23 +240,30 @@ fi
 printf 'Checking config for expected options...'
 check_config
 
-# Set release ABI information if a flavour is specified
-[ -z "$flavour" ] || release_info
 
 ### Build
 printf 'Building kernel...\n'
 # We want build_target to split as it isn't supposed to be a single arg
 # shellcheck disable=2086
-make -j "$CRAFT_PARALLEL_BUILD_COUNT"           \
-     -C "$CRAFT_PART_SRC"                       \
-      O="$CRAFT_PART_BUILD"                     \
-      KERNELVERSION="${abi_release}-${flavour}" \
-      KBUILD_BUILD_VERSION="$uploadnum"         \
-      CONFIG_DEBUG_SECTION_MISMATCH=y           \
-      LOCALVERSION=                             \
-      localver-extra=                           \
-      CFLAGS_MODULE="-DPKG_ABI=$abinum"         \
-      $build_target
+if [ -n "$flavour" ]; then
+  # Set release ABI information if a flavour is specified
+  release_info
+  make -j "$CRAFT_PARALLEL_BUILD_COUNT"           \
+       -C "$CRAFT_PART_SRC"                       \
+        O="$CRAFT_PART_BUILD"                     \
+        KERNELVERSION="${abi_release}-${flavour}" \
+        KBUILD_BUILD_VERSION="$uploadnum"         \
+        CONFIG_DEBUG_SECTION_MISMATCH=y           \
+        LOCALVERSION=                             \
+        localver-extra=                           \
+        CFLAGS_MODULE="-DPKG_ABI=$abinum"         \
+        $build_target
+else
+  make -j "$CRAFT_PARALLEL_BUILD_COUNT" \
+       -C "$CRAFT_PART_SRC"             \
+        O="$CRAFT_PART_BUILD"           \
+        $build_target
+fi
 
 printf 'Kernel build finished!\n'
 
@@ -280,7 +287,9 @@ if [ "$CRAFT_ARCH_BUILD_FOR" != "amd64" ]; then
         dtbs_install
 fi
 
-kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+# kver depends on if release information is known or not, so
+# the version varies by if we specified a flavour or not.
+kver="$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")"
 
 if [ "$enable_zfs" = "True" ]; then
   fetch_zfs
