@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from abc import ABC, abstractmethod
+from textwrap import dedent
 from typing import Any
 
 from typing_extensions import override
@@ -98,10 +99,10 @@ class DotnetExtensionBase(Extension, ABC):
         parts[f"{self.versioned_plugin_name}/launcher"] = {
             "plugin": "dump",
             "source": f"{get_extensions_data_dir()}/dotnet",
-            "override-build": """
-mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
-cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
-""",
+            "override-build": dedent("""
+                mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
+                cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
+            """),
             "stage": [
                 "bin/command-chain/launcher.sh",
             ],

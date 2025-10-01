@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from textwrap import dedent
+
 import pytest
 
 from snapcraft.extensions.dotnet9 import Dotnet9Extension
@@ -88,10 +90,10 @@ def test_get_parts_snippet(dotnet_extension):
         f"{_VERSIONED_PLUGIN_NAME}/launcher": {
             "plugin": "dump",
             "source": f"{get_extensions_data_dir()}/dotnet",
-            "override-build": """
-mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
-cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
-""",
+            "override-build": dedent("""
+                mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
+                cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
+            """),
             "stage": [
                 "bin/command-chain/launcher.sh",
             ],
