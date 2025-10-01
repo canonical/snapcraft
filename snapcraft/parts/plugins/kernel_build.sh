@@ -54,8 +54,6 @@ SECCOMP"
 
 _required_boot="SQUASHFS"
 
-  kver="$(basename "${CRAFT_PART_INSTALL}/modules/"*)"
-
 for arg; do
   case $arg in
     defconfig=*)   defconfig=${arg#*=}   ;; # valid: list
@@ -282,7 +280,7 @@ if [ "$CRAFT_ARCH_BUILD_FOR" != "amd64" ]; then
         dtbs_install
 fi
 
-kver="$(basename "${CRAFT_PART_INSTALL}/modules/"*)"
+kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
 
 if [ "$enable_zfs" = "True" ]; then
   fetch_zfs
