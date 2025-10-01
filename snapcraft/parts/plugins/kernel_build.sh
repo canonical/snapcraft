@@ -1,75 +1,23 @@
 #!/bin/sh
 
-set -eu
-
-# TODO: should these be embedded these in the plugin?
-# Required kernel configs for Ubuntu Core
-_required_generic="
-DEVTMPFS
-DEVTMPFS_MOUNT
-TMPFS_POSIX_ACL
-IPV6
-SYSVIPC
-SYSVIPC_SYSCTL
-VFAT_FS
-NLS_CODEPAGE_437
-NLS_ISO8859_1"
-
-_required_security="
-SECURITY
-SECURITY_APPARMOR
-SYN_COOKIES
-STRICT_DEVMEM
-DEFAULT_SECURITY_APPARMOR
-SECCOMP
-SECCOMP_FILTER"
-
-_required_snappy="
-RD_LZMA
-KEYS
-ENCRYPTED_KEYS
-SQUASHFS
-SQUASHFS_XATTR
-SQUASHFS_XZ
-SQUASHFS_LZO"
-
-_required_systemd="
-DEVTMPFS
-CGROUPS
-INOTIFY_USER
-SIGNALFD
-TIMERFD
-EPOLL
-NET
-SYSFS
-PROC_FS
-FHANDLE
-BLK_DEV_BSG
-NET_NS
-IPV6
-AUTOFS4_FS
-TMPFS_POSIX_ACL
-TMPFS_XATTR
-SECCOMP"
-
-_required_boot="SQUASHFS"
-
-for arg; do
-  case $arg in
-    defconfig=*)   defconfig=${arg#*=}   ;; # valid: list
-    flavour=*)     flavour=${arg#*=}     ;; # valid: string, trumps kdefconfig
-    configs=*)     configs=${arg#*=}     ;; # valid: list, trumps kconfig-flavour
-    enable-zfs=*)  enable_zfs=${arg#*=}  ;; # valid: list, true|false
-    enable-perf=*) enable_perf=${arg#*=} ;; # valid: list, true|false
-  esac
-done
-
-# Set of valid targets specified by plugin
-build_target="$KERNEL_IMAGE $KERNEL_TARGET"
+parse_args() {
+  # TODO: should these be embedded these in the plugin?
+  # Required kernel configs for Ubuntu Core
+  for arg; do
+    case ${arg} in
+      kernel-kdefconfig=*)     kernel_kdefconfig="${arg#*=}"   ;; # valid: list
+      kernel-kconfigflavour=*) kernel_kconfigflavour=${arg#*=} ;; # valid: string, trumps kdefconfig
+      kernel-kconfigs=*)       kernel_kconfigs=${arg#*=}       ;; # valid: list, trumps kconfigflavour
+      kernel-enable-zfs=*)     kernel_enable_zfs=${arg#*=}     ;; # valid: list, true|false
+      kernel-enable-perf=*)    kernel_enable_perf=${arg#*=}    ;; # valid: list, true|false
+      *) echo "err: invalid option: '${arg}'" ;;
+    esac
+  done
+}
 
 # Remove artifacts from prior builds
 cleanup() {
-  printf 'Cleaning previous build first...\n'
+  echo "Cleaning previous build first..."
 
   rm -rf "${CRAFT_PART_INSTALL}/modules"
   unlink "${CRAFT_PART_INSTALL}/lib/modules"
@@ -77,65 +25,65 @@ cleanup() {
 
 # Create specified defconfig
 gen_defconfig() {
-  make -j1                    \
-       -C "$CRAFT_PART_SRC"   \
-        O="$CRAFT_PART_BUILD" \
-        "$defconfig"
+  make -j1                      \
+       -C "${CRAFT_PART_SRC}"   \
+        O="${CRAFT_PART_BUILD}" \
+        "${kernel_kdefconfig}"
 }
 
 # Update config with flavour
 gen_flavour_config() {
-  OLDPWD="$PWD"
-  ubuntuconfig="${CRAFT_PART_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${flavour}"
+  OLDPWD="${PWD}"
+  ubuntuconfig="${CRAFT_PART_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${kernel_kconfigflavour}"
   cd "${CRAFT_PART_SRC}"
 
   # Generate the configs
   # Don't let failures stop us
   fakeroot debian/rules clean genconfigs || true
 
-  cat "$ubuntuconfig" > "${CRAFT_PART_BUILD}/.config"
+  cat "${ubuntuconfig}" > "${CRAFT_PART_BUILD}/.config"
 
   fakeroot debian/rules clean
 
   rm -rf CONFIGS
 
-  cd "$OLDPWD"
+  cd "${OLDPWD}"
 }
 
 # Add any specified kconfig overrides
 add_kconfigs() {
-  kconfigs="$1"
-  _kconfigs="$(echo "$kconfigs" | sed -e 's/,/\n/g')"
+  kconfigs="${1}"
+  _kconfigs="$(echo "${kconfigs}" | sed -e 's/,/\n/g')"
 
-  printf 'Applying extra config....'
+  echo "Applying extra config...."
 
   # Need to echo the list twice to force all Kconfigs to pickup the change
-  echo  "$_kconfigs"                    >  "${CRAFT_PART_BUILD}/.config_snap"
+  echo  "${_kconfigs}"                  >  "${CRAFT_PART_BUILD}/.config_snap"
   cat   "${CRAFT_PART_BUILD}/.config"   >> "${CRAFT_PART_BUILD}/.config_snap"
-  echo  "$_kconfigs"                    >> "${CRAFT_PART_BUILD}/.config_snap"
+  echo  "${_kconfigs}"                  >> "${CRAFT_PART_BUILD}/.config_snap"
   mv -f "${CRAFT_PART_BUILD}/.config_snap" "${CRAFT_PART_BUILD}/.config"
 }
 
 # Make sure the config is valid
 remake_config() {
   bash -c 'yes "" || true' |
-    make -j1                    \
-         -C "$CRAFT_PART_SRC"   \
-          O="$CRAFT_PART_BUILD" \
+    make -j1                      \
+         -C "${CRAFT_PART_SRC}"   \
+          O="${CRAFT_PART_BUILD}" \
           oldconfig
 }
 
 # Check for Ubuntu Core and snap specific options
 check_config() {
-  echo "$_required_boot"     \
-       "$_required_generic"  \
-       "$_required_security" \
-       "$_required_snappy"   \
-       "$_required_systemd"  | while read -r config; do
+  echo "${_required_boot}"     \
+       "${_required_generic}"  \
+       "${_required_security}" \
+       "${_required_snappy}"   \
+       "${_required_systemd}"  | while read -r config; do
     if ! grep "^CONFIG_${config}=" "${CRAFT_PART_BUILD}/.config"; then
       printf '*** WARNING ***\n'
       printf 'Your kernel config is missing:\n'
-      printf '%s\n' "$config"
+      printf '%s\n' "${config}"
       printf 'Which is recommended or required by Ubuntu Core!\n'
       printf 'Continuing, but you should check your .config\n'
     fi
@@ -144,7 +92,7 @@ check_config() {
 
 # Gather kernel release info to encode in kernel artifacts
 release_info() {
-  printf 'Gathering release information\n'
+  echo "Gathering release information"
   DEBIAN="${CRAFT_PART_SRC}/debian"
   src_pkg_name=$(sed -n '1s/^\(.*\) (.*).*$/\1/p'                                    "${DEBIAN}/changelog")
   release=$(     sed -n '1s/^'"${src_pkg_name}"'.*(\(.*\)-.*).*$/\1/p'               "${DEBIAN}/changelog")
@@ -155,28 +103,27 @@ release_info() {
 }
 
 fetch_zfs() {
-  printf 'Cloning ZFS for %s\n' "$UBUNTU_SERIES"
-
+  echo "Cloning ZFS for ${UBUNTU_SERIES}"
   if [ ! -d "${CRAFT_PART_BUILD}/zfs" ]; then
     git clone \
       --depth 1 \
-      --branch "applied/ubuntu/$UBUNTU_SERIES" \
+      --branch "applied/ubuntu/${UBUNTU_SERIES}" \
       https://git.launchpad.net/ubuntu/+source/zfs-linux \
       "${CRAFT_PART_BUILD}/zfs"
   fi
 }
 
 build_zfs() {
-  printf 'Building zfs modules...\n'
+  echo "Building zfs modules..."
   cd "${CRAFT_PART_BUILD}/zfs"
 
   ./configure \
-    --with-linux="$CRAFT_PART_SRC"         \
-    --with-linux-obj="$CRAFT_PART_BUILD"   \
-    --host="$CRAFT_ARCH_TRIPLET_BUILD_FOR" \
+    --with-linux="${CRAFT_PART_SRC}"         \
+    --with-linux-obj="${CRAFT_PART_BUILD}"   \
+    --host="${CRAFT_ARCH_TRIPLET_BUILD_FOR}" \
     --with-config=kernel
 
-  make -j "$CRAFT_PARALLEL_BUILD_COUNT"
+  make -j "${CRAFT_PARALLEL_BUILD_COUNT}"
   make install DESTDIR="${CRAFT_PART_INSTALL}/zfs"
 
   mv -f "${CRAFT_PART_INSTALL}/zfs/lib/modules/${kver}/extra" \
@@ -186,145 +133,209 @@ build_zfs() {
 }
 
 build_perf() {
-  printf 'Building perf binary...\n'
+  echo "Building perf binary..."
 
   mkdir -p "${CRAFT_PART_BUILD}/tools/perf"
 
   # Override source and build directories
-  make -j "$CRAFT_PARALLEL_BUILD_COUNT"  \
-       -C "${CRAFT_PART_SRC}/tools/perf" \
+  make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
+       -C "${CRAFT_PART_SRC}/tools/perf"  \
         O="${CRAFT_PART_BUILD}/tools/perf"
 
   install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" "${CRAFT_PART_INSTALL}/bin/perf"
 }
 
 redepmod() {
-  printf 'Rebuilding module dependencies\n'
-  depmod -b "$CRAFT_PART_INSTALL" "$kver"
+  echo "Rebuilding module dependencies"
+  depmod -b "${CRAFT_PART_INSTALL}" "${kver}"
 }
 
-# Cleanup previous builds
-if [ -e "${CRAFT_PART_INSTALL}/modules" ] ||\
-   [ -L "${CRAFT_PART_INSTALL}/lib/modules" ]; then
-  cleanup
-fi
+run() {
+  # Cleanup previous builds
+  if [ -e "${CRAFT_PART_INSTALL}/modules" ] ||\
+     [ -L "${CRAFT_PART_INSTALL}/lib/modules" ]; then
+    cleanup
+  fi
 
-### Setup
-# Create new config if one does not exist
-[ -e "${CRAFT_PART_BUILD}/.config" ] || {
-  # Privilege a specified flavour over all else
-  if [ -n "$flavour" ] && [ "$flavour" != "generic" ]; then
-      printf "Using Ubuntu config flavour %s\n" "$flavour"
+  ### Setup
+  # Create new config if one does not exist
+  [ -e "${CRAFT_PART_BUILD}/.config" ] || {
+    # Privilege a specified flavour over all else
+    if [ -n "${kernel_kconfigflavour}" ] && [ "${kernel_kconfigflavour}" != "generic" ]; then
+        echo "Using Ubuntu config flavour ${kernel_kconfigflavour}"
+        gen_flavour_config
+      # Privilege specified config(s) over most
+      elif [ -n "${kernel_kdefconfig}" ] && [ "${kernel_kdefconfig}" != "defconfig" ]; then
+        echo "Using defconfig: ${kernel_kdefconfig}"
+        gen_defconfig
+    # Choose a default otherwise
+    else
+      echo "Using generic Ubuntu config flavour"
       gen_flavour_config
-    # Privilege specified config(s) over most
-    elif [ -n "$defconfig" ] && [ "$defconfig" != "defconfig" ]; then
-      printf "Using defconfig: %s\n" "$defconfig"
-      gen_defconfig
-  # Choose a default otherwise
+    fi
+
+    # Add any crafter-specified configs
+    if [ -n "${kernel_kconfigs}" ]; then
+      add_kconfigs "${kernel_kconfigs}"
+    fi
+
+    # Rebuild config to a valid one
+    echo "Remaking oldconfig...."
+    remake_config
+  }
+
+  # Double check the config is valid
+  echo "Checking config for expected options..."
+  check_config
+
+
+  ### Build
+  echo "Building kernel..."
+  # We want build_target to split as it isn't supposed to be a single arg
+  # shellcheck disable=2086
+  if [ -n "${kernel_kconfigflavour}" ]; then
+    # Set release ABI information if a flavour is specified
+    release_info
+    make -j "${CRAFT_PARALLEL_BUILD_COUNT}"         \
+         -C "${CRAFT_PART_SRC}"                     \
+          O="${CRAFT_PART_BUILD}"                   \
+          KERNELVERSION="${abi_release}-${kernel_kconfigflavour}" \
+          KBUILD_BUILD_VERSION="${uploadnum}"       \
+          CONFIG_DEBUG_SECTION_MISMATCH=y           \
+          LOCALVERSION=                             \
+          localver-extra=                           \
+          CFLAGS_MODULE="-DPKG_ABI=${abinum}"       \
+          ${build_target}
   else
-    printf 'Using generic Ubuntu config flavour\n'
-    gen_flavour_config
+    make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
+         -C "${CRAFT_PART_SRC}"             \
+          O="${CRAFT_PART_BUILD}"           \
+          ${build_target}
   fi
 
-  # Add any crafter-specified configs
-  if [ -n "$configs" ]; then
-    add_kconfigs "$configs"
+  echo "Kernel build finished!"
+
+  ### Install
+  # Install the kernel modules, stripped
+  echo "Installing kernel modules..."
+  make -j "${CRAFT_PARALLEL_BUILD_COUNT}"        \
+       -C "${CRAFT_PART_SRC}"                    \
+        O="${CRAFT_PART_BUILD}"                  \
+        INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}" \
+        INSTALL_MOD_STRIP=1                      \
+        modules_install
+
+  # Install device trees, if required
+  if [ "${CRAFT_ARCH_BUILD_FOR}" != "amd64" ]; then
+    echo "Installing device trees..."
+    make -j "${CRAFT_PARALLEL_BUILD_COUNT}"              \
+         -C "${CRAFT_PART_SRC}"                          \
+          O="${CRAFT_PART_BUILD}"                        \
+          INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs" \
+          dtbs_install
   fi
 
-  # Rebuild config to a valid one
-  printf 'Remaking oldconfig....'
-  remake_config
+  # kver depends on if release information is known or not, so
+  # the version varies by if we specified a flavour or not.
+  kver="$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")"
+
+  if [ "${kernel_enable_zfs}" = "True" ]; then
+    fetch_zfs
+    build_zfs && redepmod
+  fi || echo "Not building ZFS"
+
+  if [ "${kernel_enable_perf}" = "True" ]; then
+    build_perf
+  fi || echo "Not building perf"
+
+  # Install kernel artifacts
+  echo "Copying kernel image..."
+  mv -f "arch/${ARCH}/boot/${KERNEL_IMAGE}" "${CRAFT_PART_INSTALL}/kernel.img"
+
+  echo "Copying System map..."
+  cp -f "${CRAFT_PART_BUILD}/System.map" "${CRAFT_PART_INSTALL}/System.map-${kver}"
+
+  echo "Copying kernel config..."
+  cp -f "${CRAFT_PART_BUILD}/.config" "${CRAFT_PART_INSTALL}/config-${kver}"
+
+  # Remove symlinks lib/modules/$kver/{build,source}
+  unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/build"
+  unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/source"
+
+  echo "Finalizing install directory..."
+  # Usually under $INSTALL_MOD_PATH/lib/ but snapd expects modules/
+  mv -f "${CRAFT_PART_INSTALL}/lib/modules" "${CRAFT_PART_INSTALL}"
+
+  # If there is firmware dir, move it to snap root as snapd expects firmware/
+  # This could have been from stage packages or from kernel build
+  if [ -d "${CRAFT_PART_INSTALL}/lib/firmware" ]; then
+    mv -f "${CRAFT_PART_INSTALL}/lib/firmware" "${CRAFT_PART_INSTALL}"
+  fi
+
+  # Create symlinks for canonical paths to modules, firmware
+  ln -sf ../modules  "${CRAFT_PART_INSTALL}/lib/modules"
+  ln -sf ../firmware "${CRAFT_PART_INSTALL}/lib/firmware"
 }
 
-# Double check the config is valid
-printf 'Checking config for expected options...'
-check_config
+main() {
+  set -eux
 
+  # Kernel configs required or strongly encouraged for Ubuntu Core and snaps
+  readonly _required_generic="
+  DEVTMPFS
+  DEVTMPFS_MOUNT
+  TMPFS_POSIX_ACL
+  IPV6
+  SYSVIPC
+  SYSVIPC_SYSCTL
+  VFAT_FS
+  NLS_CODEPAGE_437
+  NLS_ISO8859_1"
 
-### Build
-printf 'Building kernel...\n'
-# We want build_target to split as it isn't supposed to be a single arg
-# shellcheck disable=2086
-if [ -n "$flavour" ]; then
-  # Set release ABI information if a flavour is specified
-  release_info
-  make -j "$CRAFT_PARALLEL_BUILD_COUNT"           \
-       -C "$CRAFT_PART_SRC"                       \
-        O="$CRAFT_PART_BUILD"                     \
-        KERNELVERSION="${abi_release}-${flavour}" \
-        KBUILD_BUILD_VERSION="$uploadnum"         \
-        CONFIG_DEBUG_SECTION_MISMATCH=y           \
-        LOCALVERSION=                             \
-        localver-extra=                           \
-        CFLAGS_MODULE="-DPKG_ABI=$abinum"         \
-        $build_target
-else
-  make -j "$CRAFT_PARALLEL_BUILD_COUNT" \
-       -C "$CRAFT_PART_SRC"             \
-        O="$CRAFT_PART_BUILD"           \
-        $build_target
-fi
+  readonly _required_security="
+  SECURITY
+  SECURITY_APPARMOR
+  SYN_COOKIES
+  STRICT_DEVMEM
+  DEFAULT_SECURITY_APPARMOR
+  SECCOMP
+  SECCOMP_FILTER"
 
-printf 'Kernel build finished!\n'
+  readonly _required_snappy="
+  RD_LZMA
+  KEYS
+  ENCRYPTED_KEYS
+  SQUASHFS
+  SQUASHFS_XATTR
+  SQUASHFS_XZ
+  SQUASHFS_LZO"
 
-### Install
-# Install the kernel modules, stripped
-printf 'Installing kernel modules...\n'
-make -j "$CRAFT_PARALLEL_BUILD_COUNT"        \
-     -C "$CRAFT_PART_SRC"                    \
-      O="$CRAFT_PART_BUILD"                  \
-      INSTALL_MOD_PATH="$CRAFT_PART_INSTALL" \
-      INSTALL_MOD_STRIP=1                    \
-      modules_install
+  readonly _required_systemd="
+  DEVTMPFS
+  CGROUPS
+  INOTIFY_USER
+  SIGNALFD
+  TIMERFD
+  EPOLL
+  NET
+  SYSFS
+  PROC_FS
+  FHANDLE
+  BLK_DEV_BSG
+  NET_NS
+  IPV6
+  AUTOFS4_FS
+  TMPFS_POSIX_ACL
+  TMPFS_XATTR
+  SECCOMP"
 
-# Install device trees, if required
-if [ "$CRAFT_ARCH_BUILD_FOR" != "amd64" ]; then
-  printf 'Installing device trees...\n'
-  make -j "$CRAFT_PARALLEL_BUILD_COUNT"                \
-       -C "$CRAFT_PART_SRC"                            \
-        O="$CRAFT_PART_BUILD"                          \
-        INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs" \
-        dtbs_install
-fi
+  readonly _required_boot="SQUASHFS"
 
-# kver depends on if release information is known or not, so
-# the version varies by if we specified a flavour or not.
-kver="$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")"
+  # Set of valid targets specified by plugin
+  readonly build_target="${KERNEL_IMAGE} ${KERNEL_TARGET}"
 
-if [ "$enable_zfs" = "True" ]; then
-  fetch_zfs
-  build_zfs && redepmod
-fi || printf 'Not building ZFS\n'
+  parse_args "$@"
+  run
+}
 
-if [ "$enable_perf" = "True" ]; then
-  build_perf
-fi || printf 'Not building perf\n'
-
-# Install kernel artifacts
-printf 'Copying kernel image...\n'
-mv -f "arch/${ARCH}/boot/${KERNEL_IMAGE}" "${CRAFT_PART_INSTALL}/kernel.img"
-
-printf 'Copying System map...\n'
-cp -f "${CRAFT_PART_BUILD}/System.map" "${CRAFT_PART_INSTALL}/System.map-${kver}"
-
-printf 'Copying kernel config...\n'
-cp -f "${CRAFT_PART_BUILD}/.config" "${CRAFT_PART_INSTALL}/config-${kver}"
-
-### Cleanup
-# Remove symlinks lib/modules/$kver/{build,source}
-unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/build"
-unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/source"
-
-printf 'Finalizing install directory...\n'
-# Usually under $INSTALL_MOD_PATH/lib/ but snapd expects modules/
-mv -f "${CRAFT_PART_INSTALL}/lib/modules" "${CRAFT_PART_INSTALL}"
-
-# If there is firmware dir, move it to snap root as snapd expects firmware/
-# This could have been from stage packages or from kernel build
-if [ -d "${CRAFT_PART_INSTALL}/lib/firmware" ]; then
-  mv -f "${CRAFT_PART_INSTALL}/lib/firmware" "${CRAFT_PART_INSTALL}"
-fi
-
-# Create symlinks for canonical paths to modules, firmware
-ln -sf ../modules  "${CRAFT_PART_INSTALL}/lib/modules"
-ln -sf ../firmware "${CRAFT_PART_INSTALL}/lib/firmware"
+main "$@"

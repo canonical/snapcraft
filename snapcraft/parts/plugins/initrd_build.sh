@@ -12,7 +12,7 @@ parse_args() {
       initrd-build-efi-image=*) initrd_build_efi_image="${arg#*=}" ;; # valid: True|False
       initrd-efi-image-key=*)   initrd_efi_image_key="${arg#*=}"   ;; # valid: path/to/key.key
       initrd-efi-image-cert=*)  initrd_efi_image_cert="${arg#*=}"  ;; # valid: path/to/cert.pem
-      *)                echo "err: invalid option: '${arg}'" ;;
+      *) echo "err: invalid option: '${arg}'" ;;
     esac
   done
 }
