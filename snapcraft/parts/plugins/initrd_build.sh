@@ -222,30 +222,7 @@ link_files() {
       return 1
     }
   done
-  # if [ "$src" = '*' ] || [ -d "${ref_dir}/${src}" ]; then
-  #   # Preserve any spaces in name
-  #   f=$(find "${ref_dir}/${src#\**}" -mindepth 1 -type f)
-  #   for ff in $f; do
-  #     file_list="$file_list $ff"
-  #   done
-  # else file_list="${ref_dir}/${src}"
-  # fi
 
-  # for f in echo "$file_list"; do
-  #   if [ -L "$f" ]; then
-  #        rel_path=$(realpath -e  --relative-to="$ref_dir" "$f")
-  #   else rel_path=$(realpath -se --relative-to="$ref_dir" "$f")
-  #   fi
-
-  #   printf 'Installing %s to %s/%s\n' "$f" "$dest_dir" "${rel_path%/*}"
-
-  #   # Copy files from host to dest, bail if the copy fails
-  #   [ -d "${dest_dir}/${rel_path%/*}" ] || mkdir -p "${dest_dir}/${rel_path%/*}"
-  #   cp -rf "$f" "${dest_dir}/${rel_path%/*}" || {
-  #     printf 'Failed to copy file %s to destination %s/%s\n' "$f" "$dest_dir" "${rel_path%/*}"
-  #     return 1
-  #   }
-  # done
   return 0
 }
 
@@ -308,10 +285,12 @@ install_firmware() {
     for fw in ${initrd_firmware}; do
       # firmware can be from kernel build or from stage
       # firmware from kernel build takes preference
-      link_files "${CRAFT_STAGE}"        "${fw}" "${ramdisk_firmware_path}/usr/lib" ||
-      link_files "${CRAFT_PART_INSTALL}" "${fw}" "${ramdisk_firmware_path}/usr/lib" || {
-          echo "Firmware '${fw}' is missing; ignoring it"
-      }
+    if [ -e "${CRAFT_STAGE}/${fw}" ]; then
+      cp --link --recursive --force "${CRAFT_STAGE}/${fw}" "${ramdisk_firmware_path}/usr/lib"
+    elif   [ -e "${CRAFT_PART_INSTALL}/${fw}" ]; then
+      cp --link --recursive --force "${CRAFT_PART_INSTALL}/${fw}" "${ramdisk_firmware_path}/usr/lib"
+    else printf 'Firmware %s is missing; ignoring it\n' "$fw"
+    fi
     done
   )
 }
@@ -328,7 +307,7 @@ install_addons() {
   IFS=,
   for a in ${initrd_addons}; do
     echo "Copy overlay: ${a}"
-    link_files "${CRAFT_STAGE}" "${a}" "${ramdisk_overlay_path}"
+    cp --link --recursive --force "${CRAFT_STAGE}/${a}" "${ramdisk_overlay_path}"
   done
   unset IFS
 }
@@ -427,8 +406,9 @@ run() {
   echo "Installing firmware and modules into chroot"
   rm -rf "${INITRD_ROOT}/usr/lib/firmware/"* \
          "${INITRD_ROOT}/usr/lib/modules"/*
-  cp --archive --link --force "${KERNEL_FIRMWARE}" "${INITRD_ROOT}/usr/lib/firmware"
-  cp --archive --link --force "${KERNEL_MODULES}"  "${INITRD_ROOT}/usr/lib/modules"
+  cp --archive --link --force "${KERNEL_FIRMWARE}" \
+                              "${KERNEL_MODULES}"  \
+                              "${INITRD_ROOT}/usr/lib"
 
   # Cleanup dangling link
   rm -rf "${INITRD_ROOT}/usr/lib/modules/"*/build
