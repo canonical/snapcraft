@@ -88,10 +88,20 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     def validate_plugin_options(self) -> Self:
         # validate if initrd-efi-image-key or initrd-efi-image-cert is set
         # initrd-build-efi-image is also set
-        if (self.initrd_efi_image_key or self.initrd_efi_image_cert) and not (
-            self.initrd_build_efi_image
-            and self.initrd_efi_image_key
-            and self.initrd_efi_image_cert
+        if (
+            (
+                self.initrd_efi_image_key
+                != "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+            )
+            and (
+                self.initrd_efi_image_cert
+                != "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
+            )
+            and not (
+                self.initrd_build_efi_image
+                and self.initrd_efi_image_key
+                and self.initrd_efi_image_cert
+            )
         ):
             raise ValueError(
                 "initrd-efi-image-key and initrd-efi-image-cert must be both set if any is set"
