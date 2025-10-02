@@ -274,8 +274,6 @@ add_modules() {
 
 # Add additional firmware files to initrd
 install_firmware() {
-  ramdisk_firmware_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-firmware"
-
   mkdir -p "${ramdisk_firmware_path}"
 
   echo "Installing specified initrd firmware files..."
@@ -302,8 +300,6 @@ install_overlay() {
 
 # Add arbitrary files to initrd
 install_addons() {
-  ramdisk_overlay_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay"
-
   echo "Installing specified initrd additions..."
   IFS=,
   for a in ${initrd_addons}; do
@@ -315,17 +311,15 @@ install_addons() {
 
 # Create the initrd
 create_initrd() {
-  # uc_initrd_main_lib_snapd="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd"
-
   if [ -e "${CRAFT_PART_INSTALL}/initrd.img" ]; then
     rm -f "${CRAFT_PART_INSTALL}/initrd.img"
   fi
 
   # on >=core24 snapd version in initrd should be in top-level of kernel snap
-  # if [ "$UBUNTU_SERIES" = "noble" ]; then
-  #     cp -f "${uc_initrd_main_lib_snapd}/info" \
-  #       "${CRAFT_PART_INSTALL}/snapd-info"
-  # fi
+  if [ "$UBUNTU_SERIES" = "noble" ]; then
+      cp -f "${uc_initrd_main_lib_snapd}/info" \
+        "${CRAFT_PART_INSTALL}/snapd-info"
+  fi
 
   # TODO: fix bug in uci
   echo "Workaround an ubuntu-core-initramfs bug..."
@@ -454,6 +448,12 @@ main() {
   # Simple tracker for chroot state
   readonly BASE_CREATED="${CRAFT_PART_SRC}/.base_created"
   readonly BASE_CONFIGURED="${CRAFT_PART_SRC}/.base_configured"
+
+  # Paths for specific additions as specified in plugin options
+  readonly ramdisk_overlay_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay"
+  readonly ramdisk_firmware_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-firmware"
+
+  readonly uc_initrd_main_lib_snapd="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd"
 
   # clean if we fail
   trap 'clean "${INITRD_ROOT}"' EXIT INT
