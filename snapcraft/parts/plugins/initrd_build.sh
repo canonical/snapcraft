@@ -113,7 +113,6 @@ chroot_configure() {
 
   if [ "${series}" = "focal" ] || [ "${series}" = "jammy" ]; then
     # snapd deb is required
-    # DEBIAN_FRONTEND=noninteractive?
     chroot_run "apt-get install --no-install-recommends -y snapd"
     chroot_run "apt-get install --no-install-recommends -y systemd"
   else
@@ -127,7 +126,6 @@ chroot_configure() {
   setup_ppa "${PPA_FINGERPRINT}"
 
   chroot_run "apt-get update"
-  # DEBIAN_FRONTEND=noninteractive?
   chroot_run "apt-get install --no-install-recommends -y ubuntu-core-initramfs"
 
   # TODO: does this belong in uci?
@@ -272,17 +270,10 @@ create_initrd() {
         "${CRAFT_PART_INSTALL}/snapd-info"
   fi
 
-  # TODO: fix bug in uci
-  echo "Workaround an ubuntu-core-initramfs bug..."
-  for feature in kernel-modules uc-firmware uc-overlay; do
-    mv -rf "${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/${feature}" \
-      "${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/${feature}"
-  done
-
   rm -rf "${INITRD_ROOT}/boot/initrd"*
 
   chroot_run "ubuntu-core-initramfs create-initrd \
-                --kernelver \"${KERNEL_VERSION}\"           \
+                --kernelver \"${KERNEL_VERSION}\" \
                 --output /boot/initrd.img"
 
   install -Dm644 "${INITRD_ROOT}/boot/initrd.img-${KERNEL_VERSION}" \
