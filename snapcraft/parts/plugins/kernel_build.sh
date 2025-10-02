@@ -1,8 +1,6 @@
 #!/bin/sh
 
 parse_args() {
-  # TODO: should these be embedded these in the plugin?
-  # Required kernel configs for Ubuntu Core
   for arg; do
     case ${arg} in
       kernel-kdefconfig=*)     kernel_kdefconfig="${arg#*=}"   ;; # valid: list
@@ -281,6 +279,7 @@ main() {
   set -eux
 
   # Kernel configs required or strongly encouraged for Ubuntu Core and snaps
+  # TODO: should these be embedded these in the plugin?
   readonly _required_generic="
   DEVTMPFS
   DEVTMPFS_MOUNT
