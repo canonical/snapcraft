@@ -11,8 +11,8 @@ configuration. Both these plugins can be used in combination with the
 :ref:`reference-ros-1-extension` to build core20 snaps.
 
 
-Keywords
---------
+Keys
+----
 
 This plugin uses the same keys as the Catkin plugin, and provides the following unique
 keys for core20 snaps.
@@ -22,6 +22,7 @@ catkin-tools-packages
 ~~~~~~~~~~~~~~~~~~~~~
 
 **Type**: list of strings
+
 **Default**: all workspace packages
 
 The list of catkin packages to build. If not set, all packages in the catkin workspace
@@ -33,6 +34,7 @@ catkin-tools-cmake-args
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 **Type**: list of strings
+
 **Default**: []
 
 The arguments to pass to CMake.
@@ -61,19 +63,19 @@ The Catkin plugin is designed to work alongside the :ref:`reference-ros-1-extens
 
 During the build step, the plugin performs the following actions:
 
-#. Source `catkin workspaces <http://wiki.ros.org/catkin/workspaces>`_ in any declared
-   build snaps, stage snaps, and on the host system.
-#. Install any missing project dependencies with rosdep.
-#. Initialize the workspace to use catkin tools.
-#. Overwrite the default catkin build, so that builds aren't affected by profile
-   changes.
-#. Configure the project for snap builds.
-#. Run ``catkin build``, passing the arguments in the ``catkin-tools-cmake-args`` key to
-   CMake.
+* Source `catkin workspaces <http://wiki.ros.org/catkin/workspaces>`_ in any declared
+  build snaps, stage snaps, and on the host system.
+* Install any missing project dependencies with rosdep.
+* Initialize the workspace to use catkin tools.
+* Overwrite the default catkin build, so that builds aren't affected by profile
+  changes.
+* Configure the project for snap builds.
+* Run ``catkin build``, passing the arguments in the ``catkin-tools-cmake-args`` key to
+  CMake.
 
 
-Example snap
-------------
+Example
+-------
 
 The test suite in Snapcraft has a `catkin-tools-noetic-hello snap`_ built with the
 Catkin Tools plugin.

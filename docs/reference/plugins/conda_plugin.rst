@@ -8,14 +8,15 @@ The Conda plugin builds parts by retrieving packages with the `conda
 plugin is most commonly used to incorporate Python packages into snaps.
 
 
-Keywords
---------
+Keys
+----
 
 The plugin provides the following unique keys for core20 and newer snaps.
 
 
 conda-packages
 ~~~~~~~~~~~~~~
+
 **Type**: list of strings
 
 **Default**: ``unset``
@@ -25,6 +26,7 @@ The conda packages to install.
 
 conda-python-version
 ~~~~~~~~~~~~~~~~~~~~
+
 **Type**: string
 
 **Default**: ``unset``
@@ -37,6 +39,7 @@ isn't installed in the environment.
 
 conda-miniconda-version
 ~~~~~~~~~~~~~~~~~~~~~~~
+
 **Type**: string
 
 **Default**: ``latest``
@@ -54,12 +57,12 @@ This plugin installs ``curl`` for use during the Miniconda installation.
 How it works
 ------------
 
-#. Download the Miniconda installation script with ``curl``, respecting the version
-   declared with ``conda-miniconda-version``.
-#. Install Miniconda in the part's build environment with the ``miniconda.sh`` script.
-#. Create a conda environment in the part's install directory with ``conda create``. In
-   this environment, conda installs any packages declared with ``conda-packages`` and
-   the Python version declared with ``conda-python-version``.
+* Download the Miniconda installation script with ``curl``, respecting the version
+  declared with ``conda-miniconda-version``.
+* Install Miniconda in the part's build environment with the ``miniconda.sh`` script.
+* Create a conda environment in the part's install directory with ``conda create``. In
+  this environment, conda installs any packages declared with ``conda-packages`` and
+  the Python version declared with ``conda-python-version``.
 
 
 Example

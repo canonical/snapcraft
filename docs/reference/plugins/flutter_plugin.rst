@@ -7,14 +7,15 @@ The Flutter plugin simplifies the building of applications that employ the `Flut
 <https://flutter.dev/>`_ UI toolkit.
 
 
-Keywords
---------
+Keys
+----
 
 This plugin provides the following unique keys for core22 and newer snaps.
 
 
 flutter-channel
 ~~~~~~~~~~~~~~~
+
 **Type**: ``stable``, ``master``, or ``beta``
 
 **Default**: ``stable``
@@ -24,6 +25,7 @@ The flutter channel to use for the build.
 
 flutter-target
 ~~~~~~~~~~~~~~
+
 **Type**: string
 
 **Default**: ``lib/main.dart``
@@ -49,14 +51,14 @@ How it works
 
 During the build step, the plugin performs the following actions:
 
-#. Clone `Flutter's GitHub repository <https://github.com/flutter/flutter>`_, using the
-   channel declared by the ``flutter-channel`` key. If a channel isn't specified, the
-   ``stable`` channel is cloned.
-#. Populate Flutter's cache of binary artifacts with ``flutter precache``.
-#. Download any dependencies listed in the Flutter project's ``pubspec.yaml`` with
-   ``flutter pub get``.
-#. Build the app with ``flutter build``.
-#. Copy the resulting artifacts to the part's install directory.
+* Clone `Flutter's GitHub repository <https://github.com/flutter/flutter>`_, using the
+  channel declared by the ``flutter-channel`` key. If a channel isn't specified, the
+  ``stable`` channel is cloned.
+* Populate Flutter's cache of binary artifacts with ``flutter precache``.
+* Download any dependencies listed in the Flutter project's ``pubspec.yaml`` with
+  ``flutter pub get``.
+* Build the app with ``flutter build``.
+* Copy the resulting artifacts to the part's install directory.
 
 
 Example

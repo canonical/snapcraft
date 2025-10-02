@@ -7,8 +7,8 @@ The Crystal plugin builds parts whose sources are written in the Crystal program
 language.
 
 
-Keywords
---------
+Keys
+----
 
 This plugin provides the following unique keys for core20 snaps.
 
