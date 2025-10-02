@@ -1,19 +1,30 @@
 #!/bin/sh
 
+# parse_args parses arguments passed to this script
 parse_args() {
   for arg; do
     case ${arg} in
-      kernel-kdefconfig=*)     kernel_kdefconfig="${arg#*=}"   ;; # valid: list
-      kernel-kconfigflavour=*) kernel_kconfigflavour=${arg#*=} ;; # valid: string, trumps kdefconfig
-      kernel-kconfigs=*)       kernel_kconfigs=${arg#*=}       ;; # valid: list, trumps kconfigflavour
-      kernel-enable-zfs=*)     kernel_enable_zfs=${arg#*=}     ;; # valid: list, true|false
-      kernel-enable-perf=*)    kernel_enable_perf=${arg#*=}    ;; # valid: list, true|false
+      kernel-kdefconfig=*)
+      # kernel_kdefconfig is a list one or more kernel defconfigs
+      kernel_kdefconfig="${arg#*=}"           ;;
+      kernel-kconfigflavour=*)
+      # kernel_kconfigflavour is a single Ubuntu-specific kernel flavour and supercedes defconfig
+      kernel_kconfigflavour=${arg#*=}         ;;
+      kernel-kconfigs=*)
+      # kernel_kconfigs is a list of of kernel kconfigs to override in the generated config
+      kernel_kconfigs=${arg#*=}               ;;
+      kernel-enable-zfs=*)
+      # enable_zfs builds the zfs-linux package for the kernel if true
+      kernel_enable_zfs=${arg#*=}             ;;
+      kernel-enable-perf=*)
+      # enable_perf builds the perf binary if true
+      kernel_enable_perf=${arg#*=}            ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac
   done
 }
 
-# Remove artifacts from prior builds
+# cleanup removes artifacts from prior builds
 cleanup() {
   echo "Cleaning previous build first..."
 
@@ -21,7 +32,7 @@ cleanup() {
   unlink "${CRAFT_PART_INSTALL}/lib/modules"
 }
 
-# Create specified defconfig
+# gen_defconfig creates a config from one or more defconfigs
 gen_defconfig() {
   make -j1                      \
        -C "${CRAFT_PART_SRC}"   \
@@ -29,7 +40,7 @@ gen_defconfig() {
         "${kernel_kdefconfig}"
 }
 
-# Update config with flavour
+# gen_flavour_config generates a kernel config based on the chosen flavour
 gen_flavour_config() {
   OLDPWD="${PWD}"
   ubuntuconfig="${CRAFT_PART_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${kernel_kconfigflavour}"
@@ -48,7 +59,7 @@ gen_flavour_config() {
   cd "${OLDPWD}"
 }
 
-# Add any specified kconfig overrides
+# add_kconfigs adds any specified config options
 add_kconfigs() {
   kconfigs="${1}"
   _kconfigs="$(echo "${kconfigs}" | sed -e 's/,/\n/g')"
@@ -62,7 +73,7 @@ add_kconfigs() {
   mv -f "${CRAFT_PART_BUILD}/.config_snap" "${CRAFT_PART_BUILD}/.config"
 }
 
-# Make sure the config is valid
+# remake_config ensures the generated config is valid
 remake_config() {
   bash -c 'yes "" || true' |
     make -j1                      \
@@ -71,13 +82,13 @@ remake_config() {
           oldconfig
 }
 
-# Check for Ubuntu Core and snap specific options
+# check_config checks if Ubuntu Core and snap specific options are set
 check_config() {
-  echo "${_required_boot}"     \
-       "${_required_generic}"  \
-       "${_required_security}" \
-       "${_required_snappy}"   \
-       "${_required_systemd}"  | while read -r config; do
+  echo "${required_boot}"     \
+       "${required_generic}"  \
+       "${required_security}" \
+       "${required_snappy}"   \
+       "${required_systemd}"  | while read -r config; do
     if ! grep "^CONFIG_${config}=" "${CRAFT_PART_BUILD}/.config"; then
       printf '*** WARNING ***\n'
       printf 'Your kernel config is missing:\n'
@@ -88,7 +99,7 @@ check_config() {
   done
 }
 
-# Gather kernel release info to encode in kernel artifacts
+# release_info gathers kernel release info to encode in kernel artifacts
 release_info() {
   echo "Gathering release information"
   DEBIAN="${CRAFT_PART_SRC}/debian"
@@ -100,6 +111,7 @@ release_info() {
   abi_release="${release}-${abinum}"
 }
 
+# fetch_zfs downloads the zfs-linux package source for the target release
 fetch_zfs() {
   echo "Cloning ZFS for ${UBUNTU_SERIES}"
   if [ ! -d "${CRAFT_PART_BUILD}/zfs" ]; then
@@ -111,6 +123,7 @@ fetch_zfs() {
   fi
 }
 
+# build_zfs builds the zfs kernel modules for the target kernel
 build_zfs() {
   echo "Building zfs modules..."
   cd "${CRAFT_PART_BUILD}/zfs"
@@ -130,6 +143,7 @@ build_zfs() {
   rm -rf "${CRAFT_PART_INSTALL}/zfs"
 }
 
+# build_perf builds the perf binary
 build_perf() {
   echo "Building perf binary..."
 
@@ -143,20 +157,25 @@ build_perf() {
   install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" "${CRAFT_PART_INSTALL}/bin/perf"
 }
 
+# redepmod reruns depmod for the entire built kernel's module tree
 redepmod() {
   echo "Rebuilding module dependencies"
   depmod -b "${CRAFT_PART_INSTALL}" "${kver}"
 }
 
+# run executes the meat of this script
 run() {
   # Cleanup previous builds
-  if [ -e "${CRAFT_PART_INSTALL}/modules" ] ||\
+  if [ -e "${CRAFT_PART_INSTALL}/modules" ] ||
      [ -L "${CRAFT_PART_INSTALL}/lib/modules" ]; then
     cleanup
   fi
 
   ### Setup
   # Create new config if one does not exist
+  # A config COULD be supplied by the user if they add a .config to CRAFT_PART_BUILD
+  # before the plugin is called. This is intended for debugging or testing and not
+  # intended for normal consumers of this plugin.
   [ -e "${CRAFT_PART_BUILD}/.config" ] || {
     # Privilege a specified flavour over all else
     if [ -n "${kernel_kconfigflavour}" ] && [ "${kernel_kconfigflavour}" != "generic" ]; then
@@ -182,10 +201,9 @@ run() {
     remake_config
   }
 
-  # Double check the config is valid
+  # Double check the config against Ubuntu Core and snapd options
   echo "Checking config for expected options..."
   check_config
-
 
   ### Build
   echo "Building kernel..."
@@ -275,12 +293,15 @@ run() {
   ln -sf ../firmware "${CRAFT_PART_INSTALL}/lib/firmware"
 }
 
+# main sets some important variables and kicks off the script
 main() {
   set -eux
 
-  # Kernel configs required or strongly encouraged for Ubuntu Core and snaps
-  # TODO: should these be embedded these in the plugin?
-  readonly _required_generic="
+  # required_boot are Kconfigs required for booting Ubuntu Core
+  required_boot="SQUASHFS"
+
+  # required_generic are Kconfigs required in general
+  required_generic="
   DEVTMPFS
   DEVTMPFS_MOUNT
   TMPFS_POSIX_ACL
@@ -291,7 +312,8 @@ main() {
   NLS_CODEPAGE_437
   NLS_ISO8859_1"
 
-  readonly _required_security="
+  # required_security are Kconfigs for sandboxing support
+  required_security="
   SECURITY
   SECURITY_APPARMOR
   SYN_COOKIES
@@ -300,7 +322,8 @@ main() {
   SECCOMP
   SECCOMP_FILTER"
 
-  readonly _required_snappy="
+  # required_snappy arer Kconfigs for snap support
+  required_snappy="
   RD_LZMA
   KEYS
   ENCRYPTED_KEYS
@@ -309,7 +332,8 @@ main() {
   SQUASHFS_XZ
   SQUASHFS_LZO"
 
-  readonly _required_systemd="
+  # required_systemd are Kconfigs for systemd
+  required_systemd="
   DEVTMPFS
   CGROUPS
   INOTIFY_USER
@@ -328,10 +352,15 @@ main() {
   TMPFS_XATTR
   SECCOMP"
 
-  readonly _required_boot="SQUASHFS"
+  # build_target is a list of valid kernel targets specified by plugin
+  build_target="${KERNEL_IMAGE} ${KERNEL_TARGET}"
 
-  # Set of valid targets specified by plugin
-  readonly build_target="${KERNEL_IMAGE} ${KERNEL_TARGET}"
+  readonly required_generic  \
+           required_security \
+           required_snappy   \
+           required_systemd  \
+           required_boot     \
+           build_target
 
   parse_args "$@"
   run
