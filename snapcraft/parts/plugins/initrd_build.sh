@@ -8,7 +8,6 @@ parse_args() {
       initrd-modules=*)         initrd_modules="${arg#*=}"         ;; # valid: list, for mod.ko pass mod
       initrd-firmware=*)        initrd_firmware="${arg#*=}"        ;; # valid: list, relative path to "${CRAFT_STAGE}"
       initrd-addons=*)          initrd_addons="${arg#*=}"          ;; # valid: list, relative path to "${CRAFT_STAGE}"
-      initrd-overlay=*)         initrd_overlay="${arg#*=}"         ;; # valid: list, relative path to "${CRAFT_STAGE}"
       initrd-build-efi-image=*) initrd_build_efi_image="${arg#*=}" ;; # valid: True|False
       initrd-efi-image-key=*)   initrd_efi_image_key="${arg#*=}"   ;; # valid: path/to/key.key
       initrd-efi-image-cert=*)  initrd_efi_image_cert="${arg#*=}"  ;; # valid: path/to/cert.pem
@@ -182,49 +181,6 @@ Signed-By: ${gpg_file}
 EOF
 }
 
-# link files helper. Accept wild cards.
-# This packs arbitrary files from a host into an eventual runtime environment.
-# 1: reference dir - the origin directory in the build environment
-# 2: source name   - the file or directory relative to $ref_dir to be copied
-# 3: dest dir      - the target location on a rootfs with respect to /
-link_files() {
-  ref_dir="$1"
-  src="$2"
-  dest_dir="$3"
-
-  # TODO: just don't accept wildcards, instead pass "" from callers?
-  # TODO: check how all this works for more complicated use-cases (addons, overlays...)
-  # If src is '*', no it isn't
-  [ "${src}" != '*' ] || src=""
-
-  # We're either finding all directories, some directories, or a specific file
-  # The all directories case is just copying the whole tree
-  # The some directories case is a subset of the all directories case
-  # The specific file case results in a single result from a find
-  # This resolves all arguments to their intended sets of objects
-  find "${ref_dir}/${src}" -mindepth 1 -type f | while IFS= read -r f; do
-    if [ -L "${f}" ]; then
-         # Find the actual file relative to the reference directory
-         rel_path="$(realpath -e  --relative-to="${ref_dir}" "${f}")"
-    else rel_path="$(realpath -se --relative-to="${ref_dir}" "${f}")"
-    fi
-
-    # The final copy location
-    fin_dest="${dest_dir}/${rel_path}"
-    echo "Installing '${f}' to '${fin_dest}'"
-
-    # Create leading directories to final location
-    mkdir -p "${fin_dest%/*}"
-    # Copy files from host to dest, bail if the copy fails
-    cp -rf "${f}" "${dest_dir}/${rel_path%/*}" || {
-      echo "Failed to copy file '${f}' to destination '${fin_dest}'"
-      return 1
-    }
-  done
-
-  return 0
-}
-
 # Add kernel modules to initrd
 add_modules() {
   modules="$1"
@@ -272,43 +228,38 @@ add_modules() {
   )
 }
 
-# Add additional firmware files to initrd
-install_firmware() {
-  mkdir -p "${ramdisk_firmware_path}"
+# Add additional files to initrd
+install_extra() {
+  type="$1"
+  objects="$2"
 
-  echo "Installing specified initrd firmware files..."
-  (
-    IFS=,
-    for fw in ${initrd_firmware}; do
-      # firmware can be from kernel build or from stage
-      # firmware from kernel build takes preference
-    if [ -e "${CRAFT_STAGE}/${fw}" ]; then
-      cp --link --recursive --force "${CRAFT_STAGE}/${fw}" "${ramdisk_firmware_path}/usr/lib"
-    elif   [ -e "${CRAFT_PART_INSTALL}/${fw}" ]; then
-      cp --link --recursive --force "${CRAFT_PART_INSTALL}/${fw}" "${ramdisk_firmware_path}/usr/lib"
-    else printf 'Firmware %s is missing; ignoring it\n' "$fw"
-    fi
-    done
-  )
-}
+  case $type in
+    addons)   extra_path="${ramdisk_overlay_path}"          ;;
+    firmware) extra_path="${ramdisk_firmware_path}/usr/lib" ;;
+  esac
 
-# Add arbitrary file hierarchies to initrd
-install_overlay() {
-  ramdisk_overlay_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay"
-  link_files "${CRAFT_STAGE}/${initrd_overlay}" '*' "${ramdisk_overlay_path}"
-}
-
-# Add arbitrary files to initrd
-install_addons() {
-  echo "Installing specified initrd additions..."
+  echo "Installing specified extra files..."
   IFS=,
-  for a in ${initrd_addons}; do
-    echo "Copy overlay: ${a}"
-    cp --link --recursive --force "${CRAFT_STAGE}/${a}" "${ramdisk_overlay_path}"
+
+  for obj in $objects; do
+    find "${CRAFT_STAGE}" -name "${obj##*/}" | while read -r oobj; do
+      if [ -d "{$oobj}" ]; then
+        loc="${extra_path}/${obj##*/}"
+        { mkdir -p "$loc" && cp -rf "${oobj}" "${loc}" ; } || {
+          echo "Extra file ${oobj##*/} not found!"
+        }
+      else
+        loc="${extra_path}/${obj}"
+        { mkdir -p "${loc##*/}" && cp -rf "${oobj}" "${loc}" ; } || {
+          echo "Extra file ${oobj##*/} not found!"
+        [ "$type" = "firmware" ] || return 1
+        }
+      fi
+    done
   done
+
   unset IFS
 }
-
 # Create the initrd
 create_initrd() {
   if [ -e "${CRAFT_PART_INSTALL}/initrd.img" ]; then
@@ -323,15 +274,10 @@ create_initrd() {
 
   # TODO: fix bug in uci
   echo "Workaround an ubuntu-core-initramfs bug..."
-  # TODO: TBD
-  (
-    IFS=,
-    for feature in kernel-modules uc-firmware uc-overlay; do
-      link_files "${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/${feature}" \
-        '*' \
-        "${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main"
-    done
-  )
+  for feature in kernel-modules uc-firmware uc-overlay; do
+    mv -rf "${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/${feature}" \
+      "${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/${feature}"
+  done
 
   rm -rf "${INITRD_ROOT}/boot/initrd"*
 
@@ -413,10 +359,9 @@ run() {
   # This should run even if none are supplied
   add_modules "${initrd_modules}"
 
-  # TOOD: consolidate into a single function; they're pretty simple
-  [ -z "${initrd_firmware}" ] || install_firmware "${initrd_firmware}"
-  [ -z "${initrd_addons}"   ] || install_addons   "${initrd_addons}"
-  [ -z "${initrd_overlay}"  ] || install_overlay  "${initrd_overlay}"
+  # Add any extra files from plugin options to initrd
+  [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
+  [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
 
   # Configure chroot
   chroot_configure

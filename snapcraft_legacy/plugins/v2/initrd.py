@@ -19,26 +19,20 @@
 
 This plugin uses the following plugin-specific keywords:
 
-    - initrd-modules:
+    - initrd-addons
       (list of strings; default: none)
-      List of modules by name to include in the initrd. If specified module(s)
-      have any dependencies, they are also installed.
+      A list of files to include in the initrd. Provided as relative paths to
+      the stage directory.
 
     - initrd-firmware:
       (list of strings; default: none)
-      List of firmware files to include in the initrd. Provided as relative
-      paths to the stage directory.
+      A list of firmware to include in the initrd. Provided as relative paths to
+      the stage directory.
 
-    - initrd-overlay
-      (string; default: none)
-      Any modifications to be done to the initrd, specifically for initrds
-      before Ubuntu Core 20. These modify the initrd boot scripts. Provided as
-      a relative path to the stage directory.
-
-    - initrd-addons
+    - initrd-modules:
       (list of strings; default: none)
-      A specified list of files to include in the initrd. Provided as a
-      relative path to the stage directory.
+      A list of module name to include in the initrd. If the specified
+      module(s) have any dependencies, they are also installed.
 """
 
 import logging
@@ -77,10 +71,6 @@ class InitrdPlugin(PluginV2):
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
-                },
-                "initrd-overlay": {
-                    "type": "string",
-                    "default": "",
                 },
                 "initrd-addons": {
                     "type": "array",
@@ -174,5 +164,12 @@ def _get_target_architecture() -> str:
     def get_build_commands(self) -> List[str]:
         logger.info("Getting build commands...")
         return [
-            f"$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh initrd-modules={self.options.initrd_modules} initrd-firmware={self.options.initrd_firmware} initrd-addons={self.options.initrd_addons} initrd-overlay={self.options.initrd_overlay}"
+            " ".join(
+                [
+                    "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh",
+                    f"initrd-modules={self.options.initrd_modules}",
+                    f"initrd-firmware={self.options.initrd_firmware}",
+                    f"initrd-addons={self.options.initrd_addons}",
+                ]
+            )
         ]

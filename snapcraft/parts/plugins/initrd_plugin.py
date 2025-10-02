@@ -17,6 +17,21 @@
 
 """The initrd plugin for building kernel snaps.
 
+- initrd-addons
+  (list of strings; default: none)
+  A list of files to include in the initrd. Provided as relative paths to the
+  stage directory.
+
+- initrd-firmware:
+  (list of strings; default: none)
+  A list of firmware to include in the initrd. Provided as relative paths to the
+  stage directory.
+
+- initrd-modules:
+  (list of strings; default: none)
+  List of module names to include in the initrd. If the specified module(s) have
+  any dependencies, they are also installed.
+
 - initrd-build-efi-image
   (string; default: false)
   Set to true if an EFI or UKI image is preferred over discrete kernel and
@@ -31,27 +46,6 @@
   (string; default: snake oil certificate (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem))
   Certificate to be used to create EFI image. Provided as a relative path to
   the project directory. Requires initrd-build-efi-image to be true.
-
-- initrd-modules:
-  (list of strings; default: none)
-  List of modules by name to include in the initrd. If specified module(s)
-  have any dependencies, they are also installed.
-
-- initrd-firmware:
-▍ (list of strings; default: none)
-  List of firmware files to include in the initrd. Provided as relative
-  paths to the stage directory.
-
-- initrd-overlay
-  (string; default: none)
-  Any modifications to be done to the initrd, specifically for initrds
-  before Ubuntu Core 20. These modify the initrd boot scripts. Provided as
-  a relative path to the stage directory.
-
-- initrd-addons
-▍ (list of strings; default: none)
-  A specified list of files to include in the initrd. Provided as a
-  relative path to the stage directory.
 """
 
 import logging
@@ -80,7 +74,6 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     )
     initrd_modules: list[str] = []
     initrd_firmware: list[str] = []
-    initrd_overlay: str = ""
     initrd_addons: list[str] = []
 
     # part properties required by the plugin
@@ -180,7 +173,6 @@ class InitrdPlugin(plugins.Plugin):
                     f"initrd-modules={','.join(self.options.initrd_modules)}",
                     f"initrd-firmware={','.join(self.options.initrd_firmware)}",
                     f"initrd-addons={','.join(self.options.initrd_addons)}",
-                    f"initrd-overlay={self.options.initrd_overlay}",
                     f"initrd-build-efi-image={self.options.initrd_build_efi_image}",
                     f"initrd-efi-image-key={self.options.initrd_efi_image_key}",
                     f"initrd-efi-image-cert={self.options.initrd_efi_image_cert}",
