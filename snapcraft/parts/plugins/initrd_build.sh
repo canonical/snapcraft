@@ -16,12 +16,15 @@ parse_args() {
       initrd_addons="${arg#*=}"               ;;
       initrd-build-efi-image=*)
       # initrd_build_efi_image if true builds an EFI file instead of an initrd.img
+      # Default value is "False".
       initrd_build_efi_image="${arg#*=}"      ;;
       initrd-efi-image-key=*)
       # initrd_efi_image_key is a key file used to sign the EFI UKI relative to CRAFT_STAGE
+      # Default value is /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key
       initrd_efi_image_key="${arg#*=}"        ;;
       initrd-efi-image-cert=*)
       # initrd_efi_image_cert is a cert file used to sign the EFI UKI relative to CRAFT_STAGE
+      # Default value is /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem
       initrd_efi_image_cert="${arg#*=}"       ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac

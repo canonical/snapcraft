@@ -6,18 +6,22 @@ parse_args() {
     case ${arg} in
       kernel-kdefconfig=*)
       # kernel_kdefconfig is a list one or more kernel defconfigs
+      # Default value is "[defconfig]".
       kernel_kdefconfig="${arg#*=}"           ;;
       kernel-kconfigflavour=*)
       # kernel_kconfigflavour is a single Ubuntu-specific kernel flavour and supercedes defconfig
+      # Default value is "generic".
       kernel_kconfigflavour=${arg#*=}         ;;
       kernel-kconfigs=*)
       # kernel_kconfigs is a list of of kernel kconfigs to override in the generated config
       kernel_kconfigs=${arg#*=}               ;;
       kernel-enable-zfs=*)
       # enable_zfs builds the zfs-linux package for the kernel if true
+      # Default value is "False".
       kernel_enable_zfs=${arg#*=}             ;;
       kernel-enable-perf=*)
       # enable_perf builds the perf binary if true
+      # Default value is "False".
       kernel_enable_perf=${arg#*=}            ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac
