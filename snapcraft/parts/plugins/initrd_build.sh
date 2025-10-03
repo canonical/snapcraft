@@ -322,6 +322,10 @@ prep_sign() {
     install_extra signing "${key},${cert}"
   else
     echo "Using snakeoil key and cert"
+    cp -f "${INITRD_ROOT}/${initrd_efi_image_key}" \
+      "${INITRD_ROOT}/root/${initrd_efi_image_key##*/}"
+    cp -f "${INITRD_ROOT}/${initrd_efi_image_cert}" \
+      "${INITRD_ROOT}/root/${initrd_efi_image_cert##*/}"
   fi
 }
 
