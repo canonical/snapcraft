@@ -47,6 +47,7 @@ pip-delete-this-directory.txt
 # Docs
 docs/_build
 # Auto-generated command reference
+docs/common/craft-application
 docs/common/craft-parts
 docs/reference/commands
 
