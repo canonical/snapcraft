@@ -19,18 +19,30 @@
 
 - initrd-addons
   (list of strings; default: none)
-  A list of files to include in the initrd. Provided as relative paths to the
-  stage directory.
+  A list of files to include in the initrd, provided as relative paths to
+  $CRAFT_STAGE/addons. For example,
+
+      initrd-addons:
+          - usr/bin/foo
+
+  will result in "${CRAFT_STAGE}/addons/usr/bin/foo" being placed in the
+  initrd as /usr/bin/foo.
 
 - initrd-firmware:
   (list of strings; default: none)
-  A list of firmware to include in the initrd. Provided as relative paths to the
-  stage directory.
+  A list of firmware to include in the initrd, provided as relative paths to
+  $CRAFT_STAGE/firmware. For example,
+
+      initrd-firmware:
+          - foo/bar.bin
+
+  will result in "${CRAFT_STAGE}/firmware/foo/bar.bin" being placed in the
+  initrd as /usr/lib/firmware/foo/bar.bin.
 
 - initrd-modules:
   (list of strings; default: none)
-  A list of module names to include in the initrd. If the specified module(s)
-  have any dependencies, they are also installed. Provided as a list of modules.
+  A list of module names to include in the initrd, provided as a list of module
+  names. If the specified module(s) have dependencies, they are also installed.
 
 - initrd-build-efi-image
   (string; default: false)
@@ -39,13 +51,25 @@
 
 - initrd-efi-image-key
   (string; default: snake oil key (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key))
-  Key to be used when creating the EFI image. Provided as a relative path to
-  the stage directory. Requires initrd-build-efi-image to be true.
+  Requires initrd-build-efi-image to be true.
+  Key to be used when creating the EFI image, provided as a relative path to
+  $CRAFT_STAGE/signing. For example,
+
+      initrd-efi-image-key: signing.key
+
+  will result in "${CRAFT_STAGE}/signing/signing.key" being placed in the
+  initrd chroot as /root/signing.key.
 
 - initrd-efi-image-cert
   (string; default: snake oil certificate (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem))
-  Certificate to be used when creating the EFI image. Provided as a relative
-  path to the stage directory. Requires initrd-build-efi-image to be true.
+  Requires initrd-build-efi-image to be true.
+  Certificate to be used when creating the EFI image, provided as a relatiive
+  path to $CRAFT_STAGE/signing. For example,
+
+      initrd-efi-image-cert: cert.pem
+
+  will result in "${CRAFT_STAGE}/signing/cert.pem" being placed in the
+  initrd chroot as /root/cert.pem.
 """
 
 import logging

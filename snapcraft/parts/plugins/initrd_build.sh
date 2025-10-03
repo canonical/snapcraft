@@ -248,7 +248,7 @@ add_modules() {
 }
 
 # install_extra adds files to initrd
-# 1: "type", of addons|firmware|signing
+# 1: "type", of addons|firmware|signing, determines search path
 # 2: a comma-separated list of files or directories
 install_extra() {
   type="$1"
@@ -266,10 +266,9 @@ install_extra() {
   echo "Installing specified extra files..."
   IFS=,
 
-  # Iterate over objects list, find them in CRAFT_STAGE, install them to the correct
-  # location as specified above
+  # Iterate over objects list in CRAFT_STAGE and install them to extra_path
   for obj in $objects; do
-    find "${CRAFT_STAGE}" -name "${obj##*/}" | while read -r oobj; do
+    find "${CRAFT_STAGE}/${type}" -name "${obj##*/}" | while read -r oobj; do
       loc="${extra_path}/${obj%/*}"
       # If the location includes the name, strip it out
       # This can happen if the filename is just 'foo' instead of 'foo/bar'
@@ -314,8 +313,8 @@ create_initrd() {
 # 1. key file name
 # 2. cert file name
 prep_sign() {
-  key="${CRAFT_STAGE}/${1}"
-  cert="${CRAFT_STAGE}/${2}"
+  key="${CRAFT_STAGE}/signing/${1}"
+  cert="${CRAFT_STAGE}/signing${2}"
 
   if [ -e "${key}" ] && [ -e "${cert}" ]; then
     echo "Using ${key} and ${cert}"
