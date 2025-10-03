@@ -226,33 +226,38 @@ add_modules() {
   )
 }
 
-# Add additional files to initrd
+# install_extra adds files to initrd
+# 1: "type", of addons|firmware|signing
+# 2: a comma-separated list of files or directories
 install_extra() {
   type="$1"
   objects="$2"
 
+  ramdisk_overlay_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay"
+  ramdisk_firmware_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-firmware"
+
   case $type in
-    addons)   extra_path="${ramdisk_overlay_path}"          ;;
-    firmware) extra_path="${ramdisk_firmware_path}/usr/lib" ;;
+    addons)   extra_path="${ramdisk_overlay_path}"           ;;
+    firmware) extra_path="${ramdisk_firmware_path}/usr/lib/" ;;
+    signing)  extra_path="${INITRD_ROOT}/root"               ;;
   esac
 
   echo "Installing specified extra files..."
   IFS=,
 
+  # Iterate over objects list, find them in CRAFT_STAGE, install them to the correct
+  # location as specified above
   for obj in $objects; do
     find "${CRAFT_STAGE}" -name "${obj##*/}" | while read -r oobj; do
-      if [ -d "{$oobj}" ]; then
-        loc="${extra_path}/${obj##*/}"
-        { mkdir -p "$loc" && cp -rf "${oobj}" "${loc}" ; } || {
-          echo "Extra file ${oobj##*/} not found!"
-        }
-      else
-        loc="${extra_path}/${obj}"
-        { mkdir -p "${loc##*/}" && cp -rf "${oobj}" "${loc}" ; } || {
-          echo "Extra file ${oobj##*/} not found!"
-        [ "$type" = "firmware" ] || return 1
-        }
-      fi
+      loc="${extra_path}/${obj%/*}"
+      # If the location includes the name, strip it out
+      # This can happen if the filename is just 'foo' instead of 'foo/bar'
+      [ "${loc}" != "${extra_path}/${obj}" ] || loc="${loc%/*}"
+      { mkdir -p "$loc" && cp -rf "${oobj}" "${loc}" ; } || {
+        echo "Extra file ${oobj##*/} not found!"
+        # Fail if the failure was for an addon or key|cert; missing firmware is "okay"
+        [ "$type" = "firmware" ] || exit 1
+      }
     done
   done
 
@@ -282,24 +287,19 @@ create_initrd() {
   ln -sf "initrd.img-${KERNEL_VERSION}" "${CRAFT_PART_INSTALL}/initrd.img"
 }
 
+# prep_sign ensures the key and cert are available for signing the UKI
+# 1. key file name
+# 2. cert file name
 prep_sign() {
-  key="${INITRD_ROOT}/${1}"
-  cert="${INITRD_ROOT}/${2}"
+  key="${CRAFT_STAGE}/${1}"
+  cert="${CRAFT_STAGE}/${2}"
 
-  for dir in "${CRAFT_STAGE}" "${CRAFT_PROJECT_DIR}"; do
-    if [ -e "${dir}/${key}" ]; then
-      echo "Using '${key}' in '${dir}'"
-      key="${dir}/${key}"
-    fi
-
-    if [ -e "${dir}/${cert}" ]; then
-      echo "Using '${cert}' in '${dir}'"
-      cert="${dir}/${cert}"
-    fi
-  done || echo "Using snakoil key and cert"
-
-  cp --link "${key}"  "${INITRD_ROOT}/root/${key##*/}"
-  cp --link "${cert}" "${INITRD_ROOT}/root/${cert##*/}"
+  if [ -e "${key}" ] && [ -e "${cert}" ]; then
+    echo "Using ${key} and ${cert}"
+    install_extra signing "${key},${cert}"
+  else
+    echo "Using snakeoil key and cert"
+  fi
 }
 
 create_efi() {

@@ -39,13 +39,13 @@
 
 - initrd-efi-image-key
   (string; default: snake oil key (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key))
-  Key to be used to create EFI image. Provided as a relative path to the
-  project directory. Requires initrd-build-efi-image to be true.
+  Key to be used when creating the EFI image. Provided as a relative path to
+  the stage directory. Requires initrd-build-efi-image to be true.
 
 - initrd-efi-image-cert
   (string; default: snake oil certificate (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem))
-  Certificate to be used to create EFI image. Provided as a relative path to
-  the project directory. Requires initrd-build-efi-image to be true.
+  Certificate to be used when creating the EFI image. Provided as a relative
+  path to the stage directory. Requires initrd-build-efi-image to be true.
 """
 
 import logging
