@@ -274,11 +274,14 @@ install_extra() {
       # This can happen if the filename is just 'foo' instead of 'foo/bar'
       [ "${loc}" != "${extra_path}/${obj}" ] || loc="${loc%/*}"
       { mkdir -p "$loc" && cp -rf "${oobj}" "${loc}" ; } || {
-        echo "Extra file ${oobj##*/} not found!"
-        # Fail if the failure was for an addon or key|cert; missing firmware is "okay"
+        echo "Failed to copy ${oobj##*/} to ${loc}!"
         [ "$type" = "firmware" ] || exit 1
       }
-    done
+    done || {
+      echo "Extra file ${obj} not found!"
+      # Fail if the failure was for an addon or key|cert; missing firmware is "okay"
+      [ "$type" = "firmware" ] || exit 1
+    }
   done
 
   unset IFS
