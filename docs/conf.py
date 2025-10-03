@@ -75,21 +75,17 @@ html_js_files = [
 extensions = [
     "canonical_sphinx",
     "sphinx_sitemap",
+    "sphinx_substitution_extensions",
+    "sphinx_toolbox.collapse",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
+    "sphinxcontrib.details.directive",
+    "sphinxext.rediraffe",
     "pydantic_kitbash",
 ]
 
 sphinx_tabs_disable_tab_closing = True
 # endregion
-
-extensions.extend(
-    (
-        "sphinx.ext.ifconfig",
-        "sphinx.ext.intersphinx",
-        "sphinxcontrib.details.directive",
-        "sphinx_toolbox.collapse",
-        "sphinxext.rediraffe",
-    )
-)
 
 rst_epilog = """
 .. include:: /reuse/links.txt
