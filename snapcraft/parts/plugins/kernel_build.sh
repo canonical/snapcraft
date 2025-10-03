@@ -275,8 +275,9 @@ run() {
   cp -f "${CRAFT_PART_BUILD}/.config" "${CRAFT_PART_INSTALL}/config-${kver}"
 
   # Remove symlinks lib/modules/$kver/{build,source}
-  unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/build"
-  unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/source"
+  # It's possible that these are not even installed, however
+  unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/build"  || true
+  unlink "${CRAFT_PART_INSTALL}/lib/modules/${kver}/source" || true
 
   echo "Finalizing install directory..."
   # Usually under $INSTALL_MOD_PATH/lib/ but snapd expects modules/

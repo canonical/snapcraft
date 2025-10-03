@@ -365,8 +365,9 @@ run() {
                               "${INITRD_ROOT}/usr/lib"
 
   # Cleanup dangling links if they exist
-  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build"
-  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/source"
+  # The kernel plugin should have removed these, however
+  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build"  || true
+  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/source" || true
 
   # Add modules to initrd
   # This should run even if none are supplied
