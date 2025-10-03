@@ -181,8 +181,8 @@ chroot_configure() {
   # A modified ubuntu-core-initramfs COULD be supplied by the user if they add a deb to
   # CRAFT_PART_BUILD before the plugin is called. This is intended for debugging or
   # testing ubuntu-core-initramfs and not intended for normal consumers of this plugin.
-  if [ -e "${CRAFT_PART_BUILD}/ubuntu-core-initramfs.deb" ]; then
-    cp -f "${CRAFT_PART_BUILD}/ubuntu-core-initramfs.deb" "${INITRD_ROOT}"
+  if [ -e "${CRAFT_STAGE}/ubuntu-core-initramfs.deb" ]; then
+    cp -f "${CRAFT_STAGE}/ubuntu-core-initramfs.deb" "${INITRD_ROOT}"
     chroot_run "dpkg -i /ubuntu-core-initramfs.deb"
   else
     setup_ppa "${PPA_FINGERPRINT}"
