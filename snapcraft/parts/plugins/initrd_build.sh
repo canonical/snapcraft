@@ -175,7 +175,15 @@ chroot_configure() {
   fi
 
   # Install ubuntu-core-initramfs
-  setup_ppa "${PPA_FINGERPRINT}"
+  # A modified ubuntu-core-initramfs COULD be supplied by the user if they add a deb to
+  # CRAFT_PART_BUILD before the plugin is called. This is intended for debugging or
+  # testing ubuntu-core-initramfs and not intended for normal consumers of this plugin.
+  if [ -e "${CRAFT_PART_BUILD}/ubuntu-core-initramfs.deb" ]; then
+    cp -f "${CRAFT_PART_BUILD}/ubuntu-core-initramfs.deb" "${INITRD_ROOT}"
+    chroot_run "dpkg -i /ubuntu-core-initramfs.deb"
+  else
+    setup_ppa "${PPA_FINGERPRINT}"
+  fi
 
   chroot_run "apt-get update"
   chroot_run "apt-get install --no-install-recommends -y ubuntu-core-initramfs"
