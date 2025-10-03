@@ -19,7 +19,7 @@
 The following kernel-specific options are provided by this plugin:
 
     - kernel-kdefconfig:
-      (list of strings, default: none))
+      (list of strings, default: defconfig))
       defconfig target to use as the base configuration. default: "defconfig"
 
     - kernel-kconfigflavour:
@@ -175,7 +175,7 @@ class KernelPlugin(plugins.Plugin):
     def get_build_commands(self) -> list[str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build commands...")
         kconfigflavour = self.options.kernel_kconfigflavour
-        if self.options.kernel_kdefconfig != "defconfig":
+        if self.options.kernel_kdefconfig != ["defconfig"]:
             kconfigflavour = ""
 
         return [
