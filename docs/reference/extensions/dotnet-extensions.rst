@@ -105,8 +105,9 @@ The .NET extensions add the following runtime environment variables:
 Example expanded project file
 ------------------------------
 
-Here is an example of the result of a project file that uses the ``dotnet8`` extension. It shows the added plugs,
-packages, variables, and parts that the extension adds to the project file immediately prior to build.
+Here is an example of the result of a project file that uses both the ``dotnet8`` and ``dotnet9`` extensions.
+It shows the various plugs, packages, variables, and parts that the extension adds to the project file
+immediately prior to build.
 
 This example contains the difference between the original file and the output of the
 :ref:`snapcraft expand-extensions <ref_commands_expand-extensions>` command. Some of the text has been altered for
@@ -114,6 +115,6 @@ ease of reading.
 
 .. collapse:: Expanded project file for the test-snap application
 
-    .. literalinclude:: code/dotnet8-extension-test-app-expanded.diff
+    .. literalinclude:: code/dotnet8-dotnet9-extensions-test-app-expanded.diff
         :language: diff
         :emphasize-lines: 29-36, 38-45, 47-54, 56-63, 68-77, 81-90, 92-102
