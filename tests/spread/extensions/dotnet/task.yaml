@@ -1,4 +1,4 @@
-summary: Build and run a basic hello-world snap using the dotnet8 extension
+summary: Build and run a basic hello-world snap using the .NET extensions
 
 systems:
   - ubuntu-24.04*
