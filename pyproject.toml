@@ -95,7 +95,7 @@ docs = [
     "sphinx-sitemap~=2.6.0",
     "sphinx-toolbox",
     "sphinxcontrib-details-directive",
-    "sphinxext-rediraffe==0.2.7",
+    "sphinxext-rediraffe==0.3.0",
     "docutils>=0.21",
     "pydantic-kitbash==0.0.8",
     "pyspelling",
