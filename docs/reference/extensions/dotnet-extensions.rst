@@ -116,4 +116,4 @@ ease of reading.
 
     .. literalinclude:: code/dotnet8-extension-test-app-expanded.diff
         :language: diff
-        :emphasize-lines: 29-37, 39-46, 48-55, 57-64, 69-78, 82-91, 93-103
+        :emphasize-lines: 29-36, 38-45, 47-54, 56-63, 68-77, 81-90, 92-102
