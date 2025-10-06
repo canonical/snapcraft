@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import dataclasses
 import functools
-import os
 import pathlib
 import re
 from unittest import mock
@@ -43,13 +42,11 @@ def build_from_debpkg_cmds() -> list[str]:
 
 
 @pytest.fixture
-def build_cmds_environ() -> None:
+def build_cmds_environ(monkeypatch: pytest.MonkeyPatch) -> None:
     """Set the common build commands environment."""
-    os.environ |= {
-        "SNAP_CONTEXT": "snap-context",
-        "SNAP": "snap",
-        "SNAP_VERSION": "1.0.0",
-    }
+    monkeypatch.setenv("SNAP_CONTEXT", "snap-context")
+    monkeypatch.setenv("SNAP", "snap")
+    monkeypatch.setenv("SNAP_VERSION", "1.0.0")
 
 
 def normalise_actual_cmds(raw_cmds: list[str]) -> list[str]:
@@ -390,17 +387,10 @@ def build_cmds(
 class BuildParameters:
     """Parameters for the build normally provided by snapcraft."""
 
-    def __init__(
-        self,
-        base: str,
-        arch_build_on: str,
-        arch_build_for: str,
-        arch_triplet_build_for: str,
-    ):
-        self.base = base
-        self.arch_build_for = arch_build_for
-        self.arch_build_on = arch_build_on
-        self.arch_triplet_build_for = arch_triplet_build_for
+    base: str
+    arch_build_on: str
+    arch_build_for: str
+    arch_triplet_build_for: str
 
 
 @functools.lru_cache
@@ -466,7 +456,10 @@ class TestPluginUbuntuKenrel:
         properties = {
             "plugin-name": "ubuntu-kernel",
         }
-        with pytest.raises(errors.SnapcraftError):
+        with pytest.raises(
+            errors.SnapcraftError,
+            match="must provide either `ubuntu-kernel-release-name` or `source`",
+        ):
             UbuntuKernelPlugin.properties_class.unmarshal(properties)
 
         properties["ubuntu-kernel-release-name"] = "hello"
@@ -474,7 +467,10 @@ class TestPluginUbuntuKenrel:
         _ = UbuntuKernelPlugin.properties_class.unmarshal(properties)
 
         properties["source"] = "git://git-repo.git"
-        with pytest.raises(errors.SnapcraftError):
+        with pytest.raises(
+            errors.SnapcraftError,
+            match="`ubuntu-kernel-release-name` and `source` are mutually exclusive",
+        ):
             UbuntuKernelPlugin.properties_class.unmarshal(properties)
 
     @pytest.mark.parametrize(
@@ -499,7 +495,11 @@ class TestPluginUbuntuKenrel:
             "ubuntu-kernel-use-binary-package": True,
             invalid_property: invalid_property_value,
         }
-        with pytest.raises(errors.SnapcraftError):
+        with pytest.raises(
+            errors.SnapcraftError,
+            match="`ubuntu-kernel-use-binary-package` and "
+            f"`{invalid_property}` are mutually exclusive",
+        ):
             UbuntuKernelPlugin.properties_class.unmarshal(properties)
 
         properties["ubuntu-kernel-use-binary-package"] = False
@@ -574,9 +574,9 @@ class TestPluginUbuntuKenrel:
             "git",
         }
         additional_cross_compile_packages = {
-            f"binutils-{plugin.part_info.arch_triplet_build_for}",
-            f"gcc-{plugin.part_info.arch_triplet_build_for}",
-            f"libc6-dev-{plugin.part_info.target_arch}-cross",
+            f"binutils-{plugin._part_info.arch_triplet_build_for}",
+            f"gcc-{plugin._part_info.arch_triplet_build_for}",
+            f"libc6-dev-{plugin._part_info.target_arch}-cross",
         }
         expected_packages = {"core22": {}, "core24": {}}
         expected_packages["core22"]["amd64"] = expected_common_packages
@@ -599,7 +599,7 @@ class TestPluginUbuntuKenrel:
             expected_packages["core24"]["amd64"]
             | additional_cross_compile_packages
             | {
-                f"libstdc++-13-dev-{plugin.part_info.target_arch}-cross",
+                f"libstdc++-13-dev-{plugin._part_info.target_arch}-cross",
             }
         )
         assert (
@@ -645,7 +645,7 @@ class TestPluginUbuntuKenrel:
     def test_get_pull_commands_with_source_url(
         self, build_params, new_dir, setup_method_fixture
     ):
-        """Test the expected pull commands when a source is provided."""
+        """Test the expected pull commands when a source url is provided."""
         properties = {
             "plugin-name": "ubuntu-kernel",
             "source": "git://git-repo.git",
@@ -669,7 +669,7 @@ class TestPluginUbuntuKenrel:
     def test_get_pull_commands_with_release_name_build_from_source(
         self, build_params, new_dir, setup_method_fixture
     ):
-        """Test the expected pull commands when release-name provided."""
+        """Test the expected pull commands when kernel release-name is provided."""
         properties = {
             "plugin-name": "ubuntu-kernel",
             "ubuntu-kernel-release-name": "jammy",
@@ -695,7 +695,7 @@ class TestPluginUbuntuKenrel:
     def test_get_pull_commands_with_release_name_from_debpkg_binary(
         self, build_params, new_dir, setup_method_fixture
     ):
-        """Test the expected pull commands when release-name provided."""
+        """Test the expected pull commands when using a binary package."""
         properties = {
             "plugin-name": "ubuntu-kernel",
             "ubuntu-kernel-release-name": "jammy",
@@ -734,7 +734,7 @@ class TestPluginUbuntuKenrel:
         setup_method_fixture,
         build_cmds_environ,
     ):
-        """test the expected pull commands when release-name provided."""
+        """Test build commands when using a binary debian package."""
         ubuntu_kernel_plugin.kernel_version_from_debpkg_file = mock.MagicMock(
             return_value=KERNEL_VERSION_MOCK_VALUE
         )
@@ -767,7 +767,7 @@ class TestPluginUbuntuKenrel:
         setup_method_fixture,
         build_cmds_environ,
     ):
-        """test the expected pull commands when release-name provided."""
+        """Test build commands with no kernel customisations."""
 
         ubuntu_kernel_plugin.kernel_version_from_source_tree = mock.MagicMock(
             return_value=KERNEL_VERSION_MOCK_VALUE
@@ -800,7 +800,7 @@ class TestPluginUbuntuKenrel:
         setup_method_fixture,
         build_cmds_environ,
     ):
-        """test the expected pull commands when release-name provided."""
+        """Test build commands with additional tools specified."""
 
         ubuntu_kernel_plugin.kernel_version_from_source_tree = mock.MagicMock(
             return_value=KERNEL_VERSION_MOCK_VALUE
@@ -837,7 +837,7 @@ class TestPluginUbuntuKenrel:
         setup_method_fixture,
         build_cmds_environ,
     ):
-        """test the expected pull commands when release-name provided."""
+        """Test build commands with a custom kernel defconfig."""
 
         ubuntu_kernel_plugin.kernel_version_from_source_tree = mock.MagicMock(
             return_value=KERNEL_VERSION_MOCK_VALUE
@@ -879,7 +879,7 @@ class TestPluginUbuntuKenrel:
         setup_method_fixture,
         build_cmds_environ,
     ):
-        """test the expected pull commands when release-name provided."""
+        """Test build commands with custom kernel config fragment."""
 
         ubuntu_kernel_plugin.kernel_version_from_source_tree = mock.MagicMock(
             return_value=KERNEL_VERSION_MOCK_VALUE
@@ -925,7 +925,7 @@ class TestPluginUbuntuKenrel:
         setup_method_fixture,
         build_cmds_environ,
     ):
-        """test the expected pull commands when release-name provided."""
+        """Test build commands for specific image target types."""
         ubuntu_kernel_plugin.kernel_version_from_source_tree = mock.MagicMock(
             return_value=KERNEL_VERSION_MOCK_VALUE
         )
@@ -961,7 +961,7 @@ class TestPluginUbuntuKenrel:
         setup_method_fixture,
         build_cmds_environ,
     ):
-        """test the expected pull commands when release-name provided."""
+        """Test build commands with a list of additional kernel modules to build."""
         ubuntu_kernel_plugin.kernel_version_from_source_tree = mock.MagicMock(
             return_value=KERNEL_VERSION_MOCK_VALUE
         )

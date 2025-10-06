@@ -17,7 +17,6 @@
 
 """The Ubuntu kernel plugin for building Ubuntu Core kernel snaps."""
 
-import logging
 import os
 import pathlib
 import re
@@ -25,13 +24,11 @@ from typing import Literal, cast
 
 import jinja2
 import pydantic
+from craft_cli import emit
 from craft_parts import infos, plugins
-from overrides import overrides
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from snapcraft import errors
-
-logger = logging.getLogger(__name__)
 
 KERNEL_REPO_STEM = "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/"
 DEFAULT_RELEASE_NAME = {"core22": "jammy", "core24": "noble"}
@@ -104,7 +101,7 @@ def kernel_version_from_debpkg_file(root_dir: pathlib.Path) -> tuple[str, str]:
         if rem:
             kernel_version = rem.group(1)
             kernel_abi = kernel_abi_from_version(kernel_version)
-            return (kernel_version, kernel_abi)
+            return kernel_version, kernel_abi
     raise errors.SnapcraftError(
         "Failed to identify kernel version from deb package files."
     )
@@ -141,7 +138,7 @@ class UbuntuKernelPluginProperties(plugins.properties.PluginProperties, frozen=T
     ubuntu_kernel_tools: list[str] = []
     """Kernel tools to include, e.g. perf."""
     ubuntu_kernel_use_binary_package: bool = False
-    """Flag to use prebuilt kernel packages. Only valid with ubuntu-kerne-release-name."""
+    """Flag to use prebuilt kernel packages. Only valid with ubuntu-kernel-release-name."""
 
     @pydantic.model_validator(mode="after")
     def validate_release_name_and_source_exclusive(self) -> Self:
@@ -173,7 +170,8 @@ class UbuntuKernelPluginProperties(plugins.properties.PluginProperties, frozen=T
             for option in blacklist_options:
                 if getattr(self, option):
                     raise errors.SnapcraftError(
-                        f"`ubuntu-kernel-use-binary-package` and `{option}` are mutually exclusive"
+                        "`ubuntu-kernel-use-binary-package` and "
+                        f"`{option.replace('_', '-')}` are mutually exclusive"
                     )
         return self
 
@@ -181,9 +179,11 @@ class UbuntuKernelPluginProperties(plugins.properties.PluginProperties, frozen=T
     @classmethod
     def validate_tool_list(cls, value: list[str]) -> list[str]:
         """Check the list of tools is in the available list."""
-        if any(x not in _AVAILABLE_TOOLS for x in value):
+        unknown_tools = [tool for tool in value if tool not in _AVAILABLE_TOOLS]
+        if unknown_tools:
             raise errors.SnapcraftError(
-                f"unknown tool provided, available tools: {_AVAILABLE_TOOLS}"
+                "The following requested tools are not supported: "
+                f"{unknown_tools!r}. Supported tools: {_AVAILABLE_TOOLS!r}"
             )
         return value
 
@@ -198,7 +198,6 @@ class UbuntuKernelPlugin(plugins.Plugin):
     ) -> None:
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(UbuntuKernelPluginProperties, self._options)
-        self.part_info = part_info
         if part_info.base not in ("core22", "core24"):
             raise errors.SnapcraftError("only core22 and core24 bases are supported")
         self.release_name = self.options.ubuntu_kernel_release_name
@@ -208,13 +207,16 @@ class UbuntuKernelPlugin(plugins.Plugin):
             else _DEFAULT_KERNEL_IMAGE_TARGET[part_info.arch_build_for]
         )
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
-        # hardcoded for now
+        emit.message("Getting build packages")
+        # TODO(stewarthore) extract the build dependency list from the debian
+        #  source package.
+        # https://warthogs.atlassian.net/browse/KE-427
         build_packages = {
             "debhelper-compat",
             "cpio",
@@ -259,7 +261,8 @@ class UbuntuKernelPlugin(plugins.Plugin):
             "dwarfdump",
         }
 
-        if self.part_info.base == "core24":
+        if self._part_info.base == "core24":
+            emit.message("Adding core24 build packages")
             build_packages |= {
                 "python3-setuptools",
                 "libtraceevent-dev",
@@ -272,34 +275,36 @@ class UbuntuKernelPlugin(plugins.Plugin):
                 "libstdc++-13-dev",
             }
 
-        if self.part_info.is_cross_compiling:
+        if self._part_info.is_cross_compiling:
+            emit.message("Adding cross-compilation build packages")
             build_packages |= {
-                f"binutils-{self.part_info.arch_triplet_build_for}",
-                f"gcc-{self.part_info.arch_triplet_build_for}",
-                f"libc6-dev-{self.part_info.target_arch}-cross",
+                f"binutils-{self._part_info.arch_triplet_build_for}",
+                f"gcc-{self._part_info.arch_triplet_build_for}",
+                f"libc6-dev-{self._part_info.target_arch}-cross",
             }
-            if self.part_info.base == "core24":
+            if self._part_info.base == "core24":
                 build_packages |= {
-                    f"libstdc++-13-dev-{self.part_info.target_arch}-cross",
+                    f"libstdc++-13-dev-{self._part_info.target_arch}-cross",
                 }
 
         return build_packages
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         """Returns additional build environment variables."""
+        emit.message("Getting build environment")
         return (
             {}
-            if not self.part_info.is_cross_compiling
+            if not self._part_info.is_cross_compiling
             else {
-                "ARCH": self.part_info.arch_build_for,
-                "CROSS_COMPILE": self.part_info.arch_triplet_build_for,
-                "DEB_HOST_ARCH": self.part_info.arch_build_for,
-                "DEB_BUILD_ARCH": self.part_info.arch_build_on,
+                "ARCH": self._part_info.arch_build_for,
+                "CROSS_COMPILE": self._part_info.arch_triplet_build_for,
+                "DEB_HOST_ARCH": self._part_info.arch_build_for,
+                "DEB_BUILD_ARCH": self._part_info.arch_build_on,
             }
         )
 
-    @overrides
+    @override
     def get_pull_commands(self) -> list[str]:
         """Get the commands to pull the source code for the part.
 
@@ -309,6 +314,7 @@ class UbuntuKernelPlugin(plugins.Plugin):
 
         See jinja2 templates in snapcraft/templates/kernel/ for details.
         """
+        emit.message("Getting pull commands")
         if self.options.source:
             return super().get_pull_commands()
         if not self.release_name:
@@ -325,32 +331,30 @@ class UbuntuKernelPlugin(plugins.Plugin):
             {
                 "ubuntu_kernel_use_binary_package": self.options.ubuntu_kernel_use_binary_package,
                 "ubuntu_kernel_release_name": self.release_name,
-                "is_cross_compiling": self.part_info.is_cross_compiling,
-                "target_arch": self.part_info.target_arch,
+                "is_cross_compiling": self._part_info.is_cross_compiling,
+                "target_arch": self._part_info.target_arch,
                 "ubuntu_kernel_flavour": self.options.ubuntu_kernel_flavour,
                 "source_repo_url": source_repo_url,
             }
         )
         return [script]
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         """Get the commands to build the part.
 
-        See jinja2 templates in snapcraft/templates/kernel/ for details.
+        The build command script is defined in the jinja2 templates under
+        snapcraft/templates/kernel/.
         """
-        logger.info("Setting build commands...")
-        logger.info("*****************************")
-        logger.info("self.options.source = %s", self.options.source)
-
+        emit.message("Getting build commands")
         # Get the kernel version from the source files.
         if self.options.ubuntu_kernel_use_binary_package:
             kernel_version, kernel_abi = kernel_version_from_debpkg_file(
-                self.part_info.part_src_dir
+                self._part_info.part_src_dir
             )
         else:
             kernel_version, kernel_abi = kernel_version_from_source_tree(
-                self.part_info.part_src_dir
+                self._part_info.part_src_dir
             )
 
         template_file = "kernel/ubuntu_kernel_get_build_commands.sh.j2"
@@ -360,14 +364,14 @@ class UbuntuKernelPlugin(plugins.Plugin):
         template = env.get_template(template_file)
         script = template.render(
             {
-                "craft_arch_build_for": self.part_info.arch_build_for,
-                "craft_arch_build_on": self.part_info.arch_build_on,
-                "craft_arch_triplet_build_for": self.part_info.arch_triplet_build_for,
-                "craft_arch_triplet_build_on": self.part_info.arch_triplet_build_on,
-                "craft_part_build_dir": self.part_info.part_build_dir,
-                "craft_part_install_dir": self.part_info.part_install_dir,
-                "craft_part_src_dir": self.part_info.part_src_dir,
-                "craft_project_dir": self.part_info.project_dir,
+                "craft_arch_build_for": self._part_info.arch_build_for,
+                "craft_arch_build_on": self._part_info.arch_build_on,
+                "craft_arch_triplet_build_for": self._part_info.arch_triplet_build_for,
+                "craft_arch_triplet_build_on": self._part_info.arch_triplet_build_on,
+                "craft_part_build_dir": self._part_info.part_build_dir,
+                "craft_part_install_dir": self._part_info.part_install_dir,
+                "craft_part_src_dir": self._part_info.part_src_dir,
+                "craft_project_dir": self._part_info.project_dir,
                 "has_ubuntu_kernel_config_fragments": bool(
                     self.options.ubuntu_kernel_config
                 ),
@@ -377,7 +381,7 @@ class UbuntuKernelPlugin(plugins.Plugin):
                 "has_ubuntu_kernel_image_target": bool(
                     self.options.ubuntu_kernel_image_target
                 ),
-                "is_cross_compiling": self.part_info.is_cross_compiling,
+                "is_cross_compiling": self._part_info.is_cross_compiling,
                 "kernel_abi": kernel_abi,
                 "kernel_version": kernel_version,
                 "pkgfile_version_all": f"{kernel_abi}_{kernel_version}_all",
@@ -385,12 +389,12 @@ class UbuntuKernelPlugin(plugins.Plugin):
                 # templates readable it is substituted with a variable.
                 "pkgfile_version_flavour": (
                     f"{kernel_abi}-{self.options.ubuntu_kernel_flavour}_"
-                    f"{kernel_version}_{self.part_info.target_arch}"
+                    f"{kernel_version}_{self._part_info.target_arch}"
                 ),
                 "snap_context": os.environ["SNAP_CONTEXT"],
                 "snap_data_path": os.environ["SNAP"],
                 "snap_version": os.environ["SNAP_VERSION"],
-                "target_arch": self.part_info.target_arch,
+                "target_arch": self._part_info.target_arch,
                 "ubuntu_kernel_config": self.options.ubuntu_kernel_config,
                 "ubuntu_kernel_defconfig": self.options.ubuntu_kernel_defconfig,
                 "ubuntu_kernel_dkms": self.options.ubuntu_kernel_dkms,
@@ -402,6 +406,7 @@ class UbuntuKernelPlugin(plugins.Plugin):
         )
         return [script]
 
+    @override
     @classmethod
     def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
