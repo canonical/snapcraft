@@ -29,8 +29,7 @@
 +  dotnet8/launcher:
 +    plugin: dump
 +    source: /snap/snapcraft/x4/share/snapcraft/extensions/dotnet
-+    override-build: |2
-+
++    override-build: |
 +      mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
 +      cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
 +    stage:
@@ -48,7 +47,7 @@
 +  dotnet9/launcher:
 +    plugin: dump
 +    source: /snap/snapcraft/x4/share/snapcraft/extensions/dotnet
-+    override-build: |2
++    override-build: |
 +      mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
 +      cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
 +    stage:

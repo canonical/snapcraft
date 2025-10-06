@@ -20,7 +20,7 @@ The .NET extensions add the following parts to the project file:
 
 * ``prereqs``: A part that installs the prerequisite packages for running .NET applications. The installed packages are:
 
-   * ``libicu74`` (for the core24 base)
+   * ``libicu74``
    * ``libssl3t64``
    * ``libunwind8``
    * ``liblttng-ust1t64``
@@ -37,9 +37,9 @@ The .NET extensions add the following parts to the project file:
         launcher:
             plugin: dump
             source: /snap/snapcraft/x4/share/snapcraft/extensions/dotnet
-            override-build: |2
-            mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
-            cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
+            override-build: |
+              mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
+              cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
             stage:
             - bin/command-chain/launcher.sh
         prereqs:
