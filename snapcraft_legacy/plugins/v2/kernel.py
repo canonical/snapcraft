@@ -58,8 +58,6 @@ logger = logging.getLogger(__name__)
 
 
 class KernelPlugin(PluginV2):
-    """Plugin class implementing kernel build functionality"""
-
     @classmethod
     def get_schema(cls) -> Dict[str, Any]:
         return {
