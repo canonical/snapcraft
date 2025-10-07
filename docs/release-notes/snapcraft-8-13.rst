@@ -30,3 +30,19 @@ the ``adopt-info`` key, the part can call craftctl to set the version.
 
 For detailed guidance, see
 :ref:`how-to-access-project-variables-across-parts-and-components`.
+
+
+Documentation submodule name change
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Git submodule containing documentation components has been renamed to
+``sphinx-docs-starter-pack`` to match its parent repository.
+
+If you're a returning contributor to the project, after you pull the latest commits, run
+the following commands in your local repository to sync the submodule change:
+
+.. code-block::
+
+    git submodule sync
+    git submodule update --init --recursive
+    git clean -ffd

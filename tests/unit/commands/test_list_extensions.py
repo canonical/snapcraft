@@ -46,8 +46,11 @@ def test_command(emitter, command, fake_app_config):
             """\
         Extension name          Supported bases
         ----------------------  ------------------------------
+        dotnet10                core24
+        dotnet8                 core24
+        dotnet9                 core24
         env-injector            core24
-        fake-extension          core22, core24
+        fake-extension          core22, core24, core26
         flutter-beta            core18
         flutter-dev             core18
         flutter-master          core18
@@ -97,6 +100,9 @@ def test_command_extension_dups(emitter, command, fake_app_config):
             """\
         Extension name          Supported bases
         ----------------------  ------------------------------
+        dotnet10                core24
+        dotnet8                 core24
+        dotnet9                 core24
         env-injector            core24
         flutter-beta            core18
         flutter-dev             core18

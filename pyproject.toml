@@ -4,13 +4,13 @@ description = "Create snaps"
 dynamic = ["version"]
 dependencies = [
     "attrs",
-    "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
+    "catkin-pkg==1.1.0; sys_platform == 'linux'",
     "click>=8.2",
-    "craft-application[remote]>=5.9.1",
+    "craft-application[remote]~=5.11",
     "craft-archives~=2.1",
     "craft-cli>=3.1.2,<4.0.0",
     "craft-grammar>=2.0.3,<3.0.0",
-    "craft-parts>=2.21.0,<3.0.0",
+    "craft-parts~=2.22",
     "craft-platforms~=0.7",
     "craft-providers>=3.0.0,<4.0.0",
     "craft-store>=3.2.2,<4.0.0",
@@ -93,16 +93,17 @@ docs = [
     "sphinx-prompt~=1.8.0",
     # sphinx-sitemap>=2.7 fails to build on RTD infra due to https://github.com/jdillard/sphinx-sitemap/pull/95
     "sphinx-sitemap~=2.6.0",
+    "sphinx-substitution-extensions",
     "sphinx-toolbox",
     "sphinxcontrib-details-directive",
-    "sphinxext-rediraffe==0.2.7",
+    "sphinxext-rediraffe==0.3.0",
     "docutils>=0.21",
     "pydantic-kitbash==0.0.8",
     "pyspelling",
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
 types = [
-    "mypy~=1.17.1",
+    "mypy~=1.18.2",
     "types-PyYAML",
     "types-requests>=2.32",
     "types-setuptools",

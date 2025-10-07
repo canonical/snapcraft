@@ -22,7 +22,11 @@ from overrides import overrides
 
 from snapcraft import linters, models
 from snapcraft.linters.base import Linter, LinterResult
-from snapcraft.linters.linters import _ignore_matching_filenames
+from snapcraft.linters.linters import (
+    LinterStatus,
+    _ignore_matching_filenames,
+    _update_status,
+)
 from snapcraft.meta import snap_yaml
 
 
@@ -267,3 +271,104 @@ def test_base_linter_is_file_ignored():
     assert not linter.is_file_ignored(Path("test-2-path"))
     assert not linter.is_file_ignored(Path("test-2-path"), category="test-1")
     assert linter.is_file_ignored(Path("test-2-path"), category="test-2")
+
+
+class TestUpdateStatus:
+    """Test the _update_status function to ensure severity can only increase, never decrease."""
+
+    @pytest.mark.parametrize(("status"), LinterStatus)
+    def test_update_status_fatal_always_wins(self, status: LinterStatus):
+        """FATAL result should always set status to FATAL regardless of current status."""
+        assert _update_status(status, LinterResult.FATAL) == LinterStatus.FATAL
+
+    @pytest.mark.parametrize(("status"), LinterStatus)
+    def test_update_status_error_upgrades_appropriately(self, status: LinterStatus):
+        """ERROR result should upgrade status except when already FATAL."""
+        if status == LinterStatus.FATAL:
+            # Should NOT downgrade from FATAL
+            assert _update_status(status, LinterResult.ERROR) == LinterStatus.FATAL
+        else:
+            # Should upgrade to ERRORS from any other status
+            assert _update_status(status, LinterResult.ERROR) == LinterStatus.ERRORS
+
+    @pytest.mark.parametrize(("status"), LinterStatus)
+    def test_update_status_warning_upgrades_from_ok_and_info_only(
+        self, status: LinterStatus
+    ):
+        """WARNING result should only upgrade from OK and INFO."""
+        if status in (LinterStatus.OK, LinterStatus.INFO):
+            assert _update_status(status, LinterResult.WARNING) == LinterStatus.WARNINGS
+        else:
+            # Should NOT downgrade from more severe statuses
+            assert _update_status(status, LinterResult.WARNING) == status
+
+    @pytest.mark.parametrize(("status"), LinterStatus)
+    def test_update_status_info_upgrades_from_ok_only(self, status: LinterStatus):
+        """INFO result should only upgrade from OK status."""
+        if status == LinterStatus.OK:
+            assert _update_status(status, LinterResult.INFO) == LinterStatus.INFO
+        else:
+            # Should NOT downgrade from any other status (this was the original bug!)
+            assert _update_status(status, LinterResult.INFO) == status
+
+    @pytest.mark.parametrize(("status"), LinterStatus)
+    def test_update_status_ok_never_changes_status(self, status: LinterStatus):
+        """OK result should never change the current status."""
+        assert _update_status(status, LinterResult.OK) == status
+
+    @pytest.mark.parametrize(("status"), LinterStatus)
+    def test_update_status_ignored_never_changes_status(self, status: LinterStatus):
+        """IGNORED result should never change the current status."""
+        assert _update_status(status, LinterResult.IGNORED) == status
+
+    def test_update_status_severity_progression(self):
+        """Test that severity can progress through all levels but never regress."""
+        # Start with OK
+        status = LinterStatus.OK
+        # OK -> INFO
+        status = _update_status(status, LinterResult.INFO)
+        assert status == LinterStatus.INFO
+        # INFO -> WARNINGS (more INFO shouldn't change it)
+        status = _update_status(status, LinterResult.INFO)
+        assert status == LinterStatus.INFO
+        status = _update_status(status, LinterResult.WARNING)
+        assert status == LinterStatus.WARNINGS
+        # WARNINGS -> ERRORS (more INFO/WARNING shouldn't change it)
+        status = _update_status(status, LinterResult.INFO)
+        assert status == LinterStatus.WARNINGS
+        status = _update_status(status, LinterResult.WARNING)
+        assert status == LinterStatus.WARNINGS
+        status = _update_status(status, LinterResult.ERROR)
+        assert status == LinterStatus.ERRORS
+        # ERRORS -> FATAL (nothing else should change it)
+        status = _update_status(status, LinterResult.INFO)
+        assert status == LinterStatus.ERRORS
+        status = _update_status(status, LinterResult.WARNING)
+        assert status == LinterStatus.ERRORS
+        status = _update_status(status, LinterResult.ERROR)
+        assert status == LinterStatus.ERRORS
+        status = _update_status(status, LinterResult.FATAL)
+        assert status == LinterStatus.FATAL
+        # FATAL should never change
+        status = _update_status(status, LinterResult.OK)
+        assert status == LinterStatus.FATAL
+        status = _update_status(status, LinterResult.INFO)
+        assert status == LinterStatus.FATAL
+        status = _update_status(status, LinterResult.WARNING)
+        assert status == LinterStatus.FATAL
+        status = _update_status(status, LinterResult.ERROR)
+        assert status == LinterStatus.FATAL
+
+    def test_update_status_original_bug_case(self):
+        """Test the specific bug case mentioned in the issue."""
+        # Original bug: ERRORS + INFO incorrectly became INFO
+        result = _update_status(LinterStatus.ERRORS, LinterResult.INFO)
+        assert result == LinterStatus.ERRORS, (
+            "Bug fix failed: ERRORS + INFO should stay ERRORS"
+        )
+        # Another case: WARNINGS + INFO should stay WARNINGS
+        result = _update_status(LinterStatus.WARNINGS, LinterResult.INFO)
+        assert result == LinterStatus.WARNINGS, "WARNINGS + INFO should stay WARNINGS"
+        # FATAL + INFO should stay FATAL
+        result = _update_status(LinterStatus.FATAL, LinterResult.INFO)
+        assert result == LinterStatus.FATAL, "FATAL + INFO should stay FATAL"

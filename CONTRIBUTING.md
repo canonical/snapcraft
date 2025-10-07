@@ -135,7 +135,7 @@ community on the [Snapcraft Matrix channel](https://matrix.to/#/#snapcraft:ubunt
 It's possible that work on it has been started, or that it fits into an existing plan.
 Often, you will save time and effort by checking for prior work.
 
-For changes that requires coordination with the Snap Store or snapd, create a post on
+For changes that require coordination with the Snap Store or snapd, create a post on
 the [forum](https://forum.snapcraft.io), which serves as a central point for all teams
 in the snap ecosystem.
 

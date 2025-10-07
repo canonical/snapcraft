@@ -16,16 +16,20 @@
 
 """Metadata linter implementation."""
 
-from collections.abc import Callable
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import craft_cli
 from overrides import overrides
 
-from snapcraft.meta.snap_yaml import SnapMetadata
-
 from .base import Linter, LinterIssue, LinterResult
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from snapcraft.meta.snap_yaml import SnapMetadata
 
 _HELP_URL = "https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/"
 
@@ -34,9 +38,9 @@ _HELP_URL = "https://documentation.ubuntu.com/snapcraft/stable/reference/project
 class MetadataField:
     name: str
     severity: LinterResult
-    extract: Callable[["SnapMetadata"], Any]
+    extract: Callable[[SnapMetadata], Any]
     help_url: str
-    skip: Callable[["SnapMetadata"], bool] = lambda _: False
+    skip: Callable[[SnapMetadata], bool] = lambda _: False
 
 
 def _get_links_attr(meta: SnapMetadata, key: str) -> list[str] | str | None:
@@ -85,7 +89,7 @@ _FIELDS: list[MetadataField] = [
         f"{_HELP_URL}#issues",
     ),
     MetadataField(
-        "source_code",
+        "source-code",
         LinterResult.INFO,
         lambda meta: _get_links_attr(meta, "source_code"),
         f"{_HELP_URL}#source-code",

@@ -125,7 +125,7 @@ class StoreCloseCommand(AppCommand):
 
         Examples::
 
-            snapcraft close my-snap --channel beta
+            snapcraft close my-snap beta
         """
     )
 

@@ -13,10 +13,12 @@ This section contains an in-depth description of the plugins available in Snapcr
     /common/craft-parts/reference/plugins/ant_plugin
     /common/craft-parts/reference/plugins/autotools_plugin
     /common/craft-parts/reference/plugins/cargo_use_plugin
+    plugins/crystal_plugin
     plugins/catkin_plugin
     plugins/catkin_tools_plugin
     /common/craft-parts/reference/plugins/cmake_plugin
     plugins/colcon_plugin
+    plugins/conda_plugin
     /common/craft-parts/reference/plugins/dump_plugin
     plugins/flutter_plugin
     /common/craft-parts/reference/plugins/go_plugin
