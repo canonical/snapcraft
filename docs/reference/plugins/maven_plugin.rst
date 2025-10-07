@@ -23,16 +23,18 @@ Example
 
 This is an example of a Snapcraft part using the Maven plugin. Note
 that the Maven and Java Runtime packages are listed as build packages,
-and the Java Runtime is staged to be part of the final payload::
+and the Java Runtime is staged to be part of the final payload:
 
-  mkpass:
-    plugin: maven
-    source: .
-    build-packages:
-      - openjdk-11-jre-headless
-      - maven
-    stage-packages:
-      - openjdk-11-jre-headless
+.. code-block:: yaml
+
+    mkpass:
+      plugin: maven
+      source: .
+      build-packages:
+        - openjdk-11-jre-headless
+        - maven
+      stage-packages:
+        - openjdk-11-jre-headless
 
 .. include:: /common/craft-parts/reference/plugins/maven_plugin.rst
    :start-after: .. _maven-details-end:
