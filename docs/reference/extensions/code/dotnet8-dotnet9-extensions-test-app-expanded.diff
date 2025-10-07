@@ -33,16 +33,16 @@
 +      mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
 +      cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
 +    stage:
-+    - bin/command-chain/launcher.sh
++      - bin/command-chain/launcher.sh
 
 +  dotnet8/prereqs:
 +    plugin: nil
 +    stage-packages:
-+    - libicu74
-+    - libunwind8
-+    - libssl3t64
-+    - liblttng-ust1t64
-+    - libbrotli1
++      - libicu74
++      - libunwind8
++      - libssl3t64
++      - liblttng-ust1t64
++      - libbrotli1
 
 +  dotnet9/launcher:
 +    plugin: dump
@@ -51,43 +51,43 @@
 +      mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
 +      cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
 +    stage:
-+    - bin/command-chain/launcher.sh
++      - bin/command-chain/launcher.sh
 
 +  dotnet9/prereqs:
 +    plugin: nil
 +    stage-packages:
-+    - libicu74
-+    - libunwind8
-+    - libssl3t64
-+    - liblttng-ust1t64
-+    - libbrotli1
++      - libicu74
++      - libunwind8
++      - libssl3t64
++      - liblttng-ust1t64
++      - libbrotli1
 
  apps:
    hello8:
      command: opt/hello8/hello8
 -    extensions: [ dotnet8 ]
 +    plugs:
-+    - dotnet8-runtime
++      - dotnet8-runtime
 +    environment:
 +      DOTNET_EXT_CONTENT_SNAP: dotnet-runtime-80
 +      DOTNET_EXT_SNAP_NAME: test-snap
 +      DOTNET_EXT_PLUG_NAME: dotnet8-runtime
 +      DOTNET_ROOT: $SNAP/opt/dotnet8/dotnet
 +    command-chain:
-+    - bin/command-chain/launcher.sh
++      - bin/command-chain/launcher.sh
 
    hello9:
      command: opt/hello9/hello9
 -    extensions: [ dotnet9 ]
 +    plugs:
-+    - dotnet9-runtime
++      - dotnet9-runtime
 +    environment:
 +      DOTNET_EXT_CONTENT_SNAP: dotnet-runtime-90
 +      DOTNET_EXT_SNAP_NAME: test-snap
 +      DOTNET_EXT_PLUG_NAME: dotnet9-runtime
 +      DOTNET_ROOT: $SNAP/opt/dotnet9/dotnet
 +    command-chain:
-+    - bin/command-chain/launcher.sh
++      - bin/command-chain/launcher.sh
 
 +plugs:
 +  dotnet8-runtime:
