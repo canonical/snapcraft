@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# parse_args parses arrguments passed to this script
+# parse_args parses arguments passed to this script
 parse_args() {
   # initrd-build-efi-image|initrd-efi-image-{key,cert} are from snapcraft/parts/plugins/v2/initrd.py
   for arg; do
@@ -347,7 +347,7 @@ create_efi() {
                 --kernel    /boot/kernel.img      \
                 --output    /boot/kernel.efi"
 
-  # Remove unecessary initrd file
+  # Remove unnecessary initrd file
   rm -f  "${CRAFT_PART_INSTALL}/initrd.img-"*
   unlink "${CRAFT_PART_INSTALL}/initrd.img"
 

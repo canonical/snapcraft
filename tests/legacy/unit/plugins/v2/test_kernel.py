@@ -46,7 +46,7 @@ def test_schema():
     }
 
 def test_get_build_packages():
-    plugin = KernelPlugiin(part_name="my-part", options=lambda: None)
+    plugin = KernelPlugin(part_name="my-part", options=lambda: None)
 
     assert plugini.get_build_packages() == {
         "bc",
@@ -110,7 +110,7 @@ def test_get_build_environment():
         "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
         "CRAFT_TARGET_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
         "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-        "ARCH": "${CRAFT_ARRCH_BUILD_FOR}",
+        "ARCH": "${CRAFT_RRCH_BUILD_FOR}",
     }
 
 def test_get_build_commands():
@@ -119,7 +119,7 @@ def test_get_build_commands():
         kernel_kconfigflavour = "aflavour"
         kernel_kconfigs = ["CONFIG_FOO=y", "CONFIG_BAR=m"]
         kernel_enable_zfs_support = True
-        kernel_eanble_perf = True
+        kernel_enable_perf = True
 
     plugin = KernelPlugin(part_name="my-part", options=Options())
 

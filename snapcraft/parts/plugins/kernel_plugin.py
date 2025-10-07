@@ -135,6 +135,11 @@ class KernelPlugin(plugins.Plugin):
     @overrides
     def get_build_environment(self) -> dict[str, str]:  # pylint: disable=missing-function-docstring
         logger.info("Getting build env...")
+
+        _kernel_arch = ""
+        _kernel_image = ""
+        _kernel_target = ""
+
         if self._part_info.target_arch == "amd64":
             _kernel_arch = "x86"
             _kernel_image = "bzImage"

@@ -9,7 +9,7 @@ parse_args() {
       # Default value is "[defconfig]".
       kernel_kdefconfig="${arg#*=}"           ;;
       kernel-kconfigflavour=*)
-      # kernel_kconfigflavour is a single Ubuntu-specific kernel flavour and supercedes defconfig
+      # kernel_kconfigflavour is a single Ubuntu-specific kernel flavour and supersedes defconfig
       # Default value is "generic".
       kernel_kconfigflavour=${arg#*=}         ;;
       kernel-kconfigs=*)

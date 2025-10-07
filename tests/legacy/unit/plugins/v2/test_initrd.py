@@ -81,7 +81,7 @@ def test_get_build_environment():
         "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
     }
 
-def test_get_build_command():
+def test_get_build_commands():
     class Options:
         initrd_addons = "usr/bin/foo"
         initrd_firmware = "bar.bin"
@@ -89,7 +89,7 @@ def test_get_build_command():
 
     plugin = InitrdPlugin(part_name="my-part", options=Options())
 
-    assert plugin.get_build_command() == {
+    assert plugin.get_build_commands() == {
         " ".join(
             "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugin/initrd_build.sh",
             "initrd-modules=baz",
