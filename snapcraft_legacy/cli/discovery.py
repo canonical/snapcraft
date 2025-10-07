@@ -27,7 +27,7 @@ from snapcraft_legacy.internal.common import (
 )
 from snapcraft_legacy.project import errors as project_errors
 
-from ._options import get_project
+from ._options import add_verbosity_options, get_project
 
 
 @click.group()
@@ -58,7 +58,8 @@ def _get_modules_iter(base: str) -> Iterable:
     help="Show plugins for specific base",
     type=click.Choice(["core20"]),
 )
-def list_plugins(base):
+@add_verbosity_options()
+def list_plugins(base, **kwargs):
     """List the available plugins that handle different types of part.
 
     This command has an alias of `plugins`.

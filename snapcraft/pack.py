@@ -67,7 +67,7 @@ def _get_filename(
     output: str | None,
     name: str | None = None,
     version: str | None = None,
-    target_arch: str | None = None,
+    target: str | None = None,
 ) -> str | None:
     """Get output filename of the snap file.
 
@@ -76,7 +76,7 @@ def _get_filename(
     :param output: Snap file name or directory.
     :param name: Name of snap project.
     :param version: Version of snap project.
-    :param target_arch: Target architecture the snap project is built to.
+    :param target: Target platform or architecture of the snap.
 
     :return: The filename of the snap file if output or name/version/target_arch are specified.
     """
@@ -85,8 +85,8 @@ def _get_filename(
         if not output_path.is_dir():
             return output_path.name
 
-    if all(i is not None for i in [name, version, target_arch]):
-        return f"{name}_{version}_{target_arch}.snap"
+    if all(i is not None for i in [name, version, target]):
+        return f"{name}_{version}_{target}.snap"
 
     return None
 
@@ -195,7 +195,7 @@ def pack_snap(
     compression: str | None = None,
     name: str | None = None,
     version: str | None = None,
-    target_arch: str | None = None,
+    target: str | None = None,
 ) -> str:
     """Pack snap contents with `snap pack`.
 
@@ -214,7 +214,7 @@ def pack_snap(
     :param compression: Compression type to use, None for defaults.
     :param name: Name of snap project.
     :param version: Version of snap project.
-    :param target_arch: Target architecture the snap project is built to.
+    :param target: Target platform or architecture of the snap.
 
     :returns: The filename of the packed snap.
 
@@ -226,7 +226,7 @@ def pack_snap(
     _verify_snap(directory)
 
     output_dir = _get_directory(output)
-    output_file = _get_filename(output, name, version, target_arch)
+    output_file = _get_filename(output, name, version, target)
 
     emit.progress("Creating snap package...")
     return _pack(

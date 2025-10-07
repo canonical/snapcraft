@@ -8,7 +8,7 @@ interface for altering snap behavior with user-defined environment variables.
 
 When you add the extension to individual apps inside a snap, you open the way for the
 user to `configure the snap <https://snapcraft.io/docs/configuration-in-snaps>`_ or
-affect its behaviour with environment variables.
+affect its behavior with environment variables.
 
 
 How it works
@@ -44,8 +44,7 @@ App build process
 For each app that uses the extension:
 
 1. The app responsible for processing environment variables (the exporter program) is
-   added to its `command chain
-   <https://snapcraft.io/docs/snapcraft-yaml-schema#p-21225-command-chain-47>`_.
+   added to its :ref:`command chain <reference-snapcraft-yaml>`.
 2. The app's name is taken either from its internal name or an :ref:`environment alias
    <use-the-env-injector-give-app-alias>`.
 

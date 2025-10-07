@@ -63,6 +63,7 @@ parts:
       snap/gnome-calculator/current/usr: usr
     build-snaps:
       - gnome-46-2404-sdk/latest/edge
+    parse-info: [usr/share/metainfo/org.gnome.Calculator.appdata.xml]
     build-packages:
       - libmpc-dev
       - libmpfr-dev

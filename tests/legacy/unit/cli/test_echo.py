@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from textwrap import dedent
 from unittest import mock
@@ -38,6 +39,11 @@ def mock_shutil_get_terminal_size():
         "snapcraft_legacy.cli.echo.shutil.get_terminal_size", return_value=fake_terminal
     ) as mock_terminal_size:
         yield mock_terminal_size
+
+
+@pytest.fixture
+def mock_logger(mocker):
+    return mocker.patch("snapcraft_legacy.cli.echo.logger")
 
 
 class EchoTestCase(unit.TestCase):
@@ -132,6 +138,34 @@ class EchoTestCase(unit.TestCase):
             show_default=True,
             err=False,
         )
+
+
+@pytest.mark.parametrize(
+    "func",
+    ["wrapped", "info", "warning", "echo_with_pager_if_needed"]
+)
+@pytest.mark.parametrize(
+    ("level", "output"),
+    [
+        (logging.NOTSET, True),
+        (logging.DEBUG, True),
+        (logging.INFO, True),
+        (logging.WARNING, True),
+        (logging.ERROR, True),
+        (logging.CRITICAL, False),
+    ],
+)
+@pytest.mark.usefixtures("mock_shutil_get_terminal_size")
+def test_echo_output(func, level, output, mock_click, mock_logger):
+    """Write messages for logging level ERROR or lower."""
+    mock_logger.getEffectiveLevel.return_value = level
+
+    getattr(echo, func)("test")
+
+    if output:
+        mock_click.echo.assert_called_once()
+    else:
+        mock_click.echo.assert_not_called()
 
 
 @pytest.mark.parametrize(

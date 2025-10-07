@@ -22,7 +22,8 @@ from typing import TYPE_CHECKING
 
 from craft_application import ServiceFactory
 
-from snapcraft import models
+if TYPE_CHECKING:
+    from snapcraft import models
 
 # Add new services to this mapping to add them to the service factory
 # Internal service name : Stringified service class name
@@ -45,7 +46,7 @@ class SnapcraftServiceFactory(ServiceFactory):
 
     # Allow static type check to report correct types for Snapcraft services
     if TYPE_CHECKING:
-        from . import ConfdbSchemas
+        from . import ConfdbSchemas  # noqa: PLC0415 (import-outside-top-level)
 
         # Allow static type check to report correct types for Snapcraft services
         confdb_schemas: ConfdbSchemas = None  # type: ignore[assignment]

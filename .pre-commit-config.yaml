@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v5.0.0"
+    rev: "v6.0.0"
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -13,7 +13,7 @@ repos:
       - id: fix-byte-order-marker
       - id: mixed-line-ending
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.11.10"
+    rev: "v0.13.2"
     hooks:
       # Run the linter
       - id: ruff
@@ -24,5 +24,6 @@ repos:
     rev: "" # Intentionally blank, despite the warning.
     hooks:
       - id: prettier
+        files: ^(.\/?)*\.(yaml|yml|json|json5|css|md)$
         additional_dependencies:
-          - prettier@3.4.2
+          - prettier@3.6.0 # renovate: datasource=npm

@@ -1,8 +1,8 @@
 summary: Test manifest file creation
 
 environment:
-  CMD/cmdline: snapcraft --enable-manifest
-  CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft
+  CMD/cmdline: snapcraft pack --enable-manifest
+  CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft pack
 
 prepare: |
   snap install review-tools

@@ -47,7 +47,7 @@ _SNAPCRAFT_YAML_FILENAMES = [
 
 @pytest.fixture(autouse=True)
 def disable_install(mocker):
-    mocker.patch("craft_parts.packages.Repository.install_packages")
+    mocker.patch("craft_parts.packages.deb.Ubuntu.install_packages")
     mocker.patch("craft_parts.packages.snaps.install_snaps")
 
 
@@ -517,7 +517,7 @@ def test_lifecycle_run_local_destructive_mode(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=str(DebianArchitecture.from_host()),
+            target=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -582,7 +582,7 @@ def test_lifecycle_run_local_managed_mode(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=str(DebianArchitecture.from_host()),
+            target=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -647,7 +647,7 @@ def test_lifecycle_run_local_build_env(
             compression="xz",
             name="mytest",
             version="0.1",
-            target_arch=str(DebianArchitecture.from_host()),
+            target=str(DebianArchitecture.from_host()),
         )
     ]
 
@@ -830,7 +830,7 @@ def test_lifecycle_metadata_empty(field, snapcraft_yaml, new_dir):
     with pytest.raises(errors.SnapcraftError) as raised:
         update_project_metadata(
             project,
-            project_vars={"version": "", "grade": ""},
+            project_vars={"version": None, "grade": None},
             metadata_list=[],
             assets_dir=new_dir,
             prime_dir=new_dir,
@@ -1150,7 +1150,7 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
     yaml_data["adopt-info"] = "part"
     project = Project.unmarshal(yaml_data)
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars={"version": "42", "grade": "devel"},
         metadata_list=[],
@@ -2195,16 +2195,19 @@ def test_lifecycle_write_component_metadata(
 
     assert mock_write.mock_calls == [
         call(
-            project=project,
+            project=ANY,
             component_name="foo",
             component_prime_dir=new_dir / "partitions/component/foo/prime",
         ),
         call(
-            project=project,
+            project=ANY,
             component_name="bar-baz",
             component_prime_dir=new_dir / "partitions/component/bar-baz/prime",
         ),
     ]
+
+    # assert the project data is intact, even if though the instance changed
+    assert mock_write.mock_calls[0].kwargs["project"].marshal() == project.marshal()
 
 
 @pytest.mark.usefixtures("enable_partitions_feature", "project_vars")

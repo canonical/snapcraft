@@ -149,7 +149,7 @@ Example project file for ROS 2 Talker/Listener
 Add an ROS 2 app
 ----------------
 
-ROS 2 apps depend on special extensions that initialise the build- and run-time
+ROS 2 apps depend on special extensions that initialize the build- and run-time
 environments.
 
 To add an ROS 2 app:
@@ -165,18 +165,17 @@ To add an ROS 2 app:
       * - core18
         - None
       * - core20
-        - `ros2-foxy <https://snapcraft.io/docs/ros2-foxy-extension>`_
+        - :ref:`ros2-foxy <reference-ros-2-extensions>`
       * - core22
-        - `ros2-humble <https://snapcraft.io/docs/ros2-humble-extension>`_
+        - :ref:`ros2-humble <reference-ros-2-extensions>`
       * - core24
-        - `ros2-jazzy <https://snapcraft.io/docs/ros2-jazzy-extension>`_
+        - :ref:`ros2-jazzy <reference-ros-2-extensions>`
 
 
 Add a part written for ROS 2
 ----------------------------
 
-ROS 1 parts are built with the `colcon plugin
-<https://snapcraft.io/docs/colcon-plugin>`.
+ROS 1 parts are built with the :ref:`reference-colcon-plugin`.
 
 To add an ROS 2 part:
 
@@ -291,14 +290,11 @@ To turn on content sharing:
       * - Core
         - Content extension
       * - core20
-        - `ros-foxy-ros-core
-          <https://snapcraft.io/docs/ros2-foxy-content-extension>`_
+        - :ref:`ros-foxy-ros-core <reference-ros-2-content-extensions>`
       * - core22
-        - `ros2-humble-ros-base
-          <https://snapcraft.io/docs/ros2-humble-content-extension>`_
+        - :ref:`ros2-humble-ros-base <reference-ros-2-content-extensions>`
       * - core24
-        - `ros2-jazzy-ros-base
-          <https://snapcraft.io/docs/ros2-jazzy-content-extension>`_
+        - :ref:`ros2-jazzy-ros-base <reference-ros-2-content-extensions>`
 
 
 Because the snap makes use of the content provided by another snap, you must connect

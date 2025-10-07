@@ -32,13 +32,13 @@ Add an app that uses GNOME
     :start-at: apps:
     :end-at: common-id: com.github.johnfactotum.Foliate
 
-Apps that use GTK3 and GNOME as runtime libraries require the `gnome-3-38
-extension <https://snapcraft.io/docs/gnome-3-38-extension>`_. The extension
-configures the runtime environment of the app so that all desktop functionality
-is correctly initialised. As desktop environment apps, they also need special
-configuration for AppStream and ``.desktop`` file compatibility.
+Apps that use GTK3 and GNOME as runtime libraries require the
+:ref:`reference-gnome-extension`. The extension configures the runtime environment of
+the app so that all desktop functionality is correctly initialized. As desktop
+environment apps, they also need special configuration for AppStream and ``.desktop``
+file compatibility.
 
-To add a GTK4 app:
+To add a GTK3 app:
 
 #. Declare the general app keys, such as ``command``,
    ``plugs``, ``after``, and so on.
@@ -57,21 +57,18 @@ Add a part written for GTK3
     :start-at: parts:
     :end-at: parse-info: [usr/share/metainfo/com.github.johnfactotum.Foliate.appdata.xml]
 
-GTK3 parts are built with the `Meson plugin
-<https://snapcraft.io/docs/meson-plugin>`_.
+GTK3 parts are built with the :ref:`craft_parts_meson_plugin`.
 
-To add a GTK4 part:
+To add a GTK3 part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
 #. Set ``plugin: meson``.
-#. So that the app has access to its AppStream metadata, for ``parse-info`` add
-   a path to the AppStream ``.xml`` file on the host system. Since we set
-   ``adopt-info: foliate`` at the start of the project file, the AppStream
-   file of the ``foliate`` part will be used to fill in the
-   ``summary``, ``description`` and ``icon`` of this snap and copy the
-   AppStream file. See `Using AppStream metadata
-   <https://snapcraft.io/docs/using-external-metadata#heading--appstream>`_ for
+#. So that the app has access to its AppStream metadata, for ``parse-info`` add a path
+   to the AppStream ``.xml`` file on the host system. Since we set ``adopt-info:
+   foliate`` at the start of the project file, the AppStream file of the ``foliate``
+   part will be used to fill in the ``summary``, ``description`` and ``icon`` of this
+   snap and copy the AppStream file. See :ref:`reference-external-package-appstream` for
    technical details about how this works.
 
 

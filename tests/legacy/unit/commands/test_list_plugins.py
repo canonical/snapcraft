@@ -91,6 +91,25 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
             snapcraft_legacy.plugins.v2.__path__
         )
 
+    def test_default_from_snapcraft_yaml_verbose(self):
+        self.useFixture(
+            fixture_setup.SnapcraftYaml(
+                self.path,
+                base="core20",
+                parts={"part1": {"source": ".", "plugin": "nil"}},
+            )
+        )
+
+        result = self.run_command([self.command_name, "--verbosity", "trace"])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output, Contains("Displaying plugins available for 'core20")
+        )
+        self.fake_iter_modules.mock.assert_called_once_with(
+            snapcraft_legacy.plugins.v2.__path__
+        )
+
     def test_alias(self):
         self.command_name = "plugins"
         self.useFixture(
@@ -102,6 +121,20 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         )
 
         result = self.run_command([self.command_name])
+
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_alias_verbose(self):
+        self.command_name = "plugins"
+        self.useFixture(
+            fixture_setup.SnapcraftYaml(
+                self.path,
+                base="core20",
+                parts={"part1": {"source": ".", "plugin": "nil"}},
+            )
+        )
+
+        result = self.run_command([self.command_name, "--verbosity", "trace"])
 
         self.assertThat(result.exit_code, Equals(0))
 

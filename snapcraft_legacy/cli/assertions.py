@@ -23,6 +23,7 @@ from snapcraft_legacy import storeapi
 from snapcraft_legacy._store import StoreClientCLI
 
 from . import echo
+from ._options import add_verbosity_options
 
 
 @click.group()
@@ -31,7 +32,8 @@ def assertionscli():
 
 
 @assertionscli.command("list-keys")
-def list_keys():
+@add_verbosity_options()
+def list_keys(**kwargs):
     """List the keys available to sign assertions.
 
     This command has an alias of `keys`.
@@ -41,7 +43,8 @@ def list_keys():
 
 @assertionscli.command("create-key")
 @click.argument("key-name", metavar="<key-name>", required=False)
-def create_key(key_name: str) -> None:
+@add_verbosity_options()
+def create_key(key_name: str, **kwargs) -> None:
     """Create a key to sign assertions."""
     snapcraft_legacy.create_key(key_name)
 
@@ -54,7 +57,8 @@ def create_key(key_name: str) -> None:
     help="*EXPERIMENTAL* Enables login through candid.",
     envvar="SNAPCRAFT_LOGIN",
 )
-def register_key(key_name: str, experimental_login: bool) -> None:
+@add_verbosity_options()
+def register_key(key_name: str, experimental_login: bool, **kwargs) -> None:
     """Register a key with the store to sign assertions."""
     if experimental_login:
         raise click.BadArgumentUsage(
@@ -73,7 +77,8 @@ def register_key(key_name: str, experimental_login: bool) -> None:
 @click.option(
     "--local", is_flag=True, help="Do not upload the generated assertion to the store"
 )
-def sign_build(snap_file: str, key_name: str, local: bool) -> None:
+@add_verbosity_options()
+def sign_build(snap_file: str, key_name: str, local: bool, **kwargs) -> None:
     """Sign a built snap file and assert it using the developer's key."""
     snapcraft_legacy.sign_build(snap_file, key_name=key_name, local=local)
 
@@ -83,7 +88,10 @@ def sign_build(snap_file: str, key_name: str, local: bool) -> None:
 @click.argument("validations", metavar="<validation>...", nargs=-1, required=True)
 @click.option("--key-name", metavar="<key-name>")
 @click.option("--revoke/--no-revoke", default=False)
-def validate(snap_name: str, validations: list, key_name: str, revoke: bool) -> None:
+@add_verbosity_options()
+def validate(
+    snap_name: str, validations: list, key_name: str, revoke: bool, **kwargs
+) -> None:
     """Validate a gated snap.
 
     Each validation can be presented with either syntax:
@@ -96,7 +104,8 @@ def validate(snap_name: str, validations: list, key_name: str, revoke: bool) -> 
 
 @assertionscli.command()
 @click.argument("snap-name", metavar="<snap-name>")
-def gated(snap_name: str) -> None:
+@add_verbosity_options()
+def gated(snap_name: str, **kwargs) -> None:
     """Get the list of snaps and revisions gating a snap."""
     snapcraft_legacy.gated(snap_name)
 
@@ -108,7 +117,8 @@ def gated(snap_name: str) -> None:
     help="Only show results for a given Validation Set name.",
 )
 @click.option("--sequence", metavar="<sequence>", help="Sequences to show.")
-def list_validation_sets(name, sequence):
+@add_verbosity_options()
+def list_validation_sets(name, sequence, **kwargs):
     """Get the list of validation sets.
 
     The sequence option can be a sequence number or a keyword.

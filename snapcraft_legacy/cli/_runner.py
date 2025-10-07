@@ -26,7 +26,7 @@ from snapcraft_legacy.internal import log
 
 from ._command_group import SnapcraftGroup
 from ._errors import exception_handler
-from ._options import add_provider_options
+from ._options import add_provider_options, get_log_level
 from .assertions import assertionscli
 from .containers import containerscli
 from .discovery import discoverycli
@@ -91,33 +91,34 @@ def configure_requests_ca() -> None:
 )
 @click.pass_context
 @add_provider_options(hidden=True)
-@click.option("--debug", "-d", is_flag=True)
-@click.option("--verbose", "-v", is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
+     # control and use quiet/verbose/verbosity/enable-developer-debug options
+    if (
+        sum(
+            1
+            for key in ("quiet", "verbose", "verbosity", "enable_developer_debug")
+            if kwargs[key]
+        )
+        > 1
+    ):
+        raise click.BadArgumentUsage(
+            "The 'verbose', 'quiet', 'verbosity', and 'enable-developer-debug' "
+            "options are mutually exclusive."
+        )
 
-    is_snapcraft_developer_debug = kwargs["enable_developer_debug"]
-    verbose = kwargs["verbose"]
+    log_level = get_log_level(**kwargs)
 
-    if is_snapcraft_developer_debug:
-        if verbose:
-            raise click.BadArgumentUsage(
-                "The 'enable-developer-debug' and 'verbose' options are "
-                "mutually exclusive."
-            )
-        log_level = logging.DEBUG
+    if log_level <= logging.DEBUG:
         click.echo(
             "Starting snapcraft {} from {}.".format(
                 snapcraft_legacy.__version__, os.path.dirname(__file__)
             )
         )
-    # verbose is the default log level so no need to check if `--verbose` was passed
-    else:
-        log_level = logging.INFO
 
     # Setup global exception handler (to be called for unhandled exceptions)
     sys.excepthook = functools.partial(
-        exception_handler, debug=is_snapcraft_developer_debug
+        exception_handler, debug=log_level <= logging.DEBUG
     )
 
     # In an ideal world, this logger setup would be replaced

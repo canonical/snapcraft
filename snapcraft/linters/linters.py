@@ -31,6 +31,7 @@ from snapcraft.meta import snap_yaml
 from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
 from .library_linter import LibraryLinter
+from .metadata_linter import MetadataLinter
 
 LinterType = type[Linter]
 
@@ -38,6 +39,7 @@ LinterType = type[Linter]
 LINTERS: dict[str, LinterType] = {
     "classic": ClassicLinter,
     "library": LibraryLinter,
+    "metadata": MetadataLinter,
 }
 
 
@@ -49,12 +51,14 @@ class LinterStatus(enum.IntEnum):
     FATAL = 1
     ERRORS = 2
     WARNINGS = 3
+    INFO = 4
 
 
 _lint_reports: dict[LinterResult, str] = {
     LinterResult.OK: "Lint OK",
     LinterResult.WARNING: "Lint warnings",
     LinterResult.ERROR: "Lint errors",
+    LinterResult.INFO: "Lint information",
 }
 
 
@@ -99,13 +103,33 @@ def report(
 
 
 def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
-    """Compute the consolidated status based on individual linter results."""
-    if result == LinterResult.FATAL:
-        status = LinterStatus.FATAL
-    elif result == LinterResult.ERROR and status != LinterStatus.FATAL:
-        status = LinterStatus.ERRORS
-    elif result == LinterResult.WARNING and status == LinterStatus.OK:
-        status = LinterStatus.WARNINGS
+    """Update overall linter status based on a new lint result.
+
+    The status can only become more severe, never less severe.
+    Severity order (least to most severe): OK -> INFO -> WARNINGS -> ERRORS -> FATAL
+
+    Args:
+        status: Current overall linter status
+        result: New individual lint result to incorporate
+
+    Returns:
+        Updated linter status (same or more severe than input status)
+
+    """
+    match result:
+        case LinterResult.FATAL:
+            return LinterStatus.FATAL
+        case LinterResult.ERROR:
+            if status != LinterStatus.FATAL:
+                return LinterStatus.ERRORS
+        case LinterResult.WARNING:
+            if status in (LinterStatus.OK, LinterStatus.INFO):
+                return LinterStatus.WARNINGS
+        case LinterResult.INFO:
+            if status == LinterStatus.OK:
+                return LinterStatus.INFO
+        case LinterResult.OK | LinterResult.IGNORED:
+            pass
 
     return status
 

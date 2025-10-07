@@ -60,6 +60,7 @@ companion tools have features for identifying and resolving such issues.
 - :ref:`how-to-debug-a-snap`
 - :ref:`how-to-use-the-library-linter`
 - :ref:`how-to-use-the-classic-linter`
+- :ref:`how-to-use-the-metadata-linter`
 - :ref:`how-to-debug-with-gdb`
 
 
@@ -75,7 +76,8 @@ to reconfigure your project as described by these guides.
 .. toctree::
     :hidden:
 
-    setup/index
+    set-up-snapcraft
+    select-a-build-provider
     crafting/index
     integrations/index
     extensions/index

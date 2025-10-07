@@ -3,7 +3,7 @@
 Release notes
 =============
 
-This page lists the notes for past releases of Snapcraft, which summarise new features,
+This page lists the notes for past releases of Snapcraft, which summarize new features,
 bug fixes and backwards-incompatible changes in each version. It also contains the
 release and support policies for Snapcraft.
 
@@ -16,6 +16,9 @@ Current releases
 Snapcraft 8
 ~~~~~~~~~~~
 
+- :ref:`Snapcraft 8.12 <release-8.12>`
+- :ref:`Snapcraft 8.11 <release-8.11>`
+- :ref:`Snapcraft 8.10 <release-8.10>`
 - :ref:`Snapcraft 8.9 <release-8.9>`
 - :ref:`Snapcraft 8.8 <release-8.8>`
 - :ref:`Snapcraft 8.7 <release-8.7>`
@@ -25,9 +28,8 @@ Snapcraft 7
 ~~~~~~~~~~~
 
 Snapcraft 7 is available for building ``core18`` snaps. When building for newer bases,
-use Snapcraft 8. See
-:ref:`How to install multiple instances of Snapcraft <multiple-installs>` for
-more information.
+use Snapcraft 8. See :ref:`how-to-set-up-snapcraft-multiple-instances` for more
+information.
 
 - :ref:`Snapcraft 7.5.8 <changelog-7-5-8>`
 
@@ -84,6 +86,9 @@ development keeps pace with the OS's new releases and support lifecycle.
 .. toctree::
     :hidden:
 
+    Snapcraft 8.12 <snapcraft-8-12>
+    Snapcraft 8.11 <snapcraft-8-11>
+    Snapcraft 8.10 <snapcraft-8-10>
     Snapcraft 8.9 <snapcraft-8-9>
     Snapcraft 8.8 <snapcraft-8-8>
     Snapcraft 8.7 <snapcraft-8-7>
@@ -136,14 +141,14 @@ development keeps pace with the OS's new releases and support lifecycle.
   | Other important update                 | <Describe update>            | Mitigation for Heartbleed vulnerability |
   +----------------------------------------+------------------------------+-----------------------------------------+
 
-  <Paragraph 1, optional: Briefly cover the previous behaviour or the change in
+  <Paragraph 1, optional: Briefly cover the previous behavior or the change in
   circumstances. For example, "With Ubuntu 24.04 LTS, the Snap Store and App
   Center now collect public reviews for snaps and assign an averaged score to
   them to provide users and authors an avenue for discoverability and
   feedback.">
 
-  <Paragraph 2: Present the new behaviour or feature. In words, *show* what the feature
-  is and make a case for how the reader could benefit from it. Centre the user whenever
+  <Paragraph 2: Present the new behavior or feature. In words, *show* what the feature
+  is and make a case for how the reader could benefit from it. Center the user whenever
   possible ("you"), and speak on behalf of Canonical ("we"). Prefer general, simple
   usage over complex applications. Use past tense, or the form "is now [x]" or "now
   [does x]". For example, "We understand that some authors may not want to have their
@@ -269,6 +274,7 @@ development keeps pace with the OS's new releases and support lifecycle.
 
   The following issues have been resolved in Snapcraft 2.0.
 
+  .. _release-notes-fixes-2.0.0:
 
   Snapcraft 2.0.0
   ~~~~~~~~~~~~~~~
@@ -276,6 +282,8 @@ development keeps pace with the OS's new releases and support lifecycle.
   - `ID <link>`_ <Title>
   - `ID <link>`_ <Title>
 
+
+  .. _release-notes-fixes-2.0.1:
 
   Snapcraft 2.0.1
   ~~~~~~~~~~~~~~~

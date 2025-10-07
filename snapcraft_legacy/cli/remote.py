@@ -25,7 +25,7 @@ from snapcraft_legacy.internal.remote_build import LaunchpadClient, WorkTree, er
 from snapcraft_legacy.project import Project
 
 from . import echo
-from ._options import PromptOption, get_project
+from ._options import PromptOption, add_verbosity_options, get_project
 
 _SUPPORTED_ARCHS = ["amd64", "arm64", "armhf", "i386", "ppc64el", "riscv64", "s390x"]
 
@@ -85,6 +85,7 @@ def remotecli():
     is_flag=True,
     help="Package all sources to send to remote builder, not just local sources.",
 )
+@add_verbosity_options()
 def remote_build(
     recover: bool,
     status: bool,
@@ -94,6 +95,7 @@ def remote_build(
     launchpad_accept_public_upload: bool,
     launchpad_timeout: int,
     package_all_sources: bool,
+    **kwargs,
 ) -> None:
     """Dispatch a snap for remote build.
 
@@ -125,9 +127,17 @@ def remote_build(
         build_on = build_for
 
     try:
-        project._get_build_base()
+        base = project._get_build_base()
     except RuntimeError:
         raise errors.BaseRequiredError()
+
+    if base == "core22":
+        echo.warning(
+            "The legacy remote builder for core22 snaps will be removed in a future release. "
+            "Use the new remote builder instead.\n"
+            "For more information, check out "
+            "https://documentation.ubuntu.com/snapcraft/stable/explanation/remote-build/#versions "
+        )
 
     if not build_id:
         # If the option wasn't provided, use the project directory hash

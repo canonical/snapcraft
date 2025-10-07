@@ -18,10 +18,11 @@
 
 import numbers
 from collections import abc
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
 import pydantic
 from craft_application import models
+from typing_extensions import Self
 
 
 def cast_dict_scalars_to_strings(data: dict) -> dict:
@@ -72,6 +73,9 @@ class ConfdbSchema(models.CraftBaseModel):
 class Rules(models.CraftBaseModel):
     """A list of confdb schemas for a particular view."""
 
+    summary: str | None = None
+    """Optional summary for this view."""
+
     rules: list[ConfdbSchema]
 
 
@@ -83,6 +87,9 @@ class EditableConfdbSchemaAssertion(models.CraftBaseModel):
 
     name: str
     revision: int | None = 0
+
+    summary: str | None = None
+    """Optional summary for the entire confdb-schema."""
 
     views: dict[str, Rules]
     """A map of logical views of how the storage is accessed."""

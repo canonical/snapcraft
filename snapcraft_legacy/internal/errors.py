@@ -810,3 +810,16 @@ class BuildAttributePatchelfConflictError(SnapcraftException):
 
     def get_resolution(self) -> str:
         return "Use either 'no-patchelf' or 'enable-patchelf', not both."
+
+
+class SnapcraftVerbosityError(SnapcraftException):
+    """An exception to raise when the verbosity can't be determined."""
+
+    def __init__(self, level: str) -> None:
+        self.level = level
+
+    def get_brief(self) -> str:
+        return (
+            f"Invalid verbosity level {self.level!r}. "
+            "Valid levels are: QUIET, BRIEF, VERBOSE, DEBUG, TRACE."
+        )

@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import craft_application.errors
 import craft_cli
@@ -30,7 +30,7 @@ import craft_store
 from craft_application import Application, AppMetadata, launchpad, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
-from craft_parts.plugins.plugins import PluginType
+from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
 from overrides import override
 
 import snapcraft
@@ -43,13 +43,15 @@ from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
 from .parts import plugins
 from .parts.yaml_utils import get_snap_project
 
+if TYPE_CHECKING:
+    from craft_parts.plugins.plugins import PluginType
+
 APP_METADATA = AppMetadata(
     name="snapcraft",
     summary="Package, distribute, and update snaps for Linux and IoT",
     ProjectClass=models.Project,
     source_ignore_patterns=["*.snap"],
-    project_variables=["version", "grade"],
-    mandatory_adoptable_fields=["version", "summary", "description"],
+    mandatory_adoptable_fields=list(models.MANDATORY_ADOPTABLE_FIELDS),
     docs_url="https://documentation.ubuntu.com/snapcraft/{version}",
 )
 
@@ -85,7 +87,7 @@ def _get_esm_error_for_base(base: str) -> None:
 class Snapcraft(Application):
     """Snapcraft application definition."""
 
-    _known_core24: bool
+    _use_craftapp_lib: bool
     """True if the project should use the core24/craft-application codepath."""
 
     def __init__(self, *args, **kwargs) -> None:
@@ -95,14 +97,14 @@ class Snapcraft(Application):
         # compatibility with previous versions of the snapcraft codebase, and in
         # the package service to copy the project file into the snap payload if
         # manifest generation is enabled.
-        self._known_core24 = self._get_known_core24()
+        self._use_craftapp_lib = self._should_use_craftapp_lib()
 
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
 
-    def _get_known_core24(self) -> bool:
-        """Return true if the project is known to be core24."""
+    def _should_use_craftapp_lib(self) -> bool:
+        """Return true if the project is known to use Craft Application to build."""
         try:
             snapcraft_yaml_path = get_snap_project(self.project_dir).project_file
             with snapcraft_yaml_path.open() as file:
@@ -114,14 +116,18 @@ class Snapcraft(Application):
         ):
             return False
 
+        # When snapcraft.yaml exists but is empty
+        if not isinstance(_snapcraft_yaml_data, dict):
+            return False
+
         base = _snapcraft_yaml_data.get("base")
         build_base = _snapcraft_yaml_data.get("build-base")
 
-        # We know for sure that we're handling a core24 project
-        if "core24" in (base, build_base) or build_base == "devel":
-            return True
-
-        return False
+        # Check for bases known *not* to use craft-application
+        return all(
+            non_craftapp_base not in (base, build_base)
+            for non_craftapp_base in ("core18", "core20", "core22")
+        )
 
     def _get_app_plugins(self) -> dict[str, PluginType]:
         return plugins.get_plugins(core22=False)
@@ -131,15 +137,19 @@ class Snapcraft(Application):
         """Register per application plugins when initializing."""
         super()._register_default_plugins()
 
-        if self._known_core24:
-            # dotnet is disabled for core24 and newer because it is pending a rewrite
+        craft_parts.plugins.unregister("maven-use")
+
+        if self._use_craftapp_lib:
+            # core22 uses dotnet v1
+            # core24 and newer uses dotnet v2
             craft_parts.plugins.unregister("dotnet")
+            craft_parts.plugins.register({"dotnet": DotnetV2Plugin})
 
     @property
     def app_config(self) -> dict[str, Any]:
         """Overridden to add "core" knowledge to the config."""
         config = super().app_config
-        config["core24"] = self._known_core24
+        config["use_craftapp_lib"] = self._use_craftapp_lib
         return config
 
     @override
@@ -180,7 +190,7 @@ class Snapcraft(Application):
                         f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
                         "is correctly exported into the environment"
                     ),
-                    docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+                    docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate",
                 )
             )
             return_code = 1

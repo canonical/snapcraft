@@ -661,8 +661,8 @@ class TestProjectValidation:
             "Plugs should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'plugs:' stanza "
             "which is intended for configuration only."
-            "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
-            "#heading--plugs-and-slots-for-an-entire-snap)"
+            "\n(Reference: https://documentation.ubuntu.com/snapcraft/stable/reference/"
+            "project-file/snapcraft-yaml)"
         )
         emitter.assert_message(expected_message)
 
@@ -674,8 +674,8 @@ class TestProjectValidation:
             "Slots should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'slots:' stanza "
             "which is intended for configuration only."
-            "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
-            "#heading--plugs-and-slots-for-an-entire-snap)"
+            "\n(Reference: https://documentation.ubuntu.com/snapcraft/stable/reference/"
+            "project-file/snapcraft-yaml)"
         )
         emitter.assert_message(expected_message)
 
@@ -846,14 +846,6 @@ class TestPlatforms:
         error = r"build-on\n  Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
             Platform(**{"build-for": [const.SnapArch.amd64]})  # type: ignore[reportArgumentType]
-
-    def test_platforms_not_allowed_core22(self, project_yaml_data):
-        error = (
-            "'platforms' keyword is not supported for base 'core22'. "
-            "Use 'architectures' keyword instead."
-        )
-        with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(platforms={"amd64": None}))
 
     @pytest.mark.parametrize(
         ("architectures", "expected"),
@@ -2069,10 +2061,10 @@ class TestArchitecture:
         assert not arch_triplet
 
     def test_architectures_not_allowed(self, project_yaml_data):
-        """'architectures' keyword is not allowed if base is not core22."""
+        """'architectures' key is not allowed if base is not core22."""
         error = (
-            "'architectures' keyword is not supported for base 'core24'. "
-            "Use 'platforms' keyword instead."
+            "'architectures' key is not supported for base 'core24'. "
+            "Use 'platforms' key instead."
         )
 
         with pytest.raises(pydantic.ValidationError, match=error):
@@ -2239,6 +2231,7 @@ class TestComponents:
 
     @pytest.fixture
     def stub_component_data(self):
+        """Component with simple data."""
         data = {
             "type": "test",
             "summary": "test summary",
@@ -2248,11 +2241,33 @@ class TestComponents:
         }
         return data
 
-    def test_components_valid(self, project, project_yaml_data, stub_component_data):
-        component_data = {"foo": stub_component_data, "bar": stub_component_data}
+    @pytest.fixture
+    def stub_component_complex_data(self):
+        """Component with all keys set."""
+        data = {
+            "type": "test",
+            "summary": "test summary",
+            "description": "test description",
+            "version": "1.0",
+            "adopt-info": "my-part",
+            "hooks": {"my-hook": {"command-chain": ["baz"], "plugs": ["baz"]}},
+        }
+        return data
+
+    def test_components_valid(
+        self,
+        project,
+        project_yaml_data,
+        stub_component_data,
+        stub_component_complex_data,
+    ):
+        component_data = {
+            "foo": stub_component_data,
+            "bar": stub_component_complex_data,
+        }
         components = {
             "foo": snapcraft.models.Component.unmarshal(stub_component_data),
-            "bar": snapcraft.models.Component.unmarshal(stub_component_data),
+            "bar": snapcraft.models.Component.unmarshal(stub_component_complex_data),
         }
 
         test_project = project.unmarshal(project_yaml_data(components=component_data))

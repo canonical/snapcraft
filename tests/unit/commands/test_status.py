@@ -213,6 +213,15 @@ def fake_store_list_revisions(mocker, list_revisions_result):
     return fake_client
 
 
+@pytest.fixture(autouse=True)
+def stdout_tty(request, mocker):
+    """Present stdout as a tty."""
+    if "stdout_not_tty" in request.keywords:
+        mocker.patch("sys.stdout.isatty", return_value=False)
+    else:
+        mocker.patch("sys.stdout.isatty", return_value=True)
+
+
 ##################
 # Status Command #
 ##################
@@ -240,6 +249,32 @@ def test_default(emitter, fake_app_config):
         "                 candidate  -          -           -\n"
         "                 beta       10         18          -\n"
         "                 edge       ↑          ↑           -"
+    )
+
+
+@pytest.mark.usefixtures("memory_keyring", "fake_store_get_status_map")
+@pytest.mark.stdout_not_tty
+def test_stdout_not_a_tty(emitter, fake_app_config):
+    cmd = commands.StoreStatusCommand(fake_app_config)
+
+    cmd.run(
+        argparse.Namespace(
+            name="test-snap",
+            arch=None,
+            track=None,
+        )
+    )
+
+    emitter.assert_message(
+        "Track    Arch    Channel    Version    Revision    Progress\n"
+        "2.1      amd64   stable     -          -           -\n"
+        "2.1      amd64   candidate  -          -           -\n"
+        "2.1      amd64   beta       10         19          -\n"
+        "2.1      amd64   edge       ↑          ↑           -\n"
+        "2.0      amd64   stable     -          -           -\n"
+        "2.0      amd64   candidate  -          -           -\n"
+        "2.0      amd64   beta       10         18          -\n"
+        "2.0      amd64   edge       ↑          ↑           -"
     )
 
 
@@ -695,6 +730,12 @@ def test_list_tracks(emitter, command_class, fake_app_config):
 
     cmd.run(argparse.Namespace(name="test-snap"))
 
+    if command_class.hidden:
+        emitter.assert_progress(
+            f"The '{command_class.name}' command was renamed to 'list-tracks'. Use 'list-tracks' instead. "
+            "The old name will be removed in a future release.",
+            permanent=True,
+        )
     emitter.assert_message(
         "Name    Status    Creation-Date         Version-Pattern\n"
         "latest  active    -                     -\n"
@@ -707,12 +748,25 @@ def test_list_tracks(emitter, command_class, fake_app_config):
 ##########################
 
 
+@pytest.mark.parametrize(
+    "command_class",
+    [
+        commands.StoreListRevisionsCommand,
+        commands.StoreRevisionsCommand,
+    ],
+)
 @pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
-def test_list_revisions(emitter, fake_app_config):
-    cmd = commands.StoreListRevisionsCommand(fake_app_config)
+def test_list_revisions(emitter, command_class, fake_app_config):
+    cmd = command_class(fake_app_config)
 
     cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
 
+    if command_class.hidden:
+        emitter.assert_progress(
+            f"The '{command_class.name}' command was renamed to 'list-revisions'. Use 'list-revisions' instead. "
+            "The old name will be removed in a future release.",
+            permanent=True,
+        )
     emitter.assert_message(
         dedent(
             """\

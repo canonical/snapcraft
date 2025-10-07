@@ -18,13 +18,15 @@
 
 import argparse
 import textwrap
-from typing import Any, override
+from typing import Any
 
 import craft_application.commands
 from craft_cli import emit
+from overrides import override
 
 import snapcraft.errors
 import snapcraft.pack
+from snapcraft import const
 
 
 class PackCommand(craft_application.commands.lifecycle.PackCommand):
@@ -137,8 +139,7 @@ class SnapCommand(PackCommand):
         **kwargs: Any,
     ) -> None:
         emit.progress(
-            "Warning: the 'snap' command is deprecated and will be removed "
-            "in a future release of Snapcraft. Use 'pack' instead.",
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
             permanent=True,
         )
 

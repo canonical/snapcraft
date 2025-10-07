@@ -60,8 +60,9 @@ combinations = [
 
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize("combo,", combinations)
-def test_no_sets(click_run, fake_dashboard_get_validation_sets, combo):
-    cmd = ["list-validation-sets"]
+@pytest.mark.parametrize("verbosity", [[], ["--verbosity", "trace"]])
+def test_no_sets(click_run, fake_dashboard_get_validation_sets, combo, verbosity):
+    cmd = ["list-validation-sets", *verbosity]
     if combo["name"] is not None:
         cmd.extend(["--name", combo["name"]])
     if combo["sequence"] is not None:

@@ -50,6 +50,17 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
             result.output, Contains("There is no help topic, plugin or command")
         )
 
+    def test_topic_and_plugin_not_found_exits_with_tip_verbose(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        result = self.run_command(["help", "does-not-exist", "--verbosity", "trace"])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(
+            result.output, Contains("There is no help topic, plugin or command")
+        )
+
     def test_topic_and_plugin_adds_ellipsis_for_long_arg(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)

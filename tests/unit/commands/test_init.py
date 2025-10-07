@@ -96,7 +96,25 @@ def test_init_default(profile, name, project_dir, emitter, valid_new_dir, mocker
     emitter.assert_progress("Checking for an existing 'snapcraft.yaml'.")
     emitter.assert_debug("Could not find an existing 'snapcraft.yaml'.")
     emitter.assert_message(
-        "Go to https://docs.snapcraft.io/the-snapcraft-format/8337 for more "
-        "information about the snapcraft.yaml format."
+        "See https://documentation.ubuntu.com/snapcraft/stable/reference/project-file "
+        "for reference information about the snapcraft.yaml format."
     )
     emitter.assert_message("Successfully initialised project.")
+
+
+@pytest.mark.parametrize("yaml_content", ["", "just a string"])
+def test_init_existing_yaml_invalid(yaml_content, emitter, valid_new_dir, mocker):
+    """Test the 'snapcraft init' command with existing empty/invalid snapcraft.yaml."""
+    snapcraft_yaml = pathlib.Path(valid_new_dir) / "snap/snapcraft.yaml"
+    cmd = _create_command(profile=None, project_dir=None, name=None)
+    mocker.patch.object(sys, "argv", cmd)
+
+    # Write snapcraft.yaml content
+    snapcraft_yaml.parent.mkdir(exist_ok=True)
+    snapcraft_yaml.write_text(yaml_content)
+
+    app = application.create_app()
+    app.run()
+
+    emitter.assert_progress("Checking for an existing 'snapcraft.yaml'.")
+    emitter.assert_debug("Loading project file 'snap/snapcraft.yaml")

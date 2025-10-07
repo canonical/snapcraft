@@ -1,23 +1,22 @@
 [project]
 name = "snapcraft"
 description = "Create snaps"
-readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     "attrs",
-    "catkin-pkg==1.0.0 ; sys_platform == 'linux'",
-    "click==8.1.8",
-    "craft-application[remote]>=5.2.0,<6.0.0",
+    "catkin-pkg==1.1.0; sys_platform == 'linux'",
+    "click>=8.2",
+    "craft-application[remote]~=5.11",
     "craft-archives~=2.1",
-    "craft-cli~=3.0",
+    "craft-cli>=3.1.2,<4.0.0",
     "craft-grammar>=2.0.3,<3.0.0",
-    "craft-parts>=2.10.0,<3.0.0",
+    "craft-parts~=2.22",
     "craft-platforms~=0.7",
-    "craft-providers~=2.2",
-    "craft-store~=3.2",
+    "craft-providers>=3.0.0,<4.0.0",
+    "craft-store>=3.2.2,<4.0.0",
     "cryptography",
     "gnupg",
-    "jsonschema==2.5.1",
+    "jsonschema==2.6.0",
     "launchpadlib",
     "lazr.restfulclient",
     "lxml",
@@ -38,7 +37,9 @@ dependencies = [
     "raven",
     "requests-toolbelt",
     "requests-unixsocket2",
-    "requests",
+    "requests>=2.32.4",
+    # setuptools >= 80.9 has a noisy warning about pkg_resources
+    "setuptools>=69.0,<80.9.0",
     "simplejson",
     "snap-helpers",
     "tabulate",
@@ -56,11 +57,12 @@ classifiers = [
     "Natural Language :: English",
     "Topic :: Software Development :: Build Tools",
     "Topic :: System :: Software Distribution",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
 ]
-requires-python = ">=3.12"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+readme = { file = "README.md", content-type = "text/markdown" }
 
 [dependency-groups]
 dev = [
@@ -83,47 +85,36 @@ dev = [
     "pytest-subprocess",
 ]
 docs = [
-    "canonical-sphinx[full]>=0.4.0",
-    "docutils>=0.21",
+    "canonical-sphinx[full]~=0.5.1",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
-    "sphinxcontrib-details-directive",
     "sphinx-lint",
+    # sphinx-prompt >=1.9.0 needs Sphinx 8 but apparently doesn't declare it
+    "sphinx-prompt~=1.8.0",
+    # sphinx-sitemap>=2.7 fails to build on RTD infra due to https://github.com/jdillard/sphinx-sitemap/pull/95
+    "sphinx-sitemap~=2.6.0",
+    "sphinx-substitution-extensions",
     "sphinx-toolbox",
-    "sphinxext-rediraffe==0.2.7",
+    "sphinxcontrib-details-directive",
+    "sphinxext-rediraffe==0.3.0",
+    "docutils>=0.21",
+    "pydantic-kitbash==0.0.8",
     "pyspelling",
-    "pydantic-kitbash==0.0.3",
 ]
-lint = [
-    "codespell[toml]",
-    { include-group = "types" },
-]
+lint = ["codespell[toml]", { include-group = "types" }]
 types = [
-    "mypy",
+    "mypy~=1.18.2",
     "types-PyYAML",
-    # Pinned because any higher requires urllib3>=2
-    "types-requests==2.31.0.6",
+    "types-requests>=2.32",
     "types-setuptools",
     "types-simplejson",
     "types-tabulate",
     "types-toml",
 ]
-dev-jammy = [
-    # Stay on 2.4 for Jammy
-    "python-apt~=2.4.0;sys_platform=='linux'",
-]
-dev-noble = [
-    # 2.7 for Noble
-    "python-apt~=2.7.0;sys_platform=='linux'",
-]
-dev-oracular = [
-    # 2.9 for Oracular+
-    "python-apt>=2.9.0,<2.9.9;sys_platform=='linux'",
-]
-dev-plucky = [
-    # 2.9 for Oracular+
-    "python-apt>=2.9.0;sys_platform=='linux'",
-]
+dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
+dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
+dev-plucky = ["python-apt~=2.9.0;sys_platform=='linux'"]
+dev-questing = ["python-apt~=3.0.0;sys_platform=='linux'"]
 tics = ["flake8", "pylint"]
 
 [tool.uv]
@@ -131,14 +122,14 @@ conflicts = [
     [
         { group = "dev-jammy" },
         { group = "dev-noble" },
-        { group = "dev-oracular" },
         { group = "dev-plucky" },
-    ]
+        { group = "dev-questing" },
+    ],
 ]
 
 [[tool.uv.index]]
 name = "python-apt-wheels"
-url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"  # workaround to get python-apt to install across multiple platforms
+url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" # workaround to get python-apt to install across multiple platforms
 explicit = true
 
 [tool.uv.sources]
@@ -149,10 +140,7 @@ snapcraft = "snapcraft.application:main"
 snapcraft_legacy = "snapcraft_legacy.cli.__main__:run"
 
 [build-system]
-requires = [
-    "setuptools>=69.0",
-    "setuptools_scm[toml]>=7.1",
-]
+requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -195,7 +183,7 @@ namespaces = true
 snapcraft = ["templates/*"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.10"
 ignore_missing_imports = true
 follow_imports = "silent"
 exclude = [
@@ -206,56 +194,64 @@ exclude = [
     "tools",
     "venv",
 ]
-plugins = [
-    "pydantic.mypy",
-]
+plugins = ["pydantic.mypy"]
 
 [tool.pyright]
 include = ["snapcraft", "tests"]
 exclude = ["build", "tests/legacy", "tests/spread"]
-pythonVersion = "3.12"
+pythonVersion = "3.10"
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
-target-version = "py312"
+target-version = "py310"
 line-length = 88
 extend-exclude = [
     "docs",
     "__pycache__",
     "legacy",
     "tests/legacy",
-    "snapcraft/_version.py",  # setuptools_scm generates old-style type annotations and single quotes
+    "snapcraft/_version.py", # setuptools_scm generates old-style type annotations and single quotes
 ]
 lint.select = [
-    "E", "F",  # The rules built into Flake8
-    "I",  # isort checking
-    "PLC", "PLE", "PLR", "PLW",  # Pylint
+    "E",
+    "F",   # The rules built into Flake8
+    "I",   # isort checking
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW", # Pylint
     # Additional stricter checking than previously enabled:
-    "A",  # Shadowing built-ins.
-    "W",  # PyCodeStyle warnings.
-    "N",  # Pep8 naming
-    "YTT",  # flake8-2020: Misuse of `sys.version` and `sys.version_info`
-    "ANN",  # Annotations
-    "S",  # Checks for common security issues
-    "BLE",  # Blind exception
-    "B",  # Opinionated bugbear linting
-    "C4",  # better comprehensions
-    "T10",  # Ensure we don't leave code that starts the debugger in
-    "ICN",  # Unconventional import aliases.
-    "Q",  # Consistent quotations
-    "RET",  # Return values
-    "UP",  # pyupgrade
+    "A",     # Shadowing built-ins.
+    "W",     # PyCodeStyle warnings.
+    "N",     # Pep8 naming
+    "YTT",   # flake8-2020: Misuse of `sys.version` and `sys.version_info`
+    "ANN",   # Annotations
+    "S",     # Checks for common security issues
+    "BLE",   # Blind exception
+    "B",     # Opinionated bugbear linting
+    "C4",    # better comprehensions
+    "T10",   # Ensure we don't leave code that starts the debugger in
+    "ICN",   # Unconventional import aliases.
+    "Q",     # Consistent quotations
+    "RET",   # Return values
+    "UP",    # pyupgrade
+    "TC001", # Checks for first-party imports that are only used for type annotations
+    "TC002", # Checks for third-party imports that are only used for type annotations
+    "TC003", # Checks for standard library imports that are only used for type annotations
+    "TC004", # Remove imports from type-checking guard blocks if used at runtime
+    "TC005", # Delete empty type-checking blocks
 ]
 lint.ignore = [
     # These following copy the flake8 configuration
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
-    "E501",  # Line too long (reason: ruff will automatically fix this for us)
+    "E501", # Line too long (reason: ruff will automatically fix this for us)
     # The following copy our pydocstyle configuration
-    "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
-    "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
-    "D203",  # 1 blank line required before class docstring (reason: pep257 default)
-    "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
-    "D215",  # Section underline is over-indented (reason: pep257 default)
+    "D105",    # Missing docstring in magic method (reason: magic methods already have definitions)
+    "D107",    # Missing docstring in __init__ (reason: documented in class docstring)
+    "D203",    # 1 blank line required before class docstring (reason: pep257 default)
+    "D213",    # Multi-line docstring summary should start at the second line (reason: pep257 default)
+    "D215",    # Section underline is over-indented (reason: pep257 default)
+    "PLW1641", # eq-without-hash (most of our classes should be unhashable)
 
     # Ignored due to conflicts with ruff's formatter:
     # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
@@ -263,13 +259,14 @@ lint.ignore = [
     "ISC001", # Single-line implicit string concatenation.
 
     # Stricter type checking rules that that are disabled.
-    "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
-    "N818",  # Exception names ending with suffix `Error`
-    "ANN002",  "ANN003",  # Missing type annotation for *args and **kwargs
-    "ANN204",  # Missing type annotations for magic methods
-    "ANN401",  # Disallowing `typing.Any`
-    "B904",  # Within an except clause, always explicitly `raise` an exception `from` something.
-    "B905",  # Zip without explicit `strict=` parameter - this only exists in 3.10+
+    "A003",   # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
+    "N818",   # Exception names ending with suffix `Error`
+    "ANN002",
+    "ANN003", # Missing type annotation for *args and **kwargs
+    "ANN204", # Missing type annotations for magic methods
+    "ANN401", # Disallowing `typing.Any`
+    "B904",   # Within an except clause, always explicitly `raise` an exception `from` something.
+    "B905",   # Zip without explicit `strict=` parameter - this only exists in 3.10+
 
 
     # Disabled because the current code breaks these rules without "noqa" comments
@@ -277,16 +274,20 @@ lint.ignore = [
 
     # Annotation issues appear to be mostly in older code, so could be eventually enabled.
     # 5 instances of ANN201, 10 instances of ANN202
-    "ANN201", "ANN202",  # Missing return type annotation for public/private function
+    "ANN201",
+    "ANN202", # Missing return type annotation for public/private function
     # 13 instances of ANN206 - probably mostly :noqa-able
     "ANN206",
     # Comprehensions - IDK, these ones flagged and they really could go either way.
-    "C405", "C408", "C414",
-    "RET504", "RET506",  # Return value related.
-    "PLR2004",  # Magic values - widely used
-    "S603",  # Untrusted input for subprocess calls
-    "S604",  # shell=True parameter to a function
-    "S607",  # Partial executable path for subprocess calls
+    "C405",
+    "C408",
+    "C414",
+    "RET504",
+    "RET506",  # Return value related.
+    "PLR2004", # Magic values - widely used
+    "S603",    # Untrusted input for subprocess calls
+    "S604",    # shell=True parameter to a function
+    "S607",    # Partial executable path for subprocess calls
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -304,7 +305,7 @@ lint.ignore = [
     "SLF",     # Allow accessing private members from tests.
 ]
 "tests/unit/parts/plugins/test_kernel.py" = [
-    "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
+    "E101", # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
 ]
 "__init__.py" = [
     "I001", # isort leaves init files alone by default, this makes ruff ignore them too.
@@ -348,17 +349,10 @@ omit = ["test/**"]
 
 [tool.coverage.report]
 skip_empty = true
-exclude_also = [
-    "if (typing\\.)?TYPE_CHECKING:",
-]
+exclude_also = ["if (typing\\.)?TYPE_CHECKING:"]
 
 [tool.codespell]
-ignore-words-list = [
-    "buildd",
-    "crate",
-    "assertIn",
-    "socio-economic",
-]
+ignore-words-list = ["buildd", "crate", "assertIn", "socio-economic"]
 skip = [
     # Keyrings aren't code
     "*.asc",

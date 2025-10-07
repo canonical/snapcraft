@@ -273,7 +273,7 @@ For a complete list of commits, check out the `8.5.1`_ release on GitHub.
 Core
 ====
 
-* Remove the Snapcraft Dockerfile in favour of the `snapcraft-rocks`_ registry.
+* Remove the Snapcraft Dockerfile in favor of the `snapcraft-rocks`_ registry.
   For more information, see the ``docker/README.md`` file.
 
 Bases
@@ -326,14 +326,14 @@ Command line
 Init
 ====
 
-* Add a ``<project-dir>`` argument to initialise the project in a particular
+* Add a ``<project-dir>`` argument to initialize the project in a particular
   directory.
 
-* Add a ``--name <name>`` argument to set the ``name`` key in the initialised
+* Add a ``--name <name>`` argument to set the ``name`` key in the initialized
   ``snapcraft.yaml``. If ``--name`` isn't provided, the name of the project
   directory or current working directory is used.
 
-* Add a ``--profile <profile>`` argument to initialise a project for a specific
+* Add a ``--profile <profile>`` argument to initialize a project for a specific
   purpose. Currently, only the ``simple`` profile is supported.
 
 Store
@@ -822,8 +822,8 @@ ROS 2 Jazzy
 * Similar to ROS 2 Humble for ``core22``, content-sharing is supported
   (`#4828`_).
 
-For more information, see https://snapcraft.io/docs/ros2-jazzy-extension and
-https://snapcraft.io/docs/ros2-jazzy-content-extension.
+For more information, see :ref:`reference-ros-2-extensions` and
+:ref:`reference-ros-2-content-extensions`.
 
 NPM
 """
@@ -1150,12 +1150,12 @@ Bases
 core24
 """"""
 
-* Fix a bug where `project variables`_ were not evaluated inside a
-  ``snapcraft.yaml`` file and were not available as environment variables in
-  the build environment.
+* Fix a bug where :ref:`part environment variables
+  <reference-part-environment-variables>` were not evaluated inside a ``snapcraft.yaml``
+  file and were not available as environment variables in the build environment.
 
-* Fix a bug where `advanced grammar`_ was not evaluated in root-level part
-  keywords ``build-packages`` and ``build-snaps``.
+* Fix a bug where :ref:`advanced grammar <reference-advanced-grammar>` was not evaluated
+  in root-level part keywords ``build-packages`` and ``build-snaps``.
 
 * Fix a bug where local key assets in ``snap/keys/`` were not used when
   installing package repositories.
@@ -1186,8 +1186,8 @@ core24
 core22
 """"""
 
-* Extend `advanced grammar`_ for all part keywords except plugin-specific
-  keywords.
+* Extend :ref:`advanced grammar <reference-advanced-grammar>` for all part keywords
+  except plugin-specific keywords.
 
 Remote build
 ============
@@ -1232,8 +1232,8 @@ core24
 * Finalize internal refactor to use `Craft Application`_ to build ``core24``
   snaps.
 
-For more information on deprecations and changes, see the `core24 migration
-guide`_.
+For more information on deprecations and changes, see the :ref:`core24 migration guide
+<how-to-change-from-core22-to-core24>`.
 
 Plugins
 #######
@@ -1258,7 +1258,7 @@ QMake
 
 * Add support for the QMake plugin for ``core22`` snaps.
 
-For more information, see https://snapcraft.io/docs/qmake-plugin.
+For more information, see :ref:`craft_parts_qmake_plugin`.
 
 Colcon
 """"""
@@ -1498,9 +1498,9 @@ snaps`_.
 
 More information on content-sharing, see:
 
-* https://snapcraft.io/docs/ros2-humble-content-extension
-* https://snapcraft.io/docs/ros2-foxy-content-extension
-* https://snapcraft.io/docs/ros-noetic-content-extension
+* :ref:`reference-ros-2-extensions`
+* :ref:`reference-ros-2-content-extensions`
+* :ref:`reference-ros-1-content-extensions`
 
 Command line
 ============
@@ -1540,20 +1540,17 @@ Store
 * Add a fallback to a file-based keyring when the system keyring cannot be
   initialized, is not fully configured, or is otherwise not available.
 
-For more information on the file-based keyring, see
-https://snapcraft.io/docs/snapcraft-authentication.
+For more information on the file-based keyring, see :ref:`how-to-authenticate`.
 
 For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 
-.. _advanced grammar: https://snapcraft.io/docs/snapcraft-advanced-grammar
+
 .. _ESM base: https://snapcraft.io/docs/snapcraft-esm
 .. _canonical-sphinx: https://github.com/canonical/canonical-sphinx
-.. _core24 migration guide: https://snapcraft.io/docs/migrate-core24
 .. _Craft Application: https://github.com/canonical/craft-application
 .. _gpu 2404 interface docs: https://mir-server.io/docs/the-gpu-2404-snap-interface#heading--consuming-the-interface
 .. _Matter: https://csa-iot.org/all-solutions/matter/
 .. _Matter on Ubuntu: https://canonical-matter.readthedocs-hosted.com/en/latest/
-.. _project variables: https://snapcraft.io/docs/parts-environment-variables
 .. _Releases page: https://github.com/canonical/snapcraft/releases
 .. _PEP 518: https://peps.python.org/pep-0518/
 .. _ROS architectures with snaps: https://ubuntu.com/robotics/docs/ros-architectures-with-snaps.

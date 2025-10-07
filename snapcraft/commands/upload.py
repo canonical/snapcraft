@@ -20,21 +20,22 @@ from __future__ import annotations
 
 import pathlib
 import textwrap
-from collections import abc
 from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
-from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from snapcraft import errors, store, utils
+from snapcraft import const, errors, store, utils
 from snapcraft.meta import SnapMetadata
 from snapcraft_legacy._store import get_data_from_snap_file
 
 if TYPE_CHECKING:
     import argparse
+    from collections import abc
+
+    from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 
 class ComponentOption:
@@ -218,3 +219,11 @@ class StoreLegacyPushCommand(StoreUploadCommand):
 
     name = "push"
     hidden = True
+
+    @overrides
+    def run(self, parsed_args: argparse.Namespace):
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)

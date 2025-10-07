@@ -7,13 +7,13 @@
 # how-to
 # rename docs/howto/ -> docs/how-to/
 "howto/index.rst" "how-to/index.rst"
-"howto/install.rst" "how-to/setup/set-up-snapcraft.rst"
-"howto/install-snapcraft.rst" "how-to/setup/set-up-snapcraft.rst"
-"howto/select-a-build-provider.rst" "how-to/setup/select-a-build-provider.rst"
+"howto/install.rst" "how-to/set-up-snapcraft.rst"
+"howto/install-snapcraft.rst" "how-to/set-up-snapcraft.rst"
+"howto/select-a-build-provider.rst" "how-to/select-a-build-provider.rst"
 "howto/architectures.rst" "how-to/crafting/select-architectures.rst"
 "howto/bases.rst" "how-to/crafting/specify-a-base.rst"
 "howto/components.rst" "how-to/crafting/create-a-component.rst"
-"howto/set-up-snapcraft.rst" "how-to/setup/set-up-snapcraft.rst"
+"howto/set-up-snapcraft.rst" "how-to/set-up-snapcraft.rst"
 "docs/how-to/use-extensions/index.rst" "how-to/extensions/index.rst"
 "howto/use-extensions/enable-experimental-extensions.rst" "how-to/extensions/enable-experimental-extensions.rst"
 "howto/use-extensions/index.rst" "how-to/extensions/index.rst"
@@ -22,7 +22,6 @@
 "howto/use-extensions/use-the-env-injector-extension.rst" "how-to/extensions/use-the-env-injector-extension.rst"
 "howto/use-extensions/use-the-gnome-extension.rst" "how-to/extensions/use-the-gnome-extension.rst"
 
-"docs/how-to/select-a-build-provider.rst" "how-to/setup/select-a-build-provider.rst"
 "docs/how-to/architectures.rst" "how-to/crafting/select-architectures.rst"
 "docs/how-to/bases.rst" "how-to/crafting/specify-a-base.rst"
 "docs/how-to/components.rst" "how-to/crafting/create-a-component.rst"
@@ -43,8 +42,12 @@
 "howto/craft-a-snap/example-qt5-kde-app.rst" "how-to/integrations/craft-a-qt5-kde-app.rst"
 "howto/craft-a-snap/example-ros-1-app.rst" "how-to/integrations/craft-an-ros-1-app.rst"
 "howto/craft-a-snap/example-ros-2-app.rst" "how-to/integrations/craft-an-ros-2-app.rst"
-"howto/craft-a-snap/example-ruby-app.rst" "how-to/integrations/craft-a-ruby-app.rst"
+"howto/craft-a-snap/example-ruby-app.rst" "how-to/integrations/index.rst"
+"how-to/integrations/craft-a-ruby-app.rst" "how-to/integrations/index.rst"
 "howto/craft-a-snap/example-rust-app.rst" "how-to/integrations/craft-a-rust-app.rst"
+"how-to/setup/select-a-build-provider.rst" "how-to/select-a-build-provider.rst"
+"how-to/setup/set-up-snapcraft.rst" "how-to/set-up-snapcraft.rst"
+
 
 # reference
 "reference/anatomy-of-a-recipe.rst" "reference/project-file/anatomy-of-snapcraft-yaml.rst"
@@ -54,3 +57,13 @@
 "reference/parts_steps.rst" "reference/parts/parts-and-steps.rst"
 "reference/snap-build-process.rst" "reference/processes/snap-build-process.rst"
 "reference/snap-publishing-process.rst" "reference/processes/snap-publishing-process.rst"
+
+# reference/commands
+"reference/commands/list.rst" "reference/commands/names.rst"
+"reference/commands/list-registered.rst" "reference/commands/names.rst"
+"reference/commands/extensions.rst" "reference/commands/list-extensions.rst"
+"reference/commands/plugins.rst" "reference/commands/list-plugins.rst"
+"reference/commands/tracks.rst" "reference/commands/list-tracks.rst"
+"reference/commands/revisions.rst" "reference/commands/list-revisions.rst"
+"reference/commands/push.rst" "reference/commands/upload.rst"
+"reference/commands/snap.rst" "reference/commands/pack.rst"

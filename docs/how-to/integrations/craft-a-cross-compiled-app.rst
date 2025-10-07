@@ -51,11 +51,11 @@ targets:
 Adjust the Autotools configuration
 ----------------------------------
 
-When building for a particular architecture, Snapcraft will initialise the
+When building for a particular architecture, Snapcraft will initialize the
 ``CRAFT_ARCH_TRIPLET_BUILD_FOR`` environment variable in the build environment. This
 variable describes the platform and architecture that Autotools uses to configure
-cross-compilation. For more information on environment variables, see `environment
-variables <https://snapcraft.io/docs/parts-environment-variables>`_.
+cross-compilation. For more information on environment variables, see
+:ref:`reference-part-environment-variables`.
 
 A project building with the Autotools plugin can adjust the options passed to the
 ``configure`` script for a given part with the plugin's
@@ -78,9 +78,9 @@ libraries necessary for cross-compilation.
    :start-at: build-packages:
    :end-before: stage-packages:
 
-`Package repositories <https://snapcraft.io/docs/package-repositories>`_ can also be
-specified for the target platform using the ``package-repositories`` key and the
-``CRAFT_ARCH_BUILD_FOR`` environment variable.
+:ref:`reference-package-repositories` can also be specified for the target platform
+using the ``package-repositories`` key and the ``CRAFT_ARCH_BUILD_FOR`` environment
+variable.
 
 .. literalinclude:: ../code/integrations/example-cross-compiled-app-recipe.yaml
    :caption: snapcraft.yaml of hello-curl
@@ -97,9 +97,9 @@ To select the correct library for the target platform, include these packages in
    :start-at: stage-packages:
    :end-before: autotools-configure-parameters:
 
-The ``build-packages`` and ``stage-packages`` keys additionally support the `advanced
-grammar <https://snapcraft.io/docs/snapcraft-advanced-grammar>`_ keys, which allow
-further customisation of packages installed per-platform.
+The ``build-packages`` and ``stage-packages`` keys additionally support the
+:ref:`advanced grammar <reference-advanced-grammar>` keys, which allow further
+customization of packages installed per-platform.
 
 Build the snap
 --------------

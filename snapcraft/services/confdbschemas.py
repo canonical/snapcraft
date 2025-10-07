@@ -19,9 +19,10 @@
 from __future__ import annotations
 
 import textwrap
-from typing import Any, override
+from typing import Any
 
 from craft_application.util import dump_yaml
+from typing_extensions import override
 
 from snapcraft import models
 from snapcraft.services import Assertion
@@ -29,7 +30,7 @@ from snapcraft.services import Assertion
 _CONFDB_SCHEMA_TEMPLATE = textwrap.dedent(
     """\
     account-id: {account_id}
-    name: {name}
+    name: {name}{summary}
     # The revision for this confdb-schema
     # revision: {revision}
     {views}
@@ -42,6 +43,7 @@ _CONFDB_SCHEMA_VIEWS_TEMPLATE = textwrap.dedent(
     """\
     views:
       wifi-setup:
+        summary: Summary of the view.
         rules:
           - request: ssids
             storage: wifi.ssids
@@ -110,6 +112,8 @@ class ConfdbSchemas(Assertion):
 
     @override
     def _generate_yaml_from_model(self, assertion: models.Assertion) -> str:
+        # Include the summary field only when it's explicitly set (to avoid outputting 'None' in the generated YAML)
+        summary = f"\nsummary: {assertion.summary}" if assertion.summary else ""
         return _CONFDB_SCHEMA_TEMPLATE.format(
             account_id=assertion.account_id,
             views=dump_yaml(
@@ -118,6 +122,7 @@ class ConfdbSchemas(Assertion):
             body=dump_yaml({"body": assertion.body}, default_flow_style=False),
             name=assertion.name,
             revision=assertion.revision,
+            summary=summary,
         )
 
     @override
@@ -128,6 +133,7 @@ class ConfdbSchemas(Assertion):
             body=_CONFDB_SCHEMA_BODY_TEMPLATE,
             name=name,
             revision=1,
+            summary="\nsummary: Summary of the confdb-schema",
         )
 
     @override

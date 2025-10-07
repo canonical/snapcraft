@@ -29,21 +29,7 @@ class TestCLIConfig(unit.TestCase):
         conf = config.CLIConfig()
         self.assertThat(conf.parser.sections(), Equals([]))
 
-    def test_set_and_get_sentry_send_always_with_contextmanager(self):
-        with config.CLIConfig() as cli_config:
-            cli_config.set_sentry_send_always(True)
 
-        with config.CLIConfig() as cli_config:
-            self.assertThat(cli_config.get_sentry_send_always(), Equals(True))
-
-    def test_set_and_get_sentry_send_always(self):
-        cli_config = config.CLIConfig()
-        cli_config.set_sentry_send_always(True)
-        cli_config.save()
-
-        new_cli_config = config.CLIConfig()
-        new_cli_config.load()
-        self.assertThat(new_cli_config.get_sentry_send_always(), Equals(True))
 
     def test_set_and_get_outdated_step_action_with_contextmanager(self):
         with config.CLIConfig() as cli_config:
@@ -67,20 +53,12 @@ class TestCLIConfig(unit.TestCase):
             Equals(config.OutdatedStepAction.CLEAN),
         )
 
-    def test_set_when_read_only(self):
-        cli_config = config.CLIConfig(read_only=True)
-
-        self.assertRaises(RuntimeError, cli_config.set_sentry_send_always, True)
 
     def test_save_when_read_only(self):
         cli_config = config.CLIConfig(read_only=True)
 
         self.assertRaises(RuntimeError, cli_config.save)
 
-    def test_contextmanager_with_read_only(self):
-        with config.CLIConfig(read_only=True) as cli_config:
-            # This should be False
-            self.assertThat(cli_config.get_sentry_send_always(), Equals(False))
 
     def test_load_invalid_config(self):
         config_path = os.path.join(

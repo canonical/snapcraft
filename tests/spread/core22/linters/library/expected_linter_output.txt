@@ -1,7 +1,11 @@
 Running linters...
 Running linter: classic
 Running linter: library
+Running linter: metadata
 Lint warnings:
-- library: libgci-1.so.0.0.0: unused library 'usr/lib/x86_64-linux-gnu/libgci-1.so.0'. (https://snapcraft.io/docs/linters-library)
-- library: libgtksourceview-4.so.0: unused library 'usr/lib/x86_64-linux-gnu/libgtksourceview-4.so.0.0.0'. (https://snapcraft.io/docs/linters-library)
+- library: libgci-1.so.0.0.0: unused library 'usr/lib/x86_64-linux-gnu/libgci-1.so.0'. (https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter)
+- library: libgtksourceview-4.so.0: unused library 'usr/lib/x86_64-linux-gnu/libgtksourceview-4.so.0.0.0'. (https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter)
+- metadata: Metadata field 'contact' is missing or empty. (https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#contact)
+Lint information:
+- metadata: Metadata field 'source-code' is missing or empty. (https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#source-code)
 Creating snap package...

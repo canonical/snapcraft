@@ -513,30 +513,6 @@ def test_platforms_filter_error(
     ) in err
 
 
-@pytest.mark.parametrize("mock_argv", ["amd64"], indirect=True)
-@pytest.mark.usefixtures("emitter", "mock_argv", "fake_services")
-def test_platforms_shorthand_error(capsys, snapcraft_yaml):
-    """Error if '--build-for' entirely filters the build plan."""
-    snapcraft_yaml_dict = {
-        "base": "core24",
-        "platforms": {"amd64": None, "riscv64": None},
-    }
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    app = application.create_app()
-    app.run()
-
-    _, err = capsys.readouterr()
-
-    assert (
-        "Launchpad can't build snaps when using '--build-for' with a shorthand "
-        "platforms entry in the project's snapcraft.yaml."
-    ) in err
-    assert (
-        "Recommended resolution: Use full platform entries or remove the "
-        "'--build-for' argument."
-    ) in err
-
-
 @pytest.mark.parametrize(
     "mock_argv",
     [

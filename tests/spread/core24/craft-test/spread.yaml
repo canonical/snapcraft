@@ -6,5 +6,5 @@ backends:
       - ubuntu-24.04
 
 suites:
-  tests/spread/craft-test/:
+  spread/craft-test/:
     summary: basic tests

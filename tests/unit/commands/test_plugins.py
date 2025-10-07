@@ -53,6 +53,12 @@ def test_registered_plugins_default(command, emitter, fake_app_config):
     """Default to core24."""
     command(fake_app_config).run(argparse.Namespace(base=None))
 
+    if command.hidden:
+        emitter.assert_progress(
+            f"The '{command.name}' command was renamed to 'list-plugins'. Use 'list-plugins' instead. "
+            "The old name will be removed in a future release.",
+            permanent=True,
+        )
     emitter.assert_message(
         textwrap.dedent(
             """\

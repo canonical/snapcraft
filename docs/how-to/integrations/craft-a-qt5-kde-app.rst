@@ -31,11 +31,11 @@ Add an app that uses KDE
     :start-at: apps:
     :end-at: - pulseaudio
 
-Apps that use KDE runtime libraries require the `kde-neon
-<https://snapcraft.io/docs/kde-neon-extension>`_. The extension configures the
-runtime environment of the app so that all desktop functionality is correctly
-initialised. As desktop environment apps, they also need special configuration
-for AppStream and ``.desktop`` file compatibility.
+Apps that use KDE runtime libraries require the :ref:`KDE neon extension
+<reference-kde-neon-extensions>`. The extension configures the runtime environment of
+the app so that all desktop functionality is correctly initialized. As desktop
+environment apps, they also need special configuration for AppStream and ``.desktop``
+file compatibility.
 
 To add a GTK4 app:
 
@@ -61,14 +61,12 @@ To add a Qt5 KDE part:
 
 #. Declare the general part keys, such as ``plugin``, ``source``,
    ``build-packages``, and so on.
-#. So that the app has access to its AppStream metadata, for ``parse-info`` add
-   a path to the AppStream ``.xml`` file on the host system. Since we set
-   ``adopt-info: kcalc`` at the start of the project file, the AppStream file of the
-   ``kcalc`` part will be used to fill in the ``summary``, ``description`` and
-   ``icon`` of this snap and copy the AppStream file. See `Using AppStream
-   metadata
-   <https://snapcraft.io/docs/using-external-metadata#heading--appstream>`_ for
-   technical details about how this works.
+#. So that the app has access to its AppStream metadata, for ``parse-info`` add a path
+   to the AppStream ``.xml`` file on the host system. Since we set ``adopt-info: kcalc``
+   at the start of the project file, the AppStream file of the ``kcalc`` part will be
+   used to fill in the ``summary``, ``description`` and ``icon`` of this snap and copy
+   the AppStream file. See :ref:`reference-external-package-appstream` for technical
+   details about how this works.
 #. For ``build-snaps``, list the following dependencies:
 
    .. literalinclude:: ../code/integrations/example-qt5-kde-recipe.yaml

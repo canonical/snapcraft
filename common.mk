@@ -3,6 +3,7 @@
 
 SOURCES=$(wildcard *.py) $(PROJECT) tests
 DOCS=docs
+DOCS_OUTPUT=$(DOCS)/_build
 
 ifneq ($(OS),Windows_NT)
 	OS := $(shell uname)
@@ -13,7 +14,7 @@ else
 	APT := apt-get
 endif
 
-PRETTIER=npm exec --package=prettier -- prettier --log-level warn
+PRETTIER=npm exec --package=prettier@3.6.0 -- prettier --log-level warn # renovate: datasource=npm
 PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 
 # Cutoff (in seconds) before a test is considered slow by pytest
@@ -50,12 +51,29 @@ help: ## Show this help.
 	}' | uniq
 
 .PHONY: setup
-setup: install-uv setup-precommit install-build-deps ## Set up a development environment
+setup: install-uv _setup-docs _setup-lint _setup-tests setup-precommit install-build-deps  ## Set up a development environment
 	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_DOCS_GROUPS)
 
+.PHONY: setup-docs
+setup-docs: _setup-docs  ##- Set up a documentation-only environment
+	uv sync --no-dev $(UV_DOCS_GROUPS)
+
+.PHONY: _setup-docs
+_setup-docs: install-uv
+
+.PHONY: setup-lint
+setup-lint: _setup-lint  ##- Set up a linting-only environment
+	uv sync $(UV_LINT_GROUPS)
+
+.PHONY: _setup-lint
+_setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps
+
 .PHONY: setup-tests
-setup-tests: install-uv install-build-deps ##- Set up a testing environment without linters
+setup-tests: _setup-tests ##- Set up a testing environment without linters
 	uv sync $(UV_TEST_GROUPS)
+
+.PHONY: _setup-tests
+_setup-tests: install-uv install-build-deps
 
 .PHONY: setup-tics
 setup-tics: install-uv install-build-deps ##- Set up a testing environment for Tiobe TICS
@@ -64,14 +82,6 @@ setup-tics: install-uv install-build-deps ##- Set up a testing environment for T
 ifneq ($(CI),)
 	echo $(PWD)/.venv/bin >> $(GITHUB_PATH)
 endif
-
-.PHONY: setup-lint
-setup-lint: install-uv install-shellcheck install-pyright install-lint-build-deps  ##- Set up a linting-only environment
-	uv sync $(UV_LINT_GROUPS)
-
-.PHONY: setup-docs
-setup-docs: install-uv  ##- Set up a documentation-only environment
-	uv sync --no-dev $(UV_DOCS_GROUPS)
 
 .PHONY: setup-precommit
 setup-precommit: install-uv  ##- Set up pre-commit hooks in this repository.
@@ -84,7 +94,7 @@ endif
 .PHONY: clean
 clean:  ## Clean up the development environment
 	uv tool run pyclean .
-	rm -rf dist/ build/ docs/_build/ *.snap .coverage*
+	rm -rf dist/ build/ docs/_build/ docs/_linkcheck *.snap .coverage*
 
 .PHONY: autoformat
 autoformat: format  # Hidden alias for 'format'
@@ -99,6 +109,10 @@ format-ruff: install-ruff  ##- Automatically format with ruff
 .PHONY: format-codespell
 format-codespell:  ##- Fix spelling issues with codespell
 	uv run codespell --toml pyproject.toml --write-changes $(SOURCES)
+
+.PHONY: format-pre-commit
+format-pre-commit:  ##- Format the entire repository using pre-commit
+	uv tool run pre-commit run
 
 .PHONY: format-prettier
 format-prettier: install-npm  ##- Format files with prettier
@@ -149,12 +163,19 @@ ifneq ($(CI),)
 	@echo ::endgroup::
 endif
 
+.PHONY: lint-uv-lockfile
+lint-uv-lockfile: install-uv  ##- Check that uv.lock matches expectations from pyproject.toml
+	unset UV_FROZEN
+	uv lock --check
+
 .PHONY: lint-shellcheck
 lint-shellcheck:  ##- Lint shell scripts
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	git ls-files | file --mime-type -Nnf- | grep shellscript | cut -f1 -d: | xargs -r shellcheck
+	@# jinja2 shell script templates are mistakenly counted as "true" shell scripts due to their shebang,
+	@# so explicitly filter them out
+	git ls-files | grep -vE "\.sh\.j2$$" | file --mime-type -Nnf- | grep shellscript | cut -f1 -d: | xargs -r shellcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
@@ -175,6 +196,7 @@ ifneq ($(CI),)
 	@echo ::group::$@
 endif
 	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
+	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
@@ -221,11 +243,11 @@ test-find-slow:  ##- Identify slow tests. Set cutoff time in seconds with SLOW_C
 
 .PHONY: docs
 docs:  ## Build documentation
-	uv run $(UV_DOCS_GROUPS) sphinx-build -b html -W $(DOCS) $(DOCS)/_build
+	uv run $(UV_DOCS_GROUPS) sphinx-build -b dirhtml -W $(DOCS) $(DOCS_OUTPUT)
 
 .PHONY: docs-auto
 docs-auto:  ## Build and host docs with sphinx-autobuild
-	uv run --group docs sphinx-autobuild -b html --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS)/_build
+	uv run --group docs sphinx-autobuild -b dirhtml --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS_OUTPUT)
 
 .PHONY: pack-pip
 pack-pip:  ##- Build packages for pip (sdist, wheel)

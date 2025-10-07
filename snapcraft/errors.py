@@ -159,7 +159,7 @@ class MaintenanceBase(SnapcraftError):
         super().__init__(
             f"{base!r} is not supported on this version of Snapcraft.",
             resolution=resolution,
-            docs_url="https://snapcraft.io/docs/base-snaps",
+            docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base",
         )
         self.base = base
 
@@ -171,7 +171,7 @@ class StoreCredentialsUnauthorizedError(SnapcraftError):
         super().__init__(
             message,
             resolution=resolution,
-            docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+            docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate",
         )
 
 
@@ -180,6 +180,10 @@ class SnapcraftAssertionError(SnapcraftError):
 
     Not to be confused with Python's built-in AssertionError.
     """
+
+
+class SnapcraftAssertionWarning(SnapcraftAssertionError):
+    """Error raised when there is a non-critical warning for the assertion."""
 
 
 class SnapPackError(SnapcraftError):

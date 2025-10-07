@@ -1,6 +1,11 @@
 name: Spread Tests
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "hotfix/**"
 
 jobs:
   build:
@@ -8,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -49,13 +54,13 @@ jobs:
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
 
       - name: Download snapcraft snap
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: snap
           path: tests
@@ -100,14 +105,14 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Checkout snapcraft
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           submodules: true
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: snap
           path: tests

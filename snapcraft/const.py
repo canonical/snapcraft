@@ -18,6 +18,11 @@
 
 import enum
 
+DEPRECATED_COMMAND_WARNING = (
+    "The '{old}' command was renamed to '{new}'. Use '{new}' instead. "
+    "The old name will be removed in a future release."
+)
+
 
 class SnapArch(str, enum.Enum):
     """An architecture for a snap."""
@@ -52,7 +57,7 @@ OUTPUT_FORMATS = frozenset(output_format.value for output_format in OutputFormat
 """Supported output formats for commands."""
 
 
-BASES = frozenset({"core", "core18", "core20", "core22", "core24", "devel"})
+BASES = frozenset({"core", "core18", "core20", "core22", "core24", "core26", "devel"})
 """All bases recognized by snapcraft."""
 
 ESM_BASES = frozenset({"core", "core18"})
