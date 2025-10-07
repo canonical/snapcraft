@@ -29,7 +29,7 @@ catkin-packages-ignore
 
 **Type**: list of strings
 
-The Catkin packages to ignore. These packages will not be built or installed.If unset
+The Catkin packages to ignore. These packages will not be built or installed. If unset
 or set to an empty list, no packages will be ignored.
 
 
