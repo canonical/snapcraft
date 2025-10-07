@@ -28,8 +28,6 @@ crystal-build-options
 
 **Type**: list of strings
 
-**Default**: unset
-
 The options to pass to ``shards build``.
 
 
@@ -54,9 +52,9 @@ For core20 snaps, this plugin installs the Crystal snap and the following system
 How it works
 ------------
 
-* Build the Crystal project with ``shards build``, taking into account any build options
-  declared with ``crystal-build-options``.
-* Stage the Crystal project's binary and dependencies in ``/.bin``.
+#. Build the Crystal project with ``shards build``, taking into account any build options
+   declared with ``crystal-build-options``.
+#. Stage the Crystal project's binary and dependencies in ``/.bin``.
 
 
 Example

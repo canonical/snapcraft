@@ -18,8 +18,6 @@ colcon-ament-cmake-args
 
 **Type:** list of strings
 
-**Default:** []
-
 Arguments to pass to ament_cmake packages. Note that any arguments here that match
 colcon arguments need to be prefixed with a space. This can be done by quoting each
 argument with a leading space.
@@ -29,8 +27,6 @@ colcon-catkin-cmake-args
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Type:** list of strings
-
-**Default:** []
 
 Arguments to pass to catkin packages. Note that any arguments here which match colcon
 arguments need to be prefixed with a space. This can be done by quoting each argument
@@ -42,8 +38,6 @@ colcon-cmake-args
 
 **Type:** list of strings
 
-**Default:** []
-
 Arguments to pass to cmake projects. Note that any arguments here which match colcon
 arguments need to be prefixed with a space. This can be done by quoting each argument
 with a leading space.
@@ -53,8 +47,6 @@ colcon-packages
 ~~~~~~~~~~~~~~~
 
 **Type:** list of strings
-
-**Default:** []
 
 List of colcon packages to build. If not specified, all packages in the workspace will
 be built. If set to an empty list (``[]``), no packages will be built, which could
@@ -66,8 +58,6 @@ colcon-packages-ignore
 
 **Type:** list of strings
 
-**Default:** []
-
 List of packages for colcon to ignore.
 
 
@@ -77,8 +67,6 @@ colcon-ros-build-snaps
 ~~~~~~~~~~~~~~~~~~~~~~
 
 **Type:** list of strings
-
-**Default:** []
 
 List of ROS 2 snaps that contain ROS 2 workspaces. This is set by the
 :ref:`reference-ros-2-content-extensions` and shouldn't be set by the user.
@@ -140,11 +128,11 @@ reference pages.
 
 During the build step the plugin performs the following actions:
 
-* Call ``rosdep init`` and ``rosdep update`` to initialize the rosdep database.
-* Source ROS workspaces present in any build snaps, stage snaps, and on the system.
-* Install ROS 2 build packages required by the part.
-* Call ``colcon build`` with any colcon-specific keywords set in the part.
-* Stage runtime packages required by the part.
+#. Call ``rosdep init`` and ``rosdep update`` to initialize the rosdep database.
+#. Source ROS workspaces present in any build snaps, stage snaps, and on the system.
+#. Install ROS 2 build packages required by the part.
+#. Call ``colcon build`` with any colcon-specific keywords set in the part.
+#. Stage runtime packages required by the part.
 
 
 Example

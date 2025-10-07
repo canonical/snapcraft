@@ -23,19 +23,15 @@ catkin-tools-packages
 
 **Type**: list of strings
 
-**Default**: all workspace packages
-
 The list of catkin packages to build. If not set, all packages in the catkin workspace
-are built. If set to an empty list, no packages are built, and the snap will only
-contain Debian packages for ROS 1.
+are built. If unset or set to an empty list, no packages are built, and the snap will
+only contain Debian packages for ROS 1.
 
 
 catkin-tools-cmake-args
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 **Type**: list of strings
-
-**Default**: []
 
 The arguments to pass to CMake.
 
@@ -63,15 +59,15 @@ The Catkin plugin is designed to work alongside the :ref:`reference-ros-1-extens
 
 During the build step, the plugin performs the following actions:
 
-* Source `catkin workspaces <http://wiki.ros.org/catkin/workspaces>`_ in any declared
-  build snaps, stage snaps, and on the host system.
-* Install any missing project dependencies with rosdep.
-* Initialize the workspace to use catkin tools.
-* Overwrite the default catkin build, so that builds aren't affected by profile
-  changes.
-* Configure the project for snap builds.
-* Run ``catkin build``, passing the arguments in the ``catkin-tools-cmake-args`` key to
-  CMake.
+#. Source `catkin workspaces <http://wiki.ros.org/catkin/workspaces>`_ in any declared
+   build snaps, stage snaps, and on the host system.
+#. Install any missing project dependencies with rosdep.
+#. Initialize the workspace to use catkin tools.
+#. Overwrite the default catkin build, so that builds aren't affected by profile
+   changes.
+#. Configure the project for snap builds.
+#. Run ``catkin build``, passing the arguments in the ``catkin-tools-cmake-args`` key to
+   CMake.
 
 
 Example

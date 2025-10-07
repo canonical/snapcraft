@@ -19,8 +19,6 @@ conda-packages
 
 **Type**: list of strings
 
-**Default**: ``unset``
-
 The conda packages to install.
 
 
@@ -28,8 +26,6 @@ conda-python-version
 ~~~~~~~~~~~~~~~~~~~~
 
 **Type**: string
-
-**Default**: ``unset``
 
 The Python version to install in the `conda environment
 <https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_,
@@ -57,12 +53,12 @@ This plugin installs ``curl`` for use during the Miniconda installation.
 How it works
 ------------
 
-* Download the Miniconda installation script with ``curl``, respecting the version
-  declared with ``conda-miniconda-version``.
-* Install Miniconda in the part's build environment with the ``miniconda.sh`` script.
-* Create a conda environment in the part's install directory with ``conda create``. In
-  this environment, conda installs any packages declared with ``conda-packages`` and
-  the Python version declared with ``conda-python-version``.
+#. Download the Miniconda installation script with ``curl``, respecting the version
+   declared with ``conda-miniconda-version``.
+#. Install Miniconda in the part's build environment with the ``miniconda.sh`` script.
+#. Create a conda environment in the part's install directory with ``conda create``. In
+   this environment, conda installs any packages declared with ``conda-packages`` and
+   the Python version declared with ``conda-python-version``.
 
 
 Example
