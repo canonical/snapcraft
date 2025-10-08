@@ -81,12 +81,7 @@ class InitrdPlugin(PluginV2):
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
-        base = self.project._get_build_base()
-
-        build_snaps = {
-            base,
-        }
-        return build_snaps
+        return set()
 
     @overrides
     def get_build_packages(self) -> Set[str]:
