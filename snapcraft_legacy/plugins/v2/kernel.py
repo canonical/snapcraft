@@ -200,7 +200,7 @@ class KernelPlugin(PluginV2):
                 [
                     "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh",
                     f"flavour={kconfigflavour}",
-                    f"defconfig={' '.join(self.options.kernel_kdefconfig)}",
+                    f"defconfig={','.join(self.options.kernel_kdefconfig)}",
                     f"configs={','.join(self.options.kernel_kconfigs)}",
                     f"enable_zfs_support={self.options.kernel_enable_zfs_support}",
                     f"enable_perf={self.options.kernel_enable_perf}",
