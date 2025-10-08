@@ -403,6 +403,11 @@ run() {
 main() {
   set -eux
 
+  # Get the build environment's VERSION_CODENAME as this should match our target
+  . /etc/os-release
+  # UBUNTU_SERIES should match the host build environment
+  UBUNTU_SERIES="${VERSION_CODENAME}"
+
   # INITRD_ROOT sets the chroot location
   INITRD_ROOT="${CRAFT_PART_SRC}/uc-initramfs-build-root"
 

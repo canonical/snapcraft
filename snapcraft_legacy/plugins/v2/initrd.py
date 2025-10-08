@@ -81,7 +81,7 @@ class InitrdPlugin(PluginV2):
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
-        base = self._part_info.base
+        base = self.project._get_build_base()
 
         build_snaps = {
             base,
@@ -105,21 +105,7 @@ class InitrdPlugin(PluginV2):
 
     @overrides
     def get_build_environment(self) -> Dict[str, str]:
-        return {
-            "UC_INITRD_ROOT_NAME": "uc-initramfs-build-root",
-            "UC_INITRD_ROOT": "${SNAPCRAFT_PART_SRC}/${UC_INITRD_ROOT_NAME}",
-            "KERNEL_MODULES": "${SNAPCRAFT_STAGE}/modules",
-            "KERNEL_FIRMWARE": "${SNAPCRAFT_STAGE}/firmware",
-            "UBUNTU_SERIES": self._ubuntu_series,
-            "UBUNTU_CORE_BASE": "core20",
-            "CRAFT_ARCH_TRIPLET_BUILD_FOR": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
-            "CRAFT_ARCH_BUILD_FOR": self._target_arch,
-            "CRAFT_ARCH_BUILD_ON": self._host_arch,
-            "CRAFT_STAGE": "${SNAPCRAFT_STAGE}",
-            "CRAFT_PART_SRC": "${SNAPCRAFT_PART_SRC}",
-            "CRAFT_PART_BUILD": "${SNAPCRAFT_PART_BUILD}",
-            "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
-        }
+        return {}
 
     @property
     def out_of_source_build(self):

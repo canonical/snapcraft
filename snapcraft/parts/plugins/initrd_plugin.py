@@ -177,14 +177,7 @@ class InitrdPlugin(plugins.Plugin):
 
     @overrides
     def get_build_environment(self) -> dict[str, str]:  # pylint: disable=missing-function-docstring
-        return {
-            "UC_INITRD_ROOT_NAME": "uc-initramfs-build-root",
-            "UC_INITRD_ROOT": "${CRAFT_PART_SRC}/${UC_INITRD_ROOT_NAME}",
-            "KERNEL_MODULES": "${CRAFT_STAGE}/modules",
-            "KERNEL_FIRMWARE": "${CRAFT_STAGE}/firmware",
-            "UBUNTU_SERIES": self._ubuntu_series,
-            "UBUNTU_CORE_BASE": self._part_info.base,
-        }
+        return {}
 
     # TODO: finalize initrd_build.sh location
     @overrides
