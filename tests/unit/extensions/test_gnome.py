@@ -238,6 +238,7 @@ class TestGetPartSnippet:
     def assert_get_part_snippet(gnome_instance):
         assert gnome_instance.get_part_snippet(plugin_name="autotools") == {
             "build-environment": [
+                {"SNAPCRAFT_GNOME_SDK": "/snap/gnome-42-2204-sdk/current/"},
                 {"PATH": "/snap/gnome-42-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
                 {
                     "XDG_DATA_DIRS": (
@@ -323,6 +324,7 @@ class TestGetPartSnippet:
 def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
     assert gnome_extension_with_build_snap.get_part_snippet(plugin_name="meson") == {
         "build-environment": [
+            {"SNAPCRAFT_GNOME_SDK": "/snap/gnome-44-2204-sdk/current/"},
             {"PATH": "/snap/gnome-44-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
             {
                 "XDG_DATA_DIRS": (
