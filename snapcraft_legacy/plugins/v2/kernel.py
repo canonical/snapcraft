@@ -147,15 +147,45 @@ class KernelPlugin(PluginV2):
     @overrides
     def get_build_environment(self) -> Dict[str, str]:
         logger.info("Getting build env...")
+
+        _kernel_arch = ""
+        _kernel_image = ""
+        _kernel_target = ""
+
+        if self._part_info.target_arch == "amd64":
+            _kernel_arch = "x86"
+            _kernel_image = "bzImage"
+            _kernel_target = "modules"
+        if self._part_info.target_arch == "arm64":
+            _kernel_arch = "arm64"
+            _kernel_image = "Image"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "armhf":
+            _kernel_arch = "arm"
+            _kernel_image = "zImage"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "ppc64el":
+            _kernel_arch = "powerpc"
+            _kernel_image = "vmlinux.strip"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "powerpc":
+            _kernel_arch = "powerpc"
+            _kernel_image = "uImage"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "riscv64":
+            _kernel_arch = "riscv"
+            _kernel_image = "Image"
+            _kernel_target = "modules dtbs"
+        if self._part_info.target_arch == "s390x":
+            _kernel_arch = "s390"
+            _kernel_image = "bzImage"
+            _kernel_target = "modules dtbs"
+
         return {
-            "CRAFT_ARCH_TRIPLET_BUILD_FOR": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
-            "CRAFT_PROJECT_DIR": "${SNAPCRAFT_PROJECT_DIR}",
-            "CRAFT_PART_SRC": "${SNAPCRAFT_PART_SRC}",
-            "CRAFT_PART_BUILD": "${SNAPCRAFT_PART_BUILD}",
-            "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
-            "CRAFT_TARGET_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
             "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-            "ARCH": "${CRAFT_ARCH_BUILD_FOR}",
+            "ARCH": _kernel_arch,
+            "KERNEL_IMAGE": _kernel_image,
+            "KERNEL_TARGET": _kernel_target,
         }
 
     @overrides
@@ -177,11 +207,6 @@ class KernelPlugin(PluginV2):
                 ]
             )
         ]
-
-    @property
-    def out_of_source_build(self):
-        """Return whether the plugin performs out-of-source-tree builds."""
-        return True
 
 
 def _get_target_architecture() -> str:

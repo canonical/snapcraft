@@ -302,6 +302,14 @@ run() {
 main() {
   set -eux
 
+  # This script is used by both legacy and current behavior. If the new
+  # variables are unset fallback to old ones and use new names in the script.
+  : "${CRAFT_PART_SRC:=$SNAPCRAFT_PART_SRC}"
+  : "${CRAFT_PART_BUILD:=$SNAPCRAFT_PART_BUILD}"
+  : "${CRAFT_PART_INSTALL:=$SNAPCRAFT_PART_INSTALL}"
+  : "${CRAFT_ARCH_BUILD_FOR:=$SNAPCRAFT_ARCH_BUILD_FOR}"
+  : "${CRAFT_ARCH_TRIPLET_BUILD_FOR:=$SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}"
+
   # required_boot are Kconfigs required for booting Ubuntu Core
   required_boot="SQUASHFS"
 
