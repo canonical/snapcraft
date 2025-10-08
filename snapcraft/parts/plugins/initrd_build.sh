@@ -317,7 +317,7 @@ create_initrd() {
 # 2. cert file name
 prep_sign() {
   key="${CRAFT_STAGE}/signing/${1}"
-  cert="${CRAFT_STAGE}/signing${2}"
+  cert="${CRAFT_STAGE}/signing/${2}"
 
   if [ -e "${key}" ] && [ -e "${cert}" ]; then
     echo "Using ${key} and ${cert}"
