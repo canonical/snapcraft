@@ -36,14 +36,11 @@ This plugin uses the following plugin-specific keywords:
 """
 
 import logging
-import os
-import sys
 from typing import Any, Dict, List, Set
 
 from overrides import overrides
 
 from snapcraft_legacy.plugins.v2 import PluginV2
-from snapcraft_legacy.project._project_options import ProjectOptions
 
 logger = logging.getLogger(__name__)
 
@@ -81,16 +78,6 @@ class InitrdPlugin(PluginV2):
                 },
             },
         }
-
-    def __init__(self, *, part_name: str, options) -> None:
-        super().__init__(part_name=part_name, options=options)
-        self._target_arch = _get_target_architecture()
-        # check if we are cross building
-        self._host_arch = os.getenv("SNAP_ARCH", "")
-        self._cross_building = False
-        if self._host_arch != self._target_arch:
-            self._cross_building = True
-        self._ubuntu_series = "focal"
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
@@ -139,27 +126,6 @@ class InitrdPlugin(PluginV2):
         """Return whether the plugin performs out-of-source-tree builds."""
         return True
 
-
-def _get_target_architecture() -> str:
-    # TODO: there is bug in snapcraft and target arch is not reported
-    # correctly. As work around check if we are cross building,
-    # to know what is target arch
-    target_arch = None
-    # pylint: disable=invalid-name
-    for i in range(1, len(sys.argv)):
-        if sys.argv[i].startswith("--target-arch="):
-            target_arch = sys.argv[i].split("=")[1]
-        elif sys.argv[i].startswith("--target-arch"):
-            target_arch = sys.argv[i + 1]
-
-    if target_arch is None:
-        # this is native build, use deb_arch
-        # as for native build it's reported correctly
-        target_arch = ProjectOptions().deb_arch
-
-    return target_arch
-
-    # TODO: finalize initrd_build.sh location
     @overrides
     def get_build_commands(self) -> List[str]:
         logger.info("Getting build commands...")
