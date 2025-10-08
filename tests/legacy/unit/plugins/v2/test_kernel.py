@@ -24,12 +24,12 @@ def test_schema():
         "properties": {
             "kernel-kdefconfig": {
                 "type": "array",
+                "items": {"type": "string"},
                 "default": ["defconfig"],
             },
             "kernel-kconfigflavour": {"type": "string", "default": "generic"},
             "kernel-kconfigs": {
                 "type": "array",
-                "minitems": 1,
                 "uniqueItems": True,
                 "items": {"type": "string"},
                 "default": [],
@@ -41,14 +41,17 @@ def test_schema():
             "kernel-enable-perf": {
                 "type": "boolean",
                 "default": False,
-            },
+            }
         },
     }
 
 def test_get_build_packages():
-    plugin = KernelPlugin(part_name="my-part", options=lambda: None)
+    class Options:
+        kernel_enable_zfs_support = False
 
-    assert plugini.get_build_packages() == {
+    plugin = KernelPlugin(part_name="my-part", options=Options())
+
+    assert plugin.get_build_packages() == {
         "bc",
         "binutils",
         "bison",
@@ -103,33 +106,27 @@ def test_get_build_environment():
     plugin = KernelPlugin(part_name="my-part", options=lambda: None)
 
     assert plugin.get_build_environment() == {
-        "CRAFT_ARCH_TRIPLET_BUILD_FOR": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
-        "CRAFT_PROJECT_DIR": "${SNAPCRAFT_PROJECT_DIR}",
-        "CRAFT_PART_SRC": "${SNAPCRAFT_PART_SRC}",
-        "CRAFT_PART_BUILD": "${SNAPCRAFT_PART_BUILD}",
-        "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
-        "CRAFT_TARGET_ARCH": "${SNAPCRAFT_TARGET_ARCH}",
         "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-        "ARCH": "${CRAFT_RRCH_BUILD_FOR}",
+        "ARCH": "x86",
+        "KERNEL_IMAGE": "bzImage",
+        "KERNEL_TARGET": "modules",
     }
 
 def test_get_build_commands():
     class Options:
-        kernel_kdefconfig = ["snappy_defconfig", "foo_config"]
         kernel_kconfigflavour = "aflavour"
+        kernel_kdefconfig = ["snappy_defconfig", "foo_config"]
         kernel_kconfigs = ["CONFIG_FOO=y", "CONFIG_BAR=m"]
         kernel_enable_zfs_support = True
         kernel_enable_perf = True
 
     plugin = KernelPlugin(part_name="my-part", options=Options())
 
-    assert plugin.get_build_commands() == {
-        " ".join(
-            "$SNAP/lib/python3.12/siite-packages/snapcraft/parts/plugins/kernel_build.sh",
-            "flavour=aflavour",
-            "defconfig=snappy_defconfig,foo_config",
-            "configs=CONFIG_FOO=y,CONFIG_BAR=m",
-            "enable_zfs_support=True",
-            "enable_perf=True",
-        )
-    }
+    assert plugin.get_build_commands() == [
+                "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
+                "flavour= "
+                "defconfig=snappy_defconfig,foo_config "
+                "configs=CONFIG_FOO=y,CONFIG_BAR=m "
+                "enable_zfs_support=True "
+                "enable_perf=True"
+    ]

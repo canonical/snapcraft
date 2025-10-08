@@ -24,25 +24,22 @@ def test_schema():
         "properties": {
             "initrd-modules": {
                 "type": "array",
-                "minitems": 1,
                 "uniqueItems": True,
                 "items": {"type": "string"},
                 "default": [],
             },
             "initrd-firmware": {
                 "type": "array",
-                "minitems": 1,
                 "uniqueItems": True,
                 "items": {"type": "string"},
                 "default": [],
             },
             "initrd-addons": {
                 "type": "array",
-                "minitems": 1,
                 "uniqueItems": True,
                 "items": {"type": "string"},
                 "default": [],
-            },
+            }
         },
     }
 
@@ -55,45 +52,22 @@ def test_get_build_packages():
         "fakeroot",
     }
 
-def test_get_build_snaps():
-    plugin = InitrdPlugin(part_name="my-part", options=lambda: None)
-
-    assert plugin.get_build_snaps() == {
-        "core20"
-    }
-
 def test_get_build_environment():
     plugin = InitrdPlugin(part_name="my-part", options=lambda: None)
 
-    assert plugin.get_build_environment() == {
-        "UC_INITRD_ROOT_NAME": "uc-initramfs-build-root",
-        "UC_INITRD_ROOT": "${SNAPCRAFT_PART_SRC}/${UC_INITRD_ROOT_NAME}",
-        "KERNEL_MODULES": "${SNAPCRAFT_STAGE}/modules",
-        "KERNEL_FIRMWARE": "${SNAPCRAFT_STAGE}/firmware",
-        "UBUNTU_SERIES": "focal",
-        "UBUNTU_CORE_BASE": "core20",
-        "CRAFT_ARCH_TRIPLET_BUILD_FOR": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}",
-        "CRAFT_ARCH_BUILD_FOR": "${SNAPCRAFT_ARCH_BUILD_FOR}",
-        "CRAFT_ARCH_BUILD_ON": "${SNAPCRAFT_ARCH_BUILD_ON}",
-        "CRAFT_STAGE": "${SNAPCRAFT_STAGE}",
-        "CRAFT_PART_SRC": "${SNAPCRAFT_PART_SRC}",
-        "CRAFT_PART_BUILD": "${SNAPCRAFT_PART_BUILD}",
-        "CRAFT_PART_INSTALL": "${SNAPCRAFT_PART_INSTALL}",
-    }
+    assert plugin.get_build_environment() == dict()
 
 def test_get_build_commands():
     class Options:
-        initrd_addons = "usr/bin/foo"
-        initrd_firmware = "bar.bin"
-        initrd_modules = "baz"
+        initrd_addons = ["usr/bin/foo"]
+        initrd_firmware = ["bar.bin"]
+        initrd_modules = ["baz"]
 
     plugin = InitrdPlugin(part_name="my-part", options=Options())
 
-    assert plugin.get_build_commands() == {
-        " ".join(
-            "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugin/initrd_build.sh",
-            "initrd-modules=baz",
-            "initrd-firmware=bar.bin"
-            "initrd-addons=usr/bin/foo",
-        )
-    }
+    assert plugin.get_build_commands() == [
+        "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh "
+        "initrd-modules=baz "
+        "initrd-firmware=bar.bin "
+        "initrd-addons=usr/bin/foo",
+    ]

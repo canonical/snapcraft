@@ -35,14 +35,12 @@ This plugin uses the following plugin-specific keywords:
       module(s) have any dependencies, they are also installed.
 """
 
-import logging
 from typing import Any, Dict, List, Set
 
 from overrides import overrides
 
 from snapcraft_legacy.plugins.v2 import PluginV2
-
-logger = logging.getLogger(__name__)
+from snapcraft_legacy.project._project_options import ProjectOptions
 
 
 class InitrdPlugin(PluginV2):
@@ -57,21 +55,18 @@ class InitrdPlugin(PluginV2):
             "properties": {
                 "initrd-modules": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
                 },
                 "initrd-firmware": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
                 },
                 "initrd-addons": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
@@ -91,7 +86,9 @@ class InitrdPlugin(PluginV2):
             "fakeroot",
         }
         # consider cross-build option
-        if self._cross_building:
+        _host_arch = ProjectOptions().arch_build_on
+        _target_arch = ProjectOptions().arch_build_for
+        if _host_arch != _target_arch:
             build_packages |= {
                 f"libfakechroot:{self._target_arch}",
                 f"libfakeroot:{self._target_arch}",
@@ -109,14 +106,13 @@ class InitrdPlugin(PluginV2):
 
     @overrides
     def get_build_commands(self) -> List[str]:
-        logger.info("Getting build commands...")
         return [
             " ".join(
                 [
                     "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh",
-                    f"initrd-modules={self.options.initrd_modules}",
-                    f"initrd-firmware={self.options.initrd_firmware}",
-                    f"initrd-addons={self.options.initrd_addons}",
+                    f"initrd-modules={','.join(self.options.initrd_modules)}",
+                    f"initrd-firmware={','.join(self.options.initrd_firmware)}",
+                    f"initrd-addons={','.join(self.options.initrd_addons)}",
                 ]
             )
         ]

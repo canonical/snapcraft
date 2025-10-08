@@ -78,7 +78,6 @@ class KernelPlugin(PluginV2):
                 "kernel-kconfigflavour": {"type": "string", "default": "generic"},
                 "kernel-kconfigs": {
                     "type": "array",
-                    "minitems": 1,
                     "uniqueItems": True,
                     "items": {"type": "string"},
                     "default": [],
