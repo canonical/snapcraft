@@ -44,9 +44,6 @@ The following kernel-specific options are provided by this plugin:
       Enable or disable building the perf binary.
 """
 
-import logging
-import os
-import sys
 from typing import Any, Dict, List, Set
 
 from overrides import overrides
@@ -54,7 +51,15 @@ from overrides import overrides
 from snapcraft_legacy.plugins.v2 import PluginV2
 from snapcraft_legacy.project._project_options import ProjectOptions
 
-logger = logging.getLogger(__name__)
+_KERNEL_ARCH_FROM_SNAP_ARCH = {
+    "i386": "x86",
+    "amd64": "x86",
+    "armhf": "arm",
+    "arm64": "arm64",
+    "ppc64el": "powerpc",
+    "riscv64": "riscv",
+    "s390x": "s390",
+}
 
 
 class KernelPlugin(PluginV2):
@@ -89,19 +94,12 @@ class KernelPlugin(PluginV2):
             },
         }
 
-    def __init__(self, *, part_name: str, options) -> None:
-        super().__init__(part_name=part_name, options=options)
-        self.name = part_name
-        self.options = options
+    @staticmethod
+    def _get_architecture() -> str:
+        target_arch = ProjectOptions().arch_build_for
+        kernel_arch = _KERNEL_ARCH_FROM_SNAP_ARCH[target_arch]
 
-        target_arch = _get_target_architecture()
-        self._target_arch = target_arch
-
-        # check if we are cross building
-        host_arch = os.getenv("SNAP_ARCH")
-        self._cross_building = False
-        if host_arch != self._target_arch:
-            self._cross_building = True
+        return kernel_arch
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
@@ -138,48 +136,35 @@ class KernelPlugin(PluginV2):
                 "python3",
             }
 
-        # for cross build of zfs we also need libc6-dev:<target arch>
-        if self.options.kernel_enable_zfs_support and self._cross_building:
-            build_packages |= {f"libc6-dev:{self._target_arch}"}
+            _host_arch = ProjectOptions().arch_build_on
+            _target_arch = ProjectOptions().arch_build_for
+            if _host_arch != _target_arch:
+                build_packages |= {f"libc6-dev:{_target_arch}"}
 
         return build_packages
 
     @overrides
     def get_build_environment(self) -> Dict[str, str]:
-        logger.info("Getting build env...")
+        _kernel_arch = self._get_architecture()
 
-        _kernel_arch = ""
         _kernel_image = ""
-        _kernel_target = ""
+        _kernel_target = "modules"
 
-        if self._part_info.target_arch == "amd64":
-            _kernel_arch = "x86"
-            _kernel_image = "bzImage"
-            _kernel_target = "modules"
-        if self._part_info.target_arch == "arm64":
-            _kernel_arch = "arm64"
-            _kernel_image = "Image"
+        if _kernel_arch != "x86":
             _kernel_target = "modules dtbs"
-        if self._part_info.target_arch == "armhf":
-            _kernel_arch = "arm"
+
+        if _kernel_arch == "x86":
+            _kernel_image = "bzImage"
+        if _kernel_arch == "arm64":
+            _kernel_image = "Image"
+        if _kernel_arch == "arm":
             _kernel_image = "zImage"
-            _kernel_target = "modules dtbs"
-        if self._part_info.target_arch == "ppc64el":
-            _kernel_arch = "powerpc"
+        if _kernel_arch == "powerpc":
             _kernel_image = "vmlinux.strip"
-            _kernel_target = "modules dtbs"
-        if self._part_info.target_arch == "powerpc":
-            _kernel_arch = "powerpc"
-            _kernel_image = "uImage"
-            _kernel_target = "modules dtbs"
-        if self._part_info.target_arch == "riscv64":
-            _kernel_arch = "riscv"
+        if _kernel_arch == "riscv":
             _kernel_image = "Image"
-            _kernel_target = "modules dtbs"
-        if self._part_info.target_arch == "s390x":
-            _kernel_arch = "s390"
+        if _kernel_arch == "s390":
             _kernel_image = "bzImage"
-            _kernel_target = "modules dtbs"
 
         return {
             "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
@@ -190,7 +175,6 @@ class KernelPlugin(PluginV2):
 
     @overrides
     def get_build_commands(self) -> List[str]:
-        logger.info("Getting build commands...")
         kconfigflavour = self.options.kernel_kconfigflavour
         if self.options.kernel_kdefconfig != "defconfig":
             kconfigflavour = ""
@@ -207,25 +191,3 @@ class KernelPlugin(PluginV2):
                 ]
             )
         ]
-
-
-def _get_target_architecture() -> str:
-    # TODO: there is bug in snapcraft and target arch is not
-    # reported correctly.
-    # As work around check if we are cross building, to know what is
-    # target arch
-    target_arch = None
-    # pylint: disable=invalid-name
-    for i in range(1, len(sys.argv)):
-        if sys.argv[i].startswith("--target-arch="):
-            target_arch = sys.argv[i].split("=")[1]
-        elif sys.argv[i].startswith("--target-arch"):
-            target_arch = sys.argv[i + 1]
-
-    if target_arch is None:
-        # this is native build, use deb_arch
-        # as for native build it's reported correctly
-        target_arch = ProjectOptions().deb_arch
-
-    logger.info("Target architecture: %s", target_arch)
-    return target_arch
