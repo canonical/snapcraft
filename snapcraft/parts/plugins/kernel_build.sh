@@ -311,6 +311,11 @@ main() {
   : "${CRAFT_PARALLEL_BUILD_COUNT:=$SNAPCRAFT_PARALLEL_BUILD_COUNT}"
   : "${CRAFT_ARCH_TRIPLET_BUILD_FOR:=$SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}"
 
+  # Get the build environment's VERSION_CODENAME as this should match our target
+  . /etc/os-release
+  # UBUNTU_SERIES should match the host build environment
+  UBUNTU_SERIES="${VERSION_CODENAME}"
+
   # required_boot are Kconfigs required for booting Ubuntu Core
   required_boot="SQUASHFS"
 
