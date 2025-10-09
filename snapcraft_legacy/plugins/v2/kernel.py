@@ -166,7 +166,7 @@ class KernelPlugin(PluginV2):
             _kernel_image = "bzImage"
 
         return {
-            "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
+            "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": _kernel_arch,
             "KERNEL_IMAGE": _kernel_image,
             "KERNEL_TARGET": _kernel_target,
