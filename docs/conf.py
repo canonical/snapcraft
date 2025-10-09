@@ -19,6 +19,7 @@ import os
 import pathlib
 import sys
 
+import craft_application_docs
 import craft_parts_docs
 import snapcraft
 
@@ -74,21 +75,17 @@ html_js_files = [
 extensions = [
     "canonical_sphinx",
     "sphinx_sitemap",
+    "sphinx_substitution_extensions",
+    "sphinx_toolbox.collapse",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
+    "sphinxcontrib.details.directive",
+    "sphinxext.rediraffe",
     "pydantic_kitbash",
 ]
 
 sphinx_tabs_disable_tab_closing = True
 # endregion
-
-extensions.extend(
-    (
-        "sphinx.ext.ifconfig",
-        "sphinx.ext.intersphinx",
-        "sphinxcontrib.details.directive",
-        "sphinx_toolbox.collapse",
-        "sphinxext.rediraffe",
-    )
-)
 
 rst_epilog = """
 .. include:: /reuse/links.txt
@@ -102,6 +99,7 @@ exclude_patterns = [
     # documents (so they generate "duplicate label" errors) or they aren't
     # used in this documentation at all (so they generate "unreferenced"
     # errors).
+    "common/craft-application/*",
     "common/craft-parts/explanation/dump_plugin.rst",
     "common/craft-parts/explanation/file-migration.rst",
     "common/craft-parts/explanation/gradle_plugin.rst",
@@ -158,8 +156,13 @@ def setup(app):
 
 # Setup libraries documentation snippets for use in snapcraft docs.
 common_docs_path = pathlib.Path(__file__).parent / "common"
+craft_application_docs_path = pathlib.Path(craft_application_docs.__file__).parent / "craft-application"
 craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-parts"
+(common_docs_path / "craft-application").unlink(missing_ok=True)
 (common_docs_path / "craft-parts").unlink(missing_ok=True)
+(common_docs_path / "craft-application").symlink_to(
+    craft_application_docs_path, target_is_directory=True
+)
 (common_docs_path / "craft-parts").symlink_to(
     craft_parts_docs_path, target_is_directory=True
 )

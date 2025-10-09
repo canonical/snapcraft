@@ -17,6 +17,7 @@ For guidance on specific extensions, see :ref:`how-to-extensions`.
 .. toctree::
     :hidden:
 
+    dotnet-extensions
     env-injector-extension
     gnome-extension
     kde-neon-extensions
