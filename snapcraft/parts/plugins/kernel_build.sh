@@ -132,19 +132,29 @@ build_zfs() {
   echo "Building zfs modules..."
   cd "${CRAFT_PART_BUILD}/zfs"
 
+  # In case some build files are patched, regenerate them
+  ./autogen.sh
+
+  # Importantly the paths are passed directly, so they must be fully qualified
+  # paths and not relative ones
   ./configure \
     --with-linux="${CRAFT_PART_SRC}"         \
     --with-linux-obj="${CRAFT_PART_BUILD}"   \
     --host="${CRAFT_ARCH_TRIPLET_BUILD_FOR}" \
     --with-config=kernel
 
-  make -j "${CRAFT_PARALLEL_BUILD_COUNT}"
-  make install DESTDIR="${CRAFT_PART_INSTALL}/zfs"
+  # Only build the relevant module files
+  make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
+       -C "$PWD/module"                   \
+        modules
 
-  mv -f "${CRAFT_PART_INSTALL}/zfs/lib/modules/${kver}/extra" \
-        "${CRAFT_PART_INSTALL}/modules/${kver}"
-
-  rm -rf "${CRAFT_PART_INSTALL}/zfs"
+  # Install the modules to the module tree
+  # -j1 to avoid a weird error if you install "too fast"
+  make -j1                              \
+       -C "$PWD/module"                 \
+        INSTALL_MODDIR=.                \
+        DESTDIR="${CRAFT_PART_INSTALL}" \
+        install
 }
 
 # build_perf builds the perf binary
