@@ -19,8 +19,8 @@ The Matter SDK plugin simplifies the building of parts that use the `connectedho
 setup and configuration when creating a snapped Matter application.
 
 
-Keywords
---------
+Keys
+----
 
 This plugin provides one unique key.
 

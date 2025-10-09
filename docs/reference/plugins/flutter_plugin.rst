@@ -7,14 +7,15 @@ The Flutter plugin simplifies the building of applications that employ the `Flut
 <https://flutter.dev/>`_ UI toolkit.
 
 
-Keywords
---------
+Keys
+----
 
 This plugin provides the following unique keys for core22 and newer snaps.
 
 
 flutter-channel
 ~~~~~~~~~~~~~~~
+
 **Type**: ``stable``, ``master``, or ``beta``
 
 **Default**: ``stable``
@@ -24,6 +25,7 @@ The flutter channel to use for the build.
 
 flutter-target
 ~~~~~~~~~~~~~~
+
 **Type**: string
 
 **Default**: ``lib/main.dart``

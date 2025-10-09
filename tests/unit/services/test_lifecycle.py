@@ -25,8 +25,7 @@ from unittest import mock
 
 import pytest
 import pytest_subprocess
-from craft_parts.packages import Repository
-from craft_platforms import DebianArchitecture
+from craft_platforms import DebianArchitecture, DistroBase
 
 import snapcraft.parts
 from snapcraft import __version__, models, os_release
@@ -43,6 +42,11 @@ def lifecycle_service(default_project, fake_services, setup_project):
 
 def test_lifecycle_installs_base(lifecycle_service, mocker):
     install_snaps = mocker.patch("craft_parts.packages.snaps.install_snaps")
+
+    mocker.patch(
+        "craft_platforms.DistroBase.from_linux_distribution",
+        return_value=DistroBase("ubuntu", "24.04"),
+    )
 
     lifecycle_service.run("pull")
 
@@ -262,10 +266,10 @@ def package_repositories_params(extra_project_params):
 def test_lifecycle_installs_gpg_dirmngr(
     default_project, fake_services, setup_project, mocker
 ):
-    mock_is_installed = mocker.patch.object(
-        Repository, "is_package_installed", return_value=False
+    mock_is_installed = mocker.patch(
+        "craft_parts.packages.deb.Ubuntu.is_package_installed", return_value=False
     )
-    mock_install = mocker.patch.object(Repository, "install_packages")
+    mock_install = mocker.patch("craft_parts.packages.deb.Ubuntu.install_packages")
     setup_project(fake_services, default_project.marshal())
 
     fake_services.get("lifecycle")
