@@ -179,7 +179,7 @@ chroot_configure() {
 
   # Install ubuntu-core-initramfs
   # A modified ubuntu-core-initramfs COULD be supplied by the user if they add a deb to
-  # CRAFT_PART_BUILD before the plugin is called. This is intended for debugging or
+  # CRAFT_STAGE before the plugin is called. This is intended for debugging or
   # testing ubuntu-core-initramfs and not intended for normal consumers of this plugin.
   if [ -e "${CRAFT_STAGE}/ubuntu-core-initramfs.deb" ]; then
     cp -f "${CRAFT_STAGE}/ubuntu-core-initramfs.deb" "${INITRD_ROOT}"
@@ -402,6 +402,11 @@ run() {
 # main sets some important variables and kicks off the script
 main() {
   set -eux
+
+  # This script is used by both legacy and current behavior. If the new
+  # variables are unset fallback to old ones and use new names in the script.
+  : "${CRAFT_PART_SRC:=$SNAPCRAFT_PART_SRC}"
+  : "${CRAFT_PART_INSTALL:=$SNAPCRAFT_PART_INSTALL}"
 
   # Get the build environment's VERSION_CODENAME as this should match our target
   . /etc/os-release
