@@ -102,6 +102,7 @@ class KernelPlugin(plugins.Plugin):
             "binutils",
             "bison",
             "cmake",
+            "cpio",
             "cryptsetup",
             "debhelper",
             "fakeroot",
