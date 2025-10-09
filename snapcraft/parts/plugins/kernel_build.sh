@@ -280,13 +280,16 @@ run() {
 
   # Install kernel artifacts
   echo "Copying kernel image..."
-  mv -f "arch/${ARCH}/boot/${KERNEL_IMAGE}" "${CRAFT_PART_INSTALL}/kernel.img"
+  mv -f "${CRAFT_PART_BUILD}/arch/${ARCH}/boot/${KERNEL_IMAGE}" \
+        "${CRAFT_PART_INSTALL}/kernel.img"
 
   echo "Copying System map..."
-  cp -f "${CRAFT_PART_BUILD}/System.map" "${CRAFT_PART_INSTALL}/System.map-${kver}"
+  cp -f "${CRAFT_PART_BUILD}/System.map" \
+        "${CRAFT_PART_INSTALL}/System.map-${kver}"
 
   echo "Copying kernel config..."
-  cp -f "${CRAFT_PART_BUILD}/.config" "${CRAFT_PART_INSTALL}/config-${kver}"
+  cp -f "${CRAFT_PART_BUILD}/.config" \
+        "${CRAFT_PART_INSTALL}/config-${kver}"
 
   # Remove symlinks lib/modules/$kver/{build,source}
   # It's possible that these are not even installed, however
