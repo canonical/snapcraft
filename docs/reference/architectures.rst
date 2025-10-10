@@ -140,9 +140,11 @@ Shorthand format
 """"""""""""""""
 
 .. admonition:: Legacy behavior
+    :class: important
 
-    Architecture shorthand on ``core20`` snaps does not behave the same as it does on
-    newer bases.
+    Shorthand architectures are resolved differently depending on the snap's base. In
+    core20 snaps, declaring multiple shorthand architectures yields a single
+    multi-architecture artifact.
 
 As an alternative to the explicit format described above, ``core20`` snaps
 support a shorthand format can be used for simple multi-architecture ``build-on``
