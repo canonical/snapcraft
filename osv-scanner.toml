@@ -1,0 +1,4 @@
+[[IgnoredVulns]]
+id = "GHSA-4xh5-x5gv-qwph"
+ignoreUntil = 2025-11-01
+reason = "pip 25.3 isn't due for release until the end of October"
