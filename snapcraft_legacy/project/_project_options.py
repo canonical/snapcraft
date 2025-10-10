@@ -350,8 +350,7 @@ class ProjectOptions:
             else:
                 doc_page = "https://documentation.ubuntu.com/snapcraft/stable/reference/architectures/#core20"
                 echo.warning(
-                    "Warning: The architecture shorthand behaves differently on core20 builds. "
-                    "This may not have the expected behavior.\n"
+                    "Warning: The architecture shorthand behaves differently on core20 builds.\n"
                     "Declaring multiple shorthand architectures in a core20 snap yields a single, multi-architecture artifact.\n"
                     f"For more information, see {doc_page}"
                 )
