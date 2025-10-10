@@ -18,6 +18,7 @@ import os
 import platform
 from unittest import mock
 
+import pytest
 import testtools
 from testtools.matchers import Equals
 
@@ -300,3 +301,27 @@ class TestLinkerVersionForBase(unit.TestCase):
             Equals("4.10"),
         )
         self.get_linker_version_mock.assert_called_once_with("ld-2.23.so")
+
+
+def test_shorthand_warning(capfd: pytest.CaptureFixture) -> None:
+    """Shorthands with multiple architectures behave differently on core20"""
+    options = snapcraft_legacy.ProjectOptions()
+    options._determine_build_for_architecture(
+        [
+            "amd64",
+            "arm64"
+        ]
+    )
+
+    _, err = capfd.readouterr()
+    assert "Warning: The architecture shorthand behaves differently on core20 builds." in err
+
+def test_shorthand_no_warning(capfd: pytest.CaptureFixture) -> None:
+    """Shorthand with only one architecture behaves identically to newer cores and thus needs no warning"""
+    options = snapcraft_legacy.ProjectOptions()
+    options._determine_build_for_architecture(
+        ["arm64"]
+    )
+
+    _, err = capfd.readouterr()
+    assert "Warning: The architecture shorthand behaves differently on core20 builds." not in err
