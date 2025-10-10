@@ -1,4 +1,4 @@
-summary: Craft Parts kernel plugin test
+summary: Craft Parts initrd plugin test
 manual: true
 kill-timeout: 180m
 
