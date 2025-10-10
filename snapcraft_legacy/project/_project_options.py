@@ -352,6 +352,7 @@ class ProjectOptions:
                 echo.warning(
                     "Warning: The architecture shorthand behaves differently on core20 builds. "
                     "This may not have the expected behavior.\n"
+                    "Declaring multiple shorthand architectures in a core20 snap yields a single, multi-architecture artifact.\n"
                     f"For more information, see {doc_page}"
                 )
                 logger.debug("Cannot set build-for info for multi-arch build")
