@@ -147,24 +147,19 @@ class KernelPlugin(PluginV2):
     def get_build_environment(self) -> Dict[str, str]:
         _kernel_arch = self._get_architecture()
 
-        _kernel_image = ""
+        _kernel_image = "Image"
         _kernel_target = "modules"
 
         if _kernel_arch != "x86":
             _kernel_target = "modules dtbs"
 
-        if _kernel_arch == "x86":
-            _kernel_image = "bzImage"
-        if _kernel_arch == "arm64":
-            _kernel_image = "Image"
-        if _kernel_arch == "arm":
-            _kernel_image = "zImage"
-        if _kernel_arch == "powerpc":
-            _kernel_image = "vmlinux.strip"
-        if _kernel_arch == "riscv":
-            _kernel_image = "Image"
-        if _kernel_arch == "s390":
-            _kernel_image = "bzImage"
+        match _kernel_arch:
+            case "x86" | "s390":
+                _kernel_image = "bzImage"
+            case "arm":
+                _kernel_image = "zImage"
+            case "powerpc":
+                _kernel_image = "vmlinux.strip"
 
         return {
             "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-",
