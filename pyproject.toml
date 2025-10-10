@@ -137,7 +137,6 @@ python-apt = { index = "python-apt-wheels" }
 
 [project.scripts]
 snapcraft = "snapcraft.application:main"
-snapcraft_legacy = "snapcraft_legacy.cli.__main__:run"
 
 [build-system]
 requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
