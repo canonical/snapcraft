@@ -337,8 +337,11 @@ create_efi() {
   key="$1"
   cert="$2"
 
-  rm -f                             "${INITRD_ROOT}/boot/kernel.efi"*
-  ln -f "${CRAFT_STAGE}/kernel.img" "${INITRD_ROOT}/boot/kernel.img-${KERNEL_VERSION}"
+  # Remove unnecessary initrd file or existing kernel EFI
+  rm -f "${INITRD_ROOT}/boot/kernel.efi"*
+  rm -f "${CRAFT_PART_INSTALL}/initrd.img"*
+  rm -f "${CRAFT_PART_INSTALL}/boot/kernel.efi"*
+
 
   chroot_run "ubuntu-core-initramfs create-efi    \
                 --kernelver \"${KERNEL_VERSION}\" \
@@ -347,10 +350,6 @@ create_efi() {
                 --initrd    /boot/initrd.img      \
                 --kernel    /boot/kernel.img      \
                 --output    /boot/kernel.efi"
-
-  # Remove unnecessary initrd file
-  rm -f  "${CRAFT_PART_INSTALL}/initrd.img-"*
-  unlink "${CRAFT_PART_INSTALL}/initrd.img"
 
   install -Dm644 "${INITRD_ROOT}/boot/kernel.efi-${KERNEL_VERSION}" \
     "${CRAFT_PART_INSTALL}/kernel.efi-${KERNEL_VERSION}"
