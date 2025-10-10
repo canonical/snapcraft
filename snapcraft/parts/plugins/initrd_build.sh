@@ -405,8 +405,10 @@ main() {
 
   # This script is used by both legacy and current behavior. If the new
   # variables are unset fallback to old ones and use new names in the script.
+  : "${CRAFT_STAGE:=$SNAPCRAFT_STAGE}"
   : "${CRAFT_PART_SRC:=$SNAPCRAFT_PART_SRC}"
   : "${CRAFT_PART_INSTALL:=$SNAPCRAFT_PART_INSTALL}"
+  : "${CRAFT_ARCH_BUILD_FOR:=$SNAPCRAFT_ARCH_BUILD_FOR}"
 
   # Get the build environment's VERSION_CODENAME as this should match our target
   . /etc/os-release
