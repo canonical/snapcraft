@@ -17,5 +17,6 @@ Crafting
     include-local-files-and-remote-resources
     override-the-default-build
     customize-lifecycle-steps-and-part-variables
+    reuse-packages-between-builds
     create-a-component
     enable-classic-confinement
