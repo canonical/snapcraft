@@ -365,13 +365,15 @@ run() {
     "${CRAFT_ARCH_BUILD_FOR}" "${UBUNTU_SERIES}" "${CRAFT_PART_SRC}"
   chroot_setup
 
-  # Install kernel firmware, modules into chroot
-  echo "Installing firmware and modules into chroot"
+  # Install kernel, firmware, modules into chroot
+  echo "Installing kernel, firmware, and modules into chroot"
   rm -rf "${INITRD_ROOT}/usr/lib/firmware/"* \
          "${INITRD_ROOT}/usr/lib/modules"/*
   cp --archive --link --force "${KERNEL_FIRMWARE}" \
                               "${KERNEL_MODULES}"  \
                               "${INITRD_ROOT}/usr/lib"
+
+  cp --force "${KERNEL_IMAGE}" "${INITRD_ROOT}/boot"
 
   # Cleanup dangling links if they exist
   # The kernel plugin should have removed these, however
@@ -427,6 +429,8 @@ main() {
   KERNEL_MODULES="${CRAFT_STAGE}/modules"
   # KERNEL_FIRMWARE provides a path to the kernel firmware files
   KERNEL_FIRMWARE="${CRAFT_STAGE}/firmware"
+  # KERNEL_IMAGE provides a path to the kernel image file
+  KERNEL_IMAGE="${CRAFT_STAGE}/kernel.img-${KERNEL_VERSION}"
 
   # BASE_CREATED tracks whether or not the chroot has been created
   BASE_CREATED="${CRAFT_PART_SRC}/.base_created"
