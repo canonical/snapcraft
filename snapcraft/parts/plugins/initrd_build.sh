@@ -442,6 +442,13 @@ main() {
            BASE_CREATED    \
            BASE_CONFIGURED
 
+  # Building UKIs is only supported on jammy or later
+  if [ "${UBUNTU_SERIES}" = "focal" ]; then
+    initrd_build_efi_image="False"
+    initrd_efi_image_key=""
+    initrd_efi_image_cert=""
+  fi
+
   # clean if we fail
   trap 'clean "${INITRD_ROOT}"' EXIT INT
 
