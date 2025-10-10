@@ -265,16 +265,21 @@ def _determine_architectures(project: Project, user_specified_arch: str):
     # If build architectures not set in snapcraft.yaml, let the user override
     # Launchpad defaults using --build-on.
     project_architectures = _get_project_architectures(project)
-    if project_architectures and user_specified_arch:
+    split_user_archs = user_specified_arch.split(",")
+    if (
+        project_architectures
+        and user_specified_arch
+        and not set(split_user_archs).issubset(project_architectures)
+    ):
         raise click.BadOptionUsage(
             "--build-on",
             "Cannot use --build-on, architecture list is already set in snapcraft.yaml.",
         )
 
-    if project_architectures:
+    if user_specified_arch:
+        archs = split_user_archs
+    elif project_architectures:
         archs = project_architectures
-    elif user_specified_arch:
-        archs = user_specified_arch.split(",")
     else:
         # Default to typical snapcraft behavior (build for host).
         archs = [project.deb_arch]
