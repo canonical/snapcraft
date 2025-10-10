@@ -72,7 +72,6 @@
   initrd chroot as /root/cert.pem.
 """
 
-import logging
 import os
 from typing import Literal, cast
 
@@ -80,8 +79,6 @@ import pydantic
 from craft_parts import infos, plugins
 from overrides import overrides
 from typing_extensions import Self
-
-logger = logging.getLogger(__name__)
 
 
 class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
@@ -182,7 +179,6 @@ class InitrdPlugin(plugins.Plugin):
     # TODO: finalize initrd_build.sh location
     @overrides
     def get_build_commands(self) -> list[str]:  # pylint: disable=missing-function-docstring
-        logger.info("Getting build commands...")
         return [
             " ".join(
                 [
