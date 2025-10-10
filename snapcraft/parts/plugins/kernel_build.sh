@@ -335,7 +335,9 @@ main() {
   : "${CRAFT_ARCH_TRIPLET_BUILD_FOR:=$SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}"
 
   # Get the build environment's VERSION_CODENAME as this should match our target
+  # shellcheck disable=1091
   . /etc/os-release
+
   # UBUNTU_SERIES should match the host build environment
   UBUNTU_SERIES="${VERSION_CODENAME}"
 
