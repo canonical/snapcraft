@@ -152,7 +152,7 @@ build_zfs() {
   # -j1 to avoid a weird error if you install "too fast"
   make -j1                              \
        -C "$PWD/module"                 \
-        INSTALL_MODDIR=.                \
+        INSTALL_MOD_DIR=.               \
         DESTDIR="${CRAFT_PART_INSTALL}" \
         install
 }
@@ -271,12 +271,19 @@ run() {
 
   if [ "${kernel_enable_zfs}" = "True" ]; then
     fetch_zfs
-    build_zfs && redepmod
+    build_zfs
   fi || echo "Not building ZFS"
 
   if [ "${kernel_enable_perf}" = "True" ]; then
     build_perf
   fi || echo "Not building perf"
+
+  # This information gets deleted by some modules, like zfs. We still need it
+  # for e.g. initrd builds.
+  echo "Copying some module information..."
+  cp -f "${CRAFT_PART_BUILD}/modules.order"   \
+        "${CRAFT_PART_BUILD}/modules.builtin" \
+        "${CRAFT_PART_INSTALL}/lib/modules/${kver}"
 
   # Install kernel artifacts
   echo "Copying kernel image..."
@@ -290,6 +297,9 @@ run() {
   echo "Copying kernel config..."
   cp -f "${CRAFT_PART_BUILD}/.config" \
         "${CRAFT_PART_INSTALL}/config-${kver}"
+
+  # Run depmod to ensure all modules are accounted for
+  redepmod
 
   # Remove symlinks lib/modules/$kver/{build,source}
   # It's possible that these are not even installed, however
