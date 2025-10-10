@@ -137,6 +137,7 @@ setup_ppa() {
 
   chroot_run "rm -rf /root/.gnupg ${gpg_file} ${snappy_key}"
   chroot_run "mkdir -p --mode 700 /root/.gnupg"
+  chroot_run "mkdir -p            ${gpg_file%/*}"
   chroot_run "echo keyserver hkp://keyserver.ubuntu.com > ${dirmngr_conf}"
   chroot_run "gpg --homedir /root/.gnupg         \
                   --no-default-keyring           \
