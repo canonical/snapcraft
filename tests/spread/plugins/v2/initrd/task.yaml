@@ -1,4 +1,4 @@
-summary: V2 kernel plugin test
+summary: V2 initrd plugin test
 manual: true
 kill-timeout: 180m
 
