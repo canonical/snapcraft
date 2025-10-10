@@ -31,7 +31,7 @@ KERNEL_VERSION_MOCK_VALUE = ("5.15.0-143.153", "5.15.0-143")
 def build_from_debpkg_cmds() -> list[str]:
     """Return build commands for building from deb packages.
 
-    Note: All snapcraft root paths are normalised to for comparison `;parts`
+    Note: All snapcraft root paths are normalised to for comparison ';parts'
 
     Returns:
         List of build commands for building from binary deb packages.
@@ -350,10 +350,6 @@ def build_cmds(
     cmds = (
         [
             "env",
-            "cd ;parts/ubuntu-kernel/build",
-            "rm -fr ;parts/ubuntu-kernel/build/kernel/",
-            "rm -fr ;parts/ubuntu-kernel/build/unpacked-*",
-            "rm -fr ;parts/ubuntu-kernel/install/*",
             "mkdir ;parts/ubuntu-kernel/build/kernel",
         ]
         + build_type_cmds
@@ -458,7 +454,7 @@ class TestPluginUbuntuKenrel:
         }
         with pytest.raises(
             errors.SnapcraftError,
-            match="must provide either `ubuntu-kernel-release-name` or `source`",
+            match="missing either 'ubuntu-kernel-release-name' or 'source' key",
         ):
             UbuntuKernelPlugin.properties_class.unmarshal(properties)
 
@@ -469,7 +465,7 @@ class TestPluginUbuntuKenrel:
         properties["source"] = "git://git-repo.git"
         with pytest.raises(
             errors.SnapcraftError,
-            match="`ubuntu-kernel-release-name` and `source` are mutually exclusive",
+            match="cannot use 'ubuntu-kernel-release-name' and 'source' keys at same time",
         ):
             UbuntuKernelPlugin.properties_class.unmarshal(properties)
 
@@ -497,8 +493,8 @@ class TestPluginUbuntuKenrel:
         }
         with pytest.raises(
             errors.SnapcraftError,
-            match="`ubuntu-kernel-use-binary-package` and "
-            f"`{invalid_property}` are mutually exclusive",
+            match="'ubuntu-kernel-use-binary-package' and "
+            f"'{invalid_property}' keys are mutually exclusive",
         ):
             UbuntuKernelPlugin.properties_class.unmarshal(properties)
 

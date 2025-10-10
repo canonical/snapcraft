@@ -1,7 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
-# pylint: disable=line-too-long,too-many-lines,attribute-defined-outside-init
 #
-# Copyright 2020-2025 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -64,7 +63,7 @@ def kernel_abi_from_version(kernel_version: str) -> str:
     """
     rem = re.match(r"(\d+\.\d+\.\d+-\d+)\.\d+", kernel_version)
     if not rem:
-        raise errors.SnapcraftError("Failed to parse kernel version from changelog")
+        raise errors.SnapcraftError("cannot parse kernel version from changelog")
     return rem.group(1)
 
 
@@ -102,9 +101,7 @@ def kernel_version_from_debpkg_file(root_dir: pathlib.Path) -> tuple[str, str]:
             kernel_version = rem.group(1)
             kernel_abi = kernel_abi_from_version(kernel_version)
             return kernel_version, kernel_abi
-    raise errors.SnapcraftError(
-        "Failed to identify kernel version from deb package files."
-    )
+    raise errors.SnapcraftError("cannot identify kernel version from Debian packages")
 
 
 def kernel_launchpad_repository(release_name: str) -> str:
@@ -128,7 +125,7 @@ class UbuntuKernelPluginProperties(plugins.properties.PluginProperties, frozen=T
     ubuntu_kernel_dkms: list[str] = []
     """Additional dkms."""
     ubuntu_kernel_release_name: str | None = None
-    """Ubuntu release to build. Mutually exclusive with `source`."""
+    """Ubuntu release to build. Mutually exclusive with 'source'."""
     ubuntu_kernel_defconfig: str | None = None
     """Path to custom defconfig, relative to the project directory."""
     ubuntu_kernel_config: list[str] = []
@@ -145,11 +142,11 @@ class UbuntuKernelPluginProperties(plugins.properties.PluginProperties, frozen=T
         """Enforce release_name and source options are mutually exclusive."""
         if self.ubuntu_kernel_release_name and self.source:
             raise errors.SnapcraftError(
-                "`ubuntu-kernel-release-name` and `source` are mutually exclusive"
+                "cannot use 'ubuntu-kernel-release-name' and 'source' keys at same time"
             )
         if not self.ubuntu_kernel_release_name and not self.source:
             raise errors.SnapcraftError(
-                "must provide either `ubuntu-kernel-release-name` or `source`"
+                "missing either 'ubuntu-kernel-release-name' or 'source' key"
             )
         return self
 
@@ -159,7 +156,7 @@ class UbuntuKernelPluginProperties(plugins.properties.PluginProperties, frozen=T
     ) -> Self:
         """Enforce binary package and source-only options are exclusive."""
         if self.ubuntu_kernel_use_binary_package:
-            blacklist_options = [
+            conflicting_options = [
                 "source",
                 "ubuntu_kernel_config",
                 "ubuntu_kernel_defconfig",
@@ -167,11 +164,11 @@ class UbuntuKernelPluginProperties(plugins.properties.PluginProperties, frozen=T
                 "ubuntu_kernel_tools",
                 "ubuntu_kernel_dkms",
             ]
-            for option in blacklist_options:
+            for option in conflicting_options:
                 if getattr(self, option):
                     raise errors.SnapcraftError(
-                        "`ubuntu-kernel-use-binary-package` and "
-                        f"`{option.replace('_', '-')}` are mutually exclusive"
+                        "'ubuntu-kernel-use-binary-package' and "
+                        f"'{option.replace('_', '-')}' keys are mutually exclusive"
                     )
         return self
 
@@ -212,87 +209,92 @@ class UbuntuKernelPlugin(plugins.Plugin):
         return set()
 
     @override
-    def get_build_packages(self) -> set[str]:
-        emit.message("Getting build packages")
-        # TODO(stewarthore) extract the build dependency list from the debian
-        #  source package.
-        # https://warthogs.atlassian.net/browse/KE-427
+    def get_build_packages(self) -> frozenset[str]:
+        # This should instead extract the build dependency list from the Debian
+        #  source package. See https://warthogs.atlassian.net/browse/KE-427
         build_packages = {
-            "debhelper-compat",
-            "cpio",
-            "kmod",
-            "makedumpfile",
-            "libcap-dev",
-            "libelf-dev",
-            "libnewt-dev",
-            "libiberty-dev",
-            "default-jdk-headless",
-            "java-common",
-            "rsync",
-            "libdw-dev",
-            "libpci-dev",
-            "pkg-config",
-            "python3-dev",
-            "flex",
-            "bison",
-            "libunwind8-dev",
-            "liblzma-dev",
-            "openssl",
-            "libssl-dev",
-            "libaudit-dev",
-            "bc",
-            "gawk",
-            "git",
-            "libudev-dev",
-            "autoconf",
-            "automake",
-            "libtool",
-            "uuid-dev",
-            "libnuma-dev",
-            "dkms",
-            "curl",
-            "zstd",
-            "pahole",  # not in control file
-            "bzip2",
-            "debhelper",
-            "fakeroot",
-            "lz4",
-            "python3",
-            "dwarfdump",
-        }
-
-        if self._part_info.base == "core24":
-            emit.message("Adding core24 build packages")
-            build_packages |= {
-                "python3-setuptools",
-                "libtraceevent-dev",
-                "libtracefs-dev",
-                "clang-18",
-                "rustc",
-                "rust-src",
-                "rustfmt",
-                "bindgen-0.65",
-                "libstdc++-13-dev",
-            }
-
-        if self._part_info.is_cross_compiling:
-            emit.message("Adding cross-compilation build packages")
-            build_packages |= {
-                f"binutils-{self._part_info.arch_triplet_build_for}",
-                f"gcc-{self._part_info.arch_triplet_build_for}",
-                f"libc6-dev-{self._part_info.target_arch}-cross",
-            }
-            if self._part_info.base == "core24":
-                build_packages |= {
-                    f"libstdc++-13-dev-{self._part_info.target_arch}-cross",
+            "common": frozenset(
+                {
+                    "autoconf",
+                    "automake",
+                    "bc",
+                    "bison",
+                    "bzip2",
+                    "cpio",
+                    "curl",
+                    "debhelper",
+                    "debhelper-compat",
+                    "default-jdk-headless",
+                    "dkms",
+                    "dwarfdump",
+                    "fakeroot",
+                    "flex",
+                    "gawk",
+                    "git",
+                    "java-common",
+                    "kmod",
+                    "libaudit-dev",
+                    "libcap-dev",
+                    "libdw-dev",
+                    "libelf-dev",
+                    "libiberty-dev",
+                    "liblzma-dev",
+                    "libnewt-dev",
+                    "libnuma-dev",
+                    "libpci-dev",
+                    "libssl-dev",
+                    "libtool",
+                    "libudev-dev",
+                    "libunwind8-dev",
+                    "lz4",
+                    "makedumpfile",
+                    "openssl",
+                    "pahole",  # not in control file
+                    "pkg-config",
+                    "python3",
+                    "python3-dev",
+                    "rsync",
+                    "uuid-dev",
+                    "zstd",
+                    *(
+                        {
+                            f"binutils-{self._part_info.arch_triplet_build_for}",
+                            f"gcc-{self._part_info.arch_triplet_build_for}",
+                            f"libc6-dev-{self._part_info.target_arch}-cross",
+                        }
+                        if self._part_info.is_cross_compiling
+                        else set()
+                    ),
                 }
-
-        return build_packages
+            ),
+            "core22": frozenset(),
+            "core24": frozenset(
+                {
+                    "bindgen-0.65",
+                    "clang-18",
+                    "libstdc++-13-dev",
+                    "libtraceevent-dev",
+                    "libtracefs-dev",
+                    "python3-setuptools",
+                    "rust-src",
+                    "rustc",
+                    "rustfmt",
+                    *(
+                        {
+                            f"libstdc++-13-dev-{self._part_info.target_arch}-cross",
+                        }
+                        if self._part_info.is_cross_compiling
+                        else set()
+                    ),
+                }
+            ),
+        }
+        return build_packages["common"] | build_packages[self._part_info.base]
 
     @override
     def get_build_environment(self) -> dict[str, str]:
         """Returns additional build environment variables."""
-        emit.message("Getting build environment")
+        emit.debug("Getting build environment")
         return (
             {}
             if not self._part_info.is_cross_compiling
@@ -314,12 +316,12 @@ class UbuntuKernelPlugin(plugins.Plugin):
 
         See jinja2 templates in snapcraft/templates/kernel/ for details.
         """
-        emit.message("Getting pull commands")
+        emit.debug("Getting pull commands")
         if self.options.source:
             return super().get_pull_commands()
         if not self.release_name:
             raise errors.SnapcraftError(
-                "must provide `ubuntu-kernel-release-name` or `source`"
+                "missing either 'ubuntu-kernel-release-name' or 'source' key"
             )
         template_file = "kernel/ubuntu_kernel_get_pull_commands.sh.j2"
         env = jinja2.Environment(
@@ -346,7 +348,7 @@ class UbuntuKernelPlugin(plugins.Plugin):
         The build command script is defined in the jinja2 templates under
         snapcraft/templates/kernel/.
         """
-        emit.message("Getting build commands")
+        emit.debug("Getting build commands")
         # Get the kernel version from the source files.
         if self.options.ubuntu_kernel_use_binary_package:
             kernel_version, kernel_abi = kernel_version_from_debpkg_file(
