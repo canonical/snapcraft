@@ -193,12 +193,12 @@ run() {
   [ -e "${CRAFT_PART_BUILD}/.config" ] || {
     # Privilege a specified flavour over all else
     if [ -n "${kernel_kconfigflavour}" ] && [ "${kernel_kconfigflavour}" != "generic" ]; then
-        echo "Using Ubuntu config flavour ${kernel_kconfigflavour}"
-        gen_flavour_config
-      # Privilege specified config(s) over most
-      elif [ -n "${kernel_kdefconfig}" ] && [ "${kernel_kdefconfig}" != "defconfig" ]; then
-        echo "Using defconfig: ${kernel_kdefconfig}"
-        gen_defconfig
+      echo "Using Ubuntu config flavour ${kernel_kconfigflavour}"
+      gen_flavour_config
+    # Privilege specified config(s) over most
+    elif [ -n "${kernel_kdefconfig}" ] && [ "${kernel_kdefconfig}" != "defconfig" ]; then
+      echo "Using defconfig: ${kernel_kdefconfig}"
+      gen_defconfig
     # Choose a default otherwise
     else
       echo "Using generic Ubuntu config flavour"
@@ -364,7 +364,7 @@ main() {
   SECCOMP
   SECCOMP_FILTER"
 
-  # required_snappy arer Kconfigs for snap support
+  # required_snappy are Kconfigs for snap support
   required_snappy="
   RD_LZMA
   KEYS

@@ -92,11 +92,11 @@ class KernelPlugin(plugins.Plugin):
             self._cross_building = True
 
     @overrides
-    def get_build_snaps(self) -> set[str]:  # pylint: disable=missing-function-docstring
+    def get_build_snaps(self) -> set[str]:
         return set()
 
     @overrides
-    def get_build_packages(self) -> set[str]:  # pylint: disable=missing-function-docstring
+    def get_build_packages(self) -> set[str]:
         build_packages = {
             "bc",
             "binutils",
@@ -134,7 +134,7 @@ class KernelPlugin(plugins.Plugin):
         return build_packages
 
     @overrides
-    def get_build_environment(self) -> dict[str, str]:  # pylint: disable=missing-function-docstring
+    def get_build_environment(self) -> dict[str, str]:
         logger.info("Getting build env...")
 
         _kernel_arch = ""
@@ -178,7 +178,7 @@ class KernelPlugin(plugins.Plugin):
         }
 
     @overrides
-    def get_build_commands(self) -> list[str]:  # pylint: disable=missing-function-docstring
+    def get_build_commands(self) -> list[str]:
         logger.info("Getting build commands...")
         kconfigflavour = self.options.kernel_kconfigflavour
         if self.options.kernel_kdefconfig != ["defconfig"]:
