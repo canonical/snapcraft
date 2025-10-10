@@ -56,6 +56,7 @@ def test_get_build_packages():
         "binutils",
         "bison",
         "cmake",
+        "cpio",
         "cryptsetup",
         "debhelper",
         "fakeroot",
@@ -106,7 +107,7 @@ def test_get_build_environment():
     plugin = KernelPlugin(part_name="my-part", options=lambda: None)
 
     assert plugin.get_build_environment() == {
-        "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
+        "CROSS_COMPILE": "${SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}-",
         "ARCH": "x86",
         "KERNEL_IMAGE": "bzImage",
         "KERNEL_TARGET": "modules",
@@ -124,9 +125,9 @@ def test_get_build_commands():
 
     assert plugin.get_build_commands() == [
                 "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
-                "flavour= "
-                "defconfig=snappy_defconfig,foo_config "
-                "configs=CONFIG_FOO=y,CONFIG_BAR=m "
-                "enable_zfs_support=True "
-                "enable_perf=True"
+                "kernel-kconfigflavour= "
+                "kernel-kdefconfig=snappy_defconfig,foo_config "
+                "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
+                "kernel-enable-zfs=True "
+                "kernel-enable-perf=True"
     ]
