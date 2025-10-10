@@ -1,0 +1,18 @@
+summary: Craft Parts initrd plugin cross-build test
+manual: true
+kill-timeout: 180m
+
+systems:
+  - ubuntu-22.04-64
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  rm -f ./*.snap
+  snapcraft pack
+  ls -l nezha-kernel_*_riscv64.snap

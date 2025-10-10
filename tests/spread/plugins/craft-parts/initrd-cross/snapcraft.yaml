@@ -1,0 +1,70 @@
+name: nezha-kernel
+summary: Initrd plugin cross-building test
+description: A RISC-V kernel to test the initrd plugin.
+
+grade: stable
+build-base: core22
+confinement: strict
+type: kernel
+adopt-info: kernel
+
+architectures:
+  - build-on: [amd64]
+    build-for: riscv64
+
+package-repositories:
+  - type: apt
+    components: [main, universe]
+    architectures: [$CRAFT_ARCH_BUILD_FOR]
+    suites: [jammy]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    url: http://ports.ubuntu.com/ubuntu-ports
+
+parts:
+  modules:
+    plugin: dump
+    source: https://ports.ubuntu.com/pool/main/l/linux-allwinner-5.17/linux-modules-5.17.0-1010-allwinner_5.17.0-1010.10_riscv64.deb
+    stage-packages:
+      - linux-firmware
+      - wireless-regdb
+    override-build: |
+      craftctl default
+
+      mv -f "${CRAFT_PART_INSTALL}/lib/modules"  "${CRAFT_PART_INSTALL}/modules"
+      mv -f "${CRAFT_PART_INSTALL}/lib/firmware" "${CRAFT_PART_INSTALL}/firmware"
+
+      ln -sf ../modules  "${CRAFT_PART_INSTALL}/lib/modules"
+      ln -sf ../firmware "${CRAFT_PART_INSTALL}/lib/firmware"
+
+  modules-extra:
+    after: [modules]
+    plugin: dump
+    source: https://ports.ubuntu.com/pool/main/l/linux-allwinner-5.17/linux-modules-extra-5.17.0-1010-allwinner_5.17.0-1010.10_riscv64.deb
+    override-build: |
+      craftctl default
+
+      mv -f "${CRAFT_PART_INSTALL}/lib/modules"  "${CRAFT_PART_INSTALL}/modules"
+
+  kernel:
+    after: [modules, modules-extra]
+    plugin: dump
+    source: https://ports.ubuntu.com/pool/main/l/linux-allwinner-5.17/linux-image-5.17.0-1010-allwinner_5.17.0-1010.10_riscv64.deb
+    override-build: |
+      craftctl default
+
+      kver="$(basename "${CRAFT_STAGE}/lib/modules/"*)"
+
+      craftctl set version="${kver}"
+
+      depmod -b "${CRAFT_STAGE}" "${kver}"
+
+      mv -f "${CRAFT_PART_INSTALL}/boot/"*   "${CRAFT_PART_INSTALL}/"
+      mv -f "${CRAFT_PART_INSTALL}/vmlinuz"* "${CRAFT_PART_INSTALL}/kernel.img-${kver}"
+    prime:
+      - -kernel.img*
+
+  initrd:
+    after: [kernel, modules, modules-extra]
+    plugin: initrd
+    initrd-build-efi-image: true
+    initrd-modules: [8723ds, nls_iso8859-1, sunxi-mmc]
