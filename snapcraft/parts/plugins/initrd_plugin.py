@@ -147,16 +147,11 @@ class InitrdPlugin(plugins.Plugin):
             self._ubuntu_series = "jammy"
 
     @overrides
-    def get_build_snaps(self) -> set[str]:  # pylint: disable=missing-function-docstring
-        base = self._part_info.base
-
-        build_snaps = {
-            base,
-        }
-        return build_snaps
+    def get_build_snaps(self) -> set[str]:
+        return set()
 
     @overrides
-    def get_build_packages(self) -> set[str]:  # pylint: disable=missing-function-docstring
+    def get_build_packages(self) -> set[str]:
         build_packages = {
             "curl",
             "dracut-core",
@@ -173,12 +168,12 @@ class InitrdPlugin(plugins.Plugin):
         return build_packages
 
     @overrides
-    def get_build_environment(self) -> dict[str, str]:  # pylint: disable=missing-function-docstring
+    def get_build_environment(self) -> dict[str, str]:
         return {}
 
     # TODO: finalize initrd_build.sh location
     @overrides
-    def get_build_commands(self) -> list[str]:  # pylint: disable=missing-function-docstring
+    def get_build_commands(self) -> list[str]:
         return [
             " ".join(
                 [
@@ -192,8 +187,3 @@ class InitrdPlugin(plugins.Plugin):
                 ]
             )
         ]
-
-    @classmethod
-    def get_out_of_source_build(cls) -> bool:
-        """Return whether the plugin performs out-of-source-tree builds."""
-        return True

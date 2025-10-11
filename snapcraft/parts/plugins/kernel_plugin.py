@@ -183,8 +183,3 @@ class KernelPlugin(plugins.Plugin):
                 ]
             )
         ]
-
-    @classmethod
-    def get_out_of_source_build(cls) -> bool:
-        """Return whether the plugin performs out-of-source-tree builds."""
-        return True
