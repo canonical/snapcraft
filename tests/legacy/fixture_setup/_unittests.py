@@ -481,43 +481,6 @@ class FakeSnapCommand(fixtures.Fixture):
             return "Downloaded  ".encode()
 
 
-class FakeSnapcraftctl(fixtures.Fixture):
-    def _setUp(self):
-        super()._setUp()
-
-        snapcraft_path = get_snapcraft_path()
-
-        tempdir = self.useFixture(fixtures.TempDir()).path
-        altered_path = "{}:{}".format(tempdir, os.environ.get("PATH"))
-        self.useFixture(fixtures.EnvironmentVariable("PATH", altered_path))
-
-        snapcraftctl_path = os.path.join(tempdir, "snapcraftctl")
-        with open(snapcraftctl_path, "w") as f:
-            f.write(
-                textwrap.dedent(
-                    """\
-                #!/usr/bin/env python3
-
-                # Make sure we can find snapcraft, even if it's not installed
-                # (like in CI).
-                import sys
-                sys.path.append('{snapcraft_path!s}')
-
-                import snapcraft_legacy.cli.__main__
-
-                if __name__ == '__main__':
-                    snapcraft_legacy.cli.__main__.run_snapcraftctl(
-                        prog_name='snapcraftctl')
-            """.format(
-                        snapcraft_path=snapcraft_path
-                    )
-                )
-            )
-            f.flush()
-
-        os.chmod(snapcraftctl_path, 0o755)
-
-
 class FakeMultipass(fixtures.Fixture):
     def _setUp(self):
         super()._setUp()
