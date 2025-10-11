@@ -83,6 +83,7 @@ def test_get_build_packages_zfs():
         "binutils",
         "bison",
         "cmake",
+        "cpio",
         "cryptsetup",
         "debhelper",
         "fakeroot",
