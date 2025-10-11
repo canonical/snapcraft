@@ -973,7 +973,7 @@ class App(models.CraftBaseModel):
     extensions: UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The extensions to add to the project.",
-        examples=["[gnome]", "[ros2-humble]"],
+        examples=[["gnome"], ["ros2-humble"]],
     )
     """The extensions to add to the project
 
