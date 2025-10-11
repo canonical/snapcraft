@@ -34,7 +34,7 @@ from snapcraft.elf import ElfFile
 from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts import set_global_environment, yaml_utils
-from snapcraft.parts.plugins import KernelPlugin, MatterSdkPlugin
+from snapcraft.parts.plugins import MatterSdkPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -1165,16 +1165,7 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
 def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
     mocker.patch(
         "craft_parts.plugins.plugins._PLUGINS",
-        {"kernel": KernelPlugin, "matter-sdk": MatterSdkPlugin},
-    )
-    project = Project.unmarshal(
-        snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
-    )
-
-    with pytest.raises(errors.SnapcraftError) as raised:
-        parts_lifecycle._check_experimental_plugins(project, False)
-    assert str(raised.value) == (
-        "Plugin 'kernel' in part 'foo' is unstable and may change in the future."
+        {"matter-sdk": MatterSdkPlugin},
     )
 
     project = Project.unmarshal(
@@ -1193,14 +1184,6 @@ def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
     assert str(raised.value) == (
         "Plugin 'matter-sdk' in part 'foo' is unstable and may change in the future."
     )
-
-
-def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
-    mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
-    project = Project.unmarshal(
-        snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
-    )
-    parts_lifecycle._check_experimental_plugins(project, True)
 
 
 def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
