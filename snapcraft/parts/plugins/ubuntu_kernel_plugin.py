@@ -209,7 +209,7 @@ class UbuntuKernelPlugin(plugins.Plugin):
         return set()
 
     @override
-    def get_build_packages(self) -> frozenset[str]:
+    def get_build_packages(self) -> set[str]:
         # This should instead extract the build dependency list from the Debian
         #  source package. See https://warthogs.atlassian.net/browse/KE-427
         build_packages = {
@@ -289,7 +289,7 @@ class UbuntuKernelPlugin(plugins.Plugin):
                 }
             ),
         }
-        return build_packages["common"] | build_packages[self._part_info.base]
+        return set(build_packages["common"] | build_packages[self._part_info.base])
 
     @override
     def get_build_environment(self) -> dict[str, str]:
