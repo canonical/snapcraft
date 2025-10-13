@@ -2213,19 +2213,25 @@ def _custom_error(error_msg: str):
     def _validator(v: Any, next_: Any, ctx: pydantic.ValidationInfo):
         try:
             return next_(v, ctx)
-        except Exception as exc:
+        except ValueError as exc:
             raise ValueError(error_msg) from exc
 
     return pydantic.WrapValidator(_validator)
+
+
+class DevelProject(Project):
+    build_base: Literal["devel"]  # type: ignore[reportIncompatibleVariableOverride]
+    grade: Annotated[
+        Literal["devel"],
+        _custom_error("grade must be 'devel' when build-base is 'devel'"),
+    ]  # type: ignore[reportIncompatibleVariableOverride]
 
 
 class Core22Project(Project):
     type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
         Literal["app", "gadget", "kernel", "snapd", None],
         _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
-    ] = pydantic.Field(
-        default=None, description="The snap's type.", examples=["kernel"]
-    )
+    ] = pydantic.Field(default=None, description="The snap's type.")
 
     base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
@@ -2291,11 +2297,13 @@ class Core24Project(Project):
 
     base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
-    architectures: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
-        None,
-        _custom_error(
-            "'architectures' key is not supported for base 'core24'. Use 'platforms' key instead."
-        ),
+    architectures: SkipJsonSchema[
+        Annotated[  # type: ignore[reportIncompatibleVariableOverride]
+            None,
+            _custom_error(
+                "'architectures' key is not supported for base 'core24'. Use 'platforms' key instead."
+            ),
+        ]
     ] = pydantic.Field(
         default=None,
         description="The architectures key is only used in core22 snaps. For core24 and newer snaps, use the ``platforms`` key.",
@@ -2310,6 +2318,12 @@ class Core24Project(Project):
     )
 
 
+class BaseDevelProject(DevelProject):
+    type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    build_base: Literal["devel"]  # type: ignore[reportIncompatibleVariableOverride]
+
+
 class BareCore24Project(Core24Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
@@ -2322,6 +2336,7 @@ class BaseCore24Project(Core24Project):
 
 
 class _BuildBaseProjectEnum(Enum):
+    DEVEL = "devel"
     CORE22 = "core22"
     CORE24 = "core24"
     UNIMPLEMENTED = "UNIMPLEMENTED"
@@ -2367,7 +2382,8 @@ _BareProject = Annotated[
 
 
 _BaseProject = Annotated[
-    Annotated[BaseCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
+    Annotated[BaseDevelProject, pydantic.Tag(_BuildBaseProjectEnum.DEVEL.value)]
+    | Annotated[BaseCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
     | Annotated[BaseCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
     | Annotated[
         SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
@@ -2384,7 +2400,6 @@ _CoreProject = Annotated[
     ],
     pydantic.Discriminator(_discriminator(_BaseProjectEnum, "base")),
 ]
-
 
 SnapcraftProject = Annotated[
     Annotated[_CoreProject, pydantic.Tag(_TypeProjectEnum.UNIMPLEMENTED.value)]
