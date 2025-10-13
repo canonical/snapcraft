@@ -2220,11 +2220,11 @@ def _custom_error(error_msg: str):
 
 
 class DevelProject(Project):
-    build_base: Literal["devel"]  # type: ignore[reportIncompatibleVariableOverride]
-    grade: Annotated[
+    build_base: Literal["devel"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    grade: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
         Literal["devel"],
         _custom_error("grade must be 'devel' when build-base is 'devel'"),
-    ]  # type: ignore[reportIncompatibleVariableOverride]
+    ]
 
 
 class Core22Project(Project):
@@ -2297,8 +2297,8 @@ class Core24Project(Project):
 
     base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
-    architectures: SkipJsonSchema[
-        Annotated[  # type: ignore[reportIncompatibleVariableOverride]
+    architectures: SkipJsonSchema[  # type: ignore[reportIncompatibleVariableOverride]
+        Annotated[
             None,
             _custom_error(
                 "'architectures' key is not supported for base 'core24'. Use 'platforms' key instead."
