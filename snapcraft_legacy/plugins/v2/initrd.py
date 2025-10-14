@@ -80,16 +80,17 @@ class InitrdPlugin(PluginV2):
 
     @overrides
     def get_build_packages(self) -> Set[str]:
+        _host_arch = ProjectOptions().arch_build_on
+        _target_arch = ProjectOptions().arch_build_for
+
         build_packages = {
             "curl",
             "fakeroot",
         }
-        # consider cross-build option
-        _host_arch = ProjectOptions().arch_build_on
-        _target_arch = ProjectOptions().arch_build_for
+
         if _host_arch != _target_arch:
             build_packages |= {
-                f"libfakeroot:{self._target_arch}",
+                f"libfakeroot:{_target_arch}",
             }
         return build_packages
 

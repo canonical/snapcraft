@@ -87,23 +87,16 @@ class KernelPlugin(plugins.Plugin):
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(KernelPluginProperties, self._options)
 
-        target_arch = self._part_info.target_arch
-        self._target_arch = target_arch
-
-        # check if we are cross building
-        self._cross_building = False
-        if (
-            self._part_info.project_info.host_arch
-            != self._part_info.project_info.target_arch
-        ):
-            self._cross_building = True
-
     @overrides
     def get_build_snaps(self) -> set[str]:
         return set()
 
     @overrides
     def get_build_packages(self) -> set[str]:
+        _host_arch = self._part_info.host_arch
+        _target_arch = self._part_info.target_arch
+        _zfs_enabled = self.options.kernel_enable_zfs_support
+
         build_packages = {
             "bc",
             "binutils",
@@ -125,7 +118,7 @@ class KernelPlugin(plugins.Plugin):
             "zstd",
         }
 
-        if self.options.kernel_enable_zfs_support:
+        if _zfs_enabled:
             build_packages |= {
                 "autoconf",
                 "automake",
@@ -135,8 +128,8 @@ class KernelPlugin(plugins.Plugin):
             }
 
         # for cross build of zfs we also need libc6-dev:<target arch>
-        if self.options.kernel_enable_zfs_support and self._cross_building:
-            build_packages |= {f"libc6-dev:{self._target_arch}"}
+        if _zfs_enabled and _host_arch != _target_arch:
+            build_packages |= {f"libc6-dev:{_target_arch}"}
 
         return build_packages
 

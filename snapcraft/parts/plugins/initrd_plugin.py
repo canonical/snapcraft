@@ -133,14 +133,6 @@ class InitrdPlugin(plugins.Plugin):
     ) -> None:
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(InitrdPluginProperties, self._options)
-        self._target_arch = self._part_info.target_arch
-        # check if we are cross building
-        self._cross_building = False
-        if (
-            self._part_info.project_info.host_arch
-            != self._part_info.project_info.target_arch
-        ):
-            self._cross_building = True
 
     @overrides
     def get_build_snaps(self) -> set[str]:
@@ -148,6 +140,9 @@ class InitrdPlugin(plugins.Plugin):
 
     @overrides
     def get_build_packages(self) -> set[str]:
+        _host_arch = self._part_info.host_arch
+        _target_arch = self._part_info.target_arch
+
         build_packages = {
             "curl",
             "dracut-core",
@@ -155,9 +150,9 @@ class InitrdPlugin(plugins.Plugin):
         }
         # if running as non-root and cross-building
         # we need libfake{ch}root for the target arch
-        if self._cross_building and (os.getuid() != 0):
+        if _host_arch != _target_arch and (os.getuid() != 0):
             build_packages |= {
-                f"libfakeroot:{self._target_arch}",
+                f"libfakeroot:{_target_arch}",
             }
         return build_packages
 

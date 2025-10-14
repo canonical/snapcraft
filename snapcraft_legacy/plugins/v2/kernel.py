@@ -128,6 +128,9 @@ class KernelPlugin(PluginV2):
         }
 
         if self.options.kernel_enable_zfs_support:
+            _host_arch = ProjectOptions().arch_build_on
+            _target_arch = ProjectOptions().arch_build_for
+
             build_packages |= {
                 "autoconf",
                 "automake",
@@ -136,8 +139,6 @@ class KernelPlugin(PluginV2):
                 "python3",
             }
 
-            _host_arch = ProjectOptions().arch_build_on
-            _target_arch = ProjectOptions().arch_build_for
             if _host_arch != _target_arch:
                 build_packages |= {f"libc6-dev:{_target_arch}"}
 
