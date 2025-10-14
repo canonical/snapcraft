@@ -108,3 +108,13 @@ def test_list_validation_sets_with_options(mocker, legacy_run):
     assert legacy_run.mock_calls == [
         call(argparse.Namespace(name="set-name", sequence="all"))
     ]
+
+
+def test_sign_build(mocker, legacy_run):
+    mocker.patch.object(sys, "argv", ["cmd", "sign-build", "--local", "foo.snap"])
+
+    cli.run()
+
+    assert legacy_run.mock_calls == [
+        call(argparse.Namespace(local=True, snap_file="foo.snap", key_name=None))
+    ]
