@@ -141,10 +141,6 @@ class InitrdPlugin(plugins.Plugin):
             != self._part_info.project_info.target_arch
         ):
             self._cross_building = True
-        base = self._part_info.base
-        self._ubuntu_series = "noble"
-        if base == "core22":
-            self._ubuntu_series = "jammy"
 
     @overrides
     def get_build_snaps(self) -> set[str]:
