@@ -82,7 +82,6 @@ class InitrdPlugin(PluginV2):
     def get_build_packages(self) -> Set[str]:
         build_packages = {
             "curl",
-            "fakechroot",
             "fakeroot",
         }
         # consider cross-build option
@@ -90,7 +89,6 @@ class InitrdPlugin(PluginV2):
         _target_arch = ProjectOptions().arch_build_for
         if _host_arch != _target_arch:
             build_packages |= {
-                f"libfakechroot:{self._target_arch}",
                 f"libfakeroot:{self._target_arch}",
             }
         return build_packages
