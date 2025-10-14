@@ -22,8 +22,10 @@ import textwrap
 from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
-from overrides import overrides
+from craft_cli import emit
+from typing_extensions import override
 
+from snapcraft import const
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.store._legacy_account import set_legacy_env
 
@@ -34,7 +36,7 @@ if TYPE_CHECKING:
 class LegacyAppCommand(AppCommand):
     """Legacy command runner."""
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         # Setup env var for legacy credentials.
         set_legacy_env()
@@ -71,7 +73,7 @@ class StoreLegacyUploadMetadataCommand(LegacyAppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
@@ -113,7 +115,7 @@ class StoreLegacyPromoteCommand(LegacyAppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_name",
@@ -148,7 +150,7 @@ class StoreLegacySetDefaultTrackCommand(LegacyAppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_name",
@@ -169,7 +171,7 @@ class StoreLegacyMetricsCommand(LegacyAppCommand):
         Get different metrics from the Snap Store for a given snap."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("snap_name", metavar="snap-name")
         parser.add_argument("--name", metavar="name", required=True, help="metric name")
@@ -197,16 +199,31 @@ class StoreLegacyMetricsCommand(LegacyAppCommand):
 ##############
 
 
-class StoreLegacyListKeysCommand(LegacyAppCommand):
+class StoreLegacyKeysCommand(LegacyAppCommand):
     """Command passthrough for the list-keys command."""
 
-    name = "list-keys"
+    name = "keys"
     help_msg = "List the keys available to sign assertions"
     overview = textwrap.dedent(
         """
         List the available keys to sign assertions together with their
         local availability."""
     )
+
+
+class StoreLegacyListKeysCommand(StoreLegacyKeysCommand):
+    """Alias command passthrough for the list-keys command."""
+
+    name = "list-keys"
+    hidden = True
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)
 
 
 class StoreLegacyCreateKeyCommand(LegacyAppCommand):
@@ -220,7 +237,7 @@ class StoreLegacyCreateKeyCommand(LegacyAppCommand):
         it in the store."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "key_name", metavar="key-name", help="Key used to sign the assertion"
@@ -237,7 +254,7 @@ class StoreLegacyRegisterKeyCommand(LegacyAppCommand):
         Register a locally-created key with the Snap Store."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "key_name", metavar="key-name", help="Key used to sign the assertion"
@@ -255,7 +272,7 @@ class StoreLegacySignBuildCommand(LegacyAppCommand):
         to the Snap Store (unless --local)."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--key-name", metavar="key-name", help="key used to sign the assertion"
@@ -281,7 +298,7 @@ class StoreLegacyValidateCommand(LegacyAppCommand):
         -  <snap-id>=<revision>"""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--key-name", metavar="key-name", help="key used to sign the assertion"
@@ -301,23 +318,38 @@ class StoreLegacyGatedCommand(LegacyAppCommand):
         Get the list of snaps and revisions gating a snap"""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("snap_name", metavar="snap-name")
 
 
-class StoreLegacyListValidationSetsCommand(LegacyAppCommand):
-    """Command passthrough for the list-validation-sets command."""
+class StoreLegacyValidationSetsCommand(LegacyAppCommand):
+    """Command passthrough for the validation-sets command."""
 
-    name = "list-validation-sets"
+    name = "validation-sets"
     help_msg = "Get the list of validation sets"
     overview = textwrap.dedent(
         """
-        List all list-validation-sets snaps.
+        List all validation-sets snaps.
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--name", help="limit results to <name>")
         parser.add_argument("--sequence", help="limit results to <sequence>")
+
+
+class StoreLegacyListValidationSetsCommand(StoreLegacyValidationSetsCommand):
+    """Alias command passthrough for the validation-sets command."""
+
+    name = "list-validation-sets"
+    hidden = True
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)

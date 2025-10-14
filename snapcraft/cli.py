@@ -130,13 +130,15 @@ COMMAND_GROUPS = [
             commands.StoreLegacyRegisterKeyCommand,
             commands.StoreLegacySignBuildCommand,
             commands.StoreLegacyListKeysCommand,
+            commands.StoreLegacyKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Validation Sets",
         [
             commands.StoreEditValidationSetsCommand,
-            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyListValidationSetsCommand,  # hidden (alias to validation-sets)
+            commands.StoreLegacyValidationSetsCommand,
             commands.StoreLegacyValidateCommand,
             commands.StoreLegacyGatedCommand,
         ],

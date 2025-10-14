@@ -29,4 +29,4 @@ differentiating them.
     kde-neon                core18, core20, core22, core24
     [...]
 
-For the full reference for this command, see :ref:`ref_commands_list-extensions`.
+For the full reference for this command, see :ref:`ref_commands_extensions`.
