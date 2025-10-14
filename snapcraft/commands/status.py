@@ -381,10 +381,10 @@ def get_tabulated_channel_map(  # noqa: C901 (complex-structure)
     )
 
 
-class StoreListTracksCommand(AppCommand):
+class StoreTracksCommand(AppCommand):
     """List the tracks of a snap in the Snap Store."""
 
-    name = "list-tracks"
+    name = "tracks"
     help_msg = "Show the available tracks for a snap in the Snap Store"
     overview = textwrap.dedent(
         """
@@ -437,10 +437,10 @@ class StoreListTracksCommand(AppCommand):
         )
 
 
-class StoreTracksCommand(StoreListTracksCommand):
+class StoreListTracksCommand(StoreTracksCommand):
     """Command alias to list the tracks of a snap in the Snap Store."""
 
-    name = "tracks"
+    name = "list-tracks"
     hidden = True
 
     @overrides
@@ -452,10 +452,10 @@ class StoreTracksCommand(StoreListTracksCommand):
         super().run(parsed_args)
 
 
-class StoreListRevisionsCommand(AppCommand):
+class StoreRevisionsCommand(AppCommand):
     """List revisions of a published snap."""
 
-    name = "list-revisions"
+    name = "revisions"
     help_msg = "List published revisions for <snap-name>"
     overview = textwrap.dedent(
         """
@@ -565,10 +565,10 @@ class StoreListRevisionsCommand(AppCommand):
         return sorted(list(channels))
 
 
-class StoreRevisionsCommand(StoreListRevisionsCommand):
+class StoreListRevisionsCommand(StoreRevisionsCommand):
     """Command alias to list-revisions."""
 
-    name = "revisions"
+    name = "list-revisions"
     hidden = True
 
     @overrides

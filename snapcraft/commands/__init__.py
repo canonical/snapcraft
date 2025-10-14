@@ -51,7 +51,11 @@ from .names import (
     StoreRegisterCommand,
 )
 from .plugins import ListPluginsCommand, PluginsCommand
-from .confdb_schemas import StoreEditConfdbSchemaCommand, StoreListConfdbSchemasCommand
+from .confdb_schemas import (
+    StoreEditConfdbSchemaCommand,
+    StoreListConfdbSchemasCommand,
+    StoreConfdbSchemasCommand,
+)
 from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
@@ -74,6 +78,7 @@ __all__ = [
     "PluginsCommand",
     "SnapCommand",
     "StoreCloseCommand",
+    "StoreConfdbSchemasCommand",
     "StoreEditValidationSetsCommand",
     "StoreEditConfdbSchemaCommand",
     "StoreExportLoginCommand",
