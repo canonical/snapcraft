@@ -48,7 +48,6 @@ def test_get_build_packages():
 
     assert plugin.get_build_packages() == {
         "curl",
-        "fakechroot",
         "fakeroot",
     }
 

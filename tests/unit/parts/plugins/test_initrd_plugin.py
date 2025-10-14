@@ -43,7 +43,6 @@ def test_get_build_packages(part_info):
     assert plugin.get_build_packages() == {
         "curl",
         "dracut-core",
-        "fakechroot",
         "fakeroot",
     }
 
@@ -59,15 +58,18 @@ def test_get_build_commands(part_info):
     properties = InitrdPlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "initrd-addons": {
+            "initrd-addons": [
                 "usr/bin/foo",
-            },
-            "initrd-firmware": {
+                "lib/bar",
+            ],
+            "initrd-firmware": [
                 "foo.bin",
-            },
-            "initrd-modules": {
+                "bar/baz.bin",
+            ],
+            "initrd-modules": [
                 "foo",
-            },
+                "bar",
+            ],
             "initrd-build-efi-image": "true",
             "initrd-efi-image-key": "signing.key",
             "initrd-efi-image-cert": "cert.pem",
@@ -77,9 +79,9 @@ def test_get_build_commands(part_info):
 
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh "
-        "initrd-modules=foo "
-        "initrd-firmware=foo.bin "
-        "initrd-addons=usr/bin/foo "
+        "initrd-modules=foo,bar "
+        "initrd-firmware=foo.bin,bar/baz.bin "
+        "initrd-addons=usr/bin/foo,lib/bar "
         "initrd-build-efi-image=True "
         "initrd-efi-image-key=signing.key "
         "initrd-efi-image-cert=cert.pem"

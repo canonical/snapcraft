@@ -110,8 +110,14 @@ def test_get_build_commands(part_info):
     properties = KernelPlugin.properties_class.unmarshal(
         {
             "source": ".",
-            "kernel-kdefconfig": "snappy_defconfig",
-            "kernel-kconfigs": "CONFIG_FOO=y",
+            "kernel-kdefconfig": [
+                "snappy_defconfig",
+                "foo_config",
+            ],
+            "kernel-kconfigs": [
+                "CONFIG_FOO=y",
+                "CONFIG_BAR=m",
+            ],
             "kernel-enable-zfs-support": "true",
             "kernel-enable-perf": "true",
         }
@@ -121,8 +127,8 @@ def test_get_build_commands(part_info):
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
         "kernel-kconfigflavour= "
-        "kernel-kdefconfig=snappy_defconfig "
-        "kernel-kconfigs=CONFIG_BAR=m "
+        "kernel-kdefconfig=snappy_defconfig,foo_config "
+        "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
         "kernel-enable-zfs=True "
         "kernel-enable-perf=True"
     ]
