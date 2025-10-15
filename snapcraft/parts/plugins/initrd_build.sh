@@ -307,9 +307,17 @@ create_initrd() {
                 --kernelver \"${KERNEL_VERSION}\" \
                 --output /boot/initrd.img"
 
+  # Install the initrd manifest to the top-level of the snap
+  if [ "${UBUNTU_SERIES}" = "noble" ]; then
+    install -Dm644 "${INITRD_ROOT}/boot/manifest-initramfs.yaml-${KERNEL_VERSION}" \
+      "${CRAFT_PART_INSTALL}/manifest-initramfs.yaml-${KERNEL_VERSION}"
+  fi
+
+  # Install the initrd image file
   install -Dm644 "${INITRD_ROOT}/boot/initrd.img-${KERNEL_VERSION}" \
     "${CRAFT_PART_INSTALL}/initrd.img-${KERNEL_VERSION}"
 
+  # Create a symlink for useful shorthanding
   ln -sf "initrd.img-${KERNEL_VERSION}" "${CRAFT_PART_INSTALL}/initrd.img"
 }
 
