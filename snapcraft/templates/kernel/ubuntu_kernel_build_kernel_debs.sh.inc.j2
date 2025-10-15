@@ -5,12 +5,6 @@ source. It builds the Ubuntu kernel debian packages from source rather than
 pulling prebuilt binary packages from PPA. The built packages are then used
 to build the snap kernel package.
 #}
-{% if is_cross_compiling %}
-    export ARCH={{ target_arch }}
-    {#  NOTE the trailing '-' is deliberate #}
-    export CROSS_COMPILE={{ craft_arch_triplet_build_for }}-
-{% endif %}
-
 rsync -aH {{ craft_part_src_dir }}/ {{ craft_part_build_dir }}/kernel-src
 
 cd {{ craft_part_build_dir }}/kernel-src

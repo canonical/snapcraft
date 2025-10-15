@@ -295,16 +295,12 @@ class UbuntuKernelPlugin(plugins.Plugin):
     def get_build_environment(self) -> dict[str, str]:
         """Returns additional build environment variables."""
         emit.debug("Getting build environment")
-        return (
-            {}
-            if not self._part_info.is_cross_compiling
-            else {
-                "ARCH": self._part_info.arch_build_for,
-                "CROSS_COMPILE": self._part_info.arch_triplet_build_for,
-                "DEB_HOST_ARCH": self._part_info.arch_build_for,
-                "DEB_BUILD_ARCH": self._part_info.arch_build_on,
-            }
-        )
+        return {
+            "ARCH": self._part_info.arch_build_for,
+            "CROSS_COMPILE": f"{self._part_info.arch_triplet_build_for}-",
+            "DEB_HOST_ARCH": self._part_info.arch_build_for,
+            "DEB_BUILD_ARCH": self._part_info.arch_build_on,
+        }
 
     @override
     def get_pull_commands(self) -> list[str]:

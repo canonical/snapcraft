@@ -77,14 +77,6 @@ def get_cross_build_cmds(target_arch: str | None) -> tuple[list[str], list[str]]
         Tuple of pre-debian environment and post-debian environment commands
         for cross-compilation.
     """
-    cross_build_cmds_pre_debenv = (
-        []
-        if target_arch == "amd64"
-        else [
-            "export ARCH=arm64",
-            "export CROSS_COMPILE=aarch64-linux-gnu-",
-        ]
-    )
     cross_build_cmds_post_debenv = (
         []
         if target_arch == "amd64"
@@ -92,7 +84,7 @@ def get_cross_build_cmds(target_arch: str | None) -> tuple[list[str], list[str]]
             'export "$(dpkg-architecture -aarm64)"',
         ]
     )
-    return cross_build_cmds_pre_debenv, cross_build_cmds_post_debenv
+    return cross_build_cmds_post_debenv
 
 
 def get_kernel_image_target_cmds(
@@ -261,9 +253,7 @@ def build_from_source_cmds(
     Returns:
         List of build commands for building from source.
     """
-    cross_build_cmds_pre_debenv, cross_build_cmds_post_debenv = get_cross_build_cmds(
-        target_arch
-    )
+    cross_build_cmds_post_debenv = get_cross_build_cmds(target_arch)
     kernel_image_target_cmds = get_kernel_image_target_cmds(
         target_arch, kernel_image_target
     )
@@ -275,8 +265,7 @@ def build_from_source_cmds(
     kernel_dkms_cmds = get_kernel_dkms_cmds(target_arch, kernel_dkms_modules)
 
     return (
-        cross_build_cmds_pre_debenv
-        + [
+        [
             "rsync -aH ;parts/ubuntu-kernel/src/ ;parts/ubuntu-kernel/build/kernel-src",
             "cd ;parts/ubuntu-kernel/build/kernel-src",
             ". debian/debian.env",
@@ -611,27 +600,13 @@ class TestPluginUbuntuKenrel:
     def test_get_build_environment(self, build_params, new_dir, setup_method_fixture):
         """Test the expected build packages for building the Ubuntu kernel."""
         plugin = setup_method_fixture(new_dir=new_dir, build_params=build_params)
-        common_build_env = {}
-        cross_compile_build_env = {
+        expected_build_env = {
             "ARCH": build_params.arch_build_for,
-            "CROSS_COMPILE": build_params.arch_triplet_build_for,
+            "CROSS_COMPILE": f"{build_params.arch_triplet_build_for}-",
             "DEB_HOST_ARCH": build_params.arch_build_for,
             "DEB_BUILD_ARCH": build_params.arch_build_on,
         }
-        expected_build_env = {
-            "core22": {
-                "amd64": common_build_env.copy(),
-                "arm64": {**common_build_env, **cross_compile_build_env},
-            },
-            "core24": {
-                "amd64": common_build_env.copy(),
-                "arm64": {**common_build_env, **cross_compile_build_env},
-            },
-        }
-        assert (
-            expected_build_env[build_params.base][build_params.arch_build_for]
-            == plugin.get_build_environment()
-        )
+        assert expected_build_env == plugin.get_build_environment()
 
     @pytest.mark.parametrize(
         "build_params",
