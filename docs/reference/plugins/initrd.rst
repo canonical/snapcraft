@@ -171,6 +171,6 @@ stage these contents into ``${CRAFT_STAGE}/{addons,firmware,signing}``.
 
 Some further examples of snaps using this plugin can be found at the following links:
 
-* In the `snapcraft test suite <https://github.com/canonical/snapcraft/tree/main/tests/spread/plugins/craft-parts>>`_
+* In the `snapcraft test suite <https://github.com/canonical/snapcraft/tree/main/tests/spread/plugins/craft-parts>`_
 * In The `IoT Field Kernel Snaps repository <https://github.com/canonical/iot-field-kernel-snap>`_
 * In the `craft-examples <https://github.com/canonical/craft-examples>`_ repository
