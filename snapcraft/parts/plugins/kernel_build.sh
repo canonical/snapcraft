@@ -288,7 +288,9 @@ run() {
   # Install kernel artifacts
   echo "Copying kernel image..."
   mv -f "${CRAFT_PART_BUILD}/arch/${ARCH}/boot/${KERNEL_IMAGE}" \
-        "${CRAFT_PART_INSTALL}/kernel.img"
+        "${CRAFT_PART_INSTALL}/kernel.img-${kver}"
+
+  ln -sf "kernel.img-${kver}" "${CRAFT_PART_INSTALL}/kernel.img"
 
   echo "Copying System map..."
   cp -f "${CRAFT_PART_BUILD}/System.map" \
