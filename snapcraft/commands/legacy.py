@@ -279,9 +279,14 @@ class StoreLegacySignBuildCommand(LegacyAppCommand):
         )
         parser.add_argument(
             "--local",
-            "--local",
             action="store_true",
             help="sign assertion, but do not upload to the Snap Store",
+        )
+        parser.add_argument(
+            "snap_file",
+            metavar="snap-file",
+            type=str,
+            help="Snap file to sign",
         )
 
 
