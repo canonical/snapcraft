@@ -119,7 +119,7 @@ How it works
 During the build step the plugin performs the following actions:
 
 #. Pass a collection of flags built from the selected options to an initrd
-   build script within the snapcraft snap
+   build script within the snapcraft snap.
 #. Fetch a daily compressed archive base of the targeted Ubuntu series.
 #. Unpack the archive into ``${CRAFT_PART_SRC}`` to use as the chroot base.
 #. Copy any kernel firmware or modules from
@@ -135,10 +135,10 @@ During the build step the plugin performs the following actions:
     initrd-firmware:
         - foo/bar.bin
 
-   Will result in ``${CRAFT_STAGE}/addons/usr/bin/foo`` and
-   ``${CRAFT_STAGE}/firmware/foo/bar.bin`` being placed in the initrd as
-   ``/usr/bin/foo`` and ``/usr/lib/firmware/foo/bar.bin`` by being copied into a
-   directory ubuntu-core-initramfs uses to construct the initrd.
+Will result in ``${CRAFT_STAGE}/addons/usr/bin/foo`` and
+``${CRAFT_STAGE}/firmware/foo/bar.bin`` being placed in the initrd as
+``/usr/bin/foo`` and ``/usr/lib/firmware/foo/bar.bin`` by being copied into a
+directory ubuntu-core-initramfs uses to construct the initrd.
 
 #. ubuntu-core-initramfs is called to create a compressed CPIO archive.
 #. If ``initrd-build-efi-image`` is true, ubuntu-core-initramfs is called again
@@ -152,13 +152,13 @@ Examples
 The following snippet declares a part using the Initrd plugin.
 
 It doesn't specify a source but does include some files staged by other parts
-not shown here. Those parts are responsible for ensurirng that each of they
+not shown here. Those parts are responsible for ensuring that each of them
 stage these contents into ``${CRAFT_STAGE}/{addons,firmware,signing}``.
 
 .. code-block:: yaml
 
     initrd:
-      after: [kernel]
+      after: [kernel, uc-fde]
       plugin: initrd
       initrd-build-efi-image: true
       initrd-addons:

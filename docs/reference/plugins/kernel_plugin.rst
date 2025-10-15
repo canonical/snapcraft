@@ -142,25 +142,26 @@ How it works
 During the build step the plugin performs the following actions:
 
 #. Pass a collection of flags built from the selected options to a kernel build
-   script within the snapcraft snap
+   script within the snapcraft snap.
 #. Generate a ``.config`` from
-   - A flavour, if something other than ``generic`` is specified
 
-   - A list of defconfigs, if something other than ``["defconfig"]`` is specified
+   - A flavour, if something other than ``generic`` is specified.
 
-     - Otherwise, a generic Ubuntu config is constructed
+   - A list of defconfigs, if something other than ``["defconfig"]`` is specified.
 
-   - Any specified Kconfig values are appended to the ``.config``
-#. ``make oldconfig`` is run to validate the configuration file
+     - Otherwise, a generic Ubuntu config is constructed.
+
+   - Any specified Kconfig values are appended to the ``.config``.
+#. ``make oldconfig`` is run to validate the configuration file.
 #. The configuration file is checked against a minimal list of required Kconfig
-   values
-#. The kernel image and any modules or device tree files are built
-#. If enabled, ZFS for the target Ubuntu series is downloaded and built
-#. If enabled, the perf binary ``tools/perf`` is built.
+   values.
+#. The kernel image and any modules or device tree files are built.
+#. If enabled, ZFS for the target Ubuntu series is downloaded and built.
+#. If enabled, the perf binary ``tools/perf`` is built..
 #. The kernel image, system symbol map, and kernel config are installed to
-   ``${CRAFT_PART_INSTALL}``
+   ``${CRAFT_PART_INSTALL}``.
 #. The modules are moved to ``${CRAFT_PART_INSTALL}/modules`` and a symlink to
-   it named ``${CRAFT_PART_INSTALL}/lib/modules`` is installed
+   it named ``${CRAFT_PART_INSTALL}/lib/modules`` is installed.
 #. If a ``${CRAFT_PART_INSTALL}/lib/firmware/`` directory exists, then it is
    moved to ``${CRAFT_PART_INSTALL}/firmware`` and a symlink named
    ``${CRAFT_PART_INSTALL}/lib/firmware`` is created.
