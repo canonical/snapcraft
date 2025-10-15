@@ -461,9 +461,8 @@ class StoreRevisionsCommand(AppCommand):
         """
         Examples::
 
-            snapcraft list-revisions my-snap
-            snapcraft list-revisions my-snap --arch armhf
             snapcraft revisions my-snap
+            snapcraft revisions my-snap --arch armhf
         """
     )
 
@@ -566,7 +565,7 @@ class StoreRevisionsCommand(AppCommand):
 
 
 class StoreListRevisionsCommand(StoreRevisionsCommand):
-    """Command alias to list-revisions."""
+    """Command alias to revisions."""
 
     name = "list-revisions"
     hidden = True

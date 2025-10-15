@@ -108,7 +108,7 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
         The account ID of the authenticated account can be determined with the
         ``snapcraft whoami`` command.
 
-        Use the ``list-confdb-schemas`` command to view existing confdb schemas.
+        Use the ``confdb-schemas`` command to view existing confdb schemas.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]

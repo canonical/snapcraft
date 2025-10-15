@@ -8,7 +8,7 @@ list all extensions supported by the installed version of Snapcraft, run:
 
 .. code-block:: bash
 
-    snapcraft list-extensions
+    snapcraft extensions
 
 The output includes all extensions, both stable and experimental, without
 differentiating them.
