@@ -168,8 +168,13 @@ chroot_configure() {
 
   if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
     # snapd deb is required
-    chroot_run "apt-get install --no-install-recommends -y snapd"
-    chroot_run "apt-get install --no-install-recommends -y systemd"
+    # The most common failure one may see in this circumstance is an error from dpkg
+    # that /etc/resolv.conf and /run/systemd/resolve/stub-resolv.conf are the same file
+    # and refusing to overwrite it; remove the file and reattempt the build
+    chroot_run "apt-get install --no-install-recommends -y snapd" || {
+        rm "${INITRD_ROOT}/etc/resolv.conf"
+        chroot_run "apt-get install --no-install-recommends -y snapd"
+    };  chroot_run "apt-get install --no-install-recommends -y systemd"
   else
     chroot_run "apt-get install --no-install-recommends -y libsystemd-shared"
 
