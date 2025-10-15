@@ -1047,11 +1047,12 @@ class App(models.CraftBaseModel):
     @classmethod
     def _validate_extensions(cls, extensions: list[str]) -> list[str]:
         valid_extensions = set(get_extension_names())
-        for extension in extensions:
-            if extension not in valid_extensions:
-                raise ValueError(
-                    f"{extension!r} is not a valid extension. Valid extensions are {valid_extensions!r}."
-                )
+        invalid_extensions = [ext for ext in extensions if ext not in valid_extensions]
+        if invalid_extensions:
+            raise ValueError(
+                f"The following extensions are invalid: {invalid_extensions!r}.\n"
+                f"Valid extensions are {valid_extensions!r}."
+            )
         return extensions
 
 
