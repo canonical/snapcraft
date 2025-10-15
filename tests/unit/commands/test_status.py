@@ -732,7 +732,7 @@ def test_list_tracks(emitter, command_class, fake_app_config):
 
     if command_class.hidden:
         emitter.assert_progress(
-            f"The '{command_class.name}' command was renamed to 'list-tracks'. Use 'list-tracks' instead. "
+            f"The '{command_class.name}' command was renamed to 'tracks'. Use 'tracks' instead. "
             "The old name will be removed in a future release.",
             permanent=True,
         )
@@ -763,7 +763,7 @@ def test_list_revisions(emitter, command_class, fake_app_config):
 
     if command_class.hidden:
         emitter.assert_progress(
-            f"The '{command_class.name}' command was renamed to 'list-revisions'. Use 'list-revisions' instead. "
+            f"The '{command_class.name}' command was renamed to 'revisions'. Use 'revisions' instead. "
             "The old name will be removed in a future release.",
             permanent=True,
         )

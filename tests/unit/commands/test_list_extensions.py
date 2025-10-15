@@ -37,7 +37,7 @@ def test_command(emitter, command, fake_app_config):
 
     if cmd.hidden:
         emitter.assert_progress(
-            f"The '{cmd.name}' command was renamed to 'list-extensions'. Use 'list-extensions' instead. "
+            f"The '{cmd.name}' command was renamed to 'extensions'. Use 'extensions' instead. "
             "The old name will be removed in a future release.",
             permanent=True,
         )
