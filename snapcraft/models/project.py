@@ -2306,7 +2306,7 @@ class Core24Project(Project):
         ]
     ] = pydantic.Field(
         default=None,
-        description="The architectures key is only used in core22 snaps. For core24 and newer snaps, use the ``platforms`` key.",
+        description="The architectures key is only used in core22 snaps and below. For core24 and newer snaps, use the ``platforms`` key.",
     )
 
     platforms: dict[str, Platform | None] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
