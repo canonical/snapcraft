@@ -41,7 +41,7 @@
 
 - initrd-modules:
   (list of strings; default: none)
-  A list of module names to include in the initrd, provided as a list of module
+  A list of modules to include in the initrd, provided as a list of module
   names. If the specified module(s) have dependencies, they are also installed.
 
 - initrd-build-efi-image
