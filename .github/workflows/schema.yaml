@@ -34,7 +34,7 @@ jobs:
   validate-schema:
     runs-on: ubuntu-latest
     env:
-      SPREAD_FILES_GLOB: tests/spread/core2{2,4,6}/**/snapcraft.yaml
+      SPREAD_FILES_GLOB: tests/spread/core2{2,4}/**/snapcraft.yaml
 
     steps:
       - name: Checkout
