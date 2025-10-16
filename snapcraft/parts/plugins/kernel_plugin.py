@@ -93,6 +93,7 @@ class KernelPlugin(plugins.Plugin):
 
     @overrides
     def get_build_packages(self) -> set[str]:
+        _base = self._part_info.base
         _host_arch = self._part_info.host_arch
         _target_arch = self._part_info.target_arch
         _zfs_enabled = self.options.kernel_enable_zfs_support
@@ -117,6 +118,15 @@ class KernelPlugin(plugins.Plugin):
             "xz-utils",
             "zstd",
         }
+
+        # Rust was introduced in 23.04
+        if _base == "core24":
+            build_packages |= {
+                "clang",
+                "rustc",
+                "libdw-dev",
+                "llvm",
+            }
 
         if _zfs_enabled:
             build_packages |= {
