@@ -256,7 +256,7 @@ class Snapcraft(Application):
           2. Expanding extensions for a core20 snap
           3. Listing plugins for a core20 snap via the project metadata
           4. Remote builds for a core20 snap
-          5. Listing plugins for a core20 snap via `snapcraft list-plugins --base core20`
+          5. Listing plugins for a core20 snap via `snapcraft plugins --base core20`
 
         core22:
           6. Running a lifecycle command for a core22 snap

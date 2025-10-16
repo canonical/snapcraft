@@ -106,7 +106,7 @@ def help_command(ctx, topic, devel, base, **kwargs):
 
     For valid plugins:
 
-        snapcraft list-plugins
+        snapcraft plugins
 
     Or for general help:
 

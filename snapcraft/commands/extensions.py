@@ -58,10 +58,10 @@ class ExtensionModel(BaseModel):
         }
 
 
-class ListExtensionsCommand(AppCommand):
+class ExtensionsCommand(AppCommand):
     """List available extensions for all supported bases."""
 
-    name = "list-extensions"
+    name = "extensions"
     help_msg = "List available extensions for all supported bases."
     overview = textwrap.dedent(
         """
@@ -102,10 +102,10 @@ class ListExtensionsCommand(AppCommand):
         emit.message(tabulate.tabulate(printable_extensions, headers="keys"))
 
 
-class ExtensionsCommand(ListExtensionsCommand):
+class ListExtensionsCommand(ExtensionsCommand):
     """A command alias to list the available extensions."""
 
-    name = "extensions"
+    name = "list-extensions"
     hidden = True
 
     @overrides
