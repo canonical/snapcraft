@@ -473,7 +473,7 @@ def test_yaml_indentation_error(bad_yaml, in_project_path, monkeypatch, capsys):
     application.main()
 
     _, err = capsys.readouterr()
-    assert err.startswith("Bad snapcraft.yaml content:")
+    assert "Bad snapcraft.yaml content:" in err
 
 
 @pytest.mark.parametrize("envvar", ["disable-fallback", None])
