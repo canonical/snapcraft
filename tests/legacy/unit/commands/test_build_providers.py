@@ -193,12 +193,16 @@ class ValidBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
             fixtures.EnvironmentVariable("SNAPCRAFT_BUILD_ENVIRONMENT", env)
         )
 
+        command = [self.step]
+        if arg:
+            command.extend(["--provider", arg])
+
         if result == "host":
-            res = self.run_command([self.step, "--provider", arg, "--destructive-mode"])
+            res = self.run_command(command + ["--destructive-mode"])
 
             self.mock_get_provider_for.assert_not_called()
         else:
-            res = self.run_command([self.step, "--provider", arg])
+            res = self.run_command(command)
 
             self.mock_get_provider_for.assert_called_once_with(result)
 
