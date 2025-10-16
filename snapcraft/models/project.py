@@ -41,7 +41,7 @@ from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-impor
 )
 from craft_platforms import DebianArchitecture
 from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
-from pydantic.json_schema import SkipJsonSchema  # noqa: TC002
+from pydantic.json_schema import SkipJsonSchema
 from typing_extensions import Self, override
 
 from snapcraft import utils
