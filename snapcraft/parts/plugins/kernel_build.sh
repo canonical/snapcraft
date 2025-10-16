@@ -110,7 +110,7 @@ release_info() {
   src_pkg_name=$(sed -n '1s/^\(.*\) (.*).*$/\1/p'                                    "${DEBIAN}/changelog")
   release=$(     sed -n '1s/^'"${src_pkg_name}"'.*(\(.*\)-.*).*$/\1/p'               "${DEBIAN}/changelog")
   revision=$(    sed -n '1s/^'"${src_pkg_name}"'\ .*('"${release}"'-\(.*\)).*$/\1/p' "${DEBIAN}/changelog")
-  abinum=${revision%.*}
+  abinum=${revision%%.*}
   uploadnum=${revision##*.}
   abi_release="${release}-${abinum}"
 }
