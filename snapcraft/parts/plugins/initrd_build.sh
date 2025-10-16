@@ -179,7 +179,7 @@ chroot_configure() {
     chroot_run "apt-get install --no-install-recommends -y libsystemd-shared"
 
     if [ "${CRAFT_ARCH_BUILD_FOR}" = "amd64" ]; then
-      chroot_run "apt-get install --no-install-recommends -y intel-microcode amad64-microcode"
+      chroot_run "apt-get install --no-install-recommends -y intel-microcode amd64-microcode"
     fi
   fi
 
