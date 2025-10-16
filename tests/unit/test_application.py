@@ -464,6 +464,7 @@ def test_yaml_syntax_error(in_project_path, monkeypatch, capsys):
         """,
     ],
 )
+@pytest.mark.usefixtures("emitter")
 def test_yaml_indentation_error(bad_yaml, in_project_path, monkeypatch, capsys):
     """Provide a user friendly error message on schema errors that are not YAML syntax errors."""
     (in_project_path / "snapcraft.yaml").write_text(dedent(bad_yaml))
