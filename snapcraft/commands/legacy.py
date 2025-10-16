@@ -200,7 +200,7 @@ class StoreLegacyMetricsCommand(LegacyAppCommand):
 
 
 class StoreLegacyKeysCommand(LegacyAppCommand):
-    """Command passthrough for the list-keys command."""
+    """Command passthrough for the keys command."""
 
     name = "keys"
     help_msg = "List the keys available to sign assertions"
@@ -212,7 +212,7 @@ class StoreLegacyKeysCommand(LegacyAppCommand):
 
 
 class StoreLegacyListKeysCommand(StoreLegacyKeysCommand):
-    """Alias command passthrough for the list-keys command."""
+    """Alias command passthrough for the keys command."""
 
     name = "list-keys"
     hidden = True
