@@ -292,6 +292,82 @@ install_extra() {
 
   unset IFS
 }
+
+# generate_manifest generates a YAML-formatted list of apt repositories and
+# debian packages installed to $INITRD_ROOT
+generate_manifest() {
+  manifest_file="$1"
+
+  # Generate a list of repositories from their URIs
+  for path in $SRC_LIST; do
+    apt-cache policy -o "${path}" |\
+    grep -E 'http:|mirror:|file:|cdrom:|ftp:|copy:|rsh:|ssh:' |\
+      while read -r _ uri _; do
+          echo "${uri}" >> repo_list
+      done
+  done
+
+  sort -u < repo_list > uri_list
+
+  # Generate a list of components and suites for each repository
+  while read -r uri; do
+    for path in ${SRC_LIST}; do
+      apt-cache policy -o "${path}" |\
+      grep "${uri}" | while read -r _ _ sc _; do
+          comp="${sc##*/}"
+          suite="${sc%%/*}"
+          _uri="$(echo "${uri}" | sed -e 's/\//\+/g')"
+          # Create a list of suites/components for each repository
+          echo "${comp}"  | tr ' ' '\n' >> "${_uri}.comp_list"
+          echo "${suite}" | tr ' ' '\n' >> "${_uri}.suite_list"
+      done
+    done
+  done < uri_list
+
+  # Create a unique list of suites/components for each repository
+  for _list in *comp_list *suite_list; do
+    sort -u < "${_list}" > "${_list}.uniq"
+  done
+
+  echo package-repositories: > "${manifest_file}"
+
+  # Print the package-repositories used to fetch packages
+  while read -r uri; do
+    # Use correct filename and put suites/components in comma-separated list
+    _uri="$(echo "${uri}" | sed -e 's/\//\+/g')"
+    _comps="$( tr '\n' ',' < "${_uri}.comp_list.uniq")"
+    _suites="$(tr '\n' ',' < "${_uri}.suite_list.uniq")"
+
+    # Trim last ,
+    _comps="${_comps%*,}"
+    _suites="${_suites%*,}"
+
+    # Small formatting tweak
+    comps="$( echo "${_comps}"  | sed -e 's/,/, /g')"
+    suites="$(echo "${_suites}" | sed -e 's/,/, /g')"
+
+    printf -- '- type: apt\n  url: %s\n  suites: [ %s ]\n  components: [ %s ]\n' \
+      "${uri}" "${suites}" "${comps}" >> "${manifest_file}"
+  done < uri_list
+
+  echo packages: >> "${manifest_file}"
+
+  # Print the packages installed to $INITRD_ROOT
+  for pkg in "${INITRD_ROOT}/var/lib/dpkg/info/"*.md5sums; do
+    # Strip leading /
+    pkg=${pkg##*/}
+    # Strip trailing .md5sums
+    pkg=${pkg%%.md5sums*}
+    # Strip :$arch if present
+    pkg=${pkg%%:*}
+
+    # Format each package installed to $INITRD_ROOT as name=version
+    dpkg-query --admindir="${INITRD_ROOT}/var/lib/dpkg"      \
+      --show --showformat='- ${binary:Package}=${Version}\n' \
+      "${pkg}" >> "${manifest_file}"
+  done
+}
+
 # create_initrd uses ubuntu-core-initramfs to create an initrd.img
 create_initrd() {
   uc_initrd_main_lib_snapd="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd"
@@ -312,11 +388,14 @@ create_initrd() {
                 --kernelver \"${KERNEL_VERSION}\" \
                 --output /boot/initrd.img"
 
-  # Install the initrd manifest to the top-level of the snap
-  if [ "${UBUNTU_SERIES}" = "noble" ]; then
-    install -Dm644 "${INITRD_ROOT}/boot/manifest-initramfs.yaml-${KERNEL_VERSION}" \
-      "${CRAFT_PART_INSTALL}/manifest-initramfs.yaml-${KERNEL_VERSION}"
+  # ubuntu-core-initramfs will only generate a manifest for noble and later
+  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+    generate_manifest "${INITRD_ROOT}/boot/manifest-initramfs.yaml-${KERNEL_VERSION}"
   fi
+
+  # Install the initrd manifest to the top-level of the snap for easy inspection
+  install -Dm644 "${INITRD_ROOT}/boot/manifest-initramfs.yaml-${KERNEL_VERSION}" \
+    "${CRAFT_PART_INSTALL}/manifest-initramfs.yaml-${KERNEL_VERSION}"
 
   # Install the initrd image file
   install -Dm644 "${INITRD_ROOT}/boot/initrd.img-${KERNEL_VERSION}" \
@@ -452,13 +531,19 @@ main() {
   # BASE_CONFIGURED tracks whether or not the chroot has been configured
   BASE_CONFIGURED="${CRAFT_PART_SRC}/.base_configured"
 
+  # SRC_LIST is a list of paths for possible sources.list files
+  SRC_LIST="Dir::Etc::SourceList=${INITRD_ROOT}/etc/apt/sources.list
+            Dir::Etc::SourceParts=${INITRD_ROOT}/etc/apt/sources.list.d
+            Dir::Etc::State::Lists=${INITRD_ROOT}/var/lib/apt/lists"
+
   readonly INITRD_ROOT     \
            PPA_FINGERPRINT \
            KERNEL_VERSION  \
            KERNEL_MODULES  \
            KERNEL_FIRMWARE \
            BASE_CREATED    \
-           BASE_CONFIGURED
+           BASE_CONFIGURED \
+           SRC_LIST
 
   # Building UKIs is only supported on jammy or later
   if [ "${UBUNTU_SERIES}" = "focal" ]; then
