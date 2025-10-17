@@ -2262,14 +2262,12 @@ class DevelProject(Project):
 
 
 class Core22Project(Project):
-    type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        Literal[
-            ProjectType.APP,
-            ProjectType.GADGET,
-            ProjectType.KERNEL,
-            ProjectType.SNAPD,
-            None,
-        ],
+    type: Literal[  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        ProjectType.APP,
+        ProjectType.GADGET,
+        ProjectType.KERNEL,
+        ProjectType.SNAPD,
+        None,
     ] = pydantic.Field(default=None, description="The snap's type.")  # type: ignore[assignment]
 
     base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
@@ -2327,14 +2325,12 @@ class BaseCore22Project(Core22Project):
 
 
 class Core24Project(Project):
-    type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        Literal[
-            ProjectType.APP,
-            ProjectType.GADGET,
-            ProjectType.KERNEL,
-            ProjectType.SNAPD,
-            None,
-        ],
+    type: Literal[  # type: ignore[assignment,reportIncompatibleVariableOverride]
+        ProjectType.APP,
+        ProjectType.GADGET,
+        ProjectType.KERNEL,
+        ProjectType.SNAPD,
+        None,
     ] = pydantic.Field(  # type: ignore[assignment]
         default=None, description="The snap's type.", examples=["kernel"]
     )
