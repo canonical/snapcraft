@@ -2133,7 +2133,7 @@ class Project(models.Project):
     def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
         """Convert to a dictionary."""
         data: dict = super().marshal()
-        if data.get("type"):
+        if isinstance(data.get("type"), ProjectType):
             data["type"] = data["type"].value
         return data
 
