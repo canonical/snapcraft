@@ -2270,7 +2270,6 @@ class Core22Project(Project):
             ProjectType.SNAPD,
             None,
         ],
-        _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
     ] = pydantic.Field(default=None, description="The snap's type.")  # type: ignore[assignment]
 
     base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
@@ -2336,7 +2335,6 @@ class Core24Project(Project):
             ProjectType.SNAPD,
             None,
         ],
-        _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
     ] = pydantic.Field(  # type: ignore[assignment]
         default=None, description="The snap's type.", examples=["kernel"]
     )
