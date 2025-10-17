@@ -10,24 +10,24 @@ In Snapcraft 8, the Catkin plugin can be used alongside the
 :ref:`reference-ros-1-extension` to build core20 snaps.
 
 
-Keywords
---------
+Keys
+----
 
 This plugin provides the following unique keys for core20 snaps.
 
 
 catkin-packages
 ~~~~~~~~~~~~~~~
+
 **Type**: list of strings
-**Default**: all workspace packages
 
 The Catkin packages to build. If unset, all packages in the workspace will be built.
 
 
 catkin-packages-ignore
 ~~~~~~~~~~~~~~~~~~~~~~
+
 **Type**: list of strings
-**Default**: []
 
 The Catkin packages to ignore. These packages will not be built or installed. If unset
 or set to an empty list, no packages will be ignored.
@@ -35,8 +35,8 @@ or set to an empty list, no packages will be ignored.
 
 catkin-cmake-args
 ~~~~~~~~~~~~~~~~~
+
 **Type**: list of strings
-**Default**: []
 
 The arguments to pass to CMake.
 

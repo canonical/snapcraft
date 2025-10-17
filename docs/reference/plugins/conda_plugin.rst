@@ -8,26 +8,24 @@ The Conda plugin builds parts by retrieving packages with the `conda
 plugin is most commonly used to incorporate Python packages into snaps.
 
 
-Keywords
---------
+Keys
+----
 
 The plugin provides the following unique keys for core20 and newer snaps.
 
 
 conda-packages
 ~~~~~~~~~~~~~~
-**Type**: list of strings
 
-**Default**: ``unset``
+**Type**: list of strings
 
 The conda packages to install.
 
 
 conda-python-version
 ~~~~~~~~~~~~~~~~~~~~
-**Type**: string
 
-**Default**: ``unset``
+**Type**: string
 
 The Python version to install in the `conda environment
 <https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_,
@@ -37,6 +35,7 @@ isn't installed in the environment.
 
 conda-miniconda-version
 ~~~~~~~~~~~~~~~~~~~~~~~
+
 **Type**: string
 
 **Default**: ``latest``

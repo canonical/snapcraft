@@ -221,6 +221,9 @@ class GNOME(Extension):
         return {
             "build-environment": [
                 {
+                    "SNAPCRAFT_GNOME_SDK": f"/snap/{sdk_snap}/current/",
+                },
+                {
                     "PATH": prepend_to_env(
                         "PATH", [f"/snap/{sdk_snap}/current/usr/bin"]
                     ),

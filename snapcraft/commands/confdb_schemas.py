@@ -22,6 +22,7 @@ import textwrap
 from typing import TYPE_CHECKING
 
 import craft_application.commands
+from craft_cli import emit
 from typing_extensions import override
 
 from snapcraft import const, services
@@ -30,10 +31,10 @@ if TYPE_CHECKING:
     import argparse
 
 
-class StoreListConfdbSchemasCommand(craft_application.commands.AppCommand):
+class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
     """List confdb schemas."""
 
-    name = "list-confdb-schemas"
+    name = "confdb-schemas"
     help_msg = "List confdb schemas"
     overview = textwrap.dedent(
         """
@@ -76,6 +77,21 @@ class StoreListConfdbSchemasCommand(craft_application.commands.AppCommand):
         )
 
 
+class StoreListConfdbSchemasCommand(StoreConfdbSchemasCommand):
+    """A command alias to list confdb schemas."""
+
+    name = "list-confdb-schemas"
+    hidden = True
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
+            permanent=True,
+        )
+        super().run(parsed_args)
+
+
 class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
     """Edit a confdb schema."""
 
@@ -92,7 +108,7 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
         The account ID of the authenticated account can be determined with the
         ``snapcraft whoami`` command.
 
-        Use the ``list-confdb-schemas`` command to view existing confdb schemas.
+        Use the ``confdb-schemas`` command to view existing confdb schemas.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
