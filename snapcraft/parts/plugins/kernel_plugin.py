@@ -108,6 +108,7 @@ class KernelPlugin(plugins.Plugin):
             "debhelper",
             "fakeroot",
             "flex",
+            "gawk",
             "gcc",
             "kmod",
             "kpartx",
