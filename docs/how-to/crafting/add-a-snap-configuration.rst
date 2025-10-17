@@ -88,7 +88,7 @@ writes it to a file, or writes a fallback value if the gadget option doesn't exi
 
     #!/bin/sh
 
-    DEFAULT_GADGET_OPTION=”123”
+    DEFAULT_GADGET_OPTION="123"
 
     gadget_option="$(snapctl get gadget_option)"
     if [ -z "$gadget_option" ]; then
