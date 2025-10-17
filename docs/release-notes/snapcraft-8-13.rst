@@ -22,9 +22,9 @@ Snapcraft 8.13 brings the following features, integrations, and improvements.
 Experimental core26 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Experimental support for building snaps for the ``core26`` base has been added. As an
-experimental feature, snaps built with this base may break even in patch releases. To
-use this new base, add the following to your project file:
+Experimental support for building snaps for the core26 base is now available. While
+it's in testing, snaps built with core26 might break, even from patch releases of 
+Snapcraft. To build with core26, set the following in your project file:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
