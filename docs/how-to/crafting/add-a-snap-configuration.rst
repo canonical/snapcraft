@@ -70,6 +70,7 @@ server and making sure the changes have taken hold:
         # Restart example-server to apply new config
         snapctl restart example-server
     }
+    handle_port_config
 
 
 .. _how-to-add-a-snap-configuration-default-configure-hook:
