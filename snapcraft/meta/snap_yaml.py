@@ -458,6 +458,7 @@ def get_metadata_from_project(
     total_assumes = sorted(project.assumes + list(assumes))
 
     links = Links.from_project(project)
+    snap_type = project.type.value if project.type else None
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -466,7 +467,7 @@ def get_metadata_from_project(
         summary=cast(SummaryStr, project.summary),
         description=cast(str, project.description),
         license=project.license,
-        type=project.type,
+        type=snap_type,
         architectures=[arch],
         base=cast(str, project.base),
         assumes=total_assumes if total_assumes else None,

@@ -303,12 +303,18 @@ def _get_partitions_from_components(
     return None
 
 
-def _validate_mandatory_base(base: str | None, snap_type: str | None) -> None:
+def _validate_mandatory_base(base: str | None, snap_type: ProjectType | None) -> None:
     """Validate that the base is specified, if required by the snap_type."""
-    if (base is not None) ^ (snap_type not in ["base", "kernel", "snapd"]):
+    if (base is not None) ^ (
+        snap_type not in (ProjectType.BASE, ProjectType.KERNEL, ProjectType.SNAPD)
+    ):
         raise ValueError(
             "Snap base must be declared when type is not base, kernel or snapd"
         )
+
+
+def _enum_serializer(enum: Enum):
+    return enum.value
 
 
 class Socket(models.CraftBaseModel):
@@ -1276,7 +1282,8 @@ class Component(models.CraftBaseModel):
     """
 
     type: Literal["test", "kernel-modules", "standard"] = pydantic.Field(
-        description="The type of the component.", examples=["standard"]
+        description="The type of the component.",
+        examples=["standard"],
     )
     """The type of the component.
 
@@ -1487,7 +1494,16 @@ class Project(models.Project):
     for details.
     """
 
-    type: Literal["app", "base", "gadget", "kernel", "snapd"] | None = pydantic.Field(
+    type: (
+        Literal[
+            ProjectType.APP,
+            ProjectType.BASE,
+            ProjectType.GADGET,
+            ProjectType.KERNEL,
+            ProjectType.SNAPD,
+        ]
+        | None
+    ) = pydantic.Field(
         default=None, description="The snap's type.", examples=["kernel"]
     )
     """The snap's type.
@@ -2098,11 +2114,32 @@ class Project(models.Project):
             field_value = cast(UniqueList[str], [field_value])
         return field_value
 
+    @pydantic.field_validator("type", mode="before")
+    @classmethod
+    def _validate_type(cls, snap_type: str | None | ProjectType) -> ProjectType | None:
+        if isinstance(snap_type, str):
+            try:
+                snap_type = ProjectType(snap_type)
+            except ValueError as exc:
+                raise ValueError(
+                    "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
+                ) from exc
+
+        return snap_type
+
     @override
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> Project:
         """Create a Snapcraft project from a dictionary of data."""
         return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)
+
+    @override
+    def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
+        """Convert to a dictionary."""
+        data: dict = super().marshal()
+        if data.get("type"):
+            data["type"] = data["type"].value
+        return data
 
     def _get_content_plugs(self) -> list[ContentPlug]:
         """Get list of content plugs."""
@@ -2146,7 +2183,7 @@ class Project(models.Project):
         base = get_effective_base(
             base=self.base,
             build_base=self.build_base,
-            project_type=self.type,
+            project_type=self.type.value if self.type else None,
             name=self.name,
         )
 
@@ -2230,9 +2267,15 @@ class DevelProject(Project):
 
 class Core22Project(Project):
     type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        Literal["app", "gadget", "kernel", "snapd", None],
+        Literal[
+            ProjectType.APP,
+            ProjectType.GADGET,
+            ProjectType.KERNEL,
+            ProjectType.SNAPD,
+            None,
+        ],
         _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
-    ] = pydantic.Field(default=None, description="The snap's type.")
+    ] = pydantic.Field(default=None, description="The snap's type.")  # type: ignore[assignment]
 
     base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
@@ -2283,16 +2326,22 @@ class BareCore22Project(Core22Project):
 
 
 class BaseCore22Project(Core22Project):
-    type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
 
 class Core24Project(Project):
     type: Annotated[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        Literal["app", "gadget", "kernel", "snapd", None],
+        Literal[
+            ProjectType.APP,
+            ProjectType.GADGET,
+            ProjectType.KERNEL,
+            ProjectType.SNAPD,
+            None,
+        ],
         _custom_error("Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"),
-    ] = pydantic.Field(
+    ] = pydantic.Field(  # type: ignore[assignment]
         default=None, description="The snap's type.", examples=["kernel"]
     )
 
@@ -2320,7 +2369,7 @@ class Core24Project(Project):
 
 
 class BaseDevelProject(DevelProject):
-    type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["devel"]  # type: ignore[reportIncompatibleVariableOverride]
 
@@ -2331,7 +2380,7 @@ class BareCore24Project(Core24Project):
 
 
 class BaseCore24Project(Core24Project):
-    type: Literal["base"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
@@ -2358,18 +2407,27 @@ class _BaseProjectEnum(Enum):
         return cls.UNIMPLEMENTED
 
 
-class _TypeProjectEnum(Enum):
+class ProjectType(Enum):
     BASE = "base"
-    UNIMPLEMENTED = "UNIMPLEMENTED"
-
-    @classmethod
-    def _missing_(cls, value: Any):
-        return cls.UNIMPLEMENTED
+    APP = "app"
+    GADGET = "gadget"
+    KERNEL = "kernel"
+    SNAPD = "snapd"
+    NONE = "None"
 
 
 def _discriminator(enum: type[Enum], key: str):
     kebab_cased_key = key.replace("_", "-")
     return lambda data: enum(data.get(key, data.get(kebab_cased_key))).value
+
+
+def _type_discriminator(data: dict):
+    snap_type = data.get("type")
+
+    if snap_type not in ProjectType._value2member_map_:
+        snap_type = None
+
+    return snap_type or ProjectType.NONE.value
 
 
 _BareProject = Annotated[
@@ -2403,9 +2461,13 @@ _CoreProject = Annotated[
 ]
 
 SnapcraftProject = Annotated[
-    Annotated[_CoreProject, pydantic.Tag(_TypeProjectEnum.UNIMPLEMENTED.value)]
-    | Annotated[_BaseProject, pydantic.Tag(_TypeProjectEnum.BASE.value)],
-    pydantic.Discriminator(_discriminator(_TypeProjectEnum, "type")),
+    Annotated[_CoreProject, pydantic.Tag(ProjectType.APP.value)]
+    | Annotated[_CoreProject, pydantic.Tag(ProjectType.GADGET.value)]
+    | Annotated[_CoreProject, pydantic.Tag(ProjectType.KERNEL.value)]
+    | Annotated[_CoreProject, pydantic.Tag(ProjectType.SNAPD.value)]
+    | Annotated[_CoreProject, pydantic.Tag(ProjectType.NONE.value)]
+    | Annotated[_BaseProject, pydantic.Tag(ProjectType.BASE.value)],
+    pydantic.Discriminator(_type_discriminator),
 ]
 
 

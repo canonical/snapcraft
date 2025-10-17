@@ -352,7 +352,9 @@ class TestProjectValidation:
 
         if snap_type != "_invalid":
             project = Project.unmarshal(data)
-            assert project.type == snap_type
+            project_type = project.type.value if project.type else None
+            assert project_type == snap_type
+
         else:
             error = "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
             with pytest.raises(pydantic.ValidationError, match=error):

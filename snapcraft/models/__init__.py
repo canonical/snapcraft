@@ -42,6 +42,7 @@ from .project import (
     Lint,
     Platform,
     Project,
+    ProjectType,
     Socket,
 )
 
@@ -68,6 +69,7 @@ __all__ = [
     "Manifest",
     "Platform",
     "Project",
+    "ProjectType",
     "ConfdbSchema",
     "ConfdbSchemaAssertion",
     "Socket",
