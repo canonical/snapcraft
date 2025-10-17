@@ -64,8 +64,8 @@ the following commands in your local repository to sync the submodule change:
 New .NET extensions
 ~~~~~~~~~~~~~~~~~~~
 
-The experimental ``dotnet8``, ``dotnet9``, and ``dotnet10``
-:ref:`reference-dotnet-extensions` have been added to Snapcraft for ``core24`` snaps.
+The experimental dotnet8, dotnet9, and dotnet10 :ref:`reference-dotnet-extensions` have
+been added for core24 snaps.
 
 
 Minor features
