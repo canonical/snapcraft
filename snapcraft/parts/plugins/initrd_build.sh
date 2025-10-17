@@ -483,11 +483,16 @@ run() {
   # This should run even if none are supplied
   add_modules "${initrd_modules}"
 
+  # initrd_features specifies a feature list to pass to ubuntu-core-initramfs
+  # It's possible for the feature list to be empty
+  : initrd_features=""
+
   # Add any extra files from plugin options to initrd
-  [ -z "${initrd_addons}"   ] || {
+  [ -z "${initrd_addons}" ] || {
     initrd_features="${initrd_features} uc-overlay"
-    install_extra addons   "${initrd_addons}"
+    install_extra addons "${initrd_addons}"
   }
+
   [ -z "${initrd_firmware}" ] || {
     initrd_features="${initrd_features} uc-firmware"
     install_extra firmware "${initrd_firmware}"
@@ -497,7 +502,7 @@ run() {
   chroot_configure
 
   # Build the initrd image file
-  create_initrd "$initrd_features"
+  create_initrd "${initrd_features}"
 
   # Build the EFI image if requested
   [ "${initrd_build_efi_image}" = "False" ] || {
