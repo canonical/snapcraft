@@ -148,8 +148,6 @@ snapcraft = "snapcraft.application:main"
 requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-script-files = ["bin/snapcraftctl", "bin/snapcraftctl-compat"]
 
 [tool.setuptools_scm]
 write_to = "snapcraft/_version.py"
