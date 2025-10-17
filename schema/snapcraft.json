@@ -1,1103 +1,4981 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "definitions": {
-    "grammar-string": {
-      "oneOf": [
-        {
-          "type": "string",
-          "usage": "<string>"
+  "$defs": {
+    "App": {
+      "additionalProperties": false,
+      "description": "Snapcraft project app definition.",
+      "properties": {
+        "command": {
+          "description": "The command to run inside the snap when the app is invoked.",
+          "examples": ["bin/foo-app"],
+          "title": "Command",
+          "type": "string"
         },
-        {
-          "type": "array",
-          "items": {
-            "minitems": 1,
-            "uniqueItems": true,
-            "oneOf": [
-              {
-                "type": "object",
-                "usage": "on <selector>[,<selector>...]:",
-                "additionalProperties": false,
-                "patternProperties": {
-                  "^on\\s+.+$": {
-                    "$ref": "#/definitions/grammar-string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "usage": "to <selector>[,<selector>...]:",
-                "additionalProperties": false,
-                "patternProperties": {
-                  "^to\\s+.+$": {
-                    "$ref": "#/definitions/grammar-string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "usage": "try:",
-                "additionalProperties": false,
-                "patternProperties": {
-                  "^try$": {
-                    "$ref": "#/definitions/grammar-string"
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "usage": "else:",
-                "additionalProperties": false,
-                "patternProperties": {
-                  "^else$": {
-                    "$ref": "#/definitions/grammar-string"
-                  }
-                }
-              },
-              {
-                "type": "string",
-                "pattern": "else fail"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    "grammar-array": {
-      "type": "array",
-      "minitems": 1,
-      "uniqueItems": true,
-      "items": {
-        "oneOf": [
-          {
-            "type": "string",
-            "usage": "<string>"
-          },
-          {
-            "type": "object",
-            "usage": "on <selector>[,<selector>...]:",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^on\\s+.+$": {
-                "$ref": "#/definitions/grammar-array"
-              }
-            }
-          },
-          {
-            "type": "object",
-            "usage": "to <selector>[,<selector>...]:",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^to\\s+.+$": {
-                "$ref": "#/definitions/grammar-array"
-              }
-            }
-          },
-          {
-            "type": "object",
-            "usage": "try:",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^try$": {
-                "$ref": "#/definitions/grammar-array"
-              }
-            }
-          },
-          {
-            "type": "object",
-            "usage": "else:",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^else$": {
-                "$ref": "#/definitions/grammar-array"
-              }
-            }
-          }
-        ]
-      }
-    },
-    "build-environment-grammar": {
-      "type": "array",
-      "minitems": 1,
-      "uniqueItems": true,
-      "items": {
-        "oneOf": [
-          {
-            "type": "object",
-            "minProperties": 1,
-            "maxProperties": 1,
-            "additionalProperties": {
+        "autostart": {
+          "anyOf": [
+            {
               "type": "string"
+            },
+            {
+              "type": "null"
             }
-          },
-          {
-            "type": "object",
-            "usage": "on <selector>[,<selector>...]:",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^on\\s+.+$": {
-                "$ref": "#/definitions/build-environment-grammar"
-              }
+          ],
+          "default": null,
+          "description": "The desktop file used to start an app when the desktop environment starts.",
+          "examples": ["foo-app.desktop"],
+          "title": "Autostart"
+        },
+        "common-id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
             }
-          },
-          {
-            "type": "object",
-            "usage": "to <selector>[,<selector>...]:",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^to\\s+.+$": {
-                "$ref": "#/definitions/build-environment-grammar"
-              }
+          ],
+          "default": null,
+          "description": "The identifier to a desktop ID within an external appstream file.",
+          "examples": ["org.canonical.foo"],
+          "title": "Common-Id"
+        },
+        "bus-name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
             }
-          },
-          {
-            "type": "object",
-            "usage": "else:",
-            "additionalProperties": false,
-            "patternProperties": {
-              "^else$": {
-                "$ref": "#/definitions/build-environment-grammar"
-              }
+          ],
+          "default": null,
+          "description": "The bus name that the application or service exposes through D-Bus.",
+          "examples": ["org.bluez"],
+          "title": "Bus-Name"
+        },
+        "desktop": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
             }
-          }
-        ]
-      }
-    },
-    "apt-deb": {
-      "type": "object",
-      "description": "deb repositories",
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["apt"]
+          ],
+          "default": null,
+          "description": "The desktop file used to start an app.",
+          "examples": ["my-app.desktop"],
+          "title": "Desktop"
         },
-        "architectures": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
+        "completer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The name of the bash completion script for the app.",
+          "examples": ["bash-complete.sh"],
+          "title": "Completer"
+        },
+        "stop-command": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The command to run to stop the service.",
+          "examples": ["bin/foo-app --halt"],
+          "title": "Stop-Command"
+        },
+        "post-stop-command": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The command to run after the service is stopped.",
+          "examples": ["bin/logrotate --force"],
+          "title": "Post-Stop-Command"
+        },
+        "start-timeout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The maximum amount of time to wait for the service to start.",
+          "examples": ["10s", "2m"],
+          "title": "Start-Timeout"
+        },
+        "stop-timeout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The maximum amount of time to wait for the service to stop.",
+          "examples": ["10s", "2m"],
+          "title": "Stop-Timeout"
+        },
+        "watchdog-timeout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The maximum amount of time the service can run without sending a heartbeat to the watchdog.",
+          "examples": ["10s", "2m"],
+          "title": "Watchdog-Timeout"
+        },
+        "reload-command": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The command to run to restart the service.",
+          "examples": ["bin/foo-app --restart"],
+          "title": "Reload-Command"
+        },
+        "restart-delay": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The time to wait between service restarts.",
+          "examples": ["10s", "2m"],
+          "title": "Restart-Delay"
+        },
+        "timer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The time or schedule to run a service.",
+          "examples": ["23:00", "00:00-24:00/24", "mon,10:00,,fri,15:00"],
+          "title": "Timer"
+        },
+        "daemon": {
+          "anyOf": [
+            {
+              "enum": ["simple", "forking", "oneshot", "notify", "dbus"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Configures the app as a service, and sets its runtime and notification behavior.",
+          "examples": ["simple", "oneshot"],
+          "title": "Daemon"
+        },
+        "after": {
+          "description": "The ordered list of apps that the service runs after it launches.",
+          "examples": ["[foo-app, bar-app]"],
           "items": {
-            "type": "string",
-            "description": "Architectures to enable, or restrict to, for this repository.  Defaults to host architecture."
-          }
-        },
-        "formats": {
-          "type": "array",
-          "description": "deb types to enable.  Defaults to [deb, deb-src].",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "enum": ["deb", "deb-src"]
-          }
-        },
-        "components": {
-          "type": "array",
-          "minItems": 0,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "description": "Deb repository components to enable, e.g. 'main, multiverse, unstable'"
-          }
-        },
-        "key-id": {
-          "type": "string",
-          "description": "GPG key identifier / fingerprint. May be used to identify key file in <project>/snap/keys/<key-id>.asc",
-          "pattern": "^[A-Z0-9]{40}$"
-        },
-        "key-server": {
-          "type": "string",
-          "description": "GPG keyserver to use to fetch GPG <key-id>, e.g. 'keyserver.ubuntu.com'. Defaults to keyserver.ubuntu.com if key is not found in project."
-        },
-        "path": {
-          "type": "string",
-          "description": "Exact path to repository (relative to URL). Cannot be used with suites or components."
-        },
-        "suites": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "description": "Deb repository suites to enable, e.g. 'xenial-updates, xenial-security')."
-          }
-        },
-        "url": {
-          "type": "string",
-          "description": "Deb repository URL, e.g. 'http://archive.canonical.com/ubuntu'."
-        }
-      },
-      "required": ["type", "key-id", "url"],
-      "validation-failure": "{!r} is not properly configured deb repository"
-    },
-    "apt-ppa": {
-      "type": "object",
-      "description": "PPA repository",
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["apt"]
-        },
-        "ppa": {
-          "type": "string",
-          "description": "ppa path: e.g. 'canonical-kernel-team/unstable'"
-        }
-      },
-      "required": ["type", "ppa"],
-      "validation-failure": "{!r} is not properly configured PPA repository"
-    },
-    "system-username-scope": {
-      "type": "string",
-      "description": "short-form user configuration (<username>: <scope>)",
-      "enum": ["shared"],
-      "validation-failure": "{!r} is not a valid user scope. Valid scopes include: 'shared'"
-    },
-    "environment": {
-      "type": "object",
-      "description": "environment entries",
-      "minItems": 1,
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "string",
-            "minLength": 1
-          },
-          {
-            "type": "number"
-          }
-        ]
-      }
-    }
-  },
-  "title": "snapcraft schema",
-  "type": "object",
-  "properties": {
-    "build-packages": {
-      "$ref": "#/definitions/grammar-array",
-      "description": "top level build packages."
-    },
-    "adopt-info": {
-      "type": "string",
-      "description": "name of the part that provides source files that will be parsed to extract snap metadata information"
-    },
-    "name": {
-      "description": "name of the snap package",
-      "allOf": [
-        {
-          "$comment": "string, but not too long. the failure message avoids printing repr of the thing, as it could be huge",
-          "type": "string",
-          "validation-failure": "snap names need to be strings.",
-          "maxLength": 40
-        },
-        {
-          "pattern": "^[a-z0-9-]*[a-z][a-z0-9-]*$",
-          "validation-failure": "{.instance!r} is not a valid snap name. Snap names can only use ASCII lowercase letters, numbers, and hyphens, and must have at least one letter."
-        },
-        {
-          "pattern": "^[^-]",
-          "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot start with a hyphen."
-        },
-        {
-          "pattern": "[^-]$",
-          "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot end with a hyphen."
-        },
-        {
-          "not": {
-            "pattern": "--"
-          },
-          "validation-failure": "{.instance!r} is not a valid snap name. Snap names cannot have two hyphens in a row."
-        }
-      ]
-    },
-    "title": {
-      "$comment": "https://forum.snapcraft.io/t/title-length-in-snapcraft-yaml-snap-yaml/8625/10",
-      "description": "title for the snap",
-      "type": "string",
-      "maxLength": 40
-    },
-    "architectures": {
-      "description": "architectures on which to build, and on which the resulting snap runs",
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "format": "architectures",
-      "items": {
-        "anyOf": [
-          {
             "type": "string"
           },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["build-on"],
-            "properties": {
-              "build-on": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "array",
-                    "minItems": 1,
-                    "uniqueItems": true
-                  }
-                ]
-              },
-              "run-on": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "array",
-                    "minItems": 1,
-                    "uniqueItems": true
-                  }
-                ]
-              },
-              "build-for": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "array",
-                    "minItems": 1,
-                    "uniqueItems": true
-                  }
-                ]
-              }
+          "title": "After",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "before": {
+          "description": "The ordered list of apps that the service runs before it launches.",
+          "examples": ["[baz-app, quz-app]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Before",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "refresh-mode": {
+          "anyOf": [
+            {
+              "enum": ["endure", "restart", "ignore-running"],
+              "type": "string"
+            },
+            {
+              "type": "null"
             }
-          }
-        ]
-      }
+          ],
+          "default": null,
+          "description": "Determines how the service should restart when the snap refreshes.",
+          "examples": ["restart"],
+          "title": "Refresh-Mode"
+        },
+        "stop-mode": {
+          "anyOf": [
+            {
+              "enum": ["sigterm", "sigterm-all", "sighup", "sighup-all", "sigusr1", "sigusr1-all", "sigusr2", "sigusr2-all", "sigint", "sigint-all"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The signal to send when stopping the service.",
+          "examples": ["sigterm"],
+          "title": "Stop-Mode"
+        },
+        "restart-condition": {
+          "anyOf": [
+            {
+              "enum": ["on-success", "on-failure", "on-abnormal", "on-abort", "on-watchdog", "always", "never"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The conditions that cause the service to restart.",
+          "examples": ["on-failure"],
+          "title": "Restart-Condition"
+        },
+        "install-mode": {
+          "anyOf": [
+            {
+              "enum": ["enable", "disable"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether snapd can automatically start the service when the snap is installed.",
+          "examples": ["enable"],
+          "title": "Install-Mode"
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of slots that the app provides.",
+          "examples": ["[dbus-daemon]"],
+          "title": "Slots"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The interfaces that the app can connect to.",
+          "examples": ["[home, removable-media]"],
+          "title": "Plugs"
+        },
+        "aliases": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The aliases that can be used to run the app.",
+          "examples": ["[my-app]"],
+          "title": "Aliases"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The runtime environment variables.",
+          "examples": ["{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "command-chain": {
+          "description": "The ordered list of commands to run before the app's command runs.",
+          "examples": ["[bin/alsa-launch, bin/desktop-launch]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Command-Chain",
+          "type": "array"
+        },
+        "sockets": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Socket"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The sockets used to activate an app.",
+          "examples": ["{my-socket: {listen-stream: $SNAP_COMMON/lxd/unix.socket, socket-mode: 0660}}"],
+          "title": "Sockets"
+        },
+        "daemon-scope": {
+          "anyOf": [
+            {
+              "enum": ["system", "user"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Determines whether the service is run on a system or user instance of systemd.",
+          "examples": ["user"],
+          "title": "Daemon-Scope"
+        },
+        "activates-on": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The slots exposed by the snap to activate the service with D-Bus.",
+          "examples": ["gnome-shell-dbus"],
+          "title": "Activates-On"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file for the app.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        },
+        "extensions": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The extensions to add to the project.",
+          "examples": [["gnome"], ["ros2-humble"]],
+          "title": "Extensions"
+        }
+      },
+      "required": ["command"],
+      "title": "App",
+      "type": "object"
     },
-    "version": {
-      "description": "package version",
-      "allOf": [
+    "Architecture": {
+      "additionalProperties": false,
+      "description": "Snapcraft project architecture definition.",
+      "properties": {
+        "build-on": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            }
+          ],
+          "description": "The architectures on which the snap can be built.",
+          "examples": ["[amd64, riscv64]"],
+          "title": "Build-On"
+        },
+        "build-for": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The single element list containing the architecture where the snap can be run",
+          "examples": ["[amd64]", "[riscv64]"],
+          "title": "Build-For"
+        }
+      },
+      "required": ["build-on"],
+      "title": "Architecture",
+      "type": "object"
+    },
+    "BareCore22Project": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The identifying name of the snap.",
+          "examples": ["my-app", "powershell", "jupyterlab-desktop"],
+          "maxLength": 40,
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "description": "A human-readable title.",
+              "examples": ["Ubuntu Linux", "Jupyter Lab Desktop", "LXD", "DigiKam", "Apache Kafka", "MySQL Router K8s charm"],
+              "maxLength": 40,
+              "minLength": 2,
+              "title": "Title",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "description": "The version of the project, enclosed in quotation marks.",
+              "examples": ["\"0.1\"", "\"1.0.0\"", "\"v1.0.0\"", "\"24.04\""],
+              "maxLength": 32,
+              "title": "version string",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the snap.",
+          "examples": ["1.2.3"],
+          "title": "Version"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "description": "A short description of the project.",
+              "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
+              "maxLength": 78,
+              "title": "Summary",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The full description of the project.",
+          "title": "Description"
+        },
+        "base": {
+          "const": "bare",
+          "title": "Base",
+          "type": "string"
+        },
+        "build-base": {
+          "const": "core22",
+          "title": "Build-Base",
+          "type": "string"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap author's contact links and email addresses.",
+          "examples": ["[contact@example.com, https://example.com/contact]"],
+          "title": "Contact"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links and email addresses for submitting issues, bugs, and feature requests.",
+          "examples": ["[issues@email.com, https://example.com/issues]"],
+          "title": "Issues"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the source code of the snap or the original project.",
+          "examples": ["[https://example.com/source-code]"],
+          "title": "Source-Code"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project's license as an SPDX expression",
+          "examples": ["GPL-3.0+", "Apache-2.0"],
+          "title": "License"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the snap's metadata.\n\nRequired if one of ``version``, ``summary``, or ``description`` isn't set.",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
+        },
+        "parts": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "The self-contained software pieces needed to create the final artifact.",
+          "examples": ["{cloud-init:                 {plugin: python,                 source-type: git,                 source: https://git.launchpad.net/cloud-init}}"],
+          "title": "Parts",
+          "type": "object"
+        },
+        "package-repositories": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The package repositories to use for build and stage packages.",
+          "examples": ["[{type: apt,                components: [main],                suites: [xenial],                key-id: 78E1918602959B9C59103100F1831DDAFC42E99D,                url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu}]"],
+          "title": "Package-Repositories"
+        },
+        "compression": {
+          "default": "xz",
+          "description": "Specifies the algorithm that compresses the snap.",
+          "enum": ["lzo", "xz"],
+          "examples": ["xz", "lzo"],
+          "title": "Compression",
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's donation links.",
+          "examples": ["[donate@example.com, https://example.com/donate]"],
+          "title": "Donation"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the original software's web pages.",
+          "examples": ["[https://example.com]"],
+          "title": "Website"
+        },
+        "type": {
+          "default": null,
+          "description": "The snap's type.",
+          "enum": ["app", "gadget", "kernel", "snapd", null],
+          "title": "Type"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The path to the snap's icon.",
+          "examples": ["snap/gui/icon.svg"],
+          "title": "Icon"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system.",
+          "enum": ["classic", "devmode", "strict"],
+          "examples": ["strict", "classic", "devmode"],
+          "title": "Confinement",
+          "type": "string"
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "maxProperties": 1,
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": ["symlink", "bind", "bind-file", "type"]
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The file layouts in the execution environment.",
+          "examples": ["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
+          "title": "Layout"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": ["stable", "devel"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The quality grade of the snap.",
+          "examples": ["stable", "devel"],
+          "title": "Grade"
+        },
+        "architectures": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/Architecture"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The architecture sets where the snap can be built and where the resulting snap can run.",
+          "examples": ["[amd64, riscv64]", "[{build-on: [amd64], build-for: [amd64]}]", "[{build-on: [amd64, riscv64], build-for: [riscv64]}]"],
+          "title": "Architectures"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and its features that the snap requires from the host.",
+          "examples": ["[snapd2.66, common-data-dir]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumes",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "hooks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Hook"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Configures the snap's hooks.",
+          "examples": ["{configure: {plugs: [home]}}"],
+          "title": "Hooks"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        },
+        "apps": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/App"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The map of app names representing entry points to run for the snap.",
+          "examples": ["{app-1: {command: bin/app-1}}"],
+          "title": "Apps"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ContentPlug"
+                  },
+                  {}
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's plugs.",
+          "examples": ["{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"],
+          "title": "Plugs"
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's slots.",
+          "examples": ["{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"],
+          "title": "Slots"
+        },
+        "lint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Lint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The linter configuration settings.",
+          "examples": ["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"]
+        },
+        "epoch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The epoch associated with this version of the snap.",
+          "examples": ["1", "2*"],
+          "title": "Epoch"
+        },
+        "system-usernames": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The system usernames that the snap can use to run daemons and services.",
+          "examples": ["{snap-daemon: shared}"],
+          "title": "System-Usernames"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's runtime environment variables.",
+          "examples": ["{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "build-packages": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of packages to install when building a snap.",
+          "examples": ["[libssl-dev, libyaml-dev]"],
+          "title": "Build-Packages"
+        },
+        "build-snaps": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snaps to install when building a snap.",
+          "examples": ["[go/1.22/stable, yq]"],
+          "title": "Build-Snaps"
+        },
+        "ua-services": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+          "examples": ["[esm-apps]"],
+          "title": "Ua-Services"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primary-key header for snaps signed by third parties.",
+          "examples": ["test-provenance"],
+          "title": "Provenance"
+        },
+        "components": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Component"
+              },
+              "propertyNames": {
+                "maxLength": 40
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the components to build in conjunction with the snap.",
+          "examples": ["{foo-component: {type: standard}}"],
+          "title": "Components"
+        }
+      },
+      "required": ["name", "base", "build-base", "parts", "confinement"],
+      "title": "BareCore22Project",
+      "type": "object"
+    },
+    "BareCore24Project": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The identifying name of the snap.",
+          "examples": ["my-app", "powershell", "jupyterlab-desktop"],
+          "maxLength": 40,
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "description": "A human-readable title.",
+              "examples": ["Ubuntu Linux", "Jupyter Lab Desktop", "LXD", "DigiKam", "Apache Kafka", "MySQL Router K8s charm"],
+              "maxLength": 40,
+              "minLength": 2,
+              "title": "Title",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "description": "The version of the project, enclosed in quotation marks.",
+              "examples": ["\"0.1\"", "\"1.0.0\"", "\"v1.0.0\"", "\"24.04\""],
+              "maxLength": 32,
+              "title": "version string",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the snap.",
+          "examples": ["1.2.3"],
+          "title": "Version"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "description": "A short description of the project.",
+              "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
+              "maxLength": 78,
+              "title": "Summary",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The full description of the project.",
+          "title": "Description"
+        },
+        "base": {
+          "const": "bare",
+          "title": "Base",
+          "type": "string"
+        },
+        "build-base": {
+          "const": "core24",
+          "title": "Build-Base",
+          "type": "string"
+        },
+        "platforms": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Platform"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The platforms where the snap can be built and where the resulting snap can run.",
+          "examples": ["{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"],
+          "title": "Platforms"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap author's contact links and email addresses.",
+          "examples": ["[contact@example.com, https://example.com/contact]"],
+          "title": "Contact"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links and email addresses for submitting issues, bugs, and feature requests.",
+          "examples": ["[issues@email.com, https://example.com/issues]"],
+          "title": "Issues"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the source code of the snap or the original project.",
+          "examples": ["[https://example.com/source-code]"],
+          "title": "Source-Code"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project's license as an SPDX expression",
+          "examples": ["GPL-3.0+", "Apache-2.0"],
+          "title": "License"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the snap's metadata.\n\nRequired if one of ``version``, ``summary``, or ``description`` isn't set.",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
+        },
+        "parts": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "The self-contained software pieces needed to create the final artifact.",
+          "examples": ["{cloud-init:                 {plugin: python,                 source-type: git,                 source: https://git.launchpad.net/cloud-init}}"],
+          "title": "Parts",
+          "type": "object"
+        },
+        "package-repositories": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The package repositories to use for build and stage packages.",
+          "examples": ["[{type: apt,                components: [main],                suites: [xenial],                key-id: 78E1918602959B9C59103100F1831DDAFC42E99D,                url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu}]"],
+          "title": "Package-Repositories"
+        },
+        "compression": {
+          "default": "xz",
+          "description": "Specifies the algorithm that compresses the snap.",
+          "enum": ["lzo", "xz"],
+          "examples": ["xz", "lzo"],
+          "title": "Compression",
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's donation links.",
+          "examples": ["[donate@example.com, https://example.com/donate]"],
+          "title": "Donation"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the original software's web pages.",
+          "examples": ["[https://example.com]"],
+          "title": "Website"
+        },
+        "type": {
+          "default": null,
+          "description": "The snap's type.",
+          "enum": ["app", "gadget", "kernel", "snapd", null],
+          "examples": ["kernel"],
+          "title": "Type"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The path to the snap's icon.",
+          "examples": ["snap/gui/icon.svg"],
+          "title": "Icon"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system.",
+          "enum": ["classic", "devmode", "strict"],
+          "examples": ["strict", "classic", "devmode"],
+          "title": "Confinement",
+          "type": "string"
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "maxProperties": 1,
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": ["symlink", "bind", "bind-file", "type"]
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The file layouts in the execution environment.",
+          "examples": ["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
+          "title": "Layout"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": ["stable", "devel"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The quality grade of the snap.",
+          "examples": ["stable", "devel"],
+          "title": "Grade"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and its features that the snap requires from the host.",
+          "examples": ["[snapd2.66, common-data-dir]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumes",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "hooks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Hook"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Configures the snap's hooks.",
+          "examples": ["{configure: {plugs: [home]}}"],
+          "title": "Hooks"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        },
+        "apps": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/App"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The map of app names representing entry points to run for the snap.",
+          "examples": ["{app-1: {command: bin/app-1}}"],
+          "title": "Apps"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ContentPlug"
+                  },
+                  {}
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's plugs.",
+          "examples": ["{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"],
+          "title": "Plugs"
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's slots.",
+          "examples": ["{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"],
+          "title": "Slots"
+        },
+        "lint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Lint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The linter configuration settings.",
+          "examples": ["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"]
+        },
+        "epoch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The epoch associated with this version of the snap.",
+          "examples": ["1", "2*"],
+          "title": "Epoch"
+        },
+        "system-usernames": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The system usernames that the snap can use to run daemons and services.",
+          "examples": ["{snap-daemon: shared}"],
+          "title": "System-Usernames"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's runtime environment variables.",
+          "examples": ["{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "build-packages": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of packages to install when building a snap.",
+          "examples": ["[libssl-dev, libyaml-dev]"],
+          "title": "Build-Packages"
+        },
+        "build-snaps": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snaps to install when building a snap.",
+          "examples": ["[go/1.22/stable, yq]"],
+          "title": "Build-Snaps"
+        },
+        "ua-services": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+          "examples": ["[esm-apps]"],
+          "title": "Ua-Services"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primary-key header for snaps signed by third parties.",
+          "examples": ["test-provenance"],
+          "title": "Provenance"
+        },
+        "components": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Component"
+              },
+              "propertyNames": {
+                "maxLength": 40
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the components to build in conjunction with the snap.",
+          "examples": ["{foo-component: {type: standard}}"],
+          "title": "Components"
+        }
+      },
+      "required": ["name", "base", "build-base", "parts", "confinement"],
+      "title": "BareCore24Project",
+      "type": "object"
+    },
+    "BaseCore22Project": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The identifying name of the snap.",
+          "examples": ["my-app", "powershell", "jupyterlab-desktop"],
+          "maxLength": 40,
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "description": "A human-readable title.",
+              "examples": ["Ubuntu Linux", "Jupyter Lab Desktop", "LXD", "DigiKam", "Apache Kafka", "MySQL Router K8s charm"],
+              "maxLength": 40,
+              "minLength": 2,
+              "title": "Title",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "description": "The version of the project, enclosed in quotation marks.",
+              "examples": ["\"0.1\"", "\"1.0.0\"", "\"v1.0.0\"", "\"24.04\""],
+              "maxLength": 32,
+              "title": "version string",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the snap.",
+          "examples": ["1.2.3"],
+          "title": "Version"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "description": "A short description of the project.",
+              "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
+              "maxLength": 78,
+              "title": "Summary",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The full description of the project.",
+          "title": "Description"
+        },
+        "build-base": {
+          "const": "core22",
+          "title": "Build-Base",
+          "type": "string"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap author's contact links and email addresses.",
+          "examples": ["[contact@example.com, https://example.com/contact]"],
+          "title": "Contact"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links and email addresses for submitting issues, bugs, and feature requests.",
+          "examples": ["[issues@email.com, https://example.com/issues]"],
+          "title": "Issues"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the source code of the snap or the original project.",
+          "examples": ["[https://example.com/source-code]"],
+          "title": "Source-Code"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project's license as an SPDX expression",
+          "examples": ["GPL-3.0+", "Apache-2.0"],
+          "title": "License"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the snap's metadata.\n\nRequired if one of ``version``, ``summary``, or ``description`` isn't set.",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
+        },
+        "parts": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "The self-contained software pieces needed to create the final artifact.",
+          "examples": ["{cloud-init:                 {plugin: python,                 source-type: git,                 source: https://git.launchpad.net/cloud-init}}"],
+          "title": "Parts",
+          "type": "object"
+        },
+        "package-repositories": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The package repositories to use for build and stage packages.",
+          "examples": ["[{type: apt,                components: [main],                suites: [xenial],                key-id: 78E1918602959B9C59103100F1831DDAFC42E99D,                url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu}]"],
+          "title": "Package-Repositories"
+        },
+        "compression": {
+          "default": "xz",
+          "description": "Specifies the algorithm that compresses the snap.",
+          "enum": ["lzo", "xz"],
+          "examples": ["xz", "lzo"],
+          "title": "Compression",
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's donation links.",
+          "examples": ["[donate@example.com, https://example.com/donate]"],
+          "title": "Donation"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the original software's web pages.",
+          "examples": ["[https://example.com]"],
+          "title": "Website"
+        },
+        "type": {
+          "const": "base",
+          "title": "Type",
+          "type": "string"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The path to the snap's icon.",
+          "examples": ["snap/gui/icon.svg"],
+          "title": "Icon"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system.",
+          "enum": ["classic", "devmode", "strict"],
+          "examples": ["strict", "classic", "devmode"],
+          "title": "Confinement",
+          "type": "string"
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "maxProperties": 1,
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": ["symlink", "bind", "bind-file", "type"]
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The file layouts in the execution environment.",
+          "examples": ["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
+          "title": "Layout"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": ["stable", "devel"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The quality grade of the snap.",
+          "examples": ["stable", "devel"],
+          "title": "Grade"
+        },
+        "architectures": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/Architecture"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The architecture sets where the snap can be built and where the resulting snap can run.",
+          "examples": ["[amd64, riscv64]", "[{build-on: [amd64], build-for: [amd64]}]", "[{build-on: [amd64, riscv64], build-for: [riscv64]}]"],
+          "title": "Architectures"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and its features that the snap requires from the host.",
+          "examples": ["[snapd2.66, common-data-dir]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumes",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "hooks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Hook"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Configures the snap's hooks.",
+          "examples": ["{configure: {plugs: [home]}}"],
+          "title": "Hooks"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        },
+        "apps": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/App"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The map of app names representing entry points to run for the snap.",
+          "examples": ["{app-1: {command: bin/app-1}}"],
+          "title": "Apps"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ContentPlug"
+                  },
+                  {}
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's plugs.",
+          "examples": ["{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"],
+          "title": "Plugs"
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's slots.",
+          "examples": ["{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"],
+          "title": "Slots"
+        },
+        "lint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Lint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The linter configuration settings.",
+          "examples": ["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"]
+        },
+        "epoch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The epoch associated with this version of the snap.",
+          "examples": ["1", "2*"],
+          "title": "Epoch"
+        },
+        "system-usernames": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The system usernames that the snap can use to run daemons and services.",
+          "examples": ["{snap-daemon: shared}"],
+          "title": "System-Usernames"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's runtime environment variables.",
+          "examples": ["{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "build-packages": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of packages to install when building a snap.",
+          "examples": ["[libssl-dev, libyaml-dev]"],
+          "title": "Build-Packages"
+        },
+        "build-snaps": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snaps to install when building a snap.",
+          "examples": ["[go/1.22/stable, yq]"],
+          "title": "Build-Snaps"
+        },
+        "ua-services": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+          "examples": ["[esm-apps]"],
+          "title": "Ua-Services"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primary-key header for snaps signed by third parties.",
+          "examples": ["test-provenance"],
+          "title": "Provenance"
+        },
+        "components": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Component"
+              },
+              "propertyNames": {
+                "maxLength": 40
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the components to build in conjunction with the snap.",
+          "examples": ["{foo-component: {type: standard}}"],
+          "title": "Components"
+        }
+      },
+      "required": ["name", "build-base", "parts", "type", "confinement"],
+      "title": "BaseCore22Project",
+      "type": "object"
+    },
+    "BaseCore24Project": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The identifying name of the snap.",
+          "examples": ["my-app", "powershell", "jupyterlab-desktop"],
+          "maxLength": 40,
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "description": "A human-readable title.",
+              "examples": ["Ubuntu Linux", "Jupyter Lab Desktop", "LXD", "DigiKam", "Apache Kafka", "MySQL Router K8s charm"],
+              "maxLength": 40,
+              "minLength": 2,
+              "title": "Title",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "description": "The version of the project, enclosed in quotation marks.",
+              "examples": ["\"0.1\"", "\"1.0.0\"", "\"v1.0.0\"", "\"24.04\""],
+              "maxLength": 32,
+              "title": "version string",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the snap.",
+          "examples": ["1.2.3"],
+          "title": "Version"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "description": "A short description of the project.",
+              "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
+              "maxLength": 78,
+              "title": "Summary",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The full description of the project.",
+          "title": "Description"
+        },
+        "build-base": {
+          "const": "core24",
+          "title": "Build-Base",
+          "type": "string"
+        },
+        "platforms": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Platform"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The platforms where the snap can be built and where the resulting snap can run.",
+          "examples": ["{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"],
+          "title": "Platforms"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap author's contact links and email addresses.",
+          "examples": ["[contact@example.com, https://example.com/contact]"],
+          "title": "Contact"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links and email addresses for submitting issues, bugs, and feature requests.",
+          "examples": ["[issues@email.com, https://example.com/issues]"],
+          "title": "Issues"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the source code of the snap or the original project.",
+          "examples": ["[https://example.com/source-code]"],
+          "title": "Source-Code"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project's license as an SPDX expression",
+          "examples": ["GPL-3.0+", "Apache-2.0"],
+          "title": "License"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the snap's metadata.\n\nRequired if one of ``version``, ``summary``, or ``description`` isn't set.",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
+        },
+        "parts": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "The self-contained software pieces needed to create the final artifact.",
+          "examples": ["{cloud-init:                 {plugin: python,                 source-type: git,                 source: https://git.launchpad.net/cloud-init}}"],
+          "title": "Parts",
+          "type": "object"
+        },
+        "package-repositories": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The package repositories to use for build and stage packages.",
+          "examples": ["[{type: apt,                components: [main],                suites: [xenial],                key-id: 78E1918602959B9C59103100F1831DDAFC42E99D,                url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu}]"],
+          "title": "Package-Repositories"
+        },
+        "compression": {
+          "default": "xz",
+          "description": "Specifies the algorithm that compresses the snap.",
+          "enum": ["lzo", "xz"],
+          "examples": ["xz", "lzo"],
+          "title": "Compression",
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's donation links.",
+          "examples": ["[donate@example.com, https://example.com/donate]"],
+          "title": "Donation"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the original software's web pages.",
+          "examples": ["[https://example.com]"],
+          "title": "Website"
+        },
+        "type": {
+          "const": "base",
+          "title": "Type",
+          "type": "string"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The path to the snap's icon.",
+          "examples": ["snap/gui/icon.svg"],
+          "title": "Icon"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system.",
+          "enum": ["classic", "devmode", "strict"],
+          "examples": ["strict", "classic", "devmode"],
+          "title": "Confinement",
+          "type": "string"
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "maxProperties": 1,
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": ["symlink", "bind", "bind-file", "type"]
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The file layouts in the execution environment.",
+          "examples": ["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
+          "title": "Layout"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": ["stable", "devel"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The quality grade of the snap.",
+          "examples": ["stable", "devel"],
+          "title": "Grade"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and its features that the snap requires from the host.",
+          "examples": ["[snapd2.66, common-data-dir]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumes",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "hooks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Hook"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Configures the snap's hooks.",
+          "examples": ["{configure: {plugs: [home]}}"],
+          "title": "Hooks"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        },
+        "apps": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/App"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The map of app names representing entry points to run for the snap.",
+          "examples": ["{app-1: {command: bin/app-1}}"],
+          "title": "Apps"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ContentPlug"
+                  },
+                  {}
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's plugs.",
+          "examples": ["{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"],
+          "title": "Plugs"
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's slots.",
+          "examples": ["{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"],
+          "title": "Slots"
+        },
+        "lint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Lint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The linter configuration settings.",
+          "examples": ["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"]
+        },
+        "epoch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The epoch associated with this version of the snap.",
+          "examples": ["1", "2*"],
+          "title": "Epoch"
+        },
+        "system-usernames": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The system usernames that the snap can use to run daemons and services.",
+          "examples": ["{snap-daemon: shared}"],
+          "title": "System-Usernames"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's runtime environment variables.",
+          "examples": ["{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "build-packages": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of packages to install when building a snap.",
+          "examples": ["[libssl-dev, libyaml-dev]"],
+          "title": "Build-Packages"
+        },
+        "build-snaps": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snaps to install when building a snap.",
+          "examples": ["[go/1.22/stable, yq]"],
+          "title": "Build-Snaps"
+        },
+        "ua-services": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+          "examples": ["[esm-apps]"],
+          "title": "Ua-Services"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primary-key header for snaps signed by third parties.",
+          "examples": ["test-provenance"],
+          "title": "Provenance"
+        },
+        "components": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Component"
+              },
+              "propertyNames": {
+                "maxLength": 40
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the components to build in conjunction with the snap.",
+          "examples": ["{foo-component: {type: standard}}"],
+          "title": "Components"
+        }
+      },
+      "required": ["name", "build-base", "parts", "type", "confinement"],
+      "title": "BaseCore24Project",
+      "type": "object"
+    },
+    "BaseDevelProject": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The identifying name of the snap.",
+          "examples": ["my-app", "powershell", "jupyterlab-desktop"],
+          "maxLength": 40,
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "description": "A human-readable title.",
+              "examples": ["Ubuntu Linux", "Jupyter Lab Desktop", "LXD", "DigiKam", "Apache Kafka", "MySQL Router K8s charm"],
+              "maxLength": 40,
+              "minLength": 2,
+              "title": "Title",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "description": "The version of the project, enclosed in quotation marks.",
+              "examples": ["\"0.1\"", "\"1.0.0\"", "\"v1.0.0\"", "\"24.04\""],
+              "maxLength": 32,
+              "title": "version string",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the snap.",
+          "examples": ["1.2.3"],
+          "title": "Version"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "description": "A short description of the project.",
+              "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
+              "maxLength": 78,
+              "title": "Summary",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The full description of the project.",
+          "title": "Description"
+        },
+        "build-base": {
+          "const": "devel",
+          "title": "Build-Base",
+          "type": "string"
+        },
+        "platforms": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Platform"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The platforms where the snap can be built and where the resulting snap can run.",
+          "examples": ["{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"],
+          "title": "Platforms"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap author's contact links and email addresses.",
+          "examples": ["[contact@example.com, https://example.com/contact]"],
+          "title": "Contact"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links and email addresses for submitting issues, bugs, and feature requests.",
+          "examples": ["[issues@email.com, https://example.com/issues]"],
+          "title": "Issues"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the source code of the snap or the original project.",
+          "examples": ["[https://example.com/source-code]"],
+          "title": "Source-Code"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project's license as an SPDX expression",
+          "examples": ["GPL-3.0+", "Apache-2.0"],
+          "title": "License"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the snap's metadata.\n\nRequired if one of ``version``, ``summary``, or ``description`` isn't set.",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
+        },
+        "parts": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "The self-contained software pieces needed to create the final artifact.",
+          "examples": ["{cloud-init:                 {plugin: python,                 source-type: git,                 source: https://git.launchpad.net/cloud-init}}"],
+          "title": "Parts",
+          "type": "object"
+        },
+        "package-repositories": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The package repositories to use for build and stage packages.",
+          "examples": ["[{type: apt,                components: [main],                suites: [xenial],                key-id: 78E1918602959B9C59103100F1831DDAFC42E99D,                url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu}]"],
+          "title": "Package-Repositories"
+        },
+        "compression": {
+          "default": "xz",
+          "description": "Specifies the algorithm that compresses the snap.",
+          "enum": ["lzo", "xz"],
+          "examples": ["xz", "lzo"],
+          "title": "Compression",
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's donation links.",
+          "examples": ["[donate@example.com, https://example.com/donate]"],
+          "title": "Donation"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the original software's web pages.",
+          "examples": ["[https://example.com]"],
+          "title": "Website"
+        },
+        "type": {
+          "const": "base",
+          "title": "Type",
+          "type": "string"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The path to the snap's icon.",
+          "examples": ["snap/gui/icon.svg"],
+          "title": "Icon"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system.",
+          "enum": ["classic", "devmode", "strict"],
+          "examples": ["strict", "classic", "devmode"],
+          "title": "Confinement",
+          "type": "string"
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "maxProperties": 1,
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": ["symlink", "bind", "bind-file", "type"]
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The file layouts in the execution environment.",
+          "examples": ["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
+          "title": "Layout"
+        },
+        "grade": {
+          "const": "devel",
+          "title": "Grade",
+          "type": "string"
+        },
+        "architectures": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/Architecture"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The architecture sets where the snap can be built and where the resulting snap can run.",
+          "examples": ["[amd64, riscv64]", "[{build-on: [amd64], build-for: [amd64]}]", "[{build-on: [amd64, riscv64], build-for: [riscv64]}]"],
+          "title": "Architectures"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and its features that the snap requires from the host.",
+          "examples": ["[snapd2.66, common-data-dir]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumes",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "hooks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Hook"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Configures the snap's hooks.",
+          "examples": ["{configure: {plugs: [home]}}"],
+          "title": "Hooks"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        },
+        "apps": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/App"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The map of app names representing entry points to run for the snap.",
+          "examples": ["{app-1: {command: bin/app-1}}"],
+          "title": "Apps"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ContentPlug"
+                  },
+                  {}
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's plugs.",
+          "examples": ["{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"],
+          "title": "Plugs"
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's slots.",
+          "examples": ["{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"],
+          "title": "Slots"
+        },
+        "lint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Lint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The linter configuration settings.",
+          "examples": ["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"]
+        },
+        "epoch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The epoch associated with this version of the snap.",
+          "examples": ["1", "2*"],
+          "title": "Epoch"
+        },
+        "system-usernames": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The system usernames that the snap can use to run daemons and services.",
+          "examples": ["{snap-daemon: shared}"],
+          "title": "System-Usernames"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's runtime environment variables.",
+          "examples": ["{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "build-packages": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of packages to install when building a snap.",
+          "examples": ["[libssl-dev, libyaml-dev]"],
+          "title": "Build-Packages"
+        },
+        "build-snaps": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snaps to install when building a snap.",
+          "examples": ["[go/1.22/stable, yq]"],
+          "title": "Build-Snaps"
+        },
+        "ua-services": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+          "examples": ["[esm-apps]"],
+          "title": "Ua-Services"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primary-key header for snaps signed by third parties.",
+          "examples": ["test-provenance"],
+          "title": "Provenance"
+        },
+        "components": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Component"
+              },
+              "propertyNames": {
+                "maxLength": 40
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the components to build in conjunction with the snap.",
+          "examples": ["{foo-component: {type: standard}}"],
+          "title": "Components"
+        }
+      },
+      "required": ["name", "build-base", "parts", "type", "confinement", "grade"],
+      "title": "BaseDevelProject",
+      "type": "object"
+    },
+    "Component": {
+      "additionalProperties": false,
+      "description": "Snapcraft component definition.",
+      "properties": {
+        "summary": {
+          "description": "The summary of the component.",
+          "examples": ["Language translations for the app"],
+          "maxLength": 78,
+          "title": "Summary",
+          "type": "string"
+        },
+        "description": {
+          "description": "The full description of the component.",
+          "examples": ["Contains optional translation packs to allow the user to change the language."],
+          "title": "Description",
+          "type": "string"
+        },
+        "type": {
+          "description": "The type of the component.",
+          "enum": ["test", "kernel-modules", "standard"],
+          "examples": ["standard"],
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "description": "The version of the project, enclosed in quotation marks.",
+              "examples": ["\"0.1\"", "\"1.0.0\"", "\"v1.0.0\"", "\"24.04\""],
+              "maxLength": 32,
+              "title": "version string",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the component.",
+          "examples": ["1.2.3"],
+          "title": "Version"
+        },
+        "hooks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Hook"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The configuration for the component's hooks.",
+          "examples": ["{configure: {plugs: [home]}}"],
+          "title": "Hooks"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the component's metadata.\n\nOnly the component's version can be set.\n",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
+        }
+      },
+      "required": ["summary", "description", "type"],
+      "title": "Component",
+      "type": "object"
+    },
+    "ContentPlug": {
+      "additionalProperties": false,
+      "description": "Snapcraft project content plug definition.",
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The name for the content type.",
+          "examples": ["themes"],
+          "title": "Content"
+        },
+        "interface": {
+          "description": "The name of the interface.",
+          "examples": ["network"],
+          "title": "Interface",
+          "type": "string"
+        },
+        "target": {
+          "description": "The path to where the producer's files will be available in the snap.",
+          "examples": ["$SNAP/data-dir/themes"],
+          "title": "Target",
+          "type": "string"
+        },
+        "default-provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The name of the producer snap..",
+          "examples": ["gtk-common-themes"],
+          "title": "Default-Provider"
+        }
+      },
+      "required": ["interface", "target"],
+      "title": "ContentPlug",
+      "type": "object"
+    },
+    "Core22Project": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The identifying name of the snap.",
+          "examples": ["my-app", "powershell", "jupyterlab-desktop"],
+          "maxLength": 40,
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "description": "A human-readable title.",
+              "examples": ["Ubuntu Linux", "Jupyter Lab Desktop", "LXD", "DigiKam", "Apache Kafka", "MySQL Router K8s charm"],
+              "maxLength": 40,
+              "minLength": 2,
+              "title": "Title",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "description": "The version of the project, enclosed in quotation marks.",
+              "examples": ["\"0.1\"", "\"1.0.0\"", "\"v1.0.0\"", "\"24.04\""],
+              "maxLength": 32,
+              "title": "version string",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the snap.",
+          "examples": ["1.2.3"],
+          "title": "Version"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "description": "A short description of the project.",
+              "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
+              "maxLength": 78,
+              "title": "Summary",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The full description of the project.",
+          "title": "Description"
+        },
+        "base": {
+          "const": "core22",
+          "title": "Base",
+          "type": "string"
+        },
+        "build-base": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The build environment to use when building the snap",
+          "examples": ["core20", "core22", "core24", "devel"],
+          "title": "Build-Base"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap author's contact links and email addresses.",
+          "examples": ["[contact@example.com, https://example.com/contact]"],
+          "title": "Contact"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links and email addresses for submitting issues, bugs, and feature requests.",
+          "examples": ["[issues@email.com, https://example.com/issues]"],
+          "title": "Issues"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the source code of the snap or the original project.",
+          "examples": ["[https://example.com/source-code]"],
+          "title": "Source-Code"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project's license as an SPDX expression",
+          "examples": ["GPL-3.0+", "Apache-2.0"],
+          "title": "License"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the snap's metadata.\n\nRequired if one of ``version``, ``summary``, or ``description`` isn't set.",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
+        },
+        "parts": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "The self-contained software pieces needed to create the final artifact.",
+          "examples": ["{cloud-init:                 {plugin: python,                 source-type: git,                 source: https://git.launchpad.net/cloud-init}}"],
+          "title": "Parts",
+          "type": "object"
+        },
+        "package-repositories": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The package repositories to use for build and stage packages.",
+          "examples": ["[{type: apt,                components: [main],                suites: [xenial],                key-id: 78E1918602959B9C59103100F1831DDAFC42E99D,                url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu}]"],
+          "title": "Package-Repositories"
+        },
+        "compression": {
+          "default": "xz",
+          "description": "Specifies the algorithm that compresses the snap.",
+          "enum": ["lzo", "xz"],
+          "examples": ["xz", "lzo"],
+          "title": "Compression",
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's donation links.",
+          "examples": ["[donate@example.com, https://example.com/donate]"],
+          "title": "Donation"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the original software's web pages.",
+          "examples": ["[https://example.com]"],
+          "title": "Website"
+        },
+        "type": {
+          "default": null,
+          "description": "The snap's type.",
+          "enum": ["app", "gadget", "kernel", "snapd", null],
+          "title": "Type"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The path to the snap's icon.",
+          "examples": ["snap/gui/icon.svg"],
+          "title": "Icon"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system.",
+          "enum": ["classic", "devmode", "strict"],
+          "examples": ["strict", "classic", "devmode"],
+          "title": "Confinement",
+          "type": "string"
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "maxProperties": 1,
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": ["symlink", "bind", "bind-file", "type"]
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The file layouts in the execution environment.",
+          "examples": ["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
+          "title": "Layout"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": ["stable", "devel"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The quality grade of the snap.",
+          "examples": ["stable", "devel"],
+          "title": "Grade"
+        },
+        "architectures": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/Architecture"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The architecture sets where the snap can be built and where the resulting snap can run.",
+          "examples": ["[amd64, riscv64]", "[{build-on: [amd64], build-for: [amd64]}]", "[{build-on: [amd64, riscv64], build-for: [riscv64]}]"],
+          "title": "Architectures"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and its features that the snap requires from the host.",
+          "examples": ["[snapd2.66, common-data-dir]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumes",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "hooks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Hook"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Configures the snap's hooks.",
+          "examples": ["{configure: {plugs: [home]}}"],
+          "title": "Hooks"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        },
+        "apps": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/App"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The map of app names representing entry points to run for the snap.",
+          "examples": ["{app-1: {command: bin/app-1}}"],
+          "title": "Apps"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ContentPlug"
+                  },
+                  {}
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's plugs.",
+          "examples": ["{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"],
+          "title": "Plugs"
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's slots.",
+          "examples": ["{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"],
+          "title": "Slots"
+        },
+        "lint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Lint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The linter configuration settings.",
+          "examples": ["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"]
+        },
+        "epoch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The epoch associated with this version of the snap.",
+          "examples": ["1", "2*"],
+          "title": "Epoch"
+        },
+        "system-usernames": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The system usernames that the snap can use to run daemons and services.",
+          "examples": ["{snap-daemon: shared}"],
+          "title": "System-Usernames"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's runtime environment variables.",
+          "examples": ["{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "build-packages": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of packages to install when building a snap.",
+          "examples": ["[libssl-dev, libyaml-dev]"],
+          "title": "Build-Packages"
+        },
+        "build-snaps": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snaps to install when building a snap.",
+          "examples": ["[go/1.22/stable, yq]"],
+          "title": "Build-Snaps"
+        },
+        "ua-services": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+          "examples": ["[esm-apps]"],
+          "title": "Ua-Services"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primary-key header for snaps signed by third parties.",
+          "examples": ["test-provenance"],
+          "title": "Provenance"
+        },
+        "components": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Component"
+              },
+              "propertyNames": {
+                "maxLength": 40
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the components to build in conjunction with the snap.",
+          "examples": ["{foo-component: {type: standard}}"],
+          "title": "Components"
+        }
+      },
+      "required": ["name", "base", "parts", "confinement"],
+      "title": "Core22Project",
+      "type": "object"
+    },
+    "Core24Project": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The identifying name of the snap.",
+          "examples": ["my-app", "powershell", "jupyterlab-desktop"],
+          "maxLength": 40,
+          "title": "Name",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "description": "A human-readable title.",
+              "examples": ["Ubuntu Linux", "Jupyter Lab Desktop", "LXD", "DigiKam", "Apache Kafka", "MySQL Router K8s charm"],
+              "maxLength": 40,
+              "minLength": 2,
+              "title": "Title",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "description": "The version of the project, enclosed in quotation marks.",
+              "examples": ["\"0.1\"", "\"1.0.0\"", "\"v1.0.0\"", "\"24.04\""],
+              "maxLength": 32,
+              "title": "version string",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The version of the snap.",
+          "examples": ["1.2.3"],
+          "title": "Version"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "description": "A short description of the project.",
+              "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
+              "maxLength": 78,
+              "title": "Summary",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The full description of the project.",
+          "title": "Description"
+        },
+        "base": {
+          "const": "core24",
+          "title": "Base",
+          "type": "string"
+        },
+        "build-base": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The build environment to use when building the snap",
+          "examples": ["core20", "core22", "core24", "devel"],
+          "title": "Build-Base"
+        },
+        "platforms": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Platform"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The platforms where the snap can be built and where the resulting snap can run.",
+          "examples": ["{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"],
+          "title": "Platforms"
+        },
+        "contact": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap author's contact links and email addresses.",
+          "examples": ["[contact@example.com, https://example.com/contact]"],
+          "title": "Contact"
+        },
+        "issues": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links and email addresses for submitting issues, bugs, and feature requests.",
+          "examples": ["[issues@email.com, https://example.com/issues]"],
+          "title": "Issues"
+        },
+        "source-code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the source code of the snap or the original project.",
+          "examples": ["[https://example.com/source-code]"],
+          "title": "Source-Code"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project's license as an SPDX expression",
+          "examples": ["GPL-3.0+", "Apache-2.0"],
+          "title": "License"
+        },
+        "adopt-info": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Selects a part to inherit metadata from and reuse for the snap's metadata.\n\nRequired if one of ``version``, ``summary``, or ``description`` isn't set.",
+          "examples": ["foo-part"],
+          "title": "Adopt-Info"
+        },
+        "parts": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "The self-contained software pieces needed to create the final artifact.",
+          "examples": ["{cloud-init:                 {plugin: python,                 source-type: git,                 source: https://git.launchpad.net/cloud-init}}"],
+          "title": "Parts",
+          "type": "object"
+        },
+        "package-repositories": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The package repositories to use for build and stage packages.",
+          "examples": ["[{type: apt,                components: [main],                suites: [xenial],                key-id: 78E1918602959B9C59103100F1831DDAFC42E99D,                url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu}]"],
+          "title": "Package-Repositories"
+        },
+        "compression": {
+          "default": "xz",
+          "description": "Specifies the algorithm that compresses the snap.",
+          "enum": ["lzo", "xz"],
+          "examples": ["xz", "lzo"],
+          "title": "Compression",
+          "type": "string"
+        },
+        "donation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's donation links.",
+          "examples": ["[donate@example.com, https://example.com/donate]"],
+          "title": "Donation"
+        },
+        "website": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The links to the original software's web pages.",
+          "examples": ["[https://example.com]"],
+          "title": "Website"
+        },
+        "type": {
+          "default": null,
+          "description": "The snap's type.",
+          "enum": ["app", "gadget", "kernel", "snapd", null],
+          "examples": ["kernel"],
+          "title": "Type"
+        },
+        "icon": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The path to the snap's icon.",
+          "examples": ["snap/gui/icon.svg"],
+          "title": "Icon"
+        },
+        "confinement": {
+          "description": "The amount of isolation the snap has from the host system.",
+          "enum": ["classic", "devmode", "strict"],
+          "examples": ["strict", "classic", "devmode"],
+          "title": "Confinement",
+          "type": "string"
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "maxProperties": 1,
+                "minProperties": 1,
+                "propertyNames": {
+                  "enum": ["symlink", "bind", "bind-file", "type"]
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The file layouts in the execution environment.",
+          "examples": ["{/var/lib/foo: {bind: $SNAP_DATA/var/lib/foo}}"],
+          "title": "Layout"
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": ["stable", "devel"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The quality grade of the snap.",
+          "examples": ["stable", "devel"],
+          "title": "Grade"
+        },
+        "assumes": {
+          "description": "The minimum version of snapd and its features that the snap requires from the host.",
+          "examples": ["[snapd2.66, common-data-dir]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumes",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "hooks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Hook"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Configures the snap's hooks.",
+          "examples": ["{configure: {plugs: [home]}}"],
+          "title": "Hooks"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        },
+        "apps": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/App"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The map of app names representing entry points to run for the snap.",
+          "examples": ["{app-1: {command: bin/app-1}}"],
+          "title": "Apps"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ContentPlug"
+                  },
+                  {}
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's plugs.",
+          "examples": ["{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"],
+          "title": "Plugs"
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the snap's slots.",
+          "examples": ["{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"],
+          "title": "Slots"
+        },
+        "lint": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Lint"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The linter configuration settings.",
+          "examples": ["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"]
+        },
+        "epoch": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The epoch associated with this version of the snap.",
+          "examples": ["1", "2*"],
+          "title": "Epoch"
+        },
+        "system-usernames": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The system usernames that the snap can use to run daemons and services.",
+          "examples": ["{snap-daemon: shared}"],
+          "title": "System-Usernames"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snap's runtime environment variables.",
+          "examples": ["{PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "build-packages": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of packages to install when building a snap.",
+          "examples": ["[libssl-dev, libyaml-dev]"],
+          "title": "Build-Packages"
+        },
+        "build-snaps": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The snaps to install when building a snap.",
+          "examples": ["[go/1.22/stable, yq]"],
+          "title": "Build-Snaps"
+        },
+        "ua-services": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+          "examples": ["[esm-apps]"],
+          "title": "Ua-Services"
+        },
+        "provenance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The primary-key header for snaps signed by third parties.",
+          "examples": ["test-provenance"],
+          "title": "Provenance"
+        },
+        "components": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/Component"
+              },
+              "propertyNames": {
+                "maxLength": 40
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declares the components to build in conjunction with the snap.",
+          "examples": ["{foo-component: {type: standard}}"],
+          "title": "Components"
+        }
+      },
+      "required": ["name", "base", "parts", "confinement"],
+      "title": "Core24Project",
+      "type": "object"
+    },
+    "Hook": {
+      "additionalProperties": false,
+      "description": "Snapcraft project hook definition.",
+      "properties": {
+        "command-chain": {
+          "description": "The ordered list of commands to run before the hook runs.",
+          "examples": ["[bin/alsa-launch, bin/desktop-launch]"],
+          "items": {
+            "type": "string"
+          },
+          "title": "Command-Chain",
+          "type": "array"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The environment variables for the hook.",
+          "examples": ["{PYTHONPATH: /custom/path/:$PYTHON_PATH, DISABLE_WAYLAND: 1}"],
+          "title": "Environment"
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of interfaces that the hook can connect to.",
+          "examples": ["[home, removable-media]"],
+          "title": "Plugs"
+        },
+        "passthrough": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The attributes to pass to the snap's metadata file for the hook.",
+          "examples": ["{daemon: complex}"],
+          "title": "Passthrough"
+        }
+      },
+      "title": "Hook",
+      "type": "object"
+    },
+    "Lint": {
+      "additionalProperties": false,
+      "description": "Linter configuration.\n\n:ivar ignore: A list describing which files should have issues ignored for given linters.\n    The items in the list can be either:\n    - a string, which must be the name of one of the known linters (see below). All issues\n      from this linter will be ignored.\n    - a dict containing exactly one key, which must be the name of one of the known linters.\n        The value is then a list of strings corresponding to the filenames/patterns that\n        should be ignored for that linter.\n    The \"known\" linter names are the keys in :ref:`LINTERS`",
+      "properties": {
+        "ignore": {
+          "description": "Linters or files to skip when linting.",
+          "examples": ["{ignore: [classic, library: [usr/lib/**/libfoo.so*]]}"],
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "type": "object"
+              }
+            ]
+          },
+          "title": "Ignore",
+          "type": "array"
+        }
+      },
+      "required": ["ignore"],
+      "title": "Lint",
+      "type": "object"
+    },
+    "Platform": {
+      "additionalProperties": false,
+      "description": "Snapcraft project platform definition.",
+      "properties": {
+        "build-on": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "uniqueItems": true
+                }
+              ],
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The architectures on which the snap can be built.",
+          "examples": ["[amd64, riscv64]"],
+          "title": "Build-On"
+        },
+        "build-for": {
+          "anyOf": [
+            {
+              "items": {},
+              "maxItems": 1,
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The single element list containing the architecture the snap is built for.",
+          "examples": ["[amd64]", "[riscv64]"],
+          "title": "Build-For"
+        }
+      },
+      "required": ["build-on"],
+      "title": "Platform",
+      "type": "object"
+    },
+    "Socket": {
+      "additionalProperties": false,
+      "description": "Snapcraft app socket definition.",
+      "properties": {
+        "listen-stream": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The socket's abstract name or socket path.",
+          "examples": ["$SNAP_COMMON/lxd/unix.socket", "80"],
+          "title": "Listen-Stream"
+        },
+        "socket-mode": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The mode or permissions of the socket in octal.",
+          "examples": ["0660"],
+          "title": "Socket-Mode"
+        }
+      },
+      "required": ["listen-stream"],
+      "title": "Socket",
+      "type": "object"
+    }
+  },
+  "oneOf": [
+    {
+      "oneOf": [
         {
-          "type": "string",
-          "validation-failure": "snap versions need to be strings. They must also be wrapped in quotes when the value will be interpreted by the YAML parser as a non-string. Examples: '1', '1.2', '1.2.3', git (will be replaced by a git describe based version string)."
+          "$ref": "#/$defs/Core22Project"
         },
         {
-          "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$",
-          "maxLength": 32,
-          "validation-failure": "{.instance!r} is not a valid snap version string. Snap versions consist of upper- and lower-case alphanumeric characters, as well as periods, colons, plus signs, tildes, and hyphens. They cannot begin with a period, colon, plus sign, tilde, or hyphen. They cannot end with a period, colon, or hyphen."
-        }
-      ]
-    },
-    "version-script": {
-      "type": "string",
-      "description": "a script that echoes the version to set."
-    },
-    "license": {
-      "type": "string",
-      "description": "the license the package holds"
-    },
-    "icon": {
-      "type": "string",
-      "description": "path to a 512x512 icon representing the package.",
-      "format": "icon-path"
-    },
-    "summary": {
-      "type": "string",
-      "description": "one line summary for the package",
-      "maxLength": 78
-    },
-    "description": {
-      "type": "string",
-      "description": "long description of the package",
-      "pattern": ".+",
-      "validation-failure": "{.instance!r} is not a valid description string."
-    },
-    "assumes": {
-      "type": "array",
-      "description": "featureset the snap requires in order to work.",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": [
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "type": {
-      "type": "string",
-      "description": "the snap type, the implicit type is 'app'",
-      "enum": ["app", "base", "gadget", "kernel", "snapd"]
-    },
-    "frameworks": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": [
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "confinement": {
-      "type": "string",
-      "description": "the type of confinement supported by the snap",
-      "default": "strict",
-      "enum": ["classic", "devmode", "strict"]
-    },
-    "grade": {
-      "type": "string",
-      "description": "the quality grade of the snap",
-      "default": "stable",
-      "enum": ["stable", "devel"]
-    },
-    "base": {
-      "type": "string",
-      "description": "the base snap to use"
-    },
-    "build-base": {
-      "type": "string",
-      "description": "force a build environment based on base to create a snap"
-    },
-    "epoch": {
-      "description": "the snap epoch, used to specify upgrade paths",
-      "format": "epoch"
-    },
-    "compression": {
-      "description": "compression to use for snap archive - default is otherwise determined by 'snap pack'",
-      "type": "string",
-      "enum": ["lzo", "xz"]
-    },
-    "environment": {
-      "description": "environment entries for the snap as a whole",
-      "$ref": "#/definitions/environment"
-    },
-    "passthrough": {
-      "type": "object",
-      "description": "properties to be passed into snap.yaml as-is"
-    },
-    "layout": {
-      "type": "object",
-      "description": "layout property to be passed into the snap.yaml as-is"
-    },
-    "package-repositories": {
-      "type": "array",
-      "description": "additional repository configuration.",
-      "minItems": 0,
-      "uniqueItems": true,
-      "items": [
+          "$ref": "#/$defs/Core24Project"
+        },
         {
           "oneOf": [
             {
-              "$ref": "#/definitions/apt-deb"
+              "$ref": "#/$defs/BareCore22Project"
             },
             {
-              "$ref": "#/definitions/apt-ppa"
+              "$ref": "#/$defs/BareCore24Project"
             }
           ]
-        }
-      ]
-    },
-    "system-usernames": {
-      "type": "object",
-      "description": "system username",
-      "additionalProperties": false,
-      "validation-failure": "{!r} is not a valid system-username.",
-      "patternProperties": {
-        "^snap_(daemon|microk8s|aziotedge|aziotdu)$": {
-          "oneOf": [
-            {
-              "$ref": "#/definitions/system-username-scope"
-            },
-            {
-              "type": "object",
-              "description": "long-form user configuration",
-              "additionalProperties": false,
-              "properties": {
-                "scope": {
-                  "$ref": "#/definitions/system-username-scope"
-                }
-              },
-              "required": ["scope"]
-            }
-          ]
-        }
-      }
-    },
-    "donation": {
-      "oneOf": [
-        {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": [
-            {
-              "type": "string"
-            }
-          ]
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "issues": {
-      "oneOf": [
-        {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": [
-            {
-              "type": "string"
-            }
-          ]
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "contact": {
-      "oneOf": [
-        {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": [
-            {
-              "type": "string"
-            }
-          ]
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "source-code": {
-      "type": "string"
-    },
-    "website": {
-      "type": "string"
-    },
-    "apps": {
-      "type": "object",
-      "additionalProperties": false,
-      "validation-failure": "{!r} is not a valid app name. App names consist of upper- and lower-case alphanumeric characters and hyphens. They cannot start or end with a hyphen.",
-      "patternProperties": {
-        "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$": {
-          "type": "object",
-          "required": ["command"],
-          "dependencies": {
-            "bus-name": ["daemon"],
-            "activates-on": ["daemon"],
-            "refresh-mode": ["daemon"],
-            "stop-mode": ["daemon"],
-            "stop-command": ["daemon"],
-            "start-timeout": ["daemon"],
-            "stop-timeout": ["daemon"],
-            "watchdog-timeout": ["daemon"],
-            "restart-delay": ["daemon"],
-            "post-stop-command": ["daemon"],
-            "reload-command": ["daemon"],
-            "restart-condition": ["daemon"],
-            "before": ["daemon"],
-            "after": ["daemon"],
-            "timer": ["daemon"],
-            "install-mode": ["daemon"]
-          },
-          "additionalProperties": false,
-          "properties": {
-            "autostart": {
-              "type": "string",
-              "description": "Name of the desktop file placed by the application in $SNAP_USER_DATA/.config/autostart to indicate that application should be started with the user's desktop session.",
-              "pattern": "^[A-Za-z0-9. _#:$-]+\\.desktop$",
-              "validation-failure": "{.instance!r} is not a valid desktop file name (e.g. myapp.desktop)"
-            },
-            "common-id": {
-              "type": "string",
-              "description": "common identifier across multiple packaging formats"
-            },
-            "bus-name": {
-              "type": "string",
-              "description": "D-Bus name this service is reachable as",
-              "pattern": "^[A-Za-z0-9/. _#:$-]*$",
-              "validation-failure": "{.instance!r} is not a valid bus name."
-            },
-            "activates-on": {
-              "type": "array",
-              "description": "dbus interface slots this service activates on",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              }
-            },
-            "desktop": {
-              "type": "string",
-              "description": "path to a desktop file representing the app, relative to the prime directory"
-            },
-            "command": {
-              "type": "string",
-              "description": "command executed to run the binary"
-            },
-            "completer": {
-              "type": "string",
-              "description": "bash completion script relative to the prime directory"
-            },
-            "stop-command": {
-              "type": "string",
-              "description": "command executed to stop a service"
-            },
-            "post-stop-command": {
-              "type": "string",
-              "description": "command executed after stopping a service"
-            },
-            "start-timeout": {
-              "type": "string",
-              "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
-              "validation-failure": "{.instance!r} is not a valid timeout value.",
-              "description": "Optional time to wait for daemon to start - <n>ns | <n>us | <n>ms | <n>s | <n>m"
-            },
-            "stop-timeout": {
-              "type": "string",
-              "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
-              "validation-failure": "{.instance!r} is not a valid timeout value.",
-              "description": "Optional time to wait for daemon to stop - <n>ns | <n>us | <n>ms | <n>s | <n>m"
-            },
-            "watchdog-timeout": {
-              "type": "string",
-              "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
-              "validation-failure": "{.instance!r} is not a valid timeout value.",
-              "description": "Service watchdog timeout - <n>ns | <n>us | <n>ms | <n>s | <n>m"
-            },
-            "reload-command": {
-              "type": "string",
-              "description": "Command to use to ask the service to reload its configuration."
-            },
-            "restart-delay": {
-              "type": "string",
-              "pattern": "^[0-9]+(ns|us|ms|s|m)*$",
-              "validation-failure": "{.instance!r} is not a valid delay value.",
-              "description": "Delay between service restarts - <n>ns | <n>us | <n>ms | <n>s | <n>m. Defaults to unset. See the systemd.service manual on RestartSec for details."
-            },
-            "timer": {
-              "type": "string",
-              "description": "The service is activated by a timer, app must be a daemon. (systemd.time calendar event string)"
-            },
-            "daemon": {
-              "type": "string",
-              "description": "signals that the app is a service.",
-              "enum": ["simple", "forking", "oneshot", "notify", "dbus"]
-            },
-            "after": {
-              "type": "array",
-              "description": "List of applications that are ordered to be started after the current one",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              }
-            },
-            "before": {
-              "type": "array",
-              "description": "List of applications that are ordered to be started before the current one",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              }
-            },
-            "refresh-mode": {
-              "type": "string",
-              "description": "controls if the app should be restarted at all",
-              "enum": ["endure", "restart", "ignore-running"]
-            },
-            "stop-mode": {
-              "type": "string",
-              "description": "controls how the daemon should be stopped",
-              "enum": ["sigterm", "sigterm-all", "sighup", "sighup-all", "sigusr1", "sigusr1-all", "sigusr2", "sigusr2-all", "sigint", "sigint-all"]
-            },
-            "restart-condition": {
-              "type": "string",
-              "enum": ["on-success", "on-failure", "on-abnormal", "on-abort", "on-watchdog", "always", "never"]
-            },
-            "install-mode": {
-              "type": "string",
-              "enum": ["enable", "disable"]
-            },
-            "slots": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              }
-            },
-            "plugs": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              }
-            },
-            "aliases": {
-              "type": "array",
-              "uniqueItems": true,
-              "items": {
-                "type": "string",
-                "pattern": "^[a-zA-Z0-9][-_.a-zA-Z0-9]*$",
-                "validation-failure": "{.instance!r} is not a valid alias. Aliases must be strings, begin with an ASCII alphanumeric character, and can only use ASCII alphanumeric characters and the following special characters: . _ -"
-              }
-            },
-            "environment": {
-              "description": "environment entries for the specific app.",
-              "$ref": "#/definitions/environment"
-            },
-            "adapter": {
-              "$comment": "Full should be the default, but it requires command-chain which isn't available in snapd until 2.36, which isn't yet stable. Until 2.36 is generally available, continue with legacy as the default.",
-              "type": "string",
-              "description": "What kind of wrapper to generate for the given command",
-              "enum": ["none", "legacy", "full"],
-              "default": "legacy"
-            },
-            "command-chain": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9/._#:$-]*$",
-                "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries must be strings, and can only use ASCII alphanumeric characters and the following special characters: / . _ # : $ -"
-              }
-            },
-            "sockets": {
-              "type": "object",
-              "additionalProperties": false,
-              "validation-failure": "{!r} is not a valid socket name. Socket names consist of lower-case alphanumeric characters and hyphens.",
-              "patternProperties": {
-                "^[a-z][a-z0-9_-]*$": {
-                  "type": "object",
-                  "required": ["listen-stream"],
-                  "description": "Sockets for automatic service activation",
-                  "additionalProperties": false,
-                  "properties": {
-                    "listen-stream": {
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "usage": "port number, an integer between 1 and 65535",
-                          "minimum": 1,
-                          "maximum": 65535
-                        },
-                        {
-                          "type": "string",
-                          "usage": "socket path, a string"
-                        }
-                      ]
-                    },
-                    "socket-mode": {
-                      "type": "integer"
-                    }
-                  }
-                }
-              }
-            },
-            "passthrough": {
-              "type": "object",
-              "description": "properties to be passed into snap.yaml as-is"
-            },
-            "extensions": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "enum": ["env-injector", "flutter-stable", "flutter-beta", "flutter-dev", "flutter-master", "gnome", "gnome-3-28", "gnome-3-34", "gnome-3-38", "kde-neon", "kde-neon-6", "ros1-noetic", "ros1-noetic-desktop", "ros1-noetic-perception", "ros1-noetic-robot", "ros1-noetic-ros-base", "ros1-noetic-ros-core", "ros2-foxy", "ros2-foxy-ros-base", "ros2-foxy-ros-core", "ros2-foxy-desktop", "ros2-humble", "ros2-humble-ros-base", "ros2-humble-ros-core", "ros2-humble-desktop"]
-              }
-            }
-          }
-        }
-      }
-    },
-    "hooks": {
-      "type": "object",
-      "additionalProperties": false,
-      "validation-failure": "{!r} is not a valid hook name. Hook names consist of lower-case alphanumeric characters and hyphens. They cannot start or end with a hyphen.",
-      "patternProperties": {
-        "^[a-z](?:-?[a-z0-9])*$": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "command-chain": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9/._#:$-]*$",
-                "validation-failure": "{.instance!r} is not a valid command-chain entry. Command chain entries must be strings, and can only use ASCII alphanumeric characters and the following special characters: / . _ # : $ -"
-              }
-            },
-            "environment": {
-              "description": "environment entries for this hook",
-              "$ref": "#/definitions/environment"
-            },
-            "plugs": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              }
-            },
-            "passthrough": {
-              "type": "object",
-              "description": "properties to be passed into snap.yaml as-is"
-            }
-          }
-        }
-      }
-    },
-    "parts": {
-      "type": "object",
-      "minProperties": 1,
-      "additionalProperties": false,
-      "validation-failure": "{!r} is not a valid part name. Part names consist of lower-case alphanumeric characters, hyphens and plus signs. As a special case, 'plugins' is also not a valid part name.",
-      "patternProperties": {
-        "^(?!plugins$)[a-z0-9][a-z0-9+-]*$": {
-          "type": ["object", "null"],
-          "minProperties": 1,
-          "required": ["plugin"],
-          "properties": {
-            "plugin": {
-              "type": "string",
-              "description": "plugin name"
-            },
-            "source": {
-              "$ref": "#/definitions/grammar-string"
-            },
-            "source-checksum": {
-              "type": "string",
-              "default": ""
-            },
-            "source-branch": {
-              "type": "string",
-              "default": ""
-            },
-            "source-commit": {
-              "type": "string",
-              "default": ""
-            },
-            "source-depth": {
-              "type": "integer",
-              "default": 0
-            },
-            "source-submodules": {
-              "type": "array",
-              "minItems": 0,
-              "uniqueItems": true,
-              "items": {
-                "type": "string",
-                "description": "submodules to fetch, by pathname in source tree"
-              }
-            },
-            "source-subdir": {
-              "type": "string",
-              "default": ""
-            },
-            "source-tag": {
-              "type": "string",
-              "default": ""
-            },
-            "source-type": {
-              "type": "string",
-              "default": "",
-              "enum": ["bzr", "git", "hg", "mercurial", "subversion", "svn", "tar", "zip", "deb", "rpm", "7z", "local"]
-            },
-            "disable-parallel": {
-              "type": "boolean",
-              "default": false
-            },
-            "after": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              },
-              "default": []
-            },
-            "stage-snaps": {
-              "$comment": "For some reason 'default' doesn't work if in the ref",
-              "$ref": "#/definitions/grammar-array",
-              "default": []
-            },
-            "stage-packages": {
-              "$comment": "For some reason 'default' doesn't work if in the ref",
-              "$ref": "#/definitions/grammar-array",
-              "default": []
-            },
-            "build-snaps": {
-              "$comment": "For some reason 'default' doesn't work if in the ref",
-              "$ref": "#/definitions/grammar-array",
-              "default": []
-            },
-            "build-packages": {
-              "$comment": "For some reason 'default' doesn't work if in the ref",
-              "$ref": "#/definitions/grammar-array",
-              "default": []
-            },
-            "build-environment": {
-              "$ref": "#/definitions/build-environment-grammar",
-              "default": []
-            },
-            "build-attributes": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string",
-                "enum": ["core22-step-dependencies", "enable-patchelf", "no-patchelf", "no-install", "debug", "keep-execstack"]
-              },
-              "default": []
-            },
-            "organize": {
-              "type": "object",
-              "default": {},
-              "additionalProperties": {
-                "type": "string",
-                "minLength": 1
-              }
-            },
-            "filesets": {
-              "type": "object",
-              "default": {},
-              "additionalProperties": {
-                "type": "array",
-                "minitems": 1
-              }
-            },
-            "stage": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              },
-              "default": ["*"]
-            },
-            "prime": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              },
-              "default": ["*"]
-            },
-            "override-pull": {
-              "type": "string",
-              "default": "snapcraftctl pull"
-            },
-            "override-build": {
-              "type": "string",
-              "default": "snapcraftctl build"
-            },
-            "override-stage": {
-              "type": "string",
-              "default": "snapcraftctl stage"
-            },
-            "override-prime": {
-              "type": "string",
-              "default": "snapcraftctl prime"
-            },
-            "parse-info": {
-              "type": "array",
-              "minitems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              },
-              "default": []
-            }
-          }
-        }
-      }
-    },
-    "plugs": {
-      "type": "object"
-    },
-    "slots": {
-      "type": "object"
-    },
-    "ua-services": {
-      "type": "array",
-      "description": "UA services to enable.",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": [
-        {
-          "type": "string"
-        }
-      ]
-    }
-  },
-  "allOf": [
-    {
-      "anyOf": [
-        {
-          "usage": "type: <base|kernel|snapd> (without a base)",
-          "properties": {
-            "type": {
-              "enum": ["base", "kernel", "snapd"]
-            }
-          },
-          "allOf": [
-            {
-              "required": ["type"]
-            },
-            {
-              "not": {
-                "required": ["base"]
-              }
-            }
-          ]
-        },
-        {
-          "usage": "base: <base> and type: <app|gadget>",
-          "properties": {
-            "type": {
-              "enum": ["app", "gadget"]
-            }
-          },
-          "allOf": [
-            {
-              "required": ["base"]
-            }
-          ]
-        },
-        {
-          "usage": "base: bare (with a build-base)",
-          "properties": {
-            "base": {
-              "enum": ["bare"]
-            }
-          },
-          "required": ["build-base"]
         }
       ]
     },
     {
-      "anyOf": [
+      "oneOf": [
         {
-          "required": ["summary", "description", "version"]
+          "$ref": "#/$defs/BaseDevelProject"
         },
         {
-          "required": ["adopt-info"]
+          "$ref": "#/$defs/BaseCore22Project"
+        },
+        {
+          "$ref": "#/$defs/BaseCore24Project"
         }
       ]
     }
-  ],
-  "required": ["name", "parts"],
-
-  "dependencies": {
-    "license-agreement": ["license"],
-    "license-version": ["license"]
-  },
-  "additionalProperties": false
+  ]
 }
