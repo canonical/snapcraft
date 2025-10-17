@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from typing import Optional, Sequence
+from collections.abc import Sequence
 from unittest import mock
 
 import fixtures
@@ -58,7 +58,7 @@ parts:
 
         parts = []
         for i in range(n):
-            part_dir = os.path.join(self.parts_dir, "{}{}".format(step, i))
+            part_dir = os.path.join(self.parts_dir, f"{step}{i}")
             state_dir = os.path.join(part_dir, "state")
             parts.append({"part_dir": part_dir, "state_dir": state_dir})
 
@@ -198,7 +198,7 @@ class ValidBuildEnvironmentParsingTests(BuildEnvironmentParsingTest):
             command.extend(["--provider", arg])
 
         if result == "host":
-            res = self.run_command(command + ["--destructive-mode"])
+            res = self.run_command([*command, "--destructive-mode"])
 
             self.mock_get_provider_for.assert_not_called()
         else:
@@ -407,7 +407,7 @@ class BuildProviderShellCommandTestCase(LifecycleCommandsBaseTestCase):
         self.shell_mock.assert_not_called()
 
     def test_error_with_shell_after_error_and_debug(self):
-        self.shell_mock.side_effect = EnvironmentError("error")
+        self.shell_mock.side_effect = OSError("error")
 
         self.assertRaises(
             EnvironmentError, self.run_command, ["pull", "--shell-after", "--debug"]
