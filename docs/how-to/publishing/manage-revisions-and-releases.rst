@@ -96,7 +96,7 @@ You can promote a published revision to another channel with:
     snapcraft release <snap-name> <revision> <new-channel>
 
 Replace ``<revision>`` with the revision's unique number. You can obtain a revision
-number with the ``snapcraft list-revisions`` command.
+number with the ``snapcraft revisions`` command.
 
 For example, if you were the Firefox maintainer and wanted to make an edge revision
 generally available on the stable channel, you'd run:

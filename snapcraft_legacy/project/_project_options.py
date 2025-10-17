@@ -22,6 +22,7 @@ import sys
 from typing import Dict, List, Optional, Set, Union
 
 from snapcraft_legacy import file_utils
+from snapcraft_legacy.cli import echo
 from snapcraft_legacy.internal import common, errors, os_release
 
 logger = logging.getLogger(__name__)
@@ -347,6 +348,12 @@ class ProjectOptions:
                 architectures = architectures[0]
             # lists of architectures cannot be decoded
             else:
+                doc_page = "https://documentation.ubuntu.com/snapcraft/stable/reference/architectures/#core20"
+                echo.warning(
+                    "Warning: The architecture shorthand behaves differently on core20 builds.\n"
+                    "Declaring multiple shorthand architectures in a core20 snap yields a single, multi-architecture artifact.\n"
+                    f"For more information, see {doc_page}"
+                )
                 logger.debug("Cannot set build-for info for multi-arch build")
                 return None
 

@@ -126,6 +126,12 @@ conflicts = [
         { group = "dev-questing" },
     ],
 ]
+constraint-dependencies = [
+    # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
+    # what is available in the noble repositories.
+    # https://pynacl.readthedocs.io/en/latest/changelog/
+    "pynacl<1.6.0",
+]
 
 [[tool.uv.index]]
 name = "python-apt-wheels"
@@ -137,7 +143,6 @@ python-apt = { index = "python-apt-wheels" }
 
 [project.scripts]
 snapcraft = "snapcraft.application:main"
-snapcraft_legacy = "snapcraft_legacy.cli.__main__:run"
 
 [build-system]
 requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
@@ -208,7 +213,7 @@ line-length = 88
 extend-exclude = [
     "docs",
     "__pycache__",
-    "legacy",
+    "snapcraft_legacy",
     "tests/legacy",
     "snapcraft/_version.py", # setuptools_scm generates old-style type annotations and single quotes
 ]

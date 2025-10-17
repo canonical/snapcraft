@@ -32,7 +32,9 @@ from .legacy import (
     StoreLegacyCreateKeyCommand,
     StoreLegacyGatedCommand,
     StoreLegacyListKeysCommand,
+    StoreLegacyKeysCommand,
     StoreLegacyListValidationSetsCommand,
+    StoreLegacyValidationSetsCommand,
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacyRegisterKeyCommand,
@@ -51,7 +53,11 @@ from .names import (
     StoreRegisterCommand,
 )
 from .plugins import ListPluginsCommand, PluginsCommand
-from .confdb_schemas import StoreEditConfdbSchemaCommand, StoreListConfdbSchemasCommand
+from .confdb_schemas import (
+    StoreEditConfdbSchemaCommand,
+    StoreListConfdbSchemasCommand,
+    StoreConfdbSchemasCommand,
+)
 from .remote import RemoteBuildCommand
 from .status import (
     StoreListRevisionsCommand,
@@ -74,11 +80,13 @@ __all__ = [
     "PluginsCommand",
     "SnapCommand",
     "StoreCloseCommand",
+    "StoreConfdbSchemasCommand",
     "StoreEditValidationSetsCommand",
     "StoreEditConfdbSchemaCommand",
     "StoreExportLoginCommand",
     "StoreLegacyCreateKeyCommand",
     "StoreLegacyGatedCommand",
+    "StoreLegacyKeysCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListKeysCommand",
     "StoreLegacyListRegisteredCommand",
@@ -91,6 +99,7 @@ __all__ = [
     "StoreLegacySignBuildCommand",
     "StoreLegacyUploadMetadataCommand",
     "StoreLegacyValidateCommand",
+    "StoreLegacyValidationSetsCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
     "StoreListTracksCommand",

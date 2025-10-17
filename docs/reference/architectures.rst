@@ -139,9 +139,16 @@ multi-architecture snaps.
 Shorthand format
 """"""""""""""""
 
+.. admonition:: Legacy behavior
+    :class: important
+
+    Shorthand architectures are resolved differently depending on the snap's base. In
+    core20 snaps, declaring multiple shorthand architectures yields a single
+    multi-architecture artifact.
+
 As an alternative to the explicit format described above, ``core20`` snaps
-support a shorthand format can be used for simple ``build-on/run-on``
-pairs. The following shorthand:
+support a shorthand format can be used for simple multi-architecture ``build-on``
+definitions.
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -154,13 +161,9 @@ is equivalent to:
     :caption: snapcraft.yaml
 
     architectures:
-      - build-on: [amd64]
-        run-on: [amd64]
-      - build-on: [arm64]
-        run-on: [arm64]
+      - build-on: [amd64, arm64]
 
 The explicit and shorthand format cannot be mixed.
-
 
 .. _architectures-project-variables:
 

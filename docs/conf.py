@@ -21,6 +21,7 @@ import sys
 
 import craft_application_docs
 import craft_parts_docs
+
 import snapcraft
 
 project = "Snapcraft"
@@ -65,11 +66,11 @@ templates_path = ["_templates"]
 
 # Static resources for Google Analytics
 html_css_files = [
-    'css/cookie-banner.css'
+    "css/cookie-banner.css"
 ]
 
 html_js_files = [
-    'js/bundle.js',
+    "js/bundle.js",
 ]
 
 extensions = [
@@ -118,6 +119,7 @@ exclude_patterns = [
     "common/craft-parts/reference/plugins/maven_use_plugin.rst",
     "common/craft-parts/reference/plugins/poetry_plugin.rst",
     "common/craft-parts/reference/plugins/python_plugin.rst",
+    "common/craft-parts/reference/plugins/python_v2_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
@@ -168,3 +170,17 @@ craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-
 )
 
 # endregion
+# We have many links on sites that frequently respond with 503s to GitHub runners.
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_retries
+linkcheck_retries = 20
+linkcheck_anchors_ignore = ["#", ":"]
+linkcheck_ignore = [
+    # Ignore releases, since we'll include the next release before it exists.
+    r"^https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
+    # Entire domains to ignore due to flakiness or issues
+    r"^https://www.gnu.org/",
+    r"^https://crates.io/",
+    r"^https://([\w-]*\.)?npmjs.org",
+    r"^https://rsync.samba.org",
+    r"^https://ubuntu.com",
+]

@@ -75,7 +75,7 @@ snap's revisions, run:
 
 .. code-block:: bash
 
-    snapcraft list-revisions <snap-name>
+    snapcraft revisions <snap-name>
 
 The output is ordered by revision number, and contains the revisions for all
 architectures.
@@ -108,7 +108,7 @@ architectures with the ``--arch`` argument:
 
 .. code-block:: bash
 
-    snapcraft list-revisions <snap-name> --arch amd64
+    snapcraft revisions <snap-name> --arch amd64
 
 
 Check the public visibility of your snaps

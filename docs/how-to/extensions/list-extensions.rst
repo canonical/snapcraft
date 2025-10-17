@@ -8,7 +8,7 @@ list all extensions supported by the installed version of Snapcraft, run:
 
 .. code-block:: bash
 
-    snapcraft list-extensions
+    snapcraft extensions
 
 The output includes all extensions, both stable and experimental, without
 differentiating them.
@@ -29,4 +29,4 @@ differentiating them.
     kde-neon                core18, core20, core22, core24
     [...]
 
-For the full reference for this command, see :ref:`ref_commands_list-extensions`.
+For the full reference for this command, see :ref:`ref_commands_extensions`.
