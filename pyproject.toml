@@ -31,10 +31,6 @@ dependencies = [
     # Further info: https://www.pygit2.org/install.html#version-numbers
     "pygit2~=1.13.0",
     "pylxd ; sys_platform == 'linux'",
-    # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
-    # what is available in the noble repositories.
-    # https://pynacl.readthedocs.io/en/latest/changelog/
-    "pynacl==1.5.0",
     "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
@@ -129,6 +125,12 @@ conflicts = [
         { group = "dev-plucky" },
         { group = "dev-questing" },
     ],
+]
+constraint-dependencies = [
+    # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
+    # what is available in the noble repositories.
+    # https://pynacl.readthedocs.io/en/latest/changelog/
+    "pynacl<1.6.0",
 ]
 
 [[tool.uv.index]]

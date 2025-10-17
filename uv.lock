@@ -17,6 +17,9 @@ conflicts = [[
     { package = "snapcraft", group = "dev-questing" },
 ]]
 
+[manifest]
+constraints = [{ name = "pynacl", specifier = "<1.6.0" }]
+
 [[package]]
 name = "accessible-pygments"
 version = "0.0.5"
@@ -2986,7 +2989,6 @@ dependencies = [
     { name = "pyelftools" },
     { name = "pygit2" },
     { name = "pylxd", marker = "sys_platform == 'linux' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
-    { name = "pynacl" },
     { name = "python-debian", marker = "sys_platform == 'linux' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing')" },
     { name = "pyxdg" },
     { name = "pyyaml" },
@@ -3105,7 +3107,6 @@ requires-dist = [
     { name = "pyelftools" },
     { name = "pygit2", specifier = "~=1.13.0" },
     { name = "pylxd", marker = "sys_platform == 'linux'" },
-    { name = "pynacl", specifier = "==1.5.0" },
     { name = "python-debian", marker = "sys_platform == 'linux'" },
     { name = "pyxdg" },
     { name = "pyyaml" },
