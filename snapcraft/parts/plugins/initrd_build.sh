@@ -260,13 +260,12 @@ install_extra() {
   type="$1"
   objects="$2"
 
-  ramdisk_overlay_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-overlay"
-  ramdisk_firmware_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/uc-firmware"
+  ramdisk_feature_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main"
 
   case $type in
-    addons)   extra_path="${ramdisk_overlay_path}"           ;;
-    firmware) extra_path="${ramdisk_firmware_path}/usr/lib/" ;;
-    signing)  extra_path="${INITRD_ROOT}/root"               ;;
+    addons)   extra_path="${ramdisk_feature_path}"          ;;
+    firmware) extra_path="${ramdisk_feature_path}/usr/lib/" ;;
+    signing)  extra_path="${INITRD_ROOT}/root"              ;;
   esac
 
   echo "Installing specified extra files..."
@@ -369,15 +368,7 @@ generate_manifest() {
 }
 
 # create_initrd uses ubuntu-core-initramfs to create an initrd.img
-# *: any features
 create_initrd() {
-  _feat="$*"
-
-  # Be sure to include any features if specified
-  if [ -n "$_feat" ]; then
-       _feat_args="--feature main $_feat"
-  else _feat_args=""
-  fi
 
   if [ -e "${CRAFT_PART_INSTALL}/initrd.img" ]; then
     rm -f "${CRAFT_PART_INSTALL}/initrd.img"
@@ -393,7 +384,7 @@ create_initrd() {
 
   chroot_run "ubuntu-core-initramfs create-initrd \
                 --kernelver \"${KERNEL_VERSION}\" \
-                $_feat_args --output /boot/initrd.img"
+                --output /boot/initrd.img"
 
   # ubuntu-core-initramfs will only generate a manifest for noble and later
   if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
@@ -483,26 +474,15 @@ run() {
   # This should run even if none are supplied
   add_modules "${initrd_modules}"
 
-  # initrd_features specifies a feature list to pass to ubuntu-core-initramfs
-  # It's possible for the feature list to be empty
-  : initrd_features=""
-
   # Add any extra files from plugin options to initrd
-  [ -z "${initrd_addons}" ] || {
-    initrd_features="${initrd_features} uc-overlay"
-    install_extra addons "${initrd_addons}"
-  }
-
-  [ -z "${initrd_firmware}" ] || {
-    initrd_features="${initrd_features} uc-firmware"
-    install_extra firmware "${initrd_firmware}"
-  }
+  [ -z "${initrd_addons}"   ] || install_extra addons "${initrd_addons}"
+  [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
 
   # Configure chroot
   chroot_configure
 
   # Build the initrd image file
-  create_initrd "${initrd_features}"
+  create_initrd
 
   # Build the EFI image if requested
   [ "${initrd_build_efi_image}" = "False" ] || {
