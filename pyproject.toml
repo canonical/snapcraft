@@ -126,6 +126,12 @@ conflicts = [
         { group = "dev-questing" },
     ],
 ]
+constraint-dependencies = [
+    # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
+    # what is available in the noble repositories.
+    # https://pynacl.readthedocs.io/en/latest/changelog/
+    "pynacl<1.6.0",
+]
 
 [[tool.uv.index]]
 name = "python-apt-wheels"

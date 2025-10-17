@@ -21,6 +21,7 @@ import sys
 
 import craft_application_docs
 import craft_parts_docs
+
 import snapcraft
 
 project = "Snapcraft"
@@ -65,11 +66,11 @@ templates_path = ["_templates"]
 
 # Static resources for Google Analytics
 html_css_files = [
-    'css/cookie-banner.css'
+    "css/cookie-banner.css"
 ]
 
 html_js_files = [
-    'js/bundle.js',
+    "js/bundle.js",
 ]
 
 extensions = [
@@ -118,6 +119,7 @@ exclude_patterns = [
     "common/craft-parts/reference/plugins/maven_use_plugin.rst",
     "common/craft-parts/reference/plugins/poetry_plugin.rst",
     "common/craft-parts/reference/plugins/python_plugin.rst",
+    "common/craft-parts/reference/plugins/python_v2_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration

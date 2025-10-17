@@ -22,6 +22,7 @@ from pathlib import Path
 from unittest.mock import ANY, Mock, PropertyMock, call
 
 import craft_application.errors
+import craft_parts
 import pydantic
 import pytest
 from craft_cli import EmitterMode, emit
@@ -1163,9 +1164,8 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
 
 
 def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
-    mocker.patch(
-        "craft_parts.plugins.plugins._PLUGINS",
-        {"kernel": KernelPlugin, "matter-sdk": MatterSdkPlugin},
+    craft_parts.plugins.register(
+        {"kernel": KernelPlugin, "matter-sdk": MatterSdkPlugin}
     )
     project = Project.unmarshal(
         snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
@@ -1196,7 +1196,7 @@ def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
 
 
 def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
-    mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
+    craft_parts.plugins.register({"kernel": KernelPlugin})
     project = Project.unmarshal(
         snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
     )
