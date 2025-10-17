@@ -125,8 +125,8 @@ Autotools plugin
 ~~~~~~~~~~~~~~~~
 
 The :ref:`craft_parts_autotools_plugin` now supports the
-:ref:`snapcraft-yaml-disable-parallel` key to force builds
-using the plugin to run using a single job.
+:ref:`disable-parallel <snapcraft-yaml-disable-parallel>` key to force builds using the
+plugin to run using a single job.
 
 Fixed bugs and issues
 ---------------------
