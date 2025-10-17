@@ -71,11 +71,14 @@ been added for core24 snaps.
 Minor features
 --------------
 
-Old command aliases
-~~~~~~~~~~~~~~~~~~~
+Renamed commands
+~~~~~~~~~~~~~~~~
 
-This release adds deprecation warnings to old command aliases, and creates new names for
-all of them. Any command that began with "``list-``" was affected.
+In accordance with our latest design standards, all commands starting with
+``list-`` have been renamed. The word "list" will no longer be used. The old
+command names will continue working until Snapcraft 9.
+
+The affected commands are:
 
 .. list-table::
     :header-rows: 1
