@@ -372,7 +372,6 @@ generate_manifest() {
 # *: any features
 create_initrd() {
   _feat="$*"
-  uc_initrd_main_lib_snapd="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd"
 
   # Be sure to include any features if specified
   if [ -n "$_feat" ]; then
@@ -386,7 +385,7 @@ create_initrd() {
 
   # on >=core24 snapd version in initrd should be in top-level of kernel snap
   if [ "$UBUNTU_SERIES" = "noble" ]; then
-      cp -f "${uc_initrd_main_lib_snapd}/info" \
+      cp -f "${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd/info" \
         "${CRAFT_PART_INSTALL}/snapd-info"
   fi
 
