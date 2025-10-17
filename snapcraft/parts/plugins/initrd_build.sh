@@ -369,8 +369,16 @@ generate_manifest() {
 }
 
 # create_initrd uses ubuntu-core-initramfs to create an initrd.img
+# *: any features
 create_initrd() {
+  _feat="$*"
   uc_initrd_main_lib_snapd="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd"
+
+  # Be sure to include any features if specified
+  if [ -n "$_feat" ]; then
+       _feat_args="--feature main $_feat"
+  else _feat_args=""
+  fi
 
   if [ -e "${CRAFT_PART_INSTALL}/initrd.img" ]; then
     rm -f "${CRAFT_PART_INSTALL}/initrd.img"
@@ -386,7 +394,7 @@ create_initrd() {
 
   chroot_run "ubuntu-core-initramfs create-initrd \
                 --kernelver \"${KERNEL_VERSION}\" \
-                --output /boot/initrd.img"
+                $_feat_args --output /boot/initrd.img"
 
   # ubuntu-core-initramfs will only generate a manifest for noble and later
   if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
@@ -477,14 +485,20 @@ run() {
   add_modules "${initrd_modules}"
 
   # Add any extra files from plugin options to initrd
-  [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
-  [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
+  [ -z "${initrd_addons}"   ] || {
+    initrd_features="${initrd_features} uc-overlay"
+    install_extra addons   "${initrd_addons}"
+  }
+  [ -z "${initrd_firmware}" ] || {
+    initrd_features="${initrd_features} uc-firmware"
+    install_extra firmware "${initrd_firmware}"
+  }
 
   # Configure chroot
   chroot_configure
 
   # Build the initrd image file
-  create_initrd
+  create_initrd "$initrd_features"
 
   # Build the EFI image if requested
   [ "${initrd_build_efi_image}" = "False" ] || {
