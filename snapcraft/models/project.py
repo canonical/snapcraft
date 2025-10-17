@@ -2419,9 +2419,9 @@ def _type_discriminator(data: dict):
     snap_type = data.get("type")
 
     if snap_type not in ProjectType._value2member_map_:
-        snap_type = None
+        snap_type = ProjectType.NONE.value
 
-    return snap_type or ProjectType.NONE.value
+    return snap_type
 
 
 _BareProject = Annotated[
