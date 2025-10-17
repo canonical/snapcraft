@@ -1,0 +1,51 @@
+name: nezha-kernel
+summary: Kernel plugin cross-building test
+description: A RISC-V kernel to test the kernel plugin.
+
+grade: stable
+build-base: core22
+confinement: strict
+type: kernel
+adopt-info: kernel
+
+architectures:
+  - build-on: [amd64]
+    build-for: riscv64
+
+package-repositories:
+  - type: apt
+    components: [main, universe]
+    architectures: [$CRAFT_ARCH_BUILD_FOR]
+    suites: [jammy]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    url: http://ports.ubuntu.com/ubuntu-ports
+
+parts:
+  kernel:
+    plugin: kernel
+    source: https://git.launchpad.net/~canonical-kernel/ubuntu/+source/linux-riscv/+git/jammy
+    source-depth: 1
+    source-type: git
+    source-branch: allwinner-5.19-next
+    kernel-kconfigflavour: allwinner
+    kernel-kconfigs:
+      - CONFIG_RTW88_SDIO=m
+      - CONFIG_RTW88_8723D=m
+      - CONFIG_RTW88_8723DS=m
+      # pahole required, but this is just a test
+      - CONFIG_DEBUG_INFO_BTF=n
+    build-packages:
+      - on amd64:
+          - gcc-${CRAFT_ARCH_TRIPLET_BUILD_FOR}
+    stage-packages:
+      - linux-firmware:${CRAFT_ARCH_BUILD_FOR}
+      - wireless-regdb
+    override-build: |
+      craftctl default
+
+      kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+
+      # Set the version of the snap to match the kernel version.
+      craftctl set version="$kver"
+    organize:
+      dtbs/allwinner: dtbs/
