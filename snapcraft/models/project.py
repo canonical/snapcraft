@@ -313,10 +313,6 @@ def _validate_mandatory_base(base: str | None, snap_type: ProjectType | None) ->
         )
 
 
-def _enum_serializer(enum: Enum):
-    return enum.value
-
-
 class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
