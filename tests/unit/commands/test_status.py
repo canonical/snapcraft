@@ -216,10 +216,8 @@ def fake_store_list_revisions(mocker, list_revisions_result):
 @pytest.fixture(autouse=True)
 def stdout_tty(request, mocker):
     """Present stdout as a tty."""
-    if "stdout_not_tty" in request.keywords:
-        mocker.patch("sys.stdout.isatty", return_value=False)
-    else:
-        mocker.patch("sys.stdout.isatty", return_value=True)
+    is_tty = getattr(request, "param", True)
+    mocker.patch("sys.stdout.isatty", return_value=is_tty)
 
 
 ##################
@@ -253,7 +251,7 @@ def test_default(emitter, fake_app_config):
 
 
 @pytest.mark.usefixtures("memory_keyring", "fake_store_get_status_map")
-@pytest.mark.stdout_not_tty
+@pytest.mark.parametrize("stdout_tty", [False], indirect=True)
 def test_stdout_not_a_tty(emitter, fake_app_config):
     cmd = commands.StoreStatusCommand(fake_app_config)
 
