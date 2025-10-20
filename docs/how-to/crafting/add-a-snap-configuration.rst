@@ -89,26 +89,15 @@ writes it to a file, or writes a fallback value if the gadget option doesn't exi
 
     #!/bin/sh
 
-    # Source the management script
-    . "$SNAP/management-script"
+    DEFAULT_GADGET_OPTION="123"
 
-    handle_port_config()
-    {
-        http_port="$(http_port)"
+    gadget_option="$(snapctl get gadget_option)"
+    if [ -z "$gadget_option" ]; then
+      gadget_option="$DEFAULT_GADGET_OPTION"
+    fi
 
-        # Validate HTTP port
-        if ! expr "$http_port" : '^[0-9]\+$' > /dev/null; then
-            echo "\"$http_port\" is not a valid HTTP port" >&2
-            return 1
-        fi
-
-        # Run function from management script
-        set_http_port "$http_port"
-
-        # Restart example-server to apply new config
-        snapctl restart example-server
-    }
-    handle_port_config
+    mkdir -m 0600 $SNAP_DATA/options
+    echo "option: $gadget_option" > $SNAP_DATA/options/gadget
 
 
 Add the wrapper script
