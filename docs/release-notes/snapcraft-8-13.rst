@@ -23,7 +23,7 @@ Experimental core26 support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Experimental support for building snaps for the core26 base is now available. While
-it's in testing, snaps built with core26 might break, even from patch releases of 
+it's in testing, snaps built with core26 might break, even from patch releases of
 Snapcraft. To build with core26, set the following in your project file:
 
 .. code-block:: yaml
