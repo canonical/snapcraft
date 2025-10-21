@@ -158,7 +158,6 @@ release.
 
 :literalref:`@3v1n0<https://github.com/3v1n0>`
 :literalref:`@Amanlem<https://github.com/Amanlem>`
-:literalref:`@Nalin-Kumar-Gupta<https://github.com/Nalin-Kumar-Gupta>`
 :literalref:`@bepri<https://github.com/bepri>`
 :literalref:`@fabolhak<https://github.com/fabolhak>`
 :literalref:`@jahn-junior<https://github.com/jahn-junior>`
@@ -166,6 +165,7 @@ release.
 :literalref:`@mateusrodrigues<https://github.com/mateusrodrigues>`
 :literalref:`@medubelko<https://github.com/medubelko>`
 :literalref:`@mr-cal<https://github.com/mr-cal>`
+:literalref:`@Nalin-Kumar-Gupta<https://github.com/Nalin-Kumar-Gupta>`
 :literalref:`@sergio-costas<https://github.com/sergio-costas>`
 :literalref:`@steinbro<https://github.com/steinbro>`
 :literalref:`@tigarmo<https://github.com/tigarmo>`
