@@ -146,6 +146,8 @@ App keys
 The ``apps`` key declares the programs and services that a snap operates on the host,
 and details how they're executed and which resources they can access.
 
+.. py:currentmodule:: snapcraft.models.app
+
 .. kitbash-model:: App
     :prepend-name: apps.<app-name>
 
@@ -310,7 +312,7 @@ included. Source paths always reference the default build environment.
 Socket keys
 -----------
 
-.. py:currentmodule:: snapcraft.models.project
+.. py:currentmodule:: snapcraft.models.app
 
 .. kitbash-model:: Socket
     :prepend-name: sockets.<socket-name>
@@ -318,6 +320,8 @@ Socket keys
 
 Hook keys
 ---------
+
+.. py:currentmodule:: snapcraft.models.project
 
 .. kitbash-model:: Hook
     :prepend-name: hooks.<hook-type>
