@@ -183,6 +183,8 @@ parts:
 
   snapcraft:
     source: .
+    source-type: git
+    source-submodules: []
     plugin: python
     python-packages:
       - wheel
