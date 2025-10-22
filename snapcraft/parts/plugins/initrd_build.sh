@@ -442,9 +442,7 @@ create_efi() {
                 --output    /boot/kernel.efi"
 
   install -Dm644 "${INITRD_ROOT}/boot/kernel.efi-${KERNEL_VERSION}" \
-    "${CRAFT_PART_INSTALL}/kernel.efi-${KERNEL_VERSION}"
-
-  ln -sf "kernel.efi-${KERNEL_VERSION}" "${CRAFT_PART_INSTALL}/kernel.efi"
+    "${CRAFT_PART_INSTALL}/kernel.efi"
 }
 
 # run executes the meat of this script
