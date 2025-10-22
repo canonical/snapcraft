@@ -23,6 +23,8 @@ if __name__ == "__main__":
 
     import pydantic
 
+    # The TypeAdapter complains if we don't have this.
+    from snapcraft.models.app import App  # noqa
     from snapcraft.models.project import SnapcraftProject
 
     print(json.dumps(pydantic.TypeAdapter(SnapcraftProject).json_schema(), indent="  "))
