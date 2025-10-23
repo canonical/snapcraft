@@ -219,7 +219,7 @@ class TestProjectValidation:
         data = project_yaml_data(**raw_data)
 
         with pytest.raises(
-            pydantic.ValidationError, match="Snaps of type '[a-z]+' cannot have a base."
+            pydantic.ValidationError, match=f"Snaps of type '{type_}' cannot have a base."
         ):
             Project.unmarshal(data)
 
