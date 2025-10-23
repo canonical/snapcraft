@@ -2229,6 +2229,7 @@ class _BaselessProject(Project):
             raise ValueError(f"Snaps of type {self.type!r} cannot have a base.")
         return self
 
+    @override
     @pydantic.field_validator("build_base", mode="after")
     @classmethod
     def _validate_devel_base(
@@ -2377,6 +2378,7 @@ class BareCore22Project(Core22Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
+    @override
     @pydantic.field_validator("build_base", mode="after")
     @classmethod
     def _validate_devel_base(
@@ -2418,6 +2420,7 @@ class BareCore24Project(Core24Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
+    @override
     @pydantic.field_validator("build_base", mode="after")
     @classmethod
     def _validate_devel_base(
@@ -2445,6 +2448,7 @@ class BareCore26Project(Core26Project):
     base: Literal["bare"]  # type: ignore[assignment]
     build_base: Literal["devel"]  # type: ignore[assignment]
 
+    @override
     @pydantic.field_validator("build_base", mode="after")
     @classmethod
     def _validate_devel_base(
