@@ -78,7 +78,7 @@ def test_registered_plugins_project(
     command, base, emitter, snapcraft_yaml, fake_app_config
 ):
     """Use the project's base."""
-    if base in const.UnstableBase:
+    if base in (b for b in const.UnstableBase):
         snapcraft_yaml(base=base, build_base="devel", grade="devel")
     else:
         snapcraft_yaml(base=base)
