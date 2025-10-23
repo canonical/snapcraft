@@ -25,13 +25,12 @@ from craft_platforms import DebianArchitecture
 
 import snapcraft.models
 from snapcraft import const, errors, providers
+from snapcraft.const import StableBase, UnstableBase
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
     BareCore22Project,
     BareCore24Project,
-    BaseCore22Project,
-    BaseCore24Project,
     ComponentProject,
     ContentPlug,
     Core22Project,
@@ -42,7 +41,11 @@ from snapcraft.models import (
     Platform,
     Project,
 )
-from snapcraft.models.project import apply_root_packages
+from snapcraft.models.project import (
+    _BaselessCore22Project,
+    _BaselessProject,
+    apply_root_packages,
+)
 
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
@@ -202,6 +205,24 @@ class TestProjectDefaults:
 class TestProjectValidation:
     """Validate top-level project items."""
 
+    @pytest.mark.parametrize("base", [*StableBase, *UnstableBase])
+    @pytest.mark.parametrize("type_", ["base", "kernel", "snapd"])
+    def test_baseless_project_with_base(self, project_yaml_data, base, type_):
+        raw_data = {
+            "base": base.value,
+            "build-base": base.value,
+            "type": type_,
+            "grade": "devel",
+        }
+        if isinstance(base, UnstableBase):
+            raw_data["build-base"] = "devel"
+        data = project_yaml_data(**raw_data)
+
+        with pytest.raises(
+            pydantic.ValidationError, match="Snaps of type '[a-z]+' cannot have a base."
+        ):
+            Project.unmarshal(data)
+
     def test_build_base_validation_reentrant(self, project_yaml_data):
         """Validators should be reentrant.
 
@@ -236,6 +257,7 @@ class TestProjectValidation:
         "snap_type,requires_base",
         [
             ("app", True),
+            (None, True),
             ("gadget", True),
             ("base", False),
             ("kernel", False),
@@ -244,12 +266,14 @@ class TestProjectValidation:
     )
     def test_mandatory_base(self, snap_type, requires_base, project_yaml_data):
         data = project_yaml_data(type=snap_type)
-        data.pop("base")
+        data["build-base"] = data.pop("base")
+        if data["type"] is None:
+            data.pop("type")
 
         if requires_base:
             error = "Snap base must be declared when type is not"
             with pytest.raises(pydantic.ValidationError, match=error):
-                Project.unmarshal(data)
+                project = Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
             assert project.base is None
@@ -348,7 +372,7 @@ class TestProjectValidation:
     def test_project_type(self, snap_type, project_yaml_data):
         data = project_yaml_data(type=snap_type)
         if snap_type in ["base", "kernel", "snapd"]:
-            data.pop("base")
+            data["build-base"] = data.pop("base")
 
         if snap_type != "_invalid":
             project = Project.unmarshal(data)
@@ -765,25 +789,47 @@ class TestProjectValidation:
         ]
 
     @pytest.mark.parametrize(
-        "base,build_base,type_,project_class",
+        ("base", "build_base", "project_class"),
         [
-            ("core22", None, None, Core22Project),
-            ("core24", None, None, Core24Project),
-            ("bare", "core22", None, BareCore22Project),
-            ("bare", "core24", None, BareCore24Project),
-            (None, "core22", "base", BaseCore22Project),
-            (None, "core24", "base", BaseCore24Project),
+            ("core22", None, Core22Project),
+            ("core24", None, Core24Project),
+            ("core26", "devel", Core24Project),
+            ("bare", "core22", BareCore22Project),
+            ("bare", "core24", BareCore24Project),
         ],
     )
-    def test_project_unmarshalling(
+    @pytest.mark.parametrize("type_", [None, "app", "gadget"])
+    def test_unmarshal_project_with_base(
         self, base, build_base, type_, project_class, project_yaml_data
     ):
         """Project.unmarshall should return the right sub model."""
-        data = project_yaml_data(base=base, build_base=build_base, type=type_)
+        data = project_yaml_data(
+            base=base, build_base=build_base, type=type_, grade="devel"
+        )
 
         project = Project.unmarshal(data)
 
-        assert isinstance(project, project_class)
+        assert isinstance(project, project_class), type(project)
+
+    @pytest.mark.parametrize(
+        ("build_base", "project_class"),
+        [
+            ("core22", _BaselessCore22Project),
+            ("core24", _BaselessProject),
+            ("devel", _BaselessProject),
+        ],
+    )
+    @pytest.mark.parametrize("type_", ["base", "kernel", "snapd"])
+    def test_unmarshal_project_without_base(
+        self, build_base, type_, project_class, project_yaml_data
+    ):
+        """Project.unmarshall should return the right sub model."""
+        data = project_yaml_data(build_base=build_base, type=type_, grade="devel")
+        del data["base"]
+
+        project = Project.unmarshal(data)
+
+        assert isinstance(project, project_class), type(project)
 
 
 class TestHookValidation:

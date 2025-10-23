@@ -34,12 +34,12 @@ class CoreData:
     grade: str
 
 
-@pytest.fixture(params=const.CURRENT_BASES - {"core22"})
+@pytest.fixture(params=const.CURRENT_BASES - {"core22", "devel"})
 def valid_core_data(request) -> CoreData:
     """Fixture that provides valid base, build-base and grade values for each base."""
-    # special handling for devel base
-    if request.param == "devel":
-        return CoreData(base="core24", build_base="devel", grade="devel")
+    # special handling for the in-development base
+    if request.param == "core26":
+        return CoreData(base="core26", build_base="devel", grade="devel")
 
     return CoreData(base=request.param, build_base=request.param, grade="stable")
 
