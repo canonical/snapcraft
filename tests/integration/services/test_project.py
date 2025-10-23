@@ -47,7 +47,7 @@ def project_path(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
     monkeypatch.chdir(request.param)
 
 
-@pytest.usefixtures("project_path")
+@pytest.mark.usefixtures("project_path")
 def test_load_valid_project() -> None:
     app = create_app()
     app._configure_early_services()
