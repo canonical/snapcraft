@@ -10,7 +10,7 @@ concepts and relationships of Snapcraft as a complete system.
 Bases and architectures
 -----------------------
 
-Snaps are configured to be built with specific technologies and to run on specific CPU
+Snaps are configured to build with specific technologies and run on specific CPU
 architectures. This configuration depends on the application's requirements and the
 machines that will run it.
 
