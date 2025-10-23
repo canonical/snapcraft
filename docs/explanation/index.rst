@@ -27,10 +27,10 @@ processed in a series of ordered, reproducible steps.
 - :ref:`explanation-parts`
 - :ref:`explanation-parts-lifecycle`
 
-Files are migrated between lifecycle steps by declaring groups of paths, known as
+Files are moved between lifecycle steps by declaring groups of paths, known as
 filesets.
 
-:doc:`/common/craft-parts/explanation/filesets`
+:ref:`filesets_explanation`
 
 
 Snap confinement
