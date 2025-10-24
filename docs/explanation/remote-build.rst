@@ -8,7 +8,8 @@ Remote build is a feature in Snapcraft that offloads the build process to
 different architectures.
 
 Architectures supported by Launchpad can be found
-:ref:`here<supported-architectures>`.
+:ref:`here <supported-architectures>`.
+
 
 Public and private projects
 ---------------------------
@@ -24,6 +25,7 @@ the user to create a private `Launchpad project`_ and pass the project with the
 ``--project <project-name>`` command line argument. An SSH key must be
 registered in Launchpad because source code is uploaded using SSH.
 
+
 Git repository
 --------------
 
@@ -34,11 +36,13 @@ Shallowly cloned repositories are not supported (e.g. ``git clone --depth
 1``)
 because git does not support pushing shallow clones.
 
+
 Versions
 --------
 
 Two versions of the remote-builder are available, the current and the legacy
 remote-builder.
+
 
 Current
 ^^^^^^^
@@ -48,6 +52,7 @@ and newer snaps.  It is not available for ``core20`` snaps because it cannot
 parse ``core20``'s ``snapcraft.yaml`` schema (`#4885`_).
 
 It does not modify the project or project metadata.
+
 
 Legacy
 ^^^^^^
@@ -65,6 +70,7 @@ The legacy remote builder was deprecated because of its design. It retrieves and
 tarballs remote sources and modifies the project file to point to the local tarballs.
 This caused many unexpected failures that could not be reproduced locally.
 
+
 Choosing a remote-builder
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -80,10 +86,12 @@ by the base:
 * ``core22``, ``core24``, and newer snaps will use the current remote builder
 * ``core20`` snaps will use the legacy remote builder
 
+
 Platforms and architectures
 ---------------------------
 
 Remote builds can be orchestrated for multiple platforms and architectures.
+
 
 Current
 ^^^^^^^
@@ -116,20 +124,25 @@ The second mode of operation is when there isn't a ``platforms`` or
 ``architectures`` key in the project file. In this scenario, ``--build-for``
 defines the architectures to build for.
 
+
 ``--launchpad-accept-public-upload``
 ************************************
 
 Bypasses the prompt that confirms whether you want to upload data to the public. It's
 not necessary to use this flag if you used ``--project`` to specify a private project.
 
+
 ``--project``
 *************
+
 **Type**: String
 
 Explicitly specify a project to upload to.
 
+
 ``--launchpad-timeout``
 ***********************
+
 **Type**: Integer
 
 **Default**: 0
@@ -137,10 +150,12 @@ Explicitly specify a project to upload to.
 Time, in seconds, to wait for Launchpad to complete a build. A time of 0 seconds will
 wait indefinitely.
 
+
 ``--recover``
 *************
 
 Attempt to recover previously interrupted builds.
+
 
 Project platforms and architectures
 ***********************************
@@ -162,6 +177,7 @@ and for, the host's architecture.
 The remote builder does not work for ``core20`` snaps because it cannot parse
 the ``run-on`` key in a ``core20`` architecture entry (`#4842`_).
 
+
 Legacy
 ^^^^^^
 
@@ -180,6 +196,7 @@ precedence over ``--build-on``.
 
 Both of these parameters accept a comma-separated list of architectures.
 Snapcraft will request builds to occur on each specified architecture.
+
 
 Project architectures
 *********************

@@ -3,7 +3,7 @@
 Reference
 =========
 
-These pages provide details about the features and processes in Snapcraft.
+References describe the structure and function of the individual components in Snapcraft.
 
 
 Commands
@@ -36,7 +36,8 @@ CPU architectures.
 Parts
 -----
 
-Software is brought into a snap through definitions of parts, and must be configured for the software's language and build systems.
+Software is brought into a snap through definitions of parts, and must be configured for
+the software's language and build systems.
 
 - :ref:`reference-parts-and-steps`
 - :ref:`reference-part-environment-variables`
