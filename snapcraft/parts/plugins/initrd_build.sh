@@ -374,11 +374,16 @@ create_initrd() {
     rm -f "${CRAFT_PART_INSTALL}/initrd.img"
   fi
 
-  # on >=core24 snapd version in initrd should be in top-level of kernel snap
-  if [ "$UBUNTU_SERIES" = "noble" ]; then
-      cp -f "${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/usr/lib/snapd/info" \
-        "${CRAFT_PART_INSTALL}/snapd-info"
+  # snapd version information should be at the top-level of the kernel snap
+  # The location of the file is different between jammy and noble
+  snapd_info=usr/lib/snapd/info
+  if [ "$UBUNTU_SERIES" = "focal" ] || [ "$UBUNTU_SERIES" = "jammy" ]; then
+    snapd_info="${INITRD_ROOT}/snapd_info}"
+  else
+    snapd_info="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/${snapd_info}"
   fi
+
+  cp -f "${snapd_info}" "${CRAFT_PART_INSTALL}/snapd-info"
 
   rm -rf "${INITRD_ROOT}/boot/initrd"*
 
