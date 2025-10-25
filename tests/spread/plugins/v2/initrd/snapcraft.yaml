@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2021 Canonical Ltd
+name: pc-kernel
+summary: Initrd plugin test
+description: A pc kernel to test the initrd plugin.
+
+grade: stable
+build-base: core20
+confinement: strict
+type: kernel
+adopt-info: kernel
+
+architectures:
+  - build-on: amd64
+    run-on: amd64
+
+parts:
+  kernel:
+    plugin: nil
+    build-packages:
+      - kmod
+    stage-packages:
+      - linux-image-generic
+      - linux-firmware
+      - wireless-regdb
+    override-build: |
+      snapcraftctl build
+
+      kver="$(basename "${SNAPCRAFT_PART_INSTALL}/lib/modules/"*)"
+
+      snapcraftctl set-version "${kver}"
+
+      depmod -b "${SNAPCRAFT_PART_INSTALL}" "${kver}"
+
+      mv -f "${SNAPCRAFT_PART_INSTALL}/boot/"*       "${SNAPCRAFT_PART_INSTALL}/"
+      mv -f "${SNAPCRAFT_PART_INSTALL}/vmlinuz"*     "${SNAPCRAFT_PART_INSTALL}/kernel.img-${kver}"
+      mv -f "${SNAPCRAFT_PART_INSTALL}/lib/modules"  "${SNAPCRAFT_PART_INSTALL}/modules"
+      mv -f "${SNAPCRAFT_PART_INSTALL}/lib/firmware" "${SNAPCRAFT_PART_INSTALL}/firmware"
+
+      ln -sf "kernel.img-${kver}" "${SNAPCRAFT_PART_INSTALL}/kernel.img"
+      ln -sf ../modules           "${SNAPCRAFT_PART_INSTALL}/lib/modules"
+      ln -sf ../firmware          "${SNAPCRAFT_PART_INSTALL}/lib/firmware"
+    prime:
+      - -kernel.img*
+
+  initrd:
+    after: [kernel]
+    plugin: initrd
+    initrd-firmware:
+      - firmware/regulatory.db
+      - firmware/regulatory.db.p7s
