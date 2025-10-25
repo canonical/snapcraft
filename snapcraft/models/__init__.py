@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Data models for snapcraft."""
 
+from .app import App, Socket
 from .assertions import (
     Assertion,
     EditableAssertion,
@@ -25,7 +26,6 @@ from .assertions import (
 from .manifest import Manifest
 from .project import (
     MANDATORY_ADOPTABLE_FIELDS,
-    App,
     Architecture,
     ArchitectureProject,
     BareCore22Project,
@@ -43,7 +43,6 @@ from .project import (
     Platform,
     Project,
     ProjectType,
-    Socket,
 )
 
 __all__ = [

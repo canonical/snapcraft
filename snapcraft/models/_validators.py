@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-#
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
-#
 # Copyright 2025 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,16 +11,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""Generic validators used for multiple models."""
 
-"""Creation of schema for snapcraft.yaml."""
+import re
 
-if __name__ == "__main__":
-    import json
 
-    import pydantic
-
-    # The TypeAdapter complains if we don't have this.
-    from snapcraft.models.app import App  # noqa
-    from snapcraft.models.project import SnapcraftProject
-
-    print(json.dumps(pydantic.TypeAdapter(SnapcraftProject).json_schema(), indent="  "))
+def validate_command_chain(command_chains: list[str]) -> list[str]:
+    """Validate command_chain."""
+    for command_chain in command_chains:
+        if not re.match(r"^[A-Za-z0-9/._#:$-]*$", command_chain):
+            raise ValueError(
+                f"{command_chain!r} is not a valid command chain. Command chain entries must "
+                "be strings, and can only use ASCII alphanumeric characters and the following "
+                "special characters: / . _ # : $ -"
+            )
+    return command_chains
