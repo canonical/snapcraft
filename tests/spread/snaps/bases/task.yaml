@@ -1,0 +1,29 @@
+summary: Build a base snap using snapcraft in managed mode.
+kill-timeout: 90m
+
+systems:
+  - ubuntu-20.04-64
+
+environment:
+  SNAP_REPO: https://github.com/canonical/core-base
+  SNAP_REPO/core20: https://github.com/canonical/core20
+  BRANCH/core20: master
+  BRANCH/core22: core22
+  BRANCH/core24: core24
+  BRANCH/core26: main
+
+prepare: |
+  git clone "${SNAP_REPO}" repo
+  cd repo
+  git checkout "${BRANCH}"
+
+restore: |
+  pushd repo
+  snapcraft clean
+  popd
+
+  rm -rf repo
+
+execute: |
+  cd repo
+  snapcraft pack

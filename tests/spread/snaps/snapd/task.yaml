@@ -1,0 +1,23 @@
+summary: Build the snapd snap using snapcraft in managed mode.
+kill-timeout: 90m
+
+systems:
+  - ubuntu-20.04-64
+
+environment:
+  SNAP_REPO: https://github.com/canonical/snapd
+
+prepare: |
+  git clone "${SNAP_REPO}" repo
+  cd repo
+
+restore: |
+  pushd repo
+  snapcraft clean
+  popd
+
+  rm -rf repo
+
+execute: |
+  cd repo
+  snapcraft pack

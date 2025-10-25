@@ -185,3 +185,26 @@ jobs:
       - name: core20 plugins test
         run: |
           spread google:ubuntu-20.04-64:tests/spread/plugins/v2/
+
+  snapd-bases:
+    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    runs-on: [spread-installed]
+    needs: [snap-build]
+    steps:
+      - name: Cleanup job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout snapcraft
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Download snap artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: snap
+          path: tests
+      - name: Spread test
+        run: |
+          spread google:ubuntu-20.04-64:tests/spread/snaps/bases google:ubuntu-20.04-64:tests/spread/snaps/snapd
