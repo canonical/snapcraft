@@ -17,7 +17,7 @@ jobs:
         uses: canonical/action-build@v1
 
       - name: Upload snapcraft snap
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: snap
           path: ${{ steps.build-snapcraft.outputs.snap }}
@@ -50,7 +50,7 @@ jobs:
           submodules: true
 
       - name: Download snapcraft snap
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: snap
           path: tests
@@ -102,7 +102,7 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: snap
           path: tests
