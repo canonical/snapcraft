@@ -91,6 +91,7 @@ class KernelPlugin(PluginV2):
                     "default": False,
                 },
             },
+            "required": ["source"],
         }
 
     @staticmethod
