@@ -63,7 +63,7 @@
 - initrd-efi-image-cert
   (string; default: snake oil certificate (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem))
   Requires initrd-build-efi-image to be true.
-  Certificate to be used when creating the EFI image, provided as a relatiive
+  Certificate to be used when creating the EFI image, provided as a relative
   path to $CRAFT_STAGE/signing. For example,
 
       initrd-efi-image-cert: cert.pem
