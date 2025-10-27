@@ -377,7 +377,7 @@ create_initrd() {
   # The location of the file is different between jammy and noble
   snapd_info=usr/lib/snapd/info
   if [ "$UBUNTU_SERIES" = "focal" ] || [ "$UBUNTU_SERIES" = "jammy" ]; then
-    snapd_info="${INITRD_ROOT}/snapd_info}"
+    snapd_info="${INITRD_ROOT}/${snapd_info}"
   else
     snapd_info="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/${snapd_info}"
   fi
