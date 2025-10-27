@@ -35,13 +35,13 @@ def part_info(new_dir):
 
 
 def test_get_build_snaps(part_info):
-    properties = InitrdPlugin.properties_class.unmarshal({"source": "."})
+    properties = InitrdPlugin.properties_class.unmarshal({})
     plugin = InitrdPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_snaps() == set()
 
 
 def test_get_build_packages(part_info):
-    properties = InitrdPlugin.properties_class.unmarshal({"source": "."})
+    properties = InitrdPlugin.properties_class.unmarshal({})
     plugin = InitrdPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
         "curl",
@@ -51,7 +51,7 @@ def test_get_build_packages(part_info):
 
 
 def test_get_build_environment(part_info):
-    properties = InitrdPlugin.properties_class.unmarshal({"source": "."})
+    properties = InitrdPlugin.properties_class.unmarshal({})
     plugin = InitrdPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_environment() == {}
@@ -60,7 +60,6 @@ def test_get_build_environment(part_info):
 def test_get_build_commands(part_info):
     properties = InitrdPlugin.properties_class.unmarshal(
         {
-            "source": ".",
             "initrd-addons": [
                 "usr/bin/foo",
                 "lib/bar",
