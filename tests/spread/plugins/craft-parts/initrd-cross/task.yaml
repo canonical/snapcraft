@@ -2,9 +2,6 @@ summary: Craft Parts initrd plugin cross-build test
 manual: true
 kill-timeout: 180m
 
-systems:
-  - ubuntu-22.04-64
-
 restore: |
   snapcraft clean
   rm -f ./*.snap
