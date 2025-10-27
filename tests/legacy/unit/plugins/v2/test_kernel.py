@@ -43,6 +43,7 @@ def test_schema():
                 "default": False,
             }
         },
+        "required": ["source"],
     }
 
 def test_get_build_packages():

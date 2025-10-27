@@ -1168,7 +1168,10 @@ def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
         {"kernel": KernelPlugin, "matter-sdk": MatterSdkPlugin}
     )
     project = Project.unmarshal(
-        snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
+        snapcraft_yaml(
+            base="core22",
+            parts={"foo": {"plugin": "kernel", "source": "."}},
+        )
     )
 
     with pytest.raises(errors.SnapcraftError) as raised:
@@ -1198,7 +1201,9 @@ def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
 def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
     craft_parts.plugins.register({"kernel": KernelPlugin})
     project = Project.unmarshal(
-        snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
+        snapcraft_yaml(
+            base="core22", parts={"foo": {"plugin": "kernel", "source": "."}}
+        )
     )
     parts_lifecycle._check_experimental_plugins(project, True)
 
