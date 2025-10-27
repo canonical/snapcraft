@@ -25,7 +25,9 @@ from snapcraft.parts.plugins import KernelPlugin
 def part_info(new_dir):
     yield PartInfo(
         project_info=ProjectInfo(
-            application_name="test", project_name="test-snap", cache_dir=new_dir
+            application_name="test",
+            project_name="test-snap",
+            cache_dir=new_dir,
         ),
         part=Part("my-part", {}),
     )
@@ -37,7 +39,17 @@ def test_get_build_snaps(part_info):
     assert plugin.get_build_snaps() == set()
 
 
-def test_get_build_packages(part_info):
+def test_get_build_packages_core22(part_info, new_dir):
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base="core22",
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {}),
+    )
+
     properties = KernelPlugin.properties_class.unmarshal({"source": "."})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
@@ -63,7 +75,57 @@ def test_get_build_packages(part_info):
     }
 
 
-def test_get_build_packages_zfs(part_info):
+def test_get_build_packages_core24(part_info, new_dir):
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base="core24",
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {}),
+    )
+
+    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+    assert plugin.get_build_packages() == {
+        "bc",
+        "binutils",
+        "bison",
+        "clang",
+        "cmake",
+        "cpio",
+        "cryptsetup",
+        "debhelper",
+        "fakeroot",
+        "flex",
+        "gawk",
+        "gcc",
+        "kmod",
+        "kpartx",
+        "libdw-dev",
+        "libelf-dev",
+        "libssl-dev",
+        "llvm",
+        "lz4",
+        "rustc",
+        "systemd",
+        "xz-utils",
+        "zstd",
+    }
+
+
+def test_get_build_packages_zfs_core22(part_info, new_dir):
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base="core22",
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {}),
+    )
+
     properties = KernelPlugin.properties_class.unmarshal(
         {"source": ".", "kernel-enable-zfs-support": "true"}
     )
@@ -85,6 +147,53 @@ def test_get_build_packages_zfs(part_info):
         "libelf-dev",
         "libssl-dev",
         "lz4",
+        "systemd",
+        "xz-utils",
+        "zstd",
+        "autoconf",
+        "automake",
+        "libblkid-dev",
+        "libtool",
+        "python3",
+    }
+
+
+def test_get_build_packages_zfs_core24(part_info, new_dir):
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base="core24",
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {}),
+    )
+
+    properties = KernelPlugin.properties_class.unmarshal(
+        {"source": ".", "kernel-enable-zfs-support": "true"}
+    )
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+    assert plugin.get_build_packages() == {
+        "bc",
+        "binutils",
+        "bison",
+        "clang",
+        "cmake",
+        "cpio",
+        "cryptsetup",
+        "debhelper",
+        "fakeroot",
+        "flex",
+        "gawk",
+        "gcc",
+        "kmod",
+        "kpartx",
+        "libdw-dev",
+        "libelf-dev",
+        "libssl-dev",
+        "llvm",
+        "lz4",
+        "rustc",
         "systemd",
         "xz-utils",
         "zstd",
