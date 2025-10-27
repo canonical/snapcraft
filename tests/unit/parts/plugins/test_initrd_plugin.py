@@ -25,7 +25,10 @@ from snapcraft.parts.plugins import InitrdPlugin
 def part_info(new_dir):
     yield PartInfo(
         project_info=ProjectInfo(
-            application_name="test", project_name="test-snap", cache_dir=new_dir
+            application_name="test",
+            project_name="test-snap",
+            cache_dir=new_dir,
+            arch="amd64",
         ),
         part=Part("my-part", {}),
     )

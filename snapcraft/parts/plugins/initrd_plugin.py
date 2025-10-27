@@ -120,6 +120,24 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
             raise ValueError(
                 "initrd-efi-image-key and initrd-efi-image-cert must be both set if any is set"
             )
+
+        if self.initrd_build_efi_image:
+            _base = self._part_info.base
+            _arch = self._part_info.target_arch
+
+            match _arch:
+                # There are no EFI stubs for s390x or ppc64el
+                case "s390x" | "ppc64el":
+                    raise ValueError(
+                        "Architecture not supported for initrd-build-efi-image option: "
+                        + _arch
+                    )
+                # An EFI stub for riscv64 only exists on Noble and later
+                case "riscv64":
+                    if _base == "core22":
+                        raise ValueError(
+                            "initrd-build-efi-image not allowed for riscv64"
+                        )
         return self
 
 
