@@ -160,7 +160,6 @@ class InitrdPlugin(plugins.Plugin):
     def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    # TODO: finalize initrd_build.sh location
     @overrides
     def get_build_commands(self) -> list[str]:
         return [

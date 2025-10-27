@@ -197,7 +197,6 @@ chroot_configure() {
   chroot_run "apt-get update"
   chroot_run "apt-get install --no-install-recommends -y ubuntu-core-initramfs"
 
-  # TODO: does this belong in uci?
   # actual ubuntu-core initramfs build is performed in chroot
   # where tmp is not really tmpfs, avoid excessive use of cp
   # cp "-ar"/"-aR" -> cp "-lR"

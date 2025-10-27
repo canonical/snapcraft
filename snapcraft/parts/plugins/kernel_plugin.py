@@ -122,7 +122,7 @@ class KernelPlugin(plugins.Plugin):
         }
 
         # Rust was introduced in 23.04
-        if _base == "core24":
+        if _base != "core22":
             build_packages |= {
                 "clang",
                 "rustc",
