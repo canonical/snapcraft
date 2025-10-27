@@ -100,44 +100,27 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     # part properties required by the plugin
     @pydantic.model_validator(mode="after")
     def validate_plugin_options(self) -> Self:
-        # validate if initrd-efi-image-key or initrd-efi-image-cert is set
-        # initrd-build-efi-image is also set
-        if (
-            (
-                self.initrd_efi_image_key
-                != "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
-            )
-            and (
-                self.initrd_efi_image_cert
-                != "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
-            )
-            and not (
-                self.initrd_build_efi_image
-                and self.initrd_efi_image_key
-                and self.initrd_efi_image_cert
-            )
+        _build_uki = self.initrd_build_efi_image
+        _signing_key = self.initrd_efi_image_key
+        _signing_cert = self.initrd_efi_image_cert
+        _default_key = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+        _default_cert = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
+
+        # Validate that if initrd-efi-image-key or initrd-efi-image-cert is set initrd-build-efi-image is also set
+        if _build_uki and not (
+            (_signing_key != _default_key) and (_signing_cert != _default_cert)
         ):
             raise ValueError(
-                "initrd-efi-image-key and initrd-efi-image-cert must be both set if any is set"
+                "If one of initrd-efi-image-key or initrd-efi-image-cert is set, both must be set"
             )
 
-        if self.initrd_build_efi_image:
-            _base = self._part_info.base
-            _arch = self._part_info.target_arch
-
-            match _arch:
-                # There are no EFI stubs for s390x or ppc64el
-                case "s390x" | "ppc64el":
-                    raise ValueError(
-                        "Architecture not supported for initrd-build-efi-image option: "
-                        + _arch
-                    )
-                # An EFI stub for riscv64 only exists on Noble and later
-                case "riscv64":
-                    if _base == "core22":
-                        raise ValueError(
-                            "initrd-build-efi-image not allowed for riscv64"
-                        )
+        # Validate that if the key and cert are specified, the user means to build a UKI
+        if not _build_uki and (
+            (_signing_key != _default_key) and (_signing_cert != _default_cert)
+        ):
+            raise ValueError(
+                "initrd-build-efi-image must be set if initrd-efi-image-cert or initrd-efi-image-key are set"
+            )
         return self
 
 
@@ -151,6 +134,26 @@ class InitrdPlugin(plugins.Plugin):
     ) -> None:
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(InitrdPluginProperties, self._options)
+
+    def validate_efi_image(self) -> None:
+        _arch = self._part_info.arch
+        _base = self._part_info.base
+        _build_uki = self.initrd_build_efi_image
+
+        if _build_uki:
+            match _arch:
+                # There are no EFI stubs for s390x or ppc64el
+                case "s390x" | "ppc64el":
+                    raise ValueError(
+                        "Architecture not supported for initrd-build-efi-image option: "
+                        + _arch
+                    )
+                # An EFI stub for riscv64 only exists on Noble and later
+                case "riscv64":
+                    if _base == "core22":
+                        raise ValueError(
+                            "initrd-build-efi-image not allowed for riscv64"
+                        )
 
     @overrides
     def get_build_snaps(self) -> set[str]:
