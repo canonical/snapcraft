@@ -35,7 +35,7 @@ from snapcraft.elf import ElfFile
 from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts import set_global_environment, yaml_utils
-from snapcraft.parts.plugins import MatterSdkPlugin
+from snapcraft.parts.plugins import KernelPlugin, MatterSdkPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
 
 _SNAPCRAFT_YAML_FILENAMES = [
