@@ -25,10 +25,14 @@ initrd-addons
 
 **Type**: list of strings
 
-**Default**: ``[]``
-
 A list of files to include in the initrd, provided as relative paths to
-``${CRAFT_STAGE}/addons``.
+``${CRAFT_STAGE}/addons`` like so:
+
+.. code:: yaml
+
+      initrd-addons:
+        - usr/bin/foo
+        - usr/lib/bar
 
 
 initrd-firmware
@@ -36,10 +40,14 @@ initrd-firmware
 
 **Type**: list of strings
 
-**Default**: ``[]``
-
 A list of firmware to include in the initrd, provided as relative paths to
-``${CRAFT_STAGE}/firmware``.
+``${CRAFT_STAGE}/firmware`` like so:
+
+.. code:: yaml
+
+      initrd-firmware:
+        - foo
+        - bar/baz
 
 
 initrd-modules
@@ -47,11 +55,12 @@ initrd-modules
 
 **Type**: list of strings
 
-**Default**: ``[]``
-
 A list of module to include in the initrd, provided as a list of module names.
 If the specified module(s) have dependencies, they are also installed.
 
+
+Core22 and later options
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 For core24 and later, the following options are also supported. However, they
 will only work if the target architecture has a `systemd-boot-efi <https://packages.ubuntu.com/noble/systemd-boot-efi>`_
@@ -59,7 +68,7 @@ package in the archive. Otherwise, the build will fail.
 
 
 initrd-build-efi-image
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 **Type**: bool
 
@@ -70,7 +79,7 @@ initrd compressed CPIO archive.
 
 
 initrd-efi-image-key
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 **Type**: string
 
@@ -85,7 +94,7 @@ provided by the ubuntu-core-initramfs package is used.
 
 
 initrd-efi-image-cert
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 **Type**: string
 
@@ -126,20 +135,7 @@ During the build step the plugin performs the following actions:
    ``${CRAFT_STAGE}/{firmware,modules}`` into the chroot base.
 #. Install any build-time dependencies such as the ubuntu-core-initramfs
    package into the chroot base.
-#. Any addons, firmware, or modules are added to the chroot base as follows:
-
-.. code:: yaml
-
-    initrd-addons:
-      - usr/bin/foo
-    initrd-firmware:
-        - foo/bar.bin
-
-Will result in ``${CRAFT_STAGE}/addons/usr/bin/foo`` and
-``${CRAFT_STAGE}/firmware/foo/bar.bin`` being placed in the initrd as
-``/usr/bin/foo`` and ``/usr/lib/firmware/foo/bar.bin`` by being copied into a
-directory ubuntu-core-initramfs uses to construct the initrd.
-
+#. Any addons, firmware, or modules are added to the chroot base.
 #. ubuntu-core-initramfs is called to create a compressed CPIO archive.
 #. If ``initrd-build-efi-image`` is true, ubuntu-core-initramfs is called again
    to build the UKI.
@@ -169,8 +165,11 @@ stage these contents into ``${CRAFT_STAGE}/{addons,firmware,signing}``.
         - regulatory.db
         - regulatory.db.p7s
 
+The files in ``initrd-addons`` will appear in the initrd under ``/usr/{bin,lib}`` and
+those in ``initrd-firmware`` will be in ``/lib/firmware``.
+
 Some further examples of snaps using this plugin can be found at the following links:
 
 * In the `snapcraft test suite <https://github.com/canonical/snapcraft/tree/main/tests/spread/plugins/craft-parts>`_
-* In The `IoT Field Kernel Snaps repository <https://github.com/canonical/iot-field-kernel-snap>`_
-* In the `craft-examples <https://github.com/canonical/craft-examples>`_ repository
+* In the `IoT Field Kernel Snaps repository <https://github.com/canonical/iot-field-kernel-snap>`_
+* In the `craft-examples <https://github.com/canonical/craft-examples/tree/project/c/nezha-kernel>`_ repository

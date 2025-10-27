@@ -38,7 +38,7 @@ kernel-kconfigflavour
 
 **Default**: ``["generic"]``
 
-The Ubuntu kernel flavour to use when generating an Ubuntu kernel config. Valid
+The Ubuntu kernel flavor to use when generating an Ubuntu kernel config. Valid
 names are things like ``lowlatency`` and ``generic``. A list of some variants
 can be found `here <https://ubuntu.com/kernel/variants>`_, but valid choices
 will depend on the chosen kernel source. If something other than ``generic`` is
@@ -133,8 +133,6 @@ itself, but depending on the enabled Kconfigs some additional ones may be requir
 Requirements such as ``bash`` and ``perl`` usually come from the build
 environment, and other requirements may include ``pahole``.
 
-Warnings about missing binaries such as ``gawk`` can usually be safely ignored.
-
 
 How it works
 ------------
@@ -145,7 +143,7 @@ During the build step the plugin performs the following actions:
    script within the snapcraft snap.
 #. Generate a ``.config`` from
 
-   - A flavour, if something other than ``generic`` is specified.
+   - A flavor, if something other than ``generic`` is specified.
 
    - A list of defconfigs, if something other than ``["defconfig"]`` is specified.
 
@@ -157,7 +155,7 @@ During the build step the plugin performs the following actions:
    values.
 #. The kernel image and any modules or device tree files are built.
 #. If enabled, ZFS for the target Ubuntu series is downloaded and built.
-#. If enabled, the perf binary ``tools/perf`` is built..
+#. If enabled, the perf binary ``tools/perf`` is built.
 #. The kernel image, system symbol map, and kernel config are installed to
    ``${CRAFT_PART_INSTALL}``.
 #. The modules are moved to ``${CRAFT_PART_INSTALL}/modules`` and a symlink to
@@ -196,5 +194,5 @@ convenience but are not necessarily required.
 Some further examples of snaps using this plugin can be found at the following links:
 
 * In the `snapcraft test suite <https://github.com/canonical/snapcraft/tree/main/tests/spread/plugins/craft-parts>`_
-* In The `IoT Field Kernel Snaps repository <https://github.com/canonical/iot-field-kernel-snap>`_
-* In the `craft-examples <https://github.com/canonical/craft-examples>`_ repository
+* In the `IoT Field Kernel Snaps repository <https://github.com/canonical/iot-field-kernel-snap>`_
+* In the `craft-examples <https://github.com/canonical/craft-examples/tree/project/c/nezha-kernel>`_ repository
