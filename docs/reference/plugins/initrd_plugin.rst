@@ -83,12 +83,10 @@ initrd-efi-image-key
 
 **Type**: string
 
-**Default**: ``/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key``
-
 A signing key file to use when creating a UKI EFI image, provided as a relative
 path to ``${CRAFT_STAGE}/signing``.
 
-If set, ``initrd-build-efi-image`` must be ``true`` and
+If set, ``initrd-build-efi-image`` should be ``true`` and
 ``initrd-efi-image-cert`` must be specified. If not specified, the snakeoil key
 provided by the ubuntu-core-initramfs package is used.
 
@@ -98,12 +96,10 @@ initrd-efi-image-cert
 
 **Type**: string
 
-**Default:** ``/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem``
-
 A certificate file to use when creating a UKI EFI image, provided as a relative
 path to ``${CRAFT_STAGE}/signing``.
 
-If set, ``initrd-build-efi-image`` must be ``true`` and
+If set, ``initrd-build-efi-image`` should be ``true`` and
 ``initrd-efi-image-key`` must be specified. If not specified, the snakeoil
 certificate provided by the ubuntu-core-initramfs package is used.
 
