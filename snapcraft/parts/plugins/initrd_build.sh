@@ -368,7 +368,6 @@ generate_manifest() {
 
 # create_initrd uses ubuntu-core-initramfs to create an initrd.img
 create_initrd() {
-
   if [ -e "${CRAFT_PART_INSTALL}/initrd.img" ]; then
     rm -f "${CRAFT_PART_INSTALL}/initrd.img"
   fi
@@ -407,25 +406,6 @@ create_initrd() {
   ln -sf "initrd.img-${KERNEL_VERSION}" "${CRAFT_PART_INSTALL}/initrd.img"
 }
 
-# prep_sign ensures the key and cert are available for signing the UKI
-# 1. key file name
-# 2. cert file name
-prep_sign() {
-  key="${CRAFT_STAGE}/signing/${1}"
-  cert="${CRAFT_STAGE}/signing/${2}"
-
-  if [ -e "${key}" ] && [ -e "${cert}" ]; then
-    echo "Using ${key} and ${cert}"
-    install_extra signing "${key},${cert}"
-  else
-    echo "Using snakeoil key and cert"
-    cp -f "${INITRD_ROOT}/${initrd_efi_image_key}" \
-      "${INITRD_ROOT}/root/${initrd_efi_image_key##*/}"
-    cp -f "${INITRD_ROOT}/${initrd_efi_image_cert}" \
-      "${INITRD_ROOT}/root/${initrd_efi_image_cert##*/}"
-  fi
-}
-
 # create_efi creates an EFI UKI object from a kernel and initrd.img
 create_efi() {
   key="$1"
@@ -435,7 +415,6 @@ create_efi() {
   rm -f "${INITRD_ROOT}/boot/kernel.efi"*
   rm -f "${CRAFT_PART_INSTALL}/initrd.img"*
   rm -f "${CRAFT_PART_INSTALL}/boot/kernel.efi"*
-
 
   chroot_run "ubuntu-core-initramfs create-efi    \
                 --kernelver \"${KERNEL_VERSION}\" \
@@ -488,7 +467,15 @@ run() {
 
   # Build the EFI image if requested
   [ "${initrd_build_efi_image}" = "False" ] || {
-    prep_sign  "${initrd_efi_image_key}" "${initrd_efi_image_cert}"
+    # If a key and image weren't provided, use the snakeoil key and cert
+    { [ -n "${initrd_efi_image_key}" ] && [ -n "${initrd_efi_image_cert}" ] ; } || {
+      initrd_efi_image_key="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+      initrd_efi_image_cert="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
+
+      cp -f "${initrd_efi_image_key}" "${initrd_efi_image_cert}" \
+        "${INITRD_ROOT}/root"
+    }
+
     create_efi "${initrd_efi_image_key}" "${initrd_efi_image_cert}"
   }
 }

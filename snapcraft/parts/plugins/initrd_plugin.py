@@ -87,12 +87,8 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     plugin: Literal["initrd"] = "initrd"
 
     initrd_build_efi_image: bool = False
-    initrd_efi_image_key: str = (
-        "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
-    )
-    initrd_efi_image_cert: str = (
-        "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
-    )
+    initrd_efi_image_key: str = ""
+    initrd_efi_image_cert: str = ""
     initrd_modules: list[str] = []
     initrd_firmware: list[str] = []
     initrd_addons: list[str] = []
