@@ -100,27 +100,15 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     # part properties required by the plugin
     @pydantic.model_validator(mode="after")
     def validate_plugin_options(self) -> Self:
-        _build_uki = self.initrd_build_efi_image
         _signing_key = self.initrd_efi_image_key
         _signing_cert = self.initrd_efi_image_cert
-        _default_key = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
-        _default_cert = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
 
-        # Validate that if initrd-efi-image-key or initrd-efi-image-cert is set initrd-build-efi-image is also set
-        if _build_uki and not (
-            (_signing_key != _default_key) and (_signing_cert != _default_cert)
-        ):
+        # Validate that either both key and cert are specified or neither is
+        if bool(_signing_key) ^ bool(_signing_cert):
             raise ValueError(
                 "If one of initrd-efi-image-key or initrd-efi-image-cert is set, both must be set"
             )
 
-        # Validate that if the key and cert are specified, the user means to build a UKI
-        if not _build_uki and (
-            (_signing_key != _default_key) and (_signing_cert != _default_cert)
-        ):
-            raise ValueError(
-                "initrd-build-efi-image must be set if initrd-efi-image-cert or initrd-efi-image-key are set"
-            )
         return self
 
 
