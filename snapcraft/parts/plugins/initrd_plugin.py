@@ -123,26 +123,6 @@ class InitrdPlugin(plugins.Plugin):
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(InitrdPluginProperties, self._options)
 
-    def validate_efi_image(self) -> None:
-        _arch = self._part_info.arch
-        _base = self._part_info.base
-        _build_uki = self.initrd_build_efi_image
-
-        if _build_uki:
-            match _arch:
-                # There are no EFI stubs for s390x or ppc64el
-                case "s390x" | "ppc64el":
-                    raise ValueError(
-                        "Architecture not supported for initrd-build-efi-image option: "
-                        + _arch
-                    )
-                # An EFI stub for riscv64 only exists on Noble and later
-                case "riscv64":
-                    if _base == "core22":
-                        raise ValueError(
-                            "initrd-build-efi-image not allowed for riscv64"
-                        )
-
     @overrides
     def get_build_snaps(self) -> set[str]:
         return set()
@@ -171,6 +151,23 @@ class InitrdPlugin(plugins.Plugin):
 
     @overrides
     def get_build_commands(self) -> list[str]:
+        _base = self._part_info.base
+        _arch = self._part_info.target_arch
+        build_efi_image = self.options.initrd_build_efi_image
+
+        # It only makes sense to provide a key and cert when building a UKI
+        if self.options.initrd_efi_image_key and self.options.initrd_efi_image_cert:
+            build_efi_image = True
+
+        if build_efi_image:
+            # There are no EFI stubs for s390x or ppc64el
+            if _arch in {"s390x", "ppc64el"}:
+                raise ValueError("initrd-build-efi-image not allowed for " + _arch)
+
+            # There are no EFI stubs for riscv until 24.04
+            if _arch == "riscv64" and _base == "core22":
+                raise ValueError("initrd-build-efi-image not allowed for riscv64")
+
         return [
             " ".join(
                 [
@@ -178,7 +175,7 @@ class InitrdPlugin(plugins.Plugin):
                     f"initrd-modules={','.join(self.options.initrd_modules)}",
                     f"initrd-firmware={','.join(self.options.initrd_firmware)}",
                     f"initrd-addons={','.join(self.options.initrd_addons)}",
-                    f"initrd-build-efi-image={self.options.initrd_build_efi_image}",
+                    f"initrd-build-efi-image={build_efi_image}",
                     f"initrd-efi-image-key={self.options.initrd_efi_image_key}",
                     f"initrd-efi-image-cert={self.options.initrd_efi_image_cert}",
                 ]
