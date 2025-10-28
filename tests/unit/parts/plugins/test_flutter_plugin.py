@@ -65,7 +65,6 @@ def test_get_build_commands(part_info):
     assert plugin.get_build_commands() == [
         "git clone --depth 1 -b stable https://github.com/flutter/flutter.git "
         f"{plugin.flutter_dir}",
-        f"rm {plugin.flutter_dir}/engine/src/.gn",
         "flutter precache --linux",
         "flutter pub get",
         "flutter build linux --release --verbose --target lib/main.dart",
@@ -82,7 +81,6 @@ def test_get_build_commands_alternative_target(part_info):
     assert plugin.get_build_commands() == [
         f"git clone --depth 1 -b stable https://github.com/flutter/flutter.git "
         f"{plugin.flutter_dir}",
-        f"rm {plugin.flutter_dir}/engine/src/.gn",
         "flutter precache --linux",
         "flutter pub get",
         "flutter build linux --release --verbose --target lib/not-main.dart",
@@ -100,7 +98,6 @@ def test_get_build_commands_different_channels(part_info, value):
     assert plugin.get_build_commands() == [
         f"git clone --depth 1 -b {value} https://github.com/flutter/flutter.git "
         f"{plugin.flutter_dir}",
-        f"rm {plugin.flutter_dir}/engine/src/.gn",
         "flutter precache --linux",
         "flutter pub get",
         "flutter build linux --release --verbose --target lib/main.dart",

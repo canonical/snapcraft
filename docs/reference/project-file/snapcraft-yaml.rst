@@ -77,14 +77,19 @@ For more information about the ``base`` and ``build-base`` keys, see
 .. kitbash-field:: Project confinement
 
 .. kitbash-field:: Project source_code
+    :override-type: str | list[str]
 
 .. kitbash-field:: Project contact
+    :override-type: str | list[str]
 
 .. kitbash-field:: Project website
+    :override-type: str | list[str]
 
 .. kitbash-field:: Project issues
+    :override-type: str | list[str]
 
 .. kitbash-field:: Project donation
+    :override-type: str | list[str]
 
 .. kitbash-field:: Project compression
 
@@ -245,8 +250,7 @@ The following options alter the behavior.
 For core20 snaps, the ``core22-step-dependencies`` customization alters the part
 processing order to align with newer bases, where all parts are pulled prior to build.
 For more details on part processing for core22 and newer, see `Processing order and
-dependencies
-<https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
+dependencies <https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
 
 .. kitbash-field:: PartSpec override_build
     :prepend-name: parts.<part-name>

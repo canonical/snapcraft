@@ -13,8 +13,10 @@ To that end, snap developers can use the `network interface
 <https://snapcraft.io/docs/network-interface>`_ to provide network access to the
 browser.
 
+
 Design
 ------
+
 .. image:: https://assets.ubuntu.com/v1/59c290a8-snapd-interfaces.png
    :alt: Interface between slots and plugs.
 

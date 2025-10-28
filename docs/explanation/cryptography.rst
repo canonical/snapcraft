@@ -1,4 +1,4 @@
-.. _explanation_cryptographic-technology:
+.. _explanation-cryptographic-technology:
 
 Cryptographic technology in Snapcraft
 =====================================

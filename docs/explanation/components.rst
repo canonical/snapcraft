@@ -17,6 +17,7 @@ debug symbols can download and install them as a component.
 
    Components are under development and not production ready.
 
+
 .. _components-and-partitions:
 
 Components and Partitions
@@ -30,6 +31,7 @@ Each component has a namespaced partition ``component/<component-name>`` where
 of the component from the project file.
 
 The partition for the snap itself is known as the ``default`` partition.
+
 
 Component lifecycle directories
 -------------------------------
