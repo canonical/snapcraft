@@ -3,8 +3,7 @@
 How-to guides
 =============
 
-These guides step you through the actions you can perform when making and managing a
-snap.
+These pages provide directions for completing tasks and solving problems with Snapcraft.
 
 
 Setup
@@ -33,7 +32,7 @@ Integrations and extensions
 ---------------------------
 
 Snapcraft accommodates different languages, build systems, and frameworks. These guides
-cover how to package software written in them.
+cover how to package software written with them.
 
 - :ref:`how-to-integrations`
 - :ref:`how-to-extensions`

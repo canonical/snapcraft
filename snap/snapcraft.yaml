@@ -21,6 +21,16 @@ source-code:
   - https://github.com/canonical/snapcraft
 website:
   - https://documentation.ubuntu.com/snapcraft
+contact:
+  - https://matrix.to/#/#snapcraft:ubuntu.com
+  - https://forum.snapcraft.io/c/snapcraft/13
+
+lint:
+  ignore:
+    - metadata:
+        - donation
+    - library:
+        - usr/lib/**/libicu*.so*
 
 # https://github.com/canonical/snapcraft/issues/4187
 environment:
