@@ -149,6 +149,11 @@ Snapcraft 8.13.0
 - `#5704`_ Linter results will now always report the highest severity detected, rather
   than the most recently seen severity.
 
+Snapcraft 8.13.1
+~~~~~~~~~~~~~~~~
+
+- `#5843`_ Changes to project parsing have been reverted to give more time for testing.
+
 
 Contributors
 ------------
@@ -175,3 +180,4 @@ release.
 .. _#5789: https://github.com/canonical/snapcraft/issues/5789
 .. _#5794: https://github.com/canonical/snapcraft/issues/5794
 .. _#5704: https://github.com/canonical/snapcraft/issues/5704
+.. _#5843: https://github.com/canonical/snapcraft/issues/5843
