@@ -152,7 +152,8 @@ Snapcraft 8.13.0
 Snapcraft 8.13.1
 ~~~~~~~~~~~~~~~~
 
-- `#5843`_ Changes to project parsing have been reverted to give more time for testing.
+- `#5843`_ The changes to the project model parsing from Snapcraft 8.13.0 have been
+  reverted to give more time for testing.
 
 
 Contributors
