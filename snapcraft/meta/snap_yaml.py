@@ -438,10 +438,12 @@ def get_metadata_from_project(
     if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
         assumes.add("command-chain")
 
+    effective_base = project.get_effective_base()
+
     if arch == "all":
         # if arch is "all", do not include architecture-specific paths in the environment
         arch_triplet: str | None = None
-    elif isinstance(project, models.Core22Project):
+    elif effective_base == "core22":
         arch_triplet = project.get_build_for_arch_triplet()
     else:
         arch_triplet = get_arch_triplet(
@@ -458,7 +460,6 @@ def get_metadata_from_project(
     total_assumes = sorted(project.assumes + list(assumes))
 
     links = Links.from_project(project)
-    snap_type = project.type.value if project.type else None
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -467,7 +468,7 @@ def get_metadata_from_project(
         summary=cast(SummaryStr, project.summary),
         description=cast(str, project.description),
         license=project.license,
-        type=snap_type,
+        type=project.type,
         architectures=[arch],
         base=cast(str, project.base),
         assumes=total_assumes if total_assumes else None,

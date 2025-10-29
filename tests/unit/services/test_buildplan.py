@@ -310,7 +310,7 @@ def test_build_planner_create_launchpad_build_plan_core22(
 ):
     """Test `create_unfiltered_build_plan()` function with different architectures."""
     # creating a project model will convert architectures to platforms
-    project = snapcraft.models.Project.unmarshal(
+    project = snapcraft.models.Project.model_validate(
         {**default_project.marshal(), "base": "core22", "architectures": architectures}
     )
     setup_project(fake_services, project.marshal())
