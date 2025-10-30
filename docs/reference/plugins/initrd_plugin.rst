@@ -59,7 +59,7 @@ initrd-modules
 **Type**: list of strings
 
 The kernel modules to add to the initrd. If a listed module has dependencies,
-the plugin sourrces and installs them automatically.
+the plugin sources and installs them automatically.
 
 
 Core22 and higher
@@ -90,8 +90,8 @@ A signing key file to use when creating a UKI EFI executable, provided as a
 relative path to ``${CRAFT_STAGE}/signing``.
 
 If set, the ``initrd-build-efi-image`` key should be set to ``true``, and
-the ``initrd-efi-image-cert`` key must also be set. If either are unset, the
-snakeoil key provided by the ubuntu-core-initramfs package is used.
+the ``initrd-efi-image-cert`` key must also be set. If not set, the snakeoil key
+provided by the ubuntu-core-initramfs package is used.
 
 
 initrd-efi-image-cert
@@ -129,8 +129,8 @@ During the build step the plugin performs the following actions:
 #. Install any build-time dependencies such as the ubuntu-core-initramfs
    package into the chroot base.
 #. Add any addons, firmware, or modules to the chroot base.
-#. ubuntu-core-initramfs is called to create a compressed CPIO archive.
-#. ubuntu-core-initramfs is called again to build the UKI If the
+#. Call ubuntu-core-initramfs to create a compressed CPIO archive.
+#. Call ubuntu-core-initramfs again to build the UKI If the
    ``initrd-build-efi-image`` key is set to ``true``.
 #. The built ``initrd.img`` or UKI is copied to ``${CRAFT_PART_INSTALL}``.
 
@@ -143,7 +143,7 @@ The following snippet declares a part using the Initrd plugin.
 The initrd being built supports full disk encryption (FDE) using OP-TEE, a
 commonly used trusted execution environment on ARM platforms. It supports FDE
 using OP-TEE by specifying the ``fde-reveal-key`` and ``fde-setup`` binaries and
-the `libteec.so`` for the target architecture in the `initrd-addons`` key. This
+the ``libteec.so`` for the target architecture in the ``initrd-addons`` key. This
 method for FDE is commonly used on Ubuntu Core for ARM64 platforms starting with
 Ubuntu Core 20.
 
@@ -170,8 +170,8 @@ within ``${CRAFT_STAGE}/addons``.
         - regulatory.db.p7s
 
 The files specified by the ``initrd-addons`` key will appear in the initrd in
-``/usr/{bin,lib}`` and those specified by the ``initrd-firmware`` key will be in
-``/lib/firmware``.
+``/usr/bin`` and ``/usr/lib`` and those specified by the ``initrd-firmware`` key
+will be in ``/lib/firmware``.
 
 Some further examples of snaps using this plugin can be found at the following links:
 

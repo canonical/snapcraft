@@ -4,8 +4,8 @@ Kernel plugin
 ==============
 
 The Kernel plugin is the recommended way of building kernel snaps. It helps with
-both Ubuntu-specific kernels as well as kernels other upstream sources, such as
-the mainline or linux-next trees.
+both Ubuntu-specific kernels as well as other upstream sources, such as the
+mainline or linux-next trees.
 
 The kernel build process tends to be highly repetitive and deterministic, where
 most desired modifications include applying patches and modifying kernel config
@@ -129,8 +129,9 @@ The plugin specifies the most common build-time requirements as ``build-packages
 itself, but depending on the enabled kernel configs some additional ones may be
 required.
 
-Requirements such as ``bash`` and ``perl`` usually come from the build
-environment, and other requirements may include ``pahole``.
+For example, requirements such as ``bash`` and ``perl`` usually come from the
+build environment, and other requirements such as ``pahole`` may need to be
+specified.
 
 
 How it works
