@@ -38,7 +38,7 @@ kernel-kconfigflavour
 **Default**: ``["generic"]``
 
 The Ubuntu kernel flavor to use when generating an Ubuntu kernel configuration
-file. Valid names include ``lowlatency`` and ``generic``. A list the common
+file. Valid names include ``lowlatency`` and ``generic``. A list of the common
 variants can be found `here <https://ubuntu.com/kernel/variants>`_, but valid
 choices will depend on the chosen kernel source. If something other than
 ``generic`` is provided, this value takes precedence over the ``kernel-kdefconfig`` key.

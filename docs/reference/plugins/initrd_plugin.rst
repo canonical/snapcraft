@@ -9,7 +9,7 @@ intended use is to generate the initrds for Ubuntu Core systems.
 The initrd used by Ubuntu Core is constructed by the ubuntu-core-initramfs tool
 and, while its usage is straightforward, constructing a reliable environment
 where it can be used can be quite cumbersome in the context of building a kernel
-snap where the ``build-on`` architecture is different from the ``build-for``
+snap where the snap is built on a different architecture than its target
 architecture. This plugin alleviates those challenges by constructing a minimal
 chroot for the target architecture where any required packages can be added to
 end up in the final initrd.
@@ -132,7 +132,7 @@ During the build step the plugin performs the following actions:
 #. Call ubuntu-core-initramfs to create a compressed CPIO archive.
 #. Call ubuntu-core-initramfs again to build the UKI If the
    ``initrd-build-efi-image`` key is set to ``true``.
-#. The built ``initrd.img`` or UKI is copied to ``${CRAFT_PART_INSTALL}``.
+#. Copy the built initrd or UKI to ``${CRAFT_PART_INSTALL}``.
 
 
 Examples
