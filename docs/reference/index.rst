@@ -11,7 +11,7 @@ Commands
 
 Snapcraft is operated from the command line, with a command for each function.
 
-:ref:`reference-commands`
+- :ref:`reference-commands`
 
 
 Project file
@@ -20,7 +20,7 @@ Project file
 The main object inside a snap project is a configurable project file. Read on for a
 complete reference of the structure and contents of this file.
 
-:ref:`Project file references <reference-project-file>`
+- :ref:`Project file references <reference-project-file>`
 
 
 Bases and architectures
