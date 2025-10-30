@@ -3,7 +3,7 @@ manual: true
 kill-timeout: 180m
 
 systems:
-  - ubuntu-22.04
+  - ubuntu-22.04*
 
 restore: |
   snapcraft clean --enable-experimental-plugins
