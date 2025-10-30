@@ -30,8 +30,6 @@ from .project import (
     ArchitectureProject,
     BareCore22Project,
     BareCore24Project,
-    BaseCore22Project,
-    BaseCore24Project,
     Core22Project,
     Core24Project,
     Component,
@@ -42,7 +40,6 @@ from .project import (
     Lint,
     Platform,
     Project,
-    ProjectType,
     Socket,
 )
 
@@ -54,8 +51,6 @@ __all__ = [
     "ArchitectureProject",
     "BareCore22Project",
     "BareCore24Project",
-    "BaseCore22Project",
-    "BaseCore24Project",
     "Core22Project",
     "Core24Project",
     "Component",
@@ -69,7 +64,6 @@ __all__ = [
     "Manifest",
     "Platform",
     "Project",
-    "ProjectType",
     "ConfdbSchema",
     "ConfdbSchemaAssertion",
     "Socket",
