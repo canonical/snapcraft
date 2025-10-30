@@ -11,5 +11,5 @@ execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   rm -f ./*.snap
-  snapcraft pack
+  snapcraft pack --enable-experimental-plugins
   ls -l pc-kernel_*_amd64.snap

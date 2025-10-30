@@ -11,5 +11,5 @@ execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   rm -f ./*.snap
-  snapcraft pack
+  snapcraft pack --enable-experimental-plugins
   ls -l nezha-kernel_*_riscv64.snap

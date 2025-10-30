@@ -2,6 +2,9 @@ summary: V2 initrd plugin test
 manual: true
 kill-timeout: 180m
 
+systems:
+  - ubuntu-20.04-64
+
 restore: |
   snapcraft clean
   rm -f ./*.snap
