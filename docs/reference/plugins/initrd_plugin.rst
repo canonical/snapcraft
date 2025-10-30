@@ -3,13 +3,14 @@
 Initrd plugin
 ==============
 
-The Initrd plugin simplifies the building of initrds used by kernel snaps.
-It is intended to generate an initrd for Ubuntu Core systems.
+The Initrd plugin builds initial ramdisks, or initrds, for kernel snaps. Its
+intended use is to generate the initrds for Ubuntu Core systems.
 
 The initrd used by Ubuntu Core is constructed by the ubuntu-core-initramfs tool
 and, while its usage is straightforward, constructing a reliable environment
-where it can be used can be quite cumbersome in the context of cross-building a
-kernel snap. This plugin alleviates those challenges by constructing a minimal
+where it can be used can be quite cumbersome in the context of building a kernel
+snap where the ``build-on`` architecture is different from the ``build-for``
+architecture. This plugin alleviates those challenges by constructing a minimal
 chroot for the target architecture where any required packages can be added to
 end up in the final initrd.
 
@@ -28,7 +29,8 @@ initrd-addons
 A list of files to include in the initrd, provided as relative paths to
 ``${CRAFT_STAGE}/addons`` like so:
 
-.. code:: yaml
+.. code-block:: yaml
+   :caption: snapcraft.yaml
 
       initrd-addons:
         - usr/bin/foo
@@ -43,7 +45,8 @@ initrd-firmware
 A list of firmware to include in the initrd, provided as relative paths to
 ``${CRAFT_STAGE}/firmware`` like so:
 
-.. code:: yaml
+.. code-block:: yaml
+   :caption: snapcraft.yaml
 
       initrd-firmware:
         - foo
@@ -55,16 +58,16 @@ initrd-modules
 
 **Type**: list of strings
 
-A list of module to include in the initrd, provided as a list of module names.
-If the specified module(s) have dependencies, they are also installed.
+The kernel modules to add to the initrd. If a listed module has dependencies,
+the plugin sourrces and installs them automatically.
 
 
-Core22 and later options
-~~~~~~~~~~~~~~~~~~~~~~~~
+Core22 and higher
+~~~~~~~~~~~~~~~~~
 
-For core24 and later, the following options are also supported. However, they
-will only work if the target architecture has a `systemd-boot-efi <https://packages.ubuntu.com/noble/systemd-boot-efi>`_
-package in the archive. Otherwise, the build will fail.
+For snaps on core22 and higher, the following keys are also available. However,
+they will only work if the target architecture has a package in the Ubuntu
+archive providing an EFI stub. Otherwise, the build will fail.
 
 
 initrd-build-efi-image
@@ -74,7 +77,7 @@ initrd-build-efi-image
 
 **Default**: ``false``
 
-If true, a Unified Kernel Image or UKI will be built instead of a standalone
+If true, a Unified Kernel Image (UKI) will be built instead of a standalone
 initrd compressed CPIO archive.
 
 
@@ -83,12 +86,12 @@ initrd-efi-image-key
 
 **Type**: string
 
-A signing key file to use when creating a UKI EFI image, provided as a relative
-path to ``${CRAFT_STAGE}/signing``.
+A signing key file to use when creating a UKI EFI executable, provided as a
+relative path to ``${CRAFT_STAGE}/signing``.
 
-If set, ``initrd-build-efi-image`` should be ``true`` and
-``initrd-efi-image-cert`` must be specified. If not specified, the snakeoil key
-provided by the ubuntu-core-initramfs package is used.
+If set, the ``initrd-build-efi-image`` key should be set to ``true``, and
+the ``initrd-efi-image-cert`` key must also be set. If either are unset, the
+snakeoil key provided by the ubuntu-core-initramfs package is used.
 
 
 initrd-efi-image-cert
@@ -96,18 +99,12 @@ initrd-efi-image-cert
 
 **Type**: string
 
-A certificate file to use when creating a UKI EFI image, provided as a relative
-path to ``${CRAFT_STAGE}/signing``.
+A certificate file to use when creating a UKI EFI executable, provided as a
+relative path to ``${CRAFT_STAGE}/signing``.
 
-If set, ``initrd-build-efi-image`` should be ``true`` and
-``initrd-efi-image-key`` must be specified. If not specified, the snakeoil
+If set, the ``initrd-build-efi-image`` key should be ``true`` and the
+``initrd-efi-image-key`` key must be specified. If not specified, the snakeoil
 certificate provided by the ubuntu-core-initramfs package is used.
-
-
-Environment variables
----------------------
-
-This plugin does not set its own special variables.
 
 
 Dependencies
@@ -124,17 +121,17 @@ How it works
 During the build step the plugin performs the following actions:
 
 #. Pass a collection of flags built from the selected options to an initrd
-   build script within the snapcraft snap.
+   build script within the Snapcraft snap.
 #. Fetch a daily compressed archive base of the targeted Ubuntu series.
 #. Unpack the archive into ``${CRAFT_PART_SRC}`` to use as the chroot base.
-#. Copy any kernel firmware or modules from
-   ``${CRAFT_STAGE}/{firmware,modules}`` into the chroot base.
+#. Copy any kernel firmware or modules from ``${CRAFT_STAGE}/firmware`` and
+   ``${CRAFT_STAGE}/modules`` into the chroot base.
 #. Install any build-time dependencies such as the ubuntu-core-initramfs
    package into the chroot base.
-#. Any addons, firmware, or modules are added to the chroot base.
+#. Add any addons, firmware, or modules to the chroot base.
 #. ubuntu-core-initramfs is called to create a compressed CPIO archive.
-#. If ``initrd-build-efi-image`` is true, ubuntu-core-initramfs is called again
-   to build the UKI.
+#. ubuntu-core-initramfs is called again to build the UKI If the
+   ``initrd-build-efi-image`` key is set to ``true``.
 #. The built ``initrd.img`` or UKI is copied to ``${CRAFT_PART_INSTALL}``.
 
 
@@ -143,16 +140,27 @@ Examples
 
 The following snippet declares a part using the Initrd plugin.
 
-It doesn't specify a source but does include some files staged by other parts
-not shown here. Those parts are responsible for ensuring that each of them
-stage these contents into ``${CRAFT_STAGE}/{addons,firmware,signing}``.
+The initrd being built supports full disk encryption (FDE) using OP-TEE, a
+commonly used trusted execution environment on ARM platforms. It supports FDE
+using OP-TEE by specifying the ``fde-reveal-key`` and ``fde-setup`` binaries and
+the `libteec.so`` for the target architecture in the `initrd-addons`` key. This
+method for FDE is commonly used on Ubuntu Core for ARM64 platforms starting with
+Ubuntu Core 20.
+
+The Initrd plugin does not necessarily require that a ``source`` be specified.
+However, the files specified by both the ``initrd-addons`` and ``initrd-firmware``
+keys must be provided by either this part or some other part. In this case, the
+files specified by the ``initrd-addons`` key are provided by the ``uc-fde`` part
+elsewhere in this ``snapcraft.yaml``. The ``uc-fde`` part places those files
+within ``${CRAFT_STAGE}/addons``.
 
 .. code-block:: yaml
+   :caption: snapcraft.yaml
 
     initrd:
       after: [kernel, uc-fde]
       plugin: initrd
-      initrd-build-efi-image: true
+      initrd-build-efi-image: false
       initrd-addons:
         - usr/bin/fde-reveal-key
         - usr/bin/fde-setup
@@ -161,8 +169,9 @@ stage these contents into ``${CRAFT_STAGE}/{addons,firmware,signing}``.
         - regulatory.db
         - regulatory.db.p7s
 
-The files in ``initrd-addons`` will appear in the initrd under ``/usr/{bin,lib}`` and
-those in ``initrd-firmware`` will be in ``/lib/firmware``.
+The files specified by the ``initrd-addons`` key will appear in the initrd in
+``/usr/{bin,lib}`` and those specified by the ``initrd-firmware`` key will be in
+``/lib/firmware``.
 
 Some further examples of snaps using this plugin can be found at the following links:
 
