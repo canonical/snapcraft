@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-#
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
-#
 # Copyright 2025 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,15 +12,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Creation of schema for snapcraft.yaml."""
+from typing import Any
 
-if __name__ == "__main__":
-    import json
+import pytest
 
-    import pydantic
 
-    # The TypeAdapter complains if we don't have this.
-    from snapcraft.models.app import App  # noqa
-    from snapcraft.models.project import SnapcraftProject
+@pytest.fixture
+def project_yaml_data():
+    def _project_yaml_data(
+        *, name: str = "name", version: str = "0.1", summary: str = "summary", **kwargs
+    ) -> dict[str, Any]:
+        return {
+            "name": name,
+            "version": version,
+            "base": "core22",
+            "summary": summary,
+            "description": "description",
+            "grade": "stable",
+            "confinement": "strict",
+            "parts": {},
+            **kwargs,
+        }
 
-    print(json.dumps(pydantic.TypeAdapter(SnapcraftProject).json_schema(), indent="  "))
+    yield _project_yaml_data
