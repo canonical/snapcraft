@@ -12,7 +12,7 @@ adopt-info: kernel
 
 architectures:
   - build-on: [amd64]
-    build-for: amd64
+    build-for: [amd64]
 
 parts:
   kernel:

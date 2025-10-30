@@ -2,8 +2,11 @@ summary: Craft Parts kernel plugin cross-build test
 manual: true
 kill-timeout: 180m
 
+systems:
+  - ubuntu-22.04
+
 restore: |
-  snapcraft clean
+  snapcraft clean --enable-experimental-plugins
   rm -f ./*.snap
 
 execute: |

@@ -3,7 +3,7 @@ manual: true
 kill-timeout: 180m
 
 restore: |
-  snapcraft clean
+  snapcraft clean --enable-experimental-plugins
   rm -f ./*.snap
 
 execute: |
