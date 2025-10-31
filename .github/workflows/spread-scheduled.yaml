@@ -53,9 +53,9 @@ jobs:
           path: tests
       - name: Kernel plugin test
         run: |
-          spread google:ubuntu-20.04-64:tests/plugins/v2/kernel \
-            google:ubuntu-22.04-64:tests/plugins/craft-parts/kernel \
-            google:ubuntu-22.04-64:tests/plugins/craft-parts/kernel-cross
+          spread google:ubuntu-20.04-64:tests/spread/plugins/v2/kernel \
+            google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel \
+            google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-cross
 
   remote-build:
     if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
