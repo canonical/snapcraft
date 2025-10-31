@@ -10,7 +10,7 @@ adopt-info: kernel
 
 architectures:
   - build-on: [amd64]
-    build-for: riscv64
+    build-for: [riscv64]
 
 package-repositories:
   - type: apt
