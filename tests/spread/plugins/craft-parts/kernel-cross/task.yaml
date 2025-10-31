@@ -3,10 +3,13 @@ manual: true
 kill-timeout: 180m
 
 systems:
-  - ubuntu-22.04*
+  - ubuntu-22.04-64
+
+environment:
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS: 1
 
 restore: |
-  snapcraft clean --enable-experimental-plugins
+  snapcraft clean
   rm -f ./*.snap
 
 execute: |
@@ -14,5 +17,5 @@ execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   rm -f ./*.snap
-  snapcraft pack --enable-experimental-plugins
+  snapcraft pack
   ls -l nezha-kernel_*_riscv64.snap
