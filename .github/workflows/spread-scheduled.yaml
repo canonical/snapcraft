@@ -59,14 +59,11 @@ jobs:
         run: |
           # Gather all tasks under the "kernel" directory
           kernel_tasks=
-          find tests/spread/${{ matrix.type }} -maxdepth 1 -type d | \
-            while read -r dir; do
-              if [ -e "${dir}/task.yaml" ]; then
-                kernel_tasks="$kernel_tasks $dir"
-              fi
-            done
+          for _test in tests/spread/plugins/${{ matrix.type }}/kernel*/task.yaml; do
+            kernel_tasks="$kernel_tasks $(dirname "$_test")"
+          done
 
-          spread "$kernel_tasks"
+          spread $kernel_tasks
 
   remote-build:
     if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
