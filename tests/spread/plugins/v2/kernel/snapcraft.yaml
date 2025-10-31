@@ -20,10 +20,16 @@ parts:
     stage-packages:
       - linux-firmware
       - wireless-regdb
-    kernel-kconfigflavour: "generic"
-    kernel-enable-zfs-support: true
+    kernel-kdefconfig: [defconfig, test.config]
     kernel-kconfigs:
-      - CONFIG_DEBUG_INFO=n
+      - CONFIG_MODULE_SIG_KEY=""
+      - CONFIG_SYSTEM_TRUSTED_KEYS=""
+      - CONFIG_SYSTEM_REVOCATION_KEYS=""
+    kernel-enable-zfs-support: true
+    override-pull: |
+      snapcraftctl pull
+
+      cp -f "${SNAPCRAFT_PROJECT_DIR}/test_defconfig" "${SNAPCRAFT_PART_SRC}/kernel/configs/test.config"
     override-build: |
       snapcraftctl build
 
