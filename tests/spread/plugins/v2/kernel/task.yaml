@@ -3,7 +3,10 @@ manual: true
 kill-timeout: 180m
 
 systems:
-  - ubuntu-20.04-64
+  - ubuntu-22.04-64
+
+environment:
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS: 1
 
 restore: |
   snapcraft clean

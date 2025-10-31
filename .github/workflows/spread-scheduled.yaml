@@ -57,7 +57,16 @@ jobs:
           path: tests
       - name: Kernel plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/${{ matrix.type }}/kernel
+          # Gather all tasks under the "kernel" directory
+          kernel_tasks=
+          find tests/spread/${{ matrix.type }} -maxdepth 1 -type d | \
+            while read -r dir; do
+              if [ -e "${dir}/task.yaml" ]; then
+                kernel_tasks="$kernel_tasks $dir"
+              fi
+            done
+
+          spread "$kernel_tasks"
 
   remote-build:
     if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
