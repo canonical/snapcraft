@@ -7,7 +7,7 @@ parse_args() {
       kernel-kdefconfig=*)
       # kernel_kdefconfig is a list one or more kernel defconfigs
       # Default value is "[defconfig]".
-      kernel_kdefconfig="${arg#*=}"           ;;
+      kernel_kdefconfig=${arg#*=}             ;;
       kernel-kconfigflavour=*)
       # kernel_kconfigflavour is a single Ubuntu-specific kernel flavour and supersedes defconfig
       # Default value is "generic".
@@ -38,10 +38,14 @@ cleanup() {
 
 # gen_defconfig creates a config from one or more defconfigs
 gen_defconfig() {
+  # kernel-kdefconfig is passed as comma-separated
+  _kernel_kdefconfig="$(echo "${kernel_kdefconfig}" | sed -e 's/,/ /g')"
+  # We want _kernel_kdefconfig to split as it isn't supposed to be a single arg
+  # shellcheck disable=SC2086
   make -j1                      \
        -C "${CRAFT_PART_SRC}"   \
         O="${CRAFT_PART_BUILD}" \
-        "${kernel_kdefconfig}"
+        ${_kernel_kdefconfig}
 }
 
 # gen_flavour_config generates a kernel config based on the chosen flavour
@@ -66,6 +70,7 @@ gen_flavour_config() {
 # add_kconfigs adds any specified config options
 add_kconfigs() {
   kconfigs="${1}"
+  # kernel-kconfigs is passed as comma-separated
   _kconfigs="$(echo "${kconfigs}" | sed -e 's/,/\n/g')"
 
   echo "Applying extra config...."
