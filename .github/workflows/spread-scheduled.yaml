@@ -59,7 +59,7 @@ jobs:
         run: |
           # Gather all tasks under the "kernel" directory
           kernel_tasks=
-          for _test in tests/spread/plugins/${{ matrix.type }}/kernel*/task.yaml; do
+          for _test in tests/spread/${{ matrix.type }}/kernel*/task.yaml; do
             kernel_tasks="$kernel_tasks $(dirname "$_test")"
           done
 
