@@ -257,8 +257,5 @@ def _raise_formatted_validation_error(err: pydantic.ValidationError):
     if not (loc and msg) or not isinstance(loc, tuple):
         return
 
-    # We skip the first two locations because the model validation adds the discriminators:
-    # - error setting UNIMPLEMENTED.core22.grade: Input should be 'stable' or 'devel'
-    # + error setting grade: Input should be 'stable' or 'devel'
-    varname = ".".join(x for x in loc[2:] if isinstance(x, str))
+    varname = ".".join(x for x in loc if isinstance(x, str))
     raise errors.SnapcraftError(f"error setting {varname}: {msg}")

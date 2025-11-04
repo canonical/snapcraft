@@ -67,13 +67,13 @@ def setup_assets(
             )
             setup_hooks(component.hooks, prime_dirs[component_name])
 
-    if project.type == models.ProjectType.GADGET:
+    if project.type == "gadget":
         gadget_yaml = project_dir / "gadget.yaml"
         if not gadget_yaml.exists():
             raise errors.SnapcraftError("gadget.yaml is required for gadget snaps")
         _copy_file(gadget_yaml, meta_dir / "gadget.yaml")
 
-    if project.type == models.ProjectType.KERNEL:
+    if project.type == "kernel":
         kernel_yaml = project_dir / "kernel.yaml"
         if kernel_yaml.exists():
             _copy_file(kernel_yaml, meta_dir / "kernel.yaml")
