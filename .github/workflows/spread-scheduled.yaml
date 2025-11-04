@@ -36,10 +36,6 @@ jobs:
     if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
     runs-on: [spread-installed]
     needs: [snap-build]
-    strategy:
-      fail-fast: false
-      matrix:
-        type: [plugins/craft-parts, plugins/v2]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -57,7 +53,9 @@ jobs:
           path: tests
       - name: Kernel plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/${{ matrix.type }}/kernel
+          spread google:ubuntu-20.04-64:tests/spread/plugins/v2/kernel \
+            google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel \
+            google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-cross
 
   remote-build:
     if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"

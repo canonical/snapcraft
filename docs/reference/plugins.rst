@@ -24,7 +24,9 @@ This section contains an in-depth description of the plugins available in Snapcr
     /common/craft-parts/reference/plugins/go_plugin
     /common/craft-parts/reference/plugins/go_use_plugin
     /common/craft-parts/reference/plugins/gradle_plugin
+    plugins/initrd_plugin
     /common/craft-parts/reference/plugins/jlink_plugin
+    plugins/kernel_plugin
     /common/craft-parts/reference/plugins/make_plugin
     plugins/matter_sdk_plugin
     plugins/maven_plugin

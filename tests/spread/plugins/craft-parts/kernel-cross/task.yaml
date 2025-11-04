@@ -1,4 +1,4 @@
-summary: Craft Parts kernel plugin test
+summary: Craft Parts kernel plugin cross-build test
 manual: true
 kill-timeout: 180m
 
@@ -15,4 +15,4 @@ execute: |
 
   rm -f ./*.snap
   snapcraft pack --enable-experimental-plugins
-  ls -l pc-kernel_*_amd64.snap
+  ls -l nezha-kernel_*_riscv64.snap
