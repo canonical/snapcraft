@@ -8,7 +8,7 @@ docutils==0.19
 furo==2022.9.29
 idna==3.4
 imagesize==1.4.1
-Jinja2==3.1.4
+Jinja2==3.1.6
 livereload==2.6.3
 MarkupSafe==2.1.5
 packaging==21.3
@@ -16,7 +16,7 @@ pyenchant==3.2.2
 Pygments==2.13.0
 pyparsing==3.0.9
 pytz==2022.6
-requests==2.32.2
+requests==2.32.5
 six==1.16.0
 snowballstemmer==2.2.0
 soupsieve==2.3.2.post1
@@ -31,4 +31,4 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.8
 sphinxcontrib-serializinghtml==1.1.10
 tornado==6.2
-urllib3==1.26.19
+urllib3==1.26.20
