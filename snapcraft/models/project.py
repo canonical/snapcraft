@@ -2219,14 +2219,14 @@ class _BaselessProject(Project):
     ]
     base: SkipJsonSchema[str | None] = None
     build_base: Literal["core24", "core26", "devel"] = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
-        description="The build environment to use when building the snap",
+        description="The baseline system that the snap is built in.",
     )
 
     @pydantic.model_validator(mode="after")
     def _validate_no_base(self) -> Self:
         """Baseless projects cannot have a base value set."""
         if self.base is not None:
-            raise ValueError(f"Snaps of type {self.type!r} cannot have a base.")
+            raise ValueError(f"{self.type!r} snaps cannot have a base.")
         return self
 
     @override
@@ -2245,7 +2245,7 @@ class _BaselessProject(Project):
 
 class _BaselessCore22Project(_BaselessProject):
     build_base: Literal["core22"] = pydantic.Field(  # type: ignore[assignment]
-        description="The build environment to use when building the snap",
+        description="The baseline system that the snap is built in.",
     )
 
     @pydantic.field_validator("architectures")
@@ -2305,15 +2305,17 @@ class StableBaseProject(Project):
     build_base: str | None = pydantic.Field(
         validate_default=True,
         default=None,
-        description="The build environment to use when building the snap",
+        description="The baseline system that the snap is built in.",
         examples=["core20", "core22", "core24", "devel"],
     )
-    """Specifies the Ubuntu release to use when building the snap.
+    """The baseline system that the snap is built in.
 
-    For snaps where ``base`` is a stable base, ``build-base`` must either be absent
-    or be the same as the base. If ``base`` is unstable, ``build-base`` must be
-    specified as ``devel``. For snap types that do not use a base, ``build-base``
-    must be specified.
+    If the snap has a stable base, ``build-base`` must either be unset
+    or the same as the base.
+    
+    If the snap has an unstable base, ``build-base`` must be set to ``devel``.
+    
+    If the snap's type doesn't use a base, ``build-base`` must be set.
     """
 
     @pydantic.field_validator("type", mode="before")
