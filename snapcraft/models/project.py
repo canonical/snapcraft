@@ -34,6 +34,7 @@ from craft_application.models.constraints import (
     SingleEntryList,
     UniqueList,
 )
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
     Grammar,
@@ -2282,12 +2283,6 @@ class _BaselessCore22Project(_BaselessProject):
         return self
 
 
-def _baseless_core22_discriminator(data: dict[str, Any]):
-    if data.get("build-base", data.get("build_base")) == "core22":
-        return "baseless-core22"
-    return "baseless"
-
-
 BaselessProject = Annotated[
     Annotated[_BaselessCore22Project, pydantic.Tag("baseless-core22")]
     | Annotated[_BaselessProject, pydantic.Tag("baseless")],
@@ -2312,9 +2307,9 @@ class StableBaseProject(Project):
 
     If the snap has a stable base, ``build-base`` must either be unset
     or the same as the base.
-    
+
     If the snap has an unstable base, ``build-base`` must be set to ``devel``.
-    
+
     If the snap's type doesn't use a base, ``build-base`` must be set.
     """
 
@@ -2325,9 +2320,10 @@ class StableBaseProject(Project):
             try:
                 snap_type = ProjectType(snap_type)
             except ValueError:
-                raise ValueError(
-                    "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
-                ) from None
+                valid_types = humanize_list(
+                    (t.value for t in ProjectType), conjunction="or"
+                )
+                raise ValueError(f"Input should be {valid_types}") from None
 
         return snap_type
 
@@ -2494,11 +2490,7 @@ def _has_type(data: dict[str, Any]) -> str:
 
 SnapcraftProject = Annotated[
     Annotated[_StandardProject, pydantic.Tag("has-base")]
-    | Annotated[
-        BaselessProject,
-        # pydantic.Discriminator("type"),
-        pydantic.Tag("baseless"),
-    ],
+    | Annotated[BaselessProject, pydantic.Tag("baseless")],
     pydantic.Discriminator(_has_type),
     pydantic.BeforeValidator(_validate_type),
 ]

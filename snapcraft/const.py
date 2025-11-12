@@ -62,6 +62,11 @@ class UnstableBase(StrEnum):
 
 
 class BuildBase(StrEnum):
+    """Values that are valid for the 'build-base' key for most snaps.
+
+    These correspond to the bases on which we can build for most snap types.
+    """
+
     CORE22 = "core22"
     CORE24 = "core24"
     DEVEL = "devel"

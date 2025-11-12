@@ -220,7 +220,7 @@ class TestProjectValidation:
 
         with pytest.raises(
             pydantic.ValidationError,
-            match=f"Snaps of type '{type_}' cannot have a base.",
+            match=f"'{type_}' snaps cannot have a base.",
         ):
             Project.unmarshal(data)
 
@@ -274,7 +274,7 @@ class TestProjectValidation:
         if requires_base:
             error = "Snap base must be declared when type is not"
             with pytest.raises(pydantic.ValidationError, match=error):
-                project = Project.unmarshal(data)
+                Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
             assert project.base is None
@@ -381,7 +381,7 @@ class TestProjectValidation:
             assert project_type == snap_type
 
         else:
-            error = "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
+            error = "Input should be 'app', 'base', 'gadget', 'kernel', or 'snapd'"
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
