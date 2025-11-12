@@ -29,7 +29,7 @@ processed in a series of ordered, reproducible steps.
 Files travel as bundles through the parts lifecycle. These bundles are called
 *filesets*.
 
-:ref:`filesets_explanation`
+- :ref:`filesets_explanation`
 
 
 Snap confinement
@@ -40,12 +40,12 @@ A snap's confinement determines how much access it has to the host system's reso
 A snap is sandboxed by default, with basic access to the host's file system. If it needs
 other resources from the host, access is mediated through special interfaces.
 
-:ref:`explanation-interfaces`
+- :ref:`explanation-interfaces`
 
 A classically-confined snap has broad access to the host's resources and runs more like
 a traditional app.
 
-:ref:`explanation-classic-confinement`
+- :ref:`explanation-classic-confinement`
 
 
 Cryptography
@@ -54,7 +54,7 @@ Cryptography
 Snapcraft and its external libraries use cryptographic tools for fetching files,
 communicating with local processes, and storing user credentials.
 
-:ref:`Cryptographic technology <explanation-cryptographic-technology>`
+- :ref:`Cryptographic technology <explanation-cryptographic-technology>`
 
 
 .. toctree::

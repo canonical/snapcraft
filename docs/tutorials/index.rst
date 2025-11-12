@@ -12,7 +12,7 @@ The first tutorial works through the process of packaging a snap with Snapcraft.
 introduce you to key concepts and operations, from installation and setup to finalizing
 your first snap.
 
-:ref:`Start the tutorial <tutorial-craft-a-snap>`
+- :ref:`tutorial-craft-a-snap`
 
 
 .. toctree::
