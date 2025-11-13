@@ -19,6 +19,7 @@ conflicts = [[
 
 [manifest]
 constraints = [{ name = "pynacl", specifier = "<1.6.0" }]
+build-constraints = [{ name = "maturin", specifier = "<1.10.0" }]
 
 [[package]]
 name = "accessible-pygments"
