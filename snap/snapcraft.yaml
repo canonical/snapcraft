@@ -238,8 +238,10 @@ parts:
       sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
       ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
 
-      # The new implementation still requires this.
-      ln -sf ../usr/bin/python3.12 $SNAPCRAFT_PART_INSTALL/bin/python3
+      # Fix the Python executable from uv, which had bad symlinks
+      rm $CRAFT_PART_INSTALL/bin/python*
+      ln -s ../usr/bin/python3 $CRAFT_PART_INSTALL/bin/python3
+      ln -s python3 $CRAFT_PART_INSTALL/bin/python
     after: [snapcraft-libs, libgit2, python3-apt]
 
   chisel:
