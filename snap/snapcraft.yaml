@@ -192,7 +192,6 @@ parts:
       - -usr/include
 
   python3-apt:
-    source: .
     plugin: nil
     build-attributes:
       - enable-patchelf
