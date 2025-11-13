@@ -132,6 +132,10 @@ constraint-dependencies = [
     # https://pynacl.readthedocs.io/en/latest/changelog/
     "pynacl<1.6.0",
 ]
+build-constraint-dependencies = [
+    # needed until we have rustc >= 1.78
+    "maturin<1.10.0 ; python_version < '3.14'",
+]
 
 [[tool.uv.index]]
 name = "python-apt-wheels"
