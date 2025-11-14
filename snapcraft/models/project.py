@@ -2477,7 +2477,7 @@ def _validate_type(data: dict[str, Any]) -> dict[str, Any]:
         and data.get("type") not in ("base", "kernel", "snapd")
     ):
         raise ValueError(
-            "Snap base must be declared when type is not base, kernel or snapd"
+            f"Missing 'base' key for snap type {data.get('type')!r}"
         )
     return data
 
