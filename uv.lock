@@ -892,7 +892,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.12' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-questing' and extra == 'group-9-snapcraft-dev-resolute')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-questing' and extra == 'group-9-snapcraft-dev-resolute')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -3159,7 +3159,7 @@ docs = [
     { name = "sphinx-autodoc-typehints" },
     { name = "sphinx-lint" },
     { name = "sphinx-prompt", specifier = "~=1.8.0" },
-    { name = "sphinx-sitemap", specifier = "~=2.6.0" },
+    { name = "sphinx-sitemap", specifier = "~=2.9.0" },
     { name = "sphinx-substitution-extensions" },
     { name = "sphinx-toolbox" },
     { name = "sphinxcontrib-details-directive" },
@@ -3349,6 +3349,18 @@ wheels = [
 ]
 
 [[package]]
+name = "sphinx-last-updated-by-git"
+version = "0.3.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/03/fd/de1685b6dab173dff31da24e0d3b29f02873fc24a1cdbb7678721ddc8581/sphinx_last_updated_by_git-0.3.8.tar.gz", hash = "sha256:c145011f4609d841805b69a9300099fc02fed8f5bb9e5bcef77d97aea97b7761", size = 10785, upload-time = "2024-08-11T07:15:54.601Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/fb/e496f16fa11fbe2dbdd0b5e306ede153dfed050aae4766fc89d500720dc7/sphinx_last_updated_by_git-0.3.8-py3-none-any.whl", hash = "sha256:6382c8285ac1f222483a58569b78c0371af5e55f7fbf9c01e5e8a72d6fdfa499", size = 8580, upload-time = "2024-08-11T07:15:53.244Z" },
+]
+
+[[package]]
 name = "sphinx-lint"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3421,14 +3433,14 @@ wheels = [
 
 [[package]]
 name = "sphinx-sitemap"
-version = "2.6.0"
+version = "2.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx" },
+    { name = "sphinx-last-updated-by-git" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/42/ed/96cc112b671e06df01c8306c25ce3331ccfece0d30235e32eb039afc8094/sphinx_sitemap-2.6.0.tar.gz", hash = "sha256:5e0c66b9f2e371ede80c659866a9eaad337d46ab02802f9c7e5f7bc5893c28d2", size = 6042, upload-time = "2024-04-29T00:18:13.399Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/17/56fe0f65e3567f829b2b4153a622be1d4b222b781e0d90d7db5a7738f30f/sphinx_sitemap-2.9.0.tar.gz", hash = "sha256:70f97bcdf444e3d68e118355cf82a1f54c4d3c03d651cd17fe87398b26e25e21", size = 6978, upload-time = "2025-10-06T00:24:00.036Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/94/d4/dffb4da380be24fd390d284634735d6fba560980014050e52569c04d215b/sphinx_sitemap-2.6.0-py3-none-any.whl", hash = "sha256:7478e417d141f99c9af27ccd635f44c03a471a08b20e778a0f9daef7ace1d30b", size = 5632, upload-time = "2024-04-29T00:18:12.147Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/94/3c57e8b1985e755c48972e2ecd59526d4bf0b52a1fe805bc52a8e98cb92d/sphinx_sitemap-2.9.0-py3-none-any.whl", hash = "sha256:f1f1d3a9ad012ba17a7ef0b560d303bff2d0db26647567d6e810bcc754466664", size = 6218, upload-time = "2025-10-06T00:23:58.778Z" },
 ]
 
 [[package]]
