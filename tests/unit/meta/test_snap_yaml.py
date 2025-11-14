@@ -21,7 +21,8 @@ import pydantic
 import pytest
 import yaml
 
-from snapcraft import const, models
+from snapcraft import models
+from snapcraft.const import StableBase, UnstableBase
 from snapcraft.meta import snap_yaml
 from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
 from snapcraft.models import Project
@@ -1287,14 +1288,24 @@ def test_architectures(arch, arch_triplet, simple_project, new_dir):
     ) in content
 
 
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
-def test_architectures_all(base, simple_project, new_dir):
+@pytest.mark.parametrize(
+    ("base", "build_base"),
+    [
+        *((base, None) for base in StableBase),
+        *((base, "devel") for base in UnstableBase),
+    ],
+)
+def test_architectures_all(base, build_base, simple_project, new_dir):
     """LD_LIBRARY_PATH should not contain arch-specific paths when arch = "all"."""
     # create library directories
     (new_dir / "usr/lib/x86_64-linux-gnu").mkdir(parents=True)
     (new_dir / "lib/x86_64-linux-gnu").mkdir(parents=True)
 
-    snap_yaml.write(simple_project(base=base), prime_dir=Path(new_dir), arch="all")
+    snap_yaml.write(
+        simple_project(base=base, build_base=build_base, grade="devel"),
+        prime_dir=Path(new_dir),
+        arch="all",
+    )
 
     yaml_file = Path("meta/snap.yaml")
     assert yaml_file.is_file()
