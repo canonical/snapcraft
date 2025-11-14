@@ -70,7 +70,7 @@ With each major release of Snapcraft, snap builds gain new features and capabili
 and lose others. When migrating from one version and base to a new one, you might need
 to reconfigure your project as described by these guides.
 
-:ref:`how-to-change-bases`
+- :ref:`how-to-change-bases`
 
 .. toctree::
     :hidden:
