@@ -589,14 +589,14 @@
         "contact": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -610,14 +610,14 @@
         "issues": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -631,14 +631,14 @@
         "source-code": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -716,14 +716,14 @@
         "donation": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -737,14 +737,14 @@
         "website": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1199,14 +1199,14 @@
         "contact": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1220,14 +1220,14 @@
         "issues": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1241,14 +1241,14 @@
         "source-code": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1326,14 +1326,14 @@
         "donation": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1347,14 +1347,14 @@
         "website": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1785,14 +1785,14 @@
         "contact": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1806,14 +1806,14 @@
         "issues": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1827,14 +1827,14 @@
         "source-code": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1912,14 +1912,14 @@
         "donation": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -1933,14 +1933,14 @@
         "website": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -2466,21 +2466,21 @@
             }
           ],
           "default": null,
-          "description": "The build environment to use when building the snap",
+          "description": "The baseline system that the snap is built in.",
           "examples": ["core20", "core22", "core24", "devel"],
           "title": "Build-Base"
         },
         "contact": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -2494,14 +2494,14 @@
         "issues": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -2515,14 +2515,14 @@
         "source-code": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -2600,14 +2600,14 @@
         "donation": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -2621,14 +2621,14 @@
         "website": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3061,7 +3061,7 @@
             }
           ],
           "default": null,
-          "description": "The build environment to use when building the snap",
+          "description": "The baseline system that the snap is built in.",
           "examples": ["core20", "core22", "core24", "devel"],
           "title": "Build-Base"
         },
@@ -3092,14 +3092,14 @@
         "contact": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3113,14 +3113,14 @@
         "issues": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3134,14 +3134,14 @@
         "source-code": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3219,14 +3219,14 @@
         "donation": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3240,14 +3240,14 @@
         "website": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3678,14 +3678,14 @@
         "contact": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3699,14 +3699,14 @@
         "issues": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3720,14 +3720,14 @@
         "source-code": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3805,14 +3805,14 @@
         "donation": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -3826,14 +3826,14 @@
         "website": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -4257,14 +4257,14 @@
             {
               "anyOf": [
                 {
-                  "type": "string"
-                },
-                {
                   "items": {
                     "type": "string"
                   },
                   "type": "array",
                   "uniqueItems": true
+                },
+                {
+                  "type": "string"
                 }
               ],
               "minLength": 1
@@ -4414,7 +4414,7 @@
         },
         "build-base": {
           "const": "core22",
-          "description": "The build environment to use when building the snap",
+          "description": "The baseline system that the snap is built in.",
           "title": "Build-Base",
           "type": "string"
         },
@@ -4438,14 +4438,14 @@
         "contact": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -4459,14 +4459,14 @@
         "issues": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -4480,14 +4480,14 @@
         "source-code": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -4565,14 +4565,14 @@
         "donation": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -4586,14 +4586,14 @@
         "website": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -5013,7 +5013,7 @@
           "title": "Description"
         },
         "build-base": {
-          "description": "The build environment to use when building the snap",
+          "description": "The baseline system that the snap is built in.",
           "enum": ["core24", "core26", "devel"],
           "title": "Build-Base",
           "type": "string"
@@ -5038,14 +5038,14 @@
         "contact": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -5059,14 +5059,14 @@
         "issues": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -5080,14 +5080,14 @@
         "source-code": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -5165,14 +5165,14 @@
         "donation": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
@@ -5186,14 +5186,14 @@
         "website": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "items": {
                 "type": "string"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            {
+              "type": "string"
             },
             {
               "type": "null"
