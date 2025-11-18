@@ -191,15 +191,18 @@ parts:
     prime:
       - -usr/include
 
+  python3-apt:
+    plugin: nil
+    build-attributes:
+      - enable-patchelf
+    stage-packages:
+      - python3-apt
+    organize:
+      "usr/lib/python3/dist-packages/*": "lib/python3.12/site-packages/"
+
   snapcraft:
     source: .
-    plugin: python
-    python-packages:
-      - wheel
-      - pip
-    python-requirements:
-      - uv-requirements.txt
-      - requirements-noble.txt
+    plugin: uv
     organize:
       # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
       # without including other binaries.
@@ -214,29 +217,31 @@ parts:
     build-attributes:
       - enable-patchelf
     build-environment:
-      # Build PyNaCl from source since the wheel files interact
-      # strangely with classic snaps. Well, build it all from source.
-      - "PIP_NO_BINARY": ":all:"
       # Use base image's libsodium for PyNaCl.
       - "SODIUM_INSTALL": "system"
       - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
       - "UV_FROZEN": "1" # Never update the uv lockfile - fail build if we can't succeed.
+      - UV_NO_BINARY: "true"
+      # Parallel make jobs for things like python-apt
+      - MAKEOPTS: -j$(nproc --all)
+      - UV_COMPILE_BYTECODE: "true"
     build-snaps:
       - astral-uv
     override-build: |
-      uv export --no-dev --no-emit-workspace --output-file uv-requirements.txt
       ${SNAP}/libexec/snapcraft/craftctl default
 
-      version=$(PYTHONPATH=$CRAFT_PART_INSTALL/lib/python3.12/site-packages python3 -c "import snapcraft;print(snapcraft.__version__)")
+      version="$(uv pip show snapcraft | grep "Version:" | cut -d' ' -f2)"
       ${SNAP}/libexec/snapcraft/craftctl set version="$version"
 
       [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
       sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
       ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
 
-      # The new implementation still requires this.
-      ln -sf ../usr/bin/python3.12 $SNAPCRAFT_PART_INSTALL/bin/python3
-    after: [snapcraft-libs, libgit2]
+      # Fix the Python executable from uv, which had bad symlinks
+      rm $CRAFT_PART_INSTALL/bin/python*
+      ln -s ../usr/bin/python3 $CRAFT_PART_INSTALL/bin/python3
+      ln -s python3 $CRAFT_PART_INSTALL/bin/python
+    after: [snapcraft-libs, libgit2, python3-apt]
 
   chisel:
     plugin: nil
