@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
+from collections.abc import Callable
 from typing import Any, cast
 
 import pydantic
@@ -255,25 +256,30 @@ class TestProjectValidation:
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
-        "snap_type,requires_base",
+        ("snap_type", "requires_base", "error_message"),
         [
-            ("app", True),
-            (None, True),
-            ("gadget", True),
-            ("base", False),
-            ("kernel", False),
-            ("snapd", False),
+            ("app", True, "Missing 'base' key for snap type 'app'."),
+            (None, True, "Missing 'base' key for snap."),
+            ("gadget", True, "Missing 'base' key for snap type 'gadget'."),
+            ("base", False, "Missing 'base' key for snap type 'base'."),
+            ("kernel", False, "Missing 'base' key for snap type 'kernel'."),
+            ("snapd", False, "Missing 'base' key for snap type 'snapd'."),
         ],
     )
-    def test_mandatory_base(self, snap_type, requires_base, project_yaml_data):
+    def test_mandatory_base(
+        self,
+        snap_type: str,
+        requires_base: bool,
+        project_yaml_data: Callable[..., dict[str, Any]],
+        error_message: str,
+    ):
         data = project_yaml_data(type=snap_type)
         data["build-base"] = data.pop("base")
         if data["type"] is None:
             data.pop("type")
 
         if requires_base:
-            error = "Snap base must be declared when type is not"
-            with pytest.raises(pydantic.ValidationError, match=error):
+            with pytest.raises(pydantic.ValidationError, match=error_message):
                 Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)

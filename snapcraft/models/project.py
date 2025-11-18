@@ -2476,9 +2476,10 @@ def _validate_type(data: dict[str, Any]) -> dict[str, Any]:
         data.get("base") is None  # Catch both missing base key and null base.
         and data.get("type") not in ("base", "kernel", "snapd")
     ):
-        raise ValueError(
-            f"Missing 'base' key for snap type {data.get('type')!r}"
-        )
+        snap_type = data.get("type")
+        if snap_type is None:
+            raise ValueError("Missing 'base' key for snap.")
+        raise ValueError(f"Missing 'base' key for snap type {snap_type!r}.")
     return data
 
 
