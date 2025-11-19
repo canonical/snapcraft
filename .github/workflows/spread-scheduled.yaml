@@ -26,7 +26,7 @@ jobs:
 
   snap-build:
     needs: predicate
-    if: needs.predicate.outputs.should_run == "true"
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -51,7 +51,7 @@ jobs:
 
   kernel-plugins:
     needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == "true"
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
     strategy:
       fail-fast: false
@@ -78,7 +78,7 @@ jobs:
 
   remote-build:
     needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == "true"
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
     steps:
       - name: Cleanup job workspace
@@ -107,7 +107,7 @@ jobs:
 
   matter-sdk:
     needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == "true"
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
     steps:
       - name: Cleanup job workspace
@@ -132,7 +132,7 @@ jobs:
 
   colcon-plugins:
     needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == "true"
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
     steps:
       - name: Cleanup job workspace
@@ -159,7 +159,7 @@ jobs:
 
   extensions:
     needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == "true"
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
     steps:
       - name: Cleanup job workspace
@@ -182,7 +182,7 @@ jobs:
 
   core20-plugins:
     needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == "true"
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
     steps:
       - name: Cleanup job workspace
@@ -205,7 +205,7 @@ jobs:
 
   snapd-bases:
     needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == "true"
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
     steps:
       - name: Cleanup job workspace
