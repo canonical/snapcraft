@@ -21,7 +21,7 @@ jobs:
           # - This is an actual scheduled run
           # - This is a manually triggered run via the Actions tab
           # - This is a PR with the 'PR: Run Manual Spread' label
-          should_run="${{ contains(github.event.pull_request.labels.*.name, 'PR: Run Manual Spread') || contains(['schedule', 'workflow_dispatch'], github.event_name) }}"
+          should_run=${{ contains(github.event.pull_request.labels.*.name, 'PR: Run Manual Spread') || contains(fromJSON('["schedule", "workflow_dispatch"]'), github.event_name) }}
           echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
 
   snap-build:
