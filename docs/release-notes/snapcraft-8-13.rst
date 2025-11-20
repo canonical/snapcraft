@@ -159,7 +159,7 @@ Snapcraft 8.13.2
 ~~~~~~~~~~~~~~~~
 
 - `craft-providers#850`_ Fix the "Couldn't get EOL data" errors when packing snaps with
-  `devel` bases.
+  ``devel`` bases.
 
 
 Contributors
