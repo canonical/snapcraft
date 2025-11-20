@@ -2,44 +2,30 @@ name: Documentation
 description: Submit a documentation request
 labels: "documentation"
 body:
-  - type: markdown
+  - type: checkboxes
+    id: existing-issues
     attributes:
-      value: >
-        Thanks for taking the time to fill out this documentation request! Before you submit,
-        please make sure there isn't an existing issue concerning your request. If there
-        is, please join that discussion instead.
-  - type: dropdown
-    id: type
-    attributes:
-      label: Request type
-      description: Are you requesting a fix or an enhancement to the docs?
+      label: Check existing issues
       options:
-        - Fix
-        - Enhancement
-    validations:
-      required: true
+        - label: I've verified that this request isn't described by any existing issues.
+          required: true
+      validations:
+        required: true
   - type: textarea
     id: request-description
     attributes:
       label: What needs to get done
-      description: >
-        Describe the request and why it should be done
+      placeholder: >
+        Describe your request and why it should be addressed.
+
+        Include any relevant context, screenshots, or examples to help us better
+        understand the request.
     validations:
       required: true
   - type: input
     id: page-name
     attributes:
       label: Document location
-      description: Provide the URL or file path of the relevant page
-      placeholder: ex. https://documentation.ubuntu.com/snapcraft/stable/tutorials/craft-a-snap/
-    validations:
-      required: false
-  - type: textarea
-    id: additional-information
-    attributes:
-      label: Additional information
-      description: >
-        Include additional context, screenshots, or examples to help
-        us better understand the request
+      placeholder: Provide the URL or file path of the relevant page.
     validations:
       required: false

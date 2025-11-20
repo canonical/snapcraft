@@ -2,17 +2,19 @@ name: Bug report
 description: Report a bug
 labels: "Bug"
 body:
-  - type: markdown
+  - type: checkboxes
+    id: existing-issues
     attributes:
-      value: >
-        Thanks for taking the time to fill out this bug report! Before
-        submitting your issue, make sure this has not been already
-        reported or if it works with the latest published version
-        of Snapcraft.
+      label: Check existing issues
+      options:
+        - label: I've verified that this bug isn't described by any existing issues.
+          required: true
+      validations:
+        required: true
   - type: textarea
     id: bug-description
     attributes:
-      label: Bug Description
+      label: Bug description
       description: >
         If applicable, add screenshots to help explain your
         problem.
@@ -21,7 +23,7 @@ body:
   - type: textarea
     id: reproduction
     attributes:
-      label: To Reproduce
+      label: To reproduce
       description: >
         Provide a step-by-step instruction of how to reproduce the behavior.
     validations:
@@ -52,7 +54,7 @@ body:
     id: logs
     attributes:
       label: Relevant log output
-      description: >
+      placeholder: >
         Please copy and paste any relevant log output. This will be
         automatically formatted into code, so no need for backticks.
       render: shell

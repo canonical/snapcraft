@@ -2,12 +2,15 @@ name: Task
 description: Submit a feature request
 labels: "Enhancement"
 body:
-  - type: markdown
+  - type: checkboxes
+    id: existing-issues
     attributes:
-      value: >
-        Thanks for taking the time to fill out this feature request! Before you submit,
-        please make sure there isn't an existing issue concerning your request. If there
-        is, please join that discussion instead.
+      label: Check existing issues
+      options:
+        - label: I've verified that this request isn't described by any existing issues.
+          required: true
+      validations:
+        required: true
   - type: textarea
     id: enhancement-proposal-what
     attributes:
