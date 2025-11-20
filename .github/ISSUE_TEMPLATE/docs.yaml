@@ -15,9 +15,7 @@ body:
       label: What needs to get done
       placeholder: >
         Describe your request and why it should be addressed.
-
-        Include any relevant context, screenshots, or examples to help us better
-        understand the request.
+        Include any relevant context, screenshots, or examples.
     validations:
       required: true
   - type: input

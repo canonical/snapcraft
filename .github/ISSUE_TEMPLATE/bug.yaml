@@ -9,8 +9,6 @@ body:
       options:
         - label: I've verified that this bug isn't described by any existing issues.
           required: true
-      validations:
-        required: true
   - type: textarea
     id: bug-description
     attributes:
