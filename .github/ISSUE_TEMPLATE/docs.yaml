@@ -5,10 +5,9 @@ body:
   - type: markdown
     attributes:
       value: >
-        Thanks for taking the time to fill out this documentation
-        request! Before submitting your request, please make sure there
-        isn't already a prior issue concerning this. If there is,
-        please join that discussion instead.
+        Thanks for taking the time to fill out this documentation request! Before you submit,
+        please make sure there isn't an existing issue concerning your request. If there
+        is, please join that discussion instead.
   - type: dropdown
     id: type
     attributes:
