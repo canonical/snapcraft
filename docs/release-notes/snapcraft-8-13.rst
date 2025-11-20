@@ -155,6 +155,12 @@ Snapcraft 8.13.1
 - `#5843`_ The changes to the project model parsing from Snapcraft 8.13.0 have been
   reverted to give more time for testing.
 
+Snapcraft 8.13.2
+~~~~~~~~~~~~~~~~
+
+- `craft-providers#850`_ Fix the "Couldn't get EOL data" errors when packing snaps with
+  `devel` bases.
+
 
 Contributors
 ------------
