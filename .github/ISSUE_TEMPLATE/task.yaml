@@ -13,13 +13,11 @@ body:
     id: enhancement-proposal-what
     attributes:
       label: What needs to get done
-      placeholder: Describe what needs to get done.
     validations:
       required: true
   - type: textarea
     id: enhancement-proposal-why
     attributes:
       label: Why it needs to get done
-      placeholder: Describe why it needs to get done.
     validations:
       required: true

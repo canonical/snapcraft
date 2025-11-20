@@ -31,8 +31,8 @@ body:
       label: Environment
       description: >
         We need to know the context in which Snapcraft failed.
-          * Are you running Snapcraft in destructive mode, using LXD or Multipass?
-          * What operating system are you running Snapcraft on?
+        * Are you running Snapcraft in destructive mode, using LXD or Multipass?
+        * What operating system are you running Snapcraft on?
     validations:
       required: true
   - type: textarea
@@ -46,10 +46,8 @@ body:
   - type: textarea
     id: logs
     attributes:
-      label: Relevant log output
+      label: Log output
       placeholder: >
         Provide any relevant log output. This field is rendered as shell output, so
         don't wrap content in backticks.
       render: shell
-    validations:
-      required: true
