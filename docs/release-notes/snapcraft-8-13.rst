@@ -188,3 +188,4 @@ release.
 .. _#5794: https://github.com/canonical/snapcraft/issues/5794
 .. _#5704: https://github.com/canonical/snapcraft/issues/5704
 .. _#5843: https://github.com/canonical/snapcraft/issues/5843
+.. _craft-providers#850: https://github.com/canonical/craft-providers/pull/850
