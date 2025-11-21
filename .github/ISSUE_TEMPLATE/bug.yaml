@@ -31,9 +31,9 @@ body:
       label: Environment
       value: >
         <!--
-        We need to know the context in which Snapcraft failed.
-          * Are you running Snapcraft in destructive mode, using LXD or Multipass?
-          * What operating system are you running Snapcraft on?
+          We need to know the context in which Snapcraft failed.
+            * Are you running Snapcraft in destructive mode, using LXD or Multipass?
+            * What operating system are you running Snapcraft on?
         -->
     validations:
       required: true
@@ -52,5 +52,5 @@ body:
       label: Log output
       value: >
         <!-- Provide any relevant logging. This field automatically renders as
-        a log, so you don' need to add special formatting. -->
+        a log, so you don't need to add special formatting. -->
       render: shell
