@@ -1,6 +1,9 @@
-- [ ] Have you followed the [guidelines for contributing](https://github.com/canonical/snapcraft/blob/main/CONTRIBUTING.md)?
-- [ ] Have you signed the [CLA](http://www.ubuntu.com/legal/contributors/)?
-- [ ] Have you successfully run `make lint`?
-- [ ] Have you successfully run `make test`?
+<!-- Describe your changes -->
 
 ---
+
+- [ ] I've followed the [contribution guidelines](https://github.com/canonical/starbase/blob/main/CONTRIBUTING.md).
+- [ ] I've signed the [CLA](http://www.ubuntu.com/legal/contributors/).
+- [ ] I've successfully run `make lint && make test`.
+- [ ] I've added or updated any relevant documentation.
+- [ ] I've updated the relevant release notes.
