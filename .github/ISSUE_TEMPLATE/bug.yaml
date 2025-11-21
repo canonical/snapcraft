@@ -32,9 +32,8 @@ body:
       value: >
         <!--
         We need to know the context in which Snapcraft failed.
-
-        * Are you running Snapcraft in destructive mode, using LXD or Multipass?
-        * What operating system are you running Snapcraft on?
+          * Are you running Snapcraft in destructive mode, using LXD or Multipass?
+          * What operating system are you running Snapcraft on?
         -->
     validations:
       required: true
