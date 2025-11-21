@@ -13,16 +13,16 @@ body:
     id: bug-description
     attributes:
       label: Bug description
-      placeholder: >
-        Describe the bug, including any relevant context or screenshots.
+      value: >
+        <!-- Describe the bug, including any relevant context or screenshots. -->
     validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
       label: To reproduce
-      placeholder: >
-        Provide step-by-step instructions to reproduce the bug.
+      value: >
+        <!-- Provide step-by-step instructions to reproduce the bug. -->
     validations:
       required: true
   - type: textarea
@@ -30,24 +30,26 @@ body:
     attributes:
       label: Environment
       description: >
+        <!--
         We need to know the context in which Snapcraft failed.
-        * Are you running Snapcraft in destructive mode, using LXD or Multipass?
-        * What operating system are you running Snapcraft on?
+          * Are you running Snapcraft in destructive mode, using LXD or Multipass?
+          * What operating system are you running Snapcraft on?
+        -->
     validations:
       required: true
   - type: textarea
     id: snapcraft_yaml
     attributes:
       label: snapcraft.yaml
-      placeholder: >
-        If relevant, provide your snapcraft.yaml file. This field is rendered as YAML,
-        so don't wrap content in backticks.
+      value: >
+        <!-- If relevant, provide your snapcraft.yaml file. This field is rendered as
+        YAML, so don't wrap content in backticks. -->
       render: yaml
   - type: textarea
     id: logs
     attributes:
       label: Log output
-      placeholder: >
-        Provide any relevant log output. This field is rendered as shell output, so
-        don't wrap content in backticks.
+      value: >
+        <!-- Provide any relevant log output. This field is rendered as shell output, so
+        don't wrap content in backticks. -->
       render: shell

@@ -13,15 +13,16 @@ body:
     id: request-description
     attributes:
       label: What needs to get done
-      placeholder: >
-        Describe your request and why it should be addressed.
-        Include any relevant context, screenshots, or examples.
+      value: >
+        <!-- Describe your request and why it should be addressed. Include any relevant
+        context, screenshots, or examples. -->
     validations:
       required: true
   - type: input
     id: page-name
     attributes:
       label: Document location
-      placeholder: Provide the URL or file path of the relevant page.
+      value: >
+        <!-- Provide the URL or file path of the relevant page. -->
     validations:
       required: false
