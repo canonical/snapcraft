@@ -12,12 +12,16 @@ body:
   - type: textarea
     id: enhancement-proposal-what
     attributes:
-      label: What needs to get done
+      label: Requested feature
+      value: >
+        <!-- Describe the feature you'd like to see implemented. -->
     validations:
       required: true
   - type: textarea
     id: enhancement-proposal-why
     attributes:
-      label: Why it needs to get done
+      label: The problem it solves
+      value: >
+        <!-- Describe the impact your request would have. -->
     validations:
       required: true

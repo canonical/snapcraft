@@ -20,7 +20,7 @@ body:
   - type: textarea
     id: reproduction
     attributes:
-      label: To reproduce
+      label: Steps to reproduce
       value: >
         <!-- Provide step-by-step instructions to reproduce the bug. -->
     validations:
@@ -30,11 +30,9 @@ body:
     attributes:
       label: Environment
       value: >
-        <!--
-          We need to know the context in which Snapcraft failed.
-            * Are you running Snapcraft in destructive mode, using LXD or Multipass?
-            * What operating system are you running Snapcraft on?
-        -->
+        <!-- We need to understand the context in which Snapcraft failed. Please let us
+        know if you are running Snapcraft in destructive mode, whether you are using LXD
+        or Multipass, and which operating system you are running Snapcraft on. -->
     validations:
       required: true
   - type: textarea

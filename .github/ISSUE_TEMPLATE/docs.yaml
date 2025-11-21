@@ -12,9 +12,9 @@ body:
   - type: textarea
     id: request-description
     attributes:
-      label: What needs to get done
+      label: Requested change
       value: >
-        <!-- Describe your request and why it should be addressed. Include any relevant
+        <!-- Describe your request and the problem it solves. Include any relevant
         context, screenshots, or examples. -->
     validations:
       required: true
