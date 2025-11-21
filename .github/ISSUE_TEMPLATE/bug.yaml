@@ -29,7 +29,7 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: >
+      value: >
         <!--
         We need to know the context in which Snapcraft failed.
           * Are you running Snapcraft in destructive mode, using LXD or Multipass?
@@ -42,14 +42,15 @@ body:
     attributes:
       label: snapcraft.yaml
       value: >
-        <!-- If relevant, provide your snapcraft.yaml file. This field is rendered as
-        YAML, so don't wrap content in backticks. -->
+        <!-- If the issue is specific to a project, share its `snapcraft.yaml`. This
+        field automatically renders as YAML, so you don't need to add special
+        formatting. -->
       render: yaml
   - type: textarea
     id: logs
     attributes:
       label: Log output
       value: >
-        <!-- Provide any relevant log output. This field is rendered as shell output, so
-        don't wrap content in backticks. -->
+        <!-- Provide any relevant logging. This field automatically renders as
+        a log, so you don' need to add special formatting. -->
       render: shell
