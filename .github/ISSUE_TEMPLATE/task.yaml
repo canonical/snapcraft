@@ -12,7 +12,7 @@ body:
   - type: textarea
     id: enhancement-proposal-what
     attributes:
-      label: Requested feature
+      label: Request
       value: >
         <!-- Describe the feature you'd like to see implemented. -->
     validations:

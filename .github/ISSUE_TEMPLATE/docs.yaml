@@ -12,7 +12,7 @@ body:
   - type: textarea
     id: request-description
     attributes:
-      label: Requested change
+      label: Request
       value: >
         <!-- Describe your request and the problem it solves. Include any relevant
         context, screenshots, or examples. -->
