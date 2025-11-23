@@ -68,7 +68,7 @@ def normalise_actual_cmds(raw_cmds: list[str]) -> list[str]:
     return actual_cmds
 
 
-def get_cross_build_cmds(target_arch: str | None) -> tuple[list[str], list[str]]:
+def get_cross_build_cmds(target_arch: str | None) -> list[str]:
     """Get the cross-build commands snippets.
 
     Args:
