@@ -1,0 +1,64 @@
+name: Schema
+on: [pull_request]
+
+env:
+  SNAPCRAFT_JSON: schema/snapcraft.json
+
+jobs:
+  diff-schema:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup project
+        run: |
+          sudo apt-get update
+          make setup
+
+      - name: Run generator script
+        run: |
+          uv run --frozen \
+            python tools/schema.py > generated_schema.json
+
+      - name: Prettify json
+        run: |
+          uvx pre-commit run prettier --files generated_schema.json
+
+      - name: Check with stored schema
+        run: |
+          test -f $SNAPCRAFT_JSON &&
+          diff generated_schema.json $SNAPCRAFT_JSON
+
+  validate-schema:
+    runs-on: ubuntu-latest
+    env:
+      SPREAD_FILES_GLOB: tests/spread/core2{2,4}/**/snapcraft.yaml
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install ajv cli
+        run: npm install -g ajv-cli
+
+      - name: Run ajv
+        run: |
+          # Don't fail immediately if one validation fails
+          EXIT_CODE=0
+          for proj_file in $SPREAD_FILES_GLOB; do
+            if ! ajv validate -s $SNAPCRAFT_JSON \
+              -d $proj_file \
+              --strict=false --spec=draft2020; then
+              EXIT_CODE=1
+            fi
+          done
+          exit $EXIT_CODE

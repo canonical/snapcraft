@@ -28,8 +28,14 @@ from snapcraft import const, errors, providers
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
+    BareCore22Project,
+    BareCore24Project,
+    BaseCore22Project,
+    BaseCore24Project,
     ComponentProject,
     ContentPlug,
+    Core22Project,
+    Core24Project,
     GrammarAwareProject,
     Hook,
     Lint,
@@ -346,7 +352,9 @@ class TestProjectValidation:
 
         if snap_type != "_invalid":
             project = Project.unmarshal(data)
-            assert project.type == snap_type
+            project_type = project.type.value if project.type else None
+            assert project_type == snap_type
+
         else:
             error = "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
             with pytest.raises(pydantic.ValidationError, match=error):
@@ -755,6 +763,27 @@ class TestProjectValidation:
             {"float": 11.0},
             {"int": 12},
         ]
+
+    @pytest.mark.parametrize(
+        "base,build_base,type_,project_class",
+        [
+            ("core22", None, None, Core22Project),
+            ("core24", None, None, Core24Project),
+            ("bare", "core22", None, BareCore22Project),
+            ("bare", "core24", None, BareCore24Project),
+            (None, "core22", "base", BaseCore22Project),
+            (None, "core24", "base", BaseCore24Project),
+        ],
+    )
+    def test_project_unmarshalling(
+        self, base, build_base, type_, project_class, project_yaml_data
+    ):
+        """Project.unmarshall should return the right sub model."""
+        data = project_yaml_data(base=base, build_base=build_base, type=type_)
+
+        project = Project.unmarshal(data)
+
+        assert isinstance(project, project_class)
 
 
 class TestHookValidation:
@@ -2088,7 +2117,7 @@ class TestArchitecture:
         assert project._architectures_in_yaml is expected
 
         # adding architectures after unmarshalling does not change the field
-        if project.base == "core22":
+        if isinstance(project, Core22Project):
             project.architectures = [
                 Architecture(build_on=["amd64"], build_for=["amd64"])
             ]
@@ -2172,7 +2201,7 @@ def test_build_planner_all_with_other_builds_core22():
     }
 
     with pytest.raises(pydantic.ValidationError) as raised:
-        snapcraft.models.project.Project(**snapcraft_yaml)
+        snapcraft.models.project.Project.unmarshal(snapcraft_yaml)
 
     assert ("one of the items has 'all' in 'build-for', but there are 2 items") in str(
         raised.value
