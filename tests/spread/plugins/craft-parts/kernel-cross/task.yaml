@@ -3,7 +3,9 @@ manual: true
 kill-timeout: 180m
 
 systems:
-  - ubuntu-22.04-64
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
 
 environment:
   SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS: 1
