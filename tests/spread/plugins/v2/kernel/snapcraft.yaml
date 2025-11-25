@@ -17,15 +17,15 @@ parts:
     source-depth: 1
     source-type: git
     source-branch: master
-    stage-packages:
-      - linux-firmware
-      - wireless-regdb
     kernel-kdefconfig: [defconfig, test.config]
     kernel-kconfigs:
       - CONFIG_MODULE_SIG_KEY=""
       - CONFIG_SYSTEM_TRUSTED_KEYS=""
       - CONFIG_SYSTEM_REVOCATION_KEYS=""
     kernel-enable-zfs-support: true
+    stage-packages:
+      - linux-firmware
+      - wireless-regdb
     override-pull: |
       snapcraftctl pull
 

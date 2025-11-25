@@ -10,10 +10,6 @@ confinement: strict
 type: kernel
 adopt-info: kernel
 
-architectures:
-  - build-on: amd64
-    run-on: amd64
-
 parts:
   kernel:
     plugin: nil
@@ -40,8 +36,6 @@ parts:
       ln -sf "kernel.img-${kver}" "${SNAPCRAFT_PART_INSTALL}/kernel.img"
       ln -sf ../modules           "${SNAPCRAFT_PART_INSTALL}/lib/modules"
       ln -sf ../firmware          "${SNAPCRAFT_PART_INSTALL}/lib/firmware"
-    prime:
-      - -kernel.img*
 
   initrd:
     after: [kernel]

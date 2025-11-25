@@ -26,20 +26,20 @@ parts:
     source: https://git.launchpad.net/~canonical-kernel/ubuntu/+source/linux-riscv/+git/jammy
     source-depth: 1
     source-type: git
-    source-branch: allwinner-5.19-next
-    kernel-kconfigflavour: allwinner
+    kernel-kdefconfig: [defconfig, test.config]
     kernel-kconfigs:
       - CONFIG_RTW88_SDIO=m
       - CONFIG_RTW88_8723D=m
       - CONFIG_RTW88_8723DS=m
       # pahole required, but this is just a test
       - CONFIG_DEBUG_INFO_BTF=n
-    build-packages:
-      - on amd64:
-          - gcc-${CRAFT_ARCH_TRIPLET_BUILD_FOR}
     stage-packages:
       - linux-firmware:${CRAFT_ARCH_BUILD_FOR}
       - wireless-regdb
+    override-pull: |
+      craftctl default
+
+      cp -f "${CRAFT_PROJECT_DIR}/test_defconfig" "${CRAFT_PART_SRC}/kernel/configs/test.config"
     override-build: |
       craftctl default
 

@@ -3,7 +3,10 @@ manual: true
 kill-timeout: 180m
 
 systems:
-  - ubuntu-22.04-64
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04-arm64
 
 environment:
   SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS: 1
@@ -18,4 +21,4 @@ execute: |
 
   rm -f ./*.snap
   snapcraft pack --use-lxd
-  ls -l pc-kernel_*_amd64.snap
+  ls -l pc-kernel_*.snap

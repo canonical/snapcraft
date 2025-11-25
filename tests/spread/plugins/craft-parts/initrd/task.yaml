@@ -2,6 +2,12 @@ summary: Craft Parts initrd plugin test
 manual: true
 kill-timeout: 180m
 
+systems:
+  - ubuntu-20.04
+  - ubuntu-20.04-64
+  - ubuntu-20.04-amd64
+  - ubuntu-20.04-arm64
+
 restore: |
   snapcraft clean
   rm -f ./*.snap
@@ -12,4 +18,4 @@ execute: |
 
   rm -f ./*.snap
   snapcraft pack
-  ls -l pc-kernel_*_amd64.snap
+  ls -l pc-kernel_*.snap
