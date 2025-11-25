@@ -106,6 +106,15 @@ class KernelPlugin(PluginV2):
 
     @overrides
     def get_build_packages(self) -> Set[str]:
+        target_triplet = ProjectOptions().arch_triplet
+
+        # We should install gcc for the target, but the x86_64 gcc package is named
+        # differently from its triplet
+        gcc_arch = target_triplet
+        match target_triplet:
+            case "x86_64-linux-gnu":
+                gcc_arch = "x86-64-linux-gnu"
+
         build_packages = {
             "bc",
             "binutils",
@@ -116,7 +125,7 @@ class KernelPlugin(PluginV2):
             "debhelper",
             "fakeroot",
             "flex",
-            "gcc",
+            f"gcc-{gcc_arch}",
             "kmod",
             "kpartx",
             "libelf-dev",

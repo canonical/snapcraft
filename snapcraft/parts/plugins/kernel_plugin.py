@@ -97,6 +97,14 @@ class KernelPlugin(plugins.Plugin):
         _host_arch = self._part_info.host_arch
         _target_arch = self._part_info.target_arch
         _zfs_enabled = self.options.kernel_enable_zfs_support
+        _target_arch_triplet = self._part_info.arch_triplet_build_for
+
+        # We should install gcc for the target, but the x86_64 gcc package is named
+        # differently from its triplet
+        _gcc_arch = _target_arch_triplet
+        match _target_arch_triplet:
+            case "x86_64-linux-gnu":
+                _gcc_arch = "x86-64-linux-gnu"
 
         build_packages = {
             "bc",
@@ -109,7 +117,7 @@ class KernelPlugin(plugins.Plugin):
             "fakeroot",
             "flex",
             "gawk",
-            "gcc",
+            f"gcc-{_gcc_arch}",
             "kmod",
             "kpartx",
             "libelf-dev",
