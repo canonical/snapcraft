@@ -1,0 +1,28 @@
+name: Documentation
+description: Submit a documentation request
+labels: "documentation"
+body:
+  - type: checkboxes
+    id: check-existing-issues
+    attributes:
+      label: Check existing issues
+      options:
+        - label: I've verified that this request isn't described by any existing issues.
+          required: true
+  - type: textarea
+    id: request-description
+    attributes:
+      label: Request
+      value: >
+        <!-- Describe your request and the problem it solves. Include any relevant
+        context, screenshots, or examples. -->
+    validations:
+      required: true
+  - type: input
+    id: page-name
+    attributes:
+      label: Document location
+      value: >
+        <!-- Provide the URL or file path of the relevant page. -->
+    validations:
+      required: false

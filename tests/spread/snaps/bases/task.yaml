@@ -19,11 +19,11 @@ prepare: |
 
 restore: |
   pushd repo
-  snapcraft clean
+  snapcraft clean --use-lxd
   popd
 
   rm -rf repo
 
 execute: |
   cd repo
-  snapcraft pack
+  snapcraft pack --use-lxd
