@@ -69,7 +69,6 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
     plugin: Literal["kernel"] = "kernel"
 
-    source: str  # type: ignore[reportGeneralTypeIssues]
     kernel_kconfigs: list[str] = []
     kernel_kconfigflavour: str = "generic"
     kernel_kdefconfig: list[str] = ["defconfig"]

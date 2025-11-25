@@ -43,7 +43,7 @@ gen_defconfig() {
   # We want _kernel_kdefconfig to split as it isn't supposed to be a single arg
   # shellcheck disable=SC2086
   make -j1                      \
-       -C "${CRAFT_PART_SRC}"   \
+       -C "${KERNEL_SRC}"       \
         O="${CRAFT_PART_BUILD}" \
         ${_kernel_kdefconfig}
 }
@@ -51,8 +51,8 @@ gen_defconfig() {
 # gen_flavour_config generates a kernel config based on the chosen flavour
 gen_flavour_config() {
   OLDPWD="${PWD}"
-  ubuntuconfig="${CRAFT_PART_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${kernel_kconfigflavour}"
-  cd "${CRAFT_PART_SRC}"
+  ubuntuconfig="${KERNEL_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${kernel_kconfigflavour}"
+  cd "${KERNEL_SRC}"
 
   # Generate the configs
   # Don't let failures stop us
@@ -86,7 +86,7 @@ add_kconfigs() {
 remake_config() {
   bash -c 'yes "" || true' |
     make -j1                      \
-         -C "${CRAFT_PART_SRC}"   \
+         -C "${KERNEL_SRC}"       \
           O="${CRAFT_PART_BUILD}" \
           oldconfig
 }
@@ -111,7 +111,7 @@ check_config() {
 # release_info gathers kernel release info to encode in kernel artifacts
 release_info() {
   echo "Gathering release information"
-  DEBIAN="${CRAFT_PART_SRC}/debian"
+  DEBIAN="${KERNEL_SRC}/debian"
   src_pkg_name=$(sed -n '1s/^\(.*\) (.*).*$/\1/p'                                    "${DEBIAN}/changelog")
   release=$(     sed -n '1s/^'"${src_pkg_name}"'.*(\(.*\)-.*).*$/\1/p'               "${DEBIAN}/changelog")
   revision=$(    sed -n '1s/^'"${src_pkg_name}"'\ .*('"${release}"'-\(.*\)).*$/\1/p' "${DEBIAN}/changelog")
@@ -143,7 +143,7 @@ build_zfs() {
   # Importantly the paths are passed directly, so they must be fully qualified
   # paths and not relative ones
   ./configure \
-    --with-linux="${CRAFT_PART_SRC}"         \
+    --with-linux="${KERNEL_SRC}"             \
     --with-linux-obj="${CRAFT_PART_BUILD}"   \
     --host="${CRAFT_ARCH_TRIPLET_BUILD_FOR}" \
     --with-config=kernel
@@ -170,7 +170,7 @@ build_perf() {
 
   # Override source and build directories
   make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-       -C "${CRAFT_PART_SRC}/tools/perf"  \
+       -C "${KERNEL_SRC}/tools/perf"      \
         O="${CRAFT_PART_BUILD}/tools/perf"
 
   install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" "${CRAFT_PART_INSTALL}/bin/perf"
@@ -232,7 +232,7 @@ run() {
     # Set release ABI information if a flavour is specified
     release_info
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}"         \
-         -C "${CRAFT_PART_SRC}"                     \
+         -C "${KERNEL_SRC}"                         \
           O="${CRAFT_PART_BUILD}"                   \
           KERNELVERSION="${abi_release}-${kernel_kconfigflavour}" \
           KBUILD_BUILD_VERSION="${uploadnum}"       \
@@ -243,7 +243,7 @@ run() {
           ${build_target}
   else
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-         -C "${CRAFT_PART_SRC}"             \
+         -C "${KERNEL_SRC}"                 \
           O="${CRAFT_PART_BUILD}"           \
           ${build_target}
   fi
@@ -254,7 +254,7 @@ run() {
   # Install the kernel modules, stripped
   echo "Installing kernel modules..."
   make -j "${CRAFT_PARALLEL_BUILD_COUNT}"        \
-       -C "${CRAFT_PART_SRC}"                    \
+       -C "${KERNEL_SRC}"                        \
         O="${CRAFT_PART_BUILD}"                  \
         INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}" \
         INSTALL_MOD_STRIP=1                      \
@@ -264,7 +264,7 @@ run() {
   if [ "${CRAFT_ARCH_BUILD_FOR}" != "amd64" ]; then
     echo "Installing device trees..."
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}"              \
-         -C "${CRAFT_PART_SRC}"                          \
+         -C "${KERNEL_SRC}"                              \
           O="${CRAFT_PART_BUILD}"                        \
           INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs" \
           dtbs_install
@@ -336,10 +336,21 @@ main() {
   # variables are unset fallback to old ones and use new names in the script.
   : "${CRAFT_PART_SRC:=$SNAPCRAFT_PART_SRC}"
   : "${CRAFT_PART_BUILD:=$SNAPCRAFT_PART_BUILD}"
+  : "${CRAFT_PROJECT_DIR:=$SNAPCRAFT_PROJECT_DIR}"
   : "${CRAFT_PART_INSTALL:=$SNAPCRAFT_PART_INSTALL}"
   : "${CRAFT_ARCH_BUILD_FOR:=$SNAPCRAFT_ARCH_BUILD_FOR}"
   : "${CRAFT_PARALLEL_BUILD_COUNT:=$SNAPCRAFT_PARALLEL_BUILD_COUNT}"
   : "${CRAFT_ARCH_TRIPLET_BUILD_FOR:=$SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}"
+
+  # Use the part's source, if provided. If it isn't, perhaps the user has a kernel tree
+  # in the project root. If not, fail - we need something to build.
+  if [ -d "${CRAFT_PART_SRC}/kernel" ]; then
+    # KERNEL_SRC is the true location of the kernel source tree
+    KERNEL_SRC="${CRAFT_PART_SRC}"
+  elif [ -d "${CRAFT_PROJECT_DIR}/kernel" ]; then
+    KERNEL_SRC="${CRAFT_PROJECT_DIR}"
+  else echo "Source missing from kernel part! Please specify a source" && exit 1
+  fi
 
   # Get the build environment's VERSION_CODENAME as this should match our target
   # shellcheck disable=1091
