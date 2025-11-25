@@ -34,7 +34,7 @@ def part_info(new_dir):
 
 
 def test_get_build_snaps(part_info):
-    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_snaps() == set()
 
@@ -50,7 +50,7 @@ def test_get_build_packages_core22(part_info, new_dir):
         part=Part("my-part", {}),
     )
 
-    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
         "bc",
@@ -63,7 +63,7 @@ def test_get_build_packages_core22(part_info, new_dir):
         "fakeroot",
         "flex",
         "gawk",
-        "gcc",
+        "gcc-x86-64-linux-gnu",
         "kmod",
         "kpartx",
         "libelf-dev",
@@ -86,7 +86,7 @@ def test_get_build_packages_core24(part_info, new_dir):
         part=Part("my-part", {}),
     )
 
-    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
         "bc",
@@ -100,7 +100,7 @@ def test_get_build_packages_core24(part_info, new_dir):
         "fakeroot",
         "flex",
         "gawk",
-        "gcc",
+        "gcc-x86-64-linux-gnu",
         "kmod",
         "kpartx",
         "libdw-dev",
@@ -127,7 +127,7 @@ def test_get_build_packages_zfs_core22(part_info, new_dir):
     )
 
     properties = KernelPlugin.properties_class.unmarshal(
-        {"source": ".", "kernel-enable-zfs-support": "true"}
+        {"kernel-enable-zfs-support": "true"}
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
@@ -141,7 +141,7 @@ def test_get_build_packages_zfs_core22(part_info, new_dir):
         "fakeroot",
         "flex",
         "gawk",
-        "gcc",
+        "gcc-x86-64-linux-gnu",
         "kmod",
         "kpartx",
         "libelf-dev",
@@ -170,7 +170,7 @@ def test_get_build_packages_zfs_core24(part_info, new_dir):
     )
 
     properties = KernelPlugin.properties_class.unmarshal(
-        {"source": ".", "kernel-enable-zfs-support": "true"}
+        {"kernel-enable-zfs-support": "true"}
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
@@ -185,7 +185,7 @@ def test_get_build_packages_zfs_core24(part_info, new_dir):
         "fakeroot",
         "flex",
         "gawk",
-        "gcc",
+        "gcc-x86-64-linux-gnu",
         "kmod",
         "kpartx",
         "libdw-dev",
@@ -206,7 +206,7 @@ def test_get_build_packages_zfs_core24(part_info, new_dir):
 
 
 def test_get_build_environment(part_info):
-    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_environment() == {
@@ -220,7 +220,6 @@ def test_get_build_environment(part_info):
 def test_get_build_commands(part_info):
     properties = KernelPlugin.properties_class.unmarshal(
         {
-            "source": ".",
             "kernel-kdefconfig": [
                 "snappy_defconfig",
                 "foo_config",
