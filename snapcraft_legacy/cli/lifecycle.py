@@ -40,6 +40,7 @@ from snapcraft_legacy.internal import (
 from snapcraft_legacy.internal.errors import SnapcraftEnvironmentError
 from snapcraft_legacy.internal.repo import ua_manager
 from snapcraft_legacy.plugins.v2.kernel import KernelPlugin
+from snapcraft_legacy.plugins.v2.initrd import InitrdPlugin
 from snapcraft_legacy.project._sanity_checks import conduct_project_sanity_check
 
 from . import echo
@@ -112,6 +113,15 @@ def _execute(  # noqa: C901
         ):
             raise SnapcraftEnvironmentError(
                 "*EXPERIMENTAL* 'kernel' plugin used, but not enabled. "
+                "Enable with '--enable-experimental-plugins' flag."
+            )
+
+        plugins = [part.plugin for part in project_config.parts.all_parts]
+        if not kwargs.get("enable_experimental_plugins") and any(
+            isinstance(plugin, InitrdPlugin) for plugin in plugins
+        ):
+            raise SnapcraftEnvironmentError(
+                "*EXPERIMENTAL* 'initrd' plugin used, but not enabled. "
                 "Enable with '--enable-experimental-plugins' flag."
             )
 
