@@ -8,6 +8,9 @@ systems:
   - ubuntu-20.04-amd64
   - ubuntu-20.04-arm64
 
+environment:
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS: 1
+
 restore: |
   snapcraft clean
   rm -f ./*.snap
