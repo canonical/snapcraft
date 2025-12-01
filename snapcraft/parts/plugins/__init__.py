@@ -22,6 +22,7 @@ from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .kernel_plugin import KernelPlugin
+from .ubuntu_kernel_plugin import UbuntuKernelPlugin
 from .matter_sdk_plugin import MatterSdkPlugin
 from .poetry_plugin import PoetryPlugin
 from .python_plugin import PythonPlugin
@@ -35,6 +36,7 @@ __all__ = [
     "KernelPlugin",
     "PoetryPlugin",
     "PythonPlugin",
+    "UbuntuKernelPlugin",
     "get_plugins",
     "register",
     "UvPlugin",
