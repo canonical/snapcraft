@@ -550,7 +550,7 @@
         "summary": {
           "anyOf": [
             {
-              "description": "A short description of the project.",
+              "description": "A short description of the project. Maximum length 78 characters.",
               "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
               "maxLength": 78,
               "title": "Summary",
@@ -1136,7 +1136,7 @@
         "summary": {
           "anyOf": [
             {
-              "description": "A short description of the project.",
+              "description": "A short description of the project. Maximum length 78 characters.",
               "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
               "maxLength": 78,
               "title": "Summary",
@@ -1722,7 +1722,7 @@
         "summary": {
           "anyOf": [
             {
-              "description": "A short description of the project.",
+              "description": "A short description of the project. Maximum length 78 characters.",
               "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
               "maxLength": 78,
               "title": "Summary",
@@ -2425,7 +2425,7 @@
         "summary": {
           "anyOf": [
             {
-              "description": "A short description of the project.",
+              "description": "A short description of the project. Maximum length 78 characters.",
               "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
               "maxLength": 78,
               "title": "Summary",
@@ -3020,7 +3020,7 @@
         "summary": {
           "anyOf": [
             {
-              "description": "A short description of the project.",
+              "description": "A short description of the project. Maximum length 78 characters.",
               "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
               "maxLength": 78,
               "title": "Summary",
@@ -3615,7 +3615,7 @@
         "summary": {
           "anyOf": [
             {
-              "description": "A short description of the project.",
+              "description": "A short description of the project. Maximum length 78 characters.",
               "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
               "maxLength": 78,
               "title": "Summary",
@@ -4386,7 +4386,7 @@
         "summary": {
           "anyOf": [
             {
-              "description": "A short description of the project.",
+              "description": "A short description of the project. Maximum length 78 characters.",
               "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
               "maxLength": 78,
               "title": "Summary",
@@ -4986,7 +4986,7 @@
         "summary": {
           "anyOf": [
             {
-              "description": "A short description of the project.",
+              "description": "A short description of the project. Maximum length 78 characters.",
               "examples": ["Linux for Human Beings", "The cross-platform desktop application for JupyterLab", "Container and VM manager", "Photo Management Program", "Charm for routing MySQL databases in Kubernetes", "An open-source event streaming platform for high-performance data pipelines"],
               "maxLength": 78,
               "title": "Summary",
