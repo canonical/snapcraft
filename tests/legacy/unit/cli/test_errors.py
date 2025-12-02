@@ -168,11 +168,11 @@ https://documentation.ubuntu.com/snapcraft/stable/reference/project-file"""
         exception._resolution = "who you gonna call? ghostbusters!!"
 
         # Test default.
-        self.assertEquals(2, _get_exception_exit_code(exception))
+        self.assertEqual(2, _get_exception_exit_code(exception))
 
         # Test override.
         exception._exit_code = 50
-        self.assertEquals(50, _get_exception_exit_code(exception))
+        self.assertEqual(50, _get_exception_exit_code(exception))
 
 
 class ReportableErrorTests(unit.TestCase):
