@@ -28,6 +28,10 @@ prepare: |
 restore: |
   rm -rf test-snap
   rm -rf ./*.snap
+  # The regular clean can potentially fail depending on if/when the test itself failed, but
+  # they should always both be attempted
+  snapcraft clean || true
+  snapcraft clean --destructive-mode
 
 execute: |
   cd test-snap
