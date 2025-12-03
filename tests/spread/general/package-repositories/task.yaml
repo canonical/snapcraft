@@ -14,12 +14,7 @@ prepare: |
 
 restore: |
   cd "$SNAP"
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-      snapcraft clean --use-lxd
-  else
-      snapcraft clean --destructive-mode
-  fi
-
+  snapcraft clean
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
