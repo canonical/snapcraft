@@ -14,7 +14,7 @@ prepare: |
 
 restore: |
   cd "$SNAP"
-  snapcraft clean
+  snapcraft clean --use-lxd
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -25,7 +25,7 @@ execute: |
   cd "$SNAP"
 
   # Build what we have.
-    snapcraft pack --use-lxd
+  snapcraft pack --use-lxd
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous

@@ -26,12 +26,14 @@ prepare: |
   echo "compression: ${COMPRESSION}" >> snap/snapcraft.yaml
 
 restore: |
-  rm -rf test-snap
-  rm -rf ./*.snap
+  pushd test-snap
   # The regular clean can potentially fail depending on if/when the test itself failed, but
   # they should always both be attempted
-  snapcraft clean || true
+  snapcraft clean --use-lxd || true
   snapcraft clean --destructive-mode
+  rm -rf ./*.snap
+  popd
+  rm -rf test-snap
 
 execute: |
   cd test-snap
