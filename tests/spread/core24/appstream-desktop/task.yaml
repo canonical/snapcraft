@@ -12,10 +12,10 @@ systems:
 
 restore: |
   cd "${SNAP}"
-  # Either of the clean options can potentially fail depending on if/when the test itself failed, but
+  # The regular clean can potentially fail depending on if/when the test itself failed, but
   # they should always both be attempted
   snapcraft clean || true
-  snapcraft clean --destructive-mode || true
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
 
 execute: |
