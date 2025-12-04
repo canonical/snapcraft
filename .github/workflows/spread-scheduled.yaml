@@ -225,3 +225,26 @@ jobs:
       - name: Spread test
         run: |
           spread google:ubuntu-20.04-64:tests/spread/snaps/bases google:ubuntu-20.04-64:tests/spread/snaps/snapd
+
+  squid-proxy:
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
+    runs-on: [spread-installed]
+    steps:
+      - name: Clean up job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout Snapcraft
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Download snap artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: snap
+          path: tests
+      - name: Spread test
+        run: |
+          spread google:ubuntu-24.04-64:tests/spread/core24/squid-proxy google:ubuntu-22.04-64:tests/spread/core22/squid-proxy
