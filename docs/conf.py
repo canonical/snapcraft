@@ -133,13 +133,17 @@ exclude_patterns = [
 rediraffe_redirects = "redirects.txt"
 
 # Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
-html_baseurl = "https://documentation.ubuntu.com/snapcraft/"
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
 
-if "READTHEDOCS_VERSION" in os.environ:
-    version = os.environ["READTHEDOCS_VERSION"]
-    sitemap_url_scheme = "{version}{link}"
-else:
-    sitemap_url_scheme = "latest/{link}"
+# Builds URLs as {html_baseurl}/<page-location>
+sitemap_url_scheme = "{link}"
+
+# Exclude generated pages from the sitemap:
+sitemap_excludes = [
+    '404/',
+    'genindex/',
+    'search/',
+]
 
 # endregion
 
