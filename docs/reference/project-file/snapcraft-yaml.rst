@@ -70,7 +70,7 @@ For more information about the ``base`` and ``build-base`` keys, see
 
 .. py:currentmodule:: snapcraft.models.project
 
-.. kitbash-field:: Project build_base
+.. kitbash-field:: StableBaseProject build_base
 
 .. kitbash-field:: Project grade
 

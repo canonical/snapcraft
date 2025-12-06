@@ -149,6 +149,18 @@ Snapcraft 8.13.0
 - `#5704`_ Linter results will now always report the highest severity detected, rather
   than the most recently seen severity.
 
+Snapcraft 8.13.1
+~~~~~~~~~~~~~~~~
+
+- `#5843`_ The changes to the project model parsing from Snapcraft 8.13.0 have been
+  reverted to give more time for testing.
+
+Snapcraft 8.13.2
+~~~~~~~~~~~~~~~~
+
+- `craft-providers#850`_ Fix the "Couldn't get EOL data" errors when packing snaps with
+  the ``devel`` build base.
+
 
 Contributors
 ------------
@@ -175,3 +187,5 @@ release.
 .. _#5789: https://github.com/canonical/snapcraft/issues/5789
 .. _#5794: https://github.com/canonical/snapcraft/issues/5794
 .. _#5704: https://github.com/canonical/snapcraft/issues/5704
+.. _#5843: https://github.com/canonical/snapcraft/issues/5843
+.. _craft-providers#850: https://github.com/canonical/craft-providers/pull/850

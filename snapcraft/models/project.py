@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import re
 import textwrap
-from enum import Enum
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import pydantic
@@ -35,17 +34,24 @@ from craft_application.models.constraints import (
     SingleEntryList,
     UniqueList,
 )
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
     Grammar,
 )
 from craft_platforms import DebianArchitecture
 from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
-from pydantic.json_schema import SkipJsonSchema
+from pydantic.json_schema import (
+    SkipJsonSchema,  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
+)
 from typing_extensions import Self, override
 
 from snapcraft import utils
-from snapcraft.const import SUPPORTED_ARCHS
+from snapcraft.const import (
+    SUPPORTED_ARCHS,
+    ProjectType,
+    StableBase,
+)
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.models._validators import validate_command_chain
@@ -645,13 +651,10 @@ MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
 class Project(models.Project):
-    """Snapcraft project definition.
+    """A basic Snapcraft project.
 
-    The `snapcraft.yaml
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml>`_
-    reference details all supported keys.
-
-    XXX: Not implemented in this version - system-usernames
+    This model defines the basics of how a Snapcraft project works, extending from
+    the craft-application project model.
     """
 
     # snapcraft's `name` is more general than craft-application
@@ -672,13 +675,6 @@ class Project(models.Project):
     snap
     <https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/register-a-snap>`_.
     """
-
-    build_base: str | None = pydantic.Field(
-        validate_default=True,
-        default=None,
-        description="The build environment to use when building the snap",
-        examples=["core20", "core22", "core24", "devel"],
-    )
 
     compression: Literal["lzo", "xz"] = pydantic.Field(
         default="xz",
@@ -797,16 +793,7 @@ class Project(models.Project):
     for details.
     """
 
-    type: (
-        Literal[
-            ProjectType.APP,
-            ProjectType.BASE,
-            ProjectType.GADGET,
-            ProjectType.KERNEL,
-            ProjectType.SNAPD,
-        ]
-        | None
-    ) = pydantic.Field(
+    type: ProjectType | None = pydantic.Field(
         default=None, description="The snap's type.", examples=["kernel"]
     )
     """The snap's type.
@@ -1303,11 +1290,6 @@ class Project(models.Project):
                 )
         return self
 
-    @pydantic.model_validator(mode="after")
-    def _validate_mandatory_base(self):
-        _validate_mandatory_base(self.base, self.type)
-        return self
-
     @pydantic.field_validator("name")
     @classmethod
     def _validate_snap_name(cls, name: str) -> str:
@@ -1417,22 +1399,9 @@ class Project(models.Project):
             field_value = cast(UniqueList[str], [field_value])
         return field_value
 
-    @pydantic.field_validator("type", mode="before")
-    @classmethod
-    def _validate_type(cls, snap_type: str | None | ProjectType) -> ProjectType | None:
-        if isinstance(snap_type, str):
-            try:
-                snap_type = ProjectType(snap_type)
-            except ValueError as exc:
-                raise ValueError(
-                    "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
-                ) from exc
-
-        return snap_type
-
     @override
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> Project:
+    def unmarshal(cls, data: dict[str, Any]) -> Self:
         """Create a Snapcraft project from a dictionary of data."""
         return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)
 
@@ -1560,24 +1529,124 @@ def _custom_error(error_msg: str):
     return pydantic.WrapValidator(_validator)
 
 
-class DevelProject(Project):
-    build_base: Literal["devel"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    grade: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
-        Literal["devel"],
-        _custom_error("grade must be 'devel' when build-base is 'devel'"),
+class _BaselessProject(Project):
+    """Project types that do not require a base."""
+
+    type: Literal[  # type: ignore[reportIncompatibleVariableOverride]
+        ProjectType.BASE, ProjectType.KERNEL, ProjectType.SNAPD
     ]
+    base: SkipJsonSchema[str | None] = None
+    build_base: Literal["core24", "core26", "devel"] = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+        description="The baseline system that the snap is built in.",
+    )
+
+    @pydantic.model_validator(mode="after")
+    def _validate_no_base(self) -> Self:
+        """Baseless projects cannot have a base value set."""
+        if self.base is not None:
+            raise ValueError(f"{self.type!r} snaps cannot have a base.")
+        return self
+
+    @override
+    @pydantic.field_validator("build_base", mode="after")
+    @classmethod
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
+
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
 
 
-class Core22Project(Project):
-    type: Literal[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        ProjectType.APP,
-        ProjectType.GADGET,
-        ProjectType.KERNEL,
-        ProjectType.SNAPD,
-        None,
-    ] = pydantic.Field(default=None, description="The snap's type.")  # type: ignore[assignment]
+class _BaselessCore22Project(_BaselessProject):
+    build_base: Literal["core22"] = pydantic.Field(  # type: ignore[assignment]
+        description="The baseline system that the snap is built in.",
+    )
 
-    base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+    @pydantic.field_validator("architectures")
+    @classmethod
+    def _validate_architecture_data(
+        cls, architectures: list[str | Architecture], info: pydantic.ValidationInfo
+    ) -> list[Architecture]:
+        """Validate architecture data."""
+        return validate_architectures(architectures)
+
+    @pydantic.model_validator(mode="after")
+    def _validate_platforms_and_architectures(self) -> Self:
+        """Validate usage of platforms and architectures.
+
+        - can optionally define architectures
+        - cannot define platforms
+        """
+        # this is a one-shot - the value should not change when re-validating
+        if self.architectures and self._architectures_in_yaml is None:
+            # record if architectures are defined in the yaml for remote-build (#4881)
+            self._architectures_in_yaml = True
+
+        elif not self.architectures:
+            self._architectures_in_yaml = False
+            # set default value
+            host_arch = str(DebianArchitecture.from_host())
+            self.architectures = [
+                Architecture(
+                    build_on=[host_arch],
+                    build_for=[host_arch],
+                )
+            ]
+
+        return self
+
+
+BaselessProject = Annotated[
+    Annotated[_BaselessCore22Project, pydantic.Tag("baseless-core22")]
+    | Annotated[_BaselessProject, pydantic.Tag("baseless")],
+    pydantic.Discriminator("build_base"),
+]
+
+
+class StableBaseProject(Project):
+    """Project types that require a base."""
+
+    type: Literal[  # type: ignore[reportIncompatibleVariableOverride]
+        ProjectType.APP, ProjectType.GADGET, None
+    ] = None
+    base: StableBase  # type: ignore[reportIncompatibleVariableOverride]
+    build_base: str | None = pydantic.Field(
+        validate_default=True,
+        default=None,
+        description="The baseline system that the snap is built in.",
+        examples=["core20", "core22", "core24", "devel"],
+    )
+    """The baseline system that the snap is built in.
+
+    If the snap has a stable base, ``build-base`` must either be unset
+    or the same as the base.
+
+    If the snap has an unstable base, ``build-base`` must be set to ``devel``.
+
+    If the snap's type doesn't use a base, ``build-base`` must be set.
+    """
+
+    @pydantic.field_validator("type", mode="before")
+    @classmethod
+    def _validate_type(cls, snap_type: str | None | ProjectType) -> ProjectType | None:
+        if isinstance(snap_type, str):
+            try:
+                snap_type = ProjectType(snap_type)
+            except ValueError:
+                valid_types = humanize_list(
+                    (t.value for t in ProjectType), conjunction="or"
+                )
+                raise ValueError(f"Input should be {valid_types}") from None
+
+        return snap_type
+
+
+class Core22Project(StableBaseProject):
+    base: Literal["core22"]  # type: ignore[assignment]
 
     platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
@@ -1624,25 +1693,22 @@ class BareCore22Project(Core22Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
+    @override
+    @pydantic.field_validator("build_base", mode="after")
+    @classmethod
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
 
-class BaseCore22Project(Core22Project):
-    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
 
 
-class Core24Project(Project):
-    type: Literal[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        ProjectType.APP,
-        ProjectType.GADGET,
-        ProjectType.KERNEL,
-        ProjectType.SNAPD,
-        None,
-    ] = pydantic.Field(  # type: ignore[assignment]
-        default=None, description="The snap's type.", examples=["kernel"]
-    )
-
-    base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
+class Core24Project(StableBaseProject):
+    base: Literal["core24"]  # type: ignore[assignment]
 
     architectures: SkipJsonSchema[  # type: ignore[reportIncompatibleVariableOverride]
         Annotated[
@@ -1665,106 +1731,86 @@ class Core24Project(Project):
     )
 
 
-class BaseDevelProject(DevelProject):
-    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    build_base: Literal["devel"]  # type: ignore[reportIncompatibleVariableOverride]
-
-
 class BareCore24Project(Core24Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
-
-class BaseCore24Project(Core24Project):
-    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
-
-
-class _BuildBaseProjectEnum(Enum):
-    DEVEL = "devel"
-    CORE22 = "core22"
-    CORE24 = "core24"
-    UNIMPLEMENTED = "UNIMPLEMENTED"
-
+    @override
+    @pydantic.field_validator("build_base", mode="after")
     @classmethod
-    def _missing_(cls, value: Any):
-        return cls.UNIMPLEMENTED
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
+
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
 
 
-class _BaseProjectEnum(Enum):
-    CORE22 = "core22"
-    CORE24 = "core24"
-    BARE = "bare"
-    UNIMPLEMENTED = "UNIMPLEMENTED"
+class Core26Project(Core24Project):
+    base: Literal["core26", "devel"]  # type: ignore[assignment]
+    build_base: Literal["devel"]  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
 
+    grade: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
+        Literal["devel"],
+        _custom_error("grade must be 'devel' when build-base is 'devel'"),
+    ]
+
+
+class BareCore26Project(Core26Project):
+    base: Literal["bare"]  # type: ignore[assignment]
+    build_base: Literal["devel"]  # type: ignore[assignment]
+
+    @override
+    @pydantic.field_validator("build_base", mode="after")
     @classmethod
-    def _missing_(cls, value: Any):
-        return cls.UNIMPLEMENTED
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
 
-
-class ProjectType(Enum):
-    BASE = "base"
-    APP = "app"
-    GADGET = "gadget"
-    KERNEL = "kernel"
-    SNAPD = "snapd"
-    NONE = "None"
-
-
-def _discriminator(enum: type[Enum], key: str):
-    kebab_cased_key = key.replace("_", "-")
-    return lambda data: enum(data.get(key, data.get(kebab_cased_key))).value
-
-
-def _type_discriminator(data: dict):
-    snap_type = data.get("type")
-
-    if snap_type not in ProjectType._value2member_map_:
-        snap_type = ProjectType.NONE.value
-
-    return snap_type
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
 
 
 _BareProject = Annotated[
-    Annotated[BareCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
-    | Annotated[BareCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
-    | Annotated[
-        SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
-    ],
-    pydantic.Discriminator(_discriminator(_BuildBaseProjectEnum, "build_base")),
+    BareCore22Project | BareCore24Project | BareCore26Project,
+    pydantic.Discriminator("build_base"),
+]
+
+_StandardProject = Annotated[
+    Core22Project | Core24Project | Core26Project | _BareProject,
+    pydantic.Discriminator("base"),
 ]
 
 
-_BaseProject = Annotated[
-    Annotated[BaseDevelProject, pydantic.Tag(_BuildBaseProjectEnum.DEVEL.value)]
-    | Annotated[BaseCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
-    | Annotated[BaseCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
-    | Annotated[
-        SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
-    ],
-    pydantic.Discriminator(_discriminator(_BuildBaseProjectEnum, "build_base")),
-]
+def _validate_type(data: dict[str, Any]) -> dict[str, Any]:
+    if (
+        data.get("base") is None  # Catch both missing base key and null base.
+        and data.get("type") not in ("base", "kernel", "snapd")
+    ):
+        snap_type = data.get("type")
+        if snap_type is None:
+            raise ValueError("Missing 'base' key for snap.")
+        raise ValueError(f"Missing 'base' key for snap type {snap_type!r}.")
+    return data
 
-_CoreProject = Annotated[
-    Annotated[Core22Project, pydantic.Tag(_BaseProjectEnum.CORE22.value)]
-    | Annotated[Core24Project, pydantic.Tag(_BaseProjectEnum.CORE24.value)]
-    | Annotated[_BareProject, pydantic.Tag(_BaseProjectEnum.BARE.value)]
-    | Annotated[
-        SkipJsonSchema[Project], pydantic.Tag(_BaseProjectEnum.UNIMPLEMENTED.value)
-    ],
-    pydantic.Discriminator(_discriminator(_BaseProjectEnum, "base")),
-]
+
+def _has_type(data: dict[str, Any]) -> str:
+    if data.get("type") in ("base", "kernel", "snapd"):
+        return "baseless"
+    return "has-base"
+
 
 SnapcraftProject = Annotated[
-    Annotated[_CoreProject, pydantic.Tag(ProjectType.APP.value)]
-    | Annotated[_CoreProject, pydantic.Tag(ProjectType.GADGET.value)]
-    | Annotated[_CoreProject, pydantic.Tag(ProjectType.KERNEL.value)]
-    | Annotated[_CoreProject, pydantic.Tag(ProjectType.SNAPD.value)]
-    | Annotated[_CoreProject, pydantic.Tag(ProjectType.NONE.value)]
-    | Annotated[_BaseProject, pydantic.Tag(ProjectType.BASE.value)],
-    pydantic.Discriminator(_type_discriminator),
+    Annotated[_StandardProject, pydantic.Tag("has-base")]
+    | Annotated[BaselessProject, pydantic.Tag("baseless")],
+    pydantic.Discriminator(_has_type),
+    pydantic.BeforeValidator(_validate_type),
 ]
 
 

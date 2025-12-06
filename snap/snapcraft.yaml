@@ -180,12 +180,13 @@ parts:
       - -usr/share/python-wheels
 
   libgit2:
-    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.2.tar.gz
-    source-checksum: sha256/de384e29d7efc9330c6cdb126ebf88342b5025d920dcb7c645defad85195ea7f
+    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.9.1.tar.gz
+    source-checksum: sha256/14cab3014b2b7ad75970ff4548e83615f74d719afe00aa479b4a889c1e13fc00
     plugin: cmake
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - -DBUILD_TESTS=OFF
     build-attributes:
       - enable-patchelf
     prime:
@@ -257,6 +258,8 @@ parts:
     plugin: nil
     build-environment:
       - PYTHONPATH: $CRAFT_STAGE/lib/python3.12/site-packages
+      # so that snapcraft can find libgit2.so.1.9
+      - LD_LIBRARY_PATH: $CRAFT_STAGE/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
     override-build: |
       python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.application:get_app_info \
           > $CRAFT_PART_INSTALL/completion.sh
