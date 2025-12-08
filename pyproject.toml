@@ -147,6 +147,7 @@ explicit = true
 
 [tool.uv.sources]
 python-apt = { index = "python-apt-wheels" }
+craft-parts = { git = "https://github.com/canonical/craft-parts.git" }
 
 [project.scripts]
 snapcraft = "snapcraft.application:main"
