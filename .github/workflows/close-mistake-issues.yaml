@@ -1,0 +1,61 @@
+name: Close Mistake Issues
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  check-mistake-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Check if issue is a mistake
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title.trim();
+            const body = (issue.body || '').trim();
+
+            // Patterns that indicate a mistake issue:
+            // 1. Title is just a URL (especially git URLs)
+            // 2. Title contains .git
+            // 3. Body is empty or very short
+            // 4. Title looks like a URL pattern
+
+            const isUrlPattern = /^https?:\/\//.test(title);
+            const containsGit = title.includes('.git');
+            const isShortBody = body.length < 20;
+            const isJustUrl = /^https?:\/\/[^\s]+$/i.test(title);
+
+            // Consider it a mistake if:
+            // - Title is just a URL, or
+            // - Title contains .git and body is very short/empty
+            const isMistake = isJustUrl || (containsGit && isShortBody);
+
+            if (isMistake) {
+              console.log('Issue appears to be opened by mistake');
+              console.log(`Title: ${title}`);
+              console.log(`Body length: ${body.length}`);
+
+              // Close the issue with a comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: 'Appears to have been opened by mistake.'
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+
+              console.log('Issue closed');
+            } else {
+              console.log('Issue appears to be legitimate');
+            }
