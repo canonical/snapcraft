@@ -21,17 +21,48 @@ jobs:
 
             // Patterns that indicate a mistake issue:
             // 1. Title is just a URL (especially git URLs)
-            // 2. Title contains .git
-            // 3. Body is empty or very short
+            // 2. Title contains .git with minimal body
+            // 3. Title contains placeholder text like "TYPE YOUR QUESTION HERE"
 
             const containsGit = title.includes('.git');
             const isShortBody = body.length < 20;
             const isJustUrl = /^https?:\/\/[^\s]+$/.test(title);
 
+            // Check for common placeholder patterns in the title
+            const placeholderPatterns = [
+              /TYPE YOUR QUESTION HERE/i,
+              /TYPE YOUR ISSUE HERE/i,
+              /ENTER YOUR TITLE HERE/i,
+              /YOUR TITLE HERE/i,
+              /\[INSERT TITLE\]/i,
+              /\[YOUR TITLE\]/i
+            ];
+            const hasPlaceholderTitle = placeholderPatterns.some(
+              pattern => pattern.test(title)
+            );
+
+            // Check if body is mostly template text
+            const templateIndicators = [
+              'Please describe',
+              '*Please describe',
+              'TYPE YOUR',
+              'Reported from:'
+            ];
+            const bodyWithoutTemplate = body.split('\n')
+              .filter(line => !templateIndicators.some(
+                indicator => line.includes(indicator)
+              ))
+              .join('\n')
+              .trim();
+            const isTemplateBody = bodyWithoutTemplate.length < 20;
+
             // Consider it a mistake if:
             // - Title is just a URL, or
-            // - Title contains .git and body is very short/empty
-            const isMistake = isJustUrl || (containsGit && isShortBody);
+            // - Title contains .git and body is very short/empty, or
+            // - Title has placeholder text and body is mostly template
+            const isMistake = isJustUrl ||
+              (containsGit && isShortBody) ||
+              (hasPlaceholderTitle && isTemplateBody);
 
             if (isMistake) {
               console.log('Issue appears to be opened by mistake');
