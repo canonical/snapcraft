@@ -23,12 +23,10 @@ jobs:
             // 1. Title is just a URL (especially git URLs)
             // 2. Title contains .git
             // 3. Body is empty or very short
-            // 4. Title looks like a URL pattern
 
-            const isUrlPattern = /^https?:\/\//.test(title);
             const containsGit = title.includes('.git');
             const isShortBody = body.length < 20;
-            const isJustUrl = /^https?:\/\/[^\s]+$/i.test(title);
+            const isJustUrl = /^https?:\/\/[^\s]+$/.test(title);
 
             // Consider it a mistake if:
             // - Title is just a URL, or
