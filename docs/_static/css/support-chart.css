@@ -1,0 +1,201 @@
+.chart__bar--orange {
+    fill: #e95420;
+    stroke: #e95420;
+    stroke-width: 1px;
+}
+
+.chart__bar--orange-light {
+    fill: #fbddd2;
+    stroke: #e95420;
+    stroke-width: 1px;
+}
+
+.chart__bar--grey {
+    fill: #aea79f;
+    stroke: #aea79f;
+    stroke-width: 1px;
+}
+
+.chart__bar--light-grey {
+    fill: #8c8c8c;
+    stroke: #8c8c8c;
+    stroke-width: 1px;
+}
+
+.chart__bar--mid-dark {
+    fill: #666;
+    stroke: #666;
+    stroke-width: 1px;
+}
+
+.chart__bar--aubergine {
+    fill: #772953;
+    stroke: #772953;
+    stroke-width: 1px;
+}
+
+.chart__bar--aubergine-mid-light {
+    fill: #923a66;
+    stroke: #923a66;
+    stroke-width: 1px;
+}
+
+.chart__bar--aubergine-light {
+    fill: #cba7b8;
+    stroke: #cba7b8;
+    stroke-width: 1px;
+}
+
+.chart__bar--green {
+    fill: green;
+    stroke: green;
+    stroke-width: 1px;
+}
+
+.chart__bar--charcoal {
+    fill: #333;
+    stroke: #333;
+    stroke-width: 1px;
+}
+
+.chart__bar--black {
+    fill: #111;
+    stroke: #111;
+    stroke-width: 1px;
+}
+
+.chart__hwe-key {
+    display: none;
+}
+
+.chart__label--bold {
+    font-weight: bold;
+}
+
+.chart__label--transparent,
+.chart__bar--transparent {
+    opacity: 0.2;
+}
+
+.chart__milestone {
+    color: var(--color-foreground-primary);
+    stroke: var(--color-foreground-primary);
+    fill: var(--color-foreground-primary);
+    stroke-width: 2px;
+}
+
+.x.axis line,
+.y.axis line {
+    shape-rendering: crispEdges;
+    stroke: #d6d3cf;
+    stroke-dasharray: 3 2;
+}
+
+.tick text {
+    font-size: 14px;
+}
+
+.chart-key text {
+    font-size: 14px;
+    font-family: "Ubuntu variable", Ubuntu, sans-serif;
+}
+
+.chart text {
+    font-family: "Ubuntu variable", Ubuntu, sans-serif;
+}
+
+.x.axis text {
+    font-size: 12px;
+    text-anchor: start !important;
+}
+
+.chart-key {
+    display: block;
+}
+
+.chart-key__label {
+    fill: var(--color-foreground-primary);
+}
+
+.chart-key__row {
+    display: block;
+}
+
+.horizontal-bar-chart {
+    .tick text {
+        font-size: 16px;
+        font-weight: 350;
+    }
+
+    .x.axis text {
+        color: #666;
+        font-size: 16px;
+        font-weight: 400;
+    }
+}
+
+/* Tooltip */
+
+.u-hide {
+    display: none !important;
+}
+
+.is-detached {
+    display: block;
+    position: absolute;
+}
+
+.p-tooltip__message {
+    font-size: 0.875rem;
+    background-color: #202020;
+    border: 0;
+    color: white;
+    display: none;
+    margin-bottom: 0;
+    padding: 9px 18px;
+    position: absolute;
+    text-align: left;
+    text-decoration: initial;
+    transform: translateX(-50%) translateY(-13px);
+    white-space: pre;
+    z-index: 50;
+    bottom: 100%;
+    left: 50%;
+    top: initial;
+}
+
+.is-detached .p-tooltip__message {
+    display: block;
+}
+
+.p-tooltip__message:focus,
+.p-tooltip__message:hover {
+    display: inline;
+    text-decoration: initial;
+}
+
+.p-tooltip__message::before {
+    border-top: 0.5rem solid #202020;
+    border-bottom: 0.5rem solid transparent;
+    border-left: 0.5rem solid transparent;
+    border-right: 0.5rem solid transparent;
+    bottom: -16px;
+    content: "";
+    height: 0;
+    left: 50%;
+    pointer-events: none;
+    position: absolute;
+    width: 0;
+    transform: translateX(-50%);
+}
+
+.p-tooltip__message::after {
+    border-radius: 10% 90% 0% 100% / 100% 100% 0% 0%;
+    content: "";
+    height: 1rem;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: auto;
+    bottom: -1rem;
+}
