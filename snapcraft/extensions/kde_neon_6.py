@@ -189,7 +189,8 @@ class KDENeon6(Extension):
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
         gpu_plugs = self.kde_snaps.gpu_plugs
         gpu_layouts = self.kde_snaps.gpu_layouts
-        base = self.yaml_data["base"]
+        if not (base := self.yaml_data.get("base")):
+        	raise CraftValidationError("The 'base' key is required.")
         lxqt_support_snap = f"lxqt-support-{base}"
 
         return {
