@@ -235,6 +235,7 @@ class KDENeon6(Extension):
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
                 "GTK_USE_PORTAL": "1",
                 "PLATFORM_PLUG": platform_kf6_snap,
+                "QT_QPA_PLATFORMTHEME": "xdgdesktopportal",
                 "LD_LIBRARY_PATH": (
                     f"$SNAP/{lxqt_support_snap}/usr/lib/"
                     "${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}"
