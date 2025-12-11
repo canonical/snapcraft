@@ -360,6 +360,9 @@ def _create_snap_app(app: models.App, assumes: set[str]) -> SnapApp:
     if app.command_chain:
         assumes.add("command-chain")
 
+    if app.success_exit_status:
+        assumes.add("snapd2.74")
+
     snap_app = SnapApp(
         command=app.command,
         autostart=app.autostart,
