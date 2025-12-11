@@ -94,7 +94,7 @@ class SnapApp(SnapcraftMetadata):
     refresh_mode: str | None = None
     stop_mode: str | None = None
     restart_condition: str | None = None
-    success_exit_status: list[int | str] | None = None
+    success_exit_status: list[int] | None = None
     install_mode: str | None = None
     plugs: list[str] | None = None
     slots: list[str] | None = None
