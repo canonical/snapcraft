@@ -272,6 +272,25 @@
           "examples": ["on-failure"],
           "title": "Restart-Condition"
         },
+        "success-exit-status": {
+          "anyOf": [
+            {
+              "items": {
+                "maximum": 255,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of exit codes that are considered successful.",
+          "examples": ["[42, 250]"],
+          "title": "Success-Exit-Status"
+        },
         "install-mode": {
           "anyOf": [
             {
