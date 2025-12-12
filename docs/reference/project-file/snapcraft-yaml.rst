@@ -25,15 +25,9 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project name
 
-.. py:currentmodule:: craft_application.models.project
-
 .. kitbash-field:: Project title
 
-.. py:currentmodule:: snapcraft.models.project
-
 .. kitbash-field:: Project version
-
-.. py:currentmodule:: craft_application.models.project
 
 .. kitbash-field:: Project license
 
@@ -41,34 +35,28 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project description
 
-.. py:currentmodule:: snapcraft.models.project
-
 .. kitbash-field:: Project adopt_info
 
 .. kitbash-field:: Project type
 
-.. py:currentmodule:: craft_application.models.project
-
 .. kitbash-field:: Project base
+    :override-description:
+    :skip-examples:
 
-**Description**
+    The base snap to be used as the run-time environment.
 
-The base snap to be used as the run-time environment.
+    If the ``build-base`` key is unset, then the ``base`` key also determines the build
+    environment. For example, ``base: core24`` builds the snap in an Ubuntu 24.04
+    environment.
 
-If the ``build-base`` key is unset, then the ``base`` key also determines the build
-environment. For example, ``base: core24`` builds the snap in an Ubuntu 24.04
-environment.
+    For more information about the ``base`` and ``build-base`` keys, see
+    :ref:`reference-bases`.
 
-For more information about the ``base`` and ``build-base`` keys, see
-:ref:`reference-bases`.
+    **Examples**
 
-**Examples**
+    .. code-block:: yaml
 
-.. code-block:: yaml
-
-    base: core24
-
-.. py:currentmodule:: snapcraft.models.project
+        base: core24
 
 .. kitbash-field:: StableBaseProject build_base
 
@@ -125,15 +113,11 @@ For more information about the ``base`` and ``build-base`` keys, see
 
 .. kitbash-field:: Project apps
 
-.. py:currentmodule:: craft_application.models.project
-
 .. kitbash-field:: Project parts
     :override-type: dict[str, Part]
 
 .. kitbash-field:: Project package_repositories
     :override-type: list[dict[str, Any]]
-
-.. py:currentmodule:: snapcraft.models.project
 
 .. kitbash-field:: Project hooks
 
@@ -218,37 +202,35 @@ detail how they're built.
 .. kitbash-field:: PartSpec build_attributes
     :prepend-name: parts.<part-name>
 
-**Description**
+    The part's default behavior for executable patching is dependent on the base snap.
+    The following options alter the behavior.
 
-The part's default behavior for executable patching is dependent on the base snap.
-The following options alter the behavior.
+    **Values**
 
-**Values**
+    .. list-table::
+        :header-rows: 1
 
-.. list-table::
-    :header-rows: 1
+        * - Value
+          - Description
+        * - ``core22-step-dependencies``
+          - For snaps using core20. Orders lifecycle steps as they are ordered for
+            core22 and newer snaps.
+        * - ``enable-patchelf``
+          - For classically-confined snaps using core22 and newer. Patches executables
+            for files primed by the part. By default, executables primed by the part
+            aren't patched.
+        * - ``no-patchelf``
+          - For classically-confined snaps using core20. Disables executable patching
+            for files primed by the part. If unset, patches all executables primed by
+            the part.
+        * - ``keep-execstack``
+          - For snaps using core20. Retains the execstack for executables primed by the
+            part.
 
-    * - Value
-      - Description
-    * - ``core22-step-dependencies``
-      - For snaps using core20. Orders lifecycle steps as they are ordered for
-        core22 and newer snaps.
-    * - ``enable-patchelf``
-      - For classically-confined snaps using core22 and newer. Patches executables
-        for files primed by the part. By default, executables primed by the part
-        aren't patched.
-    * - ``no-patchelf``
-      - For classically-confined snaps using core20. Disables executable patching
-        for files primed by the part. If unset, patches all executables primed by
-        the part.
-    * - ``keep-execstack``
-      - For snaps using core20. Retains the execstack for executables primed by the
-        part.
-
-For core20 snaps, the ``core22-step-dependencies`` customization alters the part
-processing order to align with newer bases, where all parts are pulled prior to build.
-For more details on part processing for core22 and newer, see `Processing order and
-dependencies <https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
+    For core20 snaps, the ``core22-step-dependencies`` customization alters the part
+    processing order to align with newer bases, where all parts are pulled prior to build.
+    For more details on part processing for core22 and newer, see `Processing order and
+    dependencies <https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
 
 .. kitbash-field:: PartSpec override_build
     :prepend-name: parts.<part-name>
@@ -262,10 +244,9 @@ dependencies <https://documentation.ubuntu.com/snapcraft/stable/explanation/part
 .. kitbash-field:: PartSpec organize_files
     :prepend-name: parts.<part-name>
 
-Files from the build environment can be organized into specific components. The
-destination path must start with ``(component/<component-name>)``, with the parentheses
-included. Source paths always reference the default build environment.
-
+    Files from the build environment can be organized into specific components. The
+    destination path must start with ``(component/<component-name>)``, with the
+    parentheses included. Source paths always reference the default build environment.
 
 .. Stage step keys
 
