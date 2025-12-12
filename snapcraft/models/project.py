@@ -790,22 +790,14 @@ class App(models.CraftBaseModel):
 
     success_exit_status: list[Annotated[int, Ge(1), Le(255)]] | None = pydantic.Field(
         default=None,
-        description="The list of exit codes that are considered successful.",
+        description="The list of additional successful exit statuses that the service can return.",
         examples=["[42, 250]"],
     )
-    """The list of exit codes that are considered successful.
+    """The list of additional successful exit statuses that the service can return.
 
-    This field corresponds to the ``SuccessExitStatus=`` directive in systemd
-    service definitions.
-    See the `systemd manual
-    <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#SuccessExitStatus=>`_
-    for more information.
+    This key corresponds to the `SuccessExitStatus= <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#SuccessExitStatus=>`_ directive in a systemd service configuration.
 
-    Requires the ``daemon`` key to be specified for the app.
-
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    Requires the ``daemon`` key to be set for the app.
     """
 
     install_mode: Literal["enable", "disable"] | None = pydantic.Field(
