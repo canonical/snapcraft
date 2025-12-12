@@ -36,7 +36,7 @@ jobs:
       # speed up build times by using wheels, when available
       - name: Use wheels
         run: |
-          yq eval 'del(.parts.snapcraft.build-environment[] | select(.PIP_NO_BINARY == ":all:"))' -i snap/snapcraft.yaml
+          yq e 'del(.parts.snapcraft."build-environment"[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
       - name: Build snap
         uses: canonical/action-build@v1
         id: snapcraft
