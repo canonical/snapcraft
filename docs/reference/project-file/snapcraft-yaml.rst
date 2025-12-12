@@ -38,6 +38,7 @@ values such as its confinement level and supported architectures.
 .. kitbash-field:: Project adopt_info
 
 .. kitbash-field:: Project type
+    :override-type: str
 
 .. kitbash-field:: Project base
     :override-description:
