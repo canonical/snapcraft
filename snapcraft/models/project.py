@@ -854,7 +854,7 @@ class App(models.CraftBaseModel):
     )
     """The aliases that can be used to run the app.
 
-    See `Commands and aliases <https://snapcraft.io/docs/commands-and-aliases>`_
+    See `Commands and aliases <https://documentation.ubuntu.com/snapcraft/stable/reference/commands/>`_
     for more information.
     """
 
@@ -964,7 +964,7 @@ class App(models.CraftBaseModel):
     key.
 
     See `Using development features in Snapcraft
-    <https://snapcraft.io/docs/using-in-development-features>`_ for more
+    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#reference-snapcraft-yaml-top-level-keys>`_ for more
     details.
     """
 
@@ -1098,7 +1098,7 @@ class Hook(models.CraftBaseModel):
     To pass a value for the entire project, see the top-level ``passthrough`` key.
 
     See `Using development features in Snapcraft
-    <https://snapcraft.io/docs/using-in-development-features>`_ for more details.
+    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#reference-snapcraft-yaml-top-level-keys>`_ for more details.
     """
 
     @pydantic.field_validator("command_chain")
@@ -1148,7 +1148,7 @@ class ContentPlug(models.CraftBaseModel):
     )
     """The name of the interface.
 
-    See `Supported interfaces <https://snapcraft.io/docs/supported-interfaces>`_ for a
+    See `Supported interfaces <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/>`_ for a
     list of supported interfaces.
 
     When using the content interface, this should be set to ``content``.
@@ -1497,7 +1497,7 @@ class Project(models.Project):
             <https://snapcraft.io/docs/the-gadget-snap>`_ snap.
         * - ``kernel``
           - Set the snap as a `kernel
-            <https://snapcraft.io/docs/the-kernel-snap>`_ snap.
+            <https://documentation.ubuntu.com/snapcraft/stable/reference/bases/#kernel-snaps>`_ snap.
         * - ``snapd``
           - Set the snap as a snapd snap.
 
@@ -1534,7 +1534,7 @@ class Project(models.Project):
     default value.
 
     For more information, see
-    `Confinement <https://snapcraft.io/docs/snap-confinement>`_.
+    `Confinement <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/anatomy-of-snapcraft-yaml/#confinement>`_.
 
     **Values**
 
@@ -1706,7 +1706,7 @@ class Project(models.Project):
     To pass a value for a particular app, see the ``passthrough`` key for ``apps``.
 
     See `Using development features in Snapcraft
-    <https://snapcraft.io/docs/using-in-development-features>`_.
+    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#reference-snapcraft-yaml-top-level-keys>`_.
     """
 
     apps: dict[str, App] | None = pydantic.Field(
@@ -1815,7 +1815,7 @@ class Project(models.Project):
 
     This is used to use the snapd defined user ``snap_daemon`` run a daemon.  Otherwise, this is an uncommonly used vaiue.
 
-    See `system usernames <https://snapcraft.io/docs/system-usernames>`_ for more
+    See `system usernames <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#system-usernames>`_ for more
     information.
     """
 
