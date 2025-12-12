@@ -17,11 +17,11 @@
 # Attributes that the jsonschema from the Snap Store originally require but
 # Snapcraft does not have been commented out from this schema originally
 # imported from
-# https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
+# https://documentation.ubuntu.com/snapcraft/stable/release-notes/
 
 from typing import Any, Dict
 
-# Version 14, found at: https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-releases
+# Version 14, found at: https://documentation.ubuntu.com/snapcraft/stable/release-notes/
 RELEASES_JSONSCHEMA: Dict[str, Any] = {
     "properties": {
         "releases": {
