@@ -177,6 +177,9 @@ def test_get_root_snippet(kde_neon_6_extension):
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
             "GTK_USE_PORTAL": "1",
             "PLATFORM_PLUG": "kf6-core22",
+            "LD_LIBRARY_PATH": "$SNAP/lxqt-support-core22/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}",
+            "QT_PLUGIN_PATH": "$SNAP/lxqt-support-core22/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}",
+            "QT_QPA_PLATFORMTHEME": "xdgdesktopportal",
         },
         "hooks": {
             "configure": {
@@ -188,6 +191,8 @@ def test_get_root_snippet(kde_neon_6_extension):
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support-core22/usr/share/Kvantum"},
+            "/usr/share/color-schemes": {"symlink": "$SNAP/lxqt-support-core22/usr/share/color-schemes"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -217,6 +222,12 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "default-provider": "kf6-core22",
                 "target": "$SNAP/kf6",
             },
+            "lxqt-support-core22": {
+                "content": "lxqt-support-core22",
+                "interface": "content",
+                "default-provider": "lxqt-support-core22",
+                "target": "$SNAP/lxqt-support-core22",
+            },
         },
     }
 
@@ -229,6 +240,9 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
             "GTK_USE_PORTAL": "1",
             "PLATFORM_PLUG": "kf6-core24",
+            "LD_LIBRARY_PATH": "$SNAP/lxqt-support-core24/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}",
+            "QT_PLUGIN_PATH": "$SNAP/lxqt-support-core24/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}",
+            "QT_QPA_PLATFORMTHEME": "xdgdesktopportal", 
         },
         "hooks": {
             "configure": {
@@ -241,6 +255,8 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support-core24/usr/share/Kvantum"},
+            "/usr/share/color-schemes": {"symlink": "$SNAP/lxqt-support-core24/usr/share/color-schemes"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -274,6 +290,12 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
                 "default-provider": "mesa-2404",
                 "interface": "content",
                 "target": "$SNAP/gpu-2404",
+            },
+            "lxqt-support-core24": {
+                "content": "lxqt-support-core24",
+                "interface": "content",
+                "default-provider": "lxqt-support-core24",
+                "target": "$SNAP/lxqt-support-core24",
             },
         },
     }
@@ -314,6 +336,9 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
             "GTK_USE_PORTAL": "1",
             "PLATFORM_PLUG": "kf6-core22",
+            "LD_LIBRARY_PATH": "$SNAP/lxqt-support-core22/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}",
+            "QT_PLUGIN_PATH": "$SNAP/lxqt-support-core22/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}",
+            "QT_QPA_PLATFORMTHEME": "xdgdesktopportal",
         },
         "hooks": {
             "configure": {
@@ -325,6 +350,8 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support-core22/usr/share/Kvantum"},
+            "/usr/share/color-schemes": {"symlink": "$SNAP/lxqt-support-core22/usr/share/color-schemes"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -354,6 +381,12 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "default-provider": "kf6-core22",
                 "target": "$SNAP/kf6",
             },
+            "lxqt-support-core22": {
+                "content": "lxqt-support-core22",
+                "interface": "content",
+                "default-provider": "lxqt-support-core22",
+                "target": "$SNAP/lxqt-support-core22",
+            },
         },
     }
 
@@ -368,6 +401,9 @@ def test_get_root_snippet_with_external_sdk_core24(
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
             "GTK_USE_PORTAL": "1",
             "PLATFORM_PLUG": "kf6-core24",
+            "LD_LIBRARY_PATH": "$SNAP/lxqt-support-core24/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}",
+            "QT_PLUGIN_PATH": "$SNAP/lxqt-support-core24/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}",
+            "QT_QPA_PLATFORMTHEME": "xdgdesktopportal",
         },
         "hooks": {
             "configure": {
@@ -380,6 +416,8 @@ def test_get_root_snippet_with_external_sdk_core24(
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support-core24/usr/share/Kvantum"},
+            "/usr/share/color-schemes": {"symlink": "$SNAP/lxqt-support-core24/usr/share/color-schemes"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -413,6 +451,12 @@ def test_get_root_snippet_with_external_sdk_core24(
                 "default-provider": "mesa-2404",
                 "interface": "content",
                 "target": "$SNAP/gpu-2404",
+            },
+            "lxqt-support-core24": {
+                "content": "lxqt-support-core24",
+                "interface": "content",
+                "default-provider": "lxqt-support-core24",
+                "target": "$SNAP/lxqt-support-core24",
             },
         },
     }
