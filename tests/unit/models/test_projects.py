@@ -1293,6 +1293,56 @@ class TestAppValidation:
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
+    @pytest.mark.parametrize(
+        "success_exit_status",
+        [[42, 250], [42], []],
+    )
+    def test_app_success_exit_status_valid(self, success_exit_status, app_yaml_data):
+        data = app_yaml_data(success_exit_status=success_exit_status)
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+
+        if len(success_exit_status) > 0:
+            assert project.apps["app1"].success_exit_status == success_exit_status
+        else:
+            assert project.apps["app1"].success_exit_status is None
+
+    @pytest.mark.parametrize(
+        "success_exit_status,expected_error",
+        [
+            (
+                [400],
+                "Input should be less than or equal to 255",
+            ),
+            (
+                [0],
+                "Input should be greater than or equal to 1",
+            ),
+            (
+                ["bar"],
+                "Input should be a valid integer, unable to parse string as an integer",
+            ),
+            (
+                [1.5],
+                "Input should be a valid integer, got a number with a fractional part",
+            ),
+            (
+                [42, 400],
+                "Input should be less than or equal to 255",
+            ),
+            (
+                "not a list",
+                "Input should be a valid list",
+            ),
+        ],
+    )
+    def test_app_success_exit_status_invalid(
+        self, success_exit_status, expected_error, app_yaml_data
+    ):
+        data = app_yaml_data(success_exit_status=success_exit_status)
+        with pytest.raises(pydantic.ValidationError, match=expected_error):
+            Project.unmarshal(data)
+
     def test_app_valid_aliases(self, app_yaml_data):
         data = app_yaml_data(aliases=["i", "am", "a", "list"])
 
