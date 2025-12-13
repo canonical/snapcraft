@@ -1066,6 +1066,15 @@ class App(models.CraftBaseModel):
             )
         return extensions
 
+    @pydantic.field_validator("success_exit_status")
+    @classmethod
+    def _validate_success_exit_status(
+        cls, status_list: list[int] | None
+    ) -> list[int] | None:
+        if status_list == []:
+            return None
+        return status_list
+
 
 class Hook(models.CraftBaseModel):
     """Snapcraft project hook definition."""

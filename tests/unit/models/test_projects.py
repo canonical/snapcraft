@@ -1295,15 +1295,17 @@ class TestAppValidation:
 
     @pytest.mark.parametrize(
         "success_exit_status",
-        [
-            [42, 250],
-        ],
+        [[42, 250], [42], []],
     )
     def test_app_success_exit_status_valid(self, success_exit_status, app_yaml_data):
         data = app_yaml_data(success_exit_status=success_exit_status)
         project = Project.unmarshal(data)
         assert project.apps is not None
-        assert project.apps["app1"].success_exit_status == success_exit_status
+
+        if len(success_exit_status) > 0:
+            assert project.apps["app1"].success_exit_status == success_exit_status
+        else:
+            assert project.apps["app1"].success_exit_status is None
 
     @pytest.mark.parametrize(
         "success_exit_status,expected_error",
@@ -1323,6 +1325,10 @@ class TestAppValidation:
             (
                 [1.5],
                 "Input should be a valid integer, got a number with a fractional part",
+            ),
+            (
+                [42, 400],
+                "Input should be less than or equal to 255",
             ),
             (
                 "not a list",
