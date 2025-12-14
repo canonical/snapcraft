@@ -22,6 +22,7 @@ import functools
 import re
 from typing import Any
 
+from craft_application.errors import CraftValidationError
 from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
@@ -190,7 +191,7 @@ class KDENeon6(Extension):
         gpu_plugs = self.kde_snaps.gpu_plugs
         gpu_layouts = self.kde_snaps.gpu_layouts
         if not (base := self.yaml_data.get("base")):
-        	raise CraftValidationError("The 'base' key is required.")
+            raise CraftValidationError("The 'base' key is required.")
         lxqt_support_snap = f"lxqt-support-{base}"
 
         return {
