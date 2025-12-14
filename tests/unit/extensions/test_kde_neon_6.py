@@ -179,7 +179,6 @@ def test_get_root_snippet(kde_neon_6_extension):
             "PLATFORM_PLUG": "kf6-core22",
             "LD_LIBRARY_PATH": "$SNAP/lxqt-support-core22/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}",
             "QT_PLUGIN_PATH": "$SNAP/lxqt-support-core22/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}",
-            "QT_QPA_PLATFORMTHEME": "xdgdesktopportal",
         },
         "hooks": {
             "configure": {
@@ -246,7 +245,6 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
             "PLATFORM_PLUG": "kf6-core24",
             "LD_LIBRARY_PATH": "$SNAP/lxqt-support-core24/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}",
             "QT_PLUGIN_PATH": "$SNAP/lxqt-support-core24/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}",
-            "QT_QPA_PLATFORMTHEME": "xdgdesktopportal",
         },
         "hooks": {
             "configure": {
@@ -346,7 +344,6 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             "PLATFORM_PLUG": "kf6-core22",
             "LD_LIBRARY_PATH": "$SNAP/lxqt-support-core22/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}",
             "QT_PLUGIN_PATH": "$SNAP/lxqt-support-core22/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}",
-            "QT_QPA_PLATFORMTHEME": "xdgdesktopportal",
         },
         "hooks": {
             "configure": {
@@ -415,7 +412,6 @@ def test_get_root_snippet_with_external_sdk_core24(
             "PLATFORM_PLUG": "kf6-core24",
             "LD_LIBRARY_PATH": "$SNAP/lxqt-support-core24/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}",
             "QT_PLUGIN_PATH": "$SNAP/lxqt-support-core24/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}",
-            "QT_QPA_PLATFORMTHEME": "xdgdesktopportal",
         },
         "hooks": {
             "configure": {
