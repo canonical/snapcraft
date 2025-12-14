@@ -191,8 +191,12 @@ def test_get_root_snippet(kde_neon_6_extension):
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support-core22/usr/share/Kvantum"},
-            "/usr/share/color-schemes": {"symlink": "$SNAP/lxqt-support-core22/usr/share/color-schemes"},
+            "/usr/share/Kvantum": {
+                "symlink": "$SNAP/lxqt-support-core22/usr/share/Kvantum"
+            },
+            "/usr/share/color-schemes": {
+                "symlink": "$SNAP/lxqt-support-core22/usr/share/color-schemes"
+            },
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -255,8 +259,12 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support-core24/usr/share/Kvantum"},
-            "/usr/share/color-schemes": {"symlink": "$SNAP/lxqt-support-core24/usr/share/color-schemes"},
+            "/usr/share/Kvantum": {
+                "symlink": "$SNAP/lxqt-support-core24/usr/share/Kvantum"
+            },
+            "/usr/share/color-schemes": {
+                "symlink": "$SNAP/lxqt-support-core24/usr/share/color-schemes"
+            },
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -350,8 +358,12 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support-core22/usr/share/Kvantum"},
-            "/usr/share/color-schemes": {"symlink": "$SNAP/lxqt-support-core22/usr/share/color-schemes"},
+            "/usr/share/Kvantum": {
+                "symlink": "$SNAP/lxqt-support-core22/usr/share/Kvantum"
+            },
+            "/usr/share/color-schemes": {
+                "symlink": "$SNAP/lxqt-support-core22/usr/share/color-schemes"
+            },
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -416,8 +428,12 @@ def test_get_root_snippet_with_external_sdk_core24(
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support-core24/usr/share/Kvantum"},
-            "/usr/share/color-schemes": {"symlink": "$SNAP/lxqt-support-core24/usr/share/color-schemes"},
+            "/usr/share/Kvantum": {
+                "symlink": "$SNAP/lxqt-support-core24/usr/share/Kvantum"
+            },
+            "/usr/share/color-schemes": {
+                "symlink": "$SNAP/lxqt-support-core24/usr/share/color-schemes"
+            },
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
