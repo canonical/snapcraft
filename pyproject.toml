@@ -33,9 +33,9 @@ dependencies = [
     "pygit2~=1.18.2",
     # Snapcraft directly only cares about pylxd on Linux. However, as a note for
     # packagers: As of 3.1.0, craft-providers depends on pylxd on all platforms.
-    # When we drop the direct dependency we will remove the following line, but pylxd
+    # If we drop the direct dependency we will remove the following line, but pylxd
     # will still be in the dependency tree.
-    "pylxd ; sys_platform == 'linux'",
+    "pylxd",
     "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
