@@ -1727,7 +1727,7 @@ class Project(models.Project):
 
     system_usernames: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="The system usernames the snap uses to run daemons and services.",
+        description="The system usernames the snap can use to run daemons and services.",
         examples=["{snap-daemon: shared}"],
     )
     """The system usernames the snap can use to run daemons and services.
