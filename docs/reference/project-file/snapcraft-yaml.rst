@@ -101,8 +101,10 @@ values such as its confinement level and supported architectures.
 .. kitbash-field:: Project environment
 
 .. kitbash-field:: Project build_packages
+    :override-type: list[str]
 
 .. kitbash-field:: Project build_snaps
+    :override-type: list[str]
 
 .. kitbash-field:: Project ua_services
 
@@ -137,6 +139,7 @@ The ``apps`` key declares the programs and services that a snap operates on the 
 and details how they're executed and which resources they can access.
 
 .. kitbash-model:: App
+    :skip-description:
     :prepend-name: apps.<app-name>
 
 

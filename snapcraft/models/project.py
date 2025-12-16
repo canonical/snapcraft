@@ -422,13 +422,12 @@ class App(models.CraftBaseModel):
     relative to ``$SNAP``.
 
     The command must consist only of alphanumeric characters, spaces, and the following
-    special characters: ``/, ., _, #, :, $, -``. If other characters are required, a
-    wrapper script should be used for the command.
+    special characters: ``/``, ``.``, ``_``, ``#``, ``:``, ``$``, ``-``. If other
+    characters are required, a wrapper script should be used for the command.
 
-    If the ``daemon`` is set, this will be the command to run the service. Only a snap
-    with classic confinement can use a relative path because PATH isn't modified by a
-    wrapper in classic confinement. See `Classic confinement
-    <https://documentation.ubuntu.com/snapcraft/stable/explanation/classic-confinement>`_
+    If the ``daemon`` key is set, this command runs the service. Only
+    classically-confined snaps can use a relative path because PATH isn't modified by a
+    wrapper in classic confinement. See :ref:`explanation-classic-confinement`
     for more details.
     """
 
@@ -456,9 +455,8 @@ class App(models.CraftBaseModel):
     )
     """The identifier to a desktop ID within an external appstream file.
 
-    See `Configure package information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_
-    for more information.
+    See `Configure package information <how-to-configure-package-information>`_ for more
+    information.
     """
 
     bus_name: str | None = pydantic.Field(
@@ -474,9 +472,8 @@ class App(models.CraftBaseModel):
     )
     """The desktop file used to start an app.
 
-    See `Configure package information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_
-    for more information.
+    See `Configure package information <how-to-configure-package-information>`_ for more
+    information.
     """
 
     completer: str | None = pydantic.Field(
@@ -497,9 +494,7 @@ class App(models.CraftBaseModel):
     This allows a daemon to gracefully stop or restart, such as when a snap refresh
     occurs.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     post_stop_command: str | None = pydantic.Field(
@@ -514,9 +509,8 @@ class App(models.CraftBaseModel):
     This allows a daemon to gracefully stop or restart, such as when a snap
     refresh occurs.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+
     """
 
     start_timeout: str | None = pydantic.Field(
@@ -532,9 +526,8 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+
     """
 
     stop_timeout: str | None = pydantic.Field(
@@ -550,9 +543,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     watchdog_timeout: str | None = pydantic.Field(
@@ -569,9 +560,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     reload_command: str | None = pydantic.Field(
@@ -583,9 +572,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     restart_delay: str | None = pydantic.Field(
@@ -597,9 +584,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     timer: str | None = pydantic.Field(
@@ -618,9 +603,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     daemon: Literal["simple", "forking", "oneshot", "notify", "dbus"] | None = (
@@ -632,10 +615,6 @@ class App(models.CraftBaseModel):
     )
     """Configures the app as a service, and sets its runtime and
     notification behavior.
-
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
 
     **Values**
 
@@ -675,9 +654,7 @@ class App(models.CraftBaseModel):
     Requires the ``daemon`` key to be specified for the app. Apps in the
     ``after`` key must also specify the ``daemon`` key.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     before: UniqueList[str] = pydantic.Field(
@@ -692,9 +669,7 @@ class App(models.CraftBaseModel):
     Requires the ``daemon`` key to be specified for the app. Apps in the
     ``before`` key must also specify the ``daemon`` key.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
@@ -708,9 +683,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
 
     **Values**
 
@@ -751,9 +724,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     restart_condition: (
@@ -782,9 +753,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     install_mode: Literal["enable", "disable"] | None = pydantic.Field(
@@ -796,9 +765,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
 
     **Values**
 
@@ -813,10 +780,9 @@ class App(models.CraftBaseModel):
             service. This will start the service too.
         * - ``disable``
           - The service is not automatically started. Instead, the service will be
-            started with `craftctl
-            <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/customize-lifecycle-steps-and-part-variables>`_
-            and another management agent, which is most commonly a `hook
-            <https://documentation.ubuntu.com/snapcraft/stable/reference/hooks>`_.
+            started with :ref:`craftctl <how-to-customize-the-build-and-part-variables>`.
+            and another management agent, which is most commonly a :ref:`hooks
+            <reference-hooks>`.
 
     """
 
@@ -911,9 +877,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
 
     **Values**
 
@@ -944,9 +908,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
     passthrough: dict[str, Any] | None = pydantic.Field(
@@ -985,9 +947,7 @@ class App(models.CraftBaseModel):
     acting on the project’s keys in memory – the actual project file on
     disk is unaffected.
 
-    For guidance on specific extensions, see `Extensions
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/extensions/#how-to-extensions>`_.
-    """
+    For guidance on specific extensions, see :ref:`how-to-extensions`."""
 
     @pydantic.field_validator("autostart")
     @classmethod
@@ -1351,12 +1311,11 @@ class Project(models.Project):
     numbers, and hyphens. It must contain at least one letter and it can't start or end
     with a hyphen. The maximum length is 40 characters.
 
-    The name must be unique if you want to `publish it to the Snap Store
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/publish-a-snap>`_.
+    The name must be unique if you want to :ref:`publish it to the Snap Store
+    <how-to-publish-a-snap>`.
 
-    For help on choosing a name and registering it on the Snap Store, see `Register a
-    snap
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/register-a-snap>`_.
+    For help on choosing a name and registering it on the Snap Store, see :ref:`Register
+    a snap <how-to-register-a-snap>`.
     """
 
     compression: Literal["lzo", "xz"] = pydantic.Field(
@@ -1399,9 +1358,7 @@ class Project(models.Project):
     This field is required unless version information is provided by the ``adopt-info``
     key.
 
-    See `Configure package information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_
-    for details.
+    See :ref:`how-to-configure-package-information` for details.
     """
 
     donation: UniqueList[str] | str | None = pydantic.Field(
@@ -1413,9 +1370,7 @@ class Project(models.Project):
 
     Donation links can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     # snapcraft's `source_code` is more general than craft-application
@@ -1428,9 +1383,7 @@ class Project(models.Project):
 
     Source code links can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     contact: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
@@ -1442,9 +1395,7 @@ class Project(models.Project):
 
     Contact information can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     issues: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
@@ -1457,9 +1408,7 @@ class Project(models.Project):
 
     Issue links can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     website: UniqueList[str] | str | None = pydantic.Field(
@@ -1471,9 +1420,7 @@ class Project(models.Project):
 
     Websites can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     type: ProjectType | None = pydantic.Field(
@@ -1510,8 +1457,8 @@ class Project(models.Project):
     For core22 and newer bases, confinement is a required property and has no
     default value.
 
-    For more information, see
-    `Confinement <https://snapcraft.io/docs/snap-confinement>`_.
+    For more information, see `Snap confinement
+    <https://snapcraft.io/docs/snap-confinement>`_.
 
     **Values**
 
@@ -1541,13 +1488,12 @@ class Project(models.Project):
 
     Layouts modify the execution environment of a strictly-confined snap.
 
-    With layouts, you can make elements in ``$SNAP``, ``$SNAP_DATA``, ``$SNAP_COMMON``
-    accessible from locations such as ``/usr``, ``/var`` and ``/etc``. This helps when
-    using pre-compiled binaries and libraries that expect to find files and directories
-    outside of locations referenced by ``$SNAP`` or ``$SNAP_DATA``.
+    With layouts, you can make elements in ``$SNAP``, ``$SNAP_DATA``, and
+    ``$SNAP_COMMON`` accessible from locations such as ``/usr``, ``/var`` and ``/etc``.
+    This helps when using pre-compiled binaries and libraries that expect to find files
+    and directories outside of locations referenced by ``$SNAP`` or ``$SNAP_DATA``.
 
-    See `Layouts <https://documentation.ubuntu.com/snapcraft/stable/reference/layouts>`_
-    for complete details.
+    See :ref:`reference-layouts` for details.
 
     **Values**
 
@@ -1559,13 +1505,13 @@ class Project(models.Project):
         * - ``symlink: <source-path>``
           - Create a symbolic link. This method is preferred because it is the cheapest;
             the other methods significantly increase the startup time of your
-            application
+            application.
         * - ``bind: <source-path>``
           - Bind-mount a directory.
         * - ``bind-file: <source-path>``
           - Bind-mount a file.
         * - ``type: tmpfs``
-          - Mount a private, temporary, in-memory filesystem
+          - Mount a private, temporary, in-memory filesystem.
 
     """
 
@@ -1615,7 +1561,6 @@ class Project(models.Project):
 
     Architectures may be defined as a shorthand list of architectures or a
     explicit pair of ``build-on``/``build-for`` entries.
-
     """
 
     _architectures_in_yaml: bool | None = None
@@ -1668,6 +1613,14 @@ class Project(models.Project):
         description="Configures the snap's hooks.",
         examples=["{configure: {plugs: [home]}}"],
     )
+    """Configures the snap's hooks.
+
+    Hooks are run automatically if they're packaged with the snap. They only needed to
+    be listed in the project file if they need additional configuration, such as an
+    environment variable.
+
+    See :ref:`hooks <reference-hooks>` for more information.
+    """
 
     passthrough: dict[str, Any] | None = pydantic.Field(
         default=None,
@@ -1688,18 +1641,15 @@ class Project(models.Project):
 
     apps: dict[str, App] | None = pydantic.Field(
         default=None,
-        description="The map of app names representing entry points to run for the snap.",
+        description="The individual programs and services that the snap runs.",
         examples=["{app-1: {command: bin/app-1}}"],
     )
-    """The map of app names representing entry points to run for the snap.
+    """The individual programs and services that the snap runs.
 
-    Apps are used to expose applications and services for the snap, how they are
-    run, and which resources they can access.
+    Each entry defines the executable, how it's run, and the resources it can access.
 
-    If the app name is the same as snap name, the app will be run when the snap
-    is run as app-name.
-
-    If they differ, the program will be exposed as '<snap-name>.<app-name>'.
+    If an app name matches the snap name, the app is exposed to the host with that name.
+    If they differ, the app is exposed to the host as '<snap-name>.<app-name>'.
     """
 
     plugs: dict[str, ContentPlug | Any] | None = pydantic.Field(
@@ -1727,18 +1677,13 @@ class Project(models.Project):
 
     Snapcraft runs the following linters:
 
-    - `classic
-      <https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-classic-linter>`_:
-      Verifies binary file parameters for snaps using `classic confinement
-      <https://documentation.ubuntu.com/snapcraft/stable/explanation/classic-confinement>`_.
-    - `library
-      <https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter>`_:
-      Verifies that no ELF file dependencies, such as libraries, are missing and that no
+    - :ref:`classic <how-to-use-the-classic-linter>`: Verifies binary file parameters
+      for snaps using :ref:`classic confinement <explanation-classic-confinement>`.
+    - :ref:`library <how-to-use-the-library-linter>`: Verifies that no ELF file
+         dependencies, such as libraries, are missing and that no
       extra libraries are included in the snap package.
 
-    See `Linters <https://documentation.ubuntu.com/snapcraft/stable/reference/linters>`_
-    for more information.
-
+    See :ref:`reference-linters` for more information.
     """
 
     epoch: str | None = pydantic.Field(
@@ -1756,9 +1701,7 @@ class Project(models.Project):
 
     This is an uncommonly used key.
 
-    See `Manage data compatibility
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/manage-data-compatibility>`_
-    for more information.
+    See :ref:`how-to-manage-data-compatibility` for more information.
     """
 
     adopt_info: str | None = pydantic.Field(
@@ -1785,12 +1728,13 @@ class Project(models.Project):
 
     system_usernames: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="The system usernames that the snap can use to run daemons and services.",
+        description="The system usernames the snap uses to run daemons and services.",
         examples=["{snap-daemon: shared}"],
     )
-    """The system usernames that the snap can use to run daemons and services.
+    """The system usernames the snap can use to run daemons and services.
 
-    This is used to use the snapd defined user ``snap_daemon`` run a daemon.  Otherwise, this is an uncommonly used vaiue.
+    This is used to run daemons with the ``snap_daemon`` user defined by
+    snapd. Otherwise, this is an uncommon key.
 
     See `system usernames <https://snapcraft.io/docs/system-usernames>`_ for more
     information.
