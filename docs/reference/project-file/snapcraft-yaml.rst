@@ -205,11 +205,27 @@ detail how they're built.
 
 .. kitbash-field:: PartSpec build_attributes
     :prepend-name: parts.<part-name>
+    :override-description:
+
+    Special identifiers that change certain features and behavior during the build.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``enable-usrmerge``
+          - Fills the ``${CRAFT_PART_INSTALL}`` directory with a merged ``/usr``
+            directory before running the part's build step.
+        * - ``disable-usrmerge``
+          - Prevents a merged ``/usr`` directory from being assembled for the build
+            step. Available in lifecycles where the directory would be merged by
+            default.
 
     The part's default behavior for executable patching is dependent on the base snap.
     The following options alter the behavior.
-
-    **Values**
 
     .. list-table::
         :header-rows: 1

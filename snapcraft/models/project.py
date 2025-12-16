@@ -552,9 +552,9 @@ class App(models.CraftBaseModel):
     """The maximum amount of time the service can run without sending a
     heartbeat to the watchdog.
 
-    For the watchdog to work, the application must have access to the
-    ``systemd`` notification socket by specifying ``daemon-notify`` plug in the
-    apps ``plugs`` definition.
+    For the watchdog to work, the application must have access to the systemd
+    notification socket by declaring ``daemon-notify`` in the app's ``plugs``
+    definition.
 
     Requires the ``daemon`` key to be specified for the app.
 
@@ -635,7 +635,7 @@ class App(models.CraftBaseModel):
             send signals to the systemd notification socket by specifying
             ``daemon-notify`` in the app's ``plugs`` definition.
         * - ``dbus``
-          - ``Registers a D-Bus name to notify systemd. Requires ``bus-name`` or
+          - Registers a D-Bus name to notify systemd. Requires ``bus-name`` or
             ``activates-on`` to be specified.
 
     """
@@ -743,7 +743,7 @@ class App(models.CraftBaseModel):
     )
     """The conditions that cause the service to restart.
 
-    The conditions for ``restart-condition`` match those defined by ``systemd``.
+    The conditions for ``restart-condition`` match those defined by systemd.
     See the `systemd manual
     <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#Restart=>`_
     for information on what exit codes will trigger a restart for each
@@ -916,7 +916,7 @@ class App(models.CraftBaseModel):
     )
     """The attributes to pass to the snap's metadata file for the app.
 
-    Attributes to passthrough to snap.yaml without validation from Snapcraft.
+    Attributes to pass to the snap.yaml file without validation from Snapcraft.
     This is useful for early testing of a new feature in snapd that isn't
     supported yet by Snapcraft.
 
@@ -1272,9 +1272,10 @@ class Component(models.CraftBaseModel):
         default=None,
         description=textwrap.dedent(
             """\
-        Selects a part to inherit metadata from and reuse for the component's metadata.
+            Selects a part to inherit metadata from and reuse for the component's
+            metadata.
 
-        Only the component's version can be set.
+            Only the component's version can be set.
             """
         ),
         examples=["foo-part"],
@@ -1283,7 +1284,7 @@ class Component(models.CraftBaseModel):
 
     Only the component's version can be set.
 
-    Metadata can be set using the 'craftctl set' command in an 'override-' script.
+    Metadata can be set using the ``craftctl set`` command in an `override-`` script.
     For example, ``craftctl set components.my-component.version=$(git describe)``.
     """
 
