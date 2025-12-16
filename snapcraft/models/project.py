@@ -455,8 +455,7 @@ class App(models.CraftBaseModel):
     )
     """The identifier to a desktop ID within an external appstream file.
 
-    See `Configure package information <how-to-configure-package-information>`_ for more
-    information.
+    See :ref:`how-to-configure-package-information` for details.
     """
 
     bus_name: str | None = pydantic.Field(
@@ -472,8 +471,7 @@ class App(models.CraftBaseModel):
     )
     """The desktop file used to start an app.
 
-    See `Configure package information <how-to-configure-package-information>`_ for more
-    information.
+    See :ref:`how-to-configure-package-information` for details.
     """
 
     completer: str | None = pydantic.Field(
