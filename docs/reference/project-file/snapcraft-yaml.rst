@@ -1,3 +1,6 @@
+.. meta::
+    :description: Find details and examples for every key in a snap project file.
+
 .. _reference-snapcraft-yaml:
 
 snapcraft.yaml
