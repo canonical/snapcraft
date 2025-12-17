@@ -116,18 +116,6 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project provenance
 
-.. kitbash-field:: Project apps
-
-.. kitbash-field:: Project parts
-    :override-type: dict[str, Part]
-
-.. kitbash-field:: Project hooks
-
-.. kitbash-field:: Project components
-    :override-type: dict[str, Component]
-
-.. kitbash-field:: Project plugs
-
 
 .. _reference-snapcraft-yaml-platform-keys:
 
@@ -166,8 +154,7 @@ Architecture keys
 App keys
 --------
 
-The ``apps`` key declares the programs and services that a snap operates on the host,
-and details how they're executed and which resources they can access.
+.. kitbash-field:: Project apps
 
 .. kitbash-model:: App
     :skip-description:
@@ -255,9 +242,6 @@ and details how they're executed and which resources they can access.
 .. kitbash-field:: App command_chain
     :prepend-name: apps.<app-name>
 
-.. kitbash-field:: App sockets
-    :prepend-name: apps.<app-name>
-
 .. kitbash-field:: App daemon_scope
     :prepend-name: apps.<app-name>
 
@@ -277,8 +261,8 @@ and details how they're executed and which resources they can access.
 Part keys
 ---------
 
-The ``parts`` key and its values declare the snap's :ref:`parts <explanation-parts>` and
-detail how they're built.
+.. kitbash-field:: Project parts
+    :override-type: dict[str, Part]
 
 .. py:currentmodule:: craft_parts.parts
 
@@ -447,26 +431,40 @@ Socket keys
 
 .. py:currentmodule:: snapcraft.models.project
 
+.. kitbash-field:: App sockets
+    :prepend-name: apps.<app-name>
+
 .. kitbash-model:: Socket
     :prepend-name: sockets.<socket-name>
+    :skip-description:
 
 
 Hook keys
 ---------
 
+.. kitbash-field:: Project hooks
+
 .. kitbash-model:: Hook
     :prepend-name: hooks.<hook-type>
+    :skip-description:
 
 
 Component keys
 --------------
 
+.. kitbash-field:: Project components
+    :override-type: dict[str, Component]
+
 .. kitbash-model:: Component
     :prepend-name: components.<component-name>
+    :skip-description:
 
 
 Content plug keys
 -----------------
 
+.. kitbash-field:: Project plugs
+
 .. kitbash-model:: ContentPlug
     :prepend-name: plugs.<plug-name>
+    :skip-description:
