@@ -426,9 +426,9 @@ class App(models.CraftBaseModel):
     characters are required, a wrapper script should be used for the command.
 
     If the ``daemon`` key is set, this command runs the service. Only
-    classically-confined snaps can use a relative path because PATH isn't modified by a
-    wrapper in classic confinement. See :ref:`explanation-classic-confinement`
-    for more details.
+    classically-confined snaps can use a relative path because ``PATH`` isn't modified
+    by a wrapper in classic confinement. See :ref:`explanation-classic-confinement` for
+    more details.
     """
 
     autostart: str | None = pydantic.Field(
@@ -789,7 +789,7 @@ class App(models.CraftBaseModel):
         description="The list of slots that the app provides.",
         examples=["[dbus-daemon]"],
     )
-    """The list of slots that the app provides.
+    """The list of slots that the app provides.ProjectType
 
     Slot connections are only made when the snap is running in ``strict``
     confinement.
@@ -916,12 +916,11 @@ class App(models.CraftBaseModel):
     )
     """The attributes to pass to the snap's metadata file for the app.
 
-    Attributes to pass to the snap.yaml file without validation from Snapcraft.
-    This is useful for early testing of a new feature in snapd that isn't
-    supported yet by Snapcraft.
+    These attributes are passed to the ``snap.yaml`` file without validation from Snapcraft.
+    This is useful for early testing of a new feature in snapd that isn't supported yet
+    by Snapcraft.
 
-    To pass a value for the entire project, see the top-level ``passthrough``
-    key.
+    To pass a value for the entire project, see the top-level ``passthrough`` key.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_ for more
@@ -1049,9 +1048,9 @@ class Hook(models.CraftBaseModel):
     )
     """The attributes to pass to the snap's metadata file for the hook.
 
-    Attributes to passthrough to snap.yaml without validation from Snapcraft. This is
-    useful for early testing of a new feature in snapd that isn't supported yet by
-    Snapcraft.
+    These attributes are passed to the ``snap.yaml`` file without validation from
+    Snapcraft. This is useful for early testing of a new feature in snapd that isn't
+    supported yet by Snapcraft.
 
     To pass a value for the entire project, see the top-level ``passthrough`` key.
 
@@ -1076,14 +1075,28 @@ class Architecture(models.CraftBaseModel, extra="forbid"):
     """Snapcraft project architecture definition."""
 
     build_on: str | UniqueList[str] = pydantic.Field(
-        description="The architectures on which the snap can be built.",
-        examples=["[amd64, riscv64]"],
+        description="The architectures to build the snap on.",
+        examples=["arm64", "[amd64, riscv64]"],
     )
+    """The architectures to build the snap on.
+
+    Must be paired with a ``build-for`` entry.
+
+    This list must contain unique values. If the value is a string, it will be parsed
+    into a single-entry list at runtime.
+    """
+
     build_for: str | UniqueList[str] | None = pydantic.Field(
         default=None,
-        description="The single element list containing the architecture where the snap can be run",
-        examples=["[amd64]", "[riscv64]"],
+        description="The target architecture for the build.",
+        examples=["amd64", "[riscv64]"],
     )
+    """The target architecture for the build.
+
+    Must be paired with a ``build-on`` entry.
+
+    If the value is a string, it will be parsed into a single-entry list at runtime.
+    """
 
 
 class ContentPlug(models.CraftBaseModel):
@@ -1148,15 +1161,27 @@ class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
     build_on: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[assignment]
-        description="The architectures on which the snap can be built.",
-        examples=["[amd64, riscv64]"],
+        description="The architectures to build the snap on.",
+        examples=["arm64", "[amd64, riscv64]"],
         min_length=1,
     )
+    """The architectures to build the snap on.
+
+    This list must contain unique values. If the value is a string, it will be parsed
+    into a single-entry list at runtime. This field is optional if the name of the
+    platform is a valid build-for entry.
+    """
+
     build_for: SingleEntryList | str | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
-        description="The single element list containing the architecture the snap is built for.",
-        examples=["[amd64]", "[riscv64]"],
+        description="The target architecture for the build.",
+        examples=["amd64", "[riscv64]"],
     )
+    """The target architecture for the build.
+
+    If the value is a string, it will be parsed into a single-entry list at runtime.
+    This field is optional if the name of the platform is a valid build-for entry.
+    """
 
     @pydantic.field_validator("build_on", "build_for", mode="before")
     @classmethod
@@ -1545,34 +1570,32 @@ class Project(models.Project):
 
     architectures: list[str | Architecture] | None = pydantic.Field(
         default=None,
-        description="The architecture sets where the snap can be built and where the resulting snap can run.",
+        description="The architectures that the snap builds and runs on.",
         examples=[
             "[amd64, riscv64]",
             "[{build-on: [amd64], build-for: [amd64]}]",
             "[{build-on: [amd64, riscv64], build-for: [riscv64]}]",
         ],
     )
-    """The architecture sets where the snap can be built and where the resulting
-    snap can run.
+    """The architectures that the snap builds and runs on.
 
-    The architectures key is only used in core22 and older snaps. For
-    core24 and newer snaps, use the ``platform`` key.
+    Architectures can be defined as either a shorthand list of architectures or as pairs
+    of ``build-on`` and ``build-for`` entries.
 
-    Architectures may be defined as a shorthand list of architectures or a
-    explicit pair of ``build-on``/``build-for`` entries.
+    The ``architectures`` key is only used in core22 and older snaps. For core24 and
+    newer snaps, use the ``platforms`` key.
     """
 
     _architectures_in_yaml: bool | None = None
 
     platforms: dict[str, Platform] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
-        description="The platforms where the snap can be built and where the resulting snap can run.",
+        description="The architectures that the snap builds and runs on.",
         examples=[
             "{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"
         ],
     )
-    """The platforms where the snap can be built and where the resulting snap
-    can run.
+    """The architectures that the snap builds and runs on.
 
     If the platform name is a valid debian architecture, build-on and build-for
     can be omitted.
@@ -1628,9 +1651,9 @@ class Project(models.Project):
     )
     """The attributes to pass to the snap's metadata file.
 
-    These attributes are passed to ``snap.yaml`` without validation from Snapcraft.
-    This is useful for early testing of a new feature in snapd that isn't yet supported
-    by Snapcraft.
+    These attributes are passed to the ``snap.yaml`` file without validation from
+    Snapcraft. This is useful for early testing of a new feature in snapd that isn't yet
+    supported by Snapcraft.
 
     To pass a value for a particular app, see the ``passthrough`` key for ``apps``.
 
@@ -1679,7 +1702,7 @@ class Project(models.Project):
     - :ref:`classic <how-to-use-the-classic-linter>`: Verifies binary file parameters
       for snaps using :ref:`classic confinement <explanation-classic-confinement>`.
     - :ref:`library <how-to-use-the-library-linter>`: Verifies that no ELF file
-         dependencies, such as libraries, are missing and that no
+      dependencies, such as libraries, are missing and that no
       extra libraries are included in the snap package.
 
     See :ref:`reference-linters` for more information.

@@ -27,18 +27,11 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project title
 
-.. kitbash-field:: Project version
-
-.. kitbash-field:: Project license
-
 .. kitbash-field:: Project summary
 
 .. kitbash-field:: Project description
 
-.. kitbash-field:: Project adopt_info
-
-.. kitbash-field:: Project type
-    :override-type: str
+.. kitbash-field:: Project version
 
 .. kitbash-field:: Project base
     :override-description:
@@ -61,20 +54,32 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: StableBaseProject build_base
 
-.. kitbash-field:: Project grade
-
-.. kitbash-field:: Project confinement
-
 .. kitbash-field:: Project source_code
-    :override-type: str | list[str]
+    :override-type: str
+
+.. kitbash-field:: Project license
 
 .. kitbash-field:: Project contact
     :override-type: str | list[str]
 
-.. kitbash-field:: Project website
+.. kitbash-field:: Project issues
     :override-type: str | list[str]
 
-.. kitbash-field:: Project issues
+.. kitbash-field:: Project adopt_info
+
+.. kitbash-field:: Project environment
+
+.. kitbash-field:: Project package_repositories
+    :override-type: list[dict[str, Any]]
+
+.. kitbash-field:: Project type
+    :override-type: str
+
+.. kitbash-field:: Project grade
+
+.. kitbash-field:: Project confinement
+
+.. kitbash-field:: Project website
     :override-type: str | list[str]
 
 .. kitbash-field:: Project donation
@@ -98,8 +103,6 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project system_usernames
 
-.. kitbash-field:: Project environment
-
 .. kitbash-field:: Project build_packages
     :override-type: list[str]
 
@@ -110,17 +113,10 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project provenance
 
-.. kitbash-field:: Project platforms
-
-.. kitbash-field:: Project architectures
-
 .. kitbash-field:: Project apps
 
 .. kitbash-field:: Project parts
     :override-type: dict[str, Part]
-
-.. kitbash-field:: Project package_repositories
-    :override-type: list[dict[str, Any]]
 
 .. kitbash-field:: Project hooks
 
@@ -128,6 +124,38 @@ values such as its confinement level and supported architectures.
     :override-type: dict[str, Component]
 
 .. kitbash-field:: Project plugs
+
+
+.. _reference-snapcraft-yaml-platform-keys:
+
+Platform keys
+-------------
+
+.. kitbash-field:: Project platforms
+
+.. kitbash-field:: Platform build_on
+    :prepend-name: platforms.<platform-name>
+    :override-type: str | list[str]
+
+.. kitbash-field:: Platform build_for
+    :prepend-name: platforms.<platform-name>
+    :override-type: str | list[str]
+
+
+.. _reference-snapcraft-yaml-architectures:
+
+Architecture keys
+-----------------
+
+.. kitbash-field:: Project architectures
+
+.. kitbash-field:: Architecture build_on
+    :prepend-name: architectures.<architecture>
+    :override-type: str | list[str]
+
+.. kitbash-field:: Architecture build_for
+    :prepend-name: architectures.<architecture>
+    :override-type: str | list[str]
 
 
 .. _reference-snapcraft-yaml-app-keys:
