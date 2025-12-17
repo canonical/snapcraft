@@ -1,13 +1,13 @@
 .. meta::
-    :description: Find details and examples for every key in a snap project file.
+    :description: Find usage details and examples for every key in a snap's project file.
 
 .. _reference-snapcraft-yaml:
 
 snapcraft.yaml
 ==============
 
-This reference describes the purpose, usage, and examples of all available keys in a
-snap's project file, ``snapcraft.yaml``.
+This reference describes the usage of and provides examples for every key in a snap's
+project file, ``snapcraft.yaml``.
 
 For keys that refer to file and directory locations, paths are always relative to the
 snap's file system, not the host.
