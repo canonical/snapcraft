@@ -1603,7 +1603,7 @@ class Project(models.Project):
     specifying ``build-on`` and ``build-for``, the the name is arbitrary but
     it's recommended to set the platform name to the ``build-for`` architecture.
 
-    The ``platforms`` key is only used in core24 and newer snaps.  For core22 and older
+    The ``platforms`` key is only used in core24 and newer snaps. For core22 and older
     snaps, use the ``architectures`` key.
     """
 
@@ -1680,7 +1680,7 @@ class Project(models.Project):
             "{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"
         ],
     )
-    """Declares the snap's slots.
+    """Declares the snap's plugs.
 
     See :ref:`explanation-interfaces` for more information.
     """
@@ -1793,7 +1793,7 @@ class Project(models.Project):
     )
     """The list of packages to install when building a snap.
 
-    All build packages are installed before any part is built.  However, if a
+    All build packages are installed before any part is built. However, if a
     package is only needed for one part, it's recommended to use the
     ``build-packages`` key for that part.  This organization makes it easier to
     track which parts require which build packages.
