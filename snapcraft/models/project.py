@@ -920,7 +920,8 @@ class App(models.CraftBaseModel):
     This is useful for early testing of a new feature in snapd that isn't supported yet
     by Snapcraft.
 
-    To pass a value for the entire project, see the top-level ``passthrough`` key.
+    To pass a value for the entire project, see the top-level
+    :ref:`snapcraft-yaml-passthrough` key.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_ for more
@@ -1052,7 +1053,8 @@ class Hook(models.CraftBaseModel):
     Snapcraft. This is useful for early testing of a new feature in snapd that isn't
     supported yet by Snapcraft.
 
-    To pass a value for the entire project, see the top-level ``passthrough`` key.
+    To pass a value for the entire project, see the top-level
+    :ref:`snapcraft-yaml-passthrough` key.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_ for more details.
@@ -1654,7 +1656,8 @@ class Project(models.Project):
     Snapcraft. This is useful for early testing of a new feature in snapd that isn't yet
     supported by Snapcraft.
 
-    To pass a value for a particular app, see the ``passthrough`` key for ``apps``.
+    To pass a value for a particular app, see the
+    :ref:`snapcraft-yaml-app-passthrough` key for ``apps``.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_.
