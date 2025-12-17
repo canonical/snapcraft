@@ -789,7 +789,7 @@ class App(models.CraftBaseModel):
         description="The list of slots that the app provides.",
         examples=["[dbus-daemon]"],
     )
-    """The list of slots that the app provides.ProjectType
+    """The list of slots that the app provides.
 
     Slot connections are only made when the snap is running in ``strict``
     confinement.
@@ -1168,8 +1168,7 @@ class Platform(models.Platform):
     """The architectures to build the snap on.
 
     This list must contain unique values. If the value is a string, it will be parsed
-    into a single-entry list at runtime. This field is optional if the name of the
-    platform is a valid build-for entry.
+    into a single-entry list at runtime.
     """
 
     build_for: SingleEntryList | str | None = pydantic.Field(  # type: ignore[assignment]
@@ -1180,7 +1179,7 @@ class Platform(models.Platform):
     """The target architecture for the build.
 
     If the value is a string, it will be parsed into a single-entry list at runtime.
-    This field is optional if the name of the platform is a valid build-for entry.
+    This field is optional if the name of the platform is a valid ``build-for`` entry.
     """
 
     @pydantic.field_validator("build_on", "build_for", mode="before")
@@ -1534,7 +1533,7 @@ class Project(models.Project):
           - Bind-mount a directory.
         * - ``bind-file: <source-path>``
           - Bind-mount a file.
-        * - ``type: tmpfs``
+        * - ``tmpfs: <source-path>``
           - Mount a private, temporary, in-memory filesystem.
 
     """
@@ -1597,15 +1596,15 @@ class Project(models.Project):
     )
     """The architectures that the snap builds and runs on.
 
-    If the platform name is a valid debian architecture, build-on and build-for
+    If the platform name is a valid Debian architecture, ``build-on`` and ``build-for``
     can be omitted.
 
     The platform name describes a ``build-on``/``build-for`` pairing.  When
     specifying ``build-on`` and ``build-for``, the the name is arbitrary but
     it's recommended to set the platform name to the ``build-for`` architecture.
 
-    The platforms key is only used in core24 and newer snaps.  For core22
-    and older snaps, use the ``architectures`` key.
+    The ``platforms`` key is only used in core24 and newer snaps.  For core22 and older
+    snaps, use the ``architectures`` key.
     """
 
     assumes: UniqueList[str] = pydantic.Field(
@@ -1681,6 +1680,10 @@ class Project(models.Project):
             "{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"
         ],
     )
+    """Declares the snap's slots.
+
+    See :ref:`explanation-interfaces` for more information.
+    """
 
     slots: dict[str, Any] | None = pydantic.Field(
         default=None,
@@ -1689,6 +1692,10 @@ class Project(models.Project):
             "{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"
         ],
     )
+    """Declares the snap's slots.
+
+    See :ref:`explanation-interfaces` for more information.
+    """
 
     lint: Lint | None = pydantic.Field(
         default=None,
@@ -1702,8 +1709,11 @@ class Project(models.Project):
     - :ref:`classic <how-to-use-the-classic-linter>`: Verifies binary file parameters
       for snaps using :ref:`classic confinement <explanation-classic-confinement>`.
     - :ref:`library <how-to-use-the-library-linter>`: Verifies that no ELF file
-      dependencies, such as libraries, are missing and that no
-      extra libraries are included in the snap package.
+      dependencies, such as libraries, are missing and that no extra libraries are
+      included in the snap package.
+    - :ref:`metadata <how-to-use-the-metadata-linter>`: Verifies that the snap contains
+      all the :ref:`metadata <reference-anatomy-of-snapcraft-yaml-metadata>` needed for
+      a better listing in the Snap Store.
 
     See :ref:`reference-linters` for more information.
     """
@@ -1784,7 +1794,7 @@ class Project(models.Project):
     """The list of packages to install when building a snap.
 
     All build packages are installed before any part is built.  However, if a
-    package is only needed for one part, it is recommended to use the
+    package is only needed for one part, it's recommended to use the
     ``build-packages`` key for that part.  This organization makes it easier to
     track which parts require which build packages.
     """
@@ -1797,9 +1807,13 @@ class Project(models.Project):
     """The snaps to install when building a snap.
 
     If only the snap name is provided, the snap will be installed from the
-    ``latest/stable`` channel.
+    ``latest/stable`` channel. Otherwise, a channel can be specified with
+    ``<name>/<channel>``.
 
-    Otherwise, a channel can be specified with ``<name>/<channel>``.
+    All build snaps are installed before any part is built.  However, if a
+    snap is only needed for one part, it's recommended to use the
+    ``build-snaps`` key for that part.  This organization makes it easier to
+    track which parts require which build snaps.
     """
 
     ua_services: set[str] | None = pydantic.Field(
