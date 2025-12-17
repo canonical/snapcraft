@@ -170,6 +170,104 @@ and details how they're executed and which resources they can access.
     :skip-description:
     :prepend-name: apps.<app-name>
 
+.. kitbash-field:: App command
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App autostart
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App common_id
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App bus_name
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App desktop
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App completer
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App stop_command
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App post_stop_command
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App start_timeout
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App stop_timeout
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App watchdog_timeout
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App reload_command
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App restart_delay
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App timer
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App daemon
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App after
+    :prepend-name: apps.<app-name>
+    :label: snapcraft-yaml-app-after
+
+.. kitbash-field:: App before
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App refresh_mode
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App stop_mode
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App restart_condition
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App install_mode
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App slots
+    :prepend-name: apps.<app-name>
+    :label: snapcraft-yaml-app-slots
+
+.. kitbash-field:: App plugs
+    :prepend-name: apps.<app-name>
+    :label: snapcraft-yaml-app-plugs
+
+.. kitbash-field:: App aliases
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App environment
+    :prepend-name: apps.<app-name>
+    :label: snapcraft-yaml-app-environment
+
+.. kitbash-field:: App command_chain
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App sockets
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App daemon_scope
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App activates_on
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App passthrough
+    :prepend-name: apps.<app-name>
+    :label: snapcraft-yaml-app-passthrough
+
+.. kitbash-field:: App extensions
+    :prepend-name: apps.<app-name>
+
 
 .. _reference-snapcraft-yaml-part-keys:
 
@@ -188,6 +286,7 @@ detail how they're built.
 
 .. kitbash-field:: PartSpec after
     :prepend-name: parts.<part-name>
+    :label: snapcraft-yaml-part-after
 
 .. kitbash-field:: PartSpec disable_parallel
     :prepend-name: parts.<part-name>
