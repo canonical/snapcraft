@@ -44,6 +44,7 @@ execute: |
   # Verify content snap was installed for dependency checks.
   snap list gtk-common-themes
   snap list kf6-core24
+  snap list lxqt-support-core24
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then
