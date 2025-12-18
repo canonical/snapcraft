@@ -44,7 +44,7 @@
 "howto/craft-a-snap/example-ros-2-app.rst" "how-to/integrations/craft-an-ros-2-app.rst"
 "howto/craft-a-snap/example-ruby-app.rst" "how-to/integrations/index.rst"
 "how-to/crafting/override-the-default-build.rst" "explanation/build-overrides.rst"
-"how-to/crafting/customize-lifecycle-steps-and-part-variables.rst" "how-to/crafting/override-the-part-lifecycle.rst"
+"how-to/crafting/customize-lifecycle-steps-and-part-variables.rst" "how-to/crafting/override-the-parts-lifecycle.rst"
 "how-to/integrations/craft-a-ruby-app.rst" "how-to/integrations/index.rst"
 "howto/craft-a-snap/example-rust-app.rst" "how-to/integrations/craft-a-rust-app.rst"
 "how-to/setup/select-a-build-provider.rst" "how-to/select-a-build-provider.rst"
