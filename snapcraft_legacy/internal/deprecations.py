@@ -43,9 +43,9 @@ _DEPRECATION_MESSAGES = {
     # dn14 is the next available slot.
 }
 
-_DEPRECATION_URL_FMT = "http://snapcraft.io/docs/deprecation-notices/{id}"
+_DEPRECATION_URL_FMT = ""
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)https://documentation.ubuntu.com/snapcraft/stable/how-to/change-bases/change-from-core22-to-core24/#how-to-change-from-core22-to-core24/#deprecated-features
 
 
 def _deprecation_message(id):

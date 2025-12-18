@@ -445,7 +445,7 @@ class App(models.CraftBaseModel):
     environment is started.
 
     See `Autostart desktop files
-    <https://snapcraft.io/docs/the-snap-format#heading--autostart>`_ for an
+    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.autostart>`_ for an
     example of both the desktop file and the ``Exec`` file entry.
     """
 
@@ -832,7 +832,7 @@ class App(models.CraftBaseModel):
 
     Slots are used to define what code and data can be shared with other snaps.
 
-    See the `content interface <https://snapcraft.io/docs/content-interface>`_
+    See the `content interface <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_
     for more information about plugs and slots.
     """
 
@@ -843,7 +843,7 @@ class App(models.CraftBaseModel):
     )
     """The list of interfaces that the app can connect to.
 
-    See the `content interface <https://snapcraft.io/docs/content-interface>`_
+    See the `content interface <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_
     for more information about plugs and slots.
     """
 
@@ -1080,7 +1080,7 @@ class Hook(models.CraftBaseModel):
     )
     """The list of interfaces that the hook can connect to.
 
-    See the `content interface <https://snapcraft.io/docs/content-interface>`_ for more
+    See the `content interface <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_ for more
     information about plugs and slots.
     """
 
@@ -1161,7 +1161,7 @@ class ContentPlug(models.CraftBaseModel):
     """The path to where the producer's files will be available in the snap.
 
     This is only needed when using the content interface. See the `Content
-    interface <https://snapcraft.io/docs/content-interface>`_ for more information.
+    interface <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_ for more information.
     """
 
     default_provider: str | None = pydantic.Field(
@@ -1172,7 +1172,7 @@ class ContentPlug(models.CraftBaseModel):
     """The name of the producer snap.
 
     This is only needed when using the content interface. See the `Content interface
-    <https://snapcraft.io/docs/content-interface>`_ for more information.
+    <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_ for more information.
     """
 
     @pydantic.field_validator("default_provider")
@@ -1494,7 +1494,7 @@ class Project(models.Project):
           - Set the snap as a base.
         * - ``gadget``
           - Set the snap as a `gadget
-            <https://snapcraft.io/docs/the-gadget-snap>`_ snap.
+            <https://documentation.ubuntu.com/snapcraft/stable/explanation/snap-configurations/#default-values>`_ snap.
         * - ``kernel``
           - Set the snap as a `kernel
             <https://documentation.ubuntu.com/snapcraft/stable/reference/bases/#kernel-snaps>`_ snap.
