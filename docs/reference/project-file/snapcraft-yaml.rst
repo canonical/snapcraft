@@ -68,6 +68,14 @@ values such as its confinement level and supported architectures.
 .. kitbash-field:: Project issues
     :override-type: str | list[str]
 
+.. kitbash-field:: Project donation
+    :override-type: str | list[str]
+
+.. kitbash-field:: Project website
+    :override-type: str | list[str]
+
+.. kitbash-field:: Project icon
+
 .. kitbash-field:: Project adopt_info
 
 .. kitbash-field:: Project environment
@@ -82,15 +90,7 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project confinement
 
-.. kitbash-field:: Project website
-    :override-type: str | list[str]
-
-.. kitbash-field:: Project donation
-    :override-type: str | list[str]
-
 .. kitbash-field:: Project compression
-
-.. kitbash-field:: Project icon
 
 .. kitbash-field:: Project layout
 
