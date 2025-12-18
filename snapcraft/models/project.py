@@ -23,6 +23,7 @@ import textwrap
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import pydantic
+from annotated_types import Ge, Le
 from craft_application import models
 from craft_application.errors import CraftValidationError
 from craft_application.models import (  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
@@ -754,6 +755,18 @@ class App(models.CraftBaseModel):
     See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
     """
 
+    success_exit_status: list[Annotated[int, Ge(1), Le(255)]] | None = pydantic.Field(
+        default=None,
+        description="The list of additional successful exit statuses that the service can return.",
+        examples=["[42, 250]"],
+    )
+    """The list of additional successful exit statuses that the service can return.
+
+    This key corresponds to the `SuccessExitStatus= <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#SuccessExitStatus=>`_ directive in a systemd service configuration.
+
+    Requires the ``daemon`` key to be set for the app.
+    """
+
     install_mode: Literal["enable", "disable"] | None = pydantic.Field(
         default=None,
         description="Whether snapd can automatically start the service when the snap is installed.",
@@ -1009,6 +1022,15 @@ class App(models.CraftBaseModel):
                 f"Valid extensions are {valid_extensions!r}."
             )
         return extensions
+
+    @pydantic.field_validator("success_exit_status")
+    @classmethod
+    def _validate_success_exit_status(
+        cls, status_list: list[int] | None
+    ) -> list[int] | None:
+        if status_list == []:
+            return None
+        return status_list
 
 
 class Hook(models.CraftBaseModel):
