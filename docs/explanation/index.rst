@@ -19,6 +19,7 @@ and their implementation.
     extensions
     components
     snap-configurations
+    build-overrides
     remote-build
     /common/craft-parts/explanation/filesets
     classic-confinement
