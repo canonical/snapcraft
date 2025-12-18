@@ -4,8 +4,10 @@
 
 .. _how-to-customize-the-build-and-part-variables:
 
-Customize lifecycle steps and project variables
-===============================================
+.. _how-to-override-the-part-lifecycle:
+
+Override the part lifecycle
+===========================
 
 .. include:: /common/craft-parts/how-to/customise-the-build-with-craftctl.rst
     :start-line: 7
@@ -26,7 +28,10 @@ Example solutions
     :start-after: craftctl get <key>
     :end-before: Expose part variables in apps
 
+
 .. _how-to-customize-the-build-and-part-variables-access-project-variables:
+
+.. _how-to-override-the-part-lifecycle-access-project-variables:
 
 Access project variables across parts and components
 ----------------------------------------------------

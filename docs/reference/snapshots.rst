@@ -38,5 +38,5 @@ Including ``snapshots.yaml`` in a snap
 
 The ``snapshots.yaml`` file must be located within a snap's ``meta`` directory. This is
 typically done by creating a part that uses either the :ref:`craft_parts_dump_plugin` or
-a :ref:`build step override <how-to-override-the-default-build>` to copy
+a :ref:`build step override <how-to-override-the-part-lifecycle>` to copy
 ``snapshots.yaml`` from another directory.

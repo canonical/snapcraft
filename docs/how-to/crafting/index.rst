@@ -15,8 +15,7 @@ Crafting
     use-layouts
     manage-data-compatibility
     include-local-files-and-remote-resources
-    override-the-default-build
-    customize-lifecycle-steps-and-part-variables
+    override-the-part-lifecycle
     reuse-packages-between-builds
     create-a-component
     enable-classic-confinement

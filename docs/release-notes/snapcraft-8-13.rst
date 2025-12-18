@@ -42,7 +42,7 @@ Parts can now set a component versions dynamically. If a component points to a p
 the ``adopt-info`` key, the part can call craftctl to set the version.
 
 For detailed guidance, see
-:ref:`how-to-customize-the-build-and-part-variables-access-project-variables`.
+:ref:`how-to-override-the-part-lifecycle-access-project-variables`.
 
 
 Documentation submodule name change
