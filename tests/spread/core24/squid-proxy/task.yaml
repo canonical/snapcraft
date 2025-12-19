@@ -1,4 +1,5 @@
 summary: Verify that squid proxy can be passed as an http proxy to snapcraft.
+manual: true
 
 environment:
   SNAP_DIR: snaps/squid-proxy-test
