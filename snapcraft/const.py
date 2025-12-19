@@ -35,10 +35,10 @@ class StrEnum(str, enum.Enum):
 class ProjectType(StrEnum):
     """The type of snap project."""
 
-    BASE = "base"
-    """A base snap, e.g. core26"""
     APP = "app"
     """An application snap (the default). Most snaps are this type."""
+    BASE = "base"
+    """A base snap, e.g. core26"""
     GADGET = "gadget"
     """A gadget snap."""
     KERNEL = "kernel"
