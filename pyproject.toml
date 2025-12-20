@@ -31,7 +31,11 @@ dependencies = [
     # Further info: https://www.pygit2.org/install.html#version-numbers
     # 1.18 is the last minor version that supports Python 3.10
     "pygit2~=1.18.2",
-    "pylxd ; sys_platform == 'linux'",
+    # Snapcraft directly only cares about pylxd on Linux. However, as a note for
+    # packagers: As of 3.1.0, craft-providers depends on pylxd on all platforms.
+    # If we drop the direct dependency we will remove the following line, but pylxd
+    # will still be in the dependency tree.
+    "pylxd",
     "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
