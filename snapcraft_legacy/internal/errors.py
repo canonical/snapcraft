@@ -343,7 +343,7 @@ class MissingGadgetError(SnapcraftError):
         "file\n"
         "in the root of your snapcraft project\n\n"
         "Read more about gadget snaps and the gadget.yaml on:\n"
-        "https://documentation.ubuntu.com/snapcraft/stable/explanation/snap-configurations/#default-values"
+        "https://snapcraft.io/docs/the-gadget-snap"
     )
 
 

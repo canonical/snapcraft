@@ -445,7 +445,7 @@ class App(models.CraftBaseModel):
     environment is started.
 
     See `Autostart desktop files
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.autostart>`_ for an
+    <https://snapcraft.io/docs/the-snap-format#heading--autostart>`_ for an
     example of both the desktop file and the ``Exec`` file entry.
     """
 
@@ -809,7 +809,7 @@ class App(models.CraftBaseModel):
 
     Slots are used to define what code and data can be shared with other snaps.
 
-    See the `content interface <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_
+    See the `content interface <https://snapcraft.io/docs/content-interface>`_
     for more information about plugs and slots.
     """
 
@@ -820,7 +820,7 @@ class App(models.CraftBaseModel):
     )
     """The list of interfaces that the app can connect to.
 
-    See the `content interface <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_
+    See the `content interface <https://snapcraft.io/docs/content-interface>`_
     for more information about plugs and slots.
     """
 
@@ -831,7 +831,7 @@ class App(models.CraftBaseModel):
     )
     """The aliases that can be used to run the app.
 
-    See `Commands and aliases <https://documentation.ubuntu.com/snapcraft/stable/reference/commands/>`_
+    See `Commands and aliases <https://snapcraft.io/docs/commands-and-aliases>`_
     for more information.
     """
 
@@ -936,7 +936,7 @@ class App(models.CraftBaseModel):
     To pass a value for the entire project, see the top-level ``passthrough`` key.
 
     See `Using development features in Snapcraft
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#reference-snapcraft-yaml-top-level-keys>`_ for more
+    <https://snapcraft.io/docs/using-in-development-features>`_ for more
     details.
     """
 
@@ -1059,7 +1059,7 @@ class Hook(models.CraftBaseModel):
     )
     """The list of interfaces that the hook can connect to.
 
-    See the `content interface <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_ for more
+    See the `content interface <https://snapcraft.io/docs/content-interface>`_ for more
     information about plugs and slots.
     """
 
@@ -1077,7 +1077,7 @@ class Hook(models.CraftBaseModel):
     To pass a value for the entire project, see the top-level ``passthrough`` key.
 
     See `Using development features in Snapcraft
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#reference-snapcraft-yaml-top-level-keys>`_ for more details.
+    <https://snapcraft.io/docs/using-in-development-features>`_ for more details.
     """
 
     @pydantic.field_validator("command_chain")
@@ -1141,7 +1141,7 @@ class ContentPlug(models.CraftBaseModel):
     )
     """The name of the interface.
 
-    See `Supported interfaces <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/>`_ for a
+    See `Supported interfaces <https://snapcraft.io/docs/supported-interfaces>`_ for a
     list of supported interfaces.
 
     When using the content interface, this should be set to ``content``.
@@ -1154,7 +1154,7 @@ class ContentPlug(models.CraftBaseModel):
     """The path to where the producer's files will be available in the snap.
 
     This is only needed when using the content interface. See the `Content
-    interface <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_ for more information.
+    interface <https://snapcraft.io/docs/content-interface>`_ for more information.
     """
 
     default_provider: str | None = pydantic.Field(
@@ -1165,7 +1165,7 @@ class ContentPlug(models.CraftBaseModel):
     """The name of the producer snap.
 
     This is only needed when using the content interface. See the `Content interface
-    <https://documentation.ubuntu.com/snapcraft/stable/explanation/interfaces/#Supported-interfaces>`_ for more information.
+    <https://snapcraft.io/docs/content-interface>`_ for more information.
     """
 
     @pydantic.field_validator("default_provider")
@@ -1526,7 +1526,7 @@ class Project(models.Project):
     default value.
 
     For more information, `Snap confinement
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/anatomy-of-snapcraft-yaml/#confinement>`_.
+    <https://snapcraft.io/docs/snap-confinement>`_.
 
     **Values**
 
@@ -1702,7 +1702,7 @@ class Project(models.Project):
     To pass a value for a particular app, see the ``passthrough`` key for ``apps``.
 
     See `Using development features in Snapcraft
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#reference-snapcraft-yaml-top-level-keys>`_.
+    <https://snapcraft.io/docs/using-in-development-features>`_.
     """
 
     apps: dict[str, App] | None = pydantic.Field(
@@ -1813,7 +1813,7 @@ class Project(models.Project):
     This is used to run daemons with the ``snap_daemon`` user defined by
     snapd. Otherwise, this is an uncommon key.
 
-    See `system usernames <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#system-usernames>`_ for more
+    See `system usernames <https://snapcraft.io/docs/system-usernames>`_ for more
     information.
     """
 

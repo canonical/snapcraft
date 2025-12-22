@@ -862,5 +862,5 @@ def _warn_on_multiple_builds(
         )
         emit.message(
             "For more information, check out: "
-            "https://documentation.ubuntu.com/snapcraft/stable/explanation/architectures/#core22-8"
+            "https://documentation.ubuntu.com/snapcraft/stable/explanation/architectures/#core22"
         )

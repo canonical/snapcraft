@@ -69,7 +69,7 @@ class SnapApp(SnapcraftMetadata):
     """Snap.yaml app entry.
 
     This is currently a partial implementation, see
-    https://documentation.ubuntu.com/snapcraft/stable/tutorials/craft-a-snap/ for details.
+    https://snapcraft.io/docs/snap-format for details.
 
     TODO: implement desktop (CRAFT-804)
     TODO: implement extensions (CRAFT-805)
@@ -243,7 +243,7 @@ class SnapMetadata(SnapcraftMetadata):
     """The snap.yaml model.
 
     This is currently a partial implementation, see
-    https://documentation.ubuntu.com/snapcraft/stable/tutorials/craft-a-snap/ for details.
+    https://snapcraft.io/docs/snap-format for details.
 
     TODO: should platforms replace architectures for core24?
     """
