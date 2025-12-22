@@ -827,7 +827,7 @@ def _error_list_to_message(response_json):
     """Handle error list.
 
     The error format is given here:
-    https://dashboard.snapcraft.io/docs/api/snap.html#format
+    https://documentation.ubuntu.com/snapcraft/api/snap.html#format
     """
     messages = []
     for error_list_item in response_json["error_list"]:
@@ -840,7 +840,7 @@ def _error_list_item_to_message(error_list_item, response_json):
     """Handle error list item according to code.
 
     The list of codes are here:
-    https://dashboard.snapcraft.io/docs/api/snap.html#codes
+    https://documentation.ubuntu.com/snapcraft/api/snap.html#codes
     """
     code = error_list_item["code"]
     message = ""

@@ -78,7 +78,7 @@ class StoreEditValidationSetsCommand(AppCommand):
     help_msg = "Edit the list of validations for <snap-name>"
     overview = textwrap.dedent(
         """
-        Refer to https://snapcraft.io/docs/validation-sets for further information
+        Refer to https://documentation.ubuntu.com/snapcraft/stable/reference/commands/validation-sets/ for further information
         on Validation Sets.
         """
     )

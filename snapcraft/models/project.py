@@ -1471,6 +1471,29 @@ class Project(models.Project):
     type: ProjectType | None = pydantic.Field(
         default=None, description="The snap's type.", examples=["kernel"]
     )
+    """The snap's type.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``app``
+          - Default. Set the snap as an application.
+        * - ``base``
+          - Set the snap as a base.
+        * - ``gadget``
+          - Set the snap as a `gadget
+            <https://documentation.ubuntu.com/snapcraft/stable/explanation/snap-configurations/#default-values>`_ snap.
+        * - ``kernel``
+          - Set the snap as a `kernel
+            <https://documentation.ubuntu.com/snapcraft/stable/reference/bases/#kernel-snaps>`_ snap.
+        * - ``snapd``
+          - Set the snap as a snapd snap.
+
+    """
 
     icon: str | None = pydantic.Field(
         default=None,
@@ -1502,7 +1525,7 @@ class Project(models.Project):
     For core22 and newer bases, confinement is a required property and has no
     default value.
 
-    For more information, see `Snap confinement
+    For more information, `Snap confinement
     <https://snapcraft.io/docs/snap-confinement>`_.
 
     **Values**

@@ -25,7 +25,7 @@ This module holds representations for results for the v2 whoami
 API endpoint provided by the Snap Store.
 
 The full API is documented on
-https://dashboard.snapcraft.io/docs/v2/en/tokens.html#api-tokens-whoami
+https://documentation.ubuntu.com/snapcraft/stable/reference/commands/whoami/
 """
 
 

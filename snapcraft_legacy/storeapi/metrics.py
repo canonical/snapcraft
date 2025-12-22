@@ -24,7 +24,7 @@ This module holds representations for request and results for the metrics API
 endpoint provided by the Snap Store.
 
 The relevant API documentation is available at:
-https://dashboard.snapcraft.io/docs/api/snap.html?#fetch-metrics-for-snaps
+https://documentation.ubuntu.com/snapcraft/stable/release-notes/changelog/#metrics
 """
 
 

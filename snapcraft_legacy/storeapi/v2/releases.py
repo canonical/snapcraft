@@ -26,7 +26,7 @@ API endpoint provided by the Snap Store. It currently only covers
 Revisions and Releases.
 
 The full API is documented on
-https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-releases
+https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/manage-revisions-and-releases/
 """
 
 
