@@ -20,8 +20,8 @@ Major versions of Snapcraft are supported in three phases:
 
 Each major version of Snapcraft supports the latest core and two previous cores
 available at time of release. One future core is also tentatively supported, provided it
-passes an testing phase. For example, Snapcraft 8 was released with support for the
-then-current core24, with legacy support for core20, core22. Later, it gained
+passes a testing phase. For example, Snapcraft 8 was released with support for the
+then-current core24, with legacy support for core20 and core22. Later, it gained
 experimental support for core26.
 
 
