@@ -11,7 +11,7 @@ const dataLanes = [
 // Defines the chart legend. Required.
 const dataLegend = {
   LTS: {
-    description: "LTS standard security maintenance",
+    description: "LTS Standard Security Maintenance",
     extra: "(5 years)",
     style: "chart__bar--orange",
   },

@@ -15,7 +15,7 @@ Major versions of Snapcraft are supported in three phases:
         security fixes.
     * - 5--10
       - LTS Expanded Security Maintenance, consisting of bug and security fixes.
-    * - 1--15
+    * - 10--15
       - Legacy add-on for Ubuntu Pro subscribers, consisting of security fixes.
 
 Each major version of Snapcraft supports the latest core and two previous cores
