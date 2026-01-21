@@ -1502,7 +1502,7 @@ class Project(models.Project):
     For core22 and newer bases, confinement is a required property and has no
     default value.
 
-    For more information, `Snap confinement
+    For more information, see `Snap confinement
     <https://snapcraft.io/docs/snap-confinement>`_.
 
     **Values**
