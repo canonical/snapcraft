@@ -119,7 +119,7 @@ class EditableBuildAssertion(models.CraftBaseModel):
 class BuildAssertion(EditableBuildAssertion):
     """Full build assertion header for a Validation Set.
 
-    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#request-json-schema
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#response-json-schema
     """
 
     authority_id: str
