@@ -133,6 +133,7 @@ constraint-dependencies = [
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
     # what is available in the noble repositories.
     # https://pynacl.readthedocs.io/en/latest/changelog/
+    # https://github.com/canonical/snapcraft/issues/5968
     "pynacl<1.6.0",
 ]
 build-constraint-dependencies = [
