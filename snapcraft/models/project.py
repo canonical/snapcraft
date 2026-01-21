@@ -493,7 +493,7 @@ class App(models.CraftBaseModel):
     This allows a daemon to gracefully stop or restart, such as when a snap refresh
     occurs.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     post_stop_command: str | None = pydantic.Field(
@@ -508,7 +508,7 @@ class App(models.CraftBaseModel):
     This allows a daemon to gracefully stop or restart, such as when a snap
     refresh occurs.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
 
     """
 
@@ -525,7 +525,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
 
     """
 
@@ -542,7 +542,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     watchdog_timeout: str | None = pydantic.Field(
@@ -559,7 +559,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     reload_command: str | None = pydantic.Field(
@@ -571,7 +571,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     restart_delay: str | None = pydantic.Field(
@@ -583,7 +583,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     timer: str | None = pydantic.Field(
@@ -602,7 +602,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     daemon: Literal["simple", "forking", "oneshot", "notify", "dbus"] | None = (
@@ -653,7 +653,7 @@ class App(models.CraftBaseModel):
     Requires the ``daemon`` key to be specified for the app. Apps in the
     ``after`` key must also specify the ``daemon`` key.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     before: UniqueList[str] = pydantic.Field(
@@ -668,7 +668,7 @@ class App(models.CraftBaseModel):
     Requires the ``daemon`` key to be specified for the app. Apps in the
     ``before`` key must also specify the ``daemon`` key.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
@@ -682,7 +682,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
 
     **Values**
 
@@ -723,7 +723,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     restart_condition: (
@@ -752,7 +752,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     success_exit_status: list[Annotated[int, Ge(1), Le(255)]] | None = pydantic.Field(
@@ -776,7 +776,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
 
     **Values**
 
@@ -888,7 +888,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
 
     **Values**
 
@@ -919,7 +919,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the :ref:`daemon key <snapcraft-yaml-daemon>` reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     passthrough: dict[str, Any] | None = pydantic.Field(
@@ -933,7 +933,8 @@ class App(models.CraftBaseModel):
     This is useful for early testing of a new feature in snapd that isn't supported yet
     by Snapcraft.
 
-    To pass a value for the entire project, see the top-level ``passthrough`` key.
+    To pass a value for the entire project, see the top-level :ref:`Project.passthrough`
+    key.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_ for more
@@ -1074,7 +1075,8 @@ class Hook(models.CraftBaseModel):
     Snapcraft. This is useful for early testing of a new feature in snapd that isn't
     supported yet by Snapcraft.
 
-    To pass a value for the entire project, see the top-level ``passthrough`` key.
+    To pass a value for the entire project, see the top-level :ref:`Project.passthrough`
+    key.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_ for more details.
@@ -1676,7 +1678,8 @@ class Project(models.Project):
     Snapcraft. This is useful for early testing of a new feature in snapd that isn't yet
     supported by Snapcraft.
 
-    To pass a value for a particular app, see the ``passthrough`` key for ``apps``.
+    To pass a value for a particular app, see the :ref:`passthrough key
+    <App.passthrough>` for apps.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_.
@@ -1857,7 +1860,7 @@ class Project(models.Project):
     )
     """The primary-key header for snaps signed by third parties.
 
-    This is an uncommonly used value.
+    This is an uncommonly used key.
     """
 
     components: dict[ProjectName, Component] | None = pydantic.Field(
