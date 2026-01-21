@@ -3,7 +3,7 @@
 # Remember, the last match takes precedence.
 
 # Global owner, used as a last resort.
-* @bepri
+* @bepri @mr-cal
 
 # Documentation owners
 /docs/ @canonical/starcraft-authors @bepri
