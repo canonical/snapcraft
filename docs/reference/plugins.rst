@@ -34,6 +34,7 @@ This section contains an in-depth description of the plugins available in Snapcr
     plugins/poetry_plugin
     plugins/python_plugin
     /common/craft-parts/reference/plugins/qmake_plugin
+    /common/craft-parts/reference/plugins/ruby_plugin
     /common/craft-parts/reference/plugins/rust_plugin
     /common/craft-parts/reference/plugins/scons_plugin
     plugins/uv_plugin
