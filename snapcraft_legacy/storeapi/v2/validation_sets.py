@@ -92,7 +92,7 @@ class Snap(models.CraftBaseModel):
 class EditableBuildAssertion(models.CraftBaseModel):
     """Subset of a build assertion that can be edited by the user.
 
-    https://documentation.ubuntu.com/snapcraft/stable/reference/commands/edit-validation-sets/
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#request-json-schema
     """
 
     account_id: str
@@ -119,7 +119,7 @@ class EditableBuildAssertion(models.CraftBaseModel):
 class BuildAssertion(EditableBuildAssertion):
     """Full build assertion header for a Validation Set.
 
-    https://documentation.ubuntu.com/snapcraft/stable/reference/commands/validation-sets/
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#request-json-schema
     """
 
     authority_id: str
@@ -159,7 +159,7 @@ class Headers(models.CraftBaseModel):
 class ValidationSets(models.CraftBaseModel):
     """Validation sets.
 
-    https://documentation.ubuntu.com/snapcraft/stable/reference/commands/validation-sets/
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#id4
     """
 
     assertions: list[Headers]

@@ -20,7 +20,7 @@ This module holds representations for results for the v2 channel-map
 API endpoint provided by the Snap Store.
 
 The full API is documented on
-https://documentation.ubuntu.com/snapcraft/stable/reference/commands/release/
+https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
 """
 
 from typing import Any

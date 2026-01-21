@@ -33,7 +33,7 @@ class SnapAPI(Requests):
     """The Snap API is used to query snaps.
 
     This is an interface to query that API which is documented
-    at https://documentation.ubuntu.com/snapcraft/stable/release-notes/changelog/.
+    at http://api.snapcraft.io/docs/.
     """
 
     def __init__(self, client: Optional[craft_store.HTTPClient] = None):

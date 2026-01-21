@@ -34,7 +34,7 @@ class DashboardAPI(Requests):
     """The Dashboard API is used to publish and manage snaps.
 
     This is an interface to query that API which is documented
-    at https://documentation.ubuntu.com/snapcraft/stable/reference/.
+    at https://dashboard.snapcraft.io/docs/index.html.
     """
 
     def __init__(self, auth_client: craft_store.BaseClient) -> None:
