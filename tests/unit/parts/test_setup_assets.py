@@ -144,6 +144,7 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
             "summary": "summary",
             "description": "description",
             "parts": {},
+            "build-base": "devel",
         }
     )
 
@@ -169,6 +170,7 @@ def test_kernel_missing(yaml_data, new_dir):
             "summary": "summary",
             "description": "description",
             "parts": {},
+            "build-base": "devel",
         }
     )
 

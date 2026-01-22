@@ -1,15 +1,32 @@
 name: Spread (manual - large/flaky)
 on:
   pull_request:
-    types: [labeled]
+    # The 3 default types + "labeled"
+    types: [labeled, opened, reopened, synchronize]
   schedule:
     # At 03:00 on Wednesday and Sunday.
     - cron: "0 3 * * WED,SUN"
   workflow_dispatch:
 
 jobs:
+  # Decide if the tests should be ran
+  predicate:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.eval.outputs.should_run }}
+    steps:
+      - id: eval
+        run: |
+          # OR's the three different conditions in which this should run:
+          # - This is an actual scheduled run
+          # - This is a manually triggered run via the Actions tab
+          # - This is a PR with the 'PR: Run Manual Spread' label
+          should_run=${{ contains(github.event.pull_request.labels.*.name, 'PR: Run Manual Spread') || contains(fromJSON('["schedule", "workflow_dispatch"]'), github.event_name) }}
+          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
+
   snap-build:
-    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    needs: predicate
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -19,7 +36,7 @@ jobs:
       # speed up build times by using wheels, when available
       - name: Use wheels
         run: |
-          yq eval 'del(.parts.snapcraft.build-environment[] | select(.PIP_NO_BINARY == ":all:"))' -i snap/snapcraft.yaml
+          yq e 'del(.parts.snapcraft."build-environment"[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
       - name: Build snap
         uses: canonical/action-build@v1
         id: snapcraft
@@ -33,9 +50,9 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.snapcraft.outputs.snap }}
 
   kernel-plugins:
-    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
-    needs: [snap-build]
     strategy:
       fail-fast: false
       matrix:
@@ -60,9 +77,9 @@ jobs:
           spread google:ubuntu-22.04-64:tests/spread/${{ matrix.type }}/kernel
 
   remote-build:
-    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
-    needs: [snap-build]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -89,9 +106,9 @@ jobs:
             google:fedora-39-64:tests/spread/core24/remote-build:no_platforms
 
   matter-sdk:
-    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
-    needs: [snap-build]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -114,9 +131,9 @@ jobs:
               google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
 
   colcon-plugins:
-    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
-    needs: [snap-build]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -141,9 +158,9 @@ jobs:
             google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
 
   extensions:
-    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
-    needs: [snap-build]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -164,9 +181,9 @@ jobs:
           spread google.*:tests/spread/extensions/
 
   core20-plugins:
-    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
-    needs: [snap-build]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -187,9 +204,9 @@ jobs:
           spread google:ubuntu-20.04-64:tests/spread/plugins/v2/
 
   snapd-bases:
-    if: "${{ github.event.label.name == 'PR: Run Manual Spread' || github.event_name == 'schedule' }}"
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
-    needs: [snap-build]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -208,3 +225,26 @@ jobs:
       - name: Spread test
         run: |
           spread google:ubuntu-20.04-64:tests/spread/snaps/bases google:ubuntu-20.04-64:tests/spread/snaps/snapd
+
+  squid-proxy:
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
+    runs-on: [spread-installed]
+    steps:
+      - name: Clean up job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout Snapcraft
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Download snap artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: snap
+          path: tests
+      - name: Spread test
+        run: |
+          spread google:ubuntu-24.04-64:tests/spread/core24/squid-proxy google:ubuntu-22.04-64:tests/spread/core22/squid-proxy

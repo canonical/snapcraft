@@ -1,27 +1,27 @@
 name: Task
-description: File an enhancement proposal, such as feature requests or documentation improvements
+description: Submit a feature request
 labels: "Enhancement"
 body:
-  - type: markdown
+  - type: checkboxes
+    id: check-existing-issues
     attributes:
-      value: >
-        Thanks for taking the time to fill out this enhancement
-        proposal! Before submitting your issue, please make sure there
-        isn't already a prior issue concerning this. If there is,
-        please join that discussion instead.
+      label: Check existing issues
+      options:
+        - label: I've verified that this request isn't described by any existing issues.
+          required: true
   - type: textarea
     id: enhancement-proposal-what
     attributes:
-      label: What needs to get done
-      description: >
-        Describe what needs to get done
+      label: Request
+      value: >
+        <!-- Describe the feature you'd like to see implemented. -->
     validations:
       required: true
   - type: textarea
     id: enhancement-proposal-why
     attributes:
-      label: Why it needs to get done
-      description: >
-        Describe why it needs to get done
+      label: The problem it solves
+      value: >
+        <!-- Describe the impact your request would have. -->
     validations:
       required: true

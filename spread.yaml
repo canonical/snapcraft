@@ -154,7 +154,7 @@ prepare: |
   else
     tests.pkgs remove lxd
   fi
-  snap install lxd --channel=latest/stable
+  snap install lxd --channel=5.21/stable
 
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"

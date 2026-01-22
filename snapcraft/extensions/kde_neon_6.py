@@ -22,6 +22,7 @@ import functools
 import re
 from typing import Any
 
+from craft_application.errors import CraftValidationError
 from overrides import overrides
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
@@ -189,6 +190,9 @@ class KDENeon6(Extension):
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
         gpu_plugs = self.kde_snaps.gpu_plugs
         gpu_layouts = self.kde_snaps.gpu_layouts
+        if not (base := self.yaml_data.get("base")):
+            raise CraftValidationError("The 'base' key is required.")
+        lxqt_support_snap = f"lxqt-support-{base}"
 
         return {
             "assumes": ["snapd2.58.3"],  # for cups support
@@ -221,12 +225,26 @@ class KDENeon6(Extension):
                     "default-provider": platform_kf6_snap,
                     "target": "$SNAP/kf6",
                 },
+                lxqt_support_snap: {
+                    "content": lxqt_support_snap,
+                    "interface": "content",
+                    "target": f"$SNAP/{lxqt_support_snap}",
+                    "default-provider": lxqt_support_snap,
+                },
                 **gpu_plugs,
             },
             "environment": {
                 "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
                 "GTK_USE_PORTAL": "1",
                 "PLATFORM_PLUG": platform_kf6_snap,
+                "LD_LIBRARY_PATH": (
+                    f"$SNAP/{lxqt_support_snap}/usr/lib/"
+                    "${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}"
+                ),
+                "QT_PLUGIN_PATH": (
+                    f"$SNAP/{lxqt_support_snap}/usr/lib/"
+                    "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}"
+                ),
             },
             "hooks": {
                 "configure": {
@@ -237,6 +255,12 @@ class KDENeon6(Extension):
             "layout": {
                 "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
                 "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+                "/usr/share/color-schemes": {
+                    "symlink": f"$SNAP/{lxqt_support_snap}/usr/share/color-schemes"
+                },
+                "/usr/share/Kvantum": {
+                    "symlink": f"$SNAP/{lxqt_support_snap}/usr/share/Kvantum"
+                },
                 **gpu_layouts,
             },
         }
