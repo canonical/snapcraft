@@ -24,24 +24,14 @@ Ruby plugin
 A new :ref:`craft_parts_ruby_plugin` is available for building Ruby apps for core22 and
 newer snaps.
 
-JLink options
-~~~~~~~~~~~~~
+Improved project file schema
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :ref:`craft_parts_jlink_plugin` has new options, ``jlink-multi-release`` and
-``jlink-modules``.
+IDEs use Snapcraft’s schema to validate and auto-complete ``snapcraft.yaml`` files. The
+schema has been reworked to improve validation and properly support base-specific keys.
 
-
-``success-exit-status`` key
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Daemons can use the new :ref:`success-exit-status <App.success_exit_status>` key to
-control exit status handling.
-
-KDE neon 6 theming
-~~~~~~~~~~~~~~~~~~
-
-The :ref:`KDE neon 6 <reference-kde-neon-extensions>` extension now supports LXQt and
-Kvantum theming.
+The schema is now automatically generated, so it will stay up-to-date as
+new keys are added.
 
 
 Minor features
@@ -79,14 +69,23 @@ A number of improvements have been made for parts using the ``git``
 - Running ``git describe --dirty`` in an override script of a clean repository no longer
   falsely reports the repository as dirty.
 
-Improved project file schema
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+JLink options
+~~~~~~~~~~~~~
 
-IDEs use Snapcraft’s schema to validate and auto-complete ``snapcraft.yaml`` files. The
-schema has been reworked to improve validation and properly support base-specific keys.
+The :ref:`craft_parts_jlink_plugin` has new options, ``jlink-multi-release`` and
+``jlink-modules``.
 
-The schema is now automatically generated, so it will stay up-to-date as
-new keys are added.
+KDE neon 6 theming
+~~~~~~~~~~~~~~~~~~
+
+The :ref:`KDE neon 6 <reference-kde-neon-extensions>` extension now supports LXQt and
+Kvantum theming.
+
+``success-exit-status`` key
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Daemons can use the new :ref:`success-exit-status <App.success_exit_status>` key to
+control exit status handling.
 
 uv plugin bytecode
 ~~~~~~~~~~~~~~~~~~
