@@ -272,6 +272,25 @@
           "examples": ["on-failure"],
           "title": "Restart-Condition"
         },
+        "success-exit-status": {
+          "anyOf": [
+            {
+              "items": {
+                "maximum": 255,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The list of additional successful exit statuses that the service can return.",
+          "examples": ["[42, 250]"],
+          "title": "Success-Exit-Status"
+        },
         "install-mode": {
           "anyOf": [
             {
@@ -472,8 +491,8 @@
               "uniqueItems": true
             }
           ],
-          "description": "The architectures on which the snap can be built.",
-          "examples": ["[amd64, riscv64]"],
+          "description": "The architectures to build the snap on.",
+          "examples": ["arm64", "[amd64, riscv64]"],
           "title": "Build-On"
         },
         "build-for": {
@@ -493,8 +512,8 @@
             }
           ],
           "default": null,
-          "description": "The single element list containing the architecture where the snap can be run",
-          "examples": ["[amd64]", "[riscv64]"],
+          "description": "The target architecture for the build.",
+          "examples": ["amd64", "[riscv64]"],
           "title": "Build-For"
         }
       },
@@ -841,7 +860,7 @@
             }
           ],
           "default": null,
-          "description": "The architecture sets where the snap can be built and where the resulting snap can run.",
+          "description": "The architectures that the snap builds and runs on.",
           "examples": ["[amd64, riscv64]", "[{build-on: [amd64], build-for: [amd64]}]", "[{build-on: [amd64, riscv64], build-for: [riscv64]}]"],
           "title": "Architectures"
         },
@@ -900,7 +919,7 @@
             }
           ],
           "default": null,
-          "description": "The map of app names representing entry points to run for the snap.",
+          "description": "The individual programs and services that the snap runs.",
           "examples": ["{app-1: {command: bin/app-1}}"],
           "title": "Apps"
         },
@@ -979,7 +998,7 @@
             }
           ],
           "default": null,
-          "description": "The system usernames that the snap can use to run daemons and services.",
+          "description": "The system usernames the snap can use to run daemons and services.",
           "examples": ["{snap-daemon: shared}"],
           "title": "System-Usernames"
         },
@@ -1486,7 +1505,7 @@
             }
           ],
           "default": null,
-          "description": "The map of app names representing entry points to run for the snap.",
+          "description": "The individual programs and services that the snap runs.",
           "examples": ["{app-1: {command: bin/app-1}}"],
           "title": "Apps"
         },
@@ -1565,7 +1584,7 @@
             }
           ],
           "default": null,
-          "description": "The system usernames that the snap can use to run daemons and services.",
+          "description": "The system usernames the snap can use to run daemons and services.",
           "examples": ["{snap-daemon: shared}"],
           "title": "System-Usernames"
         },
@@ -2062,7 +2081,7 @@
             }
           ],
           "default": null,
-          "description": "The map of app names representing entry points to run for the snap.",
+          "description": "The individual programs and services that the snap runs.",
           "examples": ["{app-1: {command: bin/app-1}}"],
           "title": "Apps"
         },
@@ -2141,7 +2160,7 @@
             }
           ],
           "default": null,
-          "description": "The system usernames that the snap can use to run daemons and services.",
+          "description": "The system usernames the snap can use to run daemons and services.",
           "examples": ["{snap-daemon: shared}"],
           "title": "System-Usernames"
         },
@@ -2319,7 +2338,7 @@
             }
           ],
           "default": null,
-          "description": "Selects a part to inherit metadata from and reuse for the component's metadata.\n\nOnly the component's version can be set.\n",
+          "description": "Selects a part to inherit metadata from and reuse for the component's\nmetadata.\n\nOnly the component's version can be set.\n",
           "examples": ["foo-part"],
           "title": "Adopt-Info"
         }
@@ -2725,7 +2744,7 @@
             }
           ],
           "default": null,
-          "description": "The architecture sets where the snap can be built and where the resulting snap can run.",
+          "description": "The architectures that the snap builds and runs on.",
           "examples": ["[amd64, riscv64]", "[{build-on: [amd64], build-for: [amd64]}]", "[{build-on: [amd64, riscv64], build-for: [riscv64]}]"],
           "title": "Architectures"
         },
@@ -2784,7 +2803,7 @@
             }
           ],
           "default": null,
-          "description": "The map of app names representing entry points to run for the snap.",
+          "description": "The individual programs and services that the snap runs.",
           "examples": ["{app-1: {command: bin/app-1}}"],
           "title": "Apps"
         },
@@ -2863,7 +2882,7 @@
             }
           ],
           "default": null,
-          "description": "The system usernames that the snap can use to run daemons and services.",
+          "description": "The system usernames the snap can use to run daemons and services.",
           "examples": ["{snap-daemon: shared}"],
           "title": "System-Usernames"
         },
@@ -3379,7 +3398,7 @@
             }
           ],
           "default": null,
-          "description": "The map of app names representing entry points to run for the snap.",
+          "description": "The individual programs and services that the snap runs.",
           "examples": ["{app-1: {command: bin/app-1}}"],
           "title": "Apps"
         },
@@ -3458,7 +3477,7 @@
             }
           ],
           "default": null,
-          "description": "The system usernames that the snap can use to run daemons and services.",
+          "description": "The system usernames the snap can use to run daemons and services.",
           "examples": ["{snap-daemon: shared}"],
           "title": "System-Usernames"
         },
@@ -3955,7 +3974,7 @@
             }
           ],
           "default": null,
-          "description": "The map of app names representing entry points to run for the snap.",
+          "description": "The individual programs and services that the snap runs.",
           "examples": ["{app-1: {command: bin/app-1}}"],
           "title": "Apps"
         },
@@ -4034,7 +4053,7 @@
             }
           ],
           "default": null,
-          "description": "The system usernames that the snap can use to run daemons and services.",
+          "description": "The system usernames the snap can use to run daemons and services.",
           "examples": ["{snap-daemon: shared}"],
           "title": "System-Usernames"
         },
@@ -4273,8 +4292,8 @@
               "type": "null"
             }
           ],
-          "description": "The architectures on which the snap can be built.",
-          "examples": ["[amd64, riscv64]"],
+          "description": "The architectures to build the snap on.",
+          "examples": ["arm64", "[amd64, riscv64]"],
           "title": "Build-On"
         },
         "build-for": {
@@ -4293,8 +4312,8 @@
             }
           ],
           "default": null,
-          "description": "The single element list containing the architecture the snap is built for.",
-          "examples": ["[amd64]", "[riscv64]"],
+          "description": "The target architecture for the build.",
+          "examples": ["amd64", "[riscv64]"],
           "title": "Build-For"
         }
       },
@@ -4431,7 +4450,7 @@
             }
           ],
           "default": null,
-          "description": "The platforms where the snap can be built and where the resulting snap can run.",
+          "description": "The architectures that the snap builds and runs on.",
           "examples": ["{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"],
           "title": "Platforms"
         },
@@ -4690,7 +4709,7 @@
             }
           ],
           "default": null,
-          "description": "The architecture sets where the snap can be built and where the resulting snap can run.",
+          "description": "The architectures that the snap builds and runs on.",
           "examples": ["[amd64, riscv64]", "[{build-on: [amd64], build-for: [amd64]}]", "[{build-on: [amd64, riscv64], build-for: [riscv64]}]"],
           "title": "Architectures"
         },
@@ -4749,7 +4768,7 @@
             }
           ],
           "default": null,
-          "description": "The map of app names representing entry points to run for the snap.",
+          "description": "The individual programs and services that the snap runs.",
           "examples": ["{app-1: {command: bin/app-1}}"],
           "title": "Apps"
         },
@@ -4828,7 +4847,7 @@
             }
           ],
           "default": null,
-          "description": "The system usernames that the snap can use to run daemons and services.",
+          "description": "The system usernames the snap can use to run daemons and services.",
           "examples": ["{snap-daemon: shared}"],
           "title": "System-Usernames"
         },
@@ -5031,7 +5050,7 @@
             }
           ],
           "default": null,
-          "description": "The platforms where the snap can be built and where the resulting snap can run.",
+          "description": "The architectures that the snap builds and runs on.",
           "examples": ["{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"],
           "title": "Platforms"
         },
@@ -5290,7 +5309,7 @@
             }
           ],
           "default": null,
-          "description": "The architecture sets where the snap can be built and where the resulting snap can run.",
+          "description": "The architectures that the snap builds and runs on.",
           "examples": ["[amd64, riscv64]", "[{build-on: [amd64], build-for: [amd64]}]", "[{build-on: [amd64, riscv64], build-for: [riscv64]}]"],
           "title": "Architectures"
         },
@@ -5349,7 +5368,7 @@
             }
           ],
           "default": null,
-          "description": "The map of app names representing entry points to run for the snap.",
+          "description": "The individual programs and services that the snap runs.",
           "examples": ["{app-1: {command: bin/app-1}}"],
           "title": "Apps"
         },
@@ -5428,7 +5447,7 @@
             }
           ],
           "default": null,
-          "description": "The system usernames that the snap can use to run daemons and services.",
+          "description": "The system usernames the snap can use to run daemons and services.",
           "examples": ["{snap-daemon: shared}"],
           "title": "System-Usernames"
         },

@@ -19,8 +19,14 @@ prepare: |
   echo >> snap/snapcraft.yaml
 
 restore: |
-  rm -rf test-snap
+  pushd test-snap
   rm -rf ./*.snap
+  # The regular clean can potentially fail depending on if/when the test itself failed, but
+  # they should always both be attempted
+  snapcraft clean || true
+  snapcraft clean --destructive-mode
+  popd
+  rm -rf test-snap
 
 execute: |
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.

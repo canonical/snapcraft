@@ -127,9 +127,9 @@ Fixed an issue that caused Apt to warn about directory ownership when including
 Autotools plugin
 ~~~~~~~~~~~~~~~~
 
-The :ref:`craft_parts_autotools_plugin` now supports the
-:ref:`disable-parallel <snapcraft-yaml-disable-parallel>` key to force builds using the
-plugin to run using a single job.
+The :ref:`craft_parts_autotools_plugin` now supports the :ref:`disable-parallel
+<PartSpec.disable_parallel>` key to force builds using the plugin to run using a single
+job.
 
 Fixed bugs and issues
 ---------------------

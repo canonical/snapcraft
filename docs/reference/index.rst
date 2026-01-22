@@ -54,6 +54,16 @@ Snapcraft has defined processes underlying its basic operation.
 - :ref:`reference-snap-publishing-process`
 
 
+Requirements and support
+------------------------
+
+Snapcraft is actively supported on Linux systems, and Canonical provides long term
+support (LTS) for it.
+
+- :ref:`reference-system-requirements`
+- :ref:`reference-support-schedule`
+
+
 .. toctree::
     :hidden:
 
@@ -77,3 +87,4 @@ Snapcraft has defined processes underlying its basic operation.
     metrics
     processes/index
     system-requirements
+    support-schedule
