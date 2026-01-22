@@ -34,8 +34,8 @@ The :ref:`craft_parts_jlink_plugin` has new options, ``jlink-multi-release`` and
 ``success-exit-status`` key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Daemons can use the new :ref:`success-exit-status <snapcraft-yaml-success-exit-status>`
-key to control exit status handling.
+Daemons can use the new :ref:`success-exit-status <App.success_exit_status>` key to
+control exit status handling.
 
 KDE neon 6 theming
 ~~~~~~~~~~~~~~~~~~
@@ -52,14 +52,14 @@ Snapcraft 8.14 brings the following minor changes.
 Chisel support for unstable releases
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Chisel slices can now be used for :ref:`stage-packages <snapcraft-yaml-stage-packages>`
-for core26 snaps and snaps using ``build-base: devel``.
+Chisel slices can now be used for :ref:`stage-packages <PartSpec.stage_packages>` for
+core26 snaps and snaps using ``build-base: devel``.
 
 Collision detection for ``organize``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Snapcraft now checks for collisions when organizing with the :ref:`organize
-<snapcraft-yaml-organize>` key. Collisions will now raise an error.
+<PartSpec.organize_files>` key. Collisions will now raise an error.
 
 Destructive mode warning
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,11 +71,10 @@ Git improvements
 ~~~~~~~~~~~~~~~~
 
 A number of improvements have been made for parts using the ``git``
-:ref:`source-type <snapcraft-yaml-source-type>`.
+:ref:`source-type <PartSpec.source_type>`.
 
-- Shallow clones of git sources are now possible when using
-  :ref:`source-commit <snapcraft-yaml-source-commit>` with :ref:`source-depth
-  <snapcraft-yaml-source-depth>`.
+- Shallow clones of git sources are now possible when using :ref:`source-commit
+  <PartSpec.source_commit>` with :ref:`source-depth <PartSpec.source_depth>`.
 - When cloning Git repos, detached HEAD warnings are now suppressed.
 - Running ``git describe --dirty`` in an override script of a clean repository no longer
   falsely reports the repository as dirty.
