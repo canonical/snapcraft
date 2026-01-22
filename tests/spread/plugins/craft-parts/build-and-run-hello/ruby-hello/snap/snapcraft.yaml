@@ -1,0 +1,22 @@
+name: ruby-hello
+version: "1.0"
+summary: simple ruby application
+description: build a ruby application using core24
+base: core22
+confinement: strict
+
+apps:
+  ruby-hello:
+    command: bin/hello.rb
+
+parts:
+  hello:
+    plugin: ruby
+    source: .
+    ruby-flavor: mruby
+    ruby-version: "3.4.0"
+    build-packages:
+      - ruby  # need prebuilt ruby (rake) to build mruby
+    override-build: |
+      craftctl default
+      cp ./hello.rb $CRAFT_PART_INSTALL/bin/hello.rb
