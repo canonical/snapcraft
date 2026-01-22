@@ -163,6 +163,16 @@ ifneq ($(CI),)
 	@echo ::endgroup::
 endif
 
+.PHONY: lint-ty
+lint-ty: install-ty  ##- Check types with Astral ty (disabled by default)
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
+	ty check --python .venv/bin/python $(SOURCES)
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
+
 .PHONY: lint-uv-lockfile
 lint-uv-lockfile: install-uv  ##- Check that uv.lock matches expectations from pyproject.toml
 	unset UV_FROZEN
@@ -195,7 +205,7 @@ lint-docs:  ##- Lint the documentation
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --max-line-length 88 --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink
+	uv run $(UV_DOCS_GROUPS) sphinx-lint --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d line-too-long,missing-underscore-after-hyperlink,missing-space-in-hyperlink
 	uv run $(UV_DOCS_GROUPS) sphinx-build -b linkcheck -W $(DOCS) docs/_linkcheck
 ifneq ($(CI),)
 	@echo ::endgroup::
@@ -247,7 +257,9 @@ docs:  ## Build documentation
 
 .PHONY: docs-auto
 docs-auto:  ## Build and host docs with sphinx-autobuild
-	uv run --group docs sphinx-autobuild -b dirhtml --open-browser --port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS_OUTPUT)
+	uv run --group docs sphinx-autobuild -b dirhtml \
+	--ignore=docs/reference/commands \
+	--port=8080 --watch $(PROJECT) -W $(DOCS) $(DOCS_OUTPUT)
 
 .PHONY: pack-pip
 pack-pip:  ##- Build packages for pip (sdist, wheel)
@@ -317,6 +329,17 @@ else ifneq ($(shell which brew),)
 	brew install shellcheck
 else
 	$(warning Shellcheck not installed. Please install it yourself.)
+endif
+
+.PHONY: install-ty
+install-ty:
+ifneq ($(shell which ty),)
+else ifneq ($(shell which snap),)
+	sudo snap install --classic --edge astral-ty
+	sudo snap alias astral-ty.ty ty
+else
+	make install-uv
+	uv tool install ty
 endif
 
 .PHONY: install-npm

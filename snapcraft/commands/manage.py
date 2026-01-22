@@ -42,7 +42,7 @@ class StoreReleaseCommand(AppCommand):
         <channels> is a comma-separated list of valid channels in the store.
 
         The <revision> must exist in the store; to see available revisions,
-        run ``snapcraft list-revisions <name>``.
+        run ``snapcraft revisions <name>``.
 
         The channel map will be displayed after the operation takes place. To see
         the status map at any other time run ``snapcraft status <name>``.
@@ -125,7 +125,7 @@ class StoreCloseCommand(AppCommand):
 
         Examples::
 
-            snapcraft close my-snap --channel beta
+            snapcraft close my-snap beta
         """
     )
 

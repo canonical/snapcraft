@@ -18,6 +18,7 @@ Build-on, build-for, and run-on
 ``build-on``, ``build-for``, and ``run-on`` are used within the
 ``architectures`` and ``platforms`` keys in a project file file.
 
+* ``core26`` uses ``build-on`` and ``build-for``
 * ``core24`` uses ``build-on`` and ``build-for``
 * ``core22`` uses ``build-on`` and ``build-for``
 * ``core20`` uses ``build-on`` and ``run-on``

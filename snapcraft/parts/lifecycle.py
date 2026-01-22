@@ -164,10 +164,7 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
         adopt_info=project.adopt_info,
         project_name=project.name,
         parse_info=parse_info,
-        project_vars={
-            "version": project.version or "",
-            "grade": project.grade or "",
-        },
+        project_vars=yaml_utils.create_project_vars(project.marshal()),
         extra_build_snaps=project.get_extra_build_snaps(),
         target_arch=project.get_build_for(),
         track_stage_packages=track_stage_packages,
@@ -255,7 +252,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
     part_names = getattr(parsed_args, "part_names", None)
 
     if step_name == "prime" and not part_names:
-        _generate_metadata(
+        project = _generate_metadata(
             project=project,
             lifecycle=lifecycle,
             project_dir=project_dir,
@@ -329,12 +326,12 @@ def _generate_metadata(
     assets_dir: Path,
     start_time: datetime,
     parsed_args: "argparse.Namespace",
-):
+) -> models.Project:
     project_vars = lifecycle.project_vars
 
     emit.progress("Extracting and updating metadata...")
     metadata_list = lifecycle.extract_metadata()
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=project_vars,
         metadata_list=metadata_list,
@@ -375,6 +372,8 @@ def _generate_metadata(
             start_time=start_time,
             parsed_args=parsed_args,
         )
+
+    return project
 
 
 def _generate_manifest(

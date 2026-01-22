@@ -26,6 +26,7 @@ Example solutions
     :start-after: craftctl get <key>
     :end-before: Expose part variables in apps
 
+.. _how-to-customize-the-build-and-part-variables-access-project-variables:
 
 Access project variables across parts and components
 ----------------------------------------------------

@@ -1,10 +1,13 @@
+.. meta::
+    :description: Project configuration reference for Snapcraft. Find usage details and examples for every key in a snap's project file.
+
 .. _reference-snapcraft-yaml:
 
 snapcraft.yaml
 ==============
 
-This reference describes the purpose, usage, and examples of all available keys in a
-snap's project file, ``snapcraft.yaml``.
+This reference describes the usage of and provides examples for every key in a snap's
+project file, ``snapcraft.yaml``.
 
 For keys that refer to file and directory locations, paths are always relative to the
 snap's file system, not the host.
@@ -25,70 +28,69 @@ values such as its confinement level and supported architectures.
 
 .. kitbash-field:: Project name
 
-.. py:currentmodule:: craft_application.models.project
-
 .. kitbash-field:: Project title
-
-.. py:currentmodule:: snapcraft.models.project
-
-.. kitbash-field:: Project version
-
-.. py:currentmodule:: craft_application.models.project
-
-.. kitbash-field:: Project license
 
 .. kitbash-field:: Project summary
 
 .. kitbash-field:: Project description
 
-.. py:currentmodule:: snapcraft.models.project
+.. kitbash-field:: Project version
+
+.. kitbash-field:: Project base
+    :override-description:
+    :skip-examples:
+
+    The base snap to be used as the run-time environment.
+
+    If the ``build-base`` key is unset, then the ``base`` key also determines the build
+    environment. For example, ``base: core24`` builds the snap in an Ubuntu 24.04
+    environment.
+
+    For more information about the ``base`` and ``build-base`` keys, see
+    :ref:`reference-bases`.
+
+    **Examples**
+
+    .. code-block:: yaml
+
+        base: core24
+
+.. kitbash-field:: StableBaseProject build_base
+
+.. kitbash-field:: Project source_code
+    :override-type: str
+
+.. kitbash-field:: Project license
+
+.. kitbash-field:: Project contact
+    :override-type: str | list[str]
+
+.. kitbash-field:: Project issues
+    :override-type: str | list[str]
+
+.. kitbash-field:: Project donation
+    :override-type: str | list[str]
+
+.. kitbash-field:: Project website
+    :override-type: str | list[str]
+
+.. kitbash-field:: Project icon
 
 .. kitbash-field:: Project adopt_info
 
+.. kitbash-field:: Project environment
+
+.. kitbash-field:: Project package_repositories
+    :override-type: list[dict[str, Any]]
+
 .. kitbash-field:: Project type
-
-.. py:currentmodule:: craft_application.models.project
-
-.. kitbash-field:: Project base
-
-**Description**
-
-The base snap to be used as the run-time environment.
-
-If the ``build-base`` key is unset, then the ``base`` key also determines the build
-environment. For example, ``base: core24`` builds the snap in an Ubuntu 24.04
-environment.
-
-For more information about the ``base`` and ``build-base`` keys, see
-:ref:`reference-bases`.
-
-**Examples**
-
-.. code-block:: yaml
-
-    base: core24
-
-.. py:currentmodule:: snapcraft.models.project
-
-.. kitbash-field:: Project build_base
+    :override-type: str
 
 .. kitbash-field:: Project grade
 
 .. kitbash-field:: Project confinement
 
-.. kitbash-field:: Project source_code
-
-.. kitbash-field:: Project contact
-
-.. kitbash-field:: Project website
-
-.. kitbash-field:: Project issues
-
-.. kitbash-field:: Project donation
-
 .. kitbash-field:: Project compression
-
-.. kitbash-field:: Project icon
 
 .. kitbash-field:: Project layout
 
@@ -104,38 +106,47 @@ For more information about the ``base`` and ``build-base`` keys, see
 
 .. kitbash-field:: Project system_usernames
 
-.. kitbash-field:: Project environment
-
 .. kitbash-field:: Project build_packages
+    :override-type: list[str]
 
 .. kitbash-field:: Project build_snaps
+    :override-type: list[str]
 
 .. kitbash-field:: Project ua_services
 
 .. kitbash-field:: Project provenance
 
+
+.. _reference-snapcraft-yaml-platform-keys:
+
+Platform keys
+-------------
+
 .. kitbash-field:: Project platforms
+
+.. kitbash-field:: Platform build_on
+    :prepend-name: platforms.<platform-name>
+    :override-type: str | list[str]
+
+.. kitbash-field:: Platform build_for
+    :prepend-name: platforms.<platform-name>
+    :override-type: str | list[str]
+
+
+.. _reference-snapcraft-yaml-architectures:
+
+Architecture keys
+-----------------
 
 .. kitbash-field:: Project architectures
 
-.. kitbash-field:: Project apps
+.. kitbash-field:: Architecture build_on
+    :prepend-name: architectures.<architecture>
+    :override-type: str | list[str]
 
-.. py:currentmodule:: craft_application.models.project
-
-.. kitbash-field:: Project parts
-    :override-type: dict[str, Part]
-
-.. kitbash-field:: Project package_repositories
-    :override-type: list[dict[str, Any]]
-
-.. py:currentmodule:: snapcraft.models.project
-
-.. kitbash-field:: Project hooks
-
-.. kitbash-field:: Project components
-    :override-type: dict[str, Component]
-
-.. kitbash-field:: Project plugs
+.. kitbash-field:: Architecture build_for
+    :prepend-name: architectures.<architecture>
+    :override-type: str | list[str]
 
 
 .. _reference-snapcraft-yaml-app-keys:
@@ -143,10 +154,100 @@ For more information about the ``base`` and ``build-base`` keys, see
 App keys
 --------
 
-The ``apps`` key declares the programs and services that a snap operates on the host,
-and details how they're executed and which resources they can access.
+.. kitbash-field:: Project apps
 
 .. kitbash-model:: App
+    :skip-description:
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App command
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App autostart
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App common_id
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App bus_name
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App desktop
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App completer
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App stop_command
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App post_stop_command
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App start_timeout
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App stop_timeout
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App watchdog_timeout
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App reload_command
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App restart_delay
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App timer
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App daemon
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App after
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App before
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App refresh_mode
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App stop_mode
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App restart_condition
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App install_mode
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App slots
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App plugs
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App aliases
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App environment
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App command_chain
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App daemon_scope
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App activates_on
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App passthrough
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App extensions
     :prepend-name: apps.<app-name>
 
 
@@ -155,8 +256,8 @@ and details how they're executed and which resources they can access.
 Part keys
 ---------
 
-The ``parts`` key and its values declare the snap's :ref:`parts <explanation-parts>` and
-detail how they're built.
+.. kitbash-field:: Project parts
+    :override-type: dict[str, Part]
 
 .. py:currentmodule:: craft_parts.parts
 
@@ -212,39 +313,52 @@ detail how they're built.
 
 .. kitbash-field:: PartSpec build_attributes
     :prepend-name: parts.<part-name>
+    :override-description:
 
-**Description**
+    Special identifiers that change certain features and behavior during the build.
 
-The part's default behavior for executable patching is dependent on the base snap.
-The following options alter the behavior.
+    **Values**
 
-**Values**
+    .. list-table::
+        :header-rows: 1
 
-.. list-table::
-    :header-rows: 1
+        * - Value
+          - Description
+        * - ``enable-usrmerge``
+          - Fills the ``${CRAFT_PART_INSTALL}`` directory with a merged ``/usr``
+            directory before running the part's build step.
+        * - ``disable-usrmerge``
+          - Prevents a merged ``/usr`` directory from being assembled for the build
+            step. Available in lifecycles where the directory would be merged by
+            default.
 
-    * - Value
-      - Description
-    * - ``core22-step-dependencies``
-      - For snaps using core20. Orders lifecycle steps as they are ordered for
-        core22 and newer snaps.
-    * - ``enable-patchelf``
-      - For classically-confined snaps using core22 and newer. Patches executables
-        for files primed by the part. By default, executables primed by the part
-        aren't patched.
-    * - ``no-patchelf``
-      - For classically-confined snaps using core20. Disables executable patching
-        for files primed by the part. If unset, patches all executables primed by
-        the part.
-    * - ``keep-execstack``
-      - For snaps using core20. Retains the execstack for executables primed by the
-        part.
+    The part's default behavior for executable patching is dependent on the base snap.
+    The following options alter the behavior.
 
-For core20 snaps, the ``core22-step-dependencies`` customization alters the part
-processing order to align with newer bases, where all parts are pulled prior to build.
-For more details on part processing for core22 and newer, see `Processing order and
-dependencies
-<https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``core22-step-dependencies``
+          - For snaps using core20. Orders lifecycle steps as they are ordered for
+            core22 and newer snaps.
+        * - ``enable-patchelf``
+          - For classically-confined snaps using core22 and newer. Patches executables
+            for files primed by the part. By default, executables primed by the part
+            aren't patched.
+        * - ``no-patchelf``
+          - For classically-confined snaps using core20. Disables executable patching
+            for files primed by the part. If unset, patches all executables primed by
+            the part.
+        * - ``keep-execstack``
+          - For snaps using core20. Retains the execstack for executables primed by the
+            part.
+
+    For core20 snaps, the ``core22-step-dependencies`` customization alters the part
+    processing order to align with newer bases, where all parts are pulled prior to build.
+    For more details on part processing for core22 and newer, see `Processing order and
+    dependencies <https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
 
 .. kitbash-field:: PartSpec override_build
     :prepend-name: parts.<part-name>
@@ -258,10 +372,9 @@ dependencies
 .. kitbash-field:: PartSpec organize_files
     :prepend-name: parts.<part-name>
 
-Files from the build environment can be organized into specific components. The
-destination path must start with ``(component/<component-name>)``, with the parentheses
-included. Source paths always reference the default build environment.
-
+    Files from the build environment can be organized into specific components. The
+    destination path must start with ``(component/<component-name>)``, with the
+    parentheses included. Source paths always reference the default build environment.
 
 .. Stage step keys
 
@@ -312,26 +425,40 @@ Socket keys
 
 .. py:currentmodule:: snapcraft.models.project
 
+.. kitbash-field:: App sockets
+    :prepend-name: apps.<app-name>
+
 .. kitbash-model:: Socket
     :prepend-name: sockets.<socket-name>
+    :skip-description:
 
 
 Hook keys
 ---------
 
+.. kitbash-field:: Project hooks
+
 .. kitbash-model:: Hook
     :prepend-name: hooks.<hook-type>
+    :skip-description:
 
 
 Component keys
 --------------
 
+.. kitbash-field:: Project components
+    :override-type: dict[str, Component]
+
 .. kitbash-model:: Component
     :prepend-name: components.<component-name>
+    :skip-description:
 
 
 Content plug keys
 -----------------
 
+.. kitbash-field:: Project plugs
+
 .. kitbash-model:: ContentPlug
     :prepend-name: plugs.<plug-name>
+    :skip-description:

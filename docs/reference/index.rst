@@ -3,7 +3,7 @@
 Reference
 =========
 
-These pages provide details about the features and processes in Snapcraft.
+References describe the structure and function of the individual components in Snapcraft.
 
 
 Commands
@@ -11,7 +11,7 @@ Commands
 
 Snapcraft is operated from the command line, with a command for each function.
 
-:ref:`reference-commands`
+- :ref:`reference-commands`
 
 
 Project file
@@ -20,7 +20,7 @@ Project file
 The main object inside a snap project is a configurable project file. Read on for a
 complete reference of the structure and contents of this file.
 
-:ref:`Project file references <reference-project-file>`
+- :ref:`Project file references <reference-project-file>`
 
 
 Bases and architectures
@@ -36,7 +36,8 @@ CPU architectures.
 Parts
 -----
 
-Software is brought into a snap through definitions of parts, and must be configured for the software's language and build systems.
+Software is brought into a snap through definitions of parts, and must be configured for
+the software's language and build systems.
 
 - :ref:`reference-parts-and-steps`
 - :ref:`reference-part-environment-variables`
@@ -51,6 +52,16 @@ Snapcraft has defined processes underlying its basic operation.
 
 - :ref:`reference-snap-build-process`
 - :ref:`reference-snap-publishing-process`
+
+
+Requirements and support
+------------------------
+
+Snapcraft is actively supported on Linux systems, and Canonical provides long term
+support (LTS) for it.
+
+- :ref:`reference-system-requirements`
+- :ref:`reference-support-schedule`
 
 
 .. toctree::
@@ -76,3 +87,4 @@ Snapcraft has defined processes underlying its basic operation.
     metrics
     processes/index
     system-requirements
+    support-schedule

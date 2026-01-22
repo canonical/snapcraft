@@ -18,7 +18,7 @@
 
 from collections import OrderedDict
 from pathlib import Path
-from typing import Final, cast
+from typing import Any, Final, cast
 
 import pydantic
 from craft_application.models import ProjectTitle, SummaryStr, UniqueStrList, VersionStr
@@ -34,11 +34,11 @@ _VALID_ICON_EXTENSIONS: Final[list[str]] = ["png", "svg"]
 def update_project_metadata(
     project: Project,
     *,
-    project_vars: dict[str, str],
+    project_vars: dict[str, Any],
     metadata_list: list[ExtractedMetadata],
     assets_dir: Path,
     prime_dir: Path,
-) -> None:
+) -> Project:
     """Set project fields using corresponding adopted entries.
 
     Fields are validated on assignment by pydantic.
@@ -49,7 +49,7 @@ def update_project_metadata(
 
     :raises SnapcraftError: If project update failed.
     """
-    _update_project_variables(project, project_vars)
+    project = update_project_variables(project, project_vars)
 
     update_from_extracted_metadata(
         project, metadata_list=metadata_list, assets_dir=assets_dir, prime_dir=prime_dir
@@ -61,6 +61,8 @@ def update_project_metadata(
             raise errors.SnapcraftError(
                 f"Field {field!r} was not adopted from metadata"
             )
+
+    return project
 
 
 def update_from_extracted_metadata(
@@ -137,16 +139,49 @@ def _update_project_links(
                 setattr(project, field, cast(UniqueStrList, metadata_values))
 
 
-def _update_project_variables(project: Project, project_vars: dict[str, str]):
-    """Update project fields with values set during lifecycle processing."""
+def update_project_variables(project: Project, update: dict[str, Any]) -> Project:
+    """Perform a deep update of data in the project.
+
+    This method marshals the project and performs a recursive update on the
+    project dict, then unmarshals the project.
+
+    :param update: The dict to merge into the project model.
+
+    :returns: The updated project.
+
+    :raises RuntimeError: If the project doesn't exist.
+    """
+    emit.debug(f"Updating project model with {update}.")
+
+    project_dict = project.marshal()
+    new_data = _update_project_variables(project_dict, update)
+
     try:
-        if project_vars["version"]:
-            project.version = cast(VersionStr, project_vars["version"])
-        if project_vars["grade"]:
-            project.grade = project_vars["grade"]  # type: ignore
+        return Project.unmarshal(new_data)
     except pydantic.ValidationError as err:
         _raise_formatted_validation_error(err)
         raise errors.SnapcraftError(f"error setting variable: {err}")
+
+
+def _update_project_variables(
+    base: dict[str, Any], update: dict[str, Any]
+) -> dict[str, Any]:
+    """Recursive helper to deep update a dict.
+
+    :param base: The base dict to update. This dict is modified in-place.
+    :param update: The dict to merge into the base dict.
+
+    :returns: The updated dict.
+    """
+    for key, new_value in update.items():
+        if isinstance(new_value, dict) and isinstance(base.get(key), dict):
+            base[key] = _update_project_variables(
+                cast(dict[str, Any], base[key]),
+                cast(dict[str, Any], new_value),
+            )
+        elif new_value is not None:
+            base[key] = new_value
+    return base
 
 
 def _update_project_icon(
@@ -222,5 +257,8 @@ def _raise_formatted_validation_error(err: pydantic.ValidationError):
     if not (loc and msg) or not isinstance(loc, tuple):
         return
 
-    varname = ".".join(x for x in loc if isinstance(x, str))
+    # We skip the first two locations because the model validation adds the discriminators:
+    # - error setting UNIMPLEMENTED.core22.grade: Input should be 'stable' or 'devel'
+    # + error setting grade: Input should be 'stable' or 'devel'
+    varname = ".".join(x for x in loc[2:] if isinstance(x, str))
     raise errors.SnapcraftError(f"error setting {varname}: {msg}")

@@ -94,6 +94,7 @@ class SnapApp(SnapcraftMetadata):
     refresh_mode: str | None = None
     stop_mode: str | None = None
     restart_condition: str | None = None
+    success_exit_status: list[int] | None = None
     install_mode: str | None = None
     plugs: list[str] | None = None
     slots: list[str] | None = None
@@ -359,6 +360,9 @@ def _create_snap_app(app: models.App, assumes: set[str]) -> SnapApp:
     if app.command_chain:
         assumes.add("command-chain")
 
+    if app.success_exit_status:
+        assumes.add("snapd2.74")
+
     snap_app = SnapApp(
         command=app.command,
         autostart=app.autostart,
@@ -379,6 +383,7 @@ def _create_snap_app(app: models.App, assumes: set[str]) -> SnapApp:
         refresh_mode=app.refresh_mode,
         stop_mode=app.stop_mode,
         restart_condition=app.restart_condition,
+        success_exit_status=app.success_exit_status,
         install_mode=app.install_mode,
         plugs=app.plugs,
         slots=app.slots,
@@ -438,12 +443,10 @@ def get_metadata_from_project(
     if project.hooks and any(h for h in project.hooks.values() if h.command_chain):
         assumes.add("command-chain")
 
-    effective_base = project.get_effective_base()
-
     if arch == "all":
         # if arch is "all", do not include architecture-specific paths in the environment
         arch_triplet: str | None = None
-    elif effective_base == "core22":
+    elif isinstance(project, models.Core22Project):
         arch_triplet = project.get_build_for_arch_triplet()
     else:
         arch_triplet = get_arch_triplet(
@@ -460,6 +463,7 @@ def get_metadata_from_project(
     total_assumes = sorted(project.assumes + list(assumes))
 
     links = Links.from_project(project)
+    snap_type = project.type.value if project.type else None
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -468,7 +472,7 @@ def get_metadata_from_project(
         summary=cast(SummaryStr, project.summary),
         description=cast(str, project.description),
         license=project.license,
-        type=project.type,
+        type=snap_type,
         architectures=[arch],
         base=cast(str, project.base),
         assumes=total_assumes if total_assumes else None,

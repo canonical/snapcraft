@@ -40,10 +40,10 @@ if TYPE_CHECKING:
     import argparse
 
 
-class ListPluginsCommand(AppCommand):
+class PluginsCommand(AppCommand):
     """List available plugins."""
 
-    name = "list-plugins"
+    name = "plugins"
     help_msg = "List available plugins, optionally for a given base"
     overview = textwrap.dedent(
         """
@@ -102,10 +102,10 @@ class ListPluginsCommand(AppCommand):
         emit.message(message + "\n" + "\n".join(n for n in registered_plugins))
 
 
-class PluginsCommand(ListPluginsCommand):
+class ListPluginsCommand(PluginsCommand):
     """A command alias to list the available plugins."""
 
-    name = "plugins"
+    name = "list-plugins"
     hidden = True
 
     @overrides

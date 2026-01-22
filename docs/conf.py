@@ -19,7 +19,9 @@ import os
 import pathlib
 import sys
 
+import craft_application_docs
 import craft_parts_docs
+
 import snapcraft
 
 project = "Snapcraft"
@@ -62,45 +64,46 @@ html_theme_options = {
 html_static_path = ["_static"]
 templates_path = ["_templates"]
 
+# Static resources
 html_css_files = [
-    'css/cookie-banner.css'
+    "css/cookie-banner.css",
+    "css/support-chart.css",
 ]
 
 html_js_files = [
-    'js/bundle.js',
+    "js/bundle.js",
+    "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
+    "js/support-chart.js",
 ]
 
 extensions = [
     "canonical_sphinx",
     "sphinx_sitemap",
+    "sphinx_substitution_extensions",
+    "sphinx_toolbox.collapse",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
+    "sphinxcontrib.details.directive",
+    "sphinxext.rediraffe",
     "pydantic_kitbash",
 ]
 
 sphinx_tabs_disable_tab_closing = True
 # endregion
 
-extensions.extend(
-    (
-        "sphinx.ext.ifconfig",
-        "sphinx.ext.intersphinx",
-        "sphinxcontrib.details.directive",
-        "sphinx_toolbox.collapse",
-        "sphinxext.rediraffe",
-    )
-)
-
 rst_epilog = """
 .. include:: /reuse/links.txt
 """
 
 exclude_patterns = [
-    "sphinx-resources",
+    "sphinx-docs-starter-pack",
     # Excluded because Snapcraft doesn't use overlays
     "common/craft-parts/overlay_parameters.rst",
     # Excluded here because they are either included explicitly in other
     # documents (so they generate "duplicate label" errors) or they aren't
     # used in this documentation at all (so they generate "unreferenced"
     # errors).
+    "common/craft-application/*",
     "common/craft-parts/explanation/dump_plugin.rst",
     "common/craft-parts/explanation/file-migration.rst",
     "common/craft-parts/explanation/gradle_plugin.rst",
@@ -119,12 +122,12 @@ exclude_patterns = [
     "common/craft-parts/reference/plugins/maven_use_plugin.rst",
     "common/craft-parts/reference/plugins/poetry_plugin.rst",
     "common/craft-parts/reference/plugins/python_plugin.rst",
+    "common/craft-parts/reference/plugins/python_v2_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
     "how-to/publishing/build-snaps-remotely.rst",
-    "release-notes/snapcraft-8-12.rst",
 ]
 
 # region Options for extensions
@@ -133,13 +136,17 @@ exclude_patterns = [
 rediraffe_redirects = "redirects.txt"
 
 # Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
-html_baseurl = "https://documentation.ubuntu.com/snapcraft/"
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
 
-if "READTHEDOCS_VERSION" in os.environ:
-    version = os.environ["READTHEDOCS_VERSION"]
-    sitemap_url_scheme = "{version}{link}"
-else:
-    sitemap_url_scheme = "latest/{link}"
+# Builds URLs as {html_baseurl}/<page-location>
+sitemap_url_scheme = "{link}"
+
+# Exclude generated pages from the sitemap:
+sitemap_excludes = [
+    '404/',
+    'genindex/',
+    'search/',
+]
 
 # endregion
 
@@ -157,10 +164,29 @@ def setup(app):
 
 # Setup libraries documentation snippets for use in snapcraft docs.
 common_docs_path = pathlib.Path(__file__).parent / "common"
+craft_application_docs_path = pathlib.Path(craft_application_docs.__file__).parent / "craft-application"
 craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-parts"
+(common_docs_path / "craft-application").unlink(missing_ok=True)
 (common_docs_path / "craft-parts").unlink(missing_ok=True)
+(common_docs_path / "craft-application").symlink_to(
+    craft_application_docs_path, target_is_directory=True
+)
 (common_docs_path / "craft-parts").symlink_to(
     craft_parts_docs_path, target_is_directory=True
 )
 
 # endregion
+# We have many links on sites that frequently respond with 503s to GitHub runners.
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_retries
+linkcheck_retries = 20
+linkcheck_anchors_ignore = ["#", ":"]
+linkcheck_ignore = [
+    # Ignore releases, since we'll include the next release before it exists.
+    r"^https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
+    # Entire domains to ignore due to flakiness or issues
+    r"^https://www.gnu.org/",
+    r"^https://crates.io/",
+    r"^https://([\w-]*\.)?npmjs.org",
+    r"^https://rsync.samba.org",
+    r"^https://ubuntu.com",
+]

@@ -35,7 +35,7 @@ from craft_providers.base import Base
 from overrides import override
 from pymacaroons import Caveat, Macaroon
 
-from snapcraft import models, services
+from snapcraft import const, models, services
 from snapcraft.extensions import extension, register, unregister
 
 
@@ -117,7 +117,7 @@ def fake_extension():
 
         @staticmethod
         def get_supported_bases() -> tuple[str, ...]:
-            return ("core22", "core24")
+            return ("core22", "core24", "core26")
 
         @staticmethod
         def get_supported_confinement() -> tuple[str, ...]:
@@ -531,6 +531,12 @@ def setup_project(mocker, project_path):
     def _setup_services(project_services, project_data, *, write_project: bool = False):
         from snapcraft import models  # noqa: PLC0415 (import-outside-top-level)
 
+        if project_data.get("base") in (b.value for b in const.UnstableBase):
+            project_data |= {
+                "build-base": "devel",
+                "grade": "devel",
+            }
+
         if write_project:
             _write_yaml(
                 file_path=project_path / "snapcraft.yaml",
@@ -544,7 +550,7 @@ def setup_project(mocker, project_path):
         )
         project_services.get("project").configure(platform=None, build_for=None)
 
-        return models.Project.model_validate(project_data)
+        return models.Project.unmarshal(project_data)
 
     return _setup_services
 

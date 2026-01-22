@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2023 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,30 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
-from snapcraft.plugins.v1 import PluginV1
+from typing_extensions import override
+
+from .dotnet_base import DotnetExtensionBase
 
 
-class LocalPlugin(PluginV1):
-    @classmethod
-    def schema(cls):
-        schema = super().schema()
+class Dotnet9Extension(DotnetExtensionBase):
+    """
+    An extension that eases the creation of snaps that integrate with
+    the .NET 9 content snaps.
+    """
 
-        schema["properties"]["foo"] = {"type": "string"}
+    @property
+    @override
+    def runtime_content_snap_name(self) -> str:
+        return "dotnet-runtime-90"
 
-        return schema
-
-    @classmethod
-    def get_pull_properties(cls):
-        return ["foo", "stage-packages"]
-
-    @classmethod
-    def get_build_properties(cls):
-        return ["foo", "stage-packages"]
-
-    def pull(self):
-        super().pull()
-        print(snapcraft.sources.get)
-
-    def build(self):
-        return self.run(["touch", "build-stamp"], self.installdir)
+    @property
+    @override
+    def versioned_plugin_name(self) -> str:
+        return "dotnet9"

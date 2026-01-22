@@ -125,9 +125,9 @@ def list_validation_sets(name, sequence, **kwargs):
 
     \b
     Examples:
-        snapcraft list-validation-sets
-        snapcraft list-validation-sets --sequence all
-        snapcraft list-validation-sets --name my-set --sequence 1
+        snapcraft validation-sets
+        snapcraft validation-sets --sequence all
+        snapcraft validation-sets --name my-set --sequence 1
 
     Refer to https://snapcraft.io/docs/validation-sets for further information
     on Validation Sets.

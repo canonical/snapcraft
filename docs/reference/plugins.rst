@@ -13,9 +13,14 @@ This section contains an in-depth description of the plugins available in Snapcr
     /common/craft-parts/reference/plugins/ant_plugin
     /common/craft-parts/reference/plugins/autotools_plugin
     /common/craft-parts/reference/plugins/cargo_use_plugin
+    plugins/crystal_plugin
+    plugins/catkin_plugin
+    plugins/catkin_tools_plugin
     /common/craft-parts/reference/plugins/cmake_plugin
     plugins/colcon_plugin
+    plugins/conda_plugin
     /common/craft-parts/reference/plugins/dump_plugin
+    plugins/flutter_plugin
     /common/craft-parts/reference/plugins/go_plugin
     /common/craft-parts/reference/plugins/go_use_plugin
     /common/craft-parts/reference/plugins/gradle_plugin
@@ -29,6 +34,7 @@ This section contains an in-depth description of the plugins available in Snapcr
     plugins/poetry_plugin
     plugins/python_plugin
     /common/craft-parts/reference/plugins/qmake_plugin
+    /common/craft-parts/reference/plugins/ruby_plugin
     /common/craft-parts/reference/plugins/rust_plugin
     /common/craft-parts/reference/plugins/scons_plugin
     plugins/uv_plugin

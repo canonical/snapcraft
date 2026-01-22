@@ -1,6 +1,11 @@
 name: Spread Tests
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "hotfix/**"
 
 jobs:
   build:
@@ -15,7 +20,7 @@ jobs:
       # speed up build times by using wheels, when available
       - name: Use wheels
         run: |
-          yq eval 'del(.parts.snapcraft.build-environment[] | select(.PIP_NO_BINARY == ":all:"))' -i snap/snapcraft.yaml
+          yq eval 'del(.parts.snapcraft.build-environment[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
 
       - name: Build snapcraft snap
         id: build-snapcraft

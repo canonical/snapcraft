@@ -77,8 +77,8 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Extensions",
         [
-            commands.ListExtensionsCommand,
-            commands.ExtensionsCommand,  # hidden (alias to list-extensions)
+            commands.ListExtensionsCommand,  # hidden (alias to extensions)
+            commands.ExtensionsCommand,
             commands.ExpandExtensionsCommand,
         ],
     ),
@@ -111,15 +111,15 @@ COMMAND_GROUPS = [
             commands.StoreUploadCommand,
             commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
             commands.StoreLegacyPromoteCommand,
-            commands.StoreListRevisionsCommand,
-            commands.StoreRevisionsCommand,  # hidden (alias to list-revisions)
+            commands.StoreListRevisionsCommand,  # hidden (alias to revisions)
+            commands.StoreRevisionsCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Snap Tracks",
         [
-            commands.StoreListTracksCommand,
-            commands.StoreTracksCommand,  # hidden (alias to list-tracks)
+            commands.StoreListTracksCommand,  # hidden (alias to tracks)
+            commands.StoreTracksCommand,
             commands.StoreLegacySetDefaultTrackCommand,
         ],
     ),
@@ -130,13 +130,15 @@ COMMAND_GROUPS = [
             commands.StoreLegacyRegisterKeyCommand,
             commands.StoreLegacySignBuildCommand,
             commands.StoreLegacyListKeysCommand,
+            commands.StoreLegacyKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Validation Sets",
         [
             commands.StoreEditValidationSetsCommand,
-            commands.StoreLegacyListValidationSetsCommand,
+            commands.StoreLegacyListValidationSetsCommand,  # hidden (alias to validation-sets)
+            commands.StoreLegacyValidationSetsCommand,
             commands.StoreLegacyValidateCommand,
             commands.StoreLegacyGatedCommand,
         ],
@@ -145,7 +147,8 @@ COMMAND_GROUPS = [
         "Store Confdb Schemas",
         [
             commands.StoreEditConfdbSchemaCommand,
-            commands.StoreListConfdbSchemasCommand,
+            commands.StoreListConfdbSchemasCommand,  # hidden (alias to confdb-schemas)
+            commands.StoreConfdbSchemasCommand,
         ],
     ),
     craft_cli.CommandGroup(

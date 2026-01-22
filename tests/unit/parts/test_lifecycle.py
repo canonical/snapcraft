@@ -22,6 +22,7 @@ from pathlib import Path
 from unittest.mock import ANY, Mock, PropertyMock, call
 
 import craft_application.errors
+import craft_parts
 import pydantic
 import pytest
 from craft_cli import EmitterMode, emit
@@ -47,7 +48,7 @@ _SNAPCRAFT_YAML_FILENAMES = [
 
 @pytest.fixture(autouse=True)
 def disable_install(mocker):
-    mocker.patch("craft_parts.packages.Repository.install_packages")
+    mocker.patch("craft_parts.packages.deb.Ubuntu.install_packages")
     mocker.patch("craft_parts.packages.snaps.install_snaps")
 
 
@@ -830,7 +831,7 @@ def test_lifecycle_metadata_empty(field, snapcraft_yaml, new_dir):
     with pytest.raises(errors.SnapcraftError) as raised:
         update_project_metadata(
             project,
-            project_vars={"version": "", "grade": ""},
+            project_vars={"version": None, "grade": None},
             metadata_list=[],
             assets_dir=new_dir,
             prime_dir=new_dir,
@@ -1150,7 +1151,7 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
     yaml_data["adopt-info"] = "part"
     project = Project.unmarshal(yaml_data)
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars={"version": "42", "grade": "devel"},
         metadata_list=[],
@@ -1163,9 +1164,8 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
 
 
 def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
-    mocker.patch(
-        "craft_parts.plugins.plugins._PLUGINS",
-        {"kernel": KernelPlugin, "matter-sdk": MatterSdkPlugin},
+    craft_parts.plugins.register(
+        {"kernel": KernelPlugin, "matter-sdk": MatterSdkPlugin}
     )
     project = Project.unmarshal(
         snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
@@ -1196,7 +1196,7 @@ def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
 
 
 def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
-    mocker.patch("craft_parts.plugins.plugins._PLUGINS", {"kernel": KernelPlugin})
+    craft_parts.plugins.register({"kernel": KernelPlugin})
     project = Project.unmarshal(
         snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
     )
@@ -1204,9 +1204,7 @@ def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
 
 
 def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
-    error = (
-        "Value error, Snap base must be declared when type is not base, kernel or snapd"
-    )
+    error = "Value error, Missing 'base' key for snap"
     with pytest.raises(pydantic.ValidationError, match=error):
         Project.unmarshal(snapcraft_yaml(base=None))
 
@@ -2195,16 +2193,19 @@ def test_lifecycle_write_component_metadata(
 
     assert mock_write.mock_calls == [
         call(
-            project=project,
+            project=ANY,
             component_name="foo",
             component_prime_dir=new_dir / "partitions/component/foo/prime",
         ),
         call(
-            project=project,
+            project=ANY,
             component_name="bar-baz",
             component_prime_dir=new_dir / "partitions/component/bar-baz/prime",
         ),
     ]
+
+    # assert the project data is intact, even if though the instance changed
+    assert mock_write.mock_calls[0].kwargs["project"].marshal() == project.marshal()
 
 
 @pytest.mark.usefixtures("enable_partitions_feature", "project_vars")

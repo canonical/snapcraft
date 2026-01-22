@@ -239,7 +239,7 @@ You can also list plugins for a specific base with ``snapcraft list plugins --ba
 name>``:
 
 .. terminal::
-    :input: snapcraft list-plugins --base core20
+    :input: snapcraft plugins --base core20
 
     Displaying plugins available for 'core20'
     autotools  catkin  catkin-tools  cmake  colcon  dump  go  make

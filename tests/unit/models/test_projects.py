@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
+from collections.abc import Callable
 from typing import Any, cast
 
 import pydantic
@@ -25,18 +26,27 @@ from craft_platforms import DebianArchitecture
 
 import snapcraft.models
 from snapcraft import const, errors, providers
+from snapcraft.const import StableBase, UnstableBase
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
+    BareCore22Project,
+    BareCore24Project,
     ComponentProject,
     ContentPlug,
+    Core22Project,
+    Core24Project,
     GrammarAwareProject,
     Hook,
     Lint,
     Platform,
     Project,
 )
-from snapcraft.models.project import apply_root_packages
+from snapcraft.models.project import (
+    _BaselessCore22Project,
+    _BaselessProject,
+    apply_root_packages,
+)
 
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
@@ -196,6 +206,25 @@ class TestProjectDefaults:
 class TestProjectValidation:
     """Validate top-level project items."""
 
+    @pytest.mark.parametrize("base", [*StableBase, *UnstableBase])
+    @pytest.mark.parametrize("type_", ["base", "kernel", "snapd"])
+    def test_baseless_project_with_base(self, project_yaml_data, base, type_):
+        raw_data = {
+            "base": base.value,
+            "build-base": base.value,
+            "type": type_,
+            "grade": "devel",
+        }
+        if isinstance(base, UnstableBase):
+            raw_data["build-base"] = "devel"
+        data = project_yaml_data(**raw_data)
+
+        with pytest.raises(
+            pydantic.ValidationError,
+            match=f"'{type_}' snaps cannot have a base.",
+        ):
+            Project.unmarshal(data)
+
     def test_build_base_validation_reentrant(self, project_yaml_data):
         """Validators should be reentrant.
 
@@ -227,22 +256,30 @@ class TestProjectValidation:
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
-        "snap_type,requires_base",
+        ("snap_type", "requires_base", "error_message"),
         [
-            ("app", True),
-            ("gadget", True),
-            ("base", False),
-            ("kernel", False),
-            ("snapd", False),
+            ("app", True, "Missing 'base' key for snap type 'app'."),
+            (None, True, "Missing 'base' key for snap."),
+            ("gadget", True, "Missing 'base' key for snap type 'gadget'."),
+            ("base", False, "Missing 'base' key for snap type 'base'."),
+            ("kernel", False, "Missing 'base' key for snap type 'kernel'."),
+            ("snapd", False, "Missing 'base' key for snap type 'snapd'."),
         ],
     )
-    def test_mandatory_base(self, snap_type, requires_base, project_yaml_data):
+    def test_mandatory_base(
+        self,
+        snap_type: str,
+        requires_base: bool,
+        project_yaml_data: Callable[..., dict[str, Any]],
+        error_message: str,
+    ):
         data = project_yaml_data(type=snap_type)
-        data.pop("base")
+        data["build-base"] = data.pop("base")
+        if data["type"] is None:
+            data.pop("type")
 
         if requires_base:
-            error = "Snap base must be declared when type is not"
-            with pytest.raises(pydantic.ValidationError, match=error):
+            with pytest.raises(pydantic.ValidationError, match=error_message):
                 Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
@@ -342,13 +379,15 @@ class TestProjectValidation:
     def test_project_type(self, snap_type, project_yaml_data):
         data = project_yaml_data(type=snap_type)
         if snap_type in ["base", "kernel", "snapd"]:
-            data.pop("base")
+            data["build-base"] = data.pop("base")
 
         if snap_type != "_invalid":
             project = Project.unmarshal(data)
-            assert project.type == snap_type
+            project_type = project.type.value if project.type else None
+            assert project_type == snap_type
+
         else:
-            error = "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
+            error = "Input should be 'app', 'base', 'gadget', 'kernel', or 'snapd'"
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
@@ -755,6 +794,49 @@ class TestProjectValidation:
             {"float": 11.0},
             {"int": 12},
         ]
+
+    @pytest.mark.parametrize(
+        ("base", "build_base", "project_class"),
+        [
+            ("core22", None, Core22Project),
+            ("core24", None, Core24Project),
+            ("core26", "devel", Core24Project),
+            ("bare", "core22", BareCore22Project),
+            ("bare", "core24", BareCore24Project),
+        ],
+    )
+    @pytest.mark.parametrize("type_", [None, "app", "gadget"])
+    def test_unmarshal_project_with_base(
+        self, base, build_base, type_, project_class, project_yaml_data
+    ):
+        """Project.unmarshall should return the right sub model."""
+        data = project_yaml_data(
+            base=base, build_base=build_base, type=type_, grade="devel"
+        )
+
+        project = Project.unmarshal(data)
+
+        assert isinstance(project, project_class), type(project)
+
+    @pytest.mark.parametrize(
+        ("build_base", "project_class"),
+        [
+            ("core22", _BaselessCore22Project),
+            ("core24", _BaselessProject),
+            ("devel", _BaselessProject),
+        ],
+    )
+    @pytest.mark.parametrize("type_", ["base", "kernel", "snapd"])
+    def test_unmarshal_project_without_base(
+        self, build_base, type_, project_class, project_yaml_data
+    ):
+        """Project.unmarshall should return the right sub model."""
+        data = project_yaml_data(build_base=build_base, type=type_, grade="devel")
+        del data["base"]
+
+        project = Project.unmarshal(data)
+
+        assert isinstance(project, project_class), type(project)
 
 
 class TestHookValidation:
@@ -1210,6 +1292,56 @@ class TestAppValidation:
             error = "apps.app1.install_mode\n  Input should be 'enable' or 'disable'"
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
+
+    @pytest.mark.parametrize(
+        "success_exit_status",
+        [[42, 250], [42], []],
+    )
+    def test_app_success_exit_status_valid(self, success_exit_status, app_yaml_data):
+        data = app_yaml_data(success_exit_status=success_exit_status)
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+
+        if len(success_exit_status) > 0:
+            assert project.apps["app1"].success_exit_status == success_exit_status
+        else:
+            assert project.apps["app1"].success_exit_status is None
+
+    @pytest.mark.parametrize(
+        "success_exit_status,expected_error",
+        [
+            (
+                [400],
+                "Input should be less than or equal to 255",
+            ),
+            (
+                [0],
+                "Input should be greater than or equal to 1",
+            ),
+            (
+                ["bar"],
+                "Input should be a valid integer, unable to parse string as an integer",
+            ),
+            (
+                [1.5],
+                "Input should be a valid integer, got a number with a fractional part",
+            ),
+            (
+                [42, 400],
+                "Input should be less than or equal to 255",
+            ),
+            (
+                "not a list",
+                "Input should be a valid list",
+            ),
+        ],
+    )
+    def test_app_success_exit_status_invalid(
+        self, success_exit_status, expected_error, app_yaml_data
+    ):
+        data = app_yaml_data(success_exit_status=success_exit_status)
+        with pytest.raises(pydantic.ValidationError, match=expected_error):
+            Project.unmarshal(data)
 
     def test_app_valid_aliases(self, app_yaml_data):
         data = app_yaml_data(aliases=["i", "am", "a", "list"])
@@ -2088,7 +2220,7 @@ class TestArchitecture:
         assert project._architectures_in_yaml is expected
 
         # adding architectures after unmarshalling does not change the field
-        if project.base == "core22":
+        if isinstance(project, Core22Project):
             project.architectures = [
                 Architecture(build_on=["amd64"], build_for=["amd64"])
             ]
@@ -2172,7 +2304,7 @@ def test_build_planner_all_with_other_builds_core22():
     }
 
     with pytest.raises(pydantic.ValidationError) as raised:
-        snapcraft.models.project.Project(**snapcraft_yaml)
+        snapcraft.models.project.Project.unmarshal(snapcraft_yaml)
 
     assert ("one of the items has 'all' in 'build-for', but there are 2 items") in str(
         raised.value
@@ -2231,6 +2363,7 @@ class TestComponents:
 
     @pytest.fixture
     def stub_component_data(self):
+        """Component with simple data."""
         data = {
             "type": "test",
             "summary": "test summary",
@@ -2240,11 +2373,33 @@ class TestComponents:
         }
         return data
 
-    def test_components_valid(self, project, project_yaml_data, stub_component_data):
-        component_data = {"foo": stub_component_data, "bar": stub_component_data}
+    @pytest.fixture
+    def stub_component_complex_data(self):
+        """Component with all keys set."""
+        data = {
+            "type": "test",
+            "summary": "test summary",
+            "description": "test description",
+            "version": "1.0",
+            "adopt-info": "my-part",
+            "hooks": {"my-hook": {"command-chain": ["baz"], "plugs": ["baz"]}},
+        }
+        return data
+
+    def test_components_valid(
+        self,
+        project,
+        project_yaml_data,
+        stub_component_data,
+        stub_component_complex_data,
+    ):
+        component_data = {
+            "foo": stub_component_data,
+            "bar": stub_component_complex_data,
+        }
         components = {
             "foo": snapcraft.models.Component.unmarshal(stub_component_data),
-            "bar": snapcraft.models.Component.unmarshal(stub_component_data),
+            "bar": snapcraft.models.Component.unmarshal(stub_component_complex_data),
         }
 
         test_project = project.unmarshal(project_yaml_data(components=component_data))

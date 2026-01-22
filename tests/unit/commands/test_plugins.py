@@ -55,7 +55,7 @@ def test_registered_plugins_default(command, emitter, fake_app_config):
 
     if command.hidden:
         emitter.assert_progress(
-            f"The '{command.name}' command was renamed to 'list-plugins'. Use 'list-plugins' instead. "
+            f"The '{command.name}' command was renamed to 'plugins'. Use 'plugins' instead. "
             "The old name will be removed in a future release.",
             permanent=True,
         )
@@ -78,8 +78,8 @@ def test_registered_plugins_project(
     command, base, emitter, snapcraft_yaml, fake_app_config
 ):
     """Use the project's base."""
-    if base == "devel":
-        snapcraft_yaml(base=base, grade="devel")
+    if base in (b for b in const.UnstableBase):
+        snapcraft_yaml(base=base, build_base="devel", grade="devel")
     else:
         snapcraft_yaml(base=base)
 
