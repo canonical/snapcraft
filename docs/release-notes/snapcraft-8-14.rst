@@ -21,17 +21,17 @@ Snapcraft 8.14 brings the following features, integrations, and improvements.
 Ruby plugin
 ~~~~~~~~~~~
 
-A new :ref:`craft_parts_ruby_plugin` is available for building Ruby apps for core22 and
-newer snaps.
+The new :ref:`craft_parts_ruby_plugin` is available for packaging Ruby apps with
+core22 and higher.
 
 Improved project file schema
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-IDEs use Snapcraft’s schema to validate and auto-complete ``snapcraft.yaml`` files. The
-schema has been reworked to improve validation and properly support base-specific keys.
+IDEs read the Snapcraft schema to validate and auto-complete ``snapcraft.yaml`` files.
 
-The schema is now automatically generated, so it will stay up-to-date as
-new keys are added.
+The schema is reworked to improve validation and support base-specific keys. It's also
+automatically generated with each new release, so it will stay up-to-date as new keys
+are added in new Snapcraft versions.
 
 
 Minor features
@@ -39,11 +39,11 @@ Minor features
 
 Snapcraft 8.14 brings the following minor changes.
 
-Chisel support for unstable releases
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Chisel support for core26
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Chisel slices can now be used for :ref:`stage-packages <PartSpec.stage_packages>` for
-core26 snaps and snaps using ``build-base: devel``.
+core26 snaps.
 
 Collision detection for ``organize``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,32 +54,37 @@ Snapcraft now checks for collisions when organizing with the :ref:`organize
 Destructive mode warning
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Users are now warned when they run Snapcraft in destructive mode as a non-root user,
-which can cause potentially unexpected behavior.
+Running Snapcraft in destructive mode with a non-root user can cause unexpected
+behavior. Snapcraft now emits a warning if it's run like this.
 
-Git improvements
-~~~~~~~~~~~~~~~~
+Git source improvements
+~~~~~~~~~~~~~~~~~~~~~~~
 
 A number of improvements have been made for parts using the ``git``
-:ref:`source-type <PartSpec.source_type>`.
+:ref:`source-type <PartSpec.source_type>` for a part.
 
-- Shallow clones of git sources are now possible when using :ref:`source-commit
-  <PartSpec.source_commit>` with :ref:`source-depth <PartSpec.source_depth>`.
-- When cloning Git repos, detached HEAD warnings are now suppressed.
+- You can make a shallow clone of the Git source with the new :ref:`source-depth
+  <PartSpec.source_depth>` key.
+- When cloning a Git source, detached HEAD warnings are now suppressed.
 - Running ``git describe --dirty`` in an override script of a clean repository no longer
   falsely reports the repository as dirty.
 
-JLink options
-~~~~~~~~~~~~~
+New JLink plugin keys
+~~~~~~~~~~~~~~~~~~~~~
 
 The :ref:`craft_parts_jlink_plugin` has new options, ``jlink-multi-release`` and
 ``jlink-modules``.
 
-KDE neon 6 theming
-~~~~~~~~~~~~~~~~~~
+The ``jlink-multi-release`` key specifies the OpenJDK release version to use for
+multi-release JARs. The ``jlink-modules`` key specifies the modules to include in the
+OpenJDK image.
+
+LXQt support for KDE neon 6
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :ref:`KDE neon 6 <reference-kde-neon-extensions>` extension now supports LXQt and
-Kvantum theming.
+Kvantum theming via the ``lxqt-support-core24`` content snap. Now, snaps using this
+extension will render correctly in LXQt environments.
 
 ``success-exit-status`` key
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,7 +95,7 @@ control exit status handling.
 uv plugin bytecode
 ~~~~~~~~~~~~~~~~~~
 
-The :ref:`craft_parts_uv_plugin` now compiles bytecode. Use ``UV_COMPILE_BYTECODE=0``
+The :ref:`craft_parts_uv_plugin` now compiles bytecode. Set ``UV_COMPILE_BYTECODE=0``
 to disable this feature.
 
 Backwards-incompatible changes
