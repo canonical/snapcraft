@@ -207,7 +207,6 @@ App keys
 
 .. kitbash-field:: App after
     :prepend-name: apps.<app-name>
-    :label: snapcraft-yaml-app-after
 
 .. kitbash-field:: App before
     :prepend-name: apps.<app-name>
@@ -226,18 +225,15 @@ App keys
 
 .. kitbash-field:: App slots
     :prepend-name: apps.<app-name>
-    :label: snapcraft-yaml-app-slots
 
 .. kitbash-field:: App plugs
     :prepend-name: apps.<app-name>
-    :label: snapcraft-yaml-app-plugs
 
 .. kitbash-field:: App aliases
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App environment
     :prepend-name: apps.<app-name>
-    :label: snapcraft-yaml-app-environment
 
 .. kitbash-field:: App command_chain
     :prepend-name: apps.<app-name>
@@ -250,7 +246,6 @@ App keys
 
 .. kitbash-field:: App passthrough
     :prepend-name: apps.<app-name>
-    :label: snapcraft-yaml-app-passthrough
 
 .. kitbash-field:: App extensions
     :prepend-name: apps.<app-name>
@@ -273,7 +268,6 @@ Part keys
 
 .. kitbash-field:: PartSpec after
     :prepend-name: parts.<part-name>
-    :label: snapcraft-yaml-part-after
 
 .. kitbash-field:: PartSpec disable_parallel
     :prepend-name: parts.<part-name>

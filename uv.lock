@@ -2140,7 +2140,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-kitbash"
-version = "0.1.1"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
@@ -2148,9 +2148,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cd/e1/5caae54ee150f118c883a7a2b14a3dcb836daae177914491f7f71faa1d2f/pydantic_kitbash-0.1.1.tar.gz", hash = "sha256:3f1382ee2381a7e29c62ef9662845c6af7c64e99a345fc78c00a4ff8f33599e7", size = 155732, upload-time = "2025-12-12T18:47:33.308Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/f7/67623d601fc5bdf11e7d812399ab80883d1b971ceef3eb95fc0ac009dc00/pydantic_kitbash-1.0.0.tar.gz", hash = "sha256:5b83aec025c856a2cd4cf74a761056b8adc4988419c3e5f2e8b442b7449d627d", size = 116712, upload-time = "2026-01-21T18:15:53.59Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/0e/199fc675c068067846c47886395894ef4a61b0366d5d1078e50db4b1330c/pydantic_kitbash-0.1.1-py3-none-any.whl", hash = "sha256:9cd4a47a6646a358f84b186ab6d70bd20f2ec9bece039210ade1206594633e3a", size = 14400, upload-time = "2025-12-12T18:47:31.3Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/8e/979b47ae4853025a51bf741ad7405472dfc9209765cc275f2dec204745b2/pydantic_kitbash-1.0.0-py3-none-any.whl", hash = "sha256:d745655e52b1f3cb70c9145084015e66d6061441f1a262c2a1e0cf9d4051513f", size = 14417, upload-time = "2026-01-21T18:15:52.209Z" },
 ]
 
 [[package]]
@@ -3328,7 +3328,7 @@ dev-resolute = [{ name = "python-apt", marker = "sys_platform == 'linux'", speci
 docs = [
     { name = "canonical-sphinx", extras = ["full"], specifier = "~=0.5.1" },
     { name = "docutils", specifier = ">=0.21" },
-    { name = "pydantic-kitbash", specifier = "~=0.1" },
+    { name = "pydantic-kitbash", specifier = "~=1.0" },
     { name = "pyspelling" },
     { name = "sphinx-autobuild" },
     { name = "sphinx-autodoc-typehints" },
