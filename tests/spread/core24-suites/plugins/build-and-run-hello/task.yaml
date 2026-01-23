@@ -6,8 +6,7 @@ environment:
   SNAP/conda: conda-hello
   SNAP/flutter: flutter-hello
   SNAP/npm: npm-hello
-  # https://github.com/canonical/snapcraft/issues/5207
-  # SNAP/python: python-hello
+  SNAP/python: python-hello
   SNAP/poetry: poetry-hello
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
