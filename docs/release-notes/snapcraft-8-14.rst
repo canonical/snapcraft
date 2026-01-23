@@ -66,8 +66,6 @@ A number of improvements have been made for parts using the ``git``
 - You can make a shallow clone of the Git source with the new :ref:`source-depth
   <PartSpec.source_depth>` key.
 - When cloning a Git source, detached HEAD warnings are now suppressed.
-- Running ``git describe --dirty`` in an override script of a clean repository no longer
-  falsely reports the repository as dirty.
 
 New JLink plugin keys
 ~~~~~~~~~~~~~~~~~~~~~
