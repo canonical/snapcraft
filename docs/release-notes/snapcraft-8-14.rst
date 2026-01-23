@@ -55,7 +55,7 @@ Destructive mode warning
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Running Snapcraft in destructive mode with a non-root user can cause unexpected
-behavior. Snapcraft now emits a warning if it's run like this.
+behavior. Snapcraft now emits a warning if it's run this way.
 
 Git source improvements
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,9 +75,10 @@ New JLink plugin keys
 The :ref:`craft_parts_jlink_plugin` has new options, ``jlink-multi-release`` and
 ``jlink-modules``.
 
-The ``jlink-multi-release`` key specifies the OpenJDK release version to use for
-multi-release JARs. The ``jlink-modules`` key specifies the modules to include in the
-OpenJDK image.
+- The ``jlink-multi-release`` key specifies the OpenJDK release version to use for
+  multi-release JARs.
+- The ``jlink-modules`` key specifies the modules to include in the
+  OpenJDK image.
 
 LXQt support for KDE neon 6
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
