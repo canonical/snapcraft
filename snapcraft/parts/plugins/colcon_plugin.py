@@ -128,7 +128,7 @@ class ColconPlugin(_ros.RosPlugin):
         the build step, so these commands can affect the commands that
         follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
