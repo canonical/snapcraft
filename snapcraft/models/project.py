@@ -2068,14 +2068,20 @@ class Project(models.Project):
 
     @pydantic.field_validator("parts")
     @classmethod
-    def _preprocess_parts(cls, parts: dict[str, Part]) -> dict[str, Part]:
-        """Provide a helpful error for the deprecated `snapcraftctl` command."""
+    def _validate_no_snapcraftctl(
+        cls, parts: dict[str, Part], info: pydantic.ValidationInfo
+    ) -> dict[str, Part]:
+        """Provide a helpful error for using snapcraftctl in core26+."""
         override_keys = [
             "override-pull",
             "override-build",
             "override-stage",
             "override-prime",
         ]
+
+        # core22 and core24 can use snapcraftctl
+        if {"core22", "core24"} & {info.data.get("base"), info.data.get("build-base")}:
+            return parts
 
         for name, part in parts.items():
             for key in override_keys:

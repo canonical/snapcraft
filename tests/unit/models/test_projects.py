@@ -860,10 +860,14 @@ class TestProjectValidation:
         ],
     )
     def test_snapcraftctl_valid(self, key, script, project_yaml_data):
-        """Don't error if snapcraftctl is in a script, but not the command."""
+        """Don't error if snapcraftctl is in a script, but not the command in core26."""
         parts_data = {"my-part": {"plugin": "nil", key: script}}
 
-        Project.unmarshal(project_yaml_data(base="core24", parts=parts_data))
+        Project.unmarshal(
+            project_yaml_data(
+                base="core26", build_base="devel", grade="devel", parts=parts_data
+            )
+        )
 
     @pytest.mark.parametrize(
         "key", ["override-pull", "override-build", "override-stage", "override-prime"]
@@ -885,7 +889,7 @@ class TestProjectValidation:
         ],
     )
     def test_snapcraftctl_error(self, key, script, project_yaml_data):
-        """Error when snapcraftctl is used."""
+        """Error when snapcraftctl is used in core26."""
         parts_data = {"my-part": {"plugin": "nil", key: script}}
         error = re.escape(
             f"Can't use 'snapcraftctl' in the {key} script for part 'my-part'. "
@@ -893,7 +897,21 @@ class TestProjectValidation:
         )
 
         with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(base="core24", parts=parts_data))
+            Project.unmarshal(
+                project_yaml_data(
+                    base="core26", build_base="devel", grade="devel", parts=parts_data
+                )
+            )
+
+    @pytest.mark.parametrize(
+        "key", ["override-pull", "override-build", "override-stage", "override-prime"]
+    )
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    def test_snapcraftctl_old_bases(self, key, base, project_yaml_data):
+        """snapcraftctl can be used for core22 and core24 bases."""
+        parts_data = {"my-part": {"plugin": "nil", key: "snapcraftctl"}}
+
+        Project.unmarshal(project_yaml_data(base=base, parts=parts_data))
 
 
 class TestHookValidation:

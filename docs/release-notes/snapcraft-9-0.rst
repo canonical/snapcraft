@@ -18,11 +18,11 @@ Feature deprecations
 
 The following features are deprecated in Snapcraft 9.0:
 
-``snapcraftctl``
-~~~~~~~~~~~~~~~~
+``snapcraftctl`` for core26
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``snapcraftctl`` command for override scripts has been deprecated in favor
-of :ref:`craftctl <reference-external-package-scriptlets>`.
+For core26, the ``snapcraftctl`` command for override scripts has been deprecated in
+favor of :ref:`craftctl <reference-external-package-scriptlets>`.
 
 
 Contributors
