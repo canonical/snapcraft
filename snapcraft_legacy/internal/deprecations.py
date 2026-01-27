@@ -43,7 +43,7 @@ _DEPRECATION_MESSAGES = {
     # dn14 is the next available slot.
 }
 
-_DEPRECATION_URL_FMT = "http://snapcraft.io/docs/deprecation-notices/{id}"
+_DEPRECATION_URL_FMT = "https://documentation.ubuntu.com/snapcraft/stable/release-notes/"
 
 logger = logging.getLogger(__name__)
 
