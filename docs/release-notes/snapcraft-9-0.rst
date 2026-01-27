@@ -12,16 +12,15 @@ Requirements and compatibility
 See :ref:`reference-system-requirements` for information on the minimum hardware and
 installed software.
 
+Backwards-incompatible changes
+------------------------------
 
-Feature deprecations
---------------------
+The following changes are incompatible with previous versions of Snapcraft.
 
-The following features are deprecated in Snapcraft 9.0:
+Removed snapcraftctl for core26
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``snapcraftctl`` for core26
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For core26, the ``snapcraftctl`` command for override scripts has been deprecated in
+For core26, the ``snapcraftctl`` command used in override scripts has been removed in
 favor of :ref:`craftctl <reference-external-package-scriptlets>`.
 
 
