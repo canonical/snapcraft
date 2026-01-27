@@ -1,0 +1,52 @@
+Snapcraft 9.0 release notes
+===========================
+
+.. add date before releasing
+
+(upcoming release)
+
+Learn about the new features, changes, and fixes introduced in Snapcraft 9.0.
+
+
+Requirements and compatibility
+------------------------------
+See :ref:`reference-system-requirements` for information on the minimum hardware and
+installed software.
+
+
+Backwards-incompatible changes
+------------------------------
+
+The following changes are incompatible with previous versions of Snapcraft.
+
+Removed legacy remote builder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The legacy remote builder has been removed in favor of the current :ref:`remote builder
+<explanation-remote-build>`.
+
+The environment variable to invoke the legacy remote builder,
+``SNAPCRAFT_REMOTE_BUILD_STRATEGY``, is no longer used by Snapcraft.
+
+Removed legacy remote builder credentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, if Snapcraft couldn't find remote build credentials,
+it would try to load credentials from the legacy location
+``$XDG_DATA_DIR/snapcraft/provider/launchpad/credentials``. This behavior has
+been removed. Snapcraft will only load credentials from the default location,
+``$XDG_DATA_DIR/snapcraft/launchpad-credentials``.
+
+
+Contributors
+------------
+
+We would like to express a big thank you to all the people who contributed to
+this release.
+
+.. update contributors before releasing
+
+:literalref:`@alex<https://example.com/alex>`,
+:literalref:`@blair<https://example.com/blair>`,
+:literalref:`@cam<https://example.com/cam>`,
+and :literalref:`@devin<https://example.com/devin>`
