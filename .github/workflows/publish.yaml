@@ -62,7 +62,7 @@ jobs:
       - name: Publish feature branch to edge/${{ steps.vars.outputs.branch }}
         if: steps.decisions.outputs.PUBLISH == 'true'
         run: |
-          set +e  # Don't exit on error
+          set +e  # Don't exit on error immediately
           
           SNAP_FILE="${{ steps.build.outputs.snap }}"
           CHANNEL="edge/${{ steps.vars.outputs.branch }}"
@@ -86,13 +86,16 @@ jobs:
             
             # Attempt 2
             echo "Publishing $SNAP_FILE to $CHANNEL (attempt 2)"
-            snapcraft upload "$SNAP_FILE" --release "$CHANNEL"
+            output=$(snapcraft upload "$SNAP_FILE" --release "$CHANNEL" 2>&1)
             exit_code=$?
             
             if [ $exit_code -eq 0 ]; then
               echo "Publish successful on second attempt"
+              echo "$output"
+              exit 0
             else
               echo "Publish failed on second attempt"
+              echo "$output"
               exit $exit_code
             fi
           else
