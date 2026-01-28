@@ -61,9 +61,13 @@ jobs:
 
       - name: Publish feature branch to edge/${{ steps.vars.outputs.branch }}
         if: steps.decisions.outputs.PUBLISH == 'true'
-        uses: canonical/action-publish@v1
+        uses: Wandalen/wretry.action@v3
+        with:
+          attempt_limit: 2
+          attempt_delay: 60000
+          action: canonical/action-publish@v1
+          with: |
+            snap: ${{ steps.build.outputs.snap }}
+            release: edge/${{ steps.vars.outputs.branch }}
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: ${{ steps.build.outputs.snap }}
-          release: edge/${{ steps.vars.outputs.branch }}
