@@ -1,7 +1,7 @@
 Snapcraft 9.0 release notes
 ===========================
 
-.. add date here
+.. add date before releasing
 (upcoming release)
 
 Learn about the new features, changes, and fixes introduced in Snapcraft 9.0.
@@ -20,8 +20,11 @@ The following changes are incompatible with previous versions of Snapcraft.
 Removed snapcraftctl for core26
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For core26, the ``snapcraftctl`` command used in override scripts has been removed in
-favor of :ref:`craftctl <reference-external-package-scriptlets>`.
+Snapcraft 8 deprecated the ``snapcraftctl`` command in override scripts for core22 and
+core24 snaps in favor of :ref:`craftctl <reference-external-package-scriptlets>`.
+
+While ``snapcraftctl`` can still be used for core22 and core24 snaps, it isn't available
+for core26 snaps. ``craftctl`` should be used instead.
 
 
 Contributors
@@ -30,6 +33,7 @@ Contributors
 We would like to express a big thank you to all the people who contributed to
 this release.
 
+.. update contributors before releasing
 :literalref:`@alex<https://example.com/alex>`,
 :literalref:`@blair<https://example.com/blair>`,
 :literalref:`@cam<https://example.com/cam>`,
