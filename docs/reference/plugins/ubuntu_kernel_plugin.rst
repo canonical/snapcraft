@@ -52,7 +52,7 @@ If not provided, a ``source`` key must be provided.
 ubuntu-kernel-defconfig
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-**Type** path | None
+**Type** path
 
 **Note** If provided, the key ``ubuntu-kernel-use-binary-package`` must be false.
 
@@ -71,7 +71,7 @@ entries need to be modified.
 ubuntu-kernel-image-target
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Type** string | None
+**Type** string
 
 **Note** If provided, the key ``ubuntu-kernel-use-binary-package`` must be false.
 

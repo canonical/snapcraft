@@ -29,7 +29,7 @@ from typing_extensions import Self, override
 
 from snapcraft import errors
 
-# The kenrel repository depends on the flavor
+# The kernel repository depends on the flavor
 KERNEL_REPO_STEM = "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/"
 DEFAULT_RELEASE_NAME = {"core22": "jammy", "core24": "noble"}
 
