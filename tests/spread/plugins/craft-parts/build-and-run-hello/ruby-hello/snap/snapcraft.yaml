@@ -10,13 +10,19 @@ apps:
     command: bin/hello.rb
 
 parts:
+  ruby-deps:
+    plugin: nil
+    build-packages:
+      - ruby
+    stage-packages:
+      - ruby
+
   hello:
     plugin: ruby
     source: .
-    ruby-flavor: mruby
-    ruby-version: "3.4.0"
-    build-packages:
-      - ruby  # need prebuilt ruby (rake) to build mruby
+    after:
+      - ruby-deps
     override-build: |
       craftctl default
+      mkdir -p $CRAFT_PART_INSTALL/bin
       cp ./hello.rb $CRAFT_PART_INSTALL/bin/hello.rb
