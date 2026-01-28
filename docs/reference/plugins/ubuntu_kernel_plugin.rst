@@ -9,7 +9,7 @@ rules. It supports customized kernel packages that can target Ubuntu snap-based
 systems.
 
 The plugin supports building Ubuntu kernel snaps from existing Debian packages or from
-source. When building from source the optional `source` key may be used to provide a
+source. When building from source the optional ``source`` key may be used to provide a
 custom source repository URL. If not provided, the official Canonical Ubuntu kernel
 source repository will be used.
 
@@ -19,13 +19,13 @@ Debian packages as the source.
 Keys
 ----
 
-ubuntu-kernel-flavour
+ubuntu-kernel-flavor
 ~~~~~~~~~~~~~~~~~~~~~
 **Type** string
 
 **Default** "generic"
 
-The Ubuntu kernel flavour to pack. Ubuntu kernels come in different flavours that may
+The Ubuntu kernel flavor to pack. Ubuntu kernels come in different flavors that may
 target different architectures and configurations.
 
 ubuntu-kernel-dkms
@@ -111,7 +111,7 @@ ubuntu-kernel-tools
 **Note** If provided, the key `ubuntu-kernel-use-binary-package` must be false.
 
 List of kernel tools to package. Supported tools are: ``cpupower``, ``perf``,
-``bpftool``. If not provided, the default tools for the kernel flavour will be
+``bpftool``. If not provided, the default tools for the kernel flavor will be
 packaged.
 
 ubuntu-kernel-use-binary-package
@@ -122,7 +122,7 @@ ubuntu-kernel-use-binary-package
 **Default** false
 
 If true, build the kernel snap using existing kernel Debian packages. The key
-`ubuntu-kernel-release-name` will define which Ubuntu kernel packages are used
+``ubuntu-kernel-release-name`` will define which Ubuntu kernel packages are used
 as the source.
 
 
