@@ -32,9 +32,7 @@ ubuntu-kernel-dkms
 ~~~~~~~~~~~~~~~~~~
 **Type** list[string]
 
-**Default** []
-
-**Note** If provided, the key `ubuntu-kernel-use-binary-package` must be false.
+**Note** If provided, the key ``ubuntu-kernel-use-binary-package`` must be false.
 
 List of dynamic kernel modules to include in the kernel pack. When not provided, the DKMS
 list will be the default list provided by the Ubuntu kernel source.
@@ -42,25 +40,21 @@ list will be the default list provided by the Ubuntu kernel source.
 ubuntu-kernel-release-name
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Type** string | None
+**Type** string
 
-**Default** None
-
-**Note** This key is mutually exclusive with the `source` key.
+**Note** This key is mutually exclusive with the ``source`` key.
 
 If provided, this key specifies the Ubuntu release name to build, e.g. Jammy, Noble.
 The release name dictates which kernel version will be built.
 
-If not provided, a `source` key must be provided.
+If not provided, a ``source`` key must be provided.
 
 ubuntu-kernel-defconfig
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 **Type** path | None
 
-**Default** None
-
-**Note** If provided, the key `ubuntu-kernel-use-binary-package` must be false.
+**Note** If provided, the key ``ubuntu-kernel-use-binary-package`` must be false.
 
 Path to a kernel defconfig file for custom kernel configuration.
 
@@ -69,9 +63,7 @@ ubuntu-kernel-config
 
 **Type** list[string]
 
-**Default** []
-
-**Note** If provided, the key `ubuntu-kernel-use-binary-package` must be false.
+**Note** If provided, the key ``ubuntu-kernel-use-binary-package`` must be false.
 
 List of kernel config options and values. Useful if only a few kernel configuration
 entries need to be modified.
@@ -81,9 +73,7 @@ ubuntu-kernel-image-target
 
 **Type** string | None
 
-**Default** None
-
-**Note** If provided, the key `ubuntu-kernel-use-binary-package` must be false.
+**Note** If provided, the key ``ubuntu-kernel-use-binary-package`` must be false.
 
 Specify the kernel image target type if different from the platform image type.
 The default target platform image type is defined as:
@@ -106,9 +96,7 @@ ubuntu-kernel-tools
 
 **Type** list[string]
 
-**Default** []
-
-**Note** If provided, the key `ubuntu-kernel-use-binary-package` must be false.
+**Note** If provided, the key ``ubuntu-kernel-use-binary-package`` must be false.
 
 List of kernel tools to package. Supported tools are: ``cpupower``, ``perf``,
 ``bpftool``. If not provided, the default tools for the kernel flavor will be
@@ -118,8 +106,6 @@ ubuntu-kernel-use-binary-package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Type** bool
-
-**Default** false
 
 If true, build the kernel snap using existing kernel Debian packages. The key
 ``ubuntu-kernel-release-name`` will define which Ubuntu kernel packages are used
