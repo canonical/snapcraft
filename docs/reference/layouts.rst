@@ -45,8 +45,7 @@ Layouts and their defintitions must satisfy the following requirements.
 **Strictly-confined snaps**. Layouts only work with `strictly-confined
 <https://snapcraft.io/docs/snap-confinement>`_ snaps, and not with classic confinement.
 
-
-**Allowed target paths**. The target path in a layout definition can't be any of:
+**Disallowed target paths**. The target path in a layout definition can't be:
 
 - ``/boot``
 - ``/dev``
@@ -68,7 +67,7 @@ Layouts and their defintitions must satisfy the following requirements.
 **Non-root filesystem objects**. The file or directory in a layout definition can't be
 at the root of the snap filesystem.
 
-**Like for like replacement**. Layouts can only replace filesystem objects of the same
+**Like-for-like replacement**. Layouts can only replace filesystem objects of the same
 type. This means that, for example, you can route a file to a file, a directory with a
 directory, and so on. You can't, on the other hand, replace directories with symbolic
 links.

@@ -149,13 +149,15 @@ sometimes informally referred to as its metadata. This information tells both hu
 machines about the snap, such as its purpose, authors, license, and so on. The comments
 in the template describe how to use these keys.
 
-Replace the top section with:
+Replace the first four keys with:
 
 .. literalinclude:: code/craft-a-snap/snapcraft.yaml
     :language: yaml
     :caption: snapcraft.yaml
     :start-at: name: ukuzama-pyfiglet
     :end-at: This snap is not endorsed by the pyfiglet project.
+
+Take care *not* to erase the ``grade`` and ``confinement`` keys.
 
 As this is a personal snap, we prepended the project name with a user name. Replace
 ``ukuzama`` with your own user name. You might encounter other snaps in the Snap Store
@@ -237,7 +239,7 @@ snap:
 
 After a few seconds, the final result is:
 
-.. terminal::
+.. code-block:: bash
 
     Packed ukuzama-pyfiglet_0.1_amd64.snap
 
@@ -270,7 +272,7 @@ by hand.
 The ``prime`` directory contains the state of the final files before they're packed. If
 we take a look at what's inside, we'll see:
 
-.. terminal::
+.. code-block:: text
 
     /root/prime
     ├── bin
@@ -362,22 +364,17 @@ these flags.
 
 At long last, let's try running our snap.
 
-.. literalinclude:: code/craft-a-snap/task.yaml
-    :language: bash
-    :start-at: ukuzama-pyfiglet hello, world!
-    :end-at: ukuzama-pyfiglet hello, world!
-    :dedent: 2
-
-You should see the successful result:
-
 .. terminal::
+    :input: ukuzama-pyfiglet hello, world!
+    :user: crafter
+    :host: home
 
-    _          _ _                             _     _ _
-   | |__   ___| | | ___    __      _____  _ __| | __| | |
-   | '_ \ / _ \ | |/ _ \   \ \ /\ / / _ \| '__| |/ _` | |
-   | | | |  __/ | | (_) |   \ V  V / (_) | |  | | (_| |_|
-   |_| |_|\___|_|_|\___( )   \_/\_/ \___/|_|  |_|\__,_(_)
-                       |/
+     _          _ _                             _     _ _
+    | |__   ___| | | ___    __      _____  _ __| | __| | |
+    | '_ \ / _ \ | |/ _ \   \ \ /\ / / _ \| '__| |/ _` | |
+    | | | |  __/ | | (_) |   \ V  V / (_) | |  | | (_| |_|
+    |_| |_|\___|_|_|\___( )   \_/\_/ \___/|_|  |_|\__,_(_)
+                        |/
 
 Pyfiglet can draw with different typeface styles, too. It's a fun little command.
 

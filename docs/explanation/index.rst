@@ -71,6 +71,7 @@ communicating with local processes, and storing user credentials.
     extensions
     components
     snap-configurations
+    build-overrides
     remote-build
     /common/craft-parts/explanation/filesets
     classic-confinement

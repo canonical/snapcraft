@@ -257,7 +257,7 @@ The ``override-pull`` key is an inline Bash script that runs during the pull ste
 that can't be satisfied by the default pull operation in the lifecycle. In the wethr
 example, the listed commands are used to derive the correct version of the app, and set
 it using the craftctl scriptlet. More details about overrides can be found in
-:ref:`how-to-override-the-default-build`.
+:ref:`explanation-build-overrides`.
 
 The ``build-packages`` key defines the list of tools and libraries required to
 successfully build or compile the part. The build packages are obtained from
