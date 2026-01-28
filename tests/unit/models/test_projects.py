@@ -1014,11 +1014,19 @@ class TestAppValidation:
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
-    def test_app_common_id(self, app_yaml_data):
-        data = app_yaml_data(common_id="test-common-id")
+    def test_app_valid_common_id(self, app_yaml_data):
+        data = app_yaml_data(common_id="org.test.app")
         project = Project.unmarshal(data)
         assert project.apps is not None
-        assert project.apps["app1"].common_id == "test-common-id"
+        assert project.apps["app1"].common_id == "org.test.app"
+
+    def test_app_invalid_common_id(self, app_yaml_data):
+        data = app_yaml_data(common_id="_invalid")
+        error = (
+            "apps.app1.common_id\n  Value error, '_invalid' is not a valid common id"
+        )
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(data)
 
     def test_app_completer(self, app_yaml_data):
         data = app_yaml_data(completer="test-completer")
