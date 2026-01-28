@@ -29,6 +29,7 @@ from typing_extensions import Self, override
 
 from snapcraft import errors
 
+# The kernel repository depends on the flavor
 KERNEL_REPO_STEM = "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/"
 DEFAULT_RELEASE_NAME = {"core22": "jammy", "core24": "noble"}
 
@@ -120,8 +121,8 @@ class UbuntuKernelPluginProperties(plugins.properties.PluginProperties, frozen=T
 
     plugin: Literal["ubuntu-kernel"] = "ubuntu-kernel"
     """Plugin name."""
-    ubuntu_kernel_flavour: str = "generic"
-    """The ubuntu kernel flavour, will be ignored if defconfig provided."""
+    ubuntu_kernel_flavor: str = "generic"
+    """The ubuntu kernel flavor, will be ignored if defconfig provided."""
     ubuntu_kernel_dkms: list[str] = []
     """Additional dkms."""
     ubuntu_kernel_release_name: str | None = None
@@ -331,7 +332,7 @@ class UbuntuKernelPlugin(plugins.Plugin):
                 "ubuntu_kernel_release_name": self.release_name,
                 "is_cross_compiling": self._part_info.is_cross_compiling,
                 "target_arch": self._part_info.target_arch,
-                "ubuntu_kernel_flavour": self.options.ubuntu_kernel_flavour,
+                "ubuntu_kernel_flavor": self.options.ubuntu_kernel_flavor,
                 "source_repo_url": source_repo_url,
             }
         )
@@ -385,8 +386,8 @@ class UbuntuKernelPlugin(plugins.Plugin):
                 "pkgfile_version_all": f"{kernel_abi}_{kernel_version}_all",
                 # The package version can get quite long so to keep jinja2
                 # templates readable it is substituted with a variable.
-                "pkgfile_version_flavour": (
-                    f"{kernel_abi}-{self.options.ubuntu_kernel_flavour}_"
+                "pkgfile_version_flavor": (
+                    f"{kernel_abi}-{self.options.ubuntu_kernel_flavor}_"
                     f"{kernel_version}_{self._part_info.target_arch}"
                 ),
                 "snap_context": os.environ["SNAP_CONTEXT"],
@@ -396,7 +397,7 @@ class UbuntuKernelPlugin(plugins.Plugin):
                 "ubuntu_kernel_config": self.options.ubuntu_kernel_config,
                 "ubuntu_kernel_defconfig": self.options.ubuntu_kernel_defconfig,
                 "ubuntu_kernel_dkms": self.options.ubuntu_kernel_dkms,
-                "ubuntu_kernel_flavour": self.options.ubuntu_kernel_flavour,
+                "ubuntu_kernel_flavor": self.options.ubuntu_kernel_flavor,
                 "ubuntu_kernel_image_target": self.options.ubuntu_kernel_image_target,
                 "ubuntu_kernel_tools": self.options.ubuntu_kernel_tools,
                 "ubuntu_kernel_use_binary_package": self.options.ubuntu_kernel_use_binary_package,

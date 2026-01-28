@@ -13,7 +13,7 @@ env
 
     apt-get update
 
-    KERNEL_ABI=$(apt show linux-image-{{ ubuntu_kernel_flavour }}:{{ target_arch }}/{{ ubuntu_kernel_release_name }} |
+    KERNEL_ABI=$(apt show linux-image-{{ ubuntu_kernel_flavor }}:{{ target_arch }}/{{ ubuntu_kernel_release_name }} |
         grep Version |
         sed 's/Version: \(.*\)$/\1/g' |
         cut -d. -f1-4 |
@@ -21,9 +21,9 @@ env
     )
 
     echo "Kernel ABI: ${KERNEL_ABI}"
-    apt download linux-image-"${KERNEL_ABI}"-{{ ubuntu_kernel_flavour }}:{{ target_arch }}
-    apt download linux-modules-"${KERNEL_ABI}"-{{ ubuntu_kernel_flavour }}:{{ target_arch }}
-    apt download linux-modules-extra-"${KERNEL_ABI}"-{{ ubuntu_kernel_flavour }}:{{ target_arch }}
+    apt download linux-image-"${KERNEL_ABI}"-{{ ubuntu_kernel_flavor }}:{{ target_arch }}
+    apt download linux-modules-"${KERNEL_ABI}"-{{ ubuntu_kernel_flavor }}:{{ target_arch }}
+    apt download linux-modules-extra-"${KERNEL_ABI}"-{{ ubuntu_kernel_flavor }}:{{ target_arch }}
     apt download linux-firmware
 
 {% else %}
