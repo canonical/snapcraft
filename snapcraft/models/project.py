@@ -2098,7 +2098,8 @@ class Project(models.Project):
                         continue
 
                     # error only if `snapcraftctl` is the command (`echo "snapcraftctl"` isn't an error)
-                    if tokens and tokens[0] == "snapcraftctl":
+                    # also ignore the path prefixing the command (`${SNAP}/libexec/snapcraft/snapcraftctl default` is an error)
+                    if tokens and tokens[0].split("/")[-1] == "snapcraftctl":
                         raise ValueError(
                             f"Can't use 'snapcraftctl' in the {key} script for part {name!r}. "
                             "Use 'craftctl' instead."

@@ -876,6 +876,11 @@ class TestProjectValidation:
         "script",
         [
             pytest.param("snapcraftctl", id="simple"),
+            pytest.param("${SNAP}/libexec/snapcraft/snapcraftctl", id="relative-path"),
+            pytest.param(
+                "$/snap/snapcraft/current/libexec/snapcraft/snapcraftctl",
+                id="absolute-path",
+            ),
             pytest.param("snapcraftctl set version=1.2.3", id="complex"),
             pytest.param("  snapcraftctl  ", id="whitespace"),
             pytest.param(
