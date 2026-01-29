@@ -21,7 +21,7 @@ Snapcraft 9.0 brings the following minor changes.
 Promote edge channels with ``--yes``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :ref:`ref_commands_promote` command now allows promoting releases from the edge
+The :ref:`ref_commands_promote` command now supports promoting releases from the edge
 channel non-interactively with the ``--yes`` flag.
 
 
