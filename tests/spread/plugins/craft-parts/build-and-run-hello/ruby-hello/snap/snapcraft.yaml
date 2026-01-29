@@ -1,0 +1,28 @@
+name: ruby-hello
+version: "1.0"
+summary: simple ruby application
+description: build a ruby application using core24
+base: core22
+confinement: strict
+
+apps:
+  ruby-hello:
+    command: bin/hello.rb
+
+parts:
+  ruby-deps:
+    plugin: nil
+    build-packages:
+      - ruby
+    stage-packages:
+      - ruby
+
+  hello:
+    plugin: ruby
+    source: .
+    after:
+      - ruby-deps
+    override-build: |
+      craftctl default
+      mkdir -p $CRAFT_PART_INSTALL/bin
+      cp ./hello.rb $CRAFT_PART_INSTALL/bin/hello.rb
