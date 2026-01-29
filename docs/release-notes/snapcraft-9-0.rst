@@ -23,8 +23,10 @@ Removed snapcraftctl for core26
 Snapcraft 8 deprecated the ``snapcraftctl`` command in override scripts for core22 and
 core24 snaps in favor of :ref:`craftctl <reference-external-package-scriptlets>`.
 
-While ``snapcraftctl`` can still be used for core22 and core24 snaps, it isn't available
-for core26 snaps. ``craftctl`` should be used instead.
+Core26 snaps only support ``craftctl``. To use core26, you must replace all
+instances of ``snapcraftctl`` in your scripts.
+
+Core22 and core24 aren't affected by this change.
 
 
 Contributors
