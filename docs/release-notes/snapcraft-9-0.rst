@@ -28,14 +28,12 @@ The legacy remote builder has been removed in favor of the current :ref:`remote 
 The environment variable to invoke the legacy remote builder,
 ``SNAPCRAFT_REMOTE_BUILD_STRATEGY``, is no longer used by Snapcraft.
 
-Removed legacy remote builder credentials
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Previously, if Snapcraft couldn't find remote build credentials,
 it would try to load credentials from the legacy location
-``$XDG_DATA_DIR/snapcraft/provider/launchpad/credentials``. This behavior has
-been removed. Snapcraft will only load credentials from the default location,
-``$XDG_DATA_DIR/snapcraft/launchpad-credentials``.
+``$XDG_DATA_DIR/snapcraft/provider/launchpad/credentials``.
+
+Snapcraft 9.0 only loads credentials from
+``$XDG_DATA_DIR/snapcraft/launchpad-credentials``, and doesn't use the fallback.
 
 
 Contributors
