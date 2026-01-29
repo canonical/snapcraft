@@ -129,7 +129,7 @@ def list_validation_sets(name, sequence, **kwargs):
         snapcraft validation-sets --sequence all
         snapcraft validation-sets --name my-set --sequence 1
 
-    Refer to https://snapcraft.io/docs/validation-sets for further information
+    Refer to https://documentation.ubuntu.com/snapcraft/stable/reference/commands/validation-sets/ for further information
     on Validation Sets.
     """
     store_client = StoreClientCLI()

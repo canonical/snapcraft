@@ -257,7 +257,7 @@ class AliasesTest(ProjectLoaderBaseTest):
         )
         self.assertThat(
             fake_logger.output,
-            Contains("See http://snapcraft.io/docs/deprecation-notices/dn5"),
+            Contains("See https://documentation.ubuntu.com/snapcraft/stable/release-notes/"),
         )
 
     def test_duplicate_aliases(self):
