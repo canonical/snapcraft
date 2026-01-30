@@ -77,7 +77,7 @@ class TestPluginColconPlugin:
     def test_property_unexpected(self):
         try:
             colcon.ColconPlugin.properties_class(  # noqa F841
-                source="."  # type: ignore
+                source="."
             )
         except ValidationError as e:
             raise AssertionError(f"{e}") from e
@@ -104,7 +104,7 @@ class TestPluginColconPlugin:
         except ValidationError as e:
             raise AssertionError(f"{e}") from e
 
-        assert properties.source == "."  # type: ignore
+        assert properties.source == "."
         assert properties.colcon_ament_cmake_args == ["ament", "args..."]  # type: ignore
         assert properties.colcon_catkin_cmake_args == ["catkin", "args..."]  # type: ignore
         assert properties.colcon_cmake_args == ["cmake", "args..."]  # type: ignore

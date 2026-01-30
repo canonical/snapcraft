@@ -106,7 +106,7 @@ class SnapApp(SnapcraftMetadata):
     activates_on: list[str] | None = None
 
 
-class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
+class ContentPlug(SnapcraftMetadata):
     """Content plug definition in the snap metadata."""
 
     model_config = pydantic.ConfigDict(
@@ -212,7 +212,7 @@ class Links(SnapcraftMetadata):
         )
 
 
-class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
+class ComponentMetadata(SnapcraftMetadata):
     """Component metadata model.
 
     This model contains different information than the model in the
