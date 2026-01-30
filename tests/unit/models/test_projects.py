@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
+import re
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -837,6 +838,85 @@ class TestProjectValidation:
         project = Project.unmarshal(data)
 
         assert isinstance(project, project_class), type(project)
+
+    @pytest.mark.parametrize(
+        "key", ["override-pull", "override-build", "override-stage", "override-prime"]
+    )
+    @pytest.mark.parametrize(
+        "script",
+        [
+            pytest.param("# snapcraftctl", id="comment"),
+            pytest.param("ls # snapcraftctl", id="command and comment"),
+            pytest.param("echo snapcraftctl", id="arg"),
+            pytest.param(
+                """
+                # goodbye snapcraftctl
+                echo "we will miss you, snapcraftctl"
+                rm snapcraftctl
+                echo "bye!" # snapcraftctl is gone
+                """,
+                id="multiline",
+            ),
+        ],
+    )
+    def test_snapcraftctl_valid(self, key, script, project_yaml_data):
+        """Don't error if snapcraftctl is in a script, but not the command in core26."""
+        parts_data = {"my-part": {"plugin": "nil", key: script}}
+
+        Project.unmarshal(
+            project_yaml_data(
+                base="core26", build_base="devel", grade="devel", parts=parts_data
+            )
+        )
+
+    @pytest.mark.parametrize(
+        "key", ["override-pull", "override-build", "override-stage", "override-prime"]
+    )
+    @pytest.mark.parametrize(
+        "script",
+        [
+            pytest.param("snapcraftctl", id="simple"),
+            pytest.param("${SNAP}/libexec/snapcraft/snapcraftctl", id="relative-path"),
+            pytest.param(
+                "$/snap/snapcraft/current/libexec/snapcraft/snapcraftctl",
+                id="absolute-path",
+            ),
+            pytest.param("snapcraftctl set version=1.2.3", id="complex"),
+            pytest.param("  snapcraftctl  ", id="whitespace"),
+            pytest.param(
+                """
+                echo "Hello, World!"
+                snapcraftctl set grade=stable
+                cp foo $CRAFT_PART_INSTALL/bar
+                """,
+                id="multiline",
+            ),
+        ],
+    )
+    def test_snapcraftctl_error(self, key, script, project_yaml_data):
+        """Error when snapcraftctl is used in core26."""
+        parts_data = {"my-part": {"plugin": "nil", key: script}}
+        error = re.escape(
+            f"Can't use 'snapcraftctl' in the {key} script for part 'my-part'. "
+            "Use 'craftctl' instead."
+        )
+
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(
+                project_yaml_data(
+                    base="core26", build_base="devel", grade="devel", parts=parts_data
+                )
+            )
+
+    @pytest.mark.parametrize(
+        "key", ["override-pull", "override-build", "override-stage", "override-prime"]
+    )
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    def test_snapcraftctl_old_bases(self, key, base, project_yaml_data):
+        """snapcraftctl can be used for core22 and core24 bases."""
+        parts_data = {"my-part": {"plugin": "nil", key: "snapcraftctl"}}
+
+        Project.unmarshal(project_yaml_data(base=base, parts=parts_data))
 
 
 class TestHookValidation:
