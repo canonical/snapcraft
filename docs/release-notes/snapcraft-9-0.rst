@@ -14,6 +14,18 @@ See :ref:`reference-system-requirements` for information on the minimum hardware
 installed software.
 
 
+Minor features
+--------------
+
+Snapcraft 9.0 brings the following minor changes.
+
+Promote edge channels with ``--yes``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`ref_commands_promote` command now supports promoting releases from the edge
+channel non-interactively with the ``--yes`` flag.
+
+
 Backwards-incompatible changes
 ------------------------------
 
@@ -34,6 +46,17 @@ it would try to load credentials from the legacy location
 
 Snapcraft 9.0 only loads credentials from
 ``$XDG_DATA_DIR/snapcraft/launchpad-credentials``, and doesn't use the fallback.
+
+Removed snapcraftctl for core26
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Snapcraft 8 deprecated the ``snapcraftctl`` command in override scripts for core22 and
+core24 snaps in favor of :ref:`craftctl <reference-external-package-scriptlets>`.
+
+Core26 snaps only support ``craftctl``. To use core26, you must replace all
+instances of ``snapcraftctl`` in your scripts.
+
+Core22 and core24 aren't affected by this change.
 
 
 Contributors

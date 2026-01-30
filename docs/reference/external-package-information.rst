@@ -17,7 +17,7 @@ An external metadata source can be one of the following:
 
 - :ref:`AppStream <reference-external-package-appstream>`: a standard for software
   components
-- :ref:`Scriptlets <reference-external-package-scriptlets>`: a snapcraftctl-driven
+- :ref:`Scriptlets <reference-external-package-scriptlets>`: a craftctl-driven
   command to generate ``version`` and ``grade``.
 
 
