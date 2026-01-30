@@ -1,7 +1,7 @@
-name: snapcraftctl-build-failure
+name: craftctl-build-failure
 base: core20
-version: '0.1'
-summary: Fail on snapcraftctl build
+version: "0.1"
+summary: Fail on 'craftctl default'
 description: |
   Failing with purpose.
 
@@ -13,5 +13,5 @@ parts:
     plugin: go
     source: .
     override-build: |
-      snapcraftctl set-version && echo "should have failed set-version"
-      snapcraftctl build && echo "should have failed build"
+      craftctl set-version && echo "should have failed set-version"
+      craftctl default && echo "should have failed build"
