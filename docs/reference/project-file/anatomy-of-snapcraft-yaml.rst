@@ -211,7 +211,7 @@ in two stages:
 
    #. A step in the build lifecycle is manually overridden.
    #. A custom script is used to derive the version string.
-   #. The version string is set using the Snapcraftctl scriptlet.
+   #. The version string is set using the craftctl scriptlet.
 
 Alternatively, in this particular example, the version field could also be
 manually set with ``version: '1.5'``.
