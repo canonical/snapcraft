@@ -254,10 +254,10 @@ class Snapcraft(Application):
           1. Running a lifecycle command for a core20 snap
           2. Expanding extensions for a core20 snap
           3. Listing plugins for a core20 snap via the project metadata
-          5. Listing plugins for a core20 snap via `snapcraft plugins --base core20`
+          4. Listing plugins for a core20 snap via `snapcraft plugins --base core20`
 
         core22:
-          6. Running a lifecycle command for a core22 snap
+          5. Running a lifecycle command for a core22 snap
 
         Exception: If `--version` or `-V` is passed, do not use the classic fallback.
 
@@ -302,11 +302,11 @@ class Snapcraft(Application):
                     raise errors.ClassicFallback()
 
             if effective_base == "core22":
-                # 6. Running a lifecycle command for a core22 snap
+                # 5. Running a lifecycle command for a core22 snap
                 if argv_command is None or argv_command in classic_lifecycle_commands:
                     raise errors.ClassicFallback()
 
-        # 5. Listing plugins for a core20 snap via `snapcraft list-plugins --base core20`
+        # 4. Listing plugins for a core20 snap via `snapcraft list-plugins --base core20`
         if argv_command in ["list-plugins", "plugins"] and {
             "--base=core20",
             "core20",
