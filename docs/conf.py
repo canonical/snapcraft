@@ -263,7 +263,8 @@ intersphinx_mapping = {
     # https://github.com/canonical/snapcraft/issues/6036
     # "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
-    "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None)
+    "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
+    "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
 }
 
 
