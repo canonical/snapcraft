@@ -238,8 +238,9 @@ class KDENeon6(Extension):
                 "GTK_USE_PORTAL": "1",
                 "PLATFORM_PLUG": platform_kf6_snap,
                 "LD_LIBRARY_PATH": (
-                    f"$SNAP/{lxqt_support_snap}/usr/lib/"
-                    "${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}"
+                    "${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:"
+                    f"$SNAP/usr/lib:$SNAP/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:"
+                    f"$SNAP/{lxqt_support_snap}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
                 ),
                 "QT_PLUGIN_PATH": (
                     f"$SNAP/{lxqt_support_snap}/usr/lib/"
