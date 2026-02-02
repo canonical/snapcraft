@@ -17,17 +17,13 @@
 """Remote-build command tests."""
 
 import os
-import shutil
-import subprocess
 import sys
-from pathlib import Path
 from unittest.mock import ANY
 
 import pytest
-from craft_application.git import GitRepo
 from craft_platforms import DebianArchitecture
 
-from snapcraft import application, const
+from snapcraft import const
 
 # remote-build control logic may check if the working dir is a git repo,
 # so execute all tests inside a test directory
@@ -60,11 +56,6 @@ def mock_remote_start_builds(mocker):
     return _mock_start_builds
 
 
-@pytest.fixture()
-def mock_run_legacy(mocker):
-    return mocker.patch("snapcraft_legacy.cli.legacy.legacy_run")
-
-
 #######################
 # Control logic tests #
 #######################
@@ -72,100 +63,14 @@ def mock_run_legacy(mocker):
 
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("emitter", "mock_argv")
-def test_run_core22_and_later(snapcraft_yaml, base, mock_remote_build_run, fake_app):
-    """Bases that are core22 and later will use craft-application remote-build."""
+def test_run(snapcraft_yaml, base, mock_remote_build_run, fake_app):
+    """Run a remote build."""
     snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
     snapcraft_yaml(**snapcraft_yaml_dict)
 
     fake_app.run()
 
     mock_remote_build_run.assert_called_once()
-
-
-@pytest.mark.parametrize("base", const.LEGACY_BASES)
-@pytest.mark.usefixtures("mock_argv")
-def test_run_core20(snapcraft_yaml, base, mock_run_legacy, mock_remote_build_run):
-    """core20 base use fallback remote-build."""
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-
-    application.main()
-
-    mock_run_legacy.assert_called_once()
-    mock_remote_build_run.assert_not_called()
-
-
-@pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures("emitter", "mock_argv")
-def test_run_in_repo_newer_than_core22(
-    snapcraft_yaml, base, new_dir, mock_remote_start_builds, fake_app
-):
-    """Bases newer than core22 run craft-application remote-build regardless of being in a repo."""
-    # initialize a git repo
-    GitRepo(new_dir)
-    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-
-    fake_app.run()
-
-    mock_remote_start_builds.assert_called_once()
-
-
-@pytest.mark.xfail(reason="not implemented in craft-application")
-@pytest.mark.parametrize("base", const.CURRENT_BASES)
-@pytest.mark.usefixtures(
-    "mock_argv",
-    "mock_remote_builder_start_builds",
-    "fake_services",
-)
-def test_run_in_shallow_repo_unsupported(capsys, new_dir, snapcraft_yaml, base):
-    """devel / core24 and newer bases run new remote-build in a shallow git repo."""
-    root_path = Path(new_dir)
-    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-
-    git_normal_path = root_path / "normal"
-    git_normal_path.mkdir()
-    git_shallow_path = root_path / "shallow"
-
-    shutil.move(root_path / "snap", git_normal_path)
-
-    repo_normal = GitRepo(git_normal_path)
-    (repo_normal.path / "1").write_text("1")
-    repo_normal.add_all()
-    repo_normal.commit("1")
-
-    (repo_normal.path / "2").write_text("2")
-    repo_normal.add_all()
-    repo_normal.commit("2")
-
-    (repo_normal.path / "3").write_text("3")
-    repo_normal.add_all()
-    repo_normal.commit("3")
-
-    # pygit2 does not support shallow cloning, so we use git directly
-    subprocess.run(
-        [
-            "git",
-            "clone",
-            "--depth",
-            "1",
-            git_normal_path.absolute().as_uri(),
-            git_shallow_path.absolute().as_posix(),
-        ],
-        check=True,
-    )
-
-    os.chdir(git_shallow_path)
-
-    # no exception because run() catches it
-    application.main()
-    _, err = capsys.readouterr()
-
-    assert (
-        "Remote builds are not supported for projects in shallowly cloned "
-        "git repositories."
-    ) in err
 
 
 ######################

@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 import textwrap
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
@@ -62,6 +63,7 @@ from snapcraft.utils import get_effective_base
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
+    from craft_application.models.project import Part
     from craft_providers import bases
 
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
@@ -2063,6 +2065,47 @@ class Project(models.Project):
         if isinstance(field_value, str):
             field_value = cast(UniqueList[str], [field_value])
         return field_value
+
+    @pydantic.field_validator("parts")
+    @classmethod
+    def _validate_no_snapcraftctl(
+        cls, parts: dict[str, Part], info: pydantic.ValidationInfo
+    ) -> dict[str, Part]:
+        """Provide a helpful error for using snapcraftctl in core26+."""
+        override_keys = [
+            "override-pull",
+            "override-build",
+            "override-stage",
+            "override-prime",
+        ]
+
+        # core22 and core24 can use snapcraftctl
+        if {"core22", "core24"} & {info.data.get("base"), info.data.get("build-base")}:
+            return parts
+
+        for name, part in parts.items():
+            for key in override_keys:
+                script = part.get(key)
+                if not script:
+                    continue
+
+                for line in script.splitlines():
+                    try:
+                        # ignore snapcraftctl in comments
+                        tokens = shlex.split(line, comments=True)
+                    except ValueError:
+                        # ignore malformed lines
+                        continue
+
+                    # error only if `snapcraftctl` is the command (`echo "snapcraftctl"` isn't an error)
+                    # also ignore the path prefixing the command (`${SNAP}/libexec/snapcraft/snapcraftctl default` is an error)
+                    if tokens and tokens[0].split("/")[-1] == "snapcraftctl":
+                        raise ValueError(
+                            f"Can't use 'snapcraftctl' in the {key} script for part {name!r}. "
+                            "Use 'craftctl' instead."
+                        )
+
+        return parts
 
     @override
     @classmethod
