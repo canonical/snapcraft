@@ -79,7 +79,7 @@ feedback.
 Get involved
 ~~~~~~~~~~~~
 
-* `Snapcraft Matrix Channel <https://matrix.to/#/#snapcraft:ubuntu.com>`_
+* `Snapcraft Matrix channel <https://matrix.to/#/#snapcraft:ubuntu.com>`_
 * `Snapcraft forum <https://forum.snapcraft.io/>`_
 * `Contribute to Snapcraft <https://github.com/canonical/snapcraft/blob/main/CONTRIBUTING.md>`_
 * :ref:`contribute-to-this-documentation`
