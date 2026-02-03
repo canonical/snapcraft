@@ -356,6 +356,22 @@ max-branches = 16
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
 classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
+[tool.ty.src]
+exclude = [
+    "build",
+    "snapcraft_legacy",
+    "tests/spread",
+    "tests/legacy",
+    "tools",
+    "venv",
+]
+
+[tool.ty.rules]
+
+# Temporarily disabled while mypy and pyright are still in use.
+# See: https://github.com/canonical/snapcraft/issues/6007
+unused-ignore-comment = "ignore"
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = "tests"
