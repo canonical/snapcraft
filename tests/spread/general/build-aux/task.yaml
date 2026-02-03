@@ -1,8 +1,5 @@
 summary: Use build-aux for snapcraft assets
 
-# We currently only have core18 on a stable channel
-systems: [ubuntu-20.04]
-
 environment:
   SNAPCRAFT_BUILD_INFO: on
 
@@ -10,6 +7,11 @@ prepare: |
   mkdir test-snap
   cd test-snap
   snapcraft init
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base snap/snapcraft.yaml
+
   mkdir snap/hooks
   touch snap/hooks/install
   mkdir snap/gui

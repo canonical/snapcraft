@@ -1,5 +1,5 @@
 name: craftctl-build-failure
-base: core20
+base: core22
 version: "0.1"
 summary: Fail on 'craftctl default'
 description: |

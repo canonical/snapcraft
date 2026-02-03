@@ -3,7 +3,7 @@ version: "1.0"
 summary: Quick snap to ensure build-environment works
 description: Quick snap to ensure build-environment works
 
-base: core18
+base: core22
 grade: devel
 confinement: strict
 
