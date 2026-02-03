@@ -99,9 +99,7 @@ jobs:
         env:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
         run: |
-          spread google:ubuntu-20.04-64:tests/spread/core20/remote-build-legacy \
-            google:ubuntu-22.04-64:tests/spread/core22/remote-build-legacy \
-            google:ubuntu-22.04-64:tests/spread/core22/remote-build \
+          spread google:ubuntu-22.04-64:tests/spread/core22/remote-build \
             google:ubuntu-24.04-64:tests/spread/core24/remote-build \
             google:fedora-39-64:tests/spread/core24/remote-build:no_platforms
 
