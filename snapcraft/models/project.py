@@ -1350,7 +1350,7 @@ class Project(models.Project):
     """
 
     # snapcraft's `name` is more general than craft-application
-    name: ProjectName = pydantic.Field(  # type: ignore[assignment]
+    name: ProjectName = pydantic.Field(
         description="The identifying name of the snap.",
         examples=["my-app", "powershell", "jupyterlab-desktop"],
     )
@@ -1435,7 +1435,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    contact: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    contact: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The snap author's contact links and email addresses.",
         examples=["[contact@example.com, https://example.com/contact]"],
@@ -1447,7 +1447,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    issues: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    issues: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The links and email addresses for submitting issues, bugs, and feature requests.",
         examples=["[issues@email.com, https://example.com/issues]"],
@@ -2356,7 +2356,7 @@ class StableBaseProject(Project):
 class Core22Project(StableBaseProject):
     base: Literal["core22"]  # type: ignore[assignment]
 
-    platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(
         default=None,
         description="Not available for core22. Use the `architectures` key.",
         exclude=True,
