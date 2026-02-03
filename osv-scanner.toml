@@ -1,0 +1,10 @@
+[[IgnoredVulns]]
+id = "CVE-2025-69277"
+reason = """
+Snapcraft pins PyNaCl<1.6.0, because it's tied to the version of libsodium available on 24.04.
+
+The CVE assumes that PyNaCl<1.6.0 uses a version of libsodium with the vulnerability.
+
+However, 24.04 has a patched version libsodium (1.0.18-1ubuntu0.24.04.1) specifically to address this CVE.
+See https://packages.ubuntu.com/noble-updates/libsodium23 for the changelog.
+"""
