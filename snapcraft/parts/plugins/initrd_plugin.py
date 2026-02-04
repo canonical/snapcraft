@@ -80,6 +80,11 @@ from craft_parts import infos, plugins
 from overrides import overrides
 from typing_extensions import Self
 
+_INITRD_RELEASE_FROM_SNAP_BASE = {
+    "22": "jammy",
+    "24": "noble",
+}
+
 
 class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     """The part properties used by the Initrd plugin."""
@@ -118,6 +123,37 @@ class InitrdPlugin(plugins.Plugin):
     ) -> None:
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(InitrdPluginProperties, self._options)
+
+    @overrides
+    def get_pull_commands(self) -> list[str]:
+        _target_arch = self._part_info.target_arch
+        _release = _INITRD_RELEASE_FROM_SNAP_BASE[self._part_info.base]
+
+        # URL pieces for Ubuntu base
+        _tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
+        _tar_release = f"{_release}/daily/current"
+
+        # Tarball name
+        _tar_name = f"{_release}-base-{_target_arch}.tar.gz"
+
+        # Compose the URL
+        _tar_url = f"{_tar_base_url}/{_tar_release}/{_tar_name}"
+        _ubuntu_base = f"ubuntu-base-{_release}-{_target_arch}.tar.gz"
+        _initrd_root = "uc-initramfs-build"
+
+        # Pull the base
+        return " ".join(
+            [
+                f"curl {_ubuntu_base} {_tar_url}",
+                f"mkdir -p {_initrd_root}",
+                f"tar --extract --file {_ubuntu_base} --directory {_initrd_root}",
+                f"cp --no-dereference /etc/resolv.conf {_initrd_root}/etc/resolv.conf",
+                f"touch {_initrd_root}/dev/null",
+            ]
+        )
+
+        # Perform a regular pull step just in case the user has specified a source
+        return super().get_pull_commands()
 
     @overrides
     def get_build_snaps(self) -> set[str]:
