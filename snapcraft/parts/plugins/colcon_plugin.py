@@ -55,7 +55,7 @@ specific to the ROS distro. If not using the extension, set these in your
       - ROS_DISTRO: "humble"
 """
 
-from typing import Literal, cast
+from typing import Literal
 
 from craft_parts import plugins
 from craft_parts.packages.snaps import _get_parsed_snap
@@ -159,7 +159,7 @@ class ColconPlugin(_ros.RosPlugin):
 
     @overrides
     def _get_build_commands(self) -> list[str]:
-        options = cast(ColconPluginProperties, self._options)
+        options = self._options
 
         build_command = [
             "colcon",
