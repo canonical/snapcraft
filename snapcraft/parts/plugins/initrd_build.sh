@@ -75,27 +75,6 @@ clean() {
 
 # chroot_setup creates the chroot base and mounts certain filesystems from host
 chroot_setup() {
-    # Make sure no initrd chroot is lingering
-    [ -e "${INITRD_ROOT}" ] && rm -rf "${INITRD_ROOT}"
-
-    tar_base_url=https://cdimage.ubuntu.com/ubuntu-base
-    tar_release="${UBUNTU_SERIES}/daily/current"
-    tar_name="${UBUNTU_SERIES}-base-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
-    tar_url="${tar_base_url}/${tar_release}/${tar_name}"
-    ubuntu_base="ubuntu-base-${UBUNTU_SERIES}-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
-
-    curl --output "${ubuntu_base}" "${tar_url}"
-
-    # Extract chroot base
-    mkdir -p "${INITRD_ROOT}"
-    tar --extract --file "${ubuntu_base}" --directory "${INITRD_ROOT}"
-
-    # Ensure networking in chroot
-    cp --no-dereference /etc/resolv.conf "${INITRD_ROOT}/etc/resolv.conf"
-
-    # /dev/null isn't in the chroot base but it is used to mask some systemd service units
-    touch "${INITRD_ROOT}/dev/null"
-
     # This is a minimum viable collection of mounts.
     # Even though we try to settle any existing processes, on some systems this isn't
     # sufficient for ensuring an unmount can happen right now. Therefore, unmount lazily
