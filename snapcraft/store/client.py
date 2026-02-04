@@ -21,7 +21,7 @@ import platform
 import time
 from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any, cast
+from typing import Any
 
 import craft_store
 import distro
@@ -647,12 +647,10 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             f"Ignoring snap_file_size of {snap_file_size!r} and built_at {built_at!r}"
         )
 
-        revision_request = cast(
-            craft_store.models.RevisionsRequestModel,
-            craft_store.models.RevisionsRequestModel.unmarshal(
-                {"upload-id": upload_id}
-            ),
+        revision_request = craft_store.models.RevisionsRequestModel.unmarshal(
+            {"upload-id": upload_id}
         )
+
         revision_response = self.store_client.notify_revision(
             name=snap_name, revision_request=revision_request
         )
@@ -709,10 +707,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
         return channel_map.ChannelMap.from_list_releases(
-            cast(
-                craft_store.models.SnapListReleasesModel,
-                craft_store.models.SnapListReleasesModel.unmarshal(response.json()),
-            )
+            craft_store.models.SnapListReleasesModel.unmarshal(response.json())
         )
 
     @overrides
