@@ -517,6 +517,7 @@ class TestProjectValidation:
     )
     def test_project_environment_valid(self, environment, project_yaml_data):
         project = Project.unmarshal(project_yaml_data(environment=environment))
+        assert project.environment is not None
         for variable in environment:
             assert variable in project.environment
 
@@ -1469,8 +1470,10 @@ class TestAppValidation:
         data = app_yaml_data(environment=environment)
         project = Project.unmarshal(data)
         assert project.apps is not None
+        app = project.apps["app1"]
+        assert app.environment is not None
         for variable in environment:
-            assert variable in project.apps["app1"].environment
+            assert variable in app.environment
 
     @pytest.mark.parametrize(
         "environment",
