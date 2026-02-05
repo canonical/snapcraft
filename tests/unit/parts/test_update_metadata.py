@@ -137,9 +137,8 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
     assert project.website == ["website1"]  # already set in project
     assert project.source_code == ["vcs-browser"]
     assert project.icon == "assets/icon.png"
-    assert (
-        project.apps["app3"].desktop == "assets/file.desktop"  # pyright: ignore[reportOptionalSubscript]
-    )
+    assert project.apps is not None
+    assert project.apps["app3"].desktop == "assets/file.desktop"
 
 
 @pytest.mark.parametrize(
