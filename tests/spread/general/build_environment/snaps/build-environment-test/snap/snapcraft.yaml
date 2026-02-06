@@ -9,21 +9,24 @@ confinement: strict
 
 apps:
   build-environment-test:
-    command: echo "$FOO"
+    command: echo.sh
 
 parts:
   part1:
-    plugin: nil
-    override-pull: |
+    plugin: dump
+    source: .
+    override-build: |
       echo "part1: $FOO"
+      craftctl default
     build-environment:
       - FOO: BAR
 
   part2:
     plugin: nil
     after: [part1]
-    override-pull: |
+    override-build: |
       echo "part2: $FOO"
     build-environment:
-      - FOO: "$FOO BAZ"
-      - FOO: "$FOO QUX"
+      # craft-parts uses "set -u" for unbound variables, so we use '${var -}' to only print the variable if it exists
+      - FOO: "${FOO-} BAZ"
+      - FOO: "${FOO-} QUX"
