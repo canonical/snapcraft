@@ -24,7 +24,6 @@ from .package import Package
 from .project import Project
 from .provider import Provider
 from .confdbschemas import ConfdbSchemas
-from .remotebuild import RemoteBuild
 from .service_factory import (
     SnapcraftServiceFactory,
     register_snapcraft_services,
@@ -40,6 +39,5 @@ __all__ = [
     "Project",
     "Provider",
     "register_snapcraft_services",
-    "RemoteBuild",
     "SnapcraftServiceFactory",
 ]
