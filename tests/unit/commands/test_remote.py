@@ -51,7 +51,7 @@ def mock_remote_build_run(mocker):
 @pytest.fixture()
 def mock_remote_start_builds(mocker):
     _mock_start_builds = mocker.patch(
-        "snapcraft.services.remotebuild.RemoteBuild.start_builds"
+        "craft_application.services.remotebuild.RemoteBuildService.start_builds"
     )
     return _mock_start_builds
 
