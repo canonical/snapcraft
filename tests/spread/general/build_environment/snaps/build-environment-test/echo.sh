@@ -1,3 +1,3 @@
 #! /bin/sh
 
-echo ${FOO-}
+echo "${FOO-}"
