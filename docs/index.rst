@@ -1,4 +1,7 @@
-.. snapcraft documentation root file
+.. meta::
+
+    :description: Snapcraft is the command-line build tool for packaging and distributing software and apps in the snap container format.
+
 
 Snapcraft
 =========
@@ -23,7 +26,7 @@ In this documentation
 ---------------------
 
 .. list-table::
-    :widths: 30 70
+    :widths: 35 65
     :header-rows: 0
 
     * - **Tutorial**
@@ -51,7 +54,7 @@ In this documentation
     * - **Sandboxing and access control**
       - :ref:`explanation-interfaces` • :ref:`reference-layouts` •
         :ref:`reference-build-environment-options` • :ref:`reference-hooks`
-    * - **Migrating snaps**
+    * - **Snap migration**
       - :ref:`how-to-change-from-core18-to-core20` •
         :ref:`how-to-change-from-core20-to-core22` •
         :ref:`how-to-change-from-core22-to-core24`
@@ -65,7 +68,7 @@ In this documentation
 How this documentation is organized
 -----------------------------------
 
-The Snapcraft documentation embodies the `Diátaxis framework <https://diataxis.fr/>`_.
+The Snapcraft documentation embodies the `Diátaxis framework <https://diataxis.fr/>`__.
 
 * The :ref:`tutorial <tutorials>` is a lesson that steps through the main process of
   packaging a snap.
@@ -87,9 +90,9 @@ feedback.
 Get involved
 ~~~~~~~~~~~~
 
-* `Snapcraft Matrix channel <https://matrix.to/#/#snapcraft:ubuntu.com>`_
-* `Snapcraft forum <https://forum.snapcraft.io/>`_
-* `Contribute to Snapcraft <https://github.com/canonical/snapcraft/blob/main/CONTRIBUTING.md>`_
+* `Snapcraft Matrix channel <https://matrix.to/#/#snapcraft:ubuntu.com>`__
+* `Snapcraft forum <https://forum.snapcraft.io/>`__
+* `Contribute to Snapcraft development <https://github.com/canonical/snapcraft/blob/main/CONTRIBUTING.md>`__
 * :ref:`contribute-to-this-documentation`
 
 
@@ -103,9 +106,9 @@ Releases and support
 Governance and policies
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-* `Ubuntu Code of Conduct <https://ubuntu.com/community/docs/ethos/code-of-conduct>`_
+* `Ubuntu Code of Conduct <https://ubuntu.com/community/docs/ethos/code-of-conduct>`__
 * `Canonical Contributor License Agreement
-  <https://ubuntu.com/legal/contributors>`_
+  <https://ubuntu.com/legal/contributors>`__
 
 
 .. toctree::
