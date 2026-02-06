@@ -140,6 +140,7 @@ has an ``init`` command that spawns a template project file. Let's start with th
 From here onward, we'll be working primarily in the project file. Open
 ``snap/snapcraft.yaml`` in a text editor.
 
+.. _tutorial-craft-a-snap-define-package-information:
 
 Define the package information
 ------------------------------
@@ -174,6 +175,7 @@ in the pyfiglet README. Instead, we sourced one from the upstream project at `fi
 <http://www.figlet.org>`_. The fuller ``description`` key, which has no length limit, is
 taken from pyfiglet. We added a disclaimer about endorsement at the end.
 
+.. _tutorial-craft-a-snap-define-the-target-platforms:
 
 Define the target platforms
 ---------------------------
@@ -194,6 +196,7 @@ Add the ``platform`` key after the project information:
 With this declaration, Snapcraft will only build the snap on AMD64 machines, for AMD64
 machines. Take care to preserve the colon (:) in ``amd64:``.
 
+.. _tutorial-craft-a-snap-define-the-main-part:
 
 Define the main part
 --------------------
@@ -224,6 +227,7 @@ source code. With pyfiglet, we're merely handling the packaging on the project's
 meaning our project file is downstream of and dependent on it. By pointing to a remote
 URL, Snapcraft will download the source before it packs the snap.
 
+.. _tutorial-craft-a-snap-pack-the-snap:
 
 Pack the snap
 -------------
@@ -342,6 +346,7 @@ snap calls on the host. It's a path to an executable inside the snap, and can co
 arguments. It isn't strictly tied to any binary built by the snap. It could instead be,
 for example, a combination of POSIX-compatible commands.
 
+.. _tutorial-craft-a-snap-test-the-snap:
 
 Test the snap
 -------------
@@ -454,6 +459,8 @@ snap, reinstall it, and then try it with one of the new fonts:
                    `---'
 
 
+.. _tutorial-craft-a-snap-connect-the-interfaces:
+
 Connect the interfaces
 ----------------------
 
@@ -506,6 +513,7 @@ If we repack and reinstall the snap, we can install a new font for pyfiglet to u
 
 However, before we repack, let's go back to two keys we skipped at the beginning.
 
+.. _tutorial-craft-a-snap-secure-the-snap:
 
 Secure the snap
 ---------------

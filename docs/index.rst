@@ -26,10 +26,18 @@ In this documentation
     :widths: 30 70
     :header-rows: 0
 
+    * - **Tutorial**
+      - :ref:`tutorial-craft-a-snap-define-package-information` •
+        :ref:`tutorial-craft-a-snap-define-the-target-platforms` •
+        :ref:`tutorial-craft-a-snap-define-the-main-part` •
+        :ref:`tutorial-craft-a-snap-pack-the-snap` •
+        :ref:`tutorial-craft-a-snap-test-the-snap` •
+        :ref:`tutorial-craft-a-snap-connect-the-interfaces` •
+        :ref:`tutorial-craft-a-snap-secure-the-snap`
     * - **Installation and setup**
       - :ref:`reference-system-requirements` • :ref:`how-to-set-up-snapcraft` •
         :ref:`how-to-select-a-build-provider`
-    * - **Crafting language**
+    * - **Vocabulary and syntax**
       - :ref:`reference-commands` • :ref:`reference-snapcraft-yaml` •
         :ref:`how-to-configure-package-information`
     * - **Platform compatibility**
