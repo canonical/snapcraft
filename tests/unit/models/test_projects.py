@@ -1855,7 +1855,7 @@ def test_get_snap_project_with_content_plugs(snapcraft_yaml, new_dir):
         },
     }
 
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
 
     assert project.get_extra_build_snaps() == [
         "core22",
@@ -1894,7 +1894,7 @@ def test_get_snap_project_with_content_plugs_does_not_add_extension(
         },
     }
 
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
 
     assert project.get_extra_build_snaps() == [
         "core22",
@@ -2364,7 +2364,7 @@ def test_build_planner_all_as_platform_invalid(platforms, message):
         "confinement": "strict",
     }
     with pytest.raises(pydantic.ValidationError, match=message):
-        snapcraft.models.project.Project(**build_plan_data)
+        snapcraft.models.project.Project.unmarshal(build_plan_data)
 
 
 def test_build_planner_all_with_other_builds_core22():
