@@ -1,17 +1,8 @@
 summary: Test pulling different source types
 
-# These are tested on craft-parts for 22.04 and not all of them are available.
-systems:
-  - ubuntu-20.04
-  - ubuntu-20.04-64
-  - ubuntu-20.04-amd64
-  - ubuntu-20.04-arm64
-  - ubuntu-20.04-armhf
-  - ubuntu-20.04-s390x
-  - ubuntu-20.04-ppc64el
-
 environment:
-  SNAP_DIR/7z: snaps/7z
+  # https://github.com/canonical/craft-parts/issues/1443
+  # SNAP_DIR/7z: snaps/7z
   SNAP_DIR/deb: snaps/deb
   SNAP_DIR/deb_with_checksum: snaps/deb-with-checksum
   SNAP_DIR/deb_with_symlink: snaps/deb-with-symlink

@@ -43,11 +43,7 @@ execute: |
 
   # Verify content snap was installed for dependency checks.
   snap list gtk-common-themes
-  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
-    snap list kde-frameworks-5-99-qt-5-15-7-core20
-  elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
-    snap list kf5-core22
-  fi
+  snap list kf5-core22
 
   # Verify all dependencies were found.
   if echo "$output" | grep -q "part is missing libraries"; then
