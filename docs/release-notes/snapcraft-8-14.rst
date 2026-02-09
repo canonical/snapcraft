@@ -119,6 +119,14 @@ Snapcraft 8.14.0
 
 - `craft-parts#1346`_ The Meson plugin now calls ``meson setup`` during build.
 
+.. _release-notes-fixes-8.14.1:
+
+Snapcraft 8.14.1
+~~~~~~~~~~~~~~~~
+
+- `craft-providers#898`_ Snapcraft retries calls to snapd when setting up the build
+  environment.
+
 Contributors
 ------------
 
@@ -137,3 +145,4 @@ this release.
 and :literalref:`@tigarmo<https://github.com/tigarmo>`.
 
 .. _craft-parts#1346: https://github.com/canonical/craft-parts/pull/1346
+.. _craft-providers#898: https://github.com/canonical/craft-providers/pull/898
