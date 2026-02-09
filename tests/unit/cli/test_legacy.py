@@ -81,26 +81,19 @@ def test_promote_command_yes(mocker, legacy_run):
     ]
 
 
-def test_list_validation_sets(mocker, legacy_run):
-    mocker.patch.object(
-        sys,
-        "argv",
-        [
-            "cmd",
-            "list-validation-sets",
-        ],
-    )
+def test_validation_sets(mocker, legacy_run):
+    mocker.patch.object(sys, "argv", ["cmd", "validation-sets"])
 
     cli.run()
 
     assert legacy_run.mock_calls == [call(argparse.Namespace(name=None, sequence=None))]
 
 
-def test_list_validation_sets_with_options(mocker, legacy_run):
+def test_validation_sets_with_options(mocker, legacy_run):
     mocker.patch.object(
         sys,
         "argv",
-        ["cmd", "list-validation-sets", "--name", "set-name", "--sequence", "all"],
+        ["cmd", "validation-sets", "--name", "set-name", "--sequence", "all"],
     )
 
     cli.run()
@@ -108,6 +101,22 @@ def test_list_validation_sets_with_options(mocker, legacy_run):
     assert legacy_run.mock_calls == [
         call(argparse.Namespace(name="set-name", sequence="all"))
     ]
+
+
+def test_list_validation_sets_error(mocker, capsys):
+    """Error on removed 'list-validation-sets' command."""
+    mocker.patch.object(sys, "argv", ["cmd", "list-validation-sets"])
+
+    return_code = cli.run()
+
+    out, err = capsys.readouterr()
+    assert not out
+    assert (
+        "The 'list-validation-sets' command was renamed to 'validation-sets'.\n"
+        "Recommended resolution: Use 'validation-sets' instead."
+    ) in err
+    # this error gets caught by core22's cli handler, so the return_code is 1
+    assert return_code == 1
 
 
 def test_sign_build(mocker, legacy_run):
@@ -118,3 +127,17 @@ def test_sign_build(mocker, legacy_run):
     assert legacy_run.mock_calls == [
         call(argparse.Namespace(local=True, snap_file="foo.snap", key_name=None))
     ]
+
+
+def test_list_keys_error(mocker, capsys):
+    """Error on removed 'list-keys' command."""
+    mocker.patch.object(sys, "argv", ["cmd", "list-keys"])
+
+    cli.run()
+
+    out, err = capsys.readouterr()
+    assert not out
+    assert (
+        "The 'list-keys' command was renamed to 'keys'.\n"
+        "Recommended resolution: Use 'keys' instead."
+    ) in err

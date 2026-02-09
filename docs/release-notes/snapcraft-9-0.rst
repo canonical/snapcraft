@@ -42,6 +42,67 @@ building core20 snaps.
 The :ref:`support schedule <reference-support-schedule>` details our remaining
 commitments to core20.
 
+Renamed commands
+~~~~~~~~~~~~~~~~
+
+We strive to improve the clarity and simplicity of the Snapcraft CLI. Over several
+versions of Snapcraft 8, we revised many commands and provided deprecation warnings for
+their old verbs.
+
+Snapcraft 9 removes the old command names. The updated names are:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 1 2
+
+    * - Old command
+      - New command
+    * - ``list``
+      - ``names``
+    * - ``list-registered``
+      - ``names``
+    * - ``list-extensions``
+      - ``extensions``
+    * - ``list-plugins``
+      - ``plugins``
+    * - ``list-tracks``
+      - ``tracks``
+    * - ``list-revisions``
+      - ``revisions``
+    * - ``list-validation-sets``
+      - ``validation-sets``
+    * - ``list-confdb-schemas``
+      - ``confdb-schemas``
+    * - ``list-keys``
+      - ``keys``
+    * - ``push``
+      - ``upload``
+    * - ``snap``
+      - ``pack``
+
+
+Additionally, Snapcraft 9 removes the following command line options. They're replaced
+by their equivalent environment variables:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 2 3 4
+
+    * - Command
+      - Old option
+      - Replacement
+    * - ``export-login``
+      - ``-experimental-login``
+      - Set the environment variable ``SNAPCRAFT_STORE_AUTH=candid``.
+    * - ``login``
+      - ``-experimental-login``
+      - Set the environment variable ``SNAPCRAFT_STORE_AUTH=candid``.
+    * - ``login``
+      - ``-with``
+      - Export the credentials to the environment variable ``SNAPCRAFT_STORE_CREDENTIALS``.
+
+
+
 Removed legacy remote builder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

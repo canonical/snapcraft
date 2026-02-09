@@ -14,33 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
 from argparse import Namespace
 from textwrap import dedent
 
 import pytest
 
 import snapcraft.commands
+from snapcraft import errors
 
 
 @pytest.mark.usefixtures("fake_extension")
-@pytest.mark.parametrize(
-    "command",
-    [
-        snapcraft.commands.ListExtensionsCommand,
-        snapcraft.commands.ExtensionsCommand,
-    ],
-)
-def test_command(emitter, command, fake_app_config):
-    cmd = command(fake_app_config)
+def test_command(emitter, fake_app_config):
+    cmd = snapcraft.commands.ExtensionsCommand(fake_app_config)
 
     cmd.run(Namespace())
 
-    if cmd.hidden:
-        emitter.assert_progress(
-            f"The '{cmd.name}' command was renamed to 'extensions'. Use 'extensions' instead. "
-            "The old name will be removed in a future release.",
-            permanent=True,
-        )
     emitter.assert_message(
         dedent(
             """\
@@ -65,3 +54,12 @@ def test_command(emitter, command, fake_app_config):
         ros2-jazzy-ros-core   core24"""
         )
     )
+
+
+def test_list_extensions_error(fake_app_config):
+    """Error on removed 'list-extensions' command."""
+    cmd = snapcraft.commands.ListExtensionsCommand(fake_app_config)
+    expected = re.escape("The 'list-extensions' command was renamed to 'extensions'.")
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        cmd.run(Namespace())

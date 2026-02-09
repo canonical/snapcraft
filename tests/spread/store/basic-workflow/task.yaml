@@ -65,13 +65,13 @@ execute: |
   snapcraft register --yes "${snap_name}"
 
   # Take a look at registered snaps.
-  snapcraft list
+  snapcraft names
 
   # Push and Release
   retry snapcraft upload "${snap_file}" --release edge --component "foo=${foo_component_file}" --component "bar-baz=${bar_baz_component_file}"
 
   # Show revisions
-  snapcraft list-revisions "${snap_name}"
+  snapcraft revisions "${snap_name}"
 
   # Release
   retry snapcraft release "${snap_name}" 1 edge
@@ -87,7 +87,7 @@ execute: |
   snapcraft close "${snap_name}" candidate
 
   # List tracks
-  snapcraft list-tracks "${snap_name}"
+  snapcraft tracks "${snap_name}"
 
   # Show metrics (empty metrics as no users!).
   snapcraft metrics "${snap_name}" --format json --name installed_base_by_operating_system

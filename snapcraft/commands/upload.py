@@ -27,7 +27,7 @@ from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from overrides import overrides
 
-from snapcraft import const, errors, store, utils
+from snapcraft import errors, store, utils
 from snapcraft.meta import SnapMetadata
 from snapcraft_legacy._store import get_data_from_snap_file
 
@@ -215,15 +215,11 @@ def create_callback(encoder: MultipartEncoder):
 
 
 class StoreLegacyPushCommand(StoreUploadCommand):
-    """Legacy command to upload a snap to the Snap Store."""
+    """Removed command alias to upload a snap to the Snap Store."""
 
     name = "push"
     hidden = True
 
     @overrides
     def run(self, parsed_args: argparse.Namespace):
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

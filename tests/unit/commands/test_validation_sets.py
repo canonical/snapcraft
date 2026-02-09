@@ -16,6 +16,7 @@
 
 import argparse
 import json
+import re
 from typing import Any
 from unittest.mock import call
 
@@ -569,3 +570,21 @@ def test_edit_sequence_error_no_retry(
         "to a valid state in the case of invalid changes or snap refresh failures.",
         permanent=True,
     )
+
+
+def test_list_validation_sets_error(fake_app_config):
+    """Error on removed 'list-validation-sets' command."""
+    cmd = commands.StoreLegacyListValidationSetsCommand(fake_app_config)
+    expected = re.escape(
+        "The 'list-validation-sets' command was renamed to 'validation-sets'."
+    )
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        cmd.run(
+            argparse.Namespace(
+                account_id="test",
+                set_name="cert1",
+                sequence="9",
+                key_name=None,
+            )
+        )

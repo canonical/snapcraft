@@ -30,7 +30,7 @@ from craft_cli import emit
 from overrides import overrides
 from tabulate import tabulate
 
-from snapcraft import const, store
+from snapcraft import errors, store
 
 if TYPE_CHECKING:
     import argparse
@@ -438,18 +438,14 @@ class StoreTracksCommand(AppCommand):
 
 
 class StoreListTracksCommand(StoreTracksCommand):
-    """Command alias to list the tracks of a snap in the Snap Store."""
+    """Removed command alias to list the tracks of a snap in the Snap Store."""
 
     name = "list-tracks"
     hidden = True
 
     @overrides
     def run(self, parsed_args: argparse.Namespace):
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreRevisionsCommand(AppCommand):
@@ -565,15 +561,11 @@ class StoreRevisionsCommand(AppCommand):
 
 
 class StoreListRevisionsCommand(StoreRevisionsCommand):
-    """Command alias to revisions."""
+    """Removed command alias to revisions."""
 
     name = "list-revisions"
     hidden = True
 
     @overrides
     def run(self, parsed_args: argparse.Namespace):
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

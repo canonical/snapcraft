@@ -22,10 +22,9 @@ import textwrap
 from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
-from craft_cli import emit
 from typing_extensions import override
 
-from snapcraft import const
+from snapcraft import errors
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.store._legacy_account import set_legacy_env
 
@@ -212,18 +211,14 @@ class StoreLegacyKeysCommand(LegacyAppCommand):
 
 
 class StoreLegacyListKeysCommand(StoreLegacyKeysCommand):
-    """Alias command passthrough for the keys command."""
+    """Removed command alias for the keys command."""
 
     name = "list-keys"
     hidden = True
 
     @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreLegacyCreateKeyCommand(LegacyAppCommand):
@@ -346,15 +341,11 @@ class StoreLegacyValidationSetsCommand(LegacyAppCommand):
 
 
 class StoreLegacyListValidationSetsCommand(StoreLegacyValidationSetsCommand):
-    """Alias command passthrough for the validation-sets command."""
+    """Removed command alias for the validation-sets command."""
 
     name = "list-validation-sets"
     hidden = True
 
     @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

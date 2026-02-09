@@ -22,10 +22,9 @@ import textwrap
 from typing import TYPE_CHECKING
 
 import craft_application.commands
-from craft_cli import emit
 from typing_extensions import override
 
-from snapcraft import const, services
+from snapcraft import const, errors, services
 
 if TYPE_CHECKING:
     import argparse
@@ -78,18 +77,14 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
 
 
 class StoreListConfdbSchemasCommand(StoreConfdbSchemasCommand):
-    """A command alias to list confdb schemas."""
+    """Removed command alias to list confdb schemas."""
 
     name = "list-confdb-schemas"
     hidden = True
 
     @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):

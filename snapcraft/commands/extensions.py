@@ -28,7 +28,7 @@ from craft_platforms import DebianArchitecture
 from overrides import overrides
 from pydantic import BaseModel
 
-from snapcraft import const, extensions, models
+from snapcraft import errors, extensions, models
 from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
@@ -84,18 +84,14 @@ class ExtensionsCommand(AppCommand):
 
 
 class ListExtensionsCommand(ExtensionsCommand):
-    """A command alias to list the available extensions."""
+    """Removed alias to list available extensions."""
 
     name = "list-extensions"
     hidden = True
 
     @overrides
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class ExpandExtensionsCommand(AppCommand):
