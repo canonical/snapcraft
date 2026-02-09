@@ -1,9 +1,10 @@
 import argparse
+import re
 from textwrap import dedent
 
 import pytest
 
-from snapcraft import commands
+from snapcraft import commands, errors
 from snapcraft.store import channel_map
 from snapcraft_legacy.storeapi.v2.releases import Releases
 
@@ -715,25 +716,12 @@ def test_progressive_unknown(
 #######################
 
 
-@pytest.mark.parametrize(
-    "command_class",
-    [
-        commands.StoreListTracksCommand,
-        commands.StoreTracksCommand,
-    ],
-)
 @pytest.mark.usefixtures("memory_keyring", "fake_store_get_status_map")
-def test_list_tracks(emitter, command_class, fake_app_config):
-    cmd = command_class(fake_app_config)
+def test_tracks(emitter, fake_app_config):
+    cmd = commands.StoreTracksCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(name="test-snap"))
 
-    if command_class.hidden:
-        emitter.assert_progress(
-            f"The '{command_class.name}' command was renamed to 'tracks'. Use 'tracks' instead. "
-            "The old name will be removed in a future release.",
-            permanent=True,
-        )
     emitter.assert_message(
         "Name    Status    Creation-Date         Version-Pattern\n"
         "latest  active    -                     -\n"
@@ -741,30 +729,27 @@ def test_list_tracks(emitter, command_class, fake_app_config):
     )
 
 
+@pytest.mark.usefixtures("memory_keyring")
+def test_list_tracks_error(fake_app_config):
+    """Error on removed 'list-tracks' command."""
+    cmd = commands.StoreListTracksCommand(fake_app_config)
+    expected = re.escape("The 'list-tracks' command was renamed to 'tracks'.")
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        cmd.run(argparse.Namespace(name="test-snap"))
+
+
 ##########################
 # List Revisions Command #
 ##########################
 
 
-@pytest.mark.parametrize(
-    "command_class",
-    [
-        commands.StoreListRevisionsCommand,
-        commands.StoreRevisionsCommand,
-    ],
-)
 @pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
-def test_list_revisions(emitter, command_class, fake_app_config):
-    cmd = command_class(fake_app_config)
+def test_revisions(emitter, fake_app_config):
+    cmd = commands.StoreRevisionsCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
 
-    if command_class.hidden:
-        emitter.assert_progress(
-            f"The '{command_class.name}' command was renamed to 'revisions'. Use 'revisions' instead. "
-            "The old name will be removed in a future release.",
-            permanent=True,
-        )
     emitter.assert_message(
         dedent(
             """\
@@ -775,9 +760,19 @@ def test_list_revisions(emitter, command_class, fake_app_config):
     )
 
 
+@pytest.mark.usefixtures("memory_keyring")
+def test_list_revisions_error(fake_app_config):
+    """Error on removed 'list-revisions' command."""
+    cmd = commands.StoreListRevisionsCommand(fake_app_config)
+    expected = re.escape("The 'list-revisions' command was renamed to 'revisions'.")
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
+
+
 @pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
 def test_list_revisions_arch(emitter, fake_app_config):
-    cmd = commands.StoreListRevisionsCommand(fake_app_config)
+    cmd = commands.StoreRevisionsCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(snap_name="test-snap", arch="amd64"))
 
@@ -796,7 +791,7 @@ def test_list_revisions_no_release_information(
 ):
     list_revisions_result.releases = []
 
-    cmd = commands.StoreListRevisionsCommand(fake_app_config)
+    cmd = commands.StoreRevisionsCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
 

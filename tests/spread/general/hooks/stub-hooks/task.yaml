@@ -14,7 +14,7 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
-  snapcraft snap --destructive-mode
+  snapcraft pack --destructive-mode
 
   # Verify that the hook is there
   if [ ! -f prime/meta/hooks/install ]; then

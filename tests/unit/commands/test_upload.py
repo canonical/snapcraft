@@ -1,12 +1,13 @@
 import argparse
 import pathlib
+import re
 import sys
 from unittest.mock import ANY, call
 
 import craft_cli.errors
 import pytest
 
-from snapcraft import cli, commands
+from snapcraft import cli, commands, errors
 from snapcraft.commands.upload import ComponentOption
 from tests import unit
 
@@ -80,19 +81,14 @@ def component_file(data_path):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-@pytest.mark.parametrize(
-    "command_class",
-    (commands.StoreUploadCommand, commands.StoreLegacyPushCommand),
-)
 def test_default(
     emitter,
     fake_store_notify_upload,
     fake_store_verify_upload,
     snap_file,
-    command_class,
     fake_app_config,
 ):
-    cmd = command_class(fake_app_config)
+    cmd = commands.StoreUploadCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -102,12 +98,6 @@ def test_default(
         )
     )
 
-    if command_class.hidden:
-        emitter.assert_progress(
-            f"The '{command_class.name}' command was renamed to 'upload'. Use 'upload' instead. "
-            "The old name will be removed in a future release.",
-            permanent=True,
-        )
     assert fake_store_verify_upload.mock_calls == [call(ANY, snap_name="basic")]
     assert fake_store_notify_upload.mock_calls == [
         call(
@@ -124,19 +114,33 @@ def test_default(
 
 
 @pytest.mark.usefixtures("memory_keyring")
-@pytest.mark.parametrize(
-    "command_class",
-    (commands.StoreUploadCommand, commands.StoreLegacyPushCommand),
-)
+def test_push_error(
+    snap_file,
+    fake_app_config,
+):
+    """Error on the removed 'push' command."""
+    cmd = commands.StoreLegacyPushCommand(fake_app_config)
+    expected = re.escape("The 'push' command was renamed to 'upload'.")
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        cmd.run(
+            argparse.Namespace(
+                snap_file=snap_file,
+                channels=None,
+                component=[],
+            )
+        )
+
+
+@pytest.mark.usefixtures("memory_keyring")
 def test_built_at(
     emitter,
     fake_store_notify_upload,
     fake_store_verify_upload,
     snap_file_with_started_at,
-    command_class,
     fake_app_config,
 ):
-    cmd = command_class(fake_app_config)
+    cmd = commands.StoreUploadCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(

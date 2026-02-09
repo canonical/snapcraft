@@ -31,7 +31,7 @@ execute: |
 
   snapcraft edit-validation-sets "$(snapcraft whoami | yq .id)" testset 1 --key-name test-staging-key-2
 
-  snapcraft list-validation-sets | MATCH testset
+  snapcraft validation-sets | MATCH testset
 
 restore: |
   rm -rf "$HOME/.snap/gnupg"

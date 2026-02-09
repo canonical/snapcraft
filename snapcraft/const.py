@@ -18,9 +18,16 @@
 
 import enum
 
-DEPRECATED_COMMAND_WARNING = (
-    "The '{old}' command was renamed to '{new}'. Use '{new}' instead. "
-    "The old name will be removed in a future release."
+REMOVED_COMMAND_MESSAGE = "The '{old}' command was renamed to '{new}'."
+
+REMOVED_COMMAND_RESOLUTION = "Use '{new}' instead."
+
+DEPRECATED_COMMAND_WARNING = " ".join(
+    [
+        REMOVED_COMMAND_MESSAGE,
+        REMOVED_COMMAND_RESOLUTION,
+        "The old name will be removed in a future release.",
+    ]
 )
 
 

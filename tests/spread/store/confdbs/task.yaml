@@ -33,7 +33,7 @@ execute: |
 
   snapcraft edit-confdb-schema "$(snapcraft whoami | yq .id)" testset --key-name test-staging-key-2
 
-  snapcraft list-confdb-schemas | MATCH testset
+  snapcraft confdb-schemas | MATCH testset
 
 restore: |
   rm -rf "$HOME/.snap/gnupg"

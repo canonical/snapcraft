@@ -102,15 +102,11 @@ class PluginsCommand(AppCommand):
 
 
 class ListPluginsCommand(PluginsCommand):
-    """A command alias to list the available plugins."""
+    """Removed command alias to list the available plugins."""
 
     name = "list-plugins"
     hidden = True
 
     @overrides
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
