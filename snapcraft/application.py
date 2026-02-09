@@ -33,11 +33,8 @@ from craft_cli import emit
 from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
 from overrides import override
 
-import snapcraft
-import snapcraft_legacy
 from snapcraft import cli, commands, errors, models, services, store
 from snapcraft.utils import get_effective_base
-from snapcraft_legacy.cli import legacy
 
 from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
 from .parts import plugins
@@ -71,6 +68,9 @@ def _get_esm_error_for_base(base: str) -> None:
         case "core18":
             channel = "7.x"
             version = "7"
+        case "core20":
+            channel = "8.x"
+            version = "8"
         case _:
             return
 
@@ -246,71 +246,39 @@ class Snapcraft(Application):
         return next((arg for arg in sys.argv[1:] if arg in command_names), None)
 
     def _check_for_classic_fallback(self) -> None:
-        """Check for and raise a ClassicFallback if an older codebase should be used.
+        """Check for and raise a ClassicFallback for core22 lifecycle commands.
 
-        The project should use the classic fallback path for any of the following conditions.
-
-        core20:
-          1. Running a lifecycle command for a core20 snap
-          2. Expanding extensions for a core20 snap
-          3. Listing plugins for a core20 snap via the project metadata
-          4. Listing plugins for a core20 snap via `snapcraft plugins --base core20`
-
-        core22:
-          5. Running a lifecycle command for a core22 snap
-
-        Exception: If `--version` or `-V` is passed, do not use the classic fallback.
-
-        If none of the above conditions are met, then the default craft-application
-        code path should be used.
+        The classic fallback path (pre-craft-application) should only be used for core22
+        lifecycle commands.
 
         :raises ClassicFallback: If the project should use the classic fallback code path.
         """
-        argv_command = self._get_argv_command()
-
-        # Exception: If `--version` or `-V` is passed, do not use the classic fallback.
+        # don't fallback for `--version` or `-V`
         if {"--version", "-V"}.intersection(sys.argv):
             return
 
-        if project := self._get_project_raw():
-            # if the project metadata is incomplete, assume core24 so craft application
-            # can present user-friendly errors when unmarshalling the model
-            effective_base = (
-                get_effective_base(
-                    base=project.get("base"),
-                    build_base=project.get("build-base"),
-                    project_type=project.get("type"),
-                    name=project.get("name"),
-                )
-                or "core24"
-            )
+        argv_command = self._get_argv_command()
+        project = self._get_project_raw()
 
-            classic_lifecycle_commands = [
-                command.name for command in cli.CORE22_LIFECYCLE_COMMAND_GROUP.commands
-            ]
+        # don't fallback for commands that don't need a project
+        if not project:
+            return
 
-            if effective_base == "core20":
-                # 1. Running a lifecycle command for a core20 snap
-                # 2. Expanding extensions for a core20 snap
-                # 3. Listing plugins for a core20 snap via the project metadata
-                if argv_command is None or argv_command in [
-                    *classic_lifecycle_commands,
-                    "expand-extensions",
-                    "list-plugins",
-                    "plugins",
-                ]:
-                    raise errors.ClassicFallback()
+        effective_base = get_effective_base(
+            base=project.get("base"),
+            build_base=project.get("build-base"),
+            project_type=project.get("type"),
+            name=project.get("name"),
+        )
+        if effective_base != "core22":
+            return
 
-            if effective_base == "core22":
-                # 5. Running a lifecycle command for a core22 snap
-                if argv_command is None or argv_command in classic_lifecycle_commands:
-                    raise errors.ClassicFallback()
+        classic_lifecycle_commands = [
+            command.name for command in cli.CORE22_LIFECYCLE_COMMAND_GROUP.commands
+        ]
 
-        # 4. Listing plugins for a core20 snap via `snapcraft list-plugins --base core20`
-        if argv_command in ["list-plugins", "plugins"] and {
-            "--base=core20",
-            "core20",
-        }.intersection(sys.argv):
+        # `argv_command is None` is for the default command and can be dropped in #5673
+        if argv_command is None or argv_command in classic_lifecycle_commands:
             raise errors.ClassicFallback()
 
     @override
@@ -322,11 +290,9 @@ class Snapcraft(Application):
         - The codebase for core24 and newer commands uses craft-application to
           create and manage the Dispatcher.
         - The codebase for core22 commands creates its own Dispatcher and handles
-            errors and exit codes.
-        - The codebase for core20 commands uses the legacy snapcraft codebase which
-            handles logging, errors, and exit codes internally.
+          errors and exit codes.
 
-        :raises ClassicFallback: If the core20 or core22 codebases should be used.
+        :raises ClassicFallback: If the core22 codebase should be used.
         """
         self._check_for_classic_fallback()
         return super()._get_dispatcher()
@@ -376,11 +342,6 @@ def get_app_info() -> tuple[craft_cli.Dispatcher, dict[str, Any]]:
 
 def main() -> int:
     """Run craft-application based snapcraft with classic fallback."""
-    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
-        snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
-        legacy.legacy_run()
-        return 0  # never called in normal operation
-
     # set lib loggers to debug level so that all messages are sent to Emitter
     for lib_name in _LIB_NAMES:
         logger = logging.getLogger(lib_name)

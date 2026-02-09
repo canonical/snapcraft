@@ -34,7 +34,6 @@ from snapcraft import errors, store, utils
 from snapcraft.parts import plugins
 
 from . import commands
-from .legacy_cli import run_legacy
 
 CORE22_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
     "Lifecycle",
@@ -259,13 +258,6 @@ def run():  # noqa: C901 (complex-structure)
         _run_dispatcher(dispatcher, global_args)
         retcode = 0
     except ArgumentParsingError as err:
-        # TODO https://github.com/canonical/craft-cli/issues/78
-        with contextlib.suppress(KeyError, IndexError):
-            if (
-                err.__context__ is not None
-                and err.__context__.args[0] not in dispatcher.commands
-            ):
-                run_legacy(err)
         print(err, file=sys.stderr)  # to stderr, as argparse normally does
         emit.ended_ok()
         retcode = 1
@@ -273,8 +265,6 @@ def run():  # noqa: C901 (complex-structure)
         print(err, file=sys.stderr)  # to stderr, as argparse normally does
         emit.ended_ok()
         retcode = 0
-    except errors.LegacyFallback as err:
-        run_legacy(err)
     except KeyboardInterrupt as err:
         _emit_error(craft_cli.errors.CraftError("Interrupted."), cause=err)
         retcode = 1

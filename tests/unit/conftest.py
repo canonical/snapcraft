@@ -254,40 +254,6 @@ def fake_extension_experimental():
 
 
 @pytest.fixture
-def fake_extension_name_from_legacy():
-    """A fake_extension variant with a name collision with legacy."""
-
-    class ExtensionImpl(extension.Extension):
-        """The test extension implementation."""
-
-        @staticmethod
-        def get_supported_bases() -> tuple[str, ...]:
-            return ("core22",)
-
-        @staticmethod
-        def get_supported_confinement() -> tuple[str, ...]:
-            return ("strict",)
-
-        @staticmethod
-        def is_experimental(base: str | None = None) -> bool:
-            return False
-
-        def get_root_snippet(self) -> dict[str, Any]:
-            return {}
-
-        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
-            return {"plugs": ["fake-plug", "fake-plug-extra"]}
-
-        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
-            return {"after": ["fake-extension-extra/fake-part"]}
-
-        def get_parts_snippet(self) -> dict[str, Any]:
-            return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
-
-    yield ExtensionImpl
-
-
-@pytest.fixture
 def fake_client(mocker):
     """Forces get_client to return a fake craft_store.BaseClient"""
     client = mocker.patch("craft_store.BaseClient", autospec=True)

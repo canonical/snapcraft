@@ -64,11 +64,6 @@ def mock_remote_build_run(mocker):
 
 
 @pytest.fixture()
-def mock_run_legacy(mocker):
-    return mocker.patch("snapcraft_legacy.cli.legacy.legacy_run")
-
-
-@pytest.fixture()
 def mock_remote_build_argv(mocker):
     """Mock `snapcraft remote-build` cli."""
     return mocker.patch.object(
@@ -197,20 +192,6 @@ def test_application_extra_yaml_transforms(
     assert project.parts["snapcraft/core"]["build-snaps"] == ["test-snap"]
 
 
-def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
-    monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
-
-    (new_dir / "snap").mkdir()
-
-    mock_legacy_run = mocker.patch("snapcraft_legacy.cli.legacy.legacy_run")
-    mock_create_app = mocker.patch.object(application, "create_app")
-
-    application.main()
-
-    mock_create_app.assert_not_called()
-    mock_legacy_run.assert_called()
-
-
 PARSE_INFO_PROJECT = dedent(
     """\
     name: parse-info-project
@@ -319,14 +300,10 @@ def test_application_plugins():
 @pytest.mark.parametrize(
     ("base", "build_base", "expected_plugin"),
     [
-        ("core20", None, craft_parts.plugins.dotnet_plugin.DotnetPlugin),
-        ("core20", "core20", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
-        ("core20", "devel", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
         ("core22", None, craft_parts.plugins.dotnet_plugin.DotnetPlugin),
         ("core22", "core22", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
         ("core22", "devel", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
         ("core24", None, craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
-        ("core24", "core20", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
         ("core24", "core22", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
         ("core24", "core24", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
         ("core24", "devel", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
@@ -335,7 +312,7 @@ def test_application_plugins():
 def test_application_dotnet_registered(
     base, build_base, expected_plugin, snapcraft_yaml
 ):
-    """dotnet plugin is enabled for core20 and later."""
+    """dotnet plugin is enabled for core22 and later."""
     snapcraft_yaml(base=base, build_base=build_base)
     app = application.create_app()
 
@@ -503,42 +480,6 @@ def test_run_list_plugins(command, args, base, mocker, monkeypatch, snapcraft_ya
     mock_dispatch.assert_called_once()
 
 
-@pytest.mark.parametrize("command", ["plugins", "list-plugins"])
-@pytest.mark.parametrize("args", [["--base", "core20"], ["--base=core20"]])
-@pytest.mark.parametrize("base", const.LEGACY_BASES | const.CURRENT_BASES | {None})
-def test_run_list_plugins_classic(
-    command, args, base, mocker, monkeypatch, snapcraft_yaml
-):
-    """`list-plugins` triggers a fallback only with `--base=core20`."""
-    monkeypatch.setattr("sys.argv", ["snapcraft", command, *args])
-    if base:
-        snapcraft_yaml(base=base)
-    mock_dispatch = mocker.patch(
-        "craft_application.application.Application._get_dispatcher"
-    )
-
-    app = application.create_app()
-    with pytest.raises(ClassicFallback):
-        app.run()
-
-    mock_dispatch.assert_not_called()
-
-
-def test_run_expand_extensions_classic(mocker, monkeypatch, snapcraft_yaml):
-    """`expand-extensions` triggers a fallback for core20 snaps."""
-    monkeypatch.setattr("sys.argv", ["snapcraft", "expand-extensions"])
-    snapcraft_yaml(base="core20")
-    mock_dispatch = mocker.patch(
-        "craft_application.application.Application._get_dispatcher"
-    )
-
-    app = application.create_app()
-    with pytest.raises(ClassicFallback):
-        app.run()
-
-    mock_dispatch.assert_not_called()
-
-
 @pytest.mark.parametrize("base", const.CURRENT_BASES | {None})
 def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
     """Do not trigger a classic fallback for `version`."""
@@ -558,9 +499,6 @@ def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
 @pytest.mark.parametrize(
     ("base", "build_base", "use_craftapp_lib"),
     [
-        ("core20", None, False),
-        ("core20", "core20", False),
-        ("core20", "devel", False),
         ("core22", None, False),
         ("core22", "core22", False),
         ("core22", "devel", False),
