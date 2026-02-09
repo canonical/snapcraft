@@ -27,7 +27,7 @@ from craft_application.util import strtobool
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import const, pack, utils
+from snapcraft import errors, pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 
@@ -273,11 +273,7 @@ class SnapCommand(_LifecycleCommand):
 
     @overrides
     def run(self, parsed_args: argparse.Namespace):
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new="pack"),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command="pack")
 
 
 class CleanCommand(_LifecycleStepCommand):

@@ -16,6 +16,7 @@
 
 """Unit tests for confdb schema commands."""
 
+import os
 import sys
 
 import pytest
@@ -38,9 +39,9 @@ def mock_edit_assertion(mocker):
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize("output_format", const.OUTPUT_FORMATS)
 @pytest.mark.parametrize("name", [None, "test"])
-def test_list_confdb_schemas(mocker, mock_list_assertions, output_format, name):
-    """Test `snapcraft list-confdb-schemas`."""
-    cmd = ["snapcraft", "list-confdb-schemas", "--format", output_format]
+def test_confdb_schemas(mocker, mock_list_assertions, output_format, name):
+    """Test `snapcraft confdb-schemas` command."""
+    cmd = ["snapcraft", "confdb-schemas", "--format", output_format]
     if name:
         cmd.extend(["--name", name])
     mocker.patch.object(sys, "argv", cmd)
@@ -53,9 +54,9 @@ def test_list_confdb_schemas(mocker, mock_list_assertions, output_format, name):
 
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize("name", [None, "test"])
-def test_list_confdb_schemas_default_format(mocker, mock_list_assertions, name):
+def test_confdb_schemas_default_format(mocker, mock_list_assertions, name):
     """Default format is 'table'."""
-    cmd = ["snapcraft", "list-confdb-schemas"]
+    cmd = ["snapcraft", "confdb-schemas"]
     if name:
         cmd.extend(["--name", name])
     mocker.patch.object(sys, "argv", cmd)
@@ -64,6 +65,28 @@ def test_list_confdb_schemas_default_format(mocker, mock_list_assertions, name):
     app.run()
 
     mock_list_assertions.assert_called_once_with(name=name, output_format="table")
+
+
+@pytest.mark.usefixtures("memory_keyring")
+@pytest.mark.parametrize("output_format", const.OUTPUT_FORMATS)
+@pytest.mark.parametrize("name", [None, "test"])
+def test_list_confdb_schemas_error(capsys, mocker, output_format, name):
+    """Error on removed 'list-confdb-schemas' command."""
+    cmd = ["snapcraft", "list-confdb-schemas", "--format", output_format]
+    if name:
+        cmd.extend(["--name", name])
+    mocker.patch.object(sys, "argv", cmd)
+
+    app = application.create_app()
+    return_code = app.run()
+
+    out, err = capsys.readouterr()
+    assert not out
+    assert (
+        "The 'list-confdb-schemas' command was renamed to 'confdb-schemas'.\n"
+        "Recommended resolution: Use 'confdb-schemas' instead."
+    ) in err
+    assert return_code == os.EX_USAGE
 
 
 @pytest.mark.parametrize("key_name", [None, "test-key"])
