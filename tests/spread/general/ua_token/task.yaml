@@ -14,11 +14,6 @@ prepare: |
   set_base "snap/snapcraft.yaml"
 
 restore: |
-  # core20 will use multipass if this isn't set
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-    export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
-  fi
-
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
@@ -37,11 +32,6 @@ execute: |
       echo "Can't run test because UA_TOKEN isn't set."
       exit 1
     fi
-  fi
-
-  # core20 will use multipass if this isn't set
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-    export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
   fi
 
   cd "$SNAP_DIR"

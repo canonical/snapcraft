@@ -41,14 +41,8 @@ execute: |
 
   arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
 
-  # Account for /usr merge.
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-    RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet"
-    RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet"
-  else
-    RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
-    RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
-  fi
+  RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
+  RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
 
   # Verify typical binary.
   patchelf --print-interpreter prime/bin/hello-classic | MATCH "^/snap/$base/current/lib.*ld.*.so.*"

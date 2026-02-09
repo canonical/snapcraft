@@ -1,9 +1,5 @@
 summary: "Correct behavior for stage-snaps when used with the pc snap"
 
-systems:
-  - ubuntu-20.04-64
-  - ubuntu-20.04-amd64
-
 environment:
   STAGE_PACKAGES/none: ""
   STAGE_PACKAGES/hello: "hello"
@@ -14,12 +10,10 @@ prepare: |
 
   snapcraft init
   set_base "snap/snapcraft.yaml"
-  
-  if [[ "$SPREAD_SYSTEM" =~ ubuntu-20.04 ]]; then
-    PC_TRACK="20"
-  else
-    exit 1
-  fi
+
+  # get core number (like 22 or 24)
+  base="$(get_base)"
+  PC_TRACK="${base//[^0-9]/}"
 
   echo "    stage-snaps: [pc/${PC_TRACK}/stable]" >> snap/snapcraft.yaml
 

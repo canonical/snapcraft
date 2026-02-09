@@ -1,15 +1,5 @@
 summary: Check if a default hook is created for a snap with a command-chain entry
 
-# command-chain was introduced in core20
-systems:
-  - -ubuntu-18.04
-  - -ubuntu-18.04-64
-  - -ubuntu-18.04-amd64
-  - -ubuntu-18.04-arm64
-  - -ubuntu-18.04-armhf
-  - -ubuntu-18.04-s390x
-  - -ubuntu-18.04-ppc64el
-
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
@@ -31,7 +21,7 @@ execute: |
       echo "Stub hook missing"
       exit 1
   fi
-  
+
   # Verify stub hook content
   hook_content=$(cat prime/meta/hooks/install)
   if [ "${hook_content}" != "#!/bin/true" ]; then

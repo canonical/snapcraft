@@ -53,10 +53,6 @@ jobs:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
     runs-on: [spread-installed]
-    strategy:
-      fail-fast: false
-      matrix:
-        type: [plugins/craft-parts, plugins/v2]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -74,7 +70,7 @@ jobs:
           path: tests
       - name: Kernel plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/${{ matrix.type }}/kernel
+          spread google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel
 
   remote-build:
     needs: [predicate, snap-build]
@@ -178,29 +174,6 @@ jobs:
         run: |
           spread google.*:tests/spread/extensions/
 
-  core20-plugins:
-    needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
-    steps:
-      - name: Cleanup job workspace
-        run: |
-          rm -rf "${{ github.workspace }}"
-          mkdir "${{ github.workspace }}"
-      - name: Checkout snapcraft
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-          submodules: true
-      - name: Download snap artifact
-        uses: actions/download-artifact@v5
-        with:
-          name: snap
-          path: tests
-      - name: core20 plugins test
-        run: |
-          spread google:ubuntu-20.04-64:tests/spread/plugins/v2/
-
   snapd-bases:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
@@ -222,7 +195,7 @@ jobs:
           path: tests
       - name: Spread test
         run: |
-          spread google:ubuntu-20.04-64:tests/spread/snaps/bases google:ubuntu-20.04-64:tests/spread/snaps/snapd
+          spread google:ubuntu-22.04-64:tests/spread/snaps/snapd
 
   squid-proxy:
     needs: [predicate, snap-build]
