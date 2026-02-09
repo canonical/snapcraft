@@ -139,6 +139,9 @@ constraint-dependencies = [
     # https://pynacl.readthedocs.io/en/latest/changelog/
     # https://github.com/canonical/snapcraft/issues/5968
     "pynacl<1.6.0",
+    # protobuf 6.33.x segfaults on s390x
+    # this issue might be the cause: https://github.com/protocolbuffers/protobuf/issues/24103
+    "protobuf==6.32.*",
 ]
 build-constraint-dependencies = [
     # needed until we have rustc >= 1.78
