@@ -111,7 +111,7 @@ class ExpandExtensionsCommand(AppCommand):
     )
 
     @overrides
-    def run(self, parsed_args: argparse.Namespace):
+    def run(self, parsed_args: argparse.Namespace) -> None:
         """Expand extensions in the project file and output them."""
         snap_project = get_snap_project()
         yaml_data = process_yaml(snap_project.project_file)
