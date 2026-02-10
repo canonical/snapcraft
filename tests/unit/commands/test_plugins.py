@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import re
 import textwrap
 
 import craft_parts.plugins
@@ -128,10 +129,7 @@ def test_registered_plugins_esm_base_error(
 ):
     """Error when listing plugins for an outdated base."""
     snapcraft_yaml(base=base)
+    expected = re.escape(f"{base!r} is not supported on this version of Snapcraft.")
 
-    with pytest.raises(errors.MaintenanceBase) as raised:
+    with pytest.raises(errors.MaintenanceBase, match=expected):
         command(fake_app_config).run(argparse.Namespace(base=None))
-
-    assert (
-        str(raised.value) == f"{base!r} is not supported on this version of Snapcraft."
-    )

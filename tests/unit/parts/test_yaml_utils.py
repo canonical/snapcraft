@@ -17,6 +17,7 @@
 
 import io
 import pathlib
+import re
 from textwrap import dedent
 
 import craft_application.errors
@@ -125,7 +126,9 @@ def test_yaml_load_esm_base(base):
 
 
 def test_yaml_load_no_base():
-    with pytest.raises(errors.MissingBase) as raised:
+    expected = re.escape("Project file has no base or build-base.")
+
+    with pytest.raises(errors.MissingBase, match=expected):
         yaml_utils.load(
             io.StringIO(
                 dedent(
@@ -135,8 +138,6 @@ def test_yaml_load_no_base():
                 )
             )
         )
-
-    assert str(raised.value) == "Project file has no base or build-base."
 
 
 def test_extract_parse_info():
