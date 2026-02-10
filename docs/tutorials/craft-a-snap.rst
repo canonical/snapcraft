@@ -140,6 +140,7 @@ has an ``init`` command that spawns a template project file. Let's start with th
 From here onward, we'll be working primarily in the project file. Open
 ``snap/snapcraft.yaml`` in a text editor.
 
+.. _tutorial-craft-a-snap-define-package-information:
 
 Define the package information
 ------------------------------
@@ -149,13 +150,15 @@ sometimes informally referred to as its metadata. This information tells both hu
 machines about the snap, such as its purpose, authors, license, and so on. The comments
 in the template describe how to use these keys.
 
-Replace the top section with:
+Replace the first four keys with:
 
 .. literalinclude:: code/craft-a-snap/snapcraft.yaml
     :language: yaml
     :caption: snapcraft.yaml
     :start-at: name: ukuzama-pyfiglet
     :end-at: This snap is not endorsed by the pyfiglet project.
+
+Take care *not* to erase the ``grade`` and ``confinement`` keys.
 
 As this is a personal snap, we prepended the project name with a user name. Replace
 ``ukuzama`` with your own user name. You might encounter other snaps in the Snap Store
@@ -172,6 +175,7 @@ in the pyfiglet README. Instead, we sourced one from the upstream project at `fi
 <http://www.figlet.org>`_. The fuller ``description`` key, which has no length limit, is
 taken from pyfiglet. We added a disclaimer about endorsement at the end.
 
+.. _tutorial-craft-a-snap-define-the-target-platforms:
 
 Define the target platforms
 ---------------------------
@@ -192,6 +196,7 @@ Add the ``platform`` key after the project information:
 With this declaration, Snapcraft will only build the snap on AMD64 machines, for AMD64
 machines. Take care to preserve the colon (:) in ``amd64:``.
 
+.. _tutorial-craft-a-snap-define-the-main-part:
 
 Define the main part
 --------------------
@@ -222,6 +227,7 @@ source code. With pyfiglet, we're merely handling the packaging on the project's
 meaning our project file is downstream of and dependent on it. By pointing to a remote
 URL, Snapcraft will download the source before it packs the snap.
 
+.. _tutorial-craft-a-snap-pack-the-snap:
 
 Pack the snap
 -------------
@@ -237,7 +243,7 @@ snap:
 
 After a few seconds, the final result is:
 
-.. terminal::
+.. code-block:: bash
 
     Packed ukuzama-pyfiglet_0.1_amd64.snap
 
@@ -270,7 +276,7 @@ by hand.
 The ``prime`` directory contains the state of the final files before they're packed. If
 we take a look at what's inside, we'll see:
 
-.. terminal::
+.. code-block:: text
 
     /root/prime
     ├── bin
@@ -340,6 +346,7 @@ snap calls on the host. It's a path to an executable inside the snap, and can co
 arguments. It isn't strictly tied to any binary built by the snap. It could instead be,
 for example, a combination of POSIX-compatible commands.
 
+.. _tutorial-craft-a-snap-test-the-snap:
 
 Test the snap
 -------------
@@ -362,22 +369,17 @@ these flags.
 
 At long last, let's try running our snap.
 
-.. literalinclude:: code/craft-a-snap/task.yaml
-    :language: bash
-    :start-at: ukuzama-pyfiglet hello, world!
-    :end-at: ukuzama-pyfiglet hello, world!
-    :dedent: 2
-
-You should see the successful result:
-
 .. terminal::
+    :input: ukuzama-pyfiglet hello, world!
+    :user: crafter
+    :host: home
 
-    _          _ _                             _     _ _
-   | |__   ___| | | ___    __      _____  _ __| | __| | |
-   | '_ \ / _ \ | |/ _ \   \ \ /\ / / _ \| '__| |/ _` | |
-   | | | |  __/ | | (_) |   \ V  V / (_) | |  | | (_| |_|
-   |_| |_|\___|_|_|\___( )   \_/\_/ \___/|_|  |_|\__,_(_)
-                       |/
+     _          _ _                             _     _ _
+    | |__   ___| | | ___    __      _____  _ __| | __| | |
+    | '_ \ / _ \ | |/ _ \   \ \ /\ / / _ \| '__| |/ _` | |
+    | | | |  __/ | | (_) |   \ V  V / (_) | |  | | (_| |_|
+    |_| |_|\___|_|_|\___( )   \_/\_/ \___/|_|  |_|\__,_(_)
+                        |/
 
 Pyfiglet can draw with different typeface styles, too. It's a fun little command.
 
@@ -457,6 +459,8 @@ snap, reinstall it, and then try it with one of the new fonts:
                    `---'
 
 
+.. _tutorial-craft-a-snap-connect-the-interfaces:
+
 Connect the interfaces
 ----------------------
 
@@ -509,6 +513,7 @@ If we repack and reinstall the snap, we can install a new font for pyfiglet to u
 
 However, before we repack, let's go back to two keys we skipped at the beginning.
 
+.. _tutorial-craft-a-snap-secure-the-snap:
 
 Secure the snap
 ---------------
