@@ -138,19 +138,27 @@ class ProjectMissing(SnapcraftError):
         )
 
 
-class LegacyFallback(Exception):
-    """Fall back to legacy snapcraft implementation."""
+class MissingBase(SnapcraftError):
+    """No base defined in project."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Project file has no base or build-base.",
+            docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base",
+        )
 
 
 class MaintenanceBase(SnapcraftError):
     """Error for bases under ESM and no longer supported in this release."""
 
-    def __init__(self, base: str) -> None:
+    def __init__(self, base: str | None) -> None:
         channel: str | None = None
         if base == "core":
             channel = "4.x"
         elif base == "core18":
             channel = "7.x"
+        elif base == "core20":
+            channel = "8.x"
 
         resolution: str | None = None
         if channel:

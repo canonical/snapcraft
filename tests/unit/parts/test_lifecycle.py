@@ -284,49 +284,6 @@ def test_lifecycle_run_no_components(new_dir, snapcraft_yaml, mocker):
 @pytest.mark.parametrize(
     "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
 )
-def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
-    """Option --provider is not supported in core22."""
-    snapcraft_yaml(base="core22")
-    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-
-    with pytest.raises(errors.SnapcraftError) as raised:
-        parts_lifecycle.run(
-            cmd,
-            parsed_args=argparse.Namespace(
-                destructive_mode=False,
-                use_lxd=False,
-                provider="some",
-                build_for=str(DebianArchitecture.from_host()),
-            ),
-        )
-
-    assert run_mock.mock_calls == []
-    assert str(raised.value) == "Option --provider is not supported."
-
-
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "snap", "clean"])
-def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
-    """Option --provider is supported by legacy."""
-    snapcraft_yaml(base="core20")
-    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-
-    with pytest.raises(errors.LegacyFallback) as raised:
-        parts_lifecycle.run(
-            cmd,
-            parsed_args=argparse.Namespace(
-                destructive_mode=False,
-                use_lxd=False,
-                provider="some",
-            ),
-        )
-
-    assert run_mock.mock_calls == []
-    assert str(raised.value) == "base is core20"
-
-
-@pytest.mark.parametrize(
-    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
-)
 def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, mocker):
     """UA services require --ua-token."""
     snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})

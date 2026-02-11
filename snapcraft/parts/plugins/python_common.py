@@ -72,7 +72,7 @@ def post_prime(step_info: StepInfo) -> None:
     """Perform Python-specific actions right before packing."""
     base = step_info.project_base
 
-    if base in ("core20", "core22"):
+    if base == "core22":
         # Only fix pyvenv.cfg on core24+ snaps
         return
 
