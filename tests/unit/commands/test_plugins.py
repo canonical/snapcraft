@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import re
 import textwrap
 
 import craft_parts.plugins
@@ -121,13 +122,14 @@ def test_registered_plugins_base_option(
 @pytest.mark.parametrize(
     "command", [commands.ListPluginsCommand, commands.PluginsCommand]
 )
-@pytest.mark.parametrize("base", const.LEGACY_BASES)
+@pytest.mark.parametrize("base", const.ESM_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_legacy_project(
+def test_registered_plugins_esm_base_error(
     command, base, snapcraft_yaml, fake_app_config
 ):
-    """Legacy bases should fallback to the legacy handler."""
+    """Error when listing plugins for an outdated base."""
     snapcraft_yaml(base=base)
+    expected = re.escape(f"{base!r} is not supported on this version of Snapcraft.")
 
-    with pytest.raises(errors.LegacyFallback):
+    with pytest.raises(errors.MaintenanceBase, match=expected):
         command(fake_app_config).run(argparse.Namespace(base=None))

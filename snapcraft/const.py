@@ -103,13 +103,10 @@ OUTPUT_FORMATS = frozenset(output_format.value for output_format in OutputFormat
 CURRENT_BASES = frozenset(b.value for b in (*StableBase, *UnstableBase))
 """Bases handled by the current snapcraft codebase."""
 
-LEGACY_BASES = frozenset({"core20"})
-"""Bases handled by the legacy snapcraft codebase."""
-
-ESM_BASES = frozenset({"core", "core18"})
+ESM_BASES = frozenset({"core", "core18", "core20"})
 """Bases no longer supported by the current version of snapcraft."""
 
-BASES = CURRENT_BASES | LEGACY_BASES | ESM_BASES
+BASES = CURRENT_BASES | ESM_BASES
 """All bases recognized by snapcraft."""
 
 

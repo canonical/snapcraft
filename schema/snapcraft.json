@@ -2486,7 +2486,7 @@
           ],
           "default": null,
           "description": "The baseline system that the snap is built in.",
-          "examples": ["core20", "core22", "core24", "devel"],
+          "examples": ["core22", "core24", "core26", "devel"],
           "title": "Build-Base"
         },
         "contact": {
@@ -3081,7 +3081,7 @@
           ],
           "default": null,
           "description": "The baseline system that the snap is built in.",
-          "examples": ["core20", "core22", "core24", "devel"],
+          "examples": ["core22", "core24", "core26", "devel"],
           "title": "Build-Base"
         },
         "platforms": {

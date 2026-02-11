@@ -63,16 +63,15 @@ class PluginsCommand(AppCommand):
 
     @overrides
     def run(self, parsed_args: argparse.Namespace) -> None:
-        if parsed_args.base == "core20":
-            raise errors.LegacyFallback()
-
         base = parsed_args.base
         message: str | None = None
+
+        if base in const.ESM_BASES:
+            raise errors.MaintenanceBase(base=base)
 
         if base is None:
             try:
                 snap_project = get_snap_project()
-                # Run this to trigger legacy behavior
                 yaml_data = process_yaml(snap_project.project_file)
 
                 # process yaml before unmarshalling the data

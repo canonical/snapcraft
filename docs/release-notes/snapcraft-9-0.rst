@@ -1,3 +1,5 @@
+.. _release-9.0:
+
 Snapcraft 9.0 release notes
 ===========================
 
@@ -30,6 +32,15 @@ Backwards-incompatible changes
 ------------------------------
 
 The following changes are incompatible with previous versions of Snapcraft.
+
+Removed core20 support
+~~~~~~~~~~~~~~~~~~~~~~
+
+Snapcraft 9 removes support for building core20 snaps. Use Snapcraft 8 to continue
+building core20 snaps.
+
+The :ref:`support schedule <reference-support-schedule>` details our remaining
+commitments to core20.
 
 Removed legacy remote builder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

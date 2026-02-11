@@ -275,7 +275,7 @@ class LintCommand(AppCommand):
         try:
             # process_yaml will not parse core, core18, and core20 snaps
             yaml_data = process_yaml(snapcraft_yaml_file)
-        except (errors.LegacyFallback, errors.MaintenanceBase) as error:
+        except errors.MaintenanceBase as error:
             raise errors.SnapcraftError(
                 "can not lint snap using a base older than core22"
             ) from error

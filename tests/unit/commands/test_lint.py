@@ -25,7 +25,7 @@ import pytest
 from craft_providers.bases import BuilddBaseAlias
 from craft_providers.multipass import MultipassProvider
 
-from snapcraft import application, models
+from snapcraft import application, const, models
 from snapcraft.commands.lint import LintCommand
 from snapcraft.errors import SnapcraftError
 from snapcraft.meta.snap_yaml import SnapMetadata
@@ -903,9 +903,9 @@ def test_load_project_no_file(emitter, tmp_path, fake_app_config):
     emitter.assert_debug(f"Could not find {snapcraft_yaml_file.name!r}.")
 
 
-@pytest.mark.parametrize("base", ["core", "core18", "core20"])
+@pytest.mark.parametrize("base", const.ESM_BASES)
 def test_load_project_unsupported_core_error(base, tmp_path, fake_app_config):
-    """Raise an error if for snaps with core, core18, and core20 bases."""
+    """Raise an error if for snaps with ESM bases."""
     # create a simple snapcraft.yaml
     (tmp_path / "snap").mkdir()
     snap_file = tmp_path / "snap/snapcraft.yaml"

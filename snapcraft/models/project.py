@@ -1517,7 +1517,7 @@ class Project(models.Project):
         * - Value
           - Description
         * - ``strict``
-          - Default for core20 and older bases. Use strict confinement.
+          - Use strict confinement.
         * - ``classic``
           - Use classic confinement.
         * - ``devmode``
@@ -2327,7 +2327,7 @@ class StableBaseProject(Project):
         validate_default=True,
         default=None,
         description="The baseline system that the snap is built in.",
-        examples=["core20", "core22", "core24", "devel"],
+        examples=["core22", "core24", "core26", "devel"],
     )
     """The baseline system that the snap is built in.
 
