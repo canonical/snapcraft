@@ -115,6 +115,7 @@ types = [
     "types-simplejson",
     "types-tabulate",
     "types-toml",
+    "types-lxml",
 ]
 dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
 dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
