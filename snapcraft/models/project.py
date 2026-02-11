@@ -2117,8 +2117,9 @@ class Project(models.Project):
     def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
         """Convert to a dictionary."""
         data: dict = super().marshal()
-        if isinstance(data.get("type"), ProjectType):
-            data["type"] = data["type"].value
+        project_type = data.get("type")
+        if isinstance(project_type, ProjectType):
+            data["type"] = project_type.value
         return data
 
     def _get_content_plugs(self) -> list[ContentPlug]:

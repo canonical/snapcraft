@@ -76,7 +76,7 @@ def test_render_legacy_platforms_success(
 ):
     service = Project(
         app=APP_METADATA,
-        services=None,  # pyright: ignore[reportArgumentType] other services not needed
+        services=None,  # pyright: ignore[reportArgumentType] # ty: ignore[invalid-argument-type] other services not needed
         project_dir=in_project_path,
     )
     mocker.patch.object(service, "get_raw", return_value=raw_project)
@@ -99,7 +99,7 @@ def test_render_legacy_platforms_core22_platforms_error(
 ):
     service = Project(
         app=APP_METADATA,
-        services=None,  # pyright: ignore[reportArgumentType] other services not needed
+        services=None,  # pyright: ignore[reportArgumentType] # ty: ignore[invalid-argument-type] other services not needed
         project_dir=in_project_path,
     )
     mocker.patch.object(service, "get_raw", return_value=raw_project)
