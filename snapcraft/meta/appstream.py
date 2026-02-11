@@ -22,7 +22,7 @@ import os
 from io import StringIO
 from typing import cast
 
-import lxml.etree  # ty: ignore[unresolved-import]
+import lxml.etree
 import validators
 from craft_cli import emit
 from xdg.DesktopEntry import DesktopEntry
