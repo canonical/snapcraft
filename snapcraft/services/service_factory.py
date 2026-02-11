@@ -35,6 +35,7 @@ _SERVICES: dict[str, str] = {
     "package": "Package",
     "provider": "Provider",
     "project": "Project",
+    "remote_build": "RemoteBuild",
 }
 
 

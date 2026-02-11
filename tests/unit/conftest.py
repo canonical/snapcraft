@@ -639,17 +639,16 @@ def fake_remote_build_service_class(mocker):
     from craft_application import (  # noqa: PLC0415 (import-outside-top-level)
         AppMetadata,
     )
-    from craft_application.launchpad.models import (  # noqa: PLC0415 (import-outside-top-level)
-        SnapRecipe,
+
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        RemoteBuild,
     )
 
     me = Mock(lazr.restfulclient.resource.Entry)
     me.name = "craft_test_user"
 
-    class FakeRemoteBuildService(craft_application.services.RemoteBuildService):
+    class FakeRemoteBuildService(RemoteBuild):
         """Fake remote build service with snap recipe."""
-
-        RecipeClass = SnapRecipe
 
         @override
         def __init__(
