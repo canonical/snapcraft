@@ -102,7 +102,6 @@ by their equivalent environment variables:
       - Export the credentials to the environment variable ``SNAPCRAFT_STORE_CREDENTIALS``.
 
 
-
 Removed legacy remote builder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -119,6 +118,7 @@ it would try to load credentials from the legacy location
 Snapcraft 9.0 only loads credentials from
 ``$XDG_DATA_DIR/snapcraft/launchpad-credentials``, and doesn't use the fallback.
 
+
 Removed snapcraftctl for core26
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -129,6 +129,44 @@ Core26 snaps only support ``craftctl``. To use core26, you must replace all
 instances of ``snapcraftctl`` in your scripts.
 
 Core22 and core24 aren't affected by this change.
+
+
+Updated documentation system
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The documentation base is updated to Canonical's Sphinx Starter Pack 1.4.0. Going
+forward, the system will stay in step with the Starter Pack, keeping pace with its
+features.
+
+The documentation commands that are standard in Canonical products are accessible by
+prefixing them with ``docs-``:
+
+.. list-table::
+    :header-rows: 1
+    :widths: 1 4
+
+    * - Command
+      - Result
+    * - ``make docs``
+      - Renders the docs as a static set of HTML pages.
+    * - ``make docs-auto``
+      - Hosts the docs in a local server you can view in the web browser. When you save
+        a change to a source file, the server updates the doc in real time.
+    * - ``make docs-lint``
+      - Checks for problems in the documentation.
+    * - ``make docs-clean``
+      - Removes the built docs and temporary files.
+    * - ``make docs-help``
+      - See the full list of commands from the Starter Pack.
+
+The Starter Pack is no longer a Git submodule. If you've written for Snapcraft 8 or
+lower, or built the documentation before, you must remove the submodule from your host to
+continue developing:
+
+.. code-block:: bash
+
+    git submodule deinit -f docs/sphinx-docs-starter-pack
+    rm -r docs/sphinx-docs-starter-pack
 
 
 Contributors
