@@ -6,13 +6,13 @@ dependencies = [
     "attrs",
     "catkin-pkg==1.1.0; sys_platform == 'linux'",
     "click>=8.2",
-    "craft-application[remote]>=6.0.1",
+    "craft-application[remote]>=6.1.0",
     "craft-archives>=2.2.0",
     "craft-cli>=3.2.0",
     "craft-grammar>=2.3.0",
-    "craft-parts>=2.27.0",
+    "craft-parts>=2.28.0",
     "craft-platforms>=0.10.0",
-    "craft-providers>=3.2.0",
+    "craft-providers>=3.3.0",
     "craft-store>=3.3.0",
     "cryptography",
     "gnupg",
@@ -31,7 +31,11 @@ dependencies = [
     # Further info: https://www.pygit2.org/install.html#version-numbers
     # 1.18 is the last minor version that supports Python 3.10
     "pygit2~=1.18.2",
-    "pylxd ; sys_platform == 'linux'",
+    # Snapcraft directly only cares about pylxd on Linux. However, as a note for
+    # packagers: As of 3.1.0, craft-providers depends on pylxd on all platforms.
+    # If we drop the direct dependency we will remove the following line, but pylxd
+    # will still be in the dependency tree.
+    "pylxd",
     "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
@@ -99,7 +103,7 @@ docs = [
     "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.3.0",
     "docutils>=0.21",
-    "pydantic-kitbash~=0.1",
+    "pydantic-kitbash~=1.0",
     "pyspelling",
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
@@ -133,7 +137,11 @@ constraint-dependencies = [
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
     # what is available in the noble repositories.
     # https://pynacl.readthedocs.io/en/latest/changelog/
+    # https://github.com/canonical/snapcraft/issues/5968
     "pynacl<1.6.0",
+    # protobuf 6.33.x segfaults on s390x
+    # this issue might be the cause: https://github.com/protocolbuffers/protobuf/issues/24103
+    "protobuf==6.32.*",
 ]
 build-constraint-dependencies = [
     # needed until we have rustc >= 1.78

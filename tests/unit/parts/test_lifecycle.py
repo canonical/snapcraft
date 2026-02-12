@@ -2342,5 +2342,5 @@ def test_lifecycle_warn_on_multiple_builds(
     )
     emitter.assert_message(
         "For more information, check out: "
-        "https://snapcraft.io/docs/explanation-architectures#core22-8"
+        "https://documentation.ubuntu.com/snapcraft/stable/explanation/architectures/#core22"
     )
