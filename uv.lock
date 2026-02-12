@@ -597,7 +597,7 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "6.1.0"
+version = "6.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
@@ -616,11 +616,12 @@ dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "snap-helpers" },
+    { name = "snap-http" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/d7/11fb39172bb1381084aa284fcfd2ccc8372c78fdb4782e86c23acf0508b8/craft_application-6.1.0.tar.gz", hash = "sha256:a12c302e3b2ac6d2b1958cf9ad1596ab9d634a91d94fee662ec46bd62604ac0e", size = 585353, upload-time = "2026-01-20T20:45:23.209Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/86/4ee23f43b5b28d4bda940a441bd4fb599bd264ddd9f9d420d6c0673be92d/craft_application-6.2.0.tar.gz", hash = "sha256:ad89335d42afc74d5ab78ee9450b0d4c4abc4b88ec6cbe37b033f27378027e43", size = 592836, upload-time = "2026-02-12T15:38:58.114Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/53/87630797853e23ceeefa212ddf929fdebd98ca06c0d1149d89eaa4527a26/craft_application-6.1.0-py3-none-any.whl", hash = "sha256:827b970907de7129d88463f40904df3810296a8f8855e85b149fd738e32755ec", size = 195058, upload-time = "2026-01-20T20:45:21.746Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/d5/19241f9d55ac6da3fdee9e148892c08720df31446c735c304f81b8e6df89/craft_application-6.2.0-py3-none-any.whl", hash = "sha256:b2f1410b21d32101b215b69e02a4d6126ebf5c45ec9bca780a276f41c705d27f", size = 195582, upload-time = "2026-02-12T15:38:56.331Z" },
 ]
 
 [package.optional-dependencies]
@@ -3130,6 +3131,15 @@ wheels = [
 ]
 
 [[package]]
+name = "snap-http"
+version = "1.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/0b/97fa751d236936dbb4cfc227e04c677fee110e824ce623ed382b7e66caea/snap_http-1.11.0.tar.gz", hash = "sha256:ee9afbe38e53c242cd7970ebda6f79fcad517998d79bae50ad24ff6b357f4965", size = 15993, upload-time = "2026-01-30T21:28:58.961Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c3/8a/e17a649f9d75514877b641c9ddb8414d1dcd9cfffc6bdb8ce361a810c733/snap_http-1.11.0-py3-none-any.whl", hash = "sha256:856afe2de663673104e4a431ea175c84fb342deb88003157541f3f4d4a336645", size = 17055, upload-time = "2026-01-30T21:28:57.753Z" },
+]
+
+[[package]]
 name = "snapcraft"
 source = { editable = "." }
 dependencies = [
@@ -3257,7 +3267,7 @@ requires-dist = [
     { name = "attrs" },
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.1.0" },
     { name = "click", specifier = ">=8.2" },
-    { name = "craft-application", extras = ["remote"], specifier = ">=6.1.0" },
+    { name = "craft-application", extras = ["remote"], specifier = ">=6.2.0" },
     { name = "craft-archives", specifier = ">=2.2.0" },
     { name = "craft-cli", specifier = ">=3.2.0" },
     { name = "craft-grammar", specifier = ">=2.3.0" },
