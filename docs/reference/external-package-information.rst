@@ -136,4 +136,4 @@ using ``craftctl``. All you need to do is select which part to adopt using
 See :ref:`how-to-customize-the-build-and-part-variables` for more
 details on using scripting elements within a project file.
 
-.. _Desktop File ID: https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
+.. _Desktop File ID: https://specifications.freedesktop.org/desktop-entry/latest/file-naming.html#desktop-file-id

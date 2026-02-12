@@ -55,7 +55,7 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
             metavar="name",
             required=False,
             type=str,
-            help="Name of the confb schema to list",
+            help="Name of the confdb schema to list",
         )
         parser.add_argument(
             "--format",
@@ -113,13 +113,13 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
         parser.add_argument(
             "account_id",
             metavar="account-id",
-            help="The account ID of the confb schema to edit",
+            help="The account ID of the confdb schema to edit",
         )
         parser.add_argument(
-            "name", metavar="name", help="Name of the confb schema to edit"
+            "name", metavar="name", help="Name of the confdb schema to edit"
         )
         parser.add_argument(
-            "--key-name", metavar="key-name", help="Key used to sign the confb schema"
+            "--key-name", metavar="key-name", help="Key used to sign the confdb schema"
         )
 
     @override

@@ -40,7 +40,7 @@ This enables snapd to make ``/usr/share`` writable, and consequently snapd can c
 Requirements
 ------------
 
-Layouts and their defintitions must satisfy the following requirements.
+Layouts and their definitions must satisfy the following requirements.
 
 **Strictly-confined snaps**. Layouts only work with `strictly-confined
 <https://snapcraft.io/docs/snap-confinement>`_ snaps, and not with classic confinement.

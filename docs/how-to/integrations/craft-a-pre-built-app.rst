@@ -23,7 +23,7 @@ The following code comprises the project file of a C app, `Geekbench
 <https://github.com/snapcraft-docs/geekbench4>`_. This project is a popular PC hardware
 benchmarking suite.
 
-.. collapse:: Geekbench project file
+.. dropdown:: Geekbench project file
 
     .. literalinclude:: ../code/integrations/example-pre-built-app.yaml
         :caption: snapcraft.yaml

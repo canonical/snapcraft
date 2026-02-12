@@ -502,7 +502,7 @@ Command line
 * Fix a regression where store errors would be raised as an internal error
   (`#4930`_).
 
-* Add documentation links for error messages about using an `ESM base`_.
+* Add documentation links for error messages about using an ESM base.
 
 Remote build
 ============
@@ -591,7 +591,7 @@ Command line
 
 * Improve error messages when parsing a ``snapcraft.yaml`` file (`#4941`_).
 
-* Improve error messages when using an `ESM base`_.
+* Improve error messages when using an ESM base.
 
 * Improve error messages for missing files (`canonical/craft-parts#802`_).
 
@@ -1545,7 +1545,6 @@ For more information on the file-based keyring, see :ref:`how-to-authenticate`.
 For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 
 
-.. _ESM base: https://snapcraft.io/docs/snapcraft-esm
 .. _canonical-sphinx: https://github.com/canonical/canonical-sphinx
 .. _Craft Application: https://github.com/canonical/craft-application
 .. _gpu 2404 interface docs: https://mir-server.io/docs/the-gpu-2404-snap-interface#heading--consuming-the-interface

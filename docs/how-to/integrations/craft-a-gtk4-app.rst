@@ -16,7 +16,7 @@ The following code comprises the project file of a GTK4 app, `gnome-text-editor
 <https://gitlab.gnome.org/GNOME/gnome-text-editor>`_. This project is the default text
 editor of the GNOME desktop environment.
 
-.. collapse:: gnome-text-editor project file
+.. dropdown:: gnome-text-editor project file
 
     .. literalinclude:: ../code/integrations/example-gtk4-recipe.yaml
         :caption: snapcraft.yaml

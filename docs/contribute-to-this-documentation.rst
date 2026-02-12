@@ -63,10 +63,10 @@ CODA provides:
 * Skill development in documentation and writing
 
 Contributors gain experience with open-source software, add to their professional
-portfolio, connect with likeminded people, and receive recognition for giving back.
+portfolio, connect with like-minded people, and receive recognition for giving back.
 
 CODA coordinates work for open-source projects everywhere, including Snapcraft. The best
 way to get started is to volunteer for a topic in the `task aggregator
 <https://github.com/canonical/open-documentation-academy/issues?q=is%3Aissue%20state%3Aopen%20snapcraft>`_
 and read `Get started as a contributor
-<https://documentationacademy.org/docs/howto/get-started/>`_.
+<https://documentation.academy/docs/howto/get-started/>`_.

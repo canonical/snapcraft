@@ -441,14 +441,14 @@ class App(models.CraftBaseModel):
     )
     """The desktop file used to start an app when the desktop environment starts.
 
-    The desktop file is placed in ``$SNAP_USER_DATA/.config/autostart`` and the app
-    is launched by the app's command wrapper (``<name>.<app>``) plus any argument
-    present in the ``Exec=`` line in the ``.desktop`` file when the desktop
-    environment is started.
+    The desktop file is placed in ``$SNAP_USER_DATA/.config/autostart`` and the app is
+    launched by the app's command wrapper (``<name>.<app>``) plus any argument present
+    in the ``Exec=`` line in the ``.desktop`` file when the desktop environment is
+    started.
 
-    See `Autostart desktop files
-    <https://snapcraft.io/docs/the-snap-format#heading--autostart>`_ for an
-    example of both the desktop file and the ``Exec`` file entry.
+    See `The snap format
+    <https://snapcraft.io/docs/reference/development/yaml-schemas/the-snap-format>`__ in
+    the snap docs for an example of both the desktop file and the ``Exec`` file entry.
     """
 
     common_id: str | None = pydantic.Field(

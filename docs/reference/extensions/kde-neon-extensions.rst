@@ -67,7 +67,7 @@ The KDE neon 6 extension connects the snap to the following runtime content snap
 
 The extension automatically includes the required plugs for these runtime libraries.
 
-.. collapse:: Included interfaces from KDE neon 6
+.. dropdown:: Included interfaces from KDE neon 6
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -103,7 +103,7 @@ The extension automatically includes the required plugs for these runtime librar
 
 In addition, the extension adds the following plugs to each app that uses it:
 
-.. collapse:: Included plugs for apps from KDE neon 6
+.. dropdown:: Included plugs for apps from KDE neon 6
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -148,7 +148,7 @@ Included build environment variables
 The KDE neon 6 extension sets environment variables so the project's parts can build
 correctly. The project's main part receives the following variables.
 
-.. collapse:: Included build environment variables from KDE neon 6
+.. dropdown:: Included build environment variables from KDE neon 6
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -169,7 +169,7 @@ The KDE neon 6 extension also set various runtime environment variables for apps
 
 The main runtime variables apply to the whole snap.
 
-.. collapse:: Included snap-wide runtime variables from KDE neon 6
+.. dropdown:: Included snap-wide runtime variables from KDE neon 6
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -184,7 +184,7 @@ The main runtime variables apply to the whole snap.
 The rest of the runtime variables are set at launch by a ``command-chain`` shell script
 included by a :ref:`configure hook <how-to-add-a-snap-configuration-configure-hook>`:
 
-.. collapse:: Included configure hook from KDE neon 6
+.. dropdown:: Included configure hook from KDE neon 6
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -196,7 +196,7 @@ included by a :ref:`configure hook <how-to-add-a-snap-configuration-configure-ho
 
 The KDE neon 6 extension adds this shell script to the snap through a special part.
 
-.. collapse:: Included SDK build part from KDE neon 6
+.. dropdown:: Included SDK build part from KDE neon 6
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -219,7 +219,7 @@ Included layouts
 
 The KDE neon 6 extension adds the following :ref:`layouts <reference-layouts>`.
 
-.. collapse:: Included layouts
+.. dropdown:: Included layouts
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -253,29 +253,29 @@ These examples contain the difference between the original files and the output 
 :ref:`snapcraft expand-extensions <ref_commands_expand-extensions>` command. Some of the
 text has been altered for ease of reading.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: KDE neon 6
+    .. tab-item:: KDE neon 6
 
         The original is a `project file
         <https://invent.kde.org/alexlowe/keysmith/-/blob/aml/snapcraft/snapcraft.yaml>`_
         for a snapped version of `Keysmith <https://apps.kde.org/keysmith/>`_.
 
-        .. collapse:: Expanded project file for Keysmith
+        .. dropdown:: Expanded project file for Keysmith
 
             .. literalinclude:: code/kde-neon-6-extension-keysmith-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 45-51, 65-122, 130-138, 140-142, 144-171, 179-182
 
-    .. group-tab:: KDE neon 5
+    .. tab-item:: KDE neon 5
 
         The original project file comes from the `KCalc snap
         <https://snapcraft.io/kcalc>`_.
 
         We provide a review of the unmodified file in :ref:`how-to-craft-a-qt5-kde-app`.
 
-        .. collapse:: Expanded project file for KCalc
+        .. dropdown:: Expanded project file for KCalc
 
             .. literalinclude:: code/kde-neon-extension-kcalc-expanded.diff
                   :language: diff
