@@ -1,19 +1,3 @@
-# Copyright 2023-2025 Canonical Ltd.
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License version 3 as published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-
 import datetime
 import os
 import pathlib
@@ -21,82 +5,178 @@ import sys
 
 import craft_application_docs
 import craft_parts_docs
-
 import snapcraft
 
+# Configuration for the Sphinx documentation builder.
+# All configuration specific to your project should be done in this file.
+#
+# A complete list of built-in Sphinx configuration values:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+#
+# Our starter pack uses the custom Canonical Sphinx extension
+# to keep all documentation based on it consistent and on brand:
+# https://github.com/canonical/canonical-sphinx
+
+
+#######################
+# Project information #
+#######################
+
+# Project name
 project = "Snapcraft"
-author = "Canonical Group Ltd"
+author = "Canonical Ltd."
+
+# Sidebar documentation title; best kept reasonably short
 # The full version, including alpha/beta/rc tags
 release = snapcraft.__version__
 # The commit hash in the dev release version confuses the spellchecker
 if ".post" in release:
     release = "dev"
 
+html_title = project + " documentation"
+
+# Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
-# region Configuration for canonical-sphinx
+
+# Documentation website URL
 ogp_site_url = "https://documentation.ubuntu.com/snapcraft"
+
+# Preview name of the documentation website
 ogp_site_name = project
 
-# Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
-#
-# TODO: If your documentation is hosted on https://docs.ubuntu.com/,
-#       uncomment and update as needed.
+# Preview image URL
+ogp_image = "https://assets.ubuntu.com/v1/cc828679-docs_illustration.svg"
 
-slug = "snapcraft"
+# Product favicon; shown in bookmarks, browser tabs, etc.
+# html_favicon = '.sphinx/_static/favicon.png'
 
+# Dictionary of values to pass into the Sphinx context for all pages:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-html_context
 html_context = {
     "product_page": "snapcraft.io",
+    "discourse": "https://forum.snapcraft.io",
+    "matrix": "https://matrix.to/#/#snapcraft:ubuntu.com",
     "github_url": "https://github.com/canonical/snapcraft",
     "repo_default_branch": "main",
     "repo_folder": "/docs/",
-    "github_issues": "enabled",
-    "matrix": "https://matrix.to/#/#snapcraft:ubuntu.com",
-    "discourse": "https://forum.snapcraft.io",
     "display_contributors": False,
+    'github_issues': 'enabled',
 }
 
-# Target repository for the edit button on pages
+#html_extra_path = []
+
 html_theme_options = {
     "source_edit_link": "https://github.com/canonical/snapcraft",
 }
 
+# Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
+# slug = ''
+
+
+#######################
+# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
+#######################
+
+# Use RTD canonical URL to ensure duplicate pages have a specific canonical URL
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
+
+# sphinx-sitemap uses html_baseurl to generate the full URL for each page:
+sitemap_url_scheme = '{link}'
+
+# Include `lastmod` dates in the sitemap:
+# sitemap_show_lastmod = True
+
+# Exclude generated pages from the sitemap:
+sitemap_excludes = [
+    '404/',
+    'genindex/',
+    'search/',
+]
+
+
+#######################
+# Template and asset locations
+#######################
+
 html_static_path = ["_static"]
 templates_path = ["_templates"]
 
-# Static resources
-html_css_files = [
-    "css/cookie-banner.css",
-    "css/support-chart.css",
+
+#############
+# Redirects #
+#############
+
+rediraffe_redirects = "redirects.txt"
+
+
+###########################
+# Link checker exceptions #
+###########################
+
+# A regex list of URLs that are ignored by 'make linkcheck'
+linkcheck_anchors_ignore = [
+    "#",
+    ":",
+    r"https://github\.com/.*",
+]
+linkcheck_ignore = [
+    # GitHub aggressively rate limits us
+    r"^https://github.com/",
+    # Entire domains to ignore due to flakiness or issues
+    r"^https://www.gnu.org/",
+    r"^https://crates.io/",
+    r"^https://([\w-]*\.)?npmjs.org",
+    r"^https://rsync.samba.org",
+    r"^https://ubuntu.com",
+    r"^https://www.freedesktop.org/",
+    r"^https://www.npmjs.com/",
+    "https://matrix.to/#",
 ]
 
-html_js_files = [
-    "js/bundle.js",
-    "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
-    "js/support-chart.js",
-]
+# give linkcheck multiple tries on failure
+linkcheck_retries = 20
+
+
+########################
+# Configuration extras #
+########################
+
+# Custom Sphinx extensions; see
+# https://www.sphinx-doc.org/en/master/usage/extensions/index.html
 
 extensions = [
     "canonical_sphinx",
-    "sphinx_sitemap",
-    "sphinx_substitution_extensions",
-    "sphinx_toolbox.collapse",
-    "sphinx.ext.ifconfig",
+    "notfound.extension",
+    "sphinx_design",
+    # "sphinx_tabs.tabs",
+    # "sphinxcontrib.jquery"
+    "sphinxext.opengraph",
+    # "sphinx_config_options",
+    # "sphinx_contributor_listing",
+    # "sphinx_filtered_toctree",
+    # "sphinx_related_links",
+    "sphinx_roles",
+    "sphinx_terminal",
+    # "sphinx_ubuntu_images",
+    # "sphinx_youtube_links",
+    # "sphinxcontrib.cairosvgconverter",
+    # "sphinx_last_updated_by_git",
     "sphinx.ext.intersphinx",
-    "sphinxcontrib.details.directive",
-    "sphinxext.rediraffe",
+    "sphinx_sitemap",
+    # Custom Craft extensions
     "pydantic_kitbash",
+    "sphinx-pydantic",
+    "sphinxext.rediraffe",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.viewcode",
+    "sphinx_substitution_extensions",
 ]
 
-sphinx_tabs_disable_tab_closing = True
-# endregion
-
-rst_epilog = """
-.. include:: /reuse/links.txt
-"""
-
+# Excludes files or directories from processing
 exclude_patterns = [
-    "sphinx-docs-starter-pack",
     # Excluded because Snapcraft doesn't use overlays
     "common/craft-parts/overlay_parameters.rst",
     # Excluded here because they are either included explicitly in other
@@ -131,28 +211,70 @@ exclude_patterns = [
     "release-notes/snapcraft-9-0.rst",
 ]
 
-# region Options for extensions
-
-# Client-side page redirects.
-rediraffe_redirects = "redirects.txt"
-
-# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
-html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
-
-# Builds URLs as {html_baseurl}/<page-location>
-sitemap_url_scheme = "{link}"
-
-# Exclude generated pages from the sitemap:
-sitemap_excludes = [
-    '404/',
-    'genindex/',
-    'search/',
+# Adds custom CSS files, located under 'html_static_path'
+html_css_files = [
+    "css/cookie-banner.css",
+    "css/support-chart.css",
 ]
 
-# endregion
 
-# region Automated documentation
+# Adds custom JavaScript files, located under 'html_static_path'
+html_js_files = [
+    "js/bundle.js",
+    "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
+    "js/support-chart.js",
+]
 
+
+# Specifies a reST snippet to be appended to each .rst file
+rst_epilog = """
+.. include:: /reuse/links.txt
+"""
+
+# Feedback button at the top; enabled by default
+# disable_feedback_button = True
+
+# Your manpage URL
+# manpages_url = 'https://manpages.ubuntu.com/manpages/{codename}/en/' + \
+#     'man{section}/{page}.{section}.html'
+
+# Specifies a reST snippet to be prepended to each .rst file
+# This defines a :center: role that centers table cell content.
+# This defines a :h2: role that styles content for use with PDF generation.
+rst_prolog = """
+.. role:: center
+   :class: align-center
+.. role:: h2
+    :class: hclass2
+.. role:: woke-ignore
+    :class: woke-ignore
+.. role:: vale-ignore
+    :class: vale-ignore
+"""
+
+# Workaround for https://github.com/canonical/canonical-sphinx/issues/34
+if "discourse_prefix" not in html_context and "discourse" in html_context:
+    html_context["discourse_prefix"] = f"{html_context['discourse']}/t/"
+
+# Add configuration for intersphinx mapping
+intersphinx_mapping = {
+    # https://github.com/canonical/snapcraft/issues/6036
+    # "snap": ("https://snapcraft.io/docs/", None),
+    "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
+    "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None)
+}
+
+
+##############################
+# Custom Craft configuration #
+##############################
+
+# Type hints configuration
+set_type_checking_flag = True
+typehints_fully_qualified = False
+always_document_param_types = True
+
+# Automated documentation
 project_dir = pathlib.Path(__file__).parents[1].resolve()
 sys.path.insert(0, str(project_dir.absolute()))
 
@@ -175,19 +297,3 @@ craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-
 (common_docs_path / "craft-parts").symlink_to(
     craft_parts_docs_path, target_is_directory=True
 )
-
-# endregion
-# We have many links on sites that frequently respond with 503s to GitHub runners.
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-linkcheck_retries
-linkcheck_retries = 20
-linkcheck_anchors_ignore = ["#", ":"]
-linkcheck_ignore = [
-    # Ignore releases, since we'll include the next release before it exists.
-    r"^https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
-    # Entire domains to ignore due to flakiness or issues
-    r"^https://www.gnu.org/",
-    r"^https://crates.io/",
-    r"^https://([\w-]*\.)?npmjs.org",
-    r"^https://rsync.samba.org",
-    r"^https://ubuntu.com",
-]
