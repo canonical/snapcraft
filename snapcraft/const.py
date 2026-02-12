@@ -24,7 +24,55 @@ DEPRECATED_COMMAND_WARNING = (
 )
 
 
-class SnapArch(str, enum.Enum):
+class StrEnum(str, enum.Enum):
+    def __repr__(self) -> str:
+        return repr(self.value)
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class ProjectType(StrEnum):
+    """The type of snap project."""
+
+    APP = "app"
+    """An application snap (the default). Most snaps are this type."""
+    BASE = "base"
+    """A base snap, e.g. core26"""
+    GADGET = "gadget"
+    """A gadget snap."""
+    KERNEL = "kernel"
+    """A snap containing a kernel and initrd for Ubuntu Core."""
+    SNAPD = "snapd"
+    """A snap containing snapd itself."""
+
+
+class StableBase(StrEnum):
+    """Bases whose build-base must equal the base (or be absent)."""
+
+    CORE22 = "core22"
+    CORE24 = "core24"
+
+
+class UnstableBase(StrEnum):
+    """Bases that require "devel" as their build-base."""
+
+    CORE26 = "core26"
+    DEVEL = "devel"
+
+
+class BuildBase(StrEnum):
+    """Values that are valid for the 'build-base' key for most snaps.
+
+    These correspond to the bases on which we can build for most snap types.
+    """
+
+    CORE22 = "core22"
+    CORE24 = "core24"
+    DEVEL = "devel"
+
+
+class SnapArch(StrEnum):
     """An architecture for a snap."""
 
     amd64 = "amd64"
@@ -33,10 +81,6 @@ class SnapArch(str, enum.Enum):
     ppc64el = "ppc64el"
     riscv64 = "riscv64"
     s390x = "s390x"
-
-    def __str__(self) -> str:
-        """Stringify the value."""
-        return str(self.value)
 
 
 SUPPORTED_ARCHS = frozenset(arch.value for arch in SnapArch)
@@ -56,18 +100,17 @@ class OutputFormat(str, enum.Enum):
 OUTPUT_FORMATS = frozenset(output_format.value for output_format in OutputFormat)
 """Supported output formats for commands."""
 
-
-BASES = frozenset({"core", "core18", "core20", "core22", "core24", "core26", "devel"})
-"""All bases recognized by snapcraft."""
-
-ESM_BASES = frozenset({"core", "core18"})
-"""Bases no longer supported by the current version of snapcraft."""
+CURRENT_BASES = frozenset(b.value for b in (*StableBase, *UnstableBase))
+"""Bases handled by the current snapcraft codebase."""
 
 LEGACY_BASES = frozenset({"core20"})
 """Bases handled by the legacy snapcraft codebase."""
 
-CURRENT_BASES = frozenset(BASES - ESM_BASES - LEGACY_BASES)
-"""Bases handled by the current snapcraft codebase."""
+ESM_BASES = frozenset({"core", "core18"})
+"""Bases no longer supported by the current version of snapcraft."""
+
+BASES = CURRENT_BASES | LEGACY_BASES | ESM_BASES
+"""All bases recognized by snapcraft."""
 
 
 SNAPCRAFT_ENVIRONMENT_VARIABLES = frozenset(

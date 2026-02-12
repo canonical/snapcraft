@@ -1,4 +1,19 @@
 [[IgnoredVulns]]
-id = "GHSA-4xh5-x5gv-qwph"
-ignoreUntil = 2025-11-01
-reason = "pip 25.3 isn't due for release until the end of October"
+id = "CVE-2025-69277"
+reason = """
+Snapcraft pins PyNaCl<1.6.0, because it's tied to the version of libsodium available on 24.04.
+
+The CVE assumes that PyNaCl<1.6.0 uses a version of libsodium with the CVE.
+
+However 24.04 has a patched version of libsodium (1.0.18-1ubuntu0.24.04.1) that addresses this CVE.
+
+See https://osv.dev/vulnerability/GHSA-mrfv-m5wm-5w6w and https://packages.ubuntu.com/noble-updates/libsodium23.
+"""
+[[IgnoredVulns]]
+id = "GHSA-7gcm-g887-7qv7"
+reason = """
+Protobuf 6.33.5 has an issue[0] that causes a segfault in s390x. The issue is fixed but the
+fix is unreleased.
+
+0: https://github.com/protocolbuffers/protobuf/issues/24103
+"""

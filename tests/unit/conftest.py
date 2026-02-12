@@ -35,7 +35,7 @@ from craft_providers.base import Base
 from overrides import override
 from pymacaroons import Caveat, Macaroon
 
-from snapcraft import models, services
+from snapcraft import const, models, services
 from snapcraft.extensions import extension, register, unregister
 
 
@@ -530,6 +530,12 @@ def setup_project(mocker, project_path):
 
     def _setup_services(project_services, project_data, *, write_project: bool = False):
         from snapcraft import models  # noqa: PLC0415 (import-outside-top-level)
+
+        if project_data.get("base") in (b.value for b in const.UnstableBase):
+            project_data |= {
+                "build-base": "devel",
+                "grade": "devel",
+            }
 
         if write_project:
             _write_yaml(

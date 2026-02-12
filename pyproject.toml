@@ -6,14 +6,14 @@ dependencies = [
     "attrs",
     "catkin-pkg==1.1.0; sys_platform == 'linux'",
     "click>=8.2",
-    "craft-application[remote]~=5.11",
-    "craft-archives~=2.1",
-    "craft-cli>=3.1.2,<4.0.0",
-    "craft-grammar>=2.0.3,<3.0.0",
-    "craft-parts~=2.22",
-    "craft-platforms~=0.7",
-    "craft-providers>=3.0.0,<4.0.0",
-    "craft-store>=3.2.2,<4.0.0",
+    "craft-application[remote]>=6.1.0",
+    "craft-archives>=2.2.0",
+    "craft-cli>=3.2.0",
+    "craft-grammar>=2.3.0",
+    "craft-parts>=2.28.0",
+    "craft-platforms>=0.10.0",
+    "craft-providers>=3.3.0",
+    "craft-store>=3.3.0",
     "cryptography",
     "gnupg",
     "jsonschema==2.6.0",
@@ -29,8 +29,13 @@ dependencies = [
     "pyelftools",
     # Pygit2 and libgit2 need to match versions.
     # Further info: https://www.pygit2.org/install.html#version-numbers
-    "pygit2~=1.13.0",
-    "pylxd ; sys_platform == 'linux'",
+    # 1.18 is the last minor version that supports Python 3.10
+    "pygit2~=1.18.2",
+    # Snapcraft directly only cares about pylxd on Linux. However, as a note for
+    # packagers: As of 3.1.0, craft-providers depends on pylxd on all platforms.
+    # If we drop the direct dependency we will remove the following line, but pylxd
+    # will still be in the dependency tree.
+    "pylxd",
     "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
@@ -98,12 +103,12 @@ docs = [
     "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.3.0",
     "docutils>=0.21",
-    "pydantic-kitbash==0.0.8",
+    "pydantic-kitbash~=1.0",
     "pyspelling",
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
 types = [
-    "mypy~=1.18.2",
+    "mypy~=1.19.0",
     "types-PyYAML",
     "types-requests>=2.32",
     "types-setuptools",
@@ -115,6 +120,7 @@ dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
 dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
 dev-plucky = ["python-apt~=2.9.0;sys_platform=='linux'"]
 dev-questing = ["python-apt~=3.0.0;sys_platform=='linux'"]
+dev-resolute = ["python-apt~=3.0.0;sys_platform=='linux'"]
 tics = ["flake8", "pylint"]
 
 [tool.uv]
@@ -124,13 +130,22 @@ conflicts = [
         { group = "dev-noble" },
         { group = "dev-plucky" },
         { group = "dev-questing" },
+        { group = "dev-resolute" },
     ],
 ]
 constraint-dependencies = [
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
     # what is available in the noble repositories.
     # https://pynacl.readthedocs.io/en/latest/changelog/
+    # https://github.com/canonical/snapcraft/issues/5968
     "pynacl<1.6.0",
+    # protobuf 6.33.x segfaults on s390x
+    # this issue might be the cause: https://github.com/protocolbuffers/protobuf/issues/24103
+    "protobuf==6.32.*",
+]
+build-constraint-dependencies = [
+    # needed until we have rustc >= 1.78
+    "maturin<1.10.0 ; python_version < '3.14'",
 ]
 
 [[tool.uv.index]]

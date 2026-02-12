@@ -1209,9 +1209,7 @@ def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
 
 
 def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
-    error = (
-        "Value error, Snap base must be declared when type is not base, kernel or snapd"
-    )
+    error = "Value error, Missing 'base' key for snap"
     with pytest.raises(pydantic.ValidationError, match=error):
         Project.unmarshal(snapcraft_yaml(base=None))
 
@@ -2349,5 +2347,5 @@ def test_lifecycle_warn_on_multiple_builds(
     )
     emitter.assert_message(
         "For more information, check out: "
-        "https://snapcraft.io/docs/explanation-architectures#core22-8"
+        "https://documentation.ubuntu.com/snapcraft/stable/explanation/architectures/#core22"
     )
