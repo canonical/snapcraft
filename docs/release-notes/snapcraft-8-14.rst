@@ -3,7 +3,7 @@
 Snapcraft 8.14 release notes
 ============================
 
-03 Feburary 2026
+03 February 2026
 
 Learn about the new features, changes, and fixes introduced in Snapcraft 8.14.
 

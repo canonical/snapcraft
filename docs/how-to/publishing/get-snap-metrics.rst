@@ -73,7 +73,7 @@ If you need to format the return data as a JSON object, change the value of the
 
 The returned data then takes the form of a JSON object:
 
-.. collapse:: JSON object for a metric
+.. dropdown:: JSON object for a metric
 
     .. code-block:: json
 

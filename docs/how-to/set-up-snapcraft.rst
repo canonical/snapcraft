@@ -20,9 +20,9 @@ provider.
 Install Snapcraft
 ~~~~~~~~~~~~~~~~~
 
-.. tabs::
+.. tab-set::
 
-  .. group-tab:: Linux
+  .. tab-item:: Linux
 
     If your Linux distribution has snapd installed, the easiest way to install
     Snapcraft is from the Snap Store:
@@ -31,7 +31,7 @@ Install Snapcraft
 
         snap install snapcraft --classic
 
-  .. group-tab:: macOS
+  .. tab-item:: macOS
 
     First, `install Brew <https://brew.sh#install>`_.
 
@@ -41,7 +41,7 @@ Install Snapcraft
 
         brew install snapcraft
 
-  .. group-tab:: Windows
+  .. tab-item:: Windows
 
     First, `install WSL2 with Ubuntu 20.04 or higher
     <https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command>`_.
@@ -110,7 +110,7 @@ check that you're a member of the group by running:
 
 The list should contain ``lxd``.
 
-Finnally, initialize LXD with a lightweight configuration:
+Finally, initialize LXD with a lightweight configuration:
 
 .. code:: bash
 
@@ -171,9 +171,9 @@ note of the value in the channel column.
     snap info snapcraft
 
 Install a new instance of Snapcraft with the `instance key naming
-<https://snapcraft.io/docs/parallel-installs#heading--naming>`_ syntax, replacing
-``<instance>`` with whichever name is appropriate for the instance, and ``<channel>``
-with the target channel and track:
+<https://snapcraft.io/docs/explanation/how-snaps-work/parallel-installs/>`__ syntax,
+replacing ``<instance>`` with whichever name is appropriate for the instance, and
+``<channel>`` with the target channel and track:
 
 .. code:: bash
 

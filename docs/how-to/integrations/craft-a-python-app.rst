@@ -19,7 +19,7 @@ The following code comprises the project file of a Python app, `liquidctl
 <https://snapcraft.io/liquidctl>`_. This project is both a driver and a CLI tool for
 power and cooling components in PCs.
 
-.. collapse:: liquidctl project file
+.. dropdown:: liquidctl project file
 
     .. literalinclude:: ../code/integrations/example-python-recipe.yaml
         :caption: snapcraft.yaml

@@ -38,7 +38,7 @@ package may not run as expected.
 There are multiple ways dynamic linking parameters can be manipulated:
 
 .. image:: https://assets.ubuntu.com/v1/24ce3093-confinement_03.png
-    :alt: The flow diagram for dynamic linking parameteres in the snap confinement process at build-time.
+    :alt: The flow diagram for dynamic linking parameters in the snap confinement process at build-time.
 
 - **Runtime library paths**. The dynamic section of an ELF file contains the RPATH
   entry, which lists the runtime paths to shared libraries to be searched before the

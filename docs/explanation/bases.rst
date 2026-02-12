@@ -15,7 +15,7 @@ environment where the snap is built.
 If ``build-base`` is not defined, the ``base`` will determine the
 environment where the snap is built.
 
-For example, ``base: core24`` will build a snap in a Ubuntu 24.04 environment
+For example, ``base: core24`` will build a snap in a Ubuntu 24.04 LTS environment
 with the ``core24`` snap installed. Stage packages will be installed from the
 24.04 repository.
 
@@ -79,8 +79,8 @@ While uncommon, developers can build their own base snap. They are responsible
 for maintenance and updates, in particular:
 
 * bases need to be built from stable packages
-* ABI compatibility cannot broken (ie. never replace symbols or libraries, and
-  be strict)
+* ABI compatibility cannot broken (in other words, never replace symbols or libraries,
+  and be strict)
 * security updates must be proactive
 
 `Ubuntu Core`_ systems need a base snap. These base snaps must be bootable and

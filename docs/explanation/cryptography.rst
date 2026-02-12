@@ -104,10 +104,11 @@ operating systems are handled by the local `snap daemon (snapd)`_.
 Communication with snapd
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Snapcraft uses the Requests library to communicate over Unix sockets with snapd.
-These requests fetch information about required software. If the software is missing,
-Snapcraft will install it through snapd. This is done by querying the `snapd API`_ with
-URLs built dynamically and sanitized by `urllib`_.
+Snapcraft uses the Requests library to communicate over Unix sockets with snapd. These
+requests fetch information about required software. If the software is missing,
+Snapcraft will install it through snapd. This is done by querying the `snapd API
+<https://snapcraft.io/docs/reference/development/snapd-rest-api/>`__ with URLs built
+dynamically and sanitized by `urllib`_.
 
 Sources
 ~~~~~~~
@@ -300,6 +301,5 @@ is invoked by the consuming application.
 .. _Mercurial: https://www.mercurial-scm.org/
 .. _Requests: https://requests.readthedocs.io/
 .. _snap daemon (snapd): https://snapcraft.io/docs/installing-snapd
-.. _snapd API: https://snapcraft.io/docs/snapd-api
 .. _Subversion: https://subversion.apache.org/
 .. _urllib: https://docs.python.org/3/library/urllib.html

@@ -20,7 +20,7 @@ The following code comprises the project file of a Node tool, `wethr
 local weather information.
 
 
-.. collapse:: wethr project file
+.. dropdown:: wethr project file
 
     .. literalinclude:: ../code/integrations/example-node-recipe.yaml
         :caption: snapcraft.yaml
@@ -46,9 +46,9 @@ To declare a Node part:
 #. Set ``plugin: npm``.
 #. Determine how npm is added to the snap:
 
-   .. tabs::
+   .. tab-set::
 
-     .. group-tab:: Snapcraft 8 and higher
+     .. tab-item:: Snapcraft 8 and higher
 
        - If you want Snapcraft to download and pack npm, set
          ``npm-include-node: true``, and then set ``npm-node-version`` to
@@ -57,6 +57,6 @@ To declare a Node part:
          these keys. Instead, manually include a copy of npm in the files, and
          declare it in another part.
 
-     .. group-tab:: Snapcraft 7
+     .. tab-item:: Snapcraft 7
 
        Set ``npm-node-version`` to the required NPM version.
