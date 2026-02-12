@@ -19,11 +19,12 @@ Included plugs
 When this extension is used, the following plugs are connected for the app. The paths
 slightly differ between core24 and core22 bases.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: core24
+    .. tab-item:: core24
+        :sync: core24
 
-        .. collapse:: Included snap-wide plugs
+        .. dropdown:: Included snap-wide plugs
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -52,9 +53,10 @@ slightly differ between core24 and core22 bases.
                       target: $SNAP/gpu-2404
                       default-provider: mesa-2404
 
-    .. group-tab:: core22
+    .. tab-item:: core22
+        :sync: core22
 
-        .. collapse:: Included snap-wide plugs
+        .. dropdown:: Included snap-wide plugs
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -81,7 +83,7 @@ slightly differ between core24 and core22 bases.
 
 The extension also connects the following plugs to all apps that use it.
 
-.. collapse:: Included app plugs
+.. dropdown:: Included app plugs
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -135,11 +137,12 @@ these default variables can be overridden by declaring them in the project file.
 
 The paths differ slightly between core24 and core22 bases.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: core24
+    .. tab-item:: core24
+        :sync: core24
 
-        .. collapse:: Included build environment variables
+        .. dropdown:: Included build environment variables
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -156,9 +159,10 @@ The paths differ slightly between core24 and core22 bases.
                   - PYTHONPATH: /snap/gnome-46-2404-sdk/current/usr/lib/python3.10:/snap/gnome-46-2404-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
                   - GI_TYPELIB_PATH: /snap/gnome-46-2404-sdk/current/usr/lib/girepository-1.0:/snap/gnome-46-2404-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
 
-    .. group-tab:: core22
+    .. tab-item:: core22
+        :sync: core22
 
-        .. collapse:: Included build environment variables
+        .. dropdown:: Included build environment variables
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -179,14 +183,12 @@ Runtime variables
 
 The following environment variables are exported when the app runs:
 
-.. collapse:: Environment variables
+.. code-block:: yaml
+    :caption: snapcraft.yaml
 
-    .. code-block:: yaml
-        :caption: snapcraft.yaml
-
-        environment:
-          SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
-          GTK_USE_PORTAL: '1'
+    environment:
+      SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
+      GTK_USE_PORTAL: '1'
 
 
 Included layouts
@@ -196,11 +198,12 @@ This extension uses :ref:`layouts <reference-layouts>` to access files on the ho
 platform snap's GNOME JavaScript (GJS), webkit2gtk-4.0, and iso-codes are used so they
 don't need to be packaged as part of the snap and would greatly inflate the size.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: core24
+    .. tab-item:: core24
+        :sync: core24
 
-        .. collapse:: Included layouts
+        .. dropdown:: Included layouts
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -219,9 +222,10 @@ don't need to be packaged as part of the snap and would greatly inflate the size
                   /usr/share/X11/XErrorDB:
                     symlink: $SNAP/gpu-2404/X11/XErrorDB
 
-    .. group-tab:: core22
+    .. tab-item:: core22
+        :sync: core22
 
-        .. collapse:: Included layouts
+        .. dropdown:: Included layouts
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -254,22 +258,26 @@ between the original file and the output of the :ref:`snapcraft expand-extension
 <ref_commands_expand-extensions>` command. Some of the text has been altered for ease of
 reading.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: core24
+    .. tab-item:: core24
+        :sync: core24
 
-        .. collapse:: Expanded project file for GNOME System Monitor
+        .. dropdown:: Expanded project file for GNOME System Monitor
 
             .. literalinclude:: code/gnome-extension-gnome-system-monitor-core-24-expanded.diff
+                :caption: snapcraft.yaml
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 57-66, 78-87, 100-150, 158-163, 171-173, 180-201, 210-212
 
-    .. group-tab:: core22
+    .. tab-item:: core22
+        :sync: core22
 
-        .. collapse:: Expanded project file for GNOME System Monitor
+        .. dropdown:: Expanded project file for GNOME System Monitor
 
             .. literalinclude:: code/gnome-extension-gnome-system-monitor-core-22-expanded.diff
+                :caption: snapcraft.yaml
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 60-69, 81-90, 103-155, 159-160, 164-170, 178-179, 186-207

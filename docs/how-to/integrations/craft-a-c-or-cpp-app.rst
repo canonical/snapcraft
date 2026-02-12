@@ -8,7 +8,7 @@ are unique when crafting a snap based on C or C++. We'll work through the
 aspects unique to these apps by examining an existing project.
 
 The process of developing a snap for a C or C++ app builds on top of standard
-tools like autotools and make, making it possible to adapt or integrate an
+tools like Autotools and Make, making it possible to adapt or integrate an
 app's existing build tooling into the crafting process.
 
 
@@ -19,7 +19,7 @@ The following code comprises the project file for the C app `moon-buggy
 <https://github.com/snapcraft-docs/moon-buggy>`_. This project is a small game where you
 drive a buggy across the moon's surface.
 
-.. collapse:: moon-buggy project file
+.. dropdown:: moon-buggy project file
 
     .. literalinclude:: ../code/integrations/example-c-or-cpp-recipe.yaml
         :caption: snapcraft.yaml

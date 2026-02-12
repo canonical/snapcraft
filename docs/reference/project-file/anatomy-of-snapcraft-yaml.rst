@@ -21,7 +21,7 @@ Simple project file
 yt-dlp is a command line tool for extracting online videos, and is a
 self-contained Python project.
 
-.. collapse:: yt-dlp project file
+.. dropdown:: yt-dlp project file
 
     .. literalinclude:: code/yt-dlp-recipe.yaml
         :caption: snapcraft.yaml
@@ -177,7 +177,7 @@ retrieving local weather conditions.
 The metadata, base, and confinement declarations are rather similar to the
 simple example, but with some notable differences.
 
-.. collapse:: wethr project file
+.. dropdown:: wethr project file
 
     .. literalinclude:: code/wethr-recipe.yaml
         :caption: snapcraft.yaml
