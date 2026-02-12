@@ -43,15 +43,33 @@ The following kernel-specific options are provided by this plugin:
       (boolean; default: False)
       use this flag to build the perf binary
 
+    - kernel-dkms
+      (list of strings; default: none)
+      a list of additional packages to build DKMS-style
+
+    - kernel-ubuntu-release-name
+      (string; default: none)
+      a specific Ubuntu release to build a kernel from
+
+    - kernel-ubuntu-binary-package
+      (boolean; default: False)
+      use this flag to specify whether or not a prebuilt debian kernel package should be
+      used. Conflicts with specifying a source
+
 This plugin supports cross compilation, for which plugin expects
 the build-environment is configured accordingly and has foreign
 architectures set up accordingly.
 """
 
+import pathlib
+from pathlib import Path
 from typing import Literal, cast
 
-from craft_parts import infos, plugins
-from typing_extensions import override
+import pydantic
+from craft_parts import errors, infos, plugins
+from craft_parts.packages import Repository as Repo
+from overrides import overrides
+from typing_extensions import Self
 
 _KERNEL_ARCH_FROM_SNAP_ARCH = {
     "i386": "x86",
@@ -61,6 +79,11 @@ _KERNEL_ARCH_FROM_SNAP_ARCH = {
     "ppc64el": "powerpc",
     "riscv64": "riscv",
     "s390x": "s390",
+}
+
+_KERNEL_RELEASE_FROM_SNAP_BASE = {
+    "22": "jammy",
+    "24": "noble",
 }
 
 
@@ -74,6 +97,42 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     kernel_kdefconfig: list[str] = ["defconfig"]
     kernel_enable_zfs_support: bool = False
     kernel_enable_perf: bool = False
+    kernel_dkms: list[str] = []
+    kernel_ubuntu_release_name: str = ""
+    kernel_ubuntu_binary_package: bool = False
+
+    @pydantic.model_validator(mode="after")
+    def validate_release_name_and_source_exclusive(self) -> Self:
+        """Enforce release_name and source options are mutually exclusive."""
+        if self.kernel_release_name and self.source:
+            raise errors.SnapcraftError(
+                "cannot use 'kernel-ubuntu-release-name' and 'source' keys at same time"
+            )
+        if not self.kernel_release_name and not self.source:
+            raise errors.SnapcraftError(
+                "missing either 'kernel-ubuntu-release-name' or 'source' key"
+            )
+        return self
+
+    @pydantic.model_validator(mode="after")
+    def validate_binary_package_and_source_build_options_mutually_exclusive(
+        self,
+    ) -> Self:
+        """Enforce binary package and source-only options are exclusive."""
+        if self.kernel_use_binary_package:
+            conflicting_options = [
+                "source",
+                "kernel_kconfigs",
+                "kernel_kdefconfig",
+                "kernel_dkms",
+            ]
+            for option in conflicting_options:
+                if getattr(self, option):
+                    raise errors.SnapcraftError(
+                        "'kernel-ubuntu-binary-package' and "
+                        f"'{option.replace('_', '-')}' keys are mutually exclusive"
+                    )
+        return self
 
 
 class KernelPlugin(plugins.Plugin):
@@ -87,11 +146,70 @@ class KernelPlugin(plugins.Plugin):
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(KernelPluginProperties, self._options)
 
-    @override
+    @overrides
+    def get_pull_commands(self) -> list[str]:
+        _base = self._part_info.base
+        _target_arch = self._part_info.target_arch
+        _flavour = self.options.kernel_kconfigflavour
+        _ubuntu_repo_base = (
+            "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/"
+        )
+        _ubuntu_repo_release = _KERNEL_RELEASE_FROM_SNAP_BASE[_base]
+
+        # This option takes precedence
+        if self.options.kernel_ubuntu_binary_package:
+            _package_names = {
+                f"linux-image-{_flavour}",
+                f"linux-modules-{_flavour}",
+                f"linux-modules-extra-{_flavour}",
+            }
+
+            # On Jammy and earlier, linux-firmware is an "all" architectures package
+            if _ubuntu_repo_release != "jammy":
+                _package_names.extend("linux-firmware")
+
+            _install_path = pathlib.Path(self._part_info.part_install_dir)
+            _stage_packages_path = _install_path.parent / "stage_packages"
+
+            Repo.configure("snapcraft")
+
+            _fetched_stage_packages = Repo.fetch_stage_packages(
+                cache_dir=Path(self._part_info.cache_dir.resolve()),
+                package_names=_package_names,
+                arch=_target_arch,
+                base=_base,
+                stage_packages_path=_stage_packages_path,
+            )
+
+            if _ubuntu_repo_release == "jammy":
+                _fetched_stage_packages = Repo.fetch_stage_packages(
+                    cache_dir=Path(self._part_info.cache_dir.resolve()),
+                    package_names="linux-firmware",
+                    arch="all",
+                    base=_base,
+                    stage_packages_path=_stage_packages_path,
+                )
+
+            Repo.unpack_stage_packages(
+                stage_packages_path=_stage_packages_path, install_path=_install_path
+            )
+
+        if self.options.kernel_ubuntu_release_name:
+            return [
+                " ".join(
+                    [
+                        "git clone --depth 1 --branch master-next",
+                        f"{_ubuntu_repo_base}{_ubuntu_repo_release}",
+                    ]
+                )
+            ]
+        return super().get_pull_commands()
+
+    @overrides
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @override
+    @overrides
     def get_build_packages(self) -> set[str]:
         _base = self._part_info.base
         _host_arch = self._part_info.host_arch
@@ -152,7 +270,7 @@ class KernelPlugin(plugins.Plugin):
 
         return build_packages
 
-    @override
+    @overrides
     def get_build_environment(self) -> dict[str, str]:
         _kernel_arch = _KERNEL_ARCH_FROM_SNAP_ARCH[self._part_info.target_arch]
 
@@ -177,7 +295,7 @@ class KernelPlugin(plugins.Plugin):
             "KERNEL_TARGET": _kernel_target,
         }
 
-    @override
+    @overrides
     def get_build_commands(self) -> list[str]:
         kconfigflavour = self.options.kernel_kconfigflavour
         if self.options.kernel_kdefconfig != ["defconfig"]:
@@ -192,6 +310,9 @@ class KernelPlugin(plugins.Plugin):
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
                     f"kernel-enable-zfs={self.options.kernel_enable_zfs_support}",
                     f"kernel-enable-perf={self.options.kernel_enable_perf}",
+                    f"kernel-dkms={','.join(self.options.kernel_dkms)}",
+                    f"kernel-release-name={self.options.kernel_release_name}",
+                    f"kernel-use-binary-package={self.options.kernel_use_binary_package},",
                 ]
             )
         ]

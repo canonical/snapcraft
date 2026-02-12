@@ -23,6 +23,15 @@ parse_args() {
       # enable_perf builds the perf binary if true
       # Default value is "False".
       kernel_enable_perf=${arg#*=}            ;;
+      kernel-dkms=*)
+      # kernel_dkms specifies additional packages to build
+      kernel_dkms=${arg#*=}                   ;;
+      kernel-ubuntu-release-name=*)
+      # kernel_ubuntu_release_name specifies the specific release to build from
+      kernel_ubuntu_release_name=${arg#*=}    ;;
+      kernel-ubuntu-binary-package=*)
+      # kernel_ubuntu_binary_package specifies if prebuilt debs should be used
+      kernel_ubuntu_binary_package=${arg#*=}  ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac
   done
@@ -190,120 +199,125 @@ run() {
     cleanup
   fi
 
-  ### Setup
-  # Create new config if one does not exist
-  # A config COULD be supplied by the user if they add a .config to CRAFT_PART_BUILD
-  # before the plugin is called. This is intended for debugging or testing and not
-  # intended for normal consumers of this plugin.
-  [ -e "${CRAFT_PART_BUILD}/.config" ] || {
-    # Privilege a specified flavour over all else
-    if [ -n "${kernel_kconfigflavour}" ] && [ "${kernel_kconfigflavour}" != "generic" ]; then
-      echo "Using Ubuntu config flavour ${kernel_kconfigflavour}"
-      gen_flavour_config
-    # Privilege specified config(s) over most
-    elif [ -n "${kernel_kdefconfig}" ] && [ "${kernel_kdefconfig}" != "defconfig" ]; then
-      echo "Using defconfig: ${kernel_kdefconfig}"
-      gen_defconfig
-    # Choose a default otherwise
+  if [ "$kernel_ubuntu_binary_package" = "False" ]; then
+    ### Setup
+    # Create new config if one does not exist
+    # A config COULD be supplied by the user if they add a .config to CRAFT_PART_BUILD
+    # before the plugin is called. This is intended for debugging or testing and not
+    # intended for normal consumers of this plugin.
+    [ -e "${CRAFT_PART_BUILD}/.config" ] || {
+      # Privilege a specified flavour over all else
+      if [ -n "${kernel_kconfigflavour}" ] && [ "${kernel_kconfigflavour}" != "generic" ]; then
+        echo "Using Ubuntu config flavour ${kernel_kconfigflavour}"
+        gen_flavour_config
+      # Privilege specified config(s) over most
+      elif [ -n "${kernel_kdefconfig}" ] && [ "${kernel_kdefconfig}" != "defconfig" ]; then
+        echo "Using defconfig: ${kernel_kdefconfig}"
+        gen_defconfig
+      # Choose a default otherwise
+      else
+        echo "Using generic Ubuntu config flavour"
+        gen_flavour_config
+      fi
+
+      # Add any crafter-specified configs
+      if [ -n "${kernel_kconfigs}" ]; then
+        add_kconfigs "${kernel_kconfigs}"
+      fi
+
+      # Rebuild config to a valid one
+      echo "Remaking oldconfig...."
+      remake_config
+    }
+
+    # Double check the config against Ubuntu Core and snapd options
+    echo "Checking config for expected options..."
+    check_config
+
+    ### Build
+    echo "Building kernel..."
+    # We want build_target to split as it isn't supposed to be a single arg
+    # shellcheck disable=2086
+    if [ -n "${kernel_kconfigflavour}" ]; then
+      # Set release ABI information if a flavour is specified
+      release_info
+      make -j "${CRAFT_PARALLEL_BUILD_COUNT}"         \
+           -C "${KERNEL_SRC}"                         \
+            O="${CRAFT_PART_BUILD}"                   \
+            KERNELVERSION="${abi_release}-${kernel_kconfigflavour}" \
+            KBUILD_BUILD_VERSION="${uploadnum}"       \
+            CONFIG_DEBUG_SECTION_MISMATCH=y           \
+            LOCALVERSION=                             \
+            localver-extra=                           \
+            CFLAGS_MODULE="-DPKG_ABI=${abinum}"       \
+            ${build_target}
     else
-      echo "Using generic Ubuntu config flavour"
-      gen_flavour_config
+      make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
+           -C "${KERNEL_SRC}"                 \
+            O="${CRAFT_PART_BUILD}"           \
+            ${build_target}
     fi
 
-    # Add any crafter-specified configs
-    if [ -n "${kernel_kconfigs}" ]; then
-      add_kconfigs "${kernel_kconfigs}"
+    echo "Kernel build finished!"
+
+    ### Install
+    # Install the kernel modules, stripped
+    echo "Installing kernel modules..."
+    make -j "${CRAFT_PARALLEL_BUILD_COUNT}"        \
+         -C "${KERNEL_SRC}"                        \
+          O="${CRAFT_PART_BUILD}"                  \
+          INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}" \
+          INSTALL_MOD_STRIP=1                      \
+          modules_install
+
+    # Install device trees, if required
+    if [ "${CRAFT_ARCH_BUILD_FOR}" != "amd64" ]; then
+      echo "Installing device trees..."
+      make -j "${CRAFT_PARALLEL_BUILD_COUNT}"              \
+           -C "${KERNEL_SRC}"                              \
+            O="${CRAFT_PART_BUILD}"                        \
+            INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs" \
+            dtbs_install
     fi
 
-    # Rebuild config to a valid one
-    echo "Remaking oldconfig...."
-    remake_config
-  }
+    # kver depends on if release information is known or not, so
+    # the version varies by if we specified a flavour or not.
+    kver="$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")"
 
-  # Double check the config against Ubuntu Core and snapd options
-  echo "Checking config for expected options..."
-  check_config
+    if [ "${kernel_enable_zfs}" = "True" ]; then
+      fetch_zfs
+      build_zfs
+    fi || echo "Not building ZFS"
 
-  ### Build
-  echo "Building kernel..."
-  # We want build_target to split as it isn't supposed to be a single arg
-  # shellcheck disable=2086
-  if [ -n "${kernel_kconfigflavour}" ]; then
-    # Set release ABI information if a flavour is specified
-    release_info
-    make -j "${CRAFT_PARALLEL_BUILD_COUNT}"         \
-         -C "${KERNEL_SRC}"                         \
-          O="${CRAFT_PART_BUILD}"                   \
-          KERNELVERSION="${abi_release}-${kernel_kconfigflavour}" \
-          KBUILD_BUILD_VERSION="${uploadnum}"       \
-          CONFIG_DEBUG_SECTION_MISMATCH=y           \
-          LOCALVERSION=                             \
-          localver-extra=                           \
-          CFLAGS_MODULE="-DPKG_ABI=${abinum}"       \
-          ${build_target}
-  else
-    make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-         -C "${KERNEL_SRC}"                 \
-          O="${CRAFT_PART_BUILD}"           \
-          ${build_target}
+    if [ -n "${kernel_dkms}" ]; then
+      build_dkms
+    fi || echo "No additional DKMS packages will be added"
+
+    if [ "${kernel_enable_perf}" = "True" ]; then
+      build_perf
+    fi || echo "Not building perf"
+
+    # This information gets deleted by some modules, like zfs. We still need it
+    # for e.g. initrd builds.
+    echo "Copying some module information..."
+    cp -f "${CRAFT_PART_BUILD}/modules.order"   \
+          "${CRAFT_PART_BUILD}/modules.builtin" \
+          "${CRAFT_PART_INSTALL}/lib/modules/${kver}"
+
+    # Install kernel artifacts
+    echo "Copying kernel image..."
+    cp -f "${CRAFT_PART_BUILD}/arch/${ARCH}/boot/${KERNEL_IMAGE}" \
+          "${CRAFT_PART_INSTALL}/kernel.img-${kver}"
+
+    echo "Copying System map..."
+    cp -f "${CRAFT_PART_BUILD}/System.map" \
+          "${CRAFT_PART_INSTALL}/System.map-${kver}"
+
+    echo "Copying kernel config..."
+    cp -f "${CRAFT_PART_BUILD}/.config" \
+          "${CRAFT_PART_INSTALL}/config-${kver}"
   fi
-
-  echo "Kernel build finished!"
-
-  ### Install
-  # Install the kernel modules, stripped
-  echo "Installing kernel modules..."
-  make -j "${CRAFT_PARALLEL_BUILD_COUNT}"        \
-       -C "${KERNEL_SRC}"                        \
-        O="${CRAFT_PART_BUILD}"                  \
-        INSTALL_MOD_PATH="${CRAFT_PART_INSTALL}" \
-        INSTALL_MOD_STRIP=1                      \
-        modules_install
-
-  # Install device trees, if required
-  if [ "${CRAFT_ARCH_BUILD_FOR}" != "amd64" ]; then
-    echo "Installing device trees..."
-    make -j "${CRAFT_PARALLEL_BUILD_COUNT}"              \
-         -C "${KERNEL_SRC}"                              \
-          O="${CRAFT_PART_BUILD}"                        \
-          INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs" \
-          dtbs_install
-  fi
-
-  # kver depends on if release information is known or not, so
-  # the version varies by if we specified a flavour or not.
-  kver="$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")"
-
-  if [ "${kernel_enable_zfs}" = "True" ]; then
-    fetch_zfs
-    build_zfs
-  fi || echo "Not building ZFS"
-
-  if [ "${kernel_enable_perf}" = "True" ]; then
-    build_perf
-  fi || echo "Not building perf"
-
-  # This information gets deleted by some modules, like zfs. We still need it
-  # for e.g. initrd builds.
-  echo "Copying some module information..."
-  cp -f "${CRAFT_PART_BUILD}/modules.order"   \
-        "${CRAFT_PART_BUILD}/modules.builtin" \
-        "${CRAFT_PART_INSTALL}/lib/modules/${kver}"
-
-  # Install kernel artifacts
-  echo "Copying kernel image..."
-  cp -f "${CRAFT_PART_BUILD}/arch/${ARCH}/boot/${KERNEL_IMAGE}" \
-        "${CRAFT_PART_INSTALL}/kernel.img-${kver}"
-
   ln -sf "kernel.img-${kver}" "${CRAFT_PART_INSTALL}/kernel.img"
-
-  echo "Copying System map..."
-  cp -f "${CRAFT_PART_BUILD}/System.map" \
-        "${CRAFT_PART_INSTALL}/System.map-${kver}"
-
-  echo "Copying kernel config..."
-  cp -f "${CRAFT_PART_BUILD}/.config" \
-        "${CRAFT_PART_INSTALL}/config-${kver}"
 
   # Run depmod to ensure all modules are accounted for
   redepmod
@@ -342,22 +356,28 @@ main() {
   : "${CRAFT_PARALLEL_BUILD_COUNT:=$SNAPCRAFT_PARALLEL_BUILD_COUNT}"
   : "${CRAFT_ARCH_TRIPLET_BUILD_FOR:=$SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}"
 
-  # Use the part's source, if provided. If it isn't, perhaps the user has a kernel tree
-  # in the project root. If not, fail - we need something to build.
-  if [ -d "${CRAFT_PART_SRC}/kernel" ]; then
-    # KERNEL_SRC is the true location of the kernel source tree
-    KERNEL_SRC="${CRAFT_PART_SRC}"
-  elif [ -d "${CRAFT_PROJECT_DIR}/kernel" ]; then
-    KERNEL_SRC="${CRAFT_PROJECT_DIR}"
-  else echo "Source missing from kernel part! Please specify a source" && exit 1
-  fi
-
   # Get the build environment's VERSION_CODENAME as this should match our target
   # shellcheck disable=1091
   . /etc/os-release
 
   # UBUNTU_SERIES should match the host build environment
   UBUNTU_SERIES="${VERSION_CODENAME}"
+
+  # The "source" can come from many places; either we're:
+  #   * fetching a prebuilt deb,
+  #   * fetching from a specific release,
+  #   * using a specified "source" in the part, or
+  #   * using the project directory source
+  # The first three are self-explanatory and handled by snapcraft. If a source isn't
+  # provided, perhaps the user has a kernel tree in the project root. If not, fail - we
+  # need something to build.
+  if [ -n "$kernel_ubuntu_release_name" ] || [ -d "${CRAFT_PART_SRC}/kernel" ]; then
+    # KERNEL_SRC is the true location of the kernel source tree
+    KERNEL_SRC="${CRAFT_PART_SRC}"
+  elif [ -d "${CRAFT_PROJECT_DIR}/kernel" ]; then
+    KERNEL_SRC="${CRAFT_PROJECT_DIR}"
+  else echo "Source missing from kernel part! Please specify a source" && exit 1
+  fi
 
   # required_boot are Kconfigs required for booting Ubuntu Core
   required_boot="SQUASHFS"

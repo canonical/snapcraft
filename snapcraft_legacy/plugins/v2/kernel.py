@@ -42,6 +42,19 @@ The following kernel-specific options are provided by this plugin:
     - kernel-enable-perf
       (boolean; default: false)
       Enable or disable building the perf binary.
+
+    - kernel-dkms
+      (list of strings; default: none)
+      a list of additional packages to build DKMS-style
+
+    - kernel-ubuntu-release-name
+      (string; default: none)
+      a specific Ubuntu release to build a kernel from
+
+    - kernel-ubuntu-binary-package
+      (boolean; default: False)
+      use this flag to specify whether or not a prebuilt debian kernel package should be
+      used. Conflicts with specifying a source
 """
 
 from typing import Any, Dict, List, Set
@@ -90,6 +103,20 @@ class KernelPlugin(PluginV2):
                     "type": "boolean",
                     "default": False,
                 },
+                "kernel-dkms": {
+                    "type": "array",
+                    "uniqueItems": True,
+                    "items": {"type": "string"},
+                    "default": [],
+                },
+                "kernel-ubuntu-release-name": {
+                    "type": "string",
+                    "default": "",
+                },
+                "kernel-ubuntu-binary-package": {
+                    "type": "boolean",
+                    "default": False,
+                },
             },
         }
 
@@ -99,6 +126,66 @@ class KernelPlugin(PluginV2):
         kernel_arch = _KERNEL_ARCH_FROM_SNAP_ARCH[target_arch]
 
         return kernel_arch
+
+    # TODO: This still needs to be figured out.
+    # @overrides
+    # def get_pull_commands(self) -> list[str]:
+    #     _base = "focal"
+    #     _target_arch = ProjectOptions().arch_build_for
+    #     _flavour = self.options.kernel_kconfigflavour
+    #     _ubuntu_repo_base = (
+    #         "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/"
+    #     )
+    #     _ubuntu_repo_release = "focal"
+
+    #     # This option takes precedence
+    #     if self.options.kernel_ubuntu_binary_package:
+    #         _package_names = {
+    #             f"linux-image-{_flavour}",
+    #             f"linux-modules-{_flavour}",
+    #             f"linux-modules-extra-{_flavour}",
+    #         }
+
+    #         _install_path = pathlib.Path(self.part_install_dir)
+    #         _stage_packages_path = _install_path.parent / "stage_packages"
+
+    #         Repo.configure("snapcraft")
+    #         stage_cache_dir = pathlib.Path(
+    #             BaseDirectory.save_cache_path("snapcraft", "stage-packages")
+    #         )
+
+    #         _fetched_stage_packages = Repo.fetch_stage_packages(
+    #             cache_dir=Path(stage_cache_dir),
+    #             package_names=_package_names,
+    #             arch=_target_arch,
+    #             base=_base,
+    #             stage_packages_path=_stage_packages_path,
+    #         )
+
+    #         _fetched_stage_packages = Repo.fetch_stage_packages(
+    #             cache_dir=Path(stage_cache_dir),
+    #             package_names="linux-firmware",
+    #             arch="all",
+    #             base=_base,
+    #             stage_packages_path=_stage_packages_path,
+    #         )
+
+    #         Repo.unpack_stage_packages(
+    #             stage_packages_path=_stage_packages_path, install_path=_install_path
+    #         )
+
+    #     if self.options.kernel_ubuntu_release_name:
+    #         return [
+    #             " ".join(
+    #                 [
+    #                     "git clone --depth 1 --branch master-next",
+    #                     f"{_ubuntu_repo_base}{_ubuntu_repo_release}",
+    #                 ]
+    #             )
+    #         ]
+
+    #     else:
+    #         return super().get_pull_commands()
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
