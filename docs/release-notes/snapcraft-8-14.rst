@@ -127,7 +127,7 @@ Snapcraft 8.14.1
 - `craft-providers#898`_ Snapcraft retries calls to snapd when setting up the build
   environment.
 - `#5831`_ Files and directories for the test command, ``spread.yaml`` and ``spread/``,
-  no longer cause a part’s build directory to be marked as dirty by Git.
+  no longer cause a part's build directory to be marked as dirty by Git.
 
 Contributors
 ------------
