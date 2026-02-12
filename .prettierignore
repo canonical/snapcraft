@@ -4,3 +4,6 @@ tests/spread/tools/snapd-testing-tools
 
 # Don't format spread tests in general, they sometimes expect specific formatting
 tests/spread
+
+# Files from the Starter Pack
+docs/.sphinx
