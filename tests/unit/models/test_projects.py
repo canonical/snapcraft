@@ -222,7 +222,7 @@ class TestProjectValidation:
 
         with pytest.raises(
             pydantic.ValidationError,
-            match=f"'{type_}' snaps cannot have a base.",
+            match=rf"Snap base definition not required when type is '{type_}'\. Remove 'base'\.",
         ):
             Project.unmarshal(data)
 
