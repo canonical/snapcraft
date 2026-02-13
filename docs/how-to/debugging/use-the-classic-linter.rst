@@ -106,7 +106,7 @@ Or, to set the ELF interpreter, the following command can be used:
 
 This can be done using override scripts in order to patch the binaries as part of the
 packaging of the snap. For more information, see
-:ref:`how-to-override-the-default-build`.
+:ref:`how-to-override-the-parts-lifecycle`.
 
 Enable automatic ELF file patching
 ----------------------------------

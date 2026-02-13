@@ -143,7 +143,7 @@ Downloading source files
 When a part sources a ``.deb``, ``.rpm``, ``.snap``, ``.tar``, ``.zip``, ``.7z``, or an
 executable file, Snapcraft calls the Requests library to download it.
 
-If the part has the :ref:`source-type <snapcraft-yaml-source-type>` key, then the
+If the part has the :ref:`source-type <PartSpec.source_type>` key, then the
 integrity of the source file will be verified. The checksum is verified using hashlib,
 so all `algorithms available to the hashlib library
 <https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available>`_ can be
@@ -281,7 +281,7 @@ is invoked by the consuming application.
 
 .. _Apt: https://wiki.debian.org/AptCLI
 .. _Bazaar: https://launchpad.net/bzr
-.. _Craft Application cryptography: https://canonical-craft-application.readthedocs-hosted.com/en/latest/explanation/cryptography.html
+.. _Craft Application cryptography: https://canonical-craft-application.readthedocs-hosted.com/en/latest/explanation/cryptography/
 .. _Craft Archives cryptography: https://canonical-craft-archives.readthedocs-hosted.com/en/latest/explanation/cryptography/
 .. _Craft Parts cryptography: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/explanation/cryptography/
 .. _Craft Providers cryptography: https://canonical-craft-providers.readthedocs-hosted.com/en/latest/explanation/cryptography/
