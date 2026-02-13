@@ -2253,7 +2253,7 @@ class _BaselessProject(Project):
     def _validate_no_base(self) -> Self:
         """Baseless projects cannot have a base value set."""
         if self.base is not None:
-            raise ValueError(f"Snap base definition not required when type is {self.type!r}. Remove 'base'.")
+            raise ValueError(f"'base' key is not allowed when type is {self.type!r}.")
         return self
 
     @override
