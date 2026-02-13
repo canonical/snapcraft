@@ -11,6 +11,7 @@ environment:
   SNAP/poetry: poetry-hello
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
+  SNAP/ruby: ruby-hello
   SNAP/uv: uv-hello
   SNAP/dotnet: dotnet-hello
 
@@ -32,6 +33,7 @@ restore: |
   [ -f hello.js ] && git checkout hello.js
   [ -f main.go ] && git checkout main.go
   [ -f src/main.rs ] && git checkout src/main.rs
+  [ -f hello.rb ] && git checkout hello.rb
   [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
   [ -f lib/main.dart ] && git checkout lib/main.dart
 
@@ -79,6 +81,8 @@ execute: |
     modified_file=hello.js
   elif [ -f main.go ]; then
     modified_file=main.go
+  elif [ -f hello.rb ]; then
+    modified_file=hello.rb
   elif [ -f src/main.rs ]; then
     modified_file=src/main.rs
   elif [ -f say/src/lib.rs ]; then

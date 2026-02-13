@@ -6,6 +6,7 @@ environment:
 restore: |
   cd "${SNAP}"
   rm -f ./*.snap ./*.assert ./linter_output.txt
+  snapcraft clean --destructive-mode
 
 execute: |
   cd "${SNAP}"

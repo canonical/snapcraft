@@ -221,7 +221,7 @@ def _get_latest_release_from_nodes(nodes: list[lxml.etree._Element]) -> str | No
 def _get_desktop_file_ids_from_nodes(nodes: list[lxml.etree._Element]) -> list[str]:
     desktop_file_ids: list[str] = []
     for node in nodes:
-        if "type" in node.attrib and node.attrib["type"] == "desktop-id":
+        if "type" in node.attrib and node.attrib["type"] == "desktop-id" and node.text:
             desktop_file_ids.append(node.text.strip())
     return desktop_file_ids
 
@@ -250,7 +250,10 @@ def _extract_icon(
     else:
         icon_node_type = None
 
-    icon = icon_node.text.strip() if icon_node is not None else None
+    if icon_node is not None and icon_node.text:
+        icon = icon_node.text.strip()
+    else:
+        icon = None
 
     if icon_node_type == "remote":
         return icon

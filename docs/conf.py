@@ -64,13 +64,16 @@ html_theme_options = {
 html_static_path = ["_static"]
 templates_path = ["_templates"]
 
-# Static resources for Google Analytics
+# Static resources
 html_css_files = [
-    "css/cookie-banner.css"
+    "css/cookie-banner.css",
+    "css/support-chart.css",
 ]
 
 html_js_files = [
     "js/bundle.js",
+    "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
+    "js/support-chart.js",
 ]
 
 extensions = [
@@ -133,13 +136,17 @@ exclude_patterns = [
 rediraffe_redirects = "redirects.txt"
 
 # Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
-html_baseurl = "https://documentation.ubuntu.com/snapcraft/"
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
 
-if "READTHEDOCS_VERSION" in os.environ:
-    version = os.environ["READTHEDOCS_VERSION"]
-    sitemap_url_scheme = "{version}{link}"
-else:
-    sitemap_url_scheme = "latest/{link}"
+# Builds URLs as {html_baseurl}/<page-location>
+sitemap_url_scheme = "{link}"
+
+# Exclude generated pages from the sitemap:
+sitemap_excludes = [
+    '404/',
+    'genindex/',
+    'search/',
+]
 
 # endregion
 

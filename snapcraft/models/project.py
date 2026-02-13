@@ -20,10 +20,10 @@ from __future__ import annotations
 
 import re
 import textwrap
-from enum import Enum
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
 import pydantic
+from annotated_types import Ge, Le
 from craft_application import models
 from craft_application.errors import CraftValidationError
 from craft_application.models import (  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
@@ -35,17 +35,24 @@ from craft_application.models.constraints import (
     SingleEntryList,
     UniqueList,
 )
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
     Grammar,
 )
 from craft_platforms import DebianArchitecture
 from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
-from pydantic.json_schema import SkipJsonSchema
+from pydantic.json_schema import (
+    SkipJsonSchema,  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
+)
 from typing_extensions import Self, override
 
 from snapcraft import utils
-from snapcraft.const import SUPPORTED_ARCHS
+from snapcraft.const import (
+    SUPPORTED_ARCHS,
+    ProjectType,
+    StableBase,
+)
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.errors import ProjectValidationError
 from snapcraft.extensions.registry import get_extension_names
@@ -303,16 +310,6 @@ def _get_partitions_from_components(
     return None
 
 
-def _validate_mandatory_base(base: str | None, snap_type: ProjectType | None) -> None:
-    """Validate that the base is specified, if required by the snap_type."""
-    if (base is not None) ^ (
-        snap_type not in (ProjectType.BASE, ProjectType.KERNEL, ProjectType.SNAPD)
-    ):
-        raise ValueError(
-            "Snap base must be declared when type is not base, kernel or snapd"
-        )
-
-
 class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
@@ -426,14 +423,13 @@ class App(models.CraftBaseModel):
     relative to ``$SNAP``.
 
     The command must consist only of alphanumeric characters, spaces, and the following
-    special characters: ``/, ., _, #, :, $, -``. If other characters are required, a
-    wrapper script should be used for the command.
+    special characters: ``/``, ``.``, ``_``, ``#``, ``:``, ``$``, ``-``. If other
+    characters are required, a wrapper script should be used for the command.
 
-    If the ``daemon`` is set, this will be the command to run the service. Only a snap
-    with classic confinement can use a relative path because PATH isn't modified by a
-    wrapper in classic confinement. See `Classic confinement
-    <https://documentation.ubuntu.com/snapcraft/stable/explanation/classic-confinement>`_
-    for more details.
+    If the ``daemon`` key is set, this command runs the service. Only
+    classically-confined snaps can use a relative path because ``PATH`` isn't modified
+    by a wrapper in classic confinement. See :ref:`explanation-classic-confinement` for
+    more details.
     """
 
     autostart: str | None = pydantic.Field(
@@ -460,9 +456,7 @@ class App(models.CraftBaseModel):
     )
     """The identifier to a desktop ID within an external appstream file.
 
-    See `Configure package information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_
-    for more information.
+    See :ref:`how-to-configure-package-information` for details.
     """
 
     bus_name: str | None = pydantic.Field(
@@ -478,9 +472,7 @@ class App(models.CraftBaseModel):
     )
     """The desktop file used to start an app.
 
-    See `Configure package information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_
-    for more information.
+    See :ref:`how-to-configure-package-information` for details.
     """
 
     completer: str | None = pydantic.Field(
@@ -501,9 +493,7 @@ class App(models.CraftBaseModel):
     This allows a daemon to gracefully stop or restart, such as when a snap refresh
     occurs.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     post_stop_command: str | None = pydantic.Field(
@@ -518,9 +508,8 @@ class App(models.CraftBaseModel):
     This allows a daemon to gracefully stop or restart, such as when a snap
     refresh occurs.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
+
     """
 
     start_timeout: str | None = pydantic.Field(
@@ -536,9 +525,8 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
+
     """
 
     stop_timeout: str | None = pydantic.Field(
@@ -554,9 +542,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     watchdog_timeout: str | None = pydantic.Field(
@@ -567,15 +553,13 @@ class App(models.CraftBaseModel):
     """The maximum amount of time the service can run without sending a
     heartbeat to the watchdog.
 
-    For the watchdog to work, the application must have access to the
-    ``systemd`` notification socket by specifying ``daemon-notify`` plug in the
-    apps ``plugs`` definition.
+    For the watchdog to work, the application must have access to the systemd
+    notification socket by declaring ``daemon-notify`` in the app's ``plugs``
+    definition.
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     reload_command: str | None = pydantic.Field(
@@ -587,9 +571,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     restart_delay: str | None = pydantic.Field(
@@ -601,9 +583,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     timer: str | None = pydantic.Field(
@@ -622,9 +602,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     daemon: Literal["simple", "forking", "oneshot", "notify", "dbus"] | None = (
@@ -636,10 +614,6 @@ class App(models.CraftBaseModel):
     )
     """Configures the app as a service, and sets its runtime and
     notification behavior.
-
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
 
     **Values**
 
@@ -662,7 +636,7 @@ class App(models.CraftBaseModel):
             send signals to the systemd notification socket by specifying
             ``daemon-notify`` in the app's ``plugs`` definition.
         * - ``dbus``
-          - ``Registers a D-Bus name to notify systemd. Requires ``bus-name`` or
+          - Registers a D-Bus name to notify systemd. Requires ``bus-name`` or
             ``activates-on`` to be specified.
 
     """
@@ -679,9 +653,7 @@ class App(models.CraftBaseModel):
     Requires the ``daemon`` key to be specified for the app. Apps in the
     ``after`` key must also specify the ``daemon`` key.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     before: UniqueList[str] = pydantic.Field(
@@ -696,9 +668,7 @@ class App(models.CraftBaseModel):
     Requires the ``daemon`` key to be specified for the app. Apps in the
     ``before`` key must also specify the ``daemon`` key.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
@@ -712,9 +682,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
 
     **Values**
 
@@ -755,9 +723,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     restart_condition: (
@@ -778,7 +744,7 @@ class App(models.CraftBaseModel):
     )
     """The conditions that cause the service to restart.
 
-    The conditions for ``restart-condition`` match those defined by ``systemd``.
+    The conditions for ``restart-condition`` match those defined by systemd.
     See the `systemd manual
     <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#Restart=>`_
     for information on what exit codes will trigger a restart for each
@@ -786,9 +752,19 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
+    """
+
+    success_exit_status: list[Annotated[int, Ge(1), Le(255)]] | None = pydantic.Field(
+        default=None,
+        description="The list of additional successful exit statuses that the service can return.",
+        examples=["[42, 250]"],
+    )
+    """The list of additional successful exit statuses that the service can return.
+
+    This key corresponds to the `SuccessExitStatus= <https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#SuccessExitStatus=>`_ directive in a systemd service configuration.
+
+    Requires the ``daemon`` key to be set for the app.
     """
 
     install_mode: Literal["enable", "disable"] | None = pydantic.Field(
@@ -800,9 +776,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
 
     **Values**
 
@@ -817,10 +791,9 @@ class App(models.CraftBaseModel):
             service. This will start the service too.
         * - ``disable``
           - The service is not automatically started. Instead, the service will be
-            started with `craftctl
-            <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/customize-lifecycle-steps-and-part-variables>`_
-            and another management agent, which is most commonly a `hook
-            <https://documentation.ubuntu.com/snapcraft/stable/reference/hooks>`_.
+            started with :ref:`craftctl <how-to-customize-the-build-and-part-variables>`.
+            and another management agent, which is most commonly a :ref:`hooks
+            <reference-hooks>`.
 
     """
 
@@ -915,9 +888,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
 
     **Values**
 
@@ -948,9 +919,7 @@ class App(models.CraftBaseModel):
 
     Requires the ``daemon`` key to be specified for the app.
 
-    See the `daemon key
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml/#apps.%3Capp-name%3E.daemon>`_
-    reference for more information.
+    See the :ref:`daemon key <App.daemon>` reference for more information.
     """
 
     passthrough: dict[str, Any] | None = pydantic.Field(
@@ -960,12 +929,12 @@ class App(models.CraftBaseModel):
     )
     """The attributes to pass to the snap's metadata file for the app.
 
-    Attributes to passthrough to snap.yaml without validation from Snapcraft.
-    This is useful for early testing of a new feature in snapd that isn't
-    supported yet by Snapcraft.
+    These attributes are passed to the ``snap.yaml`` file without validation from Snapcraft.
+    This is useful for early testing of a new feature in snapd that isn't supported yet
+    by Snapcraft.
 
-    To pass a value for the entire project, see the top-level ``passthrough``
-    key.
+    To pass a value for the entire project, see the top-level :ref:`passthrough key
+    <Project.passthrough>`.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_ for more
@@ -989,9 +958,7 @@ class App(models.CraftBaseModel):
     acting on the project’s keys in memory – the actual project file on
     disk is unaffected.
 
-    For guidance on specific extensions, see `Extensions
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/extensions/#how-to-extensions>`_.
-    """
+    For guidance on specific extensions, see :ref:`how-to-extensions`."""
 
     @pydantic.field_validator("autostart")
     @classmethod
@@ -1057,6 +1024,15 @@ class App(models.CraftBaseModel):
             )
         return extensions
 
+    @pydantic.field_validator("success_exit_status")
+    @classmethod
+    def _validate_success_exit_status(
+        cls, status_list: list[int] | None
+    ) -> list[int] | None:
+        if status_list == []:
+            return None
+        return status_list
+
 
 class Hook(models.CraftBaseModel):
     """Snapcraft project hook definition."""
@@ -1095,11 +1071,12 @@ class Hook(models.CraftBaseModel):
     )
     """The attributes to pass to the snap's metadata file for the hook.
 
-    Attributes to passthrough to snap.yaml without validation from Snapcraft. This is
-    useful for early testing of a new feature in snapd that isn't supported yet by
-    Snapcraft.
+    These attributes are passed to the ``snap.yaml`` file without validation from
+    Snapcraft. This is useful for early testing of a new feature in snapd that isn't
+    supported yet by Snapcraft.
 
-    To pass a value for the entire project, see the top-level ``passthrough`` key.
+    To pass a value for the entire project, see the top-level :ref:`passthrough key
+    <Project.passthrough>`.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_ for more details.
@@ -1122,14 +1099,28 @@ class Architecture(models.CraftBaseModel, extra="forbid"):
     """Snapcraft project architecture definition."""
 
     build_on: str | UniqueList[str] = pydantic.Field(
-        description="The architectures on which the snap can be built.",
-        examples=["[amd64, riscv64]"],
+        description="The architectures to build the snap on.",
+        examples=["arm64", "[amd64, riscv64]"],
     )
+    """The architectures to build the snap on.
+
+    Must be paired with a ``build-for`` entry.
+
+    This list must contain unique values. If the value is a string, it will be parsed
+    into a single-entry list at runtime.
+    """
+
     build_for: str | UniqueList[str] | None = pydantic.Field(
         default=None,
-        description="The single element list containing the architecture where the snap can be run",
-        examples=["[amd64]", "[riscv64]"],
+        description="The target architecture for the build.",
+        examples=["amd64", "[riscv64]"],
     )
+    """The target architecture for the build.
+
+    Must be paired with a ``build-on`` entry.
+
+    If the value is a string, it will be parsed into a single-entry list at runtime.
+    """
 
 
 class ContentPlug(models.CraftBaseModel):
@@ -1194,15 +1185,26 @@ class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
     build_on: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[assignment]
-        description="The architectures on which the snap can be built.",
-        examples=["[amd64, riscv64]"],
+        description="The architectures to build the snap on.",
+        examples=["arm64", "[amd64, riscv64]"],
         min_length=1,
     )
+    """The architectures to build the snap on.
+
+    This list must contain unique values. If the value is a string, it will be parsed
+    into a single-entry list at runtime.
+    """
+
     build_for: SingleEntryList | str | None = pydantic.Field(  # type: ignore[assignment]
         default=None,
-        description="The single element list containing the architecture the snap is built for.",
-        examples=["[amd64]", "[riscv64]"],
+        description="The target architecture for the build.",
+        examples=["amd64", "[riscv64]"],
     )
+    """The target architecture for the build.
+
+    If the value is a string, it will be parsed into a single-entry list at runtime.
+    This field is optional if the name of the platform is a valid ``build-for`` entry.
+    """
 
     @pydantic.field_validator("build_on", "build_for", mode="before")
     @classmethod
@@ -1318,9 +1320,10 @@ class Component(models.CraftBaseModel):
         default=None,
         description=textwrap.dedent(
             """\
-        Selects a part to inherit metadata from and reuse for the component's metadata.
+            Selects a part to inherit metadata from and reuse for the component's
+            metadata.
 
-        Only the component's version can be set.
+            Only the component's version can be set.
             """
         ),
         examples=["foo-part"],
@@ -1329,7 +1332,7 @@ class Component(models.CraftBaseModel):
 
     Only the component's version can be set.
 
-    Metadata can be set using the 'craftctl set' command in an 'override-' script.
+    Metadata can be set using the ``craftctl set`` command in an ``override-`` script.
     For example, ``craftctl set components.my-component.version=$(git describe)``.
     """
 
@@ -1338,13 +1341,10 @@ MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
 
 class Project(models.Project):
-    """Snapcraft project definition.
+    """A basic Snapcraft project.
 
-    The `snapcraft.yaml
-    <https://documentation.ubuntu.com/snapcraft/stable/reference/project-file/snapcraft-yaml>`_
-    reference details all supported keys.
-
-    XXX: Not implemented in this version - system-usernames
+    This model defines the basics of how a Snapcraft project works, extending from
+    the craft-application project model.
     """
 
     # snapcraft's `name` is more general than craft-application
@@ -1358,20 +1358,12 @@ class Project(models.Project):
     numbers, and hyphens. It must contain at least one letter and it can't start or end
     with a hyphen. The maximum length is 40 characters.
 
-    The name must be unique if you want to `publish it to the Snap Store
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/publish-a-snap>`_.
+    The name must be unique if you want to :ref:`publish it to the Snap Store
+    <how-to-publish-a-snap>`.
 
-    For help on choosing a name and registering it on the Snap Store, see `Register a
-    snap
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/register-a-snap>`_.
+    For help on choosing a name and registering it on the Snap Store, see :ref:`Register
+    a snap <how-to-register-a-snap>`.
     """
-
-    build_base: str | None = pydantic.Field(
-        validate_default=True,
-        default=None,
-        description="The build environment to use when building the snap",
-        examples=["core20", "core22", "core24", "devel"],
-    )
 
     compression: Literal["lzo", "xz"] = pydantic.Field(
         default="xz",
@@ -1413,9 +1405,7 @@ class Project(models.Project):
     This field is required unless version information is provided by the ``adopt-info``
     key.
 
-    See `Configure package information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information>`_
-    for details.
+    See :ref:`how-to-configure-package-information` for details.
     """
 
     donation: UniqueList[str] | str | None = pydantic.Field(
@@ -1427,9 +1417,7 @@ class Project(models.Project):
 
     Donation links can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     # snapcraft's `source_code` is more general than craft-application
@@ -1442,9 +1430,7 @@ class Project(models.Project):
 
     Source code links can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     contact: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
@@ -1456,9 +1442,7 @@ class Project(models.Project):
 
     Contact information can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     issues: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
@@ -1471,9 +1455,7 @@ class Project(models.Project):
 
     Issue links can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
     website: UniqueList[str] | str | None = pydantic.Field(
@@ -1485,46 +1467,12 @@ class Project(models.Project):
 
     Websites can be adopted from appstream metadata files.
 
-    See `Reuse information
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/configure-package-information/#reuse-information>`_
-    for details.
+    See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    type: (
-        Literal[
-            ProjectType.APP,
-            ProjectType.BASE,
-            ProjectType.GADGET,
-            ProjectType.KERNEL,
-            ProjectType.SNAPD,
-        ]
-        | None
-    ) = pydantic.Field(
+    type: ProjectType | None = pydantic.Field(
         default=None, description="The snap's type.", examples=["kernel"]
     )
-    """The snap's type.
-
-    **Values**
-
-    .. list-table::
-        :header-rows: 1
-
-        * - Value
-          - Description
-        * - ``app``
-          - Default. Set the snap as an application.
-        * - ``base``
-          - Set the snap as a base.
-        * - ``gadget``
-          - Set the snap as a `gadget
-            <https://snapcraft.io/docs/the-gadget-snap>`_ snap.
-        * - ``kernel``
-          - Set the snap as a `kernel
-            <https://snapcraft.io/docs/the-kernel-snap>`_ snap.
-        * - ``snapd``
-          - Set the snap as a snapd snap.
-
-    """
 
     icon: str | None = pydantic.Field(
         default=None,
@@ -1556,8 +1504,8 @@ class Project(models.Project):
     For core22 and newer bases, confinement is a required property and has no
     default value.
 
-    For more information, see
-    `Confinement <https://snapcraft.io/docs/snap-confinement>`_.
+    For more information, see `Snap confinement
+    <https://snapcraft.io/docs/snap-confinement>`_.
 
     **Values**
 
@@ -1587,13 +1535,12 @@ class Project(models.Project):
 
     Layouts modify the execution environment of a strictly-confined snap.
 
-    With layouts, you can make elements in ``$SNAP``, ``$SNAP_DATA``, ``$SNAP_COMMON``
-    accessible from locations such as ``/usr``, ``/var`` and ``/etc``. This helps when
-    using pre-compiled binaries and libraries that expect to find files and directories
-    outside of locations referenced by ``$SNAP`` or ``$SNAP_DATA``.
+    With layouts, you can make elements in ``$SNAP``, ``$SNAP_DATA``, and
+    ``$SNAP_COMMON`` accessible from locations such as ``/usr``, ``/var`` and ``/etc``.
+    This helps when using pre-compiled binaries and libraries that expect to find files
+    and directories outside of locations referenced by ``$SNAP`` or ``$SNAP_DATA``.
 
-    See `Layouts <https://documentation.ubuntu.com/snapcraft/stable/reference/layouts>`_
-    for complete details.
+    See :ref:`reference-layouts` for details.
 
     **Values**
 
@@ -1605,13 +1552,13 @@ class Project(models.Project):
         * - ``symlink: <source-path>``
           - Create a symbolic link. This method is preferred because it is the cheapest;
             the other methods significantly increase the startup time of your
-            application
+            application.
         * - ``bind: <source-path>``
           - Bind-mount a directory.
         * - ``bind-file: <source-path>``
           - Bind-mount a file.
-        * - ``type: tmpfs``
-          - Mount a private, temporary, in-memory filesystem
+        * - ``tmpfs: <source-path>``
+          - Mount a private, temporary, in-memory filesystem.
 
     """
 
@@ -1646,45 +1593,42 @@ class Project(models.Project):
 
     architectures: list[str | Architecture] | None = pydantic.Field(
         default=None,
-        description="The architecture sets where the snap can be built and where the resulting snap can run.",
+        description="The architectures that the snap builds and runs on.",
         examples=[
             "[amd64, riscv64]",
             "[{build-on: [amd64], build-for: [amd64]}]",
             "[{build-on: [amd64, riscv64], build-for: [riscv64]}]",
         ],
     )
-    """The architecture sets where the snap can be built and where the resulting
-    snap can run.
+    """The architectures that the snap builds and runs on.
 
-    The architectures key is only used in core22 and older snaps. For
-    core24 and newer snaps, use the ``platform`` key.
+    Architectures can be defined as either a shorthand list of architectures or as pairs
+    of ``build-on`` and ``build-for`` entries.
 
-    Architectures may be defined as a shorthand list of architectures or a
-    explicit pair of ``build-on``/``build-for`` entries.
-
+    The ``architectures`` key is only used in core22 and older snaps. For core24 and
+    newer snaps, use the ``platforms`` key.
     """
 
     _architectures_in_yaml: bool | None = None
 
     platforms: dict[str, Platform] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
-        description="The platforms where the snap can be built and where the resulting snap can run.",
+        description="The architectures that the snap builds and runs on.",
         examples=[
             "{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"
         ],
     )
-    """The platforms where the snap can be built and where the resulting snap
-    can run.
+    """The architectures that the snap builds and runs on.
 
-    If the platform name is a valid debian architecture, build-on and build-for
+    If the platform name is a valid Debian architecture, ``build-on`` and ``build-for``
     can be omitted.
 
     The platform name describes a ``build-on``/``build-for`` pairing.  When
     specifying ``build-on`` and ``build-for``, the the name is arbitrary but
     it's recommended to set the platform name to the ``build-for`` architecture.
 
-    The platforms key is only used in core24 and newer snaps.  For core22
-    and older snaps, use the ``architectures`` key.
+    The ``platforms`` key is only used in core24 and newer snaps. For core22 and older
+    snaps, use the ``architectures`` key.
     """
 
     assumes: UniqueList[str] = pydantic.Field(
@@ -1714,6 +1658,14 @@ class Project(models.Project):
         description="Configures the snap's hooks.",
         examples=["{configure: {plugs: [home]}}"],
     )
+    """Configures the snap's hooks.
+
+    Hooks are run automatically if they're packaged with the snap. They only needed to
+    be listed in the project file if they need additional configuration, such as an
+    environment variable.
+
+    See :ref:`hooks <reference-hooks>` for more information.
+    """
 
     passthrough: dict[str, Any] | None = pydantic.Field(
         default=None,
@@ -1722,11 +1674,12 @@ class Project(models.Project):
     )
     """The attributes to pass to the snap's metadata file.
 
-    These attributes are passed to ``snap.yaml`` without validation from Snapcraft.
-    This is useful for early testing of a new feature in snapd that isn't yet supported
-    by Snapcraft.
+    These attributes are passed to the ``snap.yaml`` file without validation from
+    Snapcraft. This is useful for early testing of a new feature in snapd that isn't yet
+    supported by Snapcraft.
 
-    To pass a value for a particular app, see the ``passthrough`` key for ``apps``.
+    To pass a value for a particular app, see the :ref:`passthrough key
+    <App.passthrough>` for apps.
 
     See `Using development features in Snapcraft
     <https://snapcraft.io/docs/using-in-development-features>`_.
@@ -1734,18 +1687,15 @@ class Project(models.Project):
 
     apps: dict[str, App] | None = pydantic.Field(
         default=None,
-        description="The map of app names representing entry points to run for the snap.",
+        description="The individual programs and services that the snap runs.",
         examples=["{app-1: {command: bin/app-1}}"],
     )
-    """The map of app names representing entry points to run for the snap.
+    """The individual programs and services that the snap runs.
 
-    Apps are used to expose applications and services for the snap, how they are
-    run, and which resources they can access.
+    Each entry defines the executable, how it's run, and the resources it can access.
 
-    If the app name is the same as snap name, the app will be run when the snap
-    is run as app-name.
-
-    If they differ, the program will be exposed as '<snap-name>.<app-name>'.
+    If an app name matches the snap name, the app is exposed to the host with that name.
+    If they differ, the app is exposed to the host as '<snap-name>.<app-name>'.
     """
 
     plugs: dict[str, ContentPlug | Any] | None = pydantic.Field(
@@ -1755,6 +1705,10 @@ class Project(models.Project):
             "{dot-gitconfig: {interface: personal-files, read: [$HOME/.gitconfig]}}"
         ],
     )
+    """Declares the snap's plugs.
+
+    See :ref:`explanation-interfaces` for more information.
+    """
 
     slots: dict[str, Any] | None = pydantic.Field(
         default=None,
@@ -1763,6 +1717,10 @@ class Project(models.Project):
             "{slot-1: {interface: content, content: my-binaries, source: {read: [$SNAP/bin]}}}"
         ],
     )
+    """Declares the snap's slots.
+
+    See :ref:`explanation-interfaces` for more information.
+    """
 
     lint: Lint | None = pydantic.Field(
         default=None,
@@ -1773,18 +1731,16 @@ class Project(models.Project):
 
     Snapcraft runs the following linters:
 
-    - `classic
-      <https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-classic-linter>`_:
-      Verifies binary file parameters for snaps using `classic confinement
-      <https://documentation.ubuntu.com/snapcraft/stable/explanation/classic-confinement>`_.
-    - `library
-      <https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter>`_:
-      Verifies that no ELF file dependencies, such as libraries, are missing and that no
-      extra libraries are included in the snap package.
+    - :ref:`classic <how-to-use-the-classic-linter>`: Verifies binary file parameters
+      for snaps using :ref:`classic confinement <explanation-classic-confinement>`.
+    - :ref:`library <how-to-use-the-library-linter>`: Verifies that no ELF file
+      dependencies, such as libraries, are missing and that no extra libraries are
+      included in the snap package.
+    - :ref:`metadata <how-to-use-the-metadata-linter>`: Verifies that the snap contains
+      all the :ref:`metadata <reference-anatomy-of-snapcraft-yaml-metadata>` needed for
+      a better listing in the Snap Store.
 
-    See `Linters <https://documentation.ubuntu.com/snapcraft/stable/reference/linters>`_
-    for more information.
-
+    See :ref:`reference-linters` for more information.
     """
 
     epoch: str | None = pydantic.Field(
@@ -1802,9 +1758,7 @@ class Project(models.Project):
 
     This is an uncommonly used key.
 
-    See `Manage data compatibility
-    <https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/manage-data-compatibility>`_
-    for more information.
+    See :ref:`how-to-manage-data-compatibility` for more information.
     """
 
     adopt_info: str | None = pydantic.Field(
@@ -1831,12 +1785,13 @@ class Project(models.Project):
 
     system_usernames: dict[str, Any] | None = pydantic.Field(
         default=None,
-        description="The system usernames that the snap can use to run daemons and services.",
+        description="The system usernames the snap can use to run daemons and services.",
         examples=["{snap-daemon: shared}"],
     )
-    """The system usernames that the snap can use to run daemons and services.
+    """The system usernames the snap can use to run daemons and services.
 
-    This is used to use the snapd defined user ``snap_daemon`` run a daemon.  Otherwise, this is an uncommonly used vaiue.
+    This is used to run daemons with the ``snap_daemon`` user defined by
+    snapd. Otherwise, this is an uncommon key.
 
     See `system usernames <https://snapcraft.io/docs/system-usernames>`_ for more
     information.
@@ -1863,8 +1818,8 @@ class Project(models.Project):
     )
     """The list of packages to install when building a snap.
 
-    All build packages are installed before any part is built.  However, if a
-    package is only needed for one part, it is recommended to use the
+    All build packages are installed before any part is built. However, if a
+    package is only needed for one part, it's recommended to use the
     ``build-packages`` key for that part.  This organization makes it easier to
     track which parts require which build packages.
     """
@@ -1877,9 +1832,13 @@ class Project(models.Project):
     """The snaps to install when building a snap.
 
     If only the snap name is provided, the snap will be installed from the
-    ``latest/stable`` channel.
+    ``latest/stable`` channel. Otherwise, a channel can be specified with
+    ``<name>/<channel>``.
 
-    Otherwise, a channel can be specified with ``<name>/<channel>``.
+    All build snaps are installed before any part is built.  However, if a
+    snap is only needed for one part, it's recommended to use the
+    ``build-snaps`` key for that part.  This organization makes it easier to
+    track which parts require which build snaps.
     """
 
     ua_services: set[str] | None = pydantic.Field(
@@ -1901,7 +1860,7 @@ class Project(models.Project):
     )
     """The primary-key header for snaps signed by third parties.
 
-    This is an uncommonly used value.
+    This is an uncommonly used key.
     """
 
     components: dict[ProjectName, Component] | None = pydantic.Field(
@@ -1994,11 +1953,6 @@ class Project(models.Project):
                 raise ValueError(
                     f"Required field '{field}' is not set and 'adopt-info' not used."
                 )
-        return self
-
-    @pydantic.model_validator(mode="after")
-    def _validate_mandatory_base(self):
-        _validate_mandatory_base(self.base, self.type)
         return self
 
     @pydantic.field_validator("name")
@@ -2110,22 +2064,9 @@ class Project(models.Project):
             field_value = cast(UniqueList[str], [field_value])
         return field_value
 
-    @pydantic.field_validator("type", mode="before")
-    @classmethod
-    def _validate_type(cls, snap_type: str | None | ProjectType) -> ProjectType | None:
-        if isinstance(snap_type, str):
-            try:
-                snap_type = ProjectType(snap_type)
-            except ValueError as exc:
-                raise ValueError(
-                    "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
-                ) from exc
-
-        return snap_type
-
     @override
     @classmethod
-    def unmarshal(cls, data: dict[str, Any]) -> Project:
+    def unmarshal(cls, data: dict[str, Any]) -> Self:
         """Create a Snapcraft project from a dictionary of data."""
         return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)
 
@@ -2253,24 +2194,124 @@ def _custom_error(error_msg: str):
     return pydantic.WrapValidator(_validator)
 
 
-class DevelProject(Project):
-    build_base: Literal["devel"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    grade: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
-        Literal["devel"],
-        _custom_error("grade must be 'devel' when build-base is 'devel'"),
+class _BaselessProject(Project):
+    """Project types that do not require a base."""
+
+    type: Literal[  # type: ignore[reportIncompatibleVariableOverride]
+        ProjectType.BASE, ProjectType.KERNEL, ProjectType.SNAPD
     ]
+    base: SkipJsonSchema[str | None] = None
+    build_base: Literal["core24", "core26", "devel"] = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+        description="The baseline system that the snap is built in.",
+    )
+
+    @pydantic.model_validator(mode="after")
+    def _validate_no_base(self) -> Self:
+        """Baseless projects cannot have a base value set."""
+        if self.base is not None:
+            raise ValueError(f"{self.type!r} snaps cannot have a base.")
+        return self
+
+    @override
+    @pydantic.field_validator("build_base", mode="after")
+    @classmethod
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
+
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
 
 
-class Core22Project(Project):
-    type: Literal[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        ProjectType.APP,
-        ProjectType.GADGET,
-        ProjectType.KERNEL,
-        ProjectType.SNAPD,
-        None,
-    ] = pydantic.Field(default=None, description="The snap's type.")  # type: ignore[assignment]
+class _BaselessCore22Project(_BaselessProject):
+    build_base: Literal["core22"] = pydantic.Field(  # type: ignore[assignment]
+        description="The baseline system that the snap is built in.",
+    )
 
-    base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+    @pydantic.field_validator("architectures")
+    @classmethod
+    def _validate_architecture_data(
+        cls, architectures: list[str | Architecture], info: pydantic.ValidationInfo
+    ) -> list[Architecture]:
+        """Validate architecture data."""
+        return validate_architectures(architectures)
+
+    @pydantic.model_validator(mode="after")
+    def _validate_platforms_and_architectures(self) -> Self:
+        """Validate usage of platforms and architectures.
+
+        - can optionally define architectures
+        - cannot define platforms
+        """
+        # this is a one-shot - the value should not change when re-validating
+        if self.architectures and self._architectures_in_yaml is None:
+            # record if architectures are defined in the yaml for remote-build (#4881)
+            self._architectures_in_yaml = True
+
+        elif not self.architectures:
+            self._architectures_in_yaml = False
+            # set default value
+            host_arch = str(DebianArchitecture.from_host())
+            self.architectures = [
+                Architecture(
+                    build_on=[host_arch],
+                    build_for=[host_arch],
+                )
+            ]
+
+        return self
+
+
+BaselessProject = Annotated[
+    Annotated[_BaselessCore22Project, pydantic.Tag("baseless-core22")]
+    | Annotated[_BaselessProject, pydantic.Tag("baseless")],
+    pydantic.Discriminator("build_base"),
+]
+
+
+class StableBaseProject(Project):
+    """Project types that require a base."""
+
+    type: Literal[  # type: ignore[reportIncompatibleVariableOverride]
+        ProjectType.APP, ProjectType.GADGET, None
+    ] = None
+    base: StableBase  # type: ignore[reportIncompatibleVariableOverride]
+    build_base: str | None = pydantic.Field(
+        validate_default=True,
+        default=None,
+        description="The baseline system that the snap is built in.",
+        examples=["core20", "core22", "core24", "devel"],
+    )
+    """The baseline system that the snap is built in.
+
+    If the snap has a stable base, ``build-base`` must either be unset
+    or the same as the base.
+
+    If the snap has an unstable base, ``build-base`` must be set to ``devel``.
+
+    If the snap's type doesn't use a base, ``build-base`` must be set.
+    """
+
+    @pydantic.field_validator("type", mode="before")
+    @classmethod
+    def _validate_type(cls, snap_type: str | None | ProjectType) -> ProjectType | None:
+        if isinstance(snap_type, str):
+            try:
+                snap_type = ProjectType(snap_type)
+            except ValueError:
+                valid_types = humanize_list(
+                    (t.value for t in ProjectType), conjunction="or"
+                )
+                raise ValueError(f"Input should be {valid_types}") from None
+
+        return snap_type
+
+
+class Core22Project(StableBaseProject):
+    base: Literal["core22"]  # type: ignore[assignment]
 
     platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
         default=None,
@@ -2317,25 +2358,22 @@ class BareCore22Project(Core22Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
 
+    @override
+    @pydantic.field_validator("build_base", mode="after")
+    @classmethod
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
 
-class BaseCore22Project(Core22Project):
-    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
 
 
-class Core24Project(Project):
-    type: Literal[  # type: ignore[assignment,reportIncompatibleVariableOverride]
-        ProjectType.APP,
-        ProjectType.GADGET,
-        ProjectType.KERNEL,
-        ProjectType.SNAPD,
-        None,
-    ] = pydantic.Field(  # type: ignore[assignment]
-        default=None, description="The snap's type.", examples=["kernel"]
-    )
-
-    base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
+class Core24Project(StableBaseProject):
+    base: Literal["core24"]  # type: ignore[assignment]
 
     architectures: SkipJsonSchema[  # type: ignore[reportIncompatibleVariableOverride]
         Annotated[
@@ -2358,106 +2396,86 @@ class Core24Project(Project):
     )
 
 
-class BaseDevelProject(DevelProject):
-    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    build_base: Literal["devel"]  # type: ignore[reportIncompatibleVariableOverride]
-
-
 class BareCore24Project(Core24Project):
     base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
     build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
 
-
-class BaseCore24Project(Core24Project):
-    type: Literal[ProjectType.BASE]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    base: SkipJsonSchema[None] = None  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
-
-
-class _BuildBaseProjectEnum(Enum):
-    DEVEL = "devel"
-    CORE22 = "core22"
-    CORE24 = "core24"
-    UNIMPLEMENTED = "UNIMPLEMENTED"
-
+    @override
+    @pydantic.field_validator("build_base", mode="after")
     @classmethod
-    def _missing_(cls, value: Any):
-        return cls.UNIMPLEMENTED
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
+
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
 
 
-class _BaseProjectEnum(Enum):
-    CORE22 = "core22"
-    CORE24 = "core24"
-    BARE = "bare"
-    UNIMPLEMENTED = "UNIMPLEMENTED"
+class Core26Project(Core24Project):
+    base: Literal["core26", "devel"]  # type: ignore[assignment]
+    build_base: Literal["devel"]  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
 
+    grade: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
+        Literal["devel"],
+        _custom_error("grade must be 'devel' when build-base is 'devel'"),
+    ]
+
+
+class BareCore26Project(Core26Project):
+    base: Literal["bare"]  # type: ignore[assignment]
+    build_base: Literal["devel"]  # type: ignore[assignment]
+
+    @override
+    @pydantic.field_validator("build_base", mode="after")
     @classmethod
-    def _missing_(cls, value: Any):
-        return cls.UNIMPLEMENTED
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
 
-
-class ProjectType(Enum):
-    BASE = "base"
-    APP = "app"
-    GADGET = "gadget"
-    KERNEL = "kernel"
-    SNAPD = "snapd"
-    NONE = "None"
-
-
-def _discriminator(enum: type[Enum], key: str):
-    kebab_cased_key = key.replace("_", "-")
-    return lambda data: enum(data.get(key, data.get(kebab_cased_key))).value
-
-
-def _type_discriminator(data: dict):
-    snap_type = data.get("type")
-
-    if snap_type not in ProjectType._value2member_map_:
-        snap_type = ProjectType.NONE.value
-
-    return snap_type
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
 
 
 _BareProject = Annotated[
-    Annotated[BareCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
-    | Annotated[BareCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
-    | Annotated[
-        SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
-    ],
-    pydantic.Discriminator(_discriminator(_BuildBaseProjectEnum, "build_base")),
+    BareCore22Project | BareCore24Project | BareCore26Project,
+    pydantic.Discriminator("build_base"),
+]
+
+_StandardProject = Annotated[
+    Core22Project | Core24Project | Core26Project | _BareProject,
+    pydantic.Discriminator("base"),
 ]
 
 
-_BaseProject = Annotated[
-    Annotated[BaseDevelProject, pydantic.Tag(_BuildBaseProjectEnum.DEVEL.value)]
-    | Annotated[BaseCore22Project, pydantic.Tag(_BuildBaseProjectEnum.CORE22.value)]
-    | Annotated[BaseCore24Project, pydantic.Tag(_BuildBaseProjectEnum.CORE24.value)]
-    | Annotated[
-        SkipJsonSchema[Project], pydantic.Tag(_BuildBaseProjectEnum.UNIMPLEMENTED.value)
-    ],
-    pydantic.Discriminator(_discriminator(_BuildBaseProjectEnum, "build_base")),
-]
+def _validate_type(data: dict[str, Any]) -> dict[str, Any]:
+    if (
+        data.get("base") is None  # Catch both missing base key and null base.
+        and data.get("type") not in ("base", "kernel", "snapd")
+    ):
+        snap_type = data.get("type")
+        if snap_type is None:
+            raise ValueError("Missing 'base' key for snap.")
+        raise ValueError(f"Missing 'base' key for snap type {snap_type!r}.")
+    return data
 
-_CoreProject = Annotated[
-    Annotated[Core22Project, pydantic.Tag(_BaseProjectEnum.CORE22.value)]
-    | Annotated[Core24Project, pydantic.Tag(_BaseProjectEnum.CORE24.value)]
-    | Annotated[_BareProject, pydantic.Tag(_BaseProjectEnum.BARE.value)]
-    | Annotated[
-        SkipJsonSchema[Project], pydantic.Tag(_BaseProjectEnum.UNIMPLEMENTED.value)
-    ],
-    pydantic.Discriminator(_discriminator(_BaseProjectEnum, "base")),
-]
+
+def _has_type(data: dict[str, Any]) -> str:
+    if data.get("type") in ("base", "kernel", "snapd"):
+        return "baseless"
+    return "has-base"
+
 
 SnapcraftProject = Annotated[
-    Annotated[_CoreProject, pydantic.Tag(ProjectType.APP.value)]
-    | Annotated[_CoreProject, pydantic.Tag(ProjectType.GADGET.value)]
-    | Annotated[_CoreProject, pydantic.Tag(ProjectType.KERNEL.value)]
-    | Annotated[_CoreProject, pydantic.Tag(ProjectType.SNAPD.value)]
-    | Annotated[_CoreProject, pydantic.Tag(ProjectType.NONE.value)]
-    | Annotated[_BaseProject, pydantic.Tag(ProjectType.BASE.value)],
-    pydantic.Discriminator(_type_discriminator),
+    Annotated[_StandardProject, pydantic.Tag("has-base")]
+    | Annotated[BaselessProject, pydantic.Tag("baseless")],
+    pydantic.Discriminator(_has_type),
+    pydantic.BeforeValidator(_validate_type),
 ]
 
 

@@ -42,7 +42,7 @@ Parts can now set a component versions dynamically. If a component points to a p
 the ``adopt-info`` key, the part can call craftctl to set the version.
 
 For detailed guidance, see
-:ref:`how-to-customize-the-build-and-part-variables-access-project-variables`.
+:ref:`how-to-override-the-parts-lifecycle-access-project-variables`.
 
 
 Documentation submodule name change
@@ -127,9 +127,9 @@ Fixed an issue that caused Apt to warn about directory ownership when including
 Autotools plugin
 ~~~~~~~~~~~~~~~~
 
-The :ref:`craft_parts_autotools_plugin` now supports the
-:ref:`disable-parallel <snapcraft-yaml-disable-parallel>` key to force builds using the
-plugin to run using a single job.
+The :ref:`craft_parts_autotools_plugin` now supports the :ref:`disable-parallel
+<PartSpec.disable_parallel>` key to force builds using the plugin to run using a single
+job.
 
 Fixed bugs and issues
 ---------------------
@@ -148,6 +148,18 @@ Snapcraft 8.13.0
 
 - `#5704`_ Linter results will now always report the highest severity detected, rather
   than the most recently seen severity.
+
+Snapcraft 8.13.1
+~~~~~~~~~~~~~~~~
+
+- `#5843`_ The changes to the project model parsing from Snapcraft 8.13.0 have been
+  reverted to give more time for testing.
+
+Snapcraft 8.13.2
+~~~~~~~~~~~~~~~~
+
+- `craft-providers#850`_ Fix the "Couldn't get EOL data" errors when packing snaps with
+  the ``devel`` build base.
 
 
 Contributors
@@ -175,3 +187,5 @@ release.
 .. _#5789: https://github.com/canonical/snapcraft/issues/5789
 .. _#5794: https://github.com/canonical/snapcraft/issues/5794
 .. _#5704: https://github.com/canonical/snapcraft/issues/5704
+.. _#5843: https://github.com/canonical/snapcraft/issues/5843
+.. _craft-providers#850: https://github.com/canonical/craft-providers/pull/850
