@@ -156,10 +156,6 @@ App keys
 
 .. kitbash-field:: Project apps
 
-.. kitbash-model:: App
-    :skip-description:
-    :prepend-name: apps.<app-name>
-
 .. kitbash-field:: App command
     :prepend-name: apps.<app-name>
 
