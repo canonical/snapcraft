@@ -222,7 +222,7 @@ class TestProjectValidation:
 
         with pytest.raises(
             pydantic.ValidationError,
-            match=rf"'base' key is not allowed when type is {type_!r}\.",
+            match=rf"'base' key is not allowed when snap type is {type_!r}\.",
         ):
             Project.unmarshal(data)
 
