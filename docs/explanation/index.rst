@@ -75,3 +75,4 @@ communicating with local processes, and storing user credentials.
     remote-build
     /common/craft-parts/explanation/filesets
     classic-confinement
+    command-chain
