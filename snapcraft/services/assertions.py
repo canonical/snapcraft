@@ -25,7 +25,7 @@ import os
 import pathlib
 import subprocess
 import tempfile
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import craft_cli
 import tabulate
@@ -38,8 +38,11 @@ from typing_extensions import override
 
 from snapcraft import const, errors, models, store, utils
 
+EditableAssertionT = TypeVar("EditableAssertionT", bound=models.EditableAssertion)
+AssertionT = TypeVar("AssertionT", bound=models.Assertion)
 
-class Assertion(base.AppService):
+
+class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
     """Abstract service for interacting with assertions."""
 
     @override
@@ -56,11 +59,11 @@ class Assertion(base.AppService):
 
     @property
     @abc.abstractmethod
-    def _editable_assertion_class(self) -> type[models.EditableAssertion]:
+    def _editable_assertion_class(self) -> type[EditableAssertionT]:
         """The type of the editable assertion."""
 
     @abc.abstractmethod
-    def _get_assertions(self, name: str | None = None) -> list[models.Assertion]:
+    def _get_assertions(self, name: str | None = None) -> list[AssertionT]:
         """Get assertions from the store.
 
         :param name: The name of the assertion to retrieve. If not provided, all
@@ -70,7 +73,7 @@ class Assertion(base.AppService):
         """
 
     @abc.abstractmethod
-    def _build_assertion(self, assertion: models.EditableAssertion) -> models.Assertion:
+    def _build_assertion(self, assertion: EditableAssertionT) -> AssertionT:
         """Build an assertion from an editable assertion.
 
         :param assertion: The editable assertion to build.
@@ -79,7 +82,7 @@ class Assertion(base.AppService):
         """
 
     @abc.abstractmethod
-    def _post_assertion(self, assertion_data: bytes) -> models.Assertion:
+    def _post_assertion(self, assertion_data: bytes) -> AssertionT:
         """Post an assertion to the store.
 
         :param assertion_data: A signed assertion represented as bytes.
@@ -89,7 +92,7 @@ class Assertion(base.AppService):
 
     @abc.abstractmethod
     def _normalize_assertions(
-        self, assertions: list[models.Assertion]
+        self, assertions: list[AssertionT]
     ) -> tuple[list[str], list[list[Any]]]:
         """Convert a list of assertion models to a tuple of headers and data.
 
@@ -99,7 +102,7 @@ class Assertion(base.AppService):
         """
 
     @abc.abstractmethod
-    def _generate_yaml_from_model(self, assertion: models.Assertion) -> str:
+    def _generate_yaml_from_model(self, assertion: AssertionT) -> str:
         """Generate a multi-line yaml string from an existing assertion.
 
         This string should contain only user-editable data.
@@ -122,7 +125,7 @@ class Assertion(base.AppService):
         """
 
     @abc.abstractmethod
-    def _get_success_message(self, assertion: models.Assertion) -> str:
+    def _get_success_message(self, assertion: AssertionT) -> str:
         """Create a message after an assertion has been successfully posted.
 
         :param assertion: The published assertion.
@@ -169,7 +172,7 @@ class Assertion(base.AppService):
         else:
             craft_cli.emit.message(f"No {self._assertion_name}s found.")
 
-    def _edit_yaml_file(self, filepath: pathlib.Path) -> models.EditableAssertion:
+    def _edit_yaml_file(self, filepath: pathlib.Path) -> EditableAssertionT:
         """Edit a yaml file and unmarshal it to an editable assertion.
 
         If the file is not valid, the user is prompted to amend it.
@@ -193,7 +196,7 @@ class Assertion(base.AppService):
                     filepath=pathlib.Path(self._assertion_name),
                 )
                 craft_cli.emit.progress(f"Edited {self._assertion_name}.")
-                return edited_assertion
+                return edited_assertion  # type: ignore[return-value]
             except (yaml.YAMLError, CraftValidationError) as err:
                 craft_cli.emit.message(f"{err!s}")
                 if not utils.confirm_with_user(
@@ -323,7 +326,7 @@ class Assertion(base.AppService):
             self._remove_temp_file(yaml_file)
 
     def _validate_assertion(
-        self, assertion: models.Assertion, **kwargs: dict[str, Any]
+        self, assertion: AssertionT, **kwargs: dict[str, Any]
     ) -> None:
         """Additional validation to perform on the assertion after building.
 
