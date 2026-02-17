@@ -29,7 +29,7 @@ from . import agent, constants, errors, metrics
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from .constants import DEFAULT_SERIES
-from .v2 import validation_sets, whoami
+from .v2 import whoami
 
 logger = logging.getLogger(__name__)
 
@@ -200,21 +200,6 @@ class StoreClient:
         snap_name: str,
     ) -> metrics.MetricsResults:
         return self.dashboard.get_metrics(filters=filters, snap_name=snap_name)
-
-    def post_validation_sets_build_assertion(
-        self, *, validation_sets: Dict[str, Any]
-    ) -> validation_sets.BuildAssertion:
-        return self.dashboard.post_validation_sets_build_assertion(validation_sets)
-
-    def post_validation_sets(
-        self, *, signed_validation_sets: bytes
-    ) -> validation_sets.ValidationSets:
-        return self.dashboard.post_validation_sets(signed_validation_sets)
-
-    def get_validation_sets(
-        self, *, name: Optional[str] = None, sequence: Optional[str] = None
-    ) -> validation_sets.ValidationSets:
-        return self.dashboard.get_validation_sets(name=name, sequence=sequence)
 
     @classmethod
     def download(

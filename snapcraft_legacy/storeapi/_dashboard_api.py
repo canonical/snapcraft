@@ -25,7 +25,7 @@ from simplejson.scanner import JSONDecodeError
 
 from . import _metadata, errors, metrics
 from ._requests import Requests
-from .v2 import validation_sets, whoami
+from .v2 import whoami
 
 logger = logging.getLogger(__name__)
 
@@ -345,55 +345,3 @@ class DashboardAPI(Requests):
             ) from store_error
 
         return whoami.WhoAmI.unmarshal(response.json())
-
-    def post_validation_sets_build_assertion(
-        self, validation_sets_data: Dict[str, Any]
-    ) -> validation_sets.BuildAssertion:
-        try:
-            response = self.post(
-                "/api/v2/validation-sets/build-assertion",
-                headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                },
-                json=validation_sets_data,
-            )
-        except craft_store.errors.StoreServerError as store_error:
-            raise errors.StoreValidationSetsError(store_error.response) from store_error
-
-        return validation_sets.BuildAssertion.unmarshal(response.json())
-
-    def post_validation_sets(
-        self, signed_validation_sets: bytes
-    ) -> validation_sets.ValidationSets:
-        try:
-            response = self.post(
-                "/api/v2/validation-sets",
-                headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/x.ubuntu.assertion",
-                },
-                data=signed_validation_sets,
-            )
-        except craft_store.errors.StoreServerError as store_error:
-            raise errors.StoreValidationSetsError(store_error.response) from store_error
-
-        return validation_sets.ValidationSets.unmarshal(response.json())
-
-    def get_validation_sets(
-        self, *, name: Optional[str], sequence: Optional[str]
-    ) -> validation_sets.ValidationSets:
-        url = "/api/v2/validation-sets"
-        if name is not None:
-            url += "/" + name
-        params = dict()
-        if sequence is not None:
-            params["sequence"] = sequence
-        try:
-            response = self.get(
-                url, headers={"Accept": "application/json"}, params=params
-            )
-        except craft_store.errors.StoreServerError as store_error:
-            raise errors.StoreValidationSetsError(store_error.response) from store_error
-
-        return validation_sets.ValidationSets.unmarshal(response.json())
