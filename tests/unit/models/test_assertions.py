@@ -23,8 +23,69 @@ from snapcraft.models import (
     ConfdbSchema,
     ConfdbSchemaAssertion,
     EditableConfdbSchemaAssertion,
+    EditableValidationSetAssertion,
+    ValidationSetAssertion,
 )
-from snapcraft.models.assertions import cast_dict_scalars_to_strings
+from snapcraft.models.assertions import Snap, cast_dict_scalars_to_strings
+
+
+@pytest.fixture()
+def fake_snap_data():
+    return {
+        "name": "hello-world",
+        "id": "test-snap-id",
+        "presence": "required",
+        "revision": "6",
+        "components": {
+            "component-with-revision": {
+                "presence": "required",
+                "revision": "10",
+            },
+            "component-without-revision": "invalid",
+        },
+    }
+
+
+@pytest.fixture()
+def fake_snap(fake_snap_data):
+    return Snap.unmarshal(fake_snap_data)
+
+
+@pytest.fixture()
+def fake_editable_validation_set_data(fake_snap_data):
+    return {
+        "account-id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [fake_snap_data],
+    }
+
+
+@pytest.fixture()
+def fake_editable_validation_set(fake_editable_validation_set_data):
+    return EditableValidationSetAssertion.unmarshal(fake_editable_validation_set_data)
+
+
+@pytest.fixture()
+def fake_validation_set_data(fake_snap_data):
+    return {
+        "account-id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [fake_snap_data],
+        "authority-id": "test-authority-id",
+        "series": "16",
+        "sign-key-sha3-384": "test-sign-key",
+        "timestamp": "2026-01-01T10:20:30Z",
+        "type": "validation-set",
+    }
+
+
+@pytest.fixture()
+def fake_validation_set(fake_validation_set_data):
+    return ValidationSetAssertion.unmarshal(fake_validation_set_data)
 
 
 @pytest.mark.parametrize(
@@ -229,3 +290,66 @@ def test_confdb_schema_assertion_with_summary(check):
 
     check.equal(assertion.summary, "This is a test confdb-schema summary.")
     check.equal(assertion.views["wifi-setup"].summary, "This is a test views summary.")
+
+
+def test_ignore_sign_key(fake_validation_set):
+    """Ignore the sign key when unmarshalling."""
+    assert not fake_validation_set.sign_key_sha3_384
+
+
+def test_editable_validation_set_marshal_as_str(fake_editable_validation_set):
+    """Cast all scalars to string when marshalling."""
+    data = fake_editable_validation_set.marshal_scalars_as_strings()
+
+    assert data == {
+        "account-id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [
+            {
+                "name": "hello-world",
+                "id": "test-snap-id",
+                "presence": "required",
+                "revision": "6",
+                "components": {
+                    "component-with-revision": {
+                        "presence": "required",
+                        "revision": "10",
+                    },
+                    "component-without-revision": "invalid",
+                },
+            }
+        ],
+    }
+
+
+def test_validation_set_marshal_as_str(fake_validation_set):
+    """Cast all scalars to string when marshalling."""
+    data = fake_validation_set.marshal_scalars_as_strings()
+
+    assert data == {
+        "account-id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [
+            {
+                "name": "hello-world",
+                "id": "test-snap-id",
+                "presence": "required",
+                "revision": "6",
+                "components": {
+                    "component-with-revision": {
+                        "presence": "required",
+                        "revision": "10",
+                    },
+                    "component-without-revision": "invalid",
+                },
+            }
+        ],
+        "authority-id": "test-authority-id",
+        "series": "16",
+        "timestamp": "2026-01-01T10:20:30Z",
+        "type": "validation-set",
+    }
