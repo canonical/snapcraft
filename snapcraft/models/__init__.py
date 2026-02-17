@@ -19,8 +19,10 @@ from .assertions import (
     Assertion,
     EditableAssertion,
     EditableConfdbSchemaAssertion,
+    EditableValidationSetAssertion,
     ConfdbSchema,
     ConfdbSchemaAssertion,
+    ValidationSetAssertion,
 )
 from .manifest import Manifest
 from .project import (
@@ -58,6 +60,7 @@ __all__ = [
     "ContentPlug",
     "EditableAssertion",
     "EditableConfdbSchemaAssertion",
+    "EditableValidationSetAssertion",
     "GrammarAwareProject",
     "Hook",
     "Lint",
@@ -67,4 +70,5 @@ __all__ = [
     "ConfdbSchema",
     "ConfdbSchemaAssertion",
     "Socket",
+    "ValidationSetAssertion",
 ]

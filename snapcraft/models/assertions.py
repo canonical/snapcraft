@@ -18,11 +18,15 @@
 
 import numbers
 from collections import abc
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import pydantic
 from craft_application import models
 from typing_extensions import Self
+
+SnapName = Annotated[str, pydantic.StringConstraints(max_length=40)]
+SnapId = Annotated[str, pydantic.StringConstraints(max_length=40)]
+Presence = Literal["required", "optional", "invalid"]
 
 
 def cast_dict_scalars_to_strings(data: dict) -> dict:
@@ -120,10 +124,100 @@ class ConfdbSchemaAssertion(EditableConfdbSchemaAssertion):
     """Signing key ID."""
 
 
-# this will be a union for validation sets and confdb schemas once
-# validation sets are migrated from the legacy codebase
-Assertion = ConfdbSchemaAssertion
+class Component(models.CraftBaseModel):
+    """A Component in a Validation Set."""
 
-# this will be a union for editable validation sets and editable confdb schemas once
-# validation sets are migrated from the legacy codebase
-EditableAssertion = EditableConfdbSchemaAssertion
+    presence: Presence
+    """Component presence"""
+
+    revision: int | None = None
+    """Component revision"""
+
+
+class Snap(models.CraftBaseModel):
+    """A Snap in a Validation Set."""
+
+    name: SnapName
+    """Snap name"""
+
+    id: SnapId | None = None
+    """Snap ID"""
+
+    presence: Presence | None = None
+    """Snap presence"""
+
+    revision: int | None = None
+    """Snap revision"""
+
+    components: dict[str, Presence | Component] | None = None
+    """Snap components"""
+
+
+class EditableValidationSetAssertion(models.CraftBaseModel):
+    """Subset of a validation-set that can be edited by the user.
+
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#request-json-schema
+    """
+
+    account_id: str
+    """The "account-id" assertion header"""
+
+    name: str
+    """The "name" assertion header"""
+
+    revision: str | None = None
+    """The "revision" assertion header"""
+
+    sequence: int
+    """The "sequence" assertion header"""
+
+    snaps: Annotated[list[Snap], pydantic.Field(min_length=1)]
+    """List of snaps in a Validation Set assertion"""
+
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
+        """Marshal the model where all scalars are represented as strings."""
+        return cast_dict_scalars_to_strings(self.marshal())
+
+
+class ValidationSetAssertion(EditableValidationSetAssertion):
+    """A full validation set containing editable and non-editable fields.
+
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#response-json-schema
+    """
+
+    authority_id: str
+    """The "authority-id" assertion header"""
+
+    series: str
+    """The "series" assertion header"""
+
+    sign_key_sha3_384: None = None
+    """Signing key ID."""
+
+    timestamp: str
+    """The "timestamp" assertion header"""
+
+    type: Literal["validation-set"]
+    """The "type" assertion header"""
+
+    @pydantic.model_validator(mode="before")
+    @classmethod
+    def remove_sign_key(cls, values: dict[str, Any]) -> dict[str, Any]:
+        """Accept but always ignore the sign key.
+
+        The store API can accept and return a signing key, but the original
+        implementation in Snapcraft ignored it, so it's ignored here for compatibility.
+        """
+        values.pop("sign-key-sha3-384", None)
+        return values
+
+
+class ValidationSetHeaders(models.CraftBaseModel):
+    """Assertion headers for a validation set."""
+
+    headers: ValidationSetAssertion
+    """Assertion headers"""
+
+
+Assertion = ConfdbSchemaAssertion | ValidationSetAssertion
+EditableAssertion = EditableConfdbSchemaAssertion | EditableValidationSetAssertion
