@@ -177,6 +177,7 @@ wethr
 whatime
 whitespace
 whitespaces
+whoami
 wordlist
 xetex
 xindy

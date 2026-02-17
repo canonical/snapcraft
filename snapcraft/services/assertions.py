@@ -63,11 +63,15 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
         """The type of the editable assertion."""
 
     @abc.abstractmethod
-    def _get_assertions(self, name: str | None = None) -> list[AssertionT]:
+    def _get_assertions(
+        self, name: str | None = None, **kwargs: dict[str, Any]
+    ) -> list[AssertionT]:
         """Get assertions from the store.
 
         :param name: The name of the assertion to retrieve. If not provided, all
           assertions are retrieved.
+        :param kwargs: Additional keyword arguments to use to filter the list of
+          assertions.
 
         :returns: A list of assertions.
         """
@@ -113,7 +117,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
         """
 
     @abc.abstractmethod
-    def _generate_yaml_from_template(self, name: str, account_id: str) -> str:
+    def _generate_yaml_from_template(self, name: str, account_id: str, **kwargs) -> str:
         """Generate a multi-line yaml string of a default assertion.
 
         This string should contain only user-editable data.
@@ -204,12 +208,12 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
                 ):
                     raise errors.SnapcraftError("operation aborted") from err
 
-    def _get_yaml_data(self, name: str, account_id: str) -> str:
+    def _get_yaml_data(self, name: str, account_id: str, **kwargs) -> str:
         craft_cli.emit.progress(
             f"Requesting {self._assertion_name} '{name}' from the store."
         )
 
-        if assertions := self._get_assertions(name=name):
+        if assertions := self._get_assertions(name=name, **kwargs):
             yaml_data = self._generate_yaml_from_model(assertions[0])
             craft_cli.emit.progress(
                 f"Retrieved {self._assertion_name} '{name}' from the store.",
@@ -219,7 +223,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
                 f"Could not find an existing {self._assertion_name} named '{name}'.",
             )
             yaml_data = self._generate_yaml_from_template(
-                name=name, account_id=account_id
+                name=name, account_id=account_id, **kwargs
             )
 
         return yaml_data
@@ -286,7 +290,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
         :param key_name: Name of the key to sign the assertion.
         :param kwargs: Additional keyword arguments to use for validation.
         """
-        yaml_data = self._get_yaml_data(name=name, account_id=account_id)
+        yaml_data = self._get_yaml_data(name=name, account_id=account_id, **kwargs)
         yaml_file = self._write_to_file(yaml_data)
         original_assertion = self._editable_assertion_class.unmarshal(
             safe_yaml_load(io.StringIO(yaml_data))
