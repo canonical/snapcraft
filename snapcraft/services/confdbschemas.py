@@ -68,7 +68,9 @@ _CONFDB_SCHEMA_BODY_TEMPLATE = textwrap.dedent(
 )
 
 
-class ConfdbSchemas(Assertion):
+class ConfdbSchemas(
+    Assertion[models.EditableConfdbSchemaAssertion, models.ConfdbSchemaAssertion]
+):
     """Service for interacting with confdb schemas."""
 
     @property
@@ -78,24 +80,28 @@ class ConfdbSchemas(Assertion):
 
     @property
     @override
-    def _editable_assertion_class(self) -> type[models.EditableAssertion]:
+    def _editable_assertion_class(self) -> type[models.EditableConfdbSchemaAssertion]:
         return models.EditableConfdbSchemaAssertion
 
     @override
-    def _get_assertions(self, name: str | None = None) -> list[models.Assertion]:
+    def _get_assertions(
+        self, name: str | None = None
+    ) -> list[models.ConfdbSchemaAssertion]:
         return self._store_client.list_confdb_schemas(name=name)
 
     @override
-    def _build_assertion(self, assertion: models.EditableAssertion) -> models.Assertion:
+    def _build_assertion(
+        self, assertion: models.EditableConfdbSchemaAssertion
+    ) -> models.ConfdbSchemaAssertion:
         return self._store_client.build_confdb_schema(confdb_schema=assertion)
 
     @override
-    def _post_assertion(self, assertion_data: bytes) -> models.Assertion:
+    def _post_assertion(self, assertion_data: bytes) -> models.ConfdbSchemaAssertion:
         return self._store_client.post_confdb_schema(confdb_schema_data=assertion_data)
 
     @override
     def _normalize_assertions(
-        self, assertions: list[models.Assertion]
+        self, assertions: list[models.ConfdbSchemaAssertion]
     ) -> tuple[list[str], list[list[Any]]]:
         headers = ["Account ID", "Name", "Revision", "When"]
         confdb_schema = [
@@ -111,7 +117,7 @@ class ConfdbSchemas(Assertion):
         return headers, confdb_schema
 
     @override
-    def _generate_yaml_from_model(self, assertion: models.Assertion) -> str:
+    def _generate_yaml_from_model(self, assertion: models.ConfdbSchemaAssertion) -> str:
         # Include the summary field only when it's explicitly set (to avoid outputting 'None' in the generated YAML)
         summary = f"\nsummary: {assertion.summary}" if assertion.summary else ""
         return _CONFDB_SCHEMA_TEMPLATE.format(
@@ -137,5 +143,5 @@ class ConfdbSchemas(Assertion):
         )
 
     @override
-    def _get_success_message(self, assertion: models.Assertion) -> str:
+    def _get_success_message(self, assertion: models.ConfdbSchemaAssertion) -> str:
         return f"Successfully created revision {assertion.revision!r} for {assertion.name!r}."
