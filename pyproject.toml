@@ -390,7 +390,7 @@ exclude = [
 
 # Temporarily disabled while mypy and pyright are still in use.
 # See: https://github.com/canonical/snapcraft/issues/6007
-unused-ignore-comment = "ignore"
+unused-type-ignore-comment = "ignore"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
