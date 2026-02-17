@@ -85,7 +85,7 @@ class ConfdbSchemas(
 
     @override
     def _get_assertions(
-        self, name: str | None = None
+        self, name: str | None = None, **kwargs: dict[str, Any]
     ) -> list[models.ConfdbSchemaAssertion]:
         return self._store_client.list_confdb_schemas(name=name)
 
@@ -132,7 +132,9 @@ class ConfdbSchemas(
         )
 
     @override
-    def _generate_yaml_from_template(self, name: str, account_id: str) -> str:
+    def _generate_yaml_from_template(
+        self, name: str, account_id: str, **kwargs: dict[str, Any]
+    ) -> str:
         return _CONFDB_SCHEMA_TEMPLATE.format(
             account_id=account_id,
             views=_CONFDB_SCHEMA_VIEWS_TEMPLATE,

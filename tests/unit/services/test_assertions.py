@@ -135,7 +135,7 @@ def fake_assertion_service(fake_services):
 
         @override
         def _get_assertions(  # type: ignore[override]
-            self, name: str | None = None
+            self, name: str | None = None, **kwargs: dict[str, Any]
         ) -> list[FakeAssertion]:
             return [
                 FakeAssertion(test_field_1="test-value-1", test_field_2=0),
@@ -183,7 +183,9 @@ def fake_assertion_service(fake_services):
             )
 
         @override
-        def _generate_yaml_from_template(self, name: str, account_id: str) -> str:
+        def _generate_yaml_from_template(
+            self, name: str, account_id: str, **kwargs: dict[str, Any]
+        ) -> str:
             return textwrap.dedent(
                 """\
                 test-field-1: default-value-1
