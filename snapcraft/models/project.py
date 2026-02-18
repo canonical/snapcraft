@@ -793,7 +793,7 @@ class App(models.CraftBaseModel):
             service. This will start the service too.
         * - ``disable``
           - The service is not automatically started. Instead, the service will be
-            started with :ref:`craftctl <how-to-customize-the-build-and-part-variables>`.
+            started with :ref:`snapctl <https://snapcraft.io/docs/using-snapctl>`_.
             and another management agent, which is most commonly a :ref:`hooks
             <reference-hooks>`.
 
