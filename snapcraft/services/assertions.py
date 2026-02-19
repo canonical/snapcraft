@@ -137,16 +137,19 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
         :returns: The success message to log.
         """
 
-    def list_assertions(self, *, output_format: str, name: str | None = None) -> None:
+    def list_assertions(
+        self, *, output_format: str, name: str | None = None, **kwargs: dict[str, Any]
+    ) -> None:
         """List assertions from the store.
 
         :param output_format: The output format to render.
         :param name: The name of the assertion to list. If not provided, all assertions
           are listed.
+        :param kwargs: Additional keyword arguments to use to filter the list of assertions.
 
         :raises FeatureNotImplemented: If the output format is not supported.
         """
-        assertions = self._get_assertions(name)
+        assertions = self._get_assertions(name, **kwargs)
 
         if assertions:
             headers, normalized_assertions = self._normalize_assertions(assertions)

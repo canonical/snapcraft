@@ -321,31 +321,3 @@ class StoreLegacyGatedCommand(LegacyAppCommand):
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("snap_name", metavar="snap-name")
-
-
-class StoreLegacyValidationSetsCommand(LegacyAppCommand):
-    """Command passthrough for the validation-sets command."""
-
-    name = "validation-sets"
-    help_msg = "Get the list of validation sets"
-    overview = textwrap.dedent(
-        """
-        List all validation-sets snaps.
-        """
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--name", help="limit results to <name>")
-        parser.add_argument("--sequence", help="limit results to <sequence>")
-
-
-class StoreLegacyListValidationSetsCommand(StoreLegacyValidationSetsCommand):
-    """Removed command alias for the validation-sets command."""
-
-    name = "list-validation-sets"
-    hidden = True
-
-    @override
-    def run(self, parsed_args: argparse.Namespace) -> None:
-        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
