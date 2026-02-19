@@ -1,0 +1,23 @@
+name: ros2-lyrical-hello
+version: "1.0"
+summary: hello world
+description: |
+  A ROS 2 rclcpp-based workspace.
+
+base: core26
+build-base: devel
+grade: devel
+confinement: strict
+
+apps:
+  ros2-lyrical-hello:
+    command: opt/ros/lyrical/bin/ros2 run colcon_ros2_rlcpp_hello colcon_ros2_rlcpp_hello
+    plugs: [network, network-bind]
+    extensions: [ros2-lyrical]
+
+parts:
+  hello:
+    plugin: colcon
+    source: .
+    build-packages: [g++, make, vim]
+    stage-packages: [ros-lyrical-ros2run]
