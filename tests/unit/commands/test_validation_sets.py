@@ -20,7 +20,7 @@ import sys
 
 import pytest
 
-from snapcraft import application, commands, errors
+from snapcraft import application, commands, const, errors
 
 
 @pytest.fixture
@@ -60,13 +60,18 @@ def test_edit_validation_sets(key_name, mocker, mock_edit_assertion):
 @pytest.mark.usefixtures("memory_keyring")
 @pytest.mark.parametrize("name", [None, "test"])
 @pytest.mark.parametrize("sequence", [None, "latest", "all"])
-def test_list_validation_sets(capsys, mocker, name, sequence, mock_list_assertions):
+@pytest.mark.parametrize("output_format", [None, *const.OUTPUT_FORMATS])
+def test_list_validation_sets(
+    capsys, mocker, name, sequence, output_format, mock_list_assertions
+):
     """Test `snapcraft validation-sets`."""
     cmd = ["snapcraft", "validation-sets"]
     if name:
         cmd.extend(["--name", name])
     if sequence:
         cmd.extend(["--sequence", sequence])
+    if output_format:
+        cmd.extend(["--format", output_format])
     mocker.patch.object(sys, "argv", cmd)
     kwargs = {"sequence": sequence} if sequence else {}
 
@@ -75,7 +80,7 @@ def test_list_validation_sets(capsys, mocker, name, sequence, mock_list_assertio
 
     mock_list_assertions.assert_called_once_with(
         name=name,
-        output_format="table",
+        output_format=output_format or "table",
         **kwargs,
     )
 
