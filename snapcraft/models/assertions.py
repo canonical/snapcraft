@@ -120,14 +120,6 @@ class ConfdbSchemaAssertion(EditableConfdbSchemaAssertion):
     """Signing key ID."""
 
 
-class ConfdbSchemasList(models.CraftBaseModel):
-    """A list of confdb assertions."""
-
-    confdb_schema_list: list[ConfdbSchemaAssertion] = pydantic.Field(
-        default_factory=list
-    )
-
-
 # this will be a union for validation sets and confdb schemas once
 # validation sets are migrated from the legacy codebase
 Assertion = ConfdbSchemaAssertion
