@@ -99,9 +99,10 @@ The extension adds its own part to the project, which pulls in the ROS 2 build p
                     - ros-jazzy-ament-index-cpp
                     - ros-jazzy-ament-index-python
 
-    .. group-tab:: ROS 2 Lyrical
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
 
-        .. collapse:: Included parts
+        .. dropdown:: Included parts
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -160,9 +161,10 @@ variables.
                   - ROS_VERSION: "2"
                   - ROS_DISTRO: jazzy
 
-    .. group-tab:: ROS 2 Lyrical
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
 
-        .. collapse:: Included build environment variables
+        .. dropdown:: Included build environment variables
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -315,9 +317,10 @@ installs the necessary GPG key.
                     suites:
                       - noble
 
-    .. group-tab:: ROS 2 Lyrical
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
 
-        .. collapse:: Included package repositories
+        .. dropdown:: Included package repositories
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -381,9 +384,10 @@ The files are based on the :ref:`ros2-talker-listener
                 :lines: 3-
                 :emphasize-lines: 18-28, 33-41, 43-53
 
-    .. group-tab:: ROS 2 Lyrical
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
 
-        .. collapse:: Expanded project file for ros2-talker-listener
+        .. dropdown:: Expanded project file for ros2-talker-listener
 
             .. literalinclude:: code/ros-2-lyrical-extension-talker-listener-expanded.diff
                 :language: diff
