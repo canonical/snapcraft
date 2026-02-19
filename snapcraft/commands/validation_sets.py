@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 from craft_application.commands import AppCommand
 from typing_extensions import override
 
-from snapcraft import errors
+from snapcraft import const, errors
 
 if TYPE_CHECKING:
     import argparse
@@ -68,13 +68,20 @@ class StoreValidationSetsCommand(AppCommand):
             choices=["all", "latest"],
             help="Sequences to list (default is 'latest', options are 'all', 'latest').",
         )
+        parser.add_argument(
+            "--format",
+            type=str,
+            choices=const.OUTPUT_FORMATS,
+            help="The output format (default is 'table', options are 'table', 'json').",
+            default=const.OutputFormat.table,
+        )
 
     @override
     def run(self, parsed_args: argparse.Namespace):
         kwargs = {"sequence": parsed_args.sequence} if parsed_args.sequence else {}
         self._services.validation_sets.list_assertions(
             name=parsed_args.name,
-            output_format="table",
+            output_format=parsed_args.format,
             **kwargs,
         )
 

@@ -27,6 +27,12 @@ Promote edge channels with ``--yes``
 The :ref:`ref_commands_promote` command now supports promoting releases from the edge
 channel non-interactively with the ``--yes`` flag.
 
+``--format`` option for ``validation-sets``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`ref_commands_validation-sets` command now supports a ``--format`` option to
+output validation sets as either a table or JSON.
+
 
 Backwards-incompatible changes
 ------------------------------
