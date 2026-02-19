@@ -33,8 +33,6 @@ from .legacy import (
     StoreLegacyGatedCommand,
     StoreLegacyListKeysCommand,
     StoreLegacyKeysCommand,
-    StoreLegacyListValidationSetsCommand,
-    StoreLegacyValidationSetsCommand,
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacyRegisterKeyCommand,
@@ -67,7 +65,11 @@ from .status import (
     StoreTracksCommand,
 )
 from .upload import StoreLegacyPushCommand, StoreUploadCommand
-from .validation_sets import StoreEditValidationSetsCommand
+from .validation_sets import (
+    StoreEditValidationSetsCommand,
+    StoreListValidationSetsCommand,
+    StoreValidationSetsCommand,
+)
 
 __all__ = [
     "ExpandExtensionsCommand",
@@ -90,7 +92,6 @@ __all__ = [
     "StoreLegacyListCommand",
     "StoreLegacyListKeysCommand",
     "StoreLegacyListRegisteredCommand",
-    "StoreLegacyListValidationSetsCommand",
     "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
@@ -99,10 +100,10 @@ __all__ = [
     "StoreLegacySignBuildCommand",
     "StoreLegacyUploadMetadataCommand",
     "StoreLegacyValidateCommand",
-    "StoreLegacyValidationSetsCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
     "StoreListTracksCommand",
+    "StoreListValidationSetsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
     "StoreNamesCommand",
@@ -112,6 +113,7 @@ __all__ = [
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",
+    "StoreValidationSetsCommand",
     "StoreWhoAmICommand",
     "TryCommand",
     "core22",

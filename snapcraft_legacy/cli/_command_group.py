@@ -34,7 +34,6 @@ _CMD_ALIASES = {
     "plugins": "list-plugins",
     "extensions": "list-extensions",
     "tracks": "list-tracks",
-    "validation-sets": "list-validation-sets",
 }
 
 _CMD_DEPRECATION_NOTICES = {
