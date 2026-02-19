@@ -30,6 +30,13 @@ def mock_edit_assertion(mocker):
     )
 
 
+@pytest.fixture
+def mock_list_assertions(mocker):
+    return mocker.patch(
+        "snapcraft.services.validationsets.ValidationSets.list_assertions"
+    )
+
+
 @pytest.mark.parametrize("key_name", [None, "test-key"])
 @pytest.mark.usefixtures("memory_keyring")
 def test_edit_validation_sets(key_name, mocker, mock_edit_assertion):
@@ -50,9 +57,32 @@ def test_edit_validation_sets(key_name, mocker, mock_edit_assertion):
     )
 
 
+@pytest.mark.usefixtures("memory_keyring")
+@pytest.mark.parametrize("name", [None, "test"])
+@pytest.mark.parametrize("sequence", [None, "latest", "all"])
+def test_list_validation_sets(capsys, mocker, name, sequence, mock_list_assertions):
+    """Test `snapcraft validation-sets`."""
+    cmd = ["snapcraft", "validation-sets"]
+    if name:
+        cmd.extend(["--name", name])
+    if sequence:
+        cmd.extend(["--sequence", sequence])
+    mocker.patch.object(sys, "argv", cmd)
+    kwargs = {"sequence": sequence} if sequence else {}
+
+    app = application.create_app()
+    app.run()
+
+    mock_list_assertions.assert_called_once_with(
+        name=name,
+        output_format="table",
+        **kwargs,
+    )
+
+
 def test_list_validation_sets_error(fake_app_config):
     """Error on removed 'list-validation-sets' command."""
-    cmd = commands.StoreLegacyListValidationSetsCommand(fake_app_config)
+    cmd = commands.StoreListValidationSetsCommand(fake_app_config)
     expected = re.escape(
         "The 'list-validation-sets' command was renamed to 'validation-sets'."
     )

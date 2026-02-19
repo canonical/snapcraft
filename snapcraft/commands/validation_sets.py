@@ -24,10 +24,70 @@ from typing import TYPE_CHECKING
 from craft_application.commands import AppCommand
 from typing_extensions import override
 
+from snapcraft import errors
+
 if TYPE_CHECKING:
     import argparse
 
     from snapcraft import services
+
+
+class StoreValidationSetsCommand(AppCommand):
+    """List validation sets."""
+
+    name = "validation-sets"
+    help_msg = "List validation sets"
+    overview = textwrap.dedent(
+        """
+        List all validation sets for the authenticated account.
+
+        Shows the account ID, name, sequence, revision, and last modified date of each validation set.
+
+        If a name is provided, only the validation set with that name is listed.
+
+        Use the 'edit-validation-sets' command to modify validation sets.
+        """
+    )
+    _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
+
+    @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--name",
+            metavar="name",
+            required=False,
+            type=str,
+            help="Name of the validation set to list",
+        )
+        parser.add_argument(
+            "--sequence",
+            metavar="sequence",
+            # the store will return the latest sequences by default
+            required=False,
+            type=str,
+            choices=["all", "latest"],
+            help="Sequences to list (default is 'latest', options are 'all', 'latest').",
+        )
+
+    @override
+    def run(self, parsed_args: argparse.Namespace):
+        kwargs = {"sequence": parsed_args.sequence} if parsed_args.sequence else {}
+        self._services.validation_sets.list_assertions(
+            name=parsed_args.name,
+            output_format="table",
+            **kwargs,
+        )
+
+
+class StoreListValidationSetsCommand(StoreValidationSetsCommand):
+    """Removed command alias for the validation-sets command."""
+
+    name = "list-validation-sets"
+    hidden = True
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreEditValidationSetsCommand(AppCommand):
