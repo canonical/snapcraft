@@ -149,12 +149,13 @@ Example project file for ROS 2 Talker/Listener
                     command: ros2 launch demo_nodes_cpp talker_listener.launch.py
                     extensions: [ros2-jazzy]
 
-    .. group-tab:: core26
+    .. tab-item:: core26
+        :sync: core26
 
         The following code comprises the `snapcraft.yaml` file for the core26 version
         of a ROS 2 Talker/Listener.
 
-        .. collapse:: Code
+        .. dropdown:: Code
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -319,7 +320,8 @@ difference in the project file when content sharing is enabled:
             -   extensions: [ros2-jazzy]
             +   extensions: [ros2-jazzy-ros-base]
 
-    .. group-tab:: core26
+    .. tab-item:: core26
+        :sync: core26
 
         .. code-block:: diff
             :caption: snapcraft.yaml
