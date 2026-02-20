@@ -8,13 +8,20 @@ The Ubuntu Kernel plugin builds signed Ubuntu kernels using official Debian buil
 rules. It supports customized kernel packages that can target Ubuntu snap-based
 systems.
 
+This plugin is not the same as the existing ``kernel`` plugin. The existing ``kernel`` plugin
+builds a custom kernel from source using mainline Linux build scripts. The
+``ubuntu-kernel`` plugin builds an Ubuntu kernel using the Ubuntu ``debian/rules``
+build scripts — the same scripts used to produce the official Ubuntu kernels.
+
 The plugin supports building Ubuntu kernel snaps from existing Debian packages or from
 source. When building from source the optional ``source`` key may be used to provide a
 custom source repository URL. If not provided, the official Canonical Ubuntu kernel
 source repository will be used.
 
 Currently, signed kernel snaps can only be built using the official Canonical kernel
-Debian packages as the source.
+Debian packages.
+
+
 
 Keys
 ----
