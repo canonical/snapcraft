@@ -213,6 +213,8 @@ don't need to be packaged as part of the snap and would greatly inflate the size
                     bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0
                   /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1:
                     bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1
+                  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy:
+                    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy
                   /usr/share/xml/iso-codes:
                     bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
                   /usr/share/libdrm:
@@ -239,6 +241,8 @@ don't need to be packaged as part of the snap and would greatly inflate the size
                     symlink: $SNAP/usr/bin/gnome-control-center
                   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0:
                     bind: $SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0
+                  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy:
+                    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy
                   /usr/share/xml/iso-codes:
                     bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
                   /usr/share/libdrm:
