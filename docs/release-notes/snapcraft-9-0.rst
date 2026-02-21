@@ -174,7 +174,7 @@ Fixed bugs and issues
 
 The following issues have been resolved in Snapcraft 9.0.
 
-.. _release-notes-fixes-9.0.0:
+.. _release-9.0.0-fixes:
 
 Snapcraft 9.0.0
 ~~~~~~~~~~~~~~~~
