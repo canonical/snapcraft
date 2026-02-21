@@ -175,6 +175,19 @@ continue developing:
     rm -r docs/sphinx-docs-starter-pack
 
 
+Fixed bugs and issues
+---------------------
+
+The following issues have been resolved in Snapcraft 9.0.
+
+.. _release-9.0.0-fixes:
+
+Snapcraft 9.0.0
+~~~~~~~~~~~~~~~~
+
+- `snapcraft#6054`_ The gnome extension now adds a layout declaration to address a libproxy error during certain app launching scenarios.
+
+
 Contributors
 ------------
 

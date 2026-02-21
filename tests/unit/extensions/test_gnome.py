@@ -117,6 +117,9 @@ def test_get_root_snippet(gnome_extension):
             "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
                 "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
             },
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy": {
+                "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy"
+            },
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
             },
@@ -189,6 +192,9 @@ def test_get_root_snippet_with_external_sdk(gnome_extension_with_build_snap):
             },
             "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
                 "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
+            },
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy": {
+                "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy"
             },
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
