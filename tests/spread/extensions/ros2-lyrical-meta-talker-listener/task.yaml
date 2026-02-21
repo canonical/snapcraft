@@ -8,26 +8,26 @@ environment:
   SNAP: colcon-talker-listener
   SNAP_DIR: "../../plugins/craft-parts/$SNAP/$SNAP"
 
-  META_SNAP/colcon_jazzy_ros_core: ros-jazzy-ros-core
-  EXTENSION/colcon_jazzy_ros_core: ros2-jazzy-ros-core
-  INTERFACE/colcon_jazzy_ros_core: ros-jazzy-ros-core
+  META_SNAP/colcon_lyrical_ros_core: ros-lyrical-ros-core
+  EXTENSION/colcon_lyrical_ros_core: ros2-lyrical-ros-core
+  INTERFACE/colcon_lyrical_ros_core: ros-lyrical-ros-core
 
-  META_SNAP/colcon_jazzy_ros_base: ros-jazzy-ros-base
-  EXTENSION/colcon_jazzy_ros_base: ros2-jazzy-ros-base
-  INTERFACE/colcon_jazzy_ros_base: ros-jazzy-ros-base
+  META_SNAP/colcon_lyrical_ros_base: ros-lyrical-ros-base
+  EXTENSION/colcon_lyrical_ros_base: ros2-lyrical-ros-base
+  INTERFACE/colcon_lyrical_ros_base: ros-lyrical-ros-base
 
-  META_SNAP/colcon_jazzy_desktop: ros-jazzy-desktop
-  EXTENSION/colcon_jazzy_desktop: ros2-jazzy-desktop
-  INTERFACE/colcon_jazzy_desktop: ros-jazzy-desktop
+  META_SNAP/colcon_lyrical_desktop: ros-lyrical-desktop
+  EXTENSION/colcon_lyrical_desktop: ros2-lyrical-desktop
+  INTERFACE/colcon_lyrical_desktop: ros-lyrical-desktop
 
 # The content snap required for the test to succeed is only
 # available on a subset of all the architectures this testbed
 # can run on.
 systems:
-  - ubuntu-24.04
-  - ubuntu-24.04-64
-  - ubuntu-24.04-amd64
-  - ubuntu-24.04-arm64
+  - ubuntu-26.04
+  - ubuntu-26.04-64
+  - ubuntu-26.04-amd64
+  - ubuntu-26.04-arm64
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -35,10 +35,10 @@ prepare: |
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
   # Overwrite the core version
-  sed -i "s|core22|core24|" "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i "s|core22|core26|" "$SNAP_DIR/snap/snapcraft.yaml"
 
   # Overwrite the extension to test them all out of a single snap
-  sed -i "s|ros2-jazzy|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
+  sed -i "s|ros2-humble|${EXTENSION}|" "$SNAP_DIR/snap/snapcraft.yaml"
 
   #shellcheck source=tests/spread/tools/package-utils.sh
   . "$TOOLS_DIR/package-utils.sh"

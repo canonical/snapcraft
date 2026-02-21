@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022,2024 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,25 +33,29 @@ def test_command(emitter, fake_app_config):
     emitter.assert_message(
         dedent(
             """\
-        Extension name        Supported bases
-        --------------------  ----------------------
-        dotnet10              core24
-        dotnet8               core24
-        dotnet9               core24
-        env-injector          core24
-        fake-extension        core22, core24, core26
-        gnome                 core22, core24
-        kde-neon              core22, core24
-        kde-neon-6            core22, core24
-        kde-neon-qt6          core22, core24
-        ros2-humble           core22
-        ros2-humble-desktop   core22
-        ros2-humble-ros-base  core22
-        ros2-humble-ros-core  core22
-        ros2-jazzy            core24
-        ros2-jazzy-desktop    core24
-        ros2-jazzy-ros-base   core24
-        ros2-jazzy-ros-core   core24"""
+        Extension name         Supported bases
+        ---------------------  ----------------------
+        dotnet10               core24
+        dotnet8                core24
+        dotnet9                core24
+        env-injector           core24
+        fake-extension         core22, core24, core26
+        gnome                  core22, core24
+        kde-neon               core22, core24
+        kde-neon-6             core22, core24
+        kde-neon-qt6           core22, core24
+        ros2-humble            core22
+        ros2-humble-desktop    core22
+        ros2-humble-ros-base   core22
+        ros2-humble-ros-core   core22
+        ros2-jazzy             core24
+        ros2-jazzy-desktop     core24
+        ros2-jazzy-ros-base    core24
+        ros2-jazzy-ros-core    core24
+        ros2-lyrical           core26
+        ros2-lyrical-desktop   core26
+        ros2-lyrical-ros-base  core26
+        ros2-lyrical-ros-core  core26"""
         )
     )
 
