@@ -2882,6 +2882,7 @@ docs = [
     { name = "sphinx-lint" },
     { name = "sphinx-notfound-page" },
     { name = "sphinx-pydantic" },
+    { name = "sphinx-related-links" },
     { name = "sphinx-roles" },
     { name = "sphinx-sitemap" },
     { name = "sphinx-substitution-extensions" },
@@ -2900,6 +2901,7 @@ docs-starter-pack = [
     { name = "sphinx-design", version = "0.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-questing' and extra == 'group-9-snapcraft-dev-resolute')" },
     { name = "sphinx-design", version = "0.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-questing' and extra == 'group-9-snapcraft-dev-resolute')" },
     { name = "sphinx-notfound-page" },
+    { name = "sphinx-related-links" },
     { name = "sphinx-roles" },
     { name = "sphinx-sitemap" },
     { name = "sphinxcontrib-jquery" },
@@ -3014,6 +3016,7 @@ docs = [
     { name = "sphinx-lint", specifier = "~=1.0" },
     { name = "sphinx-notfound-page", specifier = ">=1.1.0" },
     { name = "sphinx-pydantic", specifier = "==0.1.1" },
+    { name = "sphinx-related-links", specifier = ">=0.1.1" },
     { name = "sphinx-roles", specifier = ">=0.1.0" },
     { name = "sphinx-sitemap", specifier = ">=2.6.0" },
     { name = "sphinx-substitution-extensions", specifier = "==2025.1.2" },
@@ -3031,6 +3034,7 @@ docs-starter-pack = [
     { name = "sphinx-autobuild", specifier = ">=2024.10.3" },
     { name = "sphinx-design", specifier = ">=0.6.1" },
     { name = "sphinx-notfound-page", specifier = ">=1.1.0" },
+    { name = "sphinx-related-links", specifier = ">=0.1.1" },
     { name = "sphinx-roles", specifier = ">=0.1.0" },
     { name = "sphinx-sitemap", specifier = ">=2.6.0" },
     { name = "sphinxcontrib-jquery", specifier = ">=4.1" },
@@ -3230,6 +3234,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/67/58/e7a518876db551cf3bd6621eecc6675d003b9bd8413382c10298e2113f7e/sphinx-pydantic-0.1.1.tar.gz", hash = "sha256:a830e4f07fe88fbdfe3edecc2f52ef133cde2def7cb882a3f22780f34963b0fb", size = 3394, upload-time = "2020-06-04T17:27:16.982Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/14/87/e397aba1d53aea3bccb8df07e1086e00855404afd92d118b07854d746947/sphinx_pydantic-0.1.1-py3-none-any.whl", hash = "sha256:371487ad81250d8bc5b944a2936b33c10ff88af7188d5be0ee6c4b46bb70254a", size = 2888, upload-time = "2020-06-04T17:27:15.879Z" },
+]
+
+[[package]]
+name = "sphinx-related-links"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "docutils" },
+    { name = "requests" },
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/91/94/f46c27a759b9c1f489ae18710ea2b5c1610d486586a8499d88c32be79040/sphinx_related_links-0.1.2.tar.gz", hash = "sha256:7e4951f4fa60b21e0806dda53db41be565b589e22b58cc18d09c2676a49d00ca", size = 84209, upload-time = "2025-12-15T19:09:42.554Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3d/bd/6971dde17d8f1446a1b52d22d3b937df8f7fd380b94d109c3d9e3f2bfd62/sphinx_related_links-0.1.2-py3-none-any.whl", hash = "sha256:0f894cff31f330aa0fbbfb2d6cccc0bc07153a56925427d9f3dc4a1d9b0e08eb", size = 19873, upload-time = "2025-12-15T19:09:41.008Z" },
 ]
 
 [[package]]
