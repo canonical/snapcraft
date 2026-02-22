@@ -175,3 +175,6 @@ dmypy.json
 # .NET build artifacts
 /tests/**/bin/
 /tests/**/obj/
+
+# Vagrant state files
+/.vagrant/
