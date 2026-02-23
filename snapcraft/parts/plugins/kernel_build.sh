@@ -19,10 +19,10 @@ parse_args() {
       # enable_zfs builds the zfs-linux package for the kernel if true
       # Default value is "False".
       kernel_enable_zfs=${arg#*=}             ;;
-      kernel-enable-perf=*)
-      # enable_perf builds the perf binary if true
-      # Default value is "False".
-      kernel_enable_perf=${arg#*=}            ;;
+      kernel-tools=*)
+      # kernel_tools specifies a list of tools to build
+      # Default value is "".
+      kernel_tools=${arg#*=}                  ;;
       kernel-dkms=*)
       # kernel_dkms specifies additional packages to build
       kernel_dkms=${arg#*=}                   ;;
@@ -171,18 +171,24 @@ build_zfs() {
         install
 }
 
-# build_perf builds the perf binary
-build_perf() {
-  echo "Building perf binary..."
+build_tool() {
+  _tool="${1}"
 
-  mkdir -p "${CRAFT_PART_BUILD}/tools/perf"
+  case $_tool in
+    bpf)      _tool=bpf/bpftool    ;;
+    cpupower) _tool=power/cpupower ;;
+    *)                             ;;
+  esac
 
-  # Override source and build directories
+  echo "Building tool" "${_tool#*/}"
+
+  mkdir -p "${CRAFT_PART_BUILD}/tools/$_tool"
+
   make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-       -C "${KERNEL_SRC}/tools/perf"      \
-        O="${CRAFT_PART_BUILD}/tools/perf"
+       -C "${KERNEL_SRC}/tools/_tool"     \
+        O="${CRAFT_PART_BUILD}/tools/${_tool#*/}"
 
-  install -Dm0755 "${CRAFT_PART_BUILD}/tools/perf/perf" "${CRAFT_PART_INSTALL}/bin/perf"
+  install -Dm0755 "${CRAFT_PART_BUILD}/tools/$_tool" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
 }
 
 # redepmod reruns depmod for the entire built kernel's module tree
@@ -293,9 +299,12 @@ run() {
       build_dkms
     fi || echo "No additional DKMS packages will be added"
 
-    if [ "${kernel_enable_perf}" = "True" ]; then
-      build_perf
-    fi || echo "Not building perf"
+    if [ -n "${kernel_tools}" ]; then
+      _kernel_tools="$(echo "$kernel_tools" | sed -e 's/,/ /g')"
+    # We want build_target to split as it isn't supposed to be a single arg
+    # shellcheck disable=2086
+      build_tool $_kernel_tools
+    fi
 
     # This information gets deleted by some modules, like zfs. We still need it
     # for e.g. initrd builds.

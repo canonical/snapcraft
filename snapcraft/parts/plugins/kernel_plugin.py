@@ -39,9 +39,10 @@ The following kernel-specific options are provided by this plugin:
       (boolean; default: False)
       use this flag to build in zfs support through extra ko modules
 
-    - kernel-enable-perf
-      (boolean; default: False)
-      use this flag to build the perf binary
+    - kernel-tools
+      (list of strings; default: none)
+      a list of tools to build alongside the kernel. Accepted values are bpftool,
+      cpupower, and perf
 
     - kernel-dkms
       (list of strings; default: none)
@@ -96,7 +97,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     kernel_kconfigflavour: str = "generic"
     kernel_kdefconfig: list[str] = ["defconfig"]
     kernel_enable_zfs_support: bool = False
-    kernel_enable_perf: bool = False
+    kernel_tools: list[str] = []
     kernel_dkms: list[str] = []
     kernel_ubuntu_release_name: str = ""
     kernel_ubuntu_binary_package: bool = False
@@ -132,6 +133,18 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                         "'kernel-ubuntu-binary-package' and "
                         f"'{option.replace('_', '-')}' keys are mutually exclusive"
                     )
+        return self
+
+    @pydantic.model_validator(mode="after")
+    def validate_list_of_tools(
+        self,
+    ) -> Self:
+        """Ensure only a valid list of tools is specified."""
+        for tool in self.kernel_tools:
+            if tool not in self.kernel_tools:
+                raise errors.SnapcraftError(
+                    f"tool '{tool}' is not a valid choice! Valid choices are perf, cpupower, and bpftool"
+                )
         return self
 
 
@@ -309,7 +322,7 @@ class KernelPlugin(plugins.Plugin):
                     f"kernel-kdefconfig={','.join(self.options.kernel_kdefconfig)}",
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
                     f"kernel-enable-zfs={self.options.kernel_enable_zfs_support}",
-                    f"kernel-enable-perf={self.options.kernel_enable_perf}",
+                    f"kernel-tools={','.join(self.options.kernel_tools)}",
                     f"kernel-dkms={','.join(self.options.kernel_dkms)}",
                     f"kernel-release-name={self.options.kernel_release_name}",
                     f"kernel-use-binary-package={self.options.kernel_use_binary_package},",
