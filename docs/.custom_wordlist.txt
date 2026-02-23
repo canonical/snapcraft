@@ -81,6 +81,7 @@ lcm
 libc
 libc
 libcurl
+libproxy
 linter('?s)?
 liquidctl
 Makefile
