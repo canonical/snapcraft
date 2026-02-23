@@ -22,15 +22,15 @@ mkdir {{ craft_part_build_dir }}/kernel
 cd {{ craft_part_build_dir }}/kernel
 
 {% if ubuntu_kernel_use_binary_package %}
-    dpkg-deb -R linux-image-{{ pkgfile_version_flavour }}.deb unpacked-linux-image
+    dpkg-deb -R linux-image-{{ pkgfile_version_flavor }}.deb unpacked-linux-image
 {% else %}
     # Source builds are not signed yet
-    dpkg-deb -R linux-image-unsigned-{{ pkgfile_version_flavour }}.deb unpacked-linux-image
+    dpkg-deb -R linux-image-unsigned-{{ pkgfile_version_flavor }}.deb unpacked-linux-image
 {% endif %}
 
-dpkg-deb -x linux-modules-{{ pkgfile_version_flavour }}.deb unpacked-linux-modules
+dpkg-deb -x linux-modules-{{ pkgfile_version_flavor }}.deb unpacked-linux-modules
 
-dpkg-deb -x linux-modules-extra-{{ pkgfile_version_flavour }}.deb unpacked-linux-modules
+dpkg-deb -x linux-modules-extra-{{ pkgfile_version_flavor }}.deb unpacked-linux-modules
 
 
 # Unpack the linux deb binaries to snap package structure
@@ -39,11 +39,11 @@ mkdir {{ craft_part_install_dir }}/lib
 mv unpacked-linux-modules/lib/modules {{ craft_part_install_dir }}/lib/
 mv unpacked-linux-modules/boot/* {{ craft_part_install_dir }}/boot/
 
-depmod -b {{ craft_part_install_dir }} {{ kernel_abi }}-{{ ubuntu_kernel_flavour }}
+depmod -b {{ craft_part_install_dir }} {{ kernel_abi }}-{{ ubuntu_kernel_flavor }}
 
 # Manipulate stock kernel layout to the snapcraft package layout.
 mv {{ craft_part_install_dir }}/boot/* {{ craft_part_install_dir }}/
-ln -f {{ craft_part_install_dir }}/vmlinuz-{{ kernel_abi }}-{{ ubuntu_kernel_flavour }} {{ craft_part_install_dir }}/kernel.img
+ln -f {{ craft_part_install_dir }}/vmlinuz-{{ kernel_abi }}-{{ ubuntu_kernel_flavor }} {{ craft_part_install_dir }}/kernel.img
 mv {{ craft_part_install_dir }}/lib/modules {{ craft_part_install_dir }}/
 
 # Device tree
