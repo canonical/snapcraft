@@ -44,7 +44,7 @@ dependencies = [
     "requests-unixsocket2",
     "requests>=2.32.4",
     # setuptools >= 80.9 has a noisy warning about pkg_resources
-    "setuptools>=80.10,<81",
+    "setuptools>=81",
     "simplejson",
     "snap-helpers",
     "tabulate",
