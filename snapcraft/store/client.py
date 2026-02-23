@@ -21,7 +21,7 @@ import platform
 import time
 from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any, cast
+from typing import Any
 
 import craft_store
 import distro
@@ -610,6 +610,118 @@ class LegacyStoreClientCLI:
         emit.debug(f"Published confdb schema: {assertion.model_dump_json()}")
         return assertion
 
+    @staticmethod
+    def _unmarshal_validation_set(
+        validation_set_data: dict[str, Any],
+    ) -> models.ValidationSetAssertion:
+        """Unmarshal a validation set.
+
+        :raises StoreAssertionError: If the validation set cannot be unmarshalled.
+        """
+        try:
+            return models.ValidationSetAssertion.unmarshal(validation_set_data)
+        except pydantic.ValidationError as err:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid validation set from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"{format_pydantic_errors(err.errors(), file_name='validation set')}",
+            ) from err
+
+    def list_validation_sets(
+        self, *, name: str | None = None, sequence: str | None = None
+    ) -> list[models.ValidationSetAssertion]:
+        """Return a list of validation sets.
+
+        :param name: If specified, only list the validation set with that name.
+        :param name: The sequences to list.
+        """
+        endpoint = f"{self._base_url}/api/v2/validation-sets"
+        if name:
+            endpoint += f"/{name}"
+
+        params = dict()
+        if sequence:
+            params["sequence"] = sequence
+
+        response = self.request(
+            "GET",
+            endpoint,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            params=params,
+        )
+
+        validation_sets = []
+        if assertions := response.json().get("assertions"):
+            for assertion_data in assertions:
+                assertion = self._unmarshal_validation_set(assertion_data["headers"])
+                validation_sets.append(assertion)
+                emit.debug(f"Parsed validation sets: {assertion.model_dump_json()}")
+
+        return validation_sets
+
+    def build_validation_set(
+        self, *, validation_set: models.EditableValidationSetAssertion
+    ) -> models.ValidationSetAssertion:
+        """Build a validation set.
+
+        Sends an edited validation set to the store, which validates the data,
+        populates additional fields, and returns the validation set.
+
+        :param validation_set: The validation set to build.
+
+        :returns: The built validation set.
+        """
+        response = self.request(
+            "POST",
+            f"{self._base_url}/api/v2/validation-sets/build-assertion",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=validation_set.marshal(),
+        )
+
+        assertion = self._unmarshal_validation_set(response.json())
+        emit.debug(f"Built validation set: {assertion.model_dump_json()}")
+        return assertion
+
+    def post_validation_set(
+        self, *, validation_set_data: bytes
+    ) -> models.ValidationSetAssertion:
+        """Send a validation set to be published.
+
+        :param validation_set_data: A signed validation set represented as bytes.
+
+        :returns: The published assertion.
+        """
+        response = self.request(
+            "POST",
+            f"{self._base_url}/api/v2/validation-sets",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/x.ubuntu.assertion",
+            },
+            data=validation_set_data,
+        )
+
+        assertions = response.json().get("assertions")
+
+        if not assertions or len(assertions) != 1:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid validation set from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"Received data: {assertions}",
+            )
+
+        assertion = self._unmarshal_validation_set(assertions[0]["headers"])
+        emit.debug(f"Published validation set: {assertion.model_dump_json()}")
+        return assertion
+
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
     """On Premises Store Client command line interface."""
@@ -647,12 +759,10 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             f"Ignoring snap_file_size of {snap_file_size!r} and built_at {built_at!r}"
         )
 
-        revision_request = cast(
-            craft_store.models.RevisionsRequestModel,
-            craft_store.models.RevisionsRequestModel.unmarshal(
-                {"upload-id": upload_id}
-            ),
+        revision_request = craft_store.models.RevisionsRequestModel.unmarshal(
+            {"upload-id": upload_id}
         )
+
         revision_response = self.store_client.notify_revision(
             name=snap_name, revision_request=revision_request
         )
@@ -709,10 +819,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
         return channel_map.ChannelMap.from_list_releases(
-            cast(
-                craft_store.models.SnapListReleasesModel,
-                craft_store.models.SnapListReleasesModel.unmarshal(response.json()),
-            )
+            craft_store.models.SnapListReleasesModel.unmarshal(response.json())
         )
 
     @overrides

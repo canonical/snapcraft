@@ -64,11 +64,6 @@ def mock_remote_build_run(mocker):
 
 
 @pytest.fixture()
-def mock_run_legacy(mocker):
-    return mocker.patch("snapcraft_legacy.cli.legacy.legacy_run")
-
-
-@pytest.fixture()
 def mock_remote_build_argv(mocker):
     """Mock `snapcraft remote-build` cli."""
     return mocker.patch.object(
@@ -197,20 +192,6 @@ def test_application_extra_yaml_transforms(
     assert project.parts["snapcraft/core"]["build-snaps"] == ["test-snap"]
 
 
-def test_application_managed_core20_fallback(monkeypatch, new_dir, mocker):
-    monkeypatch.setenv("SNAPCRAFT_BUILD_ENVIRONMENT", "managed-host")
-
-    (new_dir / "snap").mkdir()
-
-    mock_legacy_run = mocker.patch("snapcraft_legacy.cli.legacy.legacy_run")
-    mock_create_app = mocker.patch.object(application, "create_app")
-
-    application.main()
-
-    mock_create_app.assert_not_called()
-    mock_legacy_run.assert_called()
-
-
 PARSE_INFO_PROJECT = dedent(
     """\
     name: parse-info-project
@@ -319,14 +300,10 @@ def test_application_plugins():
 @pytest.mark.parametrize(
     ("base", "build_base", "expected_plugin"),
     [
-        ("core20", None, craft_parts.plugins.dotnet_plugin.DotnetPlugin),
-        ("core20", "core20", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
-        ("core20", "devel", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
         ("core22", None, craft_parts.plugins.dotnet_plugin.DotnetPlugin),
         ("core22", "core22", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
         ("core22", "devel", craft_parts.plugins.dotnet_plugin.DotnetPlugin),
         ("core24", None, craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
-        ("core24", "core20", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
         ("core24", "core22", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
         ("core24", "core24", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
         ("core24", "devel", craft_parts.plugins.dotnet_v2_plugin.DotnetV2Plugin),
@@ -335,7 +312,7 @@ def test_application_plugins():
 def test_application_dotnet_registered(
     base, build_base, expected_plugin, snapcraft_yaml
 ):
-    """dotnet plugin is enabled for core20 and later."""
+    """dotnet plugin is enabled for core22 and later."""
     snapcraft_yaml(base=base, build_base=build_base)
     app = application.create_app()
 
@@ -476,138 +453,6 @@ def test_yaml_indentation_error(bad_yaml, in_project_path, monkeypatch, capsys):
     assert "Bad snapcraft.yaml content:" in err
 
 
-@pytest.mark.parametrize("envvar", ["disable-fallback", None])
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_remote_build_argv")
-def test_run_remote_build_core24(
-    monkeypatch,
-    snapcraft_yaml,
-    base,
-    envvar,
-    mock_remote_build_run,
-    mock_run_legacy,
-):
-    """Bases core24 and later use the new remote-build."""
-    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-
-    if envvar:
-        monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", envvar)
-    else:
-        monkeypatch.delenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", raising=False)
-
-    application.main()
-
-    mock_remote_build_run.assert_called_once()
-    mock_run_legacy.assert_not_called()
-
-
-@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
-@pytest.mark.usefixtures("mock_remote_build_argv")
-def test_run_remote_build_core24_error(monkeypatch, snapcraft_yaml, base, capsys):
-    """Error if using force-fallback for core24 or newer."""
-    snapcraft_yaml_dict = {"base": base, "build-base": "devel", "grade": "devel"}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "force-fallback")
-
-    application.main()
-
-    _, err = capsys.readouterr()
-    assert re.match(
-        r"^'SNAPCRAFT_REMOTE_BUILD_STRATEGY=force-fallback' cannot be used for core24 and newer snaps\.\n"
-        r"Recommended resolution: Unset the environment variable or set it to 'disable-fallback'\.\n"
-        r"For more information, check out: .*/explanation/remote-build",
-        err,
-    )
-
-
-@pytest.mark.parametrize("base", const.LEGACY_BASES)
-@pytest.mark.usefixtures("mock_remote_build_argv")
-def test_run_envvar_disable_fallback_core20(snapcraft_yaml, base, monkeypatch, capsys):
-    """core20 bases cannot use the new remote-build."""
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "disable-fallback")
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-
-    application.main()
-
-    _, err = capsys.readouterr()
-    assert re.match(
-        r"'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' cannot be used for core20 snaps\.\n"
-        r"Recommended resolution: Unset the environment variable or set it to 'force-fallback'\.\n"
-        r"For more information, check out: .*/explanation/remote-build",
-        err,
-    )
-
-
-@pytest.mark.parametrize("base", const.LEGACY_BASES | {"core22"})
-@pytest.mark.usefixtures("mock_remote_build_argv")
-def test_run_envvar_force_fallback_core22(
-    snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
-):
-    """core22 and older bases run legacy remote-build if envvar is `force-fallback`."""
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "force-fallback")
-
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    application.main()
-
-    mock_run_legacy.assert_called_once()
-    mock_remote_build_run.assert_not_called()
-
-
-@pytest.mark.parametrize("base", const.LEGACY_BASES)
-@pytest.mark.usefixtures("mock_remote_build_argv")
-def test_run_envvar_force_fallback_unset_core20(
-    snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
-):
-    """core20 base run legacy remote-build if envvar is unset."""
-    monkeypatch.delenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", raising=False)
-
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    application.main()
-
-    mock_run_legacy.assert_called_once()
-    mock_remote_build_run.assert_not_called()
-
-
-@pytest.mark.parametrize("base", {"core22"})
-@pytest.mark.usefixtures("mock_remote_build_argv")
-def test_run_envvar_force_fallback_empty_core22(
-    snapcraft_yaml, base, mock_remote_build_run, mock_run_legacy, monkeypatch
-):
-    """core22 bases run craft-application remote-build if envvar is empty."""
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "")
-
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-    application.main()
-
-    mock_remote_build_run.assert_called_once()
-    mock_run_legacy.assert_not_called()
-
-
-@pytest.mark.parametrize("base", const.LEGACY_BASES | const.CURRENT_BASES)
-@pytest.mark.usefixtures("mock_remote_build_argv")
-def test_run_envvar_invalid(snapcraft_yaml, base, monkeypatch, capsys):
-    """core20 and core22 bases raise an error if the envvar is invalid."""
-    monkeypatch.setenv("SNAPCRAFT_REMOTE_BUILD_STRATEGY", "badvalue")
-
-    snapcraft_yaml_dict = {"base": base}
-    snapcraft_yaml(**snapcraft_yaml_dict)
-
-    application.main()
-
-    _, err = capsys.readouterr()
-    assert re.match(
-        r"Unknown value 'badvalue' in environment variable 'SNAPCRAFT_REMOTE_BUILD_STRATEGY'\.\n"
-        r"Recommended resolution: Valid values are 'disable-fallback' and 'force-fallback'\.\n"
-        r"For more information, check out: .*/explanation/remote-build",
-        err,
-    )
-
-
 @pytest.mark.parametrize("command", ["plugins", "list-plugins"])
 @pytest.mark.parametrize(
     "args",
@@ -635,42 +480,6 @@ def test_run_list_plugins(command, args, base, mocker, monkeypatch, snapcraft_ya
     mock_dispatch.assert_called_once()
 
 
-@pytest.mark.parametrize("command", ["plugins", "list-plugins"])
-@pytest.mark.parametrize("args", [["--base", "core20"], ["--base=core20"]])
-@pytest.mark.parametrize("base", const.LEGACY_BASES | const.CURRENT_BASES | {None})
-def test_run_list_plugins_classic(
-    command, args, base, mocker, monkeypatch, snapcraft_yaml
-):
-    """`list-plugins` triggers a fallback only with `--base=core20`."""
-    monkeypatch.setattr("sys.argv", ["snapcraft", command, *args])
-    if base:
-        snapcraft_yaml(base=base)
-    mock_dispatch = mocker.patch(
-        "craft_application.application.Application._get_dispatcher"
-    )
-
-    app = application.create_app()
-    with pytest.raises(ClassicFallback):
-        app.run()
-
-    mock_dispatch.assert_not_called()
-
-
-def test_run_expand_extensions_classic(mocker, monkeypatch, snapcraft_yaml):
-    """`expand-extensions` triggers a fallback for core20 snaps."""
-    monkeypatch.setattr("sys.argv", ["snapcraft", "expand-extensions"])
-    snapcraft_yaml(base="core20")
-    mock_dispatch = mocker.patch(
-        "craft_application.application.Application._get_dispatcher"
-    )
-
-    app = application.create_app()
-    with pytest.raises(ClassicFallback):
-        app.run()
-
-    mock_dispatch.assert_not_called()
-
-
 @pytest.mark.parametrize("base", const.CURRENT_BASES | {None})
 def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
     """Do not trigger a classic fallback for `version`."""
@@ -690,9 +499,6 @@ def test_run_version(base, mocker, monkeypatch, snapcraft_yaml):
 @pytest.mark.parametrize(
     ("base", "build_base", "use_craftapp_lib"),
     [
-        ("core20", None, False),
-        ("core20", "core20", False),
-        ("core20", "devel", False),
         ("core22", None, False),
         ("core22", "core22", False),
         ("core22", "devel", False),

@@ -19,7 +19,7 @@ The following code comprises the project file of a Go tool, `woke
 <https://github.com/get-woke/woke>`_. This project is a text analysis tool that detects
 exclusive language.
 
-.. collapse:: woke project file
+.. dropdown:: woke project file
 
     .. literalinclude:: ../code/integrations/example-go-recipe.yaml
         :caption: snapcraft.yaml

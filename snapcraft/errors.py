@@ -16,9 +16,12 @@
 
 """Snapcraft error definitions."""
 
+import os
 import subprocess
 
 from craft_cli import CraftError
+
+from . import const
 
 
 class ClassicFallback(BaseException):
@@ -138,19 +141,27 @@ class ProjectMissing(SnapcraftError):
         )
 
 
-class LegacyFallback(Exception):
-    """Fall back to legacy snapcraft implementation."""
+class MissingBase(SnapcraftError):
+    """No base defined in project."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Project file has no base or build-base.",
+            docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/crafting/specify-a-base",
+        )
 
 
 class MaintenanceBase(SnapcraftError):
     """Error for bases under ESM and no longer supported in this release."""
 
-    def __init__(self, base: str) -> None:
+    def __init__(self, base: str | None) -> None:
         channel: str | None = None
         if base == "core":
             channel = "4.x"
         elif base == "core18":
             channel = "7.x"
+        elif base == "core20":
+            channel = "8.x"
 
         resolution: str | None = None
         if channel:
@@ -205,4 +216,17 @@ class SnapPackError(SnapcraftError):
         super().__init__(
             message="Snapd failed to pack",
             details=self._get_error_string_from_stderr(call_error.stderr),
+        )
+
+
+class RemovedCommand(SnapcraftError):
+    """Error for a command that was removed."""
+
+    def __init__(self, removed_command: str, new_command: str) -> None:
+        super().__init__(
+            message=const.REMOVED_COMMAND_MESSAGE.format(
+                old=removed_command, new=new_command
+            ),
+            resolution=const.REMOVED_COMMAND_RESOLUTION.format(new=new_command),
+            retcode=os.EX_USAGE,
         )

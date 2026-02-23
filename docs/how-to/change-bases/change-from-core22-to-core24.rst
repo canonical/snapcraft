@@ -62,11 +62,10 @@ available for older bases, core24 snaps must use the new remote builder.
 Platforms
 ~~~~~~~~~
 
-A new ``platforms`` key is the way for core24 snaps to
-declare the systems where the snap should be built. This aligns with
-`Charmcraft’s <https://canonical-charmcraft.readthedocs-hosted.com/en/stable/reference/platforms/>`_
-and `Rockcraft’s <https://canonical-rockcraft.readthedocs-hosted.com/en/stable/reference/rockcraft.yaml/#platforms>`__
-``platforms`` key.
+A new ``platforms`` key is the way for core24 snaps to declare the systems where the
+snap should be built. This aligns with :external+charmcraft:ref:`Charmcraft's
+<charmcraft-yaml-key-bases>` and :external+rockcraft:ref:`Rockcraft's
+<rockcraft-yaml-platform-keys>` ``platforms`` key.
 
 ``platforms`` is an optional key. If it's not defined, then Snapcraft will
 build a snap for the host architecture. Valid architectures are defined

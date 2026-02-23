@@ -15,7 +15,7 @@ Example Arduino IDE project file
 The following code comprises the project file of a GTK2 app, the legacy `Arduino IDE
 <https://github.com/arduino/Arduino>`_.
 
-.. collapse:: Arduino IDE project file
+.. dropdown:: Arduino IDE project file
 
     .. literalinclude:: ../code/integrations/example-gtk2-recipe.yaml
         :caption: snapcraft.yaml

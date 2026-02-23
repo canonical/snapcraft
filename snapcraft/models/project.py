@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 import textwrap
 from typing import TYPE_CHECKING, Annotated, Any, Literal, cast
 
@@ -62,6 +63,7 @@ from snapcraft.utils import get_effective_base
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
+    from craft_application.models.project import Part
     from craft_providers import bases
 
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
@@ -439,14 +441,14 @@ class App(models.CraftBaseModel):
     )
     """The desktop file used to start an app when the desktop environment starts.
 
-    The desktop file is placed in ``$SNAP_USER_DATA/.config/autostart`` and the app
-    is launched by the app's command wrapper (``<name>.<app>``) plus any argument
-    present in the ``Exec=`` line in the ``.desktop`` file when the desktop
-    environment is started.
+    The desktop file is placed in ``$SNAP_USER_DATA/.config/autostart`` and the app is
+    launched by the app's command wrapper (``<name>.<app>``) plus any argument present
+    in the ``Exec=`` line in the ``.desktop`` file when the desktop environment is
+    started.
 
-    See `Autostart desktop files
-    <https://snapcraft.io/docs/the-snap-format#heading--autostart>`_ for an
-    example of both the desktop file and the ``Exec`` file entry.
+    See `The snap format
+    <https://snapcraft.io/docs/reference/development/yaml-schemas/the-snap-format>`__ in
+    the snap docs for an example of both the desktop file and the ``Exec`` file entry.
     """
 
     common_id: str | None = pydantic.Field(
@@ -1348,7 +1350,7 @@ class Project(models.Project):
     """
 
     # snapcraft's `name` is more general than craft-application
-    name: ProjectName = pydantic.Field(  # type: ignore[assignment]
+    name: ProjectName = pydantic.Field(
         description="The identifying name of the snap.",
         examples=["my-app", "powershell", "jupyterlab-desktop"],
     )
@@ -1433,7 +1435,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    contact: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    contact: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The snap author's contact links and email addresses.",
         examples=["[contact@example.com, https://example.com/contact]"],
@@ -1445,7 +1447,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    issues: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    issues: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The links and email addresses for submitting issues, bugs, and feature requests.",
         examples=["[issues@email.com, https://example.com/issues]"],
@@ -1515,7 +1517,7 @@ class Project(models.Project):
         * - Value
           - Description
         * - ``strict``
-          - Default for core20 and older bases. Use strict confinement.
+          - Use strict confinement.
         * - ``classic``
           - Use classic confinement.
         * - ``devmode``
@@ -2064,6 +2066,47 @@ class Project(models.Project):
             field_value = cast(UniqueList[str], [field_value])
         return field_value
 
+    @pydantic.field_validator("parts")
+    @classmethod
+    def _validate_no_snapcraftctl(
+        cls, parts: dict[str, Part], info: pydantic.ValidationInfo
+    ) -> dict[str, Part]:
+        """Provide a helpful error for using snapcraftctl in core26+."""
+        override_keys = [
+            "override-pull",
+            "override-build",
+            "override-stage",
+            "override-prime",
+        ]
+
+        # core22 and core24 can use snapcraftctl
+        if {"core22", "core24"} & {info.data.get("base"), info.data.get("build-base")}:
+            return parts
+
+        for name, part in parts.items():
+            for key in override_keys:
+                script = part.get(key)
+                if not script:
+                    continue
+
+                for line in script.splitlines():
+                    try:
+                        # ignore snapcraftctl in comments
+                        tokens = shlex.split(line, comments=True)
+                    except ValueError:
+                        # ignore malformed lines
+                        continue
+
+                    # error only if `snapcraftctl` is the command (`echo "snapcraftctl"` isn't an error)
+                    # also ignore the path prefixing the command (`${SNAP}/libexec/snapcraft/snapcraftctl default` is an error)
+                    if tokens and tokens[0].split("/")[-1] == "snapcraftctl":
+                        raise ValueError(
+                            f"Can't use 'snapcraftctl' in the {key} script for part {name!r}. "
+                            "Use 'craftctl' instead."
+                        )
+
+        return parts
+
     @override
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> Self:
@@ -2074,8 +2117,9 @@ class Project(models.Project):
     def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
         """Convert to a dictionary."""
         data: dict = super().marshal()
-        if isinstance(data.get("type"), ProjectType):
-            data["type"] = data["type"].value
+        project_type = data.get("type")
+        if isinstance(project_type, ProjectType):
+            data["type"] = project_type.value
         return data
 
     def _get_content_plugs(self) -> list[ContentPlug]:
@@ -2283,7 +2327,7 @@ class StableBaseProject(Project):
         validate_default=True,
         default=None,
         description="The baseline system that the snap is built in.",
-        examples=["core20", "core22", "core24", "devel"],
+        examples=["core22", "core24", "core26", "devel"],
     )
     """The baseline system that the snap is built in.
 
@@ -2313,7 +2357,7 @@ class StableBaseProject(Project):
 class Core22Project(StableBaseProject):
     base: Literal["core22"]  # type: ignore[assignment]
 
-    platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(
         default=None,
         description="Not available for core22. Use the `architectures` key.",
         exclude=True,

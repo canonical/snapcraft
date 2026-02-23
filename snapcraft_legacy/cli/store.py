@@ -161,17 +161,6 @@ def promote(snap_name, from_channel, to_channel, yes, **kwargs):
         raise click.BadOptionUsage(
             "--to-channel", "--from-channel and --to-channel cannot be the same."
         )
-    elif (
-        parsed_from_channel.risk == "edge"
-        and parsed_from_channel.branch is None
-        and yes
-    ):
-        raise click.BadOptionUsage(
-            "--from-channel",
-            "{!r} is not a valid set value for --from-channel when using --yes.".format(
-                parsed_from_channel
-            ),
-        )
 
     store = storeapi.StoreClient()
     status_payload = store.get_snap_status(snap_name)

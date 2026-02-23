@@ -181,10 +181,9 @@ Snapcraft forum asking for it.
 Version scripts
 ---------------
 
-The top-level ``version-script`` key has been `deprecated
-<https://snapcraft.io/docs/deprecation-notices/dn10>`_ in favor of ``adopt-info``. This
-requires you to specify ``adopt-info`` with a reference to the part in which the version
-data (and some other metadata) may be set.
+The top-level ``version-script`` key has been deprecated in favor of ``adopt-info``.
+This requires you to specify ``adopt-info`` with a reference to the part in which the
+version data (and some other metadata) may be set.
 
 Within the parts section, use ``snapcraftctl set-version`` to define the Snapcraft
 project version number used at build time. For example, the `Cointop snap's core

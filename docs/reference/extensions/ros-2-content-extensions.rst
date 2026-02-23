@@ -9,21 +9,21 @@ settings to enable `content sharing <https://snapcraft.io/docs/content-interface
 These extensions are split across ROS 2 versions and content types, and are declared
 with the format ``ros2-<version>-<metapackage>``. The available extensions are:
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: ROS 2 Foxy
+    .. tab-item:: ROS 2 Foxy
 
         - ``ros2-foxy-ros-core``
         - ``ros2-foxy-ros-base``
         - ``ros2-foxy-desktop``
 
-    .. group-tab:: ROS 2 Humble
+    .. tab-item:: ROS 2 Humble
 
         - ``ros2-humble-ros-core``
         - ``ros2-humble-ros-base``
         - ``ros2-humble-desktop``
 
-    .. group-tab:: ROS 2 Jazzy
+    .. tab-item:: ROS 2 Jazzy
 
         - ``ros2-jazzy-ros-core``
         - ``ros2-jazzy-ros-base``
@@ -81,7 +81,7 @@ text has been altered for ease of reading.
 The file is based on the :ref:`ros2-talker-listener <how-to-craft-an-ros-2-app-project-files>`
 project.
 
-.. collapse:: Expanded project file for ros2-talker-listener
+.. dropdown:: Expanded project file for ros2-talker-listener
 
     .. literalinclude:: code/ros-2-content-desktop-extension-talker-listener-expanded.diff
         :language: diff

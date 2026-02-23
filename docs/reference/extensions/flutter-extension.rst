@@ -32,7 +32,7 @@ The Flutter extensions add the following parts to the project file. The
 ``gnome-3-28-extension`` part is noteworthy, as it provides many of the dependent
 components that Flutter-based apps need.
 
-.. collapse:: Included parts
+.. dropdown:: Included parts
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -62,7 +62,7 @@ Included interface connections
 
 The Flutter extensions connect the following snap-wide plugs.
 
-.. collapse:: Included snap-wide plugs
+.. dropdown:: Included snap-wide plugs
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -87,7 +87,7 @@ The Flutter extensions connect the following snap-wide plugs.
 
 They also connect the following plugs in apps that use the extensions.
 
-.. collapse:: Included app plugs
+.. dropdown:: Included app plugs
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -106,7 +106,7 @@ Included environment variables
 
 The extensions add one runtime environment variable:
 
-.. collapse:: Included runtime environment variables
+.. dropdown:: Included runtime environment variables
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -120,7 +120,7 @@ Included layouts
 
 The Flutter extensions add the following :ref:`layouts <reference-layouts>`:
 
-.. collapse:: Included layouts
+.. dropdown:: Included layouts
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -145,7 +145,7 @@ text has been altered for ease of reading.
 
 The file is based on the :ref:`my-flutter-app <how-to-craft-a-flutter-app>` project.
 
-.. collapse:: Expanded project file for my-flutter-app
+.. dropdown:: Expanded project file for my-flutter-app
 
     .. literalinclude:: code/flutter-extension-my-flutter-app-expanded.diff
         :language: diff

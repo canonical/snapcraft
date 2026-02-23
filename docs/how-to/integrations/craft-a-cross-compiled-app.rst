@@ -14,7 +14,7 @@ The following code comprises the project file for a project that uses libcurl. T
 complete code can be found in `this repository
 <https://github.com/snapcraft-docs/hello-curl>`_.
 
-.. collapse:: hello-curl project
+.. dropdown:: hello-curl project
 
   .. literalinclude:: ../code/integrations/example-cross-compiled-app-recipe.yaml
       :caption: snapcraft.yaml

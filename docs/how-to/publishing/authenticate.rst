@@ -116,5 +116,5 @@ sections.
 
 Note that ``snapcraft login`` sometimes fails to unlock GNOME keyring when accessing a
 Linux system with a desktop environment from a virtual console or SSH. GNOME keyring
-will not present a CLI password prompt to unlock the keyring, causing Snapcraft to hang
+will not present a CLI password prompt to unlock the keyring, causing Snapcraft to stall
 and timeout.

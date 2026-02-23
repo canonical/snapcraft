@@ -27,7 +27,7 @@ from craft_application.util import strtobool
 from craft_cli import BaseCommand, emit
 from overrides import overrides
 
-from snapcraft import const, pack, utils
+from snapcraft import errors, pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 
@@ -107,29 +107,6 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             default=os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS", "") != "",
             help="Allow using experimental (unstable) plugins.",
         )
-
-        # --enable-experimental-extensions is only available in legacy
-        parser.add_argument(
-            "--enable-experimental-extensions",
-            action="store_true",
-            help=argparse.SUPPRESS,
-        )
-        # --enable-developer-debug is only available in legacy
-        parser.add_argument(
-            "--enable-developer-debug",
-            action="store_true",
-            help=argparse.SUPPRESS,
-        )
-        # --enable-experimental-target-arch is only available in legacy
-        parser.add_argument(
-            "--enable-experimental-target-arch",
-            action="store_true",
-            help=argparse.SUPPRESS,
-        )
-        # --target-arch is only available in legacy
-        parser.add_argument("--target-arch", help=argparse.SUPPRESS)
-        # --provider is only available in legacy
-        parser.add_argument("--provider", help=argparse.SUPPRESS)
 
     @overrides
     def run(self, parsed_args: argparse.Namespace):
@@ -296,11 +273,7 @@ class SnapCommand(_LifecycleCommand):
 
     @overrides
     def run(self, parsed_args: argparse.Namespace):
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new="pack"),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command="pack")
 
 
 class CleanCommand(_LifecycleStepCommand):

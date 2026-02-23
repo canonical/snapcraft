@@ -1,5 +1,5 @@
 name: exit1
-version: '0.1'
+version: "0.1"
 summary: Single-line elevator pitch for your amazing snap
 description: |
   This is my-snap's description. You have a paragraph or two to tell the
@@ -8,11 +8,10 @@ description: |
   store.
 
 grade: devel
-base: core20
+base: core22
 confinement: devmode
 
 parts:
   test:
     plugin: nil
     override-pull: exit 1
-

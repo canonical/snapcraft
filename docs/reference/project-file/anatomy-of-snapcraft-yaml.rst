@@ -21,7 +21,7 @@ Simple project file
 yt-dlp is a command line tool for extracting online videos, and is a
 self-contained Python project.
 
-.. collapse:: yt-dlp project file
+.. dropdown:: yt-dlp project file
 
     .. literalinclude:: code/yt-dlp-recipe.yaml
         :caption: snapcraft.yaml
@@ -177,7 +177,7 @@ retrieving local weather conditions.
 The metadata, base, and confinement declarations are rather similar to the
 simple example, but with some notable differences.
 
-.. collapse:: wethr project file
+.. dropdown:: wethr project file
 
     .. literalinclude:: code/wethr-recipe.yaml
         :caption: snapcraft.yaml
@@ -211,7 +211,7 @@ in two stages:
 
    #. A step in the build lifecycle is manually overridden.
    #. A custom script is used to derive the version string.
-   #. The version string is set using the Snapcraftctl scriptlet.
+   #. The version string is set using the craftctl scriptlet.
 
 Alternatively, in this particular example, the version field could also be
 manually set with ``version: '1.5'``.

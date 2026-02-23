@@ -47,7 +47,7 @@ and ``core16`` are two distinct packages.
    core16 is not a supported base. With no stable release, its beta and
    candidate releases are classed as experimental.
 
-See `Snapcraft and ESM`_ for details bases built from ESM releases.
+The :ref:`reference-support-schedule` details the support timeline for ESM releases.
 
 ``base``
 --------
