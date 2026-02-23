@@ -57,7 +57,7 @@ cd {{ craft_part_build_dir }}/kernel-src
 } > {{ craft_project_dir }}/custom_config_fragment
     ./debian/scripts/misc/annotations \
        --arch {{ target_arch }} \
-       --flavour {{ ubuntu_kernel_flavour }} \
+       --flavour {{ ubuntu_kernel_flavor }} \
        --update {{ craft_project_dir }}/custom_config_fragment
 {% endif %}
 
@@ -65,7 +65,7 @@ cd {{ craft_part_build_dir }}/kernel-src
     {# Use full defconfig #}
     ./debian/scripts/misc/annotations \
             --arch {{ target_arch }} \
-            --flavour {{ ubuntu_kernel_flavour }} \
+            --flavour {{ ubuntu_kernel_flavor }} \
             --import {{ craft_project_dir }}/{{ ubuntu_kernel_defconfig }}
 {% endif %}
 
@@ -90,8 +90,8 @@ fakeroot debian/rules clean
 fakeroot debian/rules updateconfigs || true
 fakeroot debian/rules printenv
 
-fakeroot debian/rules build-{{ ubuntu_kernel_flavour }}
-fakeroot debian/rules binary-{{ ubuntu_kernel_flavour }}
+fakeroot debian/rules build-{{ ubuntu_kernel_flavor }}
+fakeroot debian/rules binary-{{ ubuntu_kernel_flavor }}
 fakeroot debian/rules binary-headers
 
 cd {{ craft_part_build_dir }}
