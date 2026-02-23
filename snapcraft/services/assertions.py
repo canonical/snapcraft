@@ -223,7 +223,7 @@ class Assertion(base.AppService):
 
     @staticmethod
     def _write_to_file(yaml_data: str) -> pathlib.Path:
-        with tempfile.NamedTemporaryFile() as temp_file:
+        with tempfile.NamedTemporaryFile(suffix=".yaml") as temp_file:
             filepath = pathlib.Path(temp_file.name)
         craft_cli.emit.trace(f"Writing yaml data to temporary file '{filepath}'.")
         filepath.write_text(yaml_data, encoding="utf-8")

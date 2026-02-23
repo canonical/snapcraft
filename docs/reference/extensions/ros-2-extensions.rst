@@ -290,7 +290,7 @@ The files are based on the :ref:`ros2-talker-listener
                 :lines: 3-
                 :emphasize-lines: 24-34, 39-59
 
-    .. group-tab:: ROS 2 Humble
+    .. group-tab:: ROS 2 Jazzy
 
         .. collapse:: Expanded project file for ros2-talker-listener
 
