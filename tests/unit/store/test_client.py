@@ -171,6 +171,105 @@ def list_revisions_payload():
 
 
 @pytest.fixture
+def list_validation_sets_payload():
+    return {
+        "assertions": [
+            {
+                "headers": {
+                    "account_id": "test-account-id",
+                    "name": "test-validation-set",
+                    "revision": "3",
+                    "sequence": "5",
+                    "snaps": [
+                        {
+                            "name": "hello-world",
+                            "id": "test-snap-id",
+                            "presence": "optional",
+                            "revision": "6",
+                            "components": {
+                                "component-with-revision": {
+                                    "presence": "required",
+                                    "revision": "10",
+                                },
+                                "component-without-revision": "invalid",
+                            },
+                        }
+                    ],
+                    "authority_id": "test-authority-id",
+                    "series": "16",
+                    "timestamp": "2026-01-01T10:20:30Z",
+                    "type": "validation-set",
+                }
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def build_validation_set_payload():
+    return {
+        "account_id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [
+            {
+                "name": "hello-world",
+                "id": "test-snap-id",
+                "presence": "required",
+                "revision": "6",
+                "components": {
+                    "component-with-revision": {
+                        "presence": "required",
+                        "revision": "10",
+                    },
+                    "component-without-revision": "invalid",
+                },
+            }
+        ],
+        "authority_id": "test-authority-id",
+        "series": "16",
+        "timestamp": "2026-01-01T10:20:30Z",
+        "type": "validation-set",
+    }
+
+
+@pytest.fixture
+def post_validation_set_payload():
+    return {
+        "assertions": [
+            {
+                "headers": {
+                    "account_id": "test-account-id",
+                    "name": "test-validation-set",
+                    "revision": "4",
+                    "sequence": "5",
+                    "snaps": [
+                        {
+                            "name": "hello-world",
+                            "id": "test-snap-id",
+                            "presence": "required",
+                            "revision": "6",
+                            "components": {
+                                "component-with-revision": {
+                                    "presence": "required",
+                                    "revision": "10",
+                                },
+                                "component-without-revision": "invalid",
+                            },
+                        }
+                    ],
+                    "authority_id": "test-authority-id",
+                    "series": "16",
+                    "timestamp": "2026-01-01T10:20:30Z",
+                    "type": "validation-set",
+                }
+            }
+        ]
+    }
+
+
+@pytest.fixture
 def list_confdb_schemas_payload():
     return {
         "assertions": [
@@ -1306,6 +1405,205 @@ def test_post_confdb_schema_unmarshal_error(fake_client, post_confdb_schema_payl
     assert str(raised.value) == "Received invalid confdb schema from the store"
     assert raised.value.details == (
         "Bad confdb schema content:\n- field 'name' required in top-level configuration"
+    )
+
+
+########################
+# List Validation Sets #
+########################
+
+
+@pytest.mark.parametrize("name", [None, "test-validation-set"])
+@pytest.mark.parametrize("sequence", [None, 123])
+def test_list_validation_sets(
+    name, sequence, fake_client, list_validation_sets_payload, check
+):
+    """Test the list validation sets endpoint."""
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(list_validation_sets_payload).encode()
+    )
+
+    validation_sets = client.StoreClientCLI().list_validation_sets(
+        name=name, sequence=sequence
+    )
+
+    check.is_instance(validation_sets, list)
+    for validation_set in validation_sets:
+        check.is_instance(validation_set, models.ValidationSetAssertion)
+    check.equal(
+        fake_client.request.mock_calls,
+        [
+            call(
+                "GET",
+                f"https://dashboard.snapcraft.io/api/v2/validation-sets{f'/{name}' if name else ''}",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                params={"sequence": sequence} if sequence else {},
+            )
+        ],
+    )
+
+
+def test_list_validation_sets_empty(fake_client, check):
+    """Test the list validation sets endpoint with nothing returned."""
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps({"assertions": []}).encode()
+    )
+
+    validation_sets = client.StoreClientCLI().list_validation_sets()
+
+    check.equal(validation_sets, [])
+    check.equal(
+        fake_client.request.mock_calls,
+        [
+            call(
+                "GET",
+                "https://dashboard.snapcraft.io/api/v2/validation-sets",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+                params={},
+            )
+        ],
+    )
+
+
+def test_list_validation_sets_unmarshal_error(
+    fake_client, list_validation_sets_payload
+):
+    """Raise an error if the response cannot be unmarshalled."""
+    list_validation_sets_payload["assertions"][0]["headers"].pop("name")
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(list_validation_sets_payload).encode()
+    )
+
+    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+        client.StoreClientCLI().list_validation_sets()
+
+    assert str(raised.value) == "Received invalid validation set from the store"
+    assert raised.value.details == (
+        "Bad validation set content:\n- field 'name' required in top-level configuration"
+    )
+
+
+########################
+# Build Validation Set #
+########################
+
+
+def test_build_validation_set(fake_client, build_validation_set_payload):
+    """Test the build validation set endpoint."""
+    mock_validation_set = Mock(spec=models.ValidationSetAssertion)
+    expected_validation_set = models.ValidationSetAssertion(
+        **build_validation_set_payload
+    )
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(build_validation_set_payload).encode()
+    )
+
+    validation_set = client.StoreClientCLI().build_validation_set(
+        validation_set=mock_validation_set
+    )
+
+    assert validation_set == expected_validation_set
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/api/v2/validation-sets/build-assertion",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=mock_validation_set.marshal(),
+        )
+    ]
+
+
+def test_build_validation_set_unmarshal_error(
+    fake_client, build_validation_set_payload
+):
+    """Raise an error if the response cannot be unmarshalled."""
+    mock_validation_set = Mock(spec=models.ValidationSetAssertion)
+    build_validation_set_payload.pop("name")
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(build_validation_set_payload).encode()
+    )
+
+    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+        client.StoreClientCLI().build_validation_set(validation_set=mock_validation_set)
+
+    assert str(raised.value) == "Received invalid validation set from the store"
+    assert raised.value.details == (
+        "Bad validation set content:\n- field 'name' required in top-level configuration"
+    )
+
+
+#######################
+# Post Validation Set #
+#######################
+
+
+def test_post_validation_set(fake_client, post_validation_set_payload):
+    """Test the post validation set endpoint."""
+    expected_validation_set = models.ValidationSetAssertion(
+        **post_validation_set_payload["assertions"][0]["headers"],
+    )
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(post_validation_set_payload).encode()
+    )
+
+    validation_set = client.StoreClientCLI().post_validation_set(
+        validation_set_data=b"test-data"
+    )
+
+    assert validation_set == expected_validation_set
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/api/v2/validation-sets",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/x.ubuntu.assertion",
+            },
+            data=b"test-data",
+        )
+    ]
+
+
+@pytest.mark.parametrize("num_assertions", [0, 2])
+def test_post_validation_set_wrong_payload_error(
+    num_assertions, fake_client, post_validation_set_payload
+):
+    """Error if the wrong number of assertions are returned."""
+    post_validation_set_payload["assertions"] = (
+        post_validation_set_payload["assertions"] * num_assertions
+    )
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(post_validation_set_payload).encode()
+    )
+
+    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+        client.StoreClientCLI().post_validation_set(validation_set_data=b"test-data")
+
+    assert str(raised.value) == "Received invalid validation set from the store"
+
+
+def test_post_validation_set_unmarshal_error(fake_client, post_validation_set_payload):
+    """Raise an error if the response cannot be unmarshalled."""
+    post_validation_set_payload["assertions"][0]["headers"].pop("name")
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(post_validation_set_payload).encode()
+    )
+
+    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+        client.StoreClientCLI().post_validation_set(validation_set_data=b"test-data")
+
+    assert str(raised.value) == "Received invalid validation set from the store"
+    assert raised.value.details == (
+        "Bad validation set content:\n- field 'name' required in top-level configuration"
     )
 
 

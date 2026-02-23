@@ -41,9 +41,9 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
 
         Shows the account ID, name, revision, and last modified date of each confdb-schema.
 
-        If a name is provided, only the confdb schema with that name will be listed.
+        If a name is provided, only the confdb schema with that name is listed.
 
-        Use the ``edit-confdb-schema`` command create and edit confdb schemas.
+        Use the 'edit-confdb-schema' command modify confdb schemas.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
@@ -91,19 +91,19 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
     """Edit a confdb schema."""
 
     name = "edit-confdb-schema"
-    help_msg = "Edit or create a confdb-schema"
+    help_msg = "Edit a confdb-schema"
     overview = textwrap.dedent(
         """
         Edit a confdb schema.
 
-        If the confdb schema does not exist, then a new confdb schema will be created.
+        If the confdb schema does not exist, then a new one is created.
 
         If a key name is not provided, the default key is used.
 
         The account ID of the authenticated account can be determined with the
-        ``snapcraft whoami`` command.
+        'snapcraft whoami' command.
 
-        Use the ``confdb-schemas`` command to view existing confdb schemas.
+        Use the 'confdb-schemas' command to view existing confdb schemas.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
