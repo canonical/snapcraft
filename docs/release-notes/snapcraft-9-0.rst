@@ -185,7 +185,7 @@ The following issues have been resolved in Snapcraft 9.0.
 Snapcraft 9.0.0
 ~~~~~~~~~~~~~~~~
 
-- `snapcraft#6054`_ The gnome extension now adds a layout declaration to address a libproxy error during certain app launching scenarios.
+- `snapcraft#6054`_ In the GNOME extension, fix a missing link to libproxy
 
 
 Contributors
