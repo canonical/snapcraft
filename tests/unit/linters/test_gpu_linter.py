@@ -272,12 +272,7 @@ def test_gpu_linter_core24(mocker, new_dir, mock_elf_files, files, expected_coun
 @pytest.mark.parametrize(
     ("base_config"),
     [
-        pytest.param({"type": "base", "build-base": "core24"}, id="base"),
-        pytest.param({"type": "kernel", "build-base": "core24"}, id="kernel"),
-        pytest.param({"type": "snapd", "build-base": "core24"}, id="snapd"),
-        pytest.param(
-            {"type": "gadget", "base": "core24", "build-base": "core24"}, id="gadget"
-        ),
+        pytest.param({"type": str(proj_type), "build-base": "core24"}, id=proj_type) for proj_type in const.ProjectType if proj_type != const.ProjectType.APP
     ],
 )
 def test_gpu_linter_non_app_snap_types(mocker, new_dir, mock_elf_files, base_config):
