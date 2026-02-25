@@ -20,7 +20,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from snapcraft import linters, models
+from snapcraft import const, linters, models
 from snapcraft.elf import ElfFile, elf_utils
 from snapcraft.linters.gpu_linter import GpuLinter
 from snapcraft.meta import snap_yaml
@@ -272,7 +272,14 @@ def test_gpu_linter_core24(mocker, new_dir, mock_elf_files, files, expected_coun
 @pytest.mark.parametrize(
     ("base_config"),
     [
-        pytest.param({"type": str(proj_type), "build-base": "core24"}, id=proj_type) for proj_type in const.ProjectType if proj_type != const.ProjectType.APP
+        pytest.param({"type": str(proj_type), "build-base": "core24"}, id=proj_type)
+        for proj_type in const.ProjectType
+        if proj_type not in [const.ProjectType.APP, const.ProjectType.GADGET]
+    ]
+    + [
+        pytest.param(
+            {"type": "gadget", "base": "core24", "build-base": "core24"}, id="gadget"
+        ),
     ],
 )
 def test_gpu_linter_non_app_snap_types(mocker, new_dir, mock_elf_files, base_config):
