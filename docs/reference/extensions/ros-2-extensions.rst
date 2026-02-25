@@ -7,7 +7,7 @@ ROS 2 extensions
 The ROS 2 extensions, helps fill in common settings for software built with the  `ROS 2
 <https://ros.org>`_ libraries.
 
-There are three extensions in this family, each for a different version of ROS 2.
+There are four extensions in this family, each for a different version of ROS 2.
 
 .. list-table::
 
@@ -31,9 +31,14 @@ There are three extensions in this family, each for a different version of ROS 2
       - :ref:`ROS 2 Jazzy Jalisco <reference-ros-2-content-extensions>`
       - core24
 
+    * - ROS 2 Lyrical
+      - ``ros2-lyrical``
+      - :ref:`ROS 2 Lyrical Luth <reference-ros-2-content-extensions>`
+      - core26
+
         :ref:`Experimental extensions enabled <how-to-enable-experimental-extensions>`
 
-All three extensions require Snapcraft 7.3 or higher.
+All four extensions require Snapcraft 7.3 or higher.
 
 
 Included parts
@@ -69,7 +74,7 @@ The extension adds its own part to the project, which pulls in the ROS 2 build p
                 :caption: snapcraft.yaml
 
                 ros2-humble/ros2-launch:
-                  source: /snap/snapcraft/13181/share/snapcraft/extensions/ros2
+                  source: /snap/snapcraft/current/share/snapcraft/extensions/ros2
                   plugin: make
                   build-packages:
                     - ros-humble-ros-environment
@@ -86,13 +91,30 @@ The extension adds its own part to the project, which pulls in the ROS 2 build p
                 :caption: snapcraft.yaml
 
                 ros2-jazzy/ros2-launch:
-                  source: /snap/snapcraft/13181/share/snapcraft/extensions/ros2
+                  source: /snap/snapcraft/current/share/snapcraft/extensions/ros2
                   plugin: make
                   build-packages:
                     - ros-jazzy-ros-environment
                     - ros-jazzy-ros-workspace
                     - ros-jazzy-ament-index-cpp
                     - ros-jazzy-ament-index-python
+
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
+
+        .. dropdown:: Included parts
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                ros2-lyrical/ros2-launch:
+                  source: /snap/snapcraft/current/share/snapcraft/extensions/ros2
+                  plugin: make
+                  build-packages:
+                    - ros-lyrical-ros-environment
+                    - ros-lyrical-ros-workspace
+                    - ros-lyrical-ament-index-cpp
+                    - ros-lyrical-ament-index-python
 
 
 Included build environment variables
@@ -138,6 +160,18 @@ variables.
                 build-environment:
                   - ROS_VERSION: "2"
                   - ROS_DISTRO: jazzy
+
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
+
+        .. dropdown:: Included build environment variables
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                build-environment:
+                  - ROS_VERSION: "2"
+                  - ROS_DISTRO: lyrical
 
 
 Included runtime environment settings
@@ -193,6 +227,22 @@ ROS 2 before launching the app, similar to sourcing the typical ROS 2
                   ROS_VERSION: "2"
                   ROS_DISTRO: jazzy
                   PYTHONPATH: $SNAP/opt/ros/jazzy/lib/python3.12/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}
+                  ROS_HOME: $SNAP_USER_DATA/ros
+                command-chain:
+                  - snap/command-chain/ros2-launch
+
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
+
+        .. dropdown:: Included runtime environment settings
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                environment:
+                  ROS_VERSION: "2"
+                  ROS_DISTRO: lyrical
+                  PYTHONPATH: $SNAP/opt/ros/lyrical/lib/python3.14/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}
                   ROS_HOME: $SNAP_USER_DATA/ros
                 command-chain:
                   - snap/command-chain/ros2-launch
@@ -267,6 +317,26 @@ installs the necessary GPG key.
                     suites:
                       - noble
 
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
+
+        .. dropdown:: Included package repositories
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                package-repositories:
+                  - type: apt
+                    url: http://packages.ros.org/ros2/ubuntu
+                    components:
+                      - main
+                    formats:
+                      - deb
+                    key-id: C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+                    key-server: keyserver.ubuntu.com
+                    suites:
+                      - resolute
+
 
 Example expanded project file
 -----------------------------
@@ -310,6 +380,16 @@ The files are based on the :ref:`ros2-talker-listener
         .. dropdown:: Expanded project file for ros2-talker-listener
 
             .. literalinclude:: code/ros-2-jazzy-extension-talker-listener-expanded.diff
+                :language: diff
+                :lines: 3-
+                :emphasize-lines: 18-28, 33-41, 43-53
+
+    .. tab-item:: ROS 2 Lyrical
+        :sync: lyrical
+
+        .. dropdown:: Expanded project file for ros2-talker-listener
+
+            .. literalinclude:: code/ros-2-lyrical-extension-talker-listener-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 18-28, 33-41, 43-53

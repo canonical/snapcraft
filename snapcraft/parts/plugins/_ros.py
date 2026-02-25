@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -85,7 +85,7 @@ def _parse_rosdep_resolve_dependencies(
 class RosPlugin(plugins.Plugin):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
-    _MAP_CORE_ROSDISTRO = {"core24": "jazzy"}
+    _MAP_CORE_ROSDISTRO = {"core24": "jazzy", "core26": "lyrical"}
 
     @overrides
     def get_build_snaps(self) -> set[str]:
