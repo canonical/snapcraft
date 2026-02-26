@@ -679,7 +679,7 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.28.0"
+version = "2.28.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
@@ -691,9 +691,9 @@ dependencies = [
     { name = "semver" },
     { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-questing' and extra == 'group-9-snapcraft-dev-resolute')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/80/5d2ab6748840460d0d96ae95cf56be6d6c15c57266e4f2ced34ac0f8c44a/craft_parts-2.28.0.tar.gz", hash = "sha256:8de965c14272776c23e1a8836178448bf3dc9baa713a4bd2d68fe686885b093a", size = 887516, upload-time = "2026-01-09T15:03:42.634Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c3/90/14402ebda1e74b8407c47cb922981d2a65e11c0e9c2b96eb310caf7f5775/craft_parts-2.28.1.tar.gz", hash = "sha256:8f35a54c05d10693cf882a3a0ff272d2dd9a937932832172b5545b5f4b68b9a8", size = 888422, upload-time = "2026-02-26T15:57:31.108Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/94/a0d43886e362cde5e19c87d60742d766feab0e41e980baa6e31be179b89b/craft_parts-2.28.0-py3-none-any.whl", hash = "sha256:92c839430986afbfb841cd1d58d705ca67a5ee8fee8daa750bef1819ff610a53", size = 529746, upload-time = "2026-01-09T15:03:41.025Z" },
+    { url = "https://files.pythonhosted.org/packages/d3/b4/ad914efa027dc1196142a5c9cc91a8a7dc72ee762924a69541b376f04515/craft_parts-2.28.1-py3-none-any.whl", hash = "sha256:cfc6f73d2775fbcf44000243e299e7063508036f10195c0f4a60ab30f6802f57", size = 529811, upload-time = "2026-02-26T15:57:28.662Z" },
 ]
 
 [[package]]
