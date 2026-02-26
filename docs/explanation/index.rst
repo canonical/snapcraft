@@ -14,7 +14,7 @@ Bases and architectures are key concepts in snaps. They ensure that snaps are st
 and compatible across different machines.
 
 - :ref:`explanation-bases`
-- :ref:`explanation-architectures`
+- :ref:`explanation-platforms`
 
 
 Parts
@@ -63,7 +63,7 @@ communicating with local processes, and storing user credentials.
     :hidden:
 
     Cryptographic technology <cryptography>
-    architectures
+    platforms
     bases
     parts
     parts-lifecycle

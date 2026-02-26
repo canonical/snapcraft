@@ -767,11 +767,11 @@ Remote build
 Documentation
 =============
 
-* Add an :ref:`explanation <explanation-architectures>` for the remote builders
+* Add an :ref:`explanation <explanation-platforms>` for the remote builders
   (`#4842`_).
 
-* Update :ref:`reference <reference-architectures>`, :ref:`how-to guide
-  <how-to-select-architectures>`, and :ref:`explanation <explanation-architectures>` for
+* Update :ref:`reference <reference-platforms>`, :ref:`how-to guide
+  <how-to-select-platforms>`, and :ref:`explanation <explanation-platforms>` for
   platforms and architectures.
 
 For a complete list of commits, check out the `8.3.1`_ release on GitHub.
@@ -1427,7 +1427,7 @@ Add new environment variables for ``build-on`` and ``build-for`` architectures:
 * ``CRAFT_ARCH_BUILD_FOR``, supersedes ``CRAFT_TARGET_ARCH``
 * ``CRAFT_ARCH_BUILD_ON``
 
-For more information, see :doc:`/reference/architectures`.
+For more information, see :doc:`/reference/platforms`.
 
 core20
 """"""
@@ -1439,7 +1439,7 @@ Add new environment variables for ``build-on`` and ``build-for`` architectures:
 * ``SNAPCRAFT_ARCH_BUILD_FOR``, supersedes ``SNAPCRAFT_TARGET_ARCH``
 * ``SNAPCRAFT_ARCH_BUILD_ON``
 
-For more information, see :doc:`/reference/architectures`.
+For more information, see :doc:`/reference/platforms`.
 
 core18
 """"""

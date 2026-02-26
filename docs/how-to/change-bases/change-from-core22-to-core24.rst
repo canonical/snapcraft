@@ -120,9 +120,9 @@ can be migrated to core24 as:
         build-on: [amd64, arm64]
         build-for: [arm64]
 
-For more information on platforms see the :ref:`how-to <how-to-select-architectures>`,
-:ref:`explanation <explanation-architectures>`, and
-:ref:`reference <reference-architectures>` pages.
+For more information on platforms see the :ref:`how-to <how-to-select-platforms>`,
+:ref:`explanation <explanation-platforms>`, and
+:ref:`reference <reference-platforms>` pages.
 
 Known issues
 ------------

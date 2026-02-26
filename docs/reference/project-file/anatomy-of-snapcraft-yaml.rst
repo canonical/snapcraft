@@ -229,7 +229,7 @@ Architectures
 ~~~~~~~~~~~~~
 
 The ``architectures`` key defines the target :doc:`platforms
-</reference/architectures>` for which the snap should be built on and built
+</reference/platforms>` for which the snap should be built on and built
 for. It requires the build system that is running the Snapcraft tool to be able
 to compile and build the snap for the listed platforms.
 

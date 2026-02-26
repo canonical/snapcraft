@@ -25,7 +25,7 @@ choosing the target CPU architectures, to the advanced, such as configuring layo
 
 - :ref:`how-to-configure-package-information`
 - :ref:`how-to-specify-a-base`
-- :ref:`how-to-select-architectures`
+- :ref:`how-to-select-platforms`
 
 
 Integrations and extensions

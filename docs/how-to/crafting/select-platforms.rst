@@ -1,7 +1,7 @@
-.. _how-to-select-architectures:
+.. _how-to-select-platforms:
 
-Select architectures
-====================
+Select platforms
+================
 
 By default, Snapcraft builds a snap to run on the same architecture as the build
 environment. This behavior can be modified with the top-level keys
@@ -13,17 +13,17 @@ plans are created.
 
 The keys are base-dependent:
 
-* ``platforms`` is used for ``core24`` snaps
-* ``architectures`` is used for ``core20`` and ``core22`` snaps
+* ``platforms`` is used for ``core24`` and higher snaps
+* ``architectures`` is used for ``core22`` snaps
 
 How to create a snap for a specific architecture
 ------------------------------------------------
 
 To create a snap that will be built on ``amd64`` and built for ``amd64``, use
-one of the project file snippets below.
+one of the following project file snippets.
 
-core24
-^^^^^^
+core24 and higher
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -37,7 +37,7 @@ Building on ``amd64`` will produce one snap built for ``amd64``.
 
 If the platform name is a valid architecture and ``build-for`` is omitted,
 ``build-for`` will assume the platform name. The following snippet will produce
-the same result as above:
+the same result:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -82,44 +82,13 @@ following snippet will produce the same result:
     architectures:
       - build-on: [amd64]
 
-core20
-^^^^^^
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    architectures:
-      - build-on: [amd64]
-        run-on: [amd64]
-
-Building on ``amd64`` will produce one snap built for ``amd64``. Snapcraft will
-not raise an error when building on another architecture. Instead, it will
-ignore the ``architectures`` key and build for the build-on architecture.
-
-If ``run-on`` is omitted, it will assume the value of ``build-on``. The
-following snippet will produce the same result:
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    architectures:
-      - build-on: [amd64]
-
-The shorthand format will also produce the same result:
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    architectures:
-      - amd64
-
 How to create a set of snaps for multiple architectures
 -------------------------------------------------------
 
-core24
-^^^^^^
+core24 and higher
+^^^^^^^^^^^^^^^^^
 
-``core24`` snaps accept a single build-for architecture per-platform. To create
+``core24`` and higher snaps accept a single build-for architecture per-platform. To create
 a set of snaps for multiple architectures, define a set of platforms:
 
 .. code-block:: yaml
@@ -139,7 +108,7 @@ when building on another architecture.
 
 If the platform name is a valid architecture and ``build-for`` is omitted,
 ``build-for`` will assume the platform name. The following snippet will produce
-the same result as above:
+the same result:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -191,40 +160,6 @@ following snippet will produce the same result:
       - build-on: [amd64]
       - build-on: [arm64]
 
-core20
-^^^^^^
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    architectures:
-      - build-on: [amd64]
-        run-on: [amd64]
-      - build-on: [arm64]
-        run-on: [arm64]
-
-Building on ``amd64`` will produce one snap built for ``amd64``. Building on
-``arm64`` will produce one snap built for ``arm64``. Snapcraft will not raise
-an error when building on another architecture. Instead, it will ignore the
-``architectures`` key and build for the build-on architecture.
-
-If ``run-on`` is omitted, it will assume the value of ``build-on``. The
-following snippet will produce the same result:
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    architectures:
-      - build-on: [amd64]
-      - build-on: [arm64]
-
-The shorthand format will also produce the same result:
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    architectures: [amd64, arm64]
-
 .. _how-to-arch-build-for-all:
 
 How to create an architecture independent snap
@@ -235,8 +170,8 @@ a snap that is a shell or python script. It cannot be combined with other
 architectures. Click :ref:`here<reference-build-for>` for more information on
 the ``all`` key.
 
-core24
-^^^^^^
+core24 and higher
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -256,21 +191,11 @@ core22
       - build-on: [amd64]
         build-for: [all]
 
-core20
-^^^^^^
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    architectures:
-      - build-on: [amd64]
-        run-on: [all]
-
 How to build a snap for a different architecture
 ------------------------------------------------
 
-core24
-^^^^^^
+core24 and higher
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -284,7 +209,7 @@ Building on ``amd64`` will produce one snap built for ``arm64``.
 
 If the platform name is a valid architecture and ``build-for`` is omitted,
 ``build-for`` will assume the platform name. The following snippet will produce
-the same result as above:
+the same result:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -293,7 +218,7 @@ the same result as above:
       arm64:
         build-on: [amd64]
 
-``core24`` can handle complex build plans. For example:
+``core24`` and higher can handle complex build plans. For example:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -344,23 +269,6 @@ raise an error when building on another architecture.
 Building on ``amd64`` will produce two snaps, one built for ``amd64`` and one
 built for ``arm64``. Building on ``arm64`` will produce one snap built for
 ``arm64``. Snapcraft will raise an error when building on another architecture.
-
-core20
-^^^^^^
-
-.. code-block:: yaml
-    :caption: snapcraft.yaml
-
-    architectures:
-      - build-on: [amd64]
-        run-on: [arm64]
-
-Building on ``amd64`` will produce one snap built for ``arm64``. Snapcraft will
-not raise an error when building on another architecture. Instead, it will
-ignore the ``architectures`` key and build for the build-on architecture.
-
-Complex build plans like the previous ``core22`` example are not supported for
-``core20``.
 
 How to stage packages from another architecture
 -----------------------------------------------

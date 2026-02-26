@@ -10,7 +10,7 @@
 "howto/install.rst" "how-to/set-up-snapcraft.rst"
 "howto/install-snapcraft.rst" "how-to/set-up-snapcraft.rst"
 "howto/select-a-build-provider.rst" "how-to/select-a-build-provider.rst"
-"howto/architectures.rst" "how-to/crafting/select-architectures.rst"
+"howto/architectures.rst" "how-to/crafting/select-platforms.rst"
 "howto/bases.rst" "how-to/crafting/specify-a-base.rst"
 "howto/components.rst" "how-to/crafting/create-a-component.rst"
 "howto/set-up-snapcraft.rst" "how-to/set-up-snapcraft.rst"
@@ -22,9 +22,10 @@
 "howto/use-extensions/use-the-env-injector-extension.rst" "how-to/extensions/use-the-env-injector-extension.rst"
 "howto/use-extensions/use-the-gnome-extension.rst" "how-to/extensions/use-the-gnome-extension.rst"
 
-"docs/how-to/architectures.rst" "how-to/crafting/select-architectures.rst"
+"docs/how-to/architectures.rst" "how-to/crafting/select-platforms.rst"
 "docs/how-to/bases.rst" "how-to/crafting/specify-a-base.rst"
 "docs/how-to/components.rst" "how-to/crafting/create-a-component.rst"
+"how-to/crafting/select-architectures.rst" "how-to/crafting/select-platforms.rst"
 "howto/craft-a-snap/index.rst" "how-to/integrations/index.rst"
 "howto/craft-a-snap/example-c-or-cpp-app.rst" "how-to/integrations/craft-a-c-or-cpp-app.rst"
 "howto/craft-a-snap/example-dotnet-app.rst" "how-to/integrations/craft-a-dotnet-app.rst"
@@ -59,6 +60,10 @@
 "reference/parts_steps.rst" "reference/parts/parts-and-steps.rst"
 "reference/snap-build-process.rst" "reference/processes/snap-build-process.rst"
 "reference/snap-publishing-process.rst" "reference/processes/snap-publishing-process.rst"
+"reference/architectures.rst" "reference/platforms.rst"
+
+# explanation
+"explanation/architectures.rst" "explanation/platforms.rst"
 
 # reference/commands
 "reference/commands/list.rst" "reference/commands/names.rst"
