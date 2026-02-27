@@ -266,7 +266,7 @@ text has been altered for ease of reading.
             .. literalinclude:: code/kde-neon-6-extension-keysmith-expanded.diff
                 :language: diff
                 :lines: 3-
-                :emphasize-lines: 45-51, 65-122, 130-138, 140-142, 144-171, 179-182
+                :emphasize-lines: 45-51, 65-125, 133-141, 143-145, 147-174, 182-185
 
     .. tab-item:: KDE neon 5
 
