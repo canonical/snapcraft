@@ -273,7 +273,7 @@ reading.
                 :caption: snapcraft.yaml
                 :language: diff
                 :lines: 3-
-                :emphasize-lines: 57-66, 78-87, 100-150, 158-163, 171-173, 180-201, 210-212
+                :emphasize-lines: 57-66, 78-87, 100-153, 161-166, 174-176, 183-204, 213-215
 
     .. tab-item:: core22
         :sync: core22
