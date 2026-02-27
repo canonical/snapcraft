@@ -18,7 +18,7 @@
 
 import functools
 
-from overrides import overrides
+from typing_extensions import override
 
 from ._ros2_jazzy_meta import ROS2JazzyMetaBase, ROS2JazzySnaps
 
@@ -27,7 +27,7 @@ class ROS2JazzyRosBaseExtension(ROS2JazzyMetaBase):
     """Drives ROS 2 build and runtime environment for snap using content-sharing."""
 
     @functools.cached_property
-    @overrides
+    @override
     def ros2_jazzy_snaps(  # type: ignore[reportIncompatibleMethodOverride]
         self,
     ) -> ROS2JazzySnaps:

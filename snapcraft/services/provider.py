@@ -18,7 +18,7 @@
 import os
 
 from craft_application import ProviderService
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft.const import SNAPCRAFT_ENVIRONMENT_VARIABLES
 
@@ -26,7 +26,7 @@ from snapcraft.const import SNAPCRAFT_ENVIRONMENT_VARIABLES
 class Provider(ProviderService):
     """Snapcraft specialization of the Lifecycle Service."""
 
-    @overrides
+    @override
     def setup(self) -> None:
         """Add snapcraft environment variables to the build environment."""
         super().setup()

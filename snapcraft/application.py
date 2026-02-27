@@ -31,7 +31,7 @@ from craft_application import Application, AppMetadata, launchpad, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
 from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
-from overrides import override
+from typing_extensions import override
 
 from snapcraft import cli, commands, errors, models, services, store
 from snapcraft.utils import get_effective_base

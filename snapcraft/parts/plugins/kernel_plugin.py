@@ -171,7 +171,7 @@ from typing import Any, Literal, cast
 
 import pydantic
 from craft_parts import infos, plugins
-from overrides import overrides
+from typing_extensions import override
 from typing_extensions import Self
 
 from snapcraft_legacy.plugins.v2 import _kernel_build
@@ -356,11 +356,11 @@ class KernelPlugin(plugins.Plugin):
             for opt in self.options.kernel_compiler_parameters:
                 self._make_cmd.append(str(opt))
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         build_packages = {
             "bc",
@@ -418,7 +418,7 @@ class KernelPlugin(plugins.Plugin):
 
         return build_packages
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         logger.info("Getting build env...")
         self._init_build_env()
@@ -445,7 +445,7 @@ class KernelPlugin(plugins.Plugin):
 
         return env
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         logger.info("Getting build commands...")
         self._configure_compiler()
