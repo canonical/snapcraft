@@ -454,11 +454,15 @@ class App(models.CraftBaseModel):
     common_id: str | None = pydantic.Field(
         default=None,
         description="The identifier to a desktop ID within an external appstream file.",
-        examples=["org.canonical.foo"],
+        examples=["org.canonical.foo", "org.kde.ghostwriter", "io.github.user.project"],
     )
-    """The identifier to a desktop ID within an external appstream file.
+    """The unique identifier for a project.
 
-    See :ref:`how-to-configure-package-information` for details.
+    The common-id must be in reverse DNS format and consist only of alphanumeric characters and the
+    following special characters: ``., _, -``.
+
+    See :ref:`how-to-configure-package-information` and the `Appstream specification
+    <https://www.freedesktop.org/software/appstream/docs/sect-Metadata-Application.html#tag-id-desktopapp>`_ for more information.
     """
 
     bus_name: str | None = pydantic.Field(
@@ -1025,6 +1029,20 @@ class App(models.CraftBaseModel):
                 f"Valid extensions are {valid_extensions!r}."
             )
         return extensions
+
+    @pydantic.field_validator("common_id")
+    @classmethod
+    def _validate_common_id(cls, common_id: str) -> str:
+        common_id_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$")
+        if not common_id_re.match(common_id):
+            raise ValueError(
+                f"{common_id!r} is not a valid common id. Common IDs must be"
+                " reverse DNS ids. Checkout the freedesktop specs for more info"
+                " https://www.freedesktop.org/software/appstream/docs/"
+                "sect-Metadata-Application.html#tag-id-desktopapp"
+            )
+
+        return common_id
 
     @pydantic.field_validator("success_exit_status")
     @classmethod
