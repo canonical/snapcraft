@@ -30,7 +30,7 @@ Snaps are built using existing technologies and must be configured to build for 
 CPU architectures.
 
 - :ref:`reference-bases`
-- :ref:`reference-architectures`
+- :ref:`reference-platforms`
 
 
 Parts
@@ -71,7 +71,7 @@ support (LTS) for it.
     build-environment-options
     project-file/index
     bases
-    architectures
+    platforms
     parts/index
     plugins
     package-repositories

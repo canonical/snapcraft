@@ -23,7 +23,7 @@ complete code can be found in `this repository
 Enable cross-compilation
 ------------------------
 
-The :ref:`platforms <how-to-select-architectures>` key specifies which architectures
+The :ref:`platforms <how-to-select-platforms>` key specifies which architectures
 should be used when building a snap. The ``platforms`` key can also be used to specify
 sets of architectures with the ``build-on`` and ``build-for`` keys. In the simplest
 case, this can be used to cross-compile on one architecture for a single, different
