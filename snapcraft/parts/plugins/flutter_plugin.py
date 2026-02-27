@@ -19,7 +19,7 @@
 from typing import Literal, cast
 
 from craft_parts import infos, plugins
-from overrides import overrides
+from typing_extensions import override
 
 FLUTTER_REPO = "https://github.com/flutter/flutter.git"
 """The repository where the flutter SDK resides."""
@@ -60,11 +60,11 @@ class FlutterPlugin(plugins.Plugin):
 
         self.flutter_dir = part_info.part_build_dir / "flutter-distro"
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         return {
             "clang",
@@ -75,7 +75,7 @@ class FlutterPlugin(plugins.Plugin):
             "unzip",
         }
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         return {
             "PATH": f"{self.flutter_dir / 'bin'}:${{PATH}}",
@@ -90,7 +90,7 @@ class FlutterPlugin(plugins.Plugin):
             "flutter pub get",
         ]
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         options = cast(FlutterPluginProperties, self._options)
 

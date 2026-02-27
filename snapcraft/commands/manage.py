@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import store, utils
 
@@ -67,7 +67,7 @@ class StoreReleaseCommand(AppCommand):
             snapcraft release my-snap 9 lts-channel/stable/my-branch"""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
@@ -92,7 +92,7 @@ class StoreReleaseCommand(AppCommand):
             help="set a release progression to a certain percentage [0<=x<=100]",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         channels = parsed_args.channels.split(",")
 
@@ -129,7 +129,7 @@ class StoreCloseCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
@@ -142,7 +142,7 @@ class StoreCloseCommand(AppCommand):
             help="The channel to close",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         client = store.StoreClientCLI()
 

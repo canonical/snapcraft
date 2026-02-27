@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
-from overrides import overrides
+from typing_extensions import override
 from tabulate import tabulate
 
 from snapcraft import errors, store, utils
@@ -77,7 +77,7 @@ class StoreRegisterCommand(AppCommand):
         at which time you become the publisher for the snap."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap-name",
@@ -105,7 +105,7 @@ class StoreRegisterCommand(AppCommand):
             help="Do not ask for confirmation",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         # dest does not work when filling the parser so getattr instead
         snap_name = getattr(parsed_args, "snap-name")
@@ -137,7 +137,7 @@ class StoreNamesCommand(AppCommand):
         visibility and any additional notes."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--format",
@@ -147,7 +147,7 @@ class StoreNamesCommand(AppCommand):
             default="table",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         store_client = store.StoreClientCLI()
         snaps = store_client.get_names()
@@ -186,7 +186,7 @@ class StoreLegacyListCommand(StoreNamesCommand):
     name = "list"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
@@ -197,6 +197,6 @@ class StoreLegacyListRegisteredCommand(StoreNamesCommand):
     name = "list-registered"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

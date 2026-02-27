@@ -25,7 +25,7 @@ import tabulate
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
-from overrides import overrides
+from typing_extensions import override
 from pydantic import BaseModel
 
 from snapcraft import errors, extensions, models
@@ -65,7 +65,7 @@ class ExtensionsCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         extension_presentation: dict[str, ExtensionModel] = {}
 
@@ -89,7 +89,7 @@ class ListExtensionsCommand(ExtensionsCommand):
     name = "list-extensions"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
@@ -106,7 +106,7 @@ class ExpandExtensionsCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         """Expand extensions in the project file and output them."""
         snap_project = get_snap_project()

@@ -25,7 +25,7 @@ from pathlib import Path
 
 import craft_store
 from craft_cli import emit
-from overrides import overrides
+from typing_extensions import override
 from urllib3.util import parse_url
 from xdg import BaseDirectory
 
@@ -147,7 +147,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         cls.CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
         cls.CONFIG_PATH.write_text(config_content)
 
-    @overrides
+    @override
     def __init__(  # noqa PLR0913
         self,
         *,
@@ -187,7 +187,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
             )
             self._auth.set_credentials(auth)
 
-    @overrides
+    @override
     def login(
         self,
         *,
@@ -203,7 +203,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
             resolution="Run 'snapcraft logout' first to clear them",
         )
 
-    @overrides
+    @override
     def logout(self) -> None:
         """Logout by removing legacy credentials."""
         emit.trace(f"Clearing legacy credentials from {self.CONFIG_PATH!r}")

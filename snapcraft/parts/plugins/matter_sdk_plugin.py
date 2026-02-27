@@ -20,7 +20,7 @@ import os
 from typing import Literal, cast
 
 from craft_parts import infos, plugins
-from overrides import overrides
+from typing_extensions import override
 
 # The repository where the matter SDK resides.
 MATTER_SDK_REPO = "https://github.com/project-chip/connectedhomeip"
@@ -59,7 +59,7 @@ class MatterSdkPlugin(plugins.Plugin):
         self.matter_sdk_dir = part_info.part_build_dir
         self.snap_arch = os.getenv("SNAP_ARCH")
 
-    @overrides
+    @override
     def get_pull_commands(self) -> list[str]:
         options = cast(MatterSdkPluginProperties, self._options)
         commands = []
@@ -79,7 +79,7 @@ class MatterSdkPlugin(plugins.Plugin):
 
         return commands
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         return {
             "clang",
@@ -102,15 +102,15 @@ class MatterSdkPlugin(plugins.Plugin):
             "wget",
         }
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         commands = []
 

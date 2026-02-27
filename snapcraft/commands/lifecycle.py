@@ -22,7 +22,7 @@ from typing import Any
 
 import craft_application.commands
 from craft_cli import emit
-from overrides import override
+from typing_extensions import override
 
 import snapcraft.errors
 import snapcraft.pack

@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Final, cast
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
-from overrides import overrides
+from typing_extensions import override
 from tabulate import tabulate
 
 from snapcraft import errors, store
@@ -57,7 +57,7 @@ class StoreStatusCommand(AppCommand):
         the owner or a collaborator of the snap."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
@@ -81,7 +81,7 @@ class StoreStatusCommand(AppCommand):
             help="Limit the status report to the requested tracks",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
@@ -402,7 +402,7 @@ class StoreTracksCommand(AppCommand):
         from being released to a track if the version string set does not match."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "name",
@@ -410,7 +410,7 @@ class StoreTracksCommand(AppCommand):
             help="The snap name to request the information from on the Snap Store",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         snap_channel_map = store.StoreClientCLI().get_channel_map(
             snap_name=parsed_args.name
@@ -443,7 +443,7 @@ class StoreListTracksCommand(StoreTracksCommand):
     name = "list-tracks"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
@@ -462,7 +462,7 @@ class StoreRevisionsCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_name",
@@ -474,7 +474,7 @@ class StoreRevisionsCommand(AppCommand):
             help="architecture filter",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         releases = store.StoreClientCLI().list_revisions(
             snap_name=parsed_args.snap_name
@@ -566,6 +566,6 @@ class StoreListRevisionsCommand(StoreRevisionsCommand):
     name = "list-revisions"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

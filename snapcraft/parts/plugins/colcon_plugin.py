@@ -59,7 +59,7 @@ from typing import Literal
 
 from craft_parts import plugins
 from craft_parts.packages.snaps import _get_parsed_snap
-from overrides import overrides
+from typing_extensions import override
 
 from . import _ros
 
@@ -85,7 +85,7 @@ class ColconPlugin(_ros.RosPlugin):
 
     properties_class = ColconPluginProperties
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         base = self._part_info.base
         build_packages = {"python3-colcon-common-extensions"}
@@ -93,7 +93,7 @@ class ColconPlugin(_ros.RosPlugin):
             build_packages |= {"python3-rosinstall", "python3-wstool"}
         return super().get_build_packages() | build_packages
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         env = super().get_build_environment()
         env.update(
@@ -119,7 +119,7 @@ class ColconPlugin(_ros.RosPlugin):
             "fi",
         ]
 
-    @overrides
+    @override
     def _get_workspace_activation_commands(self) -> list[str]:
         """Return a list of commands source a ROS 2 workspace.
 
@@ -157,7 +157,7 @@ class ColconPlugin(_ros.RosPlugin):
 
         return activation_commands
 
-    @overrides
+    @override
     def _get_build_commands(self) -> list[str]:
         options = self._options
 

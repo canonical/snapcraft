@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import craft_cli
-from overrides import overrides
+from typing_extensions import override
 
 from .base import Linter, LinterIssue, LinterResult
 
@@ -169,7 +169,7 @@ class MetadataLinter(Linter):
             )
         ]
 
-    @overrides
+    @override
     def run(self) -> list[LinterIssue]:
         meta: SnapMetadata = self._snap_metadata
 

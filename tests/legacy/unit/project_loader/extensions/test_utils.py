@@ -17,7 +17,7 @@
 import textwrap
 from typing import Any, Dict, Tuple
 
-from overrides import overrides
+from typing_extensions import override
 from testtools.matchers import Contains, Equals, Not
 
 import snapcraft_legacy.yaml_utils.errors
@@ -909,7 +909,7 @@ def _plugin_aware_part_snippet_extension_fixture():
             }
             self.parts = {}
 
-        @overrides
+        @override
         def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             if plugin_name == "catkin":
                 return {}

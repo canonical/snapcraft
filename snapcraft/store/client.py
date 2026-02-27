@@ -30,7 +30,7 @@ import requests
 from craft_application.util.error_formatting import format_pydantic_errors
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import __version__, errors, models, utils
 from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
@@ -726,11 +726,11 @@ class LegacyStoreClientCLI:
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
     """On Premises Store Client command line interface."""
 
-    @overrides
+    @override
     def request(self, *args, **kwargs) -> requests.Response:
         return self.store_client.request(*args, **kwargs)
 
-    @overrides
+    @override
     def verify_upload(
         self,
         *,
@@ -738,7 +738,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
     ) -> None:
         emit.debug(f"Skipping verification for {snap_name!r}")
 
-    @overrides
+    @override
     def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
@@ -786,7 +786,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
                 )
             time.sleep(_POLL_DELAY)
 
-    @overrides
+    @override
     def release(
         self,
         snap_name: str,
@@ -806,11 +806,11 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             json=payload,
         )
 
-    @overrides
+    @override
     def close(self, snap_name: str, channel: str) -> None:
         self.release(snap_name=snap_name, revision=None, channels=[channel])
 
-    @overrides
+    @override
     def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
         response = self.request(
             "GET",
@@ -822,7 +822,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             craft_store.models.SnapListReleasesModel.unmarshal(response.json())
         )
 
-    @overrides
+    @override
     def list_revisions(self, snap_name: str) -> Revisions:
         response = self.request(
             "GET",
