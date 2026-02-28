@@ -147,7 +147,7 @@ wheels = [
 
 [[package]]
 name = "canonical-sphinx"
-version = "0.5.2"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "furo" },
@@ -155,9 +155,9 @@ dependencies = [
     { name = "myst-parser" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/fc/3274925945e8097307f8bed3445698e5775260b3c3a211f0094d91dfa8ad/canonical_sphinx-0.5.2.tar.gz", hash = "sha256:6957f9c63cf73c91e65e20803c008c51c0742cdf405a9f99d456e7121756181f", size = 1053472, upload-time = "2026-01-09T00:39:52.123Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/8c/c8b9cae5b0a4f2214e096c73f1ef20e62c2b37a23d55bbec04bc096d2f17/canonical_sphinx-0.6.0.tar.gz", hash = "sha256:a5a72a087727aced5ef5b6e5ab7225a00cdcbc87e91f5d1cdc069e376007c273", size = 1049303, upload-time = "2026-02-26T07:28:52.563Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/6d/a33fe3c680d18bbd38b13873c8e697b6fc741d81971c1e456a2773fbf58a/canonical_sphinx-0.5.2-py3-none-any.whl", hash = "sha256:9cc4fa411741e08205f2cc0f3332ffc7a595f0e898b3b085a7b8188771085885", size = 1030655, upload-time = "2026-01-09T00:39:49.776Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/3b/deba42ad80932723daba144d70f0cabec215eeab62e59d9911b0b9792988/canonical_sphinx-0.6.0-py3-none-any.whl", hash = "sha256:3a74f3cbaf68493904f33b63b8802128e0813404c64913292b501e7a21e9d222", size = 1026784, upload-time = "2026-02-26T07:28:50.817Z" },
 ]
 
 [[package]]
@@ -3005,7 +3005,7 @@ dev-plucky = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifi
 dev-questing = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=3.0.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
 dev-resolute = [{ name = "python-apt", marker = "sys_platform == 'linux'", specifier = "~=3.0.0", index = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" }]
 docs = [
-    { name = "canonical-sphinx", specifier = ">=0.5.1" },
+    { name = "canonical-sphinx", specifier = "~=0.6" },
     { name = "myst-parser", specifier = ">=4.0.1" },
     { name = "packaging", specifier = ">=25.0" },
     { name = "pydantic-kitbash", specifier = "~=1.0" },
@@ -3027,7 +3027,7 @@ docs = [
     { name = "vale", specifier = ">=3.13.0.0" },
 ]
 docs-starter-pack = [
-    { name = "canonical-sphinx", specifier = ">=0.5.1" },
+    { name = "canonical-sphinx", specifier = "~=0.6" },
     { name = "myst-parser", specifier = ">=4.0.1" },
     { name = "packaging", specifier = ">=25.0" },
     { name = "rst2html", specifier = ">=2020.7.4" },

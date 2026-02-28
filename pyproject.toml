@@ -102,7 +102,7 @@ docs = [
 # We disable the unused but default SP dependencies slated for removal
 # https://warthogs.atlassian.net/browse/DOCPR-2387
 docs-starter-pack = [
-    "canonical-sphinx>=0.5.1",
+    "canonical-sphinx~=0.6",
     "myst-parser>=4.0.1",
     "packaging>=25.0",
     "rst2html>=2020.7.4",
