@@ -13,13 +13,13 @@ plans are created.
 
 The keys are base-dependent:
 
-* ``platforms`` is used for ``core24`` and higher snaps
-* ``architectures`` is used for ``core22`` snaps
+* ``platforms`` is used for core24 and higher snaps
+* ``architectures`` is used for core22 snaps
 
 How to create a snap for a specific architecture
 ------------------------------------------------
 
-To create a snap that will be built on ``amd64`` and built for ``amd64``, use
+To create a snap that will be built on AMD64 and built for AMD64, use
 one of the following project file snippets.
 
 core24 and higher
@@ -33,7 +33,7 @@ core24 and higher
         build-on: [amd64]
         build-for: [amd64]
 
-Building on ``amd64`` will produce one snap built for ``amd64``.
+Building on AMD64 will produce one snap built for AMD64.
 
 If the platform name is a valid architecture and ``build-for`` is omitted,
 ``build-for`` will assume the platform name. The following snippet will produce
@@ -70,7 +70,7 @@ core22
       - build-on: [amd64]
         build-for: [amd64]
 
-Building on ``amd64`` will produce one snap built for ``amd64``. Snapcraft will
+Building on AMD64 will produce one snap built for AMD64. Snapcraft will
 raise an error when building on another architecture.
 
 If ``build-for`` is omitted, it will assume the value of ``build-on``. The
@@ -88,7 +88,7 @@ How to create a set of snaps for multiple architectures
 core24 and higher
 ^^^^^^^^^^^^^^^^^
 
-``core24`` and higher snaps accept a single build-for architecture per-platform. To create
+core24 and higher snaps accept a single build-for architecture per-platform. To create
 a set of snaps for multiple architectures, define a set of platforms:
 
 .. code-block:: yaml
@@ -102,8 +102,8 @@ a set of snaps for multiple architectures, define a set of platforms:
         build-on: [arm64]
         build-for: [arm64]
 
-Building on ``amd64`` will produce one snap for ``amd64``. Building on
-``arm64`` will produce one snap for ``arm64``. Snapcraft will raise an error
+Building on AMD64 will produce one snap for AMD64. Building on
+ARM64 will produce one snap for ARM64. Snapcraft will raise an error
 when building on another architecture.
 
 If the platform name is a valid architecture and ``build-for`` is omitted,
@@ -133,7 +133,7 @@ produce the same result:
 core22
 ^^^^^^
 
-``core22`` snaps accept a single ``build-for`` architecture per
+core22 snaps accept a single ``build-for`` architecture per
 ``build-on``/``build-for`` pair. To create a set of snaps for multiple
 architectures, define a set of ``build-on``/``build-for`` pairs:
 
@@ -146,8 +146,8 @@ architectures, define a set of ``build-on``/``build-for`` pairs:
       - build-on: [arm64]
         build-for: [arm64]
 
-Building on ``amd64`` will produce one snap for ``amd64``. Building on ``arm64``
-will produce one snap for ``arm64``. Snapcraft will raise an error when building
+Building on AMD64 will produce one snap for AMD64. Building on ARM64
+will produce one snap for ARM64. Snapcraft will raise an error when building
 on another architecture.
 
 If ``build-for`` is omitted, it will assume the value of ``build-on``. The
@@ -205,7 +205,7 @@ core24 and higher
         build-on: [amd64]
         build-for: [arm64]
 
-Building on ``amd64`` will produce one snap built for ``arm64``.
+Building on AMD64 will produce one snap built for ARM64.
 
 If the platform name is a valid architecture and ``build-for`` is omitted,
 ``build-for`` will assume the platform name. The following snippet will produce
@@ -218,7 +218,7 @@ the same result:
       arm64:
         build-on: [amd64]
 
-``core24`` and higher can handle complex build plans. For example:
+core24 and higher can handle complex build plans. For example:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -231,14 +231,14 @@ the same result:
             build-on: [amd64, arm64]
             build-for: [arm64]
 
-Building on ``arm64`` will produce one snap built for ``arm64``.
+Building on ARM64 will produce one snap built for ARM64.
 
-Building on ``amd64`` will produce two snaps, one built for ``amd64`` and one
-built for ``arm64``. This only occurs using remote-build or a build provider.
+Building on AMD64 will produce two snaps, one built for AMD64 and one
+built for ARM64. This only occurs using remote-build or a build provider.
 In destructive mode, Snapcraft can only produce one snap. ``--build-for`` or
 ``--platform`` must be used to narrow down the build plan to a single snap.
 For example, ``snapcraft pack --destructive-mode --platform arm64`` on
-``amd64`` will produce one snap built for ``arm64``.
+AMD64 will produce one snap built for ARM64.
 
 Snapcraft will raise an error when building on another architecture.
 
@@ -252,10 +252,10 @@ core22
       - build-on: [amd64]
         build-for: [arm64]
 
-Building on ``amd64`` will produce one snap built for ``arm64``. Snapcraft will
+Building on AMD64 will produce one snap built for ARM64. Snapcraft will
 raise an error when building on another architecture.
 
-``core22`` can handle complex build plans. For example:
+core22 can handle complex build plans. For example:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -266,15 +266,15 @@ raise an error when building on another architecture.
       - build-on: [amd64, arm64]
         build-for: [arm64]
 
-Building on ``amd64`` will produce two snaps, one built for ``amd64`` and one
-built for ``arm64``. Building on ``arm64`` will produce one snap built for
-``arm64``. Snapcraft will raise an error when building on another architecture.
+Building on AMD64 will produce two snaps, one built for AMD64 and one
+built for ARM64. Building on ARM64 will produce one snap built for
+ARM64. Snapcraft will raise an error when building on another architecture.
 
 How to stage packages from another architecture
 -----------------------------------------------
 
-To use an ``i386`` package for an ``amd64`` snap, use the following
-project file snippets for ``core22``:
+To use an I386 package for an AMD64 snap, use the following
+project file snippets for core22:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -297,7 +297,7 @@ project file snippets for ``core22``:
         stage-packages:
           - libpython3.11-minimal:i386
 
-This is supported for related architectures. A snap built for ``amd64`` can
-stage ``i386`` packages and a snap built for ``i386`` can stage ``amd64``
-packages. Similarly, a snap built for ``arm64`` can stage ``armhf`` packages
-and a snap built for ``armhf`` can stage ``amd64`` packages.
+This is supported for related architectures. A snap built for AMD64 can
+stage I386 packages and a snap built for I386 can stage AMD64
+packages. Similarly, a snap built for ARM64 can stage ARMHF packages
+and a snap built for ARMHF can stage AMD64 packages.
