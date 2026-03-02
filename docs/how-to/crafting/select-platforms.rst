@@ -1,3 +1,7 @@
+.. meta::
+    :description: Learn how to use the platforms and architectures keys in snapcraft.yaml to select which architectures a snap is built on and built for.
+
+.. _how-to-select-architectures:
 .. _how-to-select-platforms:
 
 Select platforms

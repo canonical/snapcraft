@@ -1,6 +1,7 @@
 .. meta::
     :description: Reference for the platforms and architectures keys in a snapcraft.yaml file. Includes the structure, project variables, and supported architectures.
 
+.. _reference-architectures:
 .. _reference-platforms:
 
 Platforms

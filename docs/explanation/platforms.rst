@@ -1,6 +1,8 @@
 .. meta::
     :description: Learn about platforms and how Snapcraft uses platform and architecture keys to define snap builds for different CPU architectures.
 
+.. _build-plan-error:
+.. _explanation-architectures:
 .. _explanation-platforms:
 
 Platforms
