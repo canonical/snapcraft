@@ -19,9 +19,6 @@ The keys are base-dependent:
 * ``platforms`` is used for core24 and higher.
 * ``architectures`` is used for core22.
 
-The :ref:`platforms how-to <how-to-select-platforms>` provides examples of how to use
-these keys.
-
 core24 and higher
 ~~~~~~~~~~~~~~~~~
 
@@ -32,12 +29,12 @@ Structure
     :caption: snapcraft.yaml
 
     platforms:
-        <platform 1>:
-            build-on: [<arch 1>, <arch 2>]
-            build-for: [<arch 1>]
-        <platform 2>:
-            build-on: [<arch 3>]
-            build-for: [<arch 4>]
+        <platform-1>:
+            build-on: [<architecture-a>, <architecture-b>]
+            build-for: [<architecture-a>]
+        <platform-2>:
+            build-on: [<architecture-c>]
+            build-for: [<architecture-d>]
 
 ``platform``
 ^^^^^^^^^^^^
@@ -71,7 +68,11 @@ name.
 
 ``build-for: [all]`` is a special value that denotes an architecture-independent snap.
 When using ``all``, no other ``build-on`` and ``build-for`` pairs can be defined.
-:ref:`how-to-arch-build-for-all` describes how to use the ``all`` key.
+
+The special platform name ``all``, combined with ``build-for: [all]``, makes the snap
+architecture-independent. This is appropriate for snaps that contain only interpretted
+langauges, such as Bash scripts.
+
 
 .. _reference-architectures-core22:
 
@@ -87,10 +88,10 @@ The ``architectures`` key defines a list of ``build-on`` and ``build-for`` pairs
     :caption: snapcraft.yaml
 
     architectures:
-      - build-on: [<arch 1>, <arch 2>]
-        build-for: [<arch 1>]
-      - build-on: [<arch 3>]
-        build-for: [<arch 4>]
+      - build-on: [<architecture-1>, <architecture-2>]
+        build-for: [<architecture-1>]
+      - build-on: [<architecture-3>]
+        build-for: [<architecture-4>]
 
 ``build-on``
 ^^^^^^^^^^^^
@@ -110,6 +111,10 @@ The same architecture can't appear in multiple ``build-for`` entries.
 ``build-for: [all]`` is a special value that denotes an architecture-independent snap.
 When using ``all``, no other ``build-on`` and ``build-for`` pairs can be defined.
 :ref:`how-to-arch-build-for-all` describes how to use the ``all`` key.
+
+The special platform name ``all``, combined with ``build-for: [all]``, makes the snap
+architecture-independent. This is appropriate for snaps that contain only interpretted
+langauges, such as Bash scripts.
 
 .. _architectures-project-variables:
 
@@ -170,7 +175,7 @@ The platform can be defined at build time with environment variables and command
 arguments passed to the ``snapcraft`` command.
 
 Command-line arguments take priority over environment variables. Environment variables
-prefixed with ``SNAPCRAFT`` take priority over those prefixed with ``CRAFT``.
+prefixed with ``SNAPCRAFT_`` take priority over those prefixed with ``CRAFT_``.
 
 core24 and higher
 ~~~~~~~~~~~~~~~~~
@@ -201,6 +206,7 @@ Environment variables
 .. _supported-architectures:
 
 Supported CPU architectures
+---------------------------
 
 Local builds
 ~~~~~~~~~~~~

@@ -38,8 +38,8 @@ Remote builds: ``--build-for`` and shorthand platforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, the :ref:`remote builder <explanation-remote-build>` couldn't accept the
-``--build-for`` argument when building core24 snaps with a shorthand :ref:`platforms
-<reference-platforms>` definition.
+``--build-for`` argument when building core24 snaps with a shorthand
+:ref:`reference-platforms` definition.
 
 Due to improvements made by the Launchpad team, ``--build-for`` can now be used when
 building core24 snaps remotely.

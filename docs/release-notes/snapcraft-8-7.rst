@@ -150,7 +150,7 @@ The following issues have been resolved in Snapcraft 8.7:
 ~~~~~
 
 - `#5270`_ The remote-builder gave an unfriendly error when using the
-  ``--build-for`` argument and shorthand :doc:`platforms </reference/platforms>`
+  ``--build-for`` argument and shorthand :ref:`reference-platforms`
   entries in the project file.
 - `#5330`_ The Crystal plugin would fail to properly quote environment variables.
 

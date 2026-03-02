@@ -228,10 +228,9 @@ either of the stable or candidate channels in the Snap Store.
 Architectures
 ~~~~~~~~~~~~~
 
-The ``architectures`` key defines the target :doc:`platforms
-</reference/platforms>` for which the snap should be built on and built
-for. It requires the build system that is running the Snapcraft tool to be able
-to compile and build the snap for the listed platforms.
+The ``architectures`` key defines the target :ref:`reference-platforms` for which the
+snap should be built on and built for. It requires the build system that is running the
+Snapcraft tool to be able to compile and build the snap for the listed platforms.
 
 
 Parts

@@ -20,8 +20,8 @@ The keys are base-dependent:
 * ``platforms`` is used for core24 and higher snaps
 * ``architectures`` is used for core22 snaps
 
-How to create a snap for a specific architecture
-------------------------------------------------
+Target a single architecture
+----------------------------
 
 To create a snap that will be built on AMD64 and built for AMD64, use
 one of the following project file snippets.
@@ -86,8 +86,8 @@ following snippet will produce the same result:
     architectures:
       - build-on: [amd64]
 
-How to create a set of snaps for multiple architectures
--------------------------------------------------------
+Target multiple architectures
+-----------------------------
 
 core24 and higher
 ^^^^^^^^^^^^^^^^^
@@ -166,8 +166,8 @@ following snippet will produce the same result:
 
 .. _how-to-arch-build-for-all:
 
-How to create an architecture independent snap
-----------------------------------------------
+Target all architectures
+------------------------
 
 ``build-for: [all]`` is used for a snap that can run on all architectures, like
 a snap that is a shell or python script. It cannot be combined with other
@@ -195,8 +195,8 @@ core22
       - build-on: [amd64]
         build-for: [all]
 
-How to build a snap for a different architecture
-------------------------------------------------
+Target across architectures
+---------------------------
 
 core24 and higher
 ^^^^^^^^^^^^^^^^^
@@ -274,8 +274,8 @@ Building on AMD64 will produce two snaps, one built for AMD64 and one
 built for ARM64. Building on ARM64 will produce one snap built for
 ARM64. Snapcraft will raise an error when building on another architecture.
 
-How to stage packages from another architecture
------------------------------------------------
+Stage packages across architectures
+-----------------------------------
 
 To use an I386 package for an AMD64 snap, use the following
 project file snippets for core22:

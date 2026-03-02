@@ -1427,7 +1427,7 @@ Add new environment variables for ``build-on`` and ``build-for`` architectures:
 * ``CRAFT_ARCH_BUILD_FOR``, supersedes ``CRAFT_TARGET_ARCH``
 * ``CRAFT_ARCH_BUILD_ON``
 
-For more information, see :doc:`/reference/platforms`.
+For more information, see :ref:`reference-platforms`.
 
 core20
 """"""
@@ -1439,7 +1439,7 @@ Add new environment variables for ``build-on`` and ``build-for`` architectures:
 * ``SNAPCRAFT_ARCH_BUILD_FOR``, supersedes ``SNAPCRAFT_TARGET_ARCH``
 * ``SNAPCRAFT_ARCH_BUILD_ON``
 
-For more information, see :doc:`/reference/platforms`.
+For more information, see :ref:`reference-platforms`.
 
 core18
 """"""
