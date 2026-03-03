@@ -45,7 +45,7 @@ In this documentation
         :ref:`how-to-configure-package-information`
     * - **Platform compatibility**
       - :ref:`explanation-bases` • :ref:`how-to-specify-a-base` •
-        :ref:`explanation-architectures` • :ref:`how-to-select-architectures` •
+        :ref:`explanation-platforms` • :ref:`how-to-select-platforms` •
         :ref:`reference-advanced-grammar`
     * - **Software integration**
       - :ref:`how-to-integrations` • :ref:`explanation-parts` • :ref:`reference-plugins`
