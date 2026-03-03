@@ -69,7 +69,7 @@ With this filtered plan, Snapcraft builds two snaps: one that runs on AMD64 and 
 runs on RISCV64.
 
 You can filter the build plan further. Using the command-line argument ``--platform
-platform-2`` narrows the plan to:
+platform2`` narrows the plan to:
 
 * platform: platform2, build-on: AMD64, build-for: RISCV64
 
