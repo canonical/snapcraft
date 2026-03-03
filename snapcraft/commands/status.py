@@ -27,8 +27,8 @@ from typing import TYPE_CHECKING, Final, cast
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
-from typing_extensions import override
 from tabulate import tabulate
+from typing_extensions import override
 
 from snapcraft import errors, store
 

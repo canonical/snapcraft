@@ -25,8 +25,8 @@ import tabulate
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
-from typing_extensions import override
 from pydantic import BaseModel
+from typing_extensions import override
 
 from snapcraft import errors, extensions, models
 from snapcraft.parts.yaml_utils import (

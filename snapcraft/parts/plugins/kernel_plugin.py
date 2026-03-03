@@ -171,8 +171,7 @@ from typing import Any, Literal, cast
 
 import pydantic
 from craft_parts import infos, plugins
-from typing_extensions import override
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from snapcraft_legacy.plugins.v2 import _kernel_build
 
