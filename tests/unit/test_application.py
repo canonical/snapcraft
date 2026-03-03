@@ -38,7 +38,6 @@ from craft_platforms import DebianArchitecture
 from craft_providers import bases
 
 from snapcraft import application, cli, const, services
-from snapcraft.commands import PackCommand
 from snapcraft.errors import ClassicFallback
 from snapcraft.models.project import Architecture
 
@@ -332,28 +331,14 @@ def test_application_maven_use_not_registered(snapcraft_yaml):
     assert "maven-use" not in craft_parts.plugins.get_registered_plugins()
 
 
-def test_default_command_integrated(monkeypatch, mocker, new_dir):
-    """Test that for core24 projects we accept "pack" as the default command."""
+def test_default_command_error(snapcraft_yaml, monkeypatch, capsys):
+    """Test that an error is raised when using an ESM base."""
+    monkeypatch.setattr("sys.argv", ["snapcraft"])
 
-    # Pretend this is an Ubuntu 24.04 system, to match the project's build-base
-    mocker.patch.object(
-        util, "get_host_base", return_value=bases.BaseName("ubuntu", "24.04")
-    )
+    with pytest.raises(SystemExit) as exc_info:
+        application.main()
 
-    snap_dir = new_dir / "snap"
-    snap_dir.mkdir()
-
-    # The project itself doesn't really matter.
-    project_yaml = snap_dir / "snapcraft.yaml"
-    project_yaml.write_text(PARSE_INFO_PROJECT)
-
-    mocked_pack_run = mocker.patch.object(PackCommand, "run", return_value=0)
-
-    monkeypatch.setattr("sys.argv", ["snapcraft", "--destructive-mode"])
-    app = application.create_app()
-    app.run()
-
-    assert mocked_pack_run.called
+    assert exc_info.value.code == os.EX_USAGE
 
 
 @pytest.mark.parametrize("base", const.ESM_BASES)
