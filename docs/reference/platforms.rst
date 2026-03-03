@@ -70,8 +70,8 @@ name.
 When using ``all``, no other ``build-on`` and ``build-for`` pairs can be defined.
 
 The special platform name ``all``, combined with ``build-for: [all]``, makes the snap
-architecture-independent. This is appropriate for snaps that contain only interpretted
-langauges, such as Bash scripts.
+architecture-independent. This is appropriate for snaps that contain only interpreted
+languages, such as Bash scripts.
 
 
 .. _reference-architectures-core22:
@@ -110,11 +110,10 @@ The same architecture can't appear in multiple ``build-for`` entries.
 
 ``build-for: [all]`` is a special value that denotes an architecture-independent snap.
 When using ``all``, no other ``build-on`` and ``build-for`` pairs can be defined.
-:ref:`how-to-arch-build-for-all` describes how to use the ``all`` key.
 
 The special platform name ``all``, combined with ``build-for: [all]``, makes the snap
-architecture-independent. This is appropriate for snaps that contain only interpretted
-langauges, such as Bash scripts.
+architecture-independent. This is appropriate for snaps that contain only interpreted
+languages, such as Bash scripts.
 
 .. _architectures-project-variables:
 
