@@ -164,6 +164,7 @@ extensions = [
     # "sphinx_last_updated_by_git",
     "sphinx.ext.intersphinx",
     "sphinx_sitemap",
+    "sphinx_copybutton",
     # Custom Craft extensions
     "pydantic_kitbash",
     "sphinx-pydantic",
