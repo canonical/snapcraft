@@ -15,10 +15,6 @@ parse_args() {
       kernel-kconfigs=*)
       # kernel_kconfigs is a list of of kernel kconfigs to override in the generated config
       kernel_kconfigs=${arg#*=}               ;;
-      kernel-enable-zfs=*)
-      # enable_zfs builds the zfs-linux package for the kernel if true
-      # Default value is "False".
-      kernel_enable_zfs=${arg#*=}             ;;
       kernel-tools=*)
       # kernel_tools specifies a list of tools to build
       # Default value is "".
@@ -126,48 +122,7 @@ release_info() {
   abi_release="${release}-${abinum}"
 }
 
-# fetch_zfs downloads the zfs-linux package source for the target release
-fetch_zfs() {
-  echo "Cloning ZFS for ${UBUNTU_SERIES}"
-  if [ ! -d "${CRAFT_PART_BUILD}/zfs" ]; then
-    git clone \
-      --depth 1 \
-      --branch "applied/ubuntu/${UBUNTU_SERIES}" \
-      https://git.launchpad.net/ubuntu/+source/zfs-linux \
-      "${CRAFT_PART_BUILD}/zfs"
-  fi
-}
-
-# build_zfs builds the zfs kernel modules for the target kernel
-build_zfs() {
-  echo "Building zfs modules..."
-  cd "${CRAFT_PART_BUILD}/zfs"
-
-  # In case some build files are patched, regenerate them
-  ./autogen.sh
-
-  # Importantly the paths are passed directly, so they must be fully qualified
-  # paths and not relative ones
-  ./configure \
-    --with-linux="${KERNEL_SRC}"             \
-    --with-linux-obj="${CRAFT_PART_BUILD}"   \
-    --host="${CRAFT_ARCH_TRIPLET_BUILD_FOR}" \
-    --with-config=kernel
-
-  # Only build the relevant module files
-  make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-       -C "$PWD/module"                   \
-        modules
-
-  # Install the modules to the module tree
-  # -j1 to avoid a weird error if you install "too fast"
-  make -j1                              \
-       -C "$PWD/module"                 \
-        INSTALL_MOD_DIR=.               \
-        DESTDIR="${CRAFT_PART_INSTALL}" \
-        install
-}
-
+# build_tool builds a specified tool
 build_tool() {
   _tool="${1}"
 
