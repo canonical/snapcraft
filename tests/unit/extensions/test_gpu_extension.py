@@ -31,14 +31,21 @@ def gpu_extension_core24():
     )
 
 
+@pytest.fixture
+def gpu_extension_core22():
+    return gpu_extension.GPUExtension(
+        yaml_data={"base": "core22", "parts": {}}, arch="amd64", target_arch="amd64"
+    )
+
+
 ####################
 # GPU Extension    #
 ####################
 
 
 def test_get_supported_bases():
-    """Test that GPU extension supports only core24."""
-    assert gpu_extension.GPUExtension.get_supported_bases() == ("core24",)
+    """Test that GPU extension supports both core22 and core24."""
+    assert gpu_extension.GPUExtension.get_supported_bases() == ("core22", "core24")
 
 
 def test_get_supported_confinement():
@@ -49,20 +56,28 @@ def test_get_supported_confinement():
     )
 
 
-def test_is_experimental():
+@pytest.mark.parametrize("base", ["core20", "core26"])
+def test_is_experimental(base):
     """Test that GPU extension is not experimental."""
-    assert gpu_extension.GPUExtension.is_experimental(base="core24") is False
+    assert gpu_extension.GPUExtension.is_experimental(base=base) is False
 
 
 def test_get_app_snippet(gpu_extension_core24):
-    """Test that GPU extension adds gpu-2404-wrapper to command-chain."""
+    """Test that GPU extension (core24) adds gpu-2404-wrapper to command-chain."""
     assert gpu_extension_core24.get_app_snippet(app_name="test-app") == {
         "command-chain": ["snap/command-chain/gpu-2404-wrapper"],
     }
 
 
+def test_get_app_snippet_core22(gpu_extension_core22):
+    """Test that GPU extension (core22) adds graphics-core22-wrapper to command-chain."""
+    assert gpu_extension_core22.get_app_snippet(app_name="test-app") == {
+        "command-chain": ["snap/command-chain/graphics-core22-wrapper"],
+    }
+
+
 def test_get_root_snippet(gpu_extension_core24):
-    """Test that GPU extension adds gpu-2404 plug and X11 error database layout."""
+    """Test that GPU extension (core24) adds gpu-2404 plug and X11 error database layout."""
     assert gpu_extension_core24.get_root_snippet() == {
         "plugs": {
             "gpu-2404": {
@@ -72,14 +87,41 @@ def test_get_root_snippet(gpu_extension_core24):
             },
         },
         "layout": {
-            "/usr/share/X11/XErrorDB": {
-                "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
+            "/usr/share/libdrm": {
+                "bind": "$SNAP/gpu-2404/libdrm",
             },
             "/usr/share/drirc.d": {
                 "symlink": "$SNAP/gpu-2404/drirc.d",
             },
+            "/usr/share/X11/XErrorDB": {
+                "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
+            },
+        },
+    }
+
+
+def test_get_root_snippet_core22(gpu_extension_core22):
+    """Test that GPU extension (core22) adds graphics-core22 plug and layouts."""
+    assert gpu_extension_core22.get_root_snippet() == {
+        "plugs": {
+            "graphics-core22": {
+                "interface": "content",
+                "target": "$SNAP/graphics-core22",
+                "default-provider": "mesa-core22",
+            },
+        },
+        "layout": {
             "/usr/share/libdrm": {
-                "bind": "$SNAP/gpu-2404/libdrm",
+                "bind": "$SNAP/graphics-core22/libdrm",
+            },
+            "/usr/share/drirc.d": {
+                "symlink": "$SNAP/graphics-core22/drirc.d",
+            },
+            "/usr/share/X11/XErrorDB": {
+                "symlink": "$SNAP/graphics-core22/X11/XErrorDB",
+            },
+            "/usr/share/X11/locale": {
+                "symlink": "$SNAP/graphics-core22/X11/locale",
             },
         },
     }
@@ -91,12 +133,23 @@ def test_get_part_snippet(gpu_extension_core24):
 
 
 def test_get_parts_snippet(gpu_extension_core24):
-    """Test that GPU extension adds gpu/wrapper part."""
+    """Test that GPU extension (core24) adds gpu/wrapper part."""
     assert gpu_extension_core24.get_parts_snippet() == {
         "gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
             "plugin": "make",
-            "make-parameters": ["GPU_WRAPPER=gpu-2404-wrapper"],
+            "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+        },
+    }
+
+
+def test_get_parts_snippet_core22(gpu_extension_core22):
+    """Test that GPU extension (core22) adds gpu/wrapper part."""
+    assert gpu_extension_core22.get_parts_snippet() == {
+        "gpu/wrapper": {
+            "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
+            "plugin": "make",
+            "make-parameters": ["GPU_INTERFACE=graphics-core22"],
         },
     }
 
@@ -104,25 +157,25 @@ def test_get_parts_snippet(gpu_extension_core24):
 def test_app_snippet_unsupported_base():
     """Test that GPU extension raises error for unsupported base."""
     extension = gpu_extension.GPUExtension(
-        yaml_data={"base": "core22", "parts": {}}, arch="amd64", target_arch="amd64"
+        yaml_data={"base": "core20", "parts": {}}, arch="amd64", target_arch="amd64"
     )
-    with pytest.raises(AssertionError, match="Unsupported base: core22"):
+    with pytest.raises(AssertionError, match="Unsupported base: core20"):
         extension.get_app_snippet(app_name="test")
 
 
 def test_root_snippet_unsupported_base():
     """Test that GPU extension raises error for unsupported base."""
     extension = gpu_extension.GPUExtension(
-        yaml_data={"base": "core22", "parts": {}}, arch="amd64", target_arch="amd64"
+        yaml_data={"base": "core20", "parts": {}}, arch="amd64", target_arch="amd64"
     )
-    with pytest.raises(AssertionError, match="Unsupported base: core22"):
+    with pytest.raises(AssertionError, match="Unsupported base: core20"):
         extension.get_root_snippet()
 
 
 def test_parts_snippet_unsupported_base():
     """Test that GPU extension raises error for unsupported base."""
     extension = gpu_extension.GPUExtension(
-        yaml_data={"base": "core22", "parts": {}}, arch="amd64", target_arch="amd64"
+        yaml_data={"base": "core20", "parts": {}}, arch="amd64", target_arch="amd64"
     )
-    with pytest.raises(AssertionError, match="Unsupported base: core22"):
+    with pytest.raises(AssertionError, match="Unsupported base: core20"):
         extension.get_parts_snippet()
