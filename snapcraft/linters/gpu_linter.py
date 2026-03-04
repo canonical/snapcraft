@@ -57,6 +57,7 @@ _CORE24_PATTERNS = _CORE22_PATTERNS | {
 _BASE_PATTERNS = {
     "core22": _CORE22_PATTERNS,
     "core24": _CORE24_PATTERNS,
+    "core26": set(),
 }
 
 
