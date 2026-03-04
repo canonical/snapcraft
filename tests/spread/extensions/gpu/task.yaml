@@ -4,6 +4,9 @@ summary: Build and run a basic GPU snap using extensions
 # available on a subset of all the architectures this testbed
 # can run on.
 systems:
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
   - ubuntu-24.04
   - ubuntu-24.04-64
   - ubuntu-24.04-amd64
@@ -15,6 +18,17 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
+    sed --in-place \
+      -e 's/%GPU_INTERFACE%/graphics-core22/g' \
+      -e 's/%MESA_SNAP%/mesa-2204/g' \
+      "$SNAP_DIR/snap/snapcraft.yaml"
+  elif [[ "$SPREAD_SYSTEM" =~ ubuntu-24.04 ]]; then
+    sed --in-place \
+        -e 's/%GPU_INTERFACE%/gpu-2404/g' \
+        -e 's/%MESA_SNAP%/mesa-2404/g' \
+        "$SNAP_DIR/snap/snapcraft.yaml"
+  fi
 
 restore: |
   cd "$SNAP_DIR"

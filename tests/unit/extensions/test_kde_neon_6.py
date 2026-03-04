@@ -768,7 +768,7 @@ def test_get_parts_snippet_core24(kde_neon_6_extension_core24):
         "kde-neon-6/gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
             "plugin": "make",
-            "make-parameters": ["GPU_WRAPPER=gpu-2404-wrapper"],
+            "make-parameters": ["GPU_INTERFACE=gpu-2404"],
         },
         "kde-neon-6/sdk": {
             "source": str(source),
@@ -816,7 +816,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
             "kde-neon-6/gpu/wrapper": {
                 "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
                 "plugin": "make",
-                "make-parameters": ["GPU_WRAPPER=gpu-2404-wrapper"],
+                "make-parameters": ["GPU_INTERFACE=gpu-2404"],
             },
             "kde-neon-6/sdk": {
                 "source": str(source),

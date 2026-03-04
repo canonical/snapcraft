@@ -4,9 +4,11 @@ GPU extension
 =============
 
 The GPU extension, referred to internally as ``gpu``, provides hardware-accelerated graphics support for applications that need OpenGL, Vulkan, and other GPU capabilities.
-This extension integrates the gpu-2404 content interface and sets up the necessary command chain wrapper for GPU acceleration.
+This extension integrates GPU content interfaces and sets up the necessary command chain wrapper for GPU acceleration.
 
-This extension is compatible with the ``core24`` base only.
+This extension is compatible with the ``core22`` and ``core24`` bases.
+
+For core24, it integrates the gpu-2404 provider snaps. For core22, it integrates the graphics-core22 provider snaps.
 
 
 .. _gpu-extension-included-plugs:
@@ -16,29 +18,60 @@ Included plugs
 
 When this extension is used, the following plug is connected for the snap:
 
-.. dropdown:: Included snap-wide plugs
+.. tab-set::
 
-    .. code-block:: yaml
-        :caption: snapcraft.yaml
+    .. tab-item:: core24
+        :sync: core24
 
-        plugs:
-          gpu-2404:
-              interface: content
-              target: $SNAP/gpu-2404
-              default-provider: mesa-2404
+        .. dropdown:: Included snap-wide plugs
 
-Refer to :external+ubuntu-frame:ref:`the-gpu-2404-snap-interface` for more details on the packages and capabilities it provides.
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                plugs:
+                  gpu-2404:
+                      interface: content
+                      target: $SNAP/gpu-2404
+                      default-provider: mesa-2404
+
+    .. tab-item:: core22
+        :sync: core22
+
+        .. dropdown:: Included snap-wide plugs
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                plugs:
+                  graphics-core22:
+                      interface: content
+                      target: $SNAP/graphics-core22
+                      default-provider: mesa-core22
+
+Refer to :external+ubuntu-frame:ref:`use-snap-graphics` for more details.
+
 
 Included packages
 -----------------
 
-The GPU extension defaults to the `mesa-2404 snap <https://snapcraft.io/mesa-2404>`_, which provides:
+The GPU extension defaults to snap providers that include:
 
 - Mesa graphics drivers
 - OpenGL and Vulkan libraries
 - Hardware video encode/decode acceleration support
+- VA-API and VDPAU support
 
-The mesa-2404 snap is maintained by Canonical and provides up-to-date GPU driver support for applications built on the ``core24`` base.
+.. tab-set::
+
+    .. tab-item:: core24
+        :sync: core24
+
+        The `mesa-2404 snap <https://snapcraft.io/mesa-2404>`_ is maintained by Canonical and provides up-to-date GPU driver support for applications built on the ``core24`` base.
+
+    .. tab-item:: core22
+        :sync: core22
+
+        The `mesa-core22 snap <https://snapcraft.io/mesa-core22>`_ is maintained by Canonical and provides GPU driver support for applications built on the ``core22`` base. It also supports Nvidia drivers installed with debs on the host system.
 
 
 Runtime wrapper
@@ -46,46 +79,103 @@ Runtime wrapper
 
 The extension adds a command chain entry that runs before the application:
 
-.. code-block:: yaml
-    :caption: snapcraft.yaml
+.. tab-set::
 
-    command-chain:
-      - snap/command-chain/gpu-2404-wrapper
+    .. tab-item:: core24
+        :sync: core24
 
-This wrapper script configures library paths and environment variables needed for GPU acceleration at runtime.
+        .. code-block:: yaml
+            :caption: snapcraft.yaml
+
+            command-chain:
+              - snap/command-chain/gpu-2404-wrapper
+
+    .. tab-item:: core22
+        :sync: core22
+
+        .. code-block:: yaml
+            :caption: snapcraft.yaml
+
+            command-chain:
+              - snap/command-chain/graphics-core22-wrapper
+
+These wrapper scripts configure library paths and environment variables needed for GPU acceleration at runtime.
 
 
 Included layouts
 ----------------
 
-This extension uses :ref:`layouts <reference-layouts>` to provide access to X11 error database from the ``gpu-2404`` provider snap:
+This extension uses :ref:`layouts <reference-layouts>` to provide access to GPU resources:
 
-.. dropdown:: Included layouts
+.. tab-set::
 
-    .. code-block:: yaml
-        :caption: snapcraft.yaml
+    .. tab-item:: core24
+        :sync: core24
 
-        layout:
-          /usr/share/X11/XErrorDB:
-            symlink: $SNAP/gpu-2404/X11/XErrorDB
+        .. dropdown:: Included layouts
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                layout:
+                  /usr/share/X11/XErrorDB:
+                    symlink: $SNAP/gpu-2404/X11/XErrorDB
+
+    .. tab-item:: core22
+        :sync: core22
+
+        .. dropdown:: Included layouts
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                layout:
+                  /usr/share/libdrm:
+                    bind: $SNAP/graphics-core22/libdrm
+                  /usr/share/drirc.d:
+                    symlink: $SNAP/graphics-core22/drirc.d
+                  /usr/share/X11/XErrorDB:
+                    symlink: $SNAP/graphics-core22/X11/XErrorDB
+                  /usr/share/X11/locale:
+                    symlink: $SNAP/graphics-core22/X11/locale
 
 
 Included parts
 --------------
 
-The extension automatically adds a part to build and install the GPU wrapper:
+The extension automatically adds parts to build and install the GPU wrapper:
 
-.. dropdown:: Included parts
+.. tab-set::
 
-    .. code-block:: yaml
-        :caption: snapcraft.yaml
+    .. tab-item:: core24
+        :sync: core24
 
-        parts:
-          gpu/wrapper:
-            source: <extensions-data-dir>/gpu/command-chain
-            plugin: make
-            make-parameters:
-              - GPU_WRAPPER=gpu-2404-wrapper
+        .. dropdown:: Included parts
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                parts:
+                  gpu/wrapper:
+                    source: <extensions-data-dir>/gpu/command-chain
+                    plugin: make
+                    make-parameters:
+                      - GPU_INTERFACE=gpu-2404
+
+    .. tab-item:: core22
+        :sync: core22
+
+        .. dropdown:: Included parts
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                parts:
+                  gpu/wrapper:
+                    source: <extensions-data-dir>/gpu/command-chain
+                    plugin: make
+                    make-parameters:
+                      - GPU_INTERFACE=graphics-core22
 
 
 Example usage
@@ -93,32 +183,67 @@ Example usage
 
 Here's a simple example of using the GPU extension in a snapcraft.yaml file:
 
-.. code-block:: yaml
-    :caption: snapcraft.yaml
+.. tab-set::
 
-    name: my-gpu-app
-    base: core24
-    version: '1.0'
-    summary: An application using GPU acceleration
-    description: |
-      An application that requires hardware-accelerated graphics.
+    .. tab-item:: core24
+        :sync: core24
 
-    confinement: strict
+        .. code-block:: yaml
+            :caption: snapcraft.yaml
 
-    apps:
-      my-gpu-app:
-        command: usr/bin/my-gpu-app
-        extensions: [gpu]
-        plugs:
-          - opengl
-          - x11
-          - wayland
+            name: my-gpu-app
+            base: core24
+            version: '1.0'
+            summary: An application using GPU acceleration
+            description: |
+              An application that requires hardware-accelerated graphics.
 
-    parts:
-      my-app:
-        plugin: nil
-        stage-packages:
-          - my-gpu-application
+            confinement: strict
+
+            apps:
+              my-gpu-app:
+                command: usr/bin/my-gpu-app
+                extensions: [gpu]
+                plugs:
+                  - opengl
+                  - x11
+                  - wayland
+
+            parts:
+              my-app:
+                plugin: nil
+                stage-packages:
+                  - my-gpu-application
+
+    .. tab-item:: core22
+        :sync: core22
+
+        .. code-block:: yaml
+            :caption: snapcraft.yaml
+
+            name: my-gpu-app
+            base: core22
+            version: '1.0'
+            summary: An application using GPU acceleration
+            description: |
+              An application that requires hardware-accelerated graphics.
+
+            confinement: strict
+
+            apps:
+              my-gpu-app:
+                command: usr/bin/my-gpu-app
+                extensions: [gpu]
+                plugs:
+                  - opengl
+                  - x11
+                  - wayland
+
+            parts:
+              my-app:
+                plugin: nil
+                stage-packages:
+                  - my-gpu-application
 
 
 Example expanded project file
@@ -127,52 +252,113 @@ Example expanded project file
 Here's an example showing what Snapcraft adds when the GPU extension is used.
 This is the output before build, showing the expanded configuration:
 
-.. dropdown:: Expanded project with GPU extension
+.. tab-set::
 
-    .. code-block:: diff
-        :caption: snapcraft.yaml
+    .. tab-item:: core24
+        :sync: core24
 
-        name: my-gpu-app
-        base: core24
-        version: '1.0'
-        summary: An application using GPU acceleration
-        description: |
-          An application that requires hardware-accelerated graphics.
+        .. dropdown:: Expanded project with GPU extension
 
-        confinement: strict
+            .. code-block:: diff
+                :caption: snapcraft.yaml
 
-        +plugs:
-        +  gpu-2404:
-        +    interface: content
-        +    target: $SNAP/gpu-2404
-        +    default-provider: mesa-2404
-        +
-        +layout:
-        +  /usr/share/X11/XErrorDB:
-        +    symlink: $SNAP/gpu-2404/X11/XErrorDB
-        +
-        apps:
-          my-gpu-app:
-            command: usr/bin/my-gpu-app
-        -   extensions: [gpu]
-        +   command-chain:
-        +     - snap/command-chain/gpu-2404-wrapper
-            plugs:
-              - opengl
-              - x11
-              - wayland
+                name: my-gpu-app
+                base: core24
+                version: '1.0'
+                summary: An application using GPU acceleration
+                description: |
+                  An application that requires hardware-accelerated graphics.
 
-        parts:
-        +  gpu/wrapper:
-        +    source: <extensions-data-dir>/gpu/command-chain
-        +    plugin: make
-        +    make-parameters:
-        +      - GPU_WRAPPER=gpu-2404-wrapper
-        +
-          my-app:
-            plugin: nil
-            stage-packages:
-              - my-gpu-application
+                confinement: strict
+
+                +plugs:
+                +  gpu-2404:
+                +    interface: content
+                +    target: $SNAP/gpu-2404
+                +    default-provider: mesa-2404
+                +
+                +layout:
+                +  /usr/share/X11/XErrorDB:
+                +    symlink: $SNAP/gpu-2404/X11/XErrorDB
+                +
+                apps:
+                  my-gpu-app:
+                    command: usr/bin/my-gpu-app
+                -   extensions: [gpu]
+                +   command-chain:
+                +     - snap/command-chain/gpu-2404-wrapper
+                    plugs:
+                      - opengl
+                      - x11
+                      - wayland
+
+                parts:
+                +  gpu/wrapper:
+                +    source: <extensions-data-dir>/gpu/command-chain
+                +    plugin: make
+                +    make-parameters:
+                +      - GPU_INTERFACE=gpu-2404
+                +
+                  my-app:
+                    plugin: nil
+                    stage-packages:
+                      - my-gpu-application
+
+    .. tab-item:: core22
+        :sync: core22
+
+        .. dropdown:: Expanded project with GPU extension
+
+            .. code-block:: diff
+                :caption: snapcraft.yaml
+
+                name: my-gpu-app
+                base: core22
+                version: '1.0'
+                summary: An application using GPU acceleration
+                description: |
+                  An application that requires hardware-accelerated graphics.
+
+                confinement: strict
+
+                +plugs:
+                +  graphics-core22:
+                +    interface: content
+                +    target: $SNAP/graphics-core22
+                +    default-provider: mesa-core22
+                +
+                +layout:
+                +  /usr/share/libdrm:
+                +    bind: $SNAP/graphics-core22/libdrm
+                +  /usr/share/drirc.d:
+                +    symlink: $SNAP/graphics-core22/drirc.d
+                +  /usr/share/X11/XErrorDB:
+                +    symlink: $SNAP/graphics-core22/X11/XErrorDB
+                +  /usr/share/X11/locale:
+                +    symlink: $SNAP/graphics-core22/X11/locale
+                +
+                apps:
+                  my-gpu-app:
+                    command: usr/bin/my-gpu-app
+                -   extensions: [gpu]
+                +   command-chain:
+                +     - snap/command-chain/graphics-core22-wrapper
+                    plugs:
+                      - opengl
+                      - x11
+                      - wayland
+
+                parts:
+                +  gpu/wrapper:
+                +    source: <extensions-data-dir>/gpu/command-chain
+                +    plugin: make
+                +    make-parameters:
+                +      - GPU_INTERFACE=graphics-core22
+                +
+                  my-app:
+                    plugin: nil
+                    stage-packages:
+                      - my-gpu-application
 
 
 Combining with other extensions

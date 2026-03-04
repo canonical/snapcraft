@@ -35,6 +35,6 @@ parts:
     plugin: nil
     override-prime: |
       craftctl default
-      ${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404
+      ${CRAFT_PART_SRC}/bin/%GPU_INTERFACE%-cleanup %MESA_SNAP%
       # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
-      mkdir -p "${CRAFT_PRIME}/gpu-2404"
+      mkdir -p "${CRAFT_PRIME}/%GPU_INTERFACE%"
