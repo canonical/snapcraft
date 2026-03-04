@@ -35,10 +35,6 @@ The following kernel-specific options are provided by this plugin:
       config definitions.  If you don't want default for one or more implicit
       configs coming out of these, just add them to this list as well.
 
-    - kernel-enable-zfs-support
-      (boolean; default: False)
-      use this flag to build in zfs support through extra ko modules
-
     - kernel-tools
       (list of strings; default: none)
       a list of tools to build alongside the kernel. Accepted values are bpftool,
@@ -92,7 +88,6 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     kernel_kconfigs: list[str] = []
     kernel_kconfigflavour: str = "generic"
     kernel_kdefconfig: list[str] = ["defconfig"]
-    kernel_enable_zfs_support: bool = False
     kernel_tools: list[str] = []
     kernel_ubuntu_release_name: str = ""
     kernel_ubuntu_binary_package: bool = False
@@ -221,7 +216,6 @@ class KernelPlugin(plugins.Plugin):
         _base = self._part_info.base
         _host_arch = self._part_info.host_arch
         _target_arch = self._part_info.target_arch
-        _zfs_enabled = self.options.kernel_enable_zfs_support
         _target_arch_triplet = self._part_info.arch_triplet_build_for
 
         # We should install gcc for the target, but the x86_64 gcc package is named
@@ -261,19 +255,6 @@ class KernelPlugin(plugins.Plugin):
                 "libdw-dev",
                 "llvm",
             }
-
-        if _zfs_enabled:
-            build_packages |= {
-                "autoconf",
-                "automake",
-                "libblkid-dev",
-                "libtool",
-                "python3",
-            }
-
-        # for cross build of zfs we also need libc6-dev:<target arch>
-        if _zfs_enabled and _host_arch != _target_arch:
-            build_packages |= {f"libc6-dev:{_target_arch}"}
 
         return build_packages
 
@@ -315,7 +296,6 @@ class KernelPlugin(plugins.Plugin):
                     f"kernel-kconfigflavour={kconfigflavour}",
                     f"kernel-kdefconfig={','.join(self.options.kernel_kdefconfig)}",
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
-                    f"kernel-enable-zfs={self.options.kernel_enable_zfs_support}",
                     f"kernel-tools={','.join(self.options.kernel_tools)}",
                     f"kernel-ubuntu-release-name={self.options.kernel_ubuntu_release_name}",
                     f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package},",
