@@ -51,6 +51,24 @@ class GPUExtension(Extension):
         "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
     }
 
+    @staticmethod
+    @override
+    def get_supported_bases() -> tuple[str, ...]:
+        """Return the tuple of supported bases."""
+        return ("core24",)
+
+    @staticmethod
+    @override
+    def get_supported_confinement() -> tuple[str, ...]:
+        """Return the tuple of supported confinement modes."""
+        return ("strict", "devmode")
+
+    @staticmethod
+    @override
+    def is_experimental(base: str | None) -> bool:
+        """Return whether this extension is experimental for the given base."""
+        return False
+
     @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         """Return the gpu-2404-wrapper command-chain entry for core24."""
@@ -67,6 +85,11 @@ class GPUExtension(Extension):
                 "layout": dict(self._GPU_2404_LAYOUTS),
             }
         raise AssertionError(f"Unsupported base: {self.yaml_data['base']}")
+
+    @override
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
+        """Return an empty dict as GPU extension doesn't modify existing parts."""
+        return {}
 
     @override
     def get_parts_snippet(self) -> dict[str, Any]:
