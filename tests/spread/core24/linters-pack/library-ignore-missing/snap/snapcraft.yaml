@@ -8,6 +8,7 @@ confinement: strict
 
 lint:
   ignore:
+    - gpu
     - metadata
     - library:
       - linter-test
