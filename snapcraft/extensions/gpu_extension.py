@@ -18,6 +18,8 @@
 
 from typing import Any
 
+from overrides import overrides
+
 from .extension import Extension, get_extensions_data_dir
 
 
@@ -50,12 +52,32 @@ class GPUExtension(Extension):
         "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
     }
 
+    @staticmethod
+    @overrides
+    def get_supported_bases() -> tuple[str, ...]:
+        """Return the tuple of supported bases."""
+        return ("core24",)
+
+    @staticmethod
+    @overrides
+    def get_supported_confinement() -> tuple[str, ...]:
+        """Return the tuple of supported confinement modes."""
+        return ("strict", "devmode")
+
+    @staticmethod
+    @overrides
+    def is_experimental(base: str | None) -> bool:
+        """Return whether this extension is experimental for the given base."""
+        return False
+
+    @overrides
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         """Return the gpu-2404-wrapper command-chain entry for core24."""
         if self.yaml_data["base"] == "core24":
             return {"command-chain": ["snap/command-chain/gpu-2404-wrapper"]}
         raise AssertionError(f"Unsupported base: {self.yaml_data['base']}")
 
+    @overrides
     def get_root_snippet(self) -> dict[str, Any]:
         """Return the gpu-2404 plug and layouts for core24."""
         if self.yaml_data["base"] == "core24":
@@ -65,6 +87,12 @@ class GPUExtension(Extension):
             }
         raise AssertionError(f"Unsupported base: {self.yaml_data['base']}")
 
+    @overrides
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
+        """Return an empty dict as GPU extension doesn't modify existing parts."""
+        return {}
+
+    @overrides
     def get_parts_snippet(self) -> dict[str, Any]:
         """Return the part for the gpu-2404-wrapper for core24."""
         source = get_extensions_data_dir() / "gpu" / "command-chain"
