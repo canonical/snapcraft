@@ -23,9 +23,6 @@ parse_args() {
       # kernel_tools specifies a list of tools to build
       # Default value is "".
       kernel_tools=${arg#*=}                  ;;
-      kernel-dkms=*)
-      # kernel_dkms specifies additional packages to build
-      kernel_dkms=${arg#*=}                   ;;
       kernel-ubuntu-release-name=*)
       # kernel_ubuntu_release_name specifies the specific release to build from
       kernel_ubuntu_release_name=${arg#*=}    ;;

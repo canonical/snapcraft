@@ -44,10 +44,6 @@ The following kernel-specific options are provided by this plugin:
       a list of tools to build alongside the kernel. Accepted values are bpftool,
       cpupower, and perf
 
-    - kernel-dkms
-      (list of strings; default: none)
-      a list of additional packages to build DKMS-style
-
     - kernel-ubuntu-release-name
       (string; default: none)
       a specific Ubuntu release to build a kernel from
@@ -98,7 +94,6 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     kernel_kdefconfig: list[str] = ["defconfig"]
     kernel_enable_zfs_support: bool = False
     kernel_tools: list[str] = []
-    kernel_dkms: list[str] = []
     kernel_ubuntu_release_name: str = ""
     kernel_ubuntu_binary_package: bool = False
 
@@ -125,7 +120,6 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                 "source",
                 "kernel_kconfigs",
                 "kernel_kdefconfig",
-                "kernel_dkms",
             ]
             for option in conflicting_options:
                 if getattr(self, option):
@@ -323,9 +317,8 @@ class KernelPlugin(plugins.Plugin):
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
                     f"kernel-enable-zfs={self.options.kernel_enable_zfs_support}",
                     f"kernel-tools={','.join(self.options.kernel_tools)}",
-                    f"kernel-dkms={','.join(self.options.kernel_dkms)}",
-                    f"kernel-release-name={self.options.kernel_release_name}",
-                    f"kernel-use-binary-package={self.options.kernel_use_binary_package},",
+                    f"kernel-ubuntu-release-name={self.options.kernel_ubuntu_release_name}",
+                    f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package},",
                 ]
             )
         ]
