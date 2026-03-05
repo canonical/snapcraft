@@ -136,8 +136,8 @@ instances of ``snapcraftctl`` in your scripts.
 
 Core22 and core24 aren't affected by this change.
 
-Removed support for Windows hosts
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Removed support for Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Snapcraft previously supported running on Windows hosts. This workflow was uncommon,
 because snaps aren't compatible with Windows.
