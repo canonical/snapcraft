@@ -117,21 +117,27 @@ def test_should_remove_symlinks(plugin):
 
 
 @pytest.mark.parametrize(
-    "confinement,interpreter",
+    ("base", "confinement", "interpreter"),
     [
-        ("strict", "/usr/bin/python3.10"),
-        ("classic", None),
-        ("devmode", "/usr/bin/python3.10"),
+        ("core22", "strict", "/usr/bin/python3.10"),
+        ("core22", "classic", None),
+        ("core22", "devmode", "/usr/bin/python3.10"),
+        ("core24", "strict", "/usr/bin/python3.12"),
+        ("core24", "classic", None),
+        ("core24", "devmode", "/usr/bin/python3.12"),
+        ("core26", "strict", None),
+        ("core26", "classic", None),
+        ("core26", "devmode", None),
     ],
 )
-def test_get_system_python_interpreter(confinement, interpreter, new_dir):
+def test_get_system_python_interpreter(base, confinement, interpreter, new_dir):
     part_info = PartInfo(
         project_info=ProjectInfo(
             application_name="test",
             project_name="test-snap",
-            base="core22",
+            base=base,
             confinement=confinement,
-            project_base="core22",
+            project_base=base,
             cache_dir=new_dir,
         ),
         part=Part("my-part", {}),

@@ -1,0 +1,52 @@
+summary: >-
+  Verify python symlinks with different base and confinement
+  configurations
+
+systems:
+  - ubuntu-24.04*
+
+environment:
+  # base core26, strict confinement: requires provisioning
+  SNAP/strict_not_provisioned: strict-not-provisioned
+  SNAP/strict_provisioned: strict-provisioned
+
+  # base core26, classic confinement: requires provisioning
+  SNAP/classic_not_provisioned: classic-not-provisioned
+  SNAP/classic_provisioned: classic-provisioned
+
+  # base core26, devmode: same as strict
+  SNAP/devmode_not_provisioned: devmode-not-provisioned
+  SNAP/devmode_provisioned: devmode-provisioned
+
+  # re-enable after core26 goes stable (#6088)
+  # base bare: requires provisioning
+  # SNAP/bare_not_provisioned: bare-not-provisioned
+  # SNAP/bare_provisioned: bare-provisioned
+
+  # provisioned from a different part
+  SNAP/provisioned_from_another_part: provisioned-from-another-part
+
+  # re-enable after core26 is stable and there's a core26 gnome extension (#6088)
+  # using the gnome extension
+  # SNAP/strict_gnome_extension: strict-gnome-extension
+
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+  rm -rf squashfs-root
+
+execute: |
+  cd "${SNAP}"
+
+  if [ -f expected-symlink ]; then
+    snapcraft pack
+    unsquashfs ./*.snap
+    ls -l squashfs-root/bin
+    [ -x squashfs-root/bin/hello ]
+    [ "$(readlink squashfs-root/bin/python3)" == "$(cat expected-symlink)" ]
+    rm -rf squashfs-root
+    rm -f ./*.snap
+  else
+    snapcraft pack 2>&1 | MATCH "No suitable Python interpreter found, giving up."
+  fi
