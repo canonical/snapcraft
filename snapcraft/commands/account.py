@@ -31,7 +31,7 @@ from typing import Any
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import store, utils
 
@@ -72,7 +72,7 @@ class StoreLoginCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
@@ -90,7 +90,7 @@ class StoreLoginCommand(AppCommand):
             help=argparse.SUPPRESS,
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
@@ -127,7 +127,7 @@ class StoreExportLoginCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
@@ -175,7 +175,7 @@ class StoreExportLoginCommand(AppCommand):
             help=argparse.SUPPRESS,
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
@@ -243,7 +243,7 @@ class StoreWhoAmICommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         whoami = store.StoreClientCLI().store_client.whoami()
 
@@ -289,7 +289,7 @@ class StoreLogoutCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         store.StoreClientCLI().store_client.logout()
         emit.message("Credentials cleared")
