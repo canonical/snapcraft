@@ -1,4 +1,4 @@
-<!-- Describe your changes -->
+Describe your changes.
 
 ---
 
