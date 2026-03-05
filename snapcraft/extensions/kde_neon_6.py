@@ -429,6 +429,7 @@ class KDENeon6(GPUExtension):
             parts = {
                 k.replace("gpu/", "kde-neon-6/gpu-"): v
                 for k, v in super().get_parts_snippet().items()
+                if not (base == "core24" and k == "gpu/cleanup")
             }
         else:
             parts = {}
