@@ -136,14 +136,15 @@ instances of ``snapcraftctl`` in your scripts.
 
 Core22 and core24 aren't affected by this change.
 
-Removed native Windows support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Removed support for Windows hosts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Snapcraft previously supported running natively on Windows. This workflow was uncommon,
-as snaps couldn't be installed directly on Windows.
+Snapcraft previously supported running on Windows hosts. This workflow was uncommon,
+because snaps aren't compatible with Windows.
 
-Native windows support has now been removed. The recommended way to run Snapcraft on
-Windows is through WSL, as described in the :ref:`how-to-set-up-snapcraft` guide.
+Snapcraft 9 drops all official support for Windows hosts. To build snaps with Windows
+technology, use Windows Subsystem for Linux (WSL) as described in
+:ref:`how-to-set-up-snapcraft`.
 
 Updated documentation system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
