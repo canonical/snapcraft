@@ -59,10 +59,8 @@ from pathlib import Path
 from typing import Literal, cast
 
 import pydantic
-from craft_parts import errors, infos, plugins
-from craft_parts.packages import Repository as Repo
-from overrides import overrides
-from typing_extensions import Self
+from craft_parts import infos, plugins
+from typing_extensions import Self, override
 
 _KERNEL_ARCH_FROM_SNAP_ARCH = {
     "i386": "x86",
@@ -144,7 +142,7 @@ class KernelPlugin(plugins.Plugin):
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(KernelPluginProperties, self._options)
 
-    @overrides
+    @override
     def get_pull_commands(self) -> list[str]:
         _base = self._part_info.base
         _target_arch = self._part_info.target_arch
@@ -203,11 +201,11 @@ class KernelPlugin(plugins.Plugin):
             ]
         return super().get_pull_commands()
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         _base = self._part_info.base
         _host_arch = self._part_info.host_arch
@@ -254,7 +252,7 @@ class KernelPlugin(plugins.Plugin):
 
         return build_packages
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         _kernel_arch = _KERNEL_ARCH_FROM_SNAP_ARCH[self._part_info.target_arch]
 
@@ -279,7 +277,7 @@ class KernelPlugin(plugins.Plugin):
             "KERNEL_TARGET": _kernel_target,
         }
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         kconfigflavour = self.options.kernel_kconfigflavour
         if self.options.kernel_kdefconfig != ["defconfig"]:

@@ -26,7 +26,7 @@ from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_parts.plugins import get_registered_plugins
 from craft_platforms import DebianArchitecture
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import const, errors, models
 from snapcraft.parts.yaml_utils import (
@@ -51,7 +51,7 @@ class PluginsCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
@@ -61,7 +61,7 @@ class PluginsCommand(AppCommand):
             help="Show plugins for <base>",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         base = parsed_args.base
         message: str | None = None
@@ -107,6 +107,6 @@ class ListPluginsCommand(PluginsCommand):
     name = "list-plugins"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

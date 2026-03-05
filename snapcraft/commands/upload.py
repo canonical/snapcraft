@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import errors, store, utils
 from snapcraft.meta import SnapMetadata
@@ -77,7 +77,7 @@ class StoreUploadCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
@@ -104,7 +104,7 @@ class StoreUploadCommand(AppCommand):
             ),
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         snap_file = pathlib.Path(parsed_args.snap_file)
         if not snap_file.exists() or not snap_file.is_file():
@@ -220,6 +220,6 @@ class StoreLegacyPushCommand(StoreUploadCommand):
     name = "push"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
