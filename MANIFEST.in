@@ -1,3 +1,0 @@
-include schema/*
-include extensions/*
-recursive-include snapcraft/templates *
