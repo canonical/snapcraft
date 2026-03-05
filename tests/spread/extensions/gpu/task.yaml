@@ -10,6 +10,9 @@ systems:
   - ubuntu-24.04
   - ubuntu-24.04-64
   - ubuntu-24.04-amd64
+  - ubuntu-26.04
+  - ubuntu-26.04-64
+  - ubuntu-26.04-amd64
 
 environment:
   SNAP_DIR: ../snaps/gpu-hello
@@ -18,6 +21,12 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
+
+  # TODO: Remove this once core26 is stable
+  if [[ "$SPREAD_SYSTEM" =~ ubuntu-26.04 ]]; then
+    snap install core26 --edge
+    snap install mesa-2604 --edge
+  fi
 
 restore: |
   cd "$SNAP_DIR"
@@ -34,5 +43,8 @@ execute: |
   snapcraft pack | NOMATCH "GPU support library should be provided by a content interface"
 
   snap install gpu-hello_*.snap --dangerous
+
+  # TODO: Remove this once mesa-2604 is autoconnected
+  [[ "$SPREAD_SYSTEM" =~ ubuntu-26.04 ]] && snap connect gpu-hello:gpu-2604 mesa-2604:gpu-2604
 
   gpu-hello.gpuinfo
