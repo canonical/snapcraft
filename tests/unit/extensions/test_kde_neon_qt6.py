@@ -611,6 +611,17 @@ def test_get_parts_snippet_core24(kde_neon_qt6_extension_core24):
             "plugin": "make",
             "make-parameters": ["GPU_INTERFACE=gpu-2404"],
         },
+        "kde-neon-qt6/gpu/cleanup": {
+            "after": [],
+            "source": "https://github.com/canonical/gpu-snap.git",
+            "plugin": "nil",
+            "override-prime": (
+                "craftctl default\n"
+                "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24\n"
+                "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+            ),
+        },
         "kde-neon-qt6/sdk": {
             "source": str(source),
             "plugin": "make",
@@ -647,6 +658,17 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
                 "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
                 "plugin": "make",
                 "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+            },
+            "kde-neon-qt6/gpu/cleanup": {
+                "after": ["part1"],
+                "source": "https://github.com/canonical/gpu-snap.git",
+                "plugin": "nil",
+                "override-prime": (
+                    "craftctl default\n"
+                    "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24\n"
+                    "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                    'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+                ),
             },
             "kde-neon-qt6/sdk": {
                 "source": str(source),

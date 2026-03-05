@@ -132,6 +132,19 @@ class GPUExtension(Extension):
                     "plugin": "make",
                     "make-parameters": ["GPU_INTERFACE=graphics-core22"],
                 },
+                # TODO: remove this part when https://github.com/canonical/snapcraft/issues/6066 is resolved
+                # and Snapcraft prunes the consumer snap itself
+                "gpu/cleanup": {
+                    "after": list(self.yaml_data.get("parts", {}).keys()),
+                    "source": "https://github.com/canonical/gpu-snap.git",
+                    "plugin": "nil",
+                    "override-prime": (
+                        "craftctl default\n"
+                        "${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22\n"
+                        "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                        'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+                    ),
+                },
             }
         if base == "core24":
             return {
@@ -139,6 +152,19 @@ class GPUExtension(Extension):
                     "source": str(source),
                     "plugin": "make",
                     "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+                },
+                # TODO: remove this part when https://github.com/canonical/snapcraft/issues/6066 is resolved
+                # and Snapcraft prunes the consumer snap itself
+                "gpu/cleanup": {
+                    "after": list(self.yaml_data.get("parts", {}).keys()),
+                    "source": "https://github.com/canonical/gpu-snap.git",
+                    "plugin": "nil",
+                    "override-prime": (
+                        "craftctl default\n"
+                        "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24\n"
+                        "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                        'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+                    ),
                 },
             }
         raise AssertionError(f"Unsupported base: {base}")

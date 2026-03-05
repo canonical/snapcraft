@@ -143,7 +143,7 @@ This extension uses :ref:`layouts <reference-layouts>` to provide access to GPU 
 Included parts
 --------------
 
-The extension automatically adds parts to build and install the GPU wrapper:
+The extension automatically adds parts to build and install the GPU wrapper and perform cleanup:
 
 .. tab-set::
 
@@ -161,6 +161,16 @@ The extension automatically adds parts to build and install the GPU wrapper:
                     plugin: make
                     make-parameters:
                       - GPU_INTERFACE=gpu-2404
+                  gpu/cleanup:
+                    after:
+                      - <all-user-parts>
+                    source: https://github.com/canonical/gpu-snap.git
+                    plugin: nil
+                    override-prime: |
+                      craftctl default
+                      ${CRAFT_PART_SRC}/bin/graphics-gpu-2404-cleanup mesa-core24
+                      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
+                      mkdir -p "${CRAFT_PRIME}/gpu-2404"
 
     .. tab-item:: core22
         :sync: core22
@@ -176,6 +186,16 @@ The extension automatically adds parts to build and install the GPU wrapper:
                     plugin: make
                     make-parameters:
                       - GPU_INTERFACE=graphics-core22
+                  gpu/cleanup:
+                    after:
+                      - <all-user-parts>
+                    source: https://github.com/canonical/gpu-snap.git
+                    plugin: nil
+                    override-prime: |
+                      craftctl default
+                      ${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22
+                      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
+                      mkdir -p "${CRAFT_PRIME}/gpu-2404"
 
 
 Example usage
@@ -299,6 +319,17 @@ This is the output before build, showing the expanded configuration:
                 +    make-parameters:
                 +      - GPU_INTERFACE=gpu-2404
                 +
+                +  gpu/cleanup:
+                +    after:
+                +      - my-app
+                +    source: https://github.com/canonical/gpu-snap.git
+                +    plugin: nil
+                +    override-prime: |
+                +      craftctl default
+                +      ${CRAFT_PART_SRC}/bin/graphics-gpu-2404-cleanup mesa-core24
+                +      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
+                +      mkdir -p "${CRAFT_PRIME}/gpu-2404"
+                +
                   my-app:
                     plugin: nil
                     stage-packages:
@@ -354,6 +385,17 @@ This is the output before build, showing the expanded configuration:
                 +    plugin: make
                 +    make-parameters:
                 +      - GPU_INTERFACE=graphics-core22
+                +
+                +  gpu/cleanup:
+                +    after:
+                +      - my-app
+                +    source: https://github.com/canonical/gpu-snap.git
+                +    plugin: nil
+                +    override-prime: |
+                +      craftctl default
+                +      ${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22
+                +      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
+                +      mkdir -p "${CRAFT_PRIME}/gpu-2404"
                 +
                   my-app:
                     plugin: nil

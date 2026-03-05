@@ -12,6 +12,12 @@ apps:
     command: usr/local/bin/gpuinfo
     extensions: [gpu]
 
+lint:
+  ignore:
+  - classic
+  - library
+  - metadata
+
 parts:
   project:
     source: .
@@ -22,19 +28,13 @@ parts:
     - libegl-dev
     - libgl-dev
     - libgles2-mesa-dev
+    stage-packages:
+    - libegl1
+    - libgl1
+    - libgles2
     override-build: |
       gcc -std=c11 -O2 -Wall -Wextra -pedantic \
         "gpuinfo.c" \
         -o "gpuinfo" \
         -lEGL -lGL -lGLESv2
       install -D -m755 "gpuinfo" "${CRAFT_PART_INSTALL}/usr/local/bin/gpuinfo"
-
-  cleanup:
-    after: [project]
-    source: https://github.com/canonical/gpu-snap.git
-    plugin: nil
-    override-prime: |
-      craftctl default
-      ${CRAFT_PART_SRC}/bin/%GPU_INTERFACE%-cleanup %MESA_SNAP%
-      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
-      mkdir -p "${CRAFT_PRIME}/%GPU_INTERFACE%"
