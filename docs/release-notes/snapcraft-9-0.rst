@@ -139,10 +139,10 @@ Core22 and core24 aren't affected by this change.
 Removed support for Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Snapcraft previously supported running on Windows hosts. This workflow was uncommon,
+Snapcraft previously supported running on Windows. This workflow was uncommon,
 because snaps aren't compatible with Windows.
 
-Snapcraft 9 drops all official support for Windows hosts. To build snaps with Windows
+Snapcraft 9 drops all official support for Windows. To build snaps on Windows
 technology, use Windows Subsystem for Linux (WSL) as described in
 :ref:`how-to-set-up-snapcraft`.
 
