@@ -26,6 +26,7 @@ from .extension import Extension, get_extensions_data_dir
 class GPUExtension(Extension):
     """An extension base class that integrates GPU support snaps.
 
+    For core26, integrates the gpu-2604 provider snaps.
     For core24, integrates the gpu-2404 provider snaps.
     For core22, integrates the graphics-core22 provider snaps.
 
@@ -34,7 +35,7 @@ class GPUExtension(Extension):
     - Prepending the GPU/graphics wrapper to the command chain in ``get_app_snippet``.
     - Adding GPU/graphics-specific layouts in ``get_root_snippet``.
 
-    Currently only supports the core24 and core22 bases and raises ``AssertionError``
+    Currently supports the core26, core24 and core22 bases and raises ``AssertionError``
     on unsupported ones.
 
     Subclasses should call ``super()`` when overriding these methods to inherit the
@@ -70,11 +71,23 @@ class GPUExtension(Extension):
         "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
     }
 
+    _GPU_2604_PLUG: dict[str, Any] = {
+        "gpu-2604": {
+            "interface": "content",
+            "target": "$SNAP/gpu-2604",
+            "default-provider": "mesa-2604",
+        },
+    }
+
+    _GPU_2604_LAYOUTS: dict[str, Any] = {
+        "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2604/X11/XErrorDB"},
+    }
+
     @staticmethod
     @override
     def get_supported_bases() -> tuple[str, ...]:
         """Return the tuple of supported bases."""
-        return ("core22", "core24")
+        return ("core22", "core24", "core26")
 
     @staticmethod
     @override
@@ -86,7 +99,7 @@ class GPUExtension(Extension):
     @override
     def is_experimental(base: str | None) -> bool:
         """Return whether this extension is experimental for the given base."""
-        return False
+        return base == "core26"
 
     @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
@@ -96,6 +109,8 @@ class GPUExtension(Extension):
             return {"command-chain": ["snap/command-chain/graphics-core22-wrapper"]}
         if base == "core24":
             return {"command-chain": ["snap/command-chain/gpu-2404-wrapper"]}
+        if base == "core26":
+            return {"command-chain": ["snap/command-chain/gpu-2604-wrapper"]}
         raise AssertionError(f"Unsupported base: {base}")
 
     @override
@@ -111,6 +126,11 @@ class GPUExtension(Extension):
             return {
                 "plugs": dict(self._GPU_2404_PLUG),
                 "layout": dict(self._GPU_2404_LAYOUTS),
+            }
+        if base == "core26":
+            return {
+                "plugs": dict(self._GPU_2604_PLUG),
+                "layout": dict(self._GPU_2604_LAYOUTS),
             }
         raise AssertionError(f"Unsupported base: {base}")
 
@@ -164,6 +184,27 @@ class GPUExtension(Extension):
                         "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24\n"
                         "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
                         'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+                    ),
+                },
+            }
+        if base == "core26":
+            return {
+                "gpu/wrapper": {
+                    "source": str(source),
+                    "plugin": "make",
+                    "make-parameters": ["GPU_INTERFACE=gpu-2604"],
+                },
+                # TODO: remove this part when https://github.com/canonical/snapcraft/issues/6066 is resolved
+                # and Snapcraft prunes the consumer snap itself
+                "gpu/cleanup": {
+                    "after": list(self.yaml_data.get("parts", {}).keys()),
+                    "source": "https://github.com/canonical/gpu-snap.git",
+                    "plugin": "nil",
+                    "override-prime": (
+                        "craftctl default\n"
+                        "${CRAFT_PART_SRC}/bin/gpu-2604-cleanup mesa-2604\n"
+                        "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                        'mkdir -p "${CRAFT_PRIME}/gpu-2604"'
                     ),
                 },
             }

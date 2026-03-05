@@ -28,6 +28,7 @@ from .base import Linter, LinterIssue, LinterResult
 _HELP_URLS = {
     "core22": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics-on-base-core22/",
     "core24": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics-on-base-core24/",
+    "core26": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics/",
 }
 
 _CORE22_PATTERNS = {
@@ -54,10 +55,12 @@ _CORE24_PATTERNS = _CORE22_PATTERNS | {
     "libvdpau*so*",
 }
 
+_CORE26_PATTERNS = _CORE24_PATTERNS
+
 _BASE_PATTERNS = {
     "core22": _CORE22_PATTERNS,
     "core24": _CORE24_PATTERNS,
-    "core26": set(),
+    "core26": _CORE26_PATTERNS,
 }
 
 

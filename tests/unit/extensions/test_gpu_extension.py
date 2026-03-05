@@ -42,14 +42,27 @@ def gpu_extension_core22():
     )
 
 
+@pytest.fixture
+def gpu_extension_core26():
+    return gpu_extension.GPUExtension(
+        yaml_data={"base": "core26", "parts": {"other_part": {}}},
+        arch="amd64",
+        target_arch="amd64",
+    )
+
+
 ####################
 # GPU Extension    #
 ####################
 
 
 def test_get_supported_bases():
-    """Test that GPU extension supports both core22 and core24."""
-    assert gpu_extension.GPUExtension.get_supported_bases() == ("core22", "core24")
+    """Test that GPU extension supports core22, core24, and core26."""
+    assert gpu_extension.GPUExtension.get_supported_bases() == (
+        "core22",
+        "core24",
+        "core26",
+    )
 
 
 def test_get_supported_confinement():
@@ -60,10 +73,12 @@ def test_get_supported_confinement():
     )
 
 
-@pytest.mark.parametrize("base", ["core20", "core26"])
-def test_is_experimental(base):
+@pytest.mark.parametrize(
+    ("base", "experimental"), [("core22", False), ("core24", False), ("core26", True)]
+)
+def test_is_experimental(base, experimental):
     """Test that GPU extension is not experimental."""
-    assert gpu_extension.GPUExtension.is_experimental(base=base) is False
+    assert gpu_extension.GPUExtension.is_experimental(base=base) is experimental
 
 
 def test_get_app_snippet(gpu_extension_core24):
@@ -77,6 +92,13 @@ def test_get_app_snippet_core22(gpu_extension_core22):
     """Test that GPU extension (core22) adds graphics-core22-wrapper to command-chain."""
     assert gpu_extension_core22.get_app_snippet(app_name="test-app") == {
         "command-chain": ["snap/command-chain/graphics-core22-wrapper"],
+    }
+
+
+def test_get_app_snippet_core26(gpu_extension_core26):
+    """Test that GPU extension (core26) adds gpu-2604-wrapper to command-chain."""
+    assert gpu_extension_core26.get_app_snippet(app_name="test-app") == {
+        "command-chain": ["snap/command-chain/gpu-2604-wrapper"],
     }
 
 
@@ -131,6 +153,24 @@ def test_get_root_snippet_core22(gpu_extension_core22):
     }
 
 
+def test_get_root_snippet_core26(gpu_extension_core26):
+    """Test that GPU extension (core26) adds gpu-2604 plug and X11 layout only."""
+    assert gpu_extension_core26.get_root_snippet() == {
+        "plugs": {
+            "gpu-2604": {
+                "interface": "content",
+                "target": "$SNAP/gpu-2604",
+                "default-provider": "mesa-2604",
+            },
+        },
+        "layout": {
+            "/usr/share/X11/XErrorDB": {
+                "symlink": "$SNAP/gpu-2604/X11/XErrorDB",
+            },
+        },
+    }
+
+
 def test_get_part_snippet(gpu_extension_core24):
     """Test that GPU extension doesn't modify existing parts."""
     assert gpu_extension_core24.get_part_snippet(plugin_name="make") == {}
@@ -175,6 +215,28 @@ def test_get_parts_snippet_core22(gpu_extension_core22):
                 "${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22\n"
                 "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
                 'mkdir -p "${CRAFT_PRIME}/graphics-core22"'
+            ),
+        },
+    }
+
+
+def test_get_parts_snippet_core26(gpu_extension_core26):
+    """Test that GPU extension (core26) adds gpu/wrapper and gpu/cleanup parts."""
+    assert gpu_extension_core26.get_parts_snippet() == {
+        "gpu/wrapper": {
+            "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
+            "plugin": "make",
+            "make-parameters": ["GPU_INTERFACE=gpu-2604"],
+        },
+        "gpu/cleanup": {
+            "after": ["other_part"],
+            "source": "https://github.com/canonical/gpu-snap.git",
+            "plugin": "nil",
+            "override-prime": (
+                "craftctl default\n"
+                "${CRAFT_PART_SRC}/bin/gpu-2604-cleanup mesa-2604\n"
+                "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                'mkdir -p "${CRAFT_PRIME}/gpu-2604"'
             ),
         },
     }
