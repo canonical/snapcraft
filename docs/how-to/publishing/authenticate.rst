@@ -118,3 +118,19 @@ Note that ``snapcraft login`` sometimes fails to unlock GNOME keyring when acces
 Linux system with a desktop environment from a virtual console or SSH. GNOME keyring
 will not present a CLI password prompt to unlock the keyring, causing Snapcraft to stall
 and timeout.
+
+Example (WSL users):
+
+On WSL systems, you may need to install a system keyring such as
+``gnome-keyring`` manually:
+
+.. code-block:: bash
+
+   sudo apt update
+   sudo apt install --assume-yes gnome-keyring
+
+After installation, restart your shell and run:
+
+.. code-block:: bash
+
+   snapcraft login
