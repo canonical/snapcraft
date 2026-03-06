@@ -331,14 +331,30 @@ def test_application_maven_use_not_registered(snapcraft_yaml):
     assert "maven-use" not in craft_parts.plugins.get_registered_plugins()
 
 
-def test_default_command_error(snapcraft_yaml, monkeypatch, capsys):
-    """Test that an error is raised when using an ESM base."""
+@pytest.mark.parametrize(
+    ("base", "exit_code"),
+    [
+        # core22 overrides the error's exit codes
+        ("core22", 1),
+        ("core24", os.EX_USAGE),
+    ],
+)
+def test_default_command_error(snapcraft_yaml, base, exit_code, monkeypatch, capsys):
+    """Invoking snapcraft with no subcommand exits with an error."""
+    snapcraft_yaml(base=base)
     monkeypatch.setattr("sys.argv", ["snapcraft"])
 
-    with pytest.raises(SystemExit) as exc_info:
-        application.main()
+    try:
+        # core22 exits with a code, core24 returns an exit code
+        actual_exit_code = application.main()
+    except SystemExit as exc:
+        actual_exit_code = exc.code
 
-    assert exc_info.value.code == os.EX_USAGE
+    assert actual_exit_code == exit_code
+    assert (
+        "Missing a command. Try 'snapcraft pack' or 'snapcraft help'."
+        in capsys.readouterr().err
+    )
 
 
 @pytest.mark.parametrize("base", const.ESM_BASES)

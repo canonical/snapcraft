@@ -212,6 +212,7 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         summary="Package, distribute, and update snaps for Linux and IoT",
         extra_global_args=GLOBAL_ARGS,
         default_command=commands.core22.PackCommand,
+        allow_default_command=False,
     )
 
 
