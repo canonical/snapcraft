@@ -688,7 +688,7 @@ def test_get_parts_snippet_core24(kde_neon_extension_core24):
     source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
     assert kde_neon_extension_core24.get_parts_snippet() == {
-        "kde-neon/gpu-wrapper": {
+        "kde-neon/gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
             "plugin": "make",
             "make-parameters": ["GPU_WRAPPER=gpu-2404-wrapper"],
@@ -736,7 +736,7 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
     assert (
         kde_neon_extension_with_default_build_snap_from_latest_edge_core24.get_parts_snippet()
         == {
-            "kde-neon/gpu-wrapper": {
+            "kde-neon/gpu/wrapper": {
                 "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
                 "plugin": "make",
                 "make-parameters": ["GPU_WRAPPER=gpu-2404-wrapper"],
