@@ -366,7 +366,7 @@ class KDENeonQt6(GPUExtension):
         base = self.yaml_data["base"]
         if base != "core22":
             parts = {
-                k.replace("gpu/", "kde-neon-qt6/gpu-"): v
+                f"kde-neon-qt6/{k}": v
                 for k, v in super().get_parts_snippet().items()
             }
         else:
