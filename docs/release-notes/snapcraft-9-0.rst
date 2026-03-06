@@ -111,9 +111,8 @@ by their equivalent environment variables:
 Removed default command
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Previously, running ``snapcraft`` with no command implicitly ran ``snapcraft pack``.
-This default behavior has been removed. You must now run ``snapcraft pack`` to build
-a snap.
+Previously, running ``snapcraft`` alone implicitly ran ``snapcraft pack``. This default
+behavior has been removed. You must now run ``snapcraft pack`` to build a snap.
 
 
 Removed legacy remote builder
