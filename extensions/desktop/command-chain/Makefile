@@ -1,9 +1,8 @@
 #!/usr/bin/make -f
 
 BIN_DIR := $(DESTDIR)/snap/command-chain
-GPU_WRAPPER :=
 
-scripts = hooks-configure-fonts desktop-launch run $(GPU_WRAPPER)
+scripts = hooks-configure-fonts desktop-launch run
 
 *:
 	install -D -m755 "$@" "$(BIN_DIR)"/"$@"

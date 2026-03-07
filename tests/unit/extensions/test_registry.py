@@ -29,6 +29,7 @@ def test_get_extension_names():
         "dotnet10",
         "env-injector",
         "gnome",
+        "gpu",
         "ros2-humble",
         "ros2-humble-ros-core",
         "ros2-humble-ros-base",

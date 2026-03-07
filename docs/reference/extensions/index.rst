@@ -20,6 +20,7 @@ For guidance on specific extensions, see :ref:`how-to-extensions`.
     dotnet-extensions
     env-injector-extension
     gnome-extension
+    gpu-extension
     kde-neon-extensions
     flutter-extension
     ros-1-extension
