@@ -273,7 +273,7 @@ reading.
                 :caption: snapcraft.yaml
                 :language: diff
                 :lines: 3-
-                :emphasize-lines: 57-66, 78-87, 100-150, 158-163, 171-173, 180-201, 210-212
+                :emphasize-lines: 57-66, 78-87, 100-153, 161-166, 174-176, 183-204, 213-215
 
     .. tab-item:: core22
         :sync: core22
@@ -285,3 +285,14 @@ reading.
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 60-69, 81-90, 103-155, 159-160, 164-170, 178-179, 186-207
+
+
+GPU linter warnings
+-------------------
+
+If the GPU linter reports libraries that should come from a content provider snap, do one of the following:
+
+- remove the packages from ``stage-packages:`` (they will be supplied by the GPU provider snap),
+- remove them from the snap through exclusions in the ``prime:`` section,
+- use a cleanup script in ``override-prime:`` as a final part (``after:`` all your other parts) to remove the files, or
+- ignore the warnings in the ``lint:`` section if appropriate.

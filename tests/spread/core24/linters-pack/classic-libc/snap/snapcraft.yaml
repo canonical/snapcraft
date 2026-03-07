@@ -12,6 +12,7 @@ confinement: strict
 
 lint:
   ignore:
+    - gpu
     - library
     - metadata
 
