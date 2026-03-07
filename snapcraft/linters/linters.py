@@ -30,6 +30,7 @@ from snapcraft.meta import snap_yaml
 
 from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
+from .gpu_linter import GpuLinter
 from .library_linter import LibraryLinter
 from .metadata_linter import MetadataLinter
 
@@ -38,6 +39,7 @@ LinterType = type[Linter]
 
 LINTERS: dict[str, LinterType] = {
     "classic": ClassicLinter,
+    "gpu": GpuLinter,
     "library": LibraryLinter,
     "metadata": MetadataLinter,
 }

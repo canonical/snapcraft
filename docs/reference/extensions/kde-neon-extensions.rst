@@ -281,3 +281,14 @@ text has been altered for ease of reading.
                   :language: diff
                   :lines: 3-
                   :emphasize-lines: 15-19, 27-28, 58-103
+
+
+GPU linter warnings
+-------------------
+
+If the GPU linter reports libraries that should come from a content provider snap, do one of the following:
+
+- remove the packages from ``stage-packages:`` (they will be supplied by the GPU provider snap),
+- remove them from the snap through exclusions in the ``prime:`` section,
+- use a cleanup script in ``override-prime:`` as a final part (``after:`` all your other parts) to remove the files, or
+- ignore the warnings in the ``lint:`` section if appropriate.
