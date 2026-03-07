@@ -94,7 +94,7 @@ docs = [
     "sphinx-pydantic==0.1.1",
     "sphinx-lint~=1.0",
     "sphinxext-rediraffe==0.3.0",
-    "sphinx-substitution-extensions==2025.1.2",
+    "sphinx-substitution-extensions==2026.1.12",
     "sphinx-terminal==0.1.1",
     "sphinx-copybutton",
     {include-group = "docs-starter-pack"},
