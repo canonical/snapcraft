@@ -137,7 +137,7 @@ class GNOME(GPUExtension):
         base = self.yaml_data["base"]
 
         if base == "core24":
-            snippet: dict[str, Any]  = super().get_root_snippet()
+            snippet: dict[str, Any] = super().get_root_snippet()
         else:
             snippet = {
                 "layout": {
@@ -328,10 +328,7 @@ class GNOME(GPUExtension):
 
         base = self.yaml_data["base"]
         if base != "core22":
-            parts = {
-                f"gnome/{k}": v
-                for k, v in super().get_parts_snippet().items()
-            }
+            parts = {f"gnome/{k}": v for k, v in super().get_parts_snippet().items()}
         else:
             parts = {}
 
