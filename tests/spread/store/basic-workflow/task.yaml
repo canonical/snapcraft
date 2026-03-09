@@ -31,7 +31,7 @@ prepare: |
 
   # Build what we have and verify the snap runs as expected.
   cd "$SNAP"
-  snapcraft
+  snapcraft pack
 
 restore: |
   cd "$SNAP"

@@ -20,7 +20,7 @@ restore: |
 
 execute: |
   # Create a snap to trigger `snap pack`.
-  snapcraft
+  snapcraft pack
 
   # Links exists
   # SC2002: cat is useful for confined applications!

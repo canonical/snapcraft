@@ -38,7 +38,6 @@ from craft_platforms import DebianArchitecture
 from craft_providers import bases
 
 from snapcraft import application, cli, const, services
-from snapcraft.commands import PackCommand
 from snapcraft.errors import ClassicFallback
 from snapcraft.models.project import Architecture
 
@@ -333,28 +332,30 @@ def test_application_maven_use_not_registered(snapcraft_yaml):
     assert "maven-use" not in craft_parts.plugins.get_registered_plugins()
 
 
-def test_default_command_integrated(monkeypatch, mocker, new_dir):
-    """Test that for core24 projects we accept "pack" as the default command."""
+@pytest.mark.parametrize(
+    ("base", "exit_code"),
+    [
+        # core22 overrides the error's exit codes
+        ("core22", 1),
+        ("core24", os.EX_USAGE),
+    ],
+)
+def test_default_command_error(snapcraft_yaml, base, exit_code, monkeypatch, capsys):
+    """Invoking snapcraft with no subcommand exits with an error."""
+    snapcraft_yaml(base=base)
+    monkeypatch.setattr("sys.argv", ["snapcraft"])
 
-    # Pretend this is an Ubuntu 24.04 system, to match the project's build-base
-    mocker.patch.object(
-        util, "get_host_base", return_value=bases.BaseName("ubuntu", "24.04")
+    try:
+        # core22 exits with a code, core24 returns an exit code
+        actual_exit_code = application.main()
+    except SystemExit as exc:
+        actual_exit_code = exc.code
+
+    assert actual_exit_code == exit_code
+    assert (
+        "Missing a command. Try 'snapcraft pack' or 'snapcraft help'."
+        in capsys.readouterr().err
     )
-
-    snap_dir = new_dir / "snap"
-    snap_dir.mkdir()
-
-    # The project itself doesn't really matter.
-    project_yaml = snap_dir / "snapcraft.yaml"
-    project_yaml.write_text(PARSE_INFO_PROJECT)
-
-    mocked_pack_run = mocker.patch.object(PackCommand, "run", return_value=0)
-
-    monkeypatch.setattr("sys.argv", ["snapcraft", "--destructive-mode"])
-    app = application.create_app()
-    app.run()
-
-    assert mocked_pack_run.called
 
 
 @pytest.mark.parametrize("base", const.ESM_BASES)
