@@ -3,6 +3,7 @@
 (un)?sandbox(ed|ing)
 [Pp]ower(PC|pc)
 aex
+addons
 appstream
 Autoconf
 autoformatte(d|rs?)
@@ -13,6 +14,7 @@ backend
 backends
 backoff
 Boehm
+bool
 booleans?
 bootable
 breakpoints?
@@ -21,6 +23,7 @@ buildd
 Bundler
 Canonical('s)?
 Charmcraft
+chroot
 cjk
 classpath
 CMake
@@ -34,6 +37,7 @@ crafters?
 cryptographically
 ctypes?
 DBus
+defconfigs
 devmode
 distros?
 Dockerfiles?
@@ -63,11 +67,15 @@ Hawksbill
 html
 https
 Inadyn
+Initrd
 ing
+initrd
+initrds
 Intersphinx
 io
 ip
 Irssi
+iterability
 jemalloc
 JLink
 json
@@ -107,6 +115,7 @@ otf
 patchelf
 pathing
 PDF
+perf
 plaintext
 plantuml
 PNG
@@ -121,6 +130,7 @@ pytest
 QEMU
 qmake
 Read the Docs
+ramdisks
 readthedocs
 redeclare
 repos?
