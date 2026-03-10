@@ -8,7 +8,7 @@ base and confinement.
 core26
 ~~~~~~
 
-- The core26 base snap doesn't include Python, so the snap must always bundle it. This
+- The core26 base snap doesn't include Python, so the snap must always include it. This
   is typically done with the :ref:`stage-packages <PartSpec.stage_packages>` key.
 
 core24 and lower
@@ -18,7 +18,7 @@ core24 and lower
   snap's interpreter, so they typically do **not** need to include Python.
 - Projects with ``classic`` confinement **cannot** use the base snap's
   interpreter and thus must always bundle it. This is typically done with the
-  ``stage-packages`` key.
+  :ref:`stage-packages <PartSpec.stage_packages>` key.
 - In both cases, a specific/custom Python installation can always be included
   in the snap. This can be useful, for example, when using a different Python
   version or building an interpreter with custom flags.

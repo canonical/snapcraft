@@ -142,8 +142,8 @@ Snapcraft 8.14.2
 Snapcraft 8.14.3
 ~~~~~~~~~~~~~~~~
 
-- `#6020 <https://github.com/canonical/snapcraft/issues/6020>`__ The python plugin can
-  now be used for core26 strictly-confined snaps.
+- `#6020 <https://github.com/canonical/snapcraft/issues/6020>`__ The Python plugin can
+  now be used for strictly-confined core26 snaps.
 
 Contributors
 ------------
