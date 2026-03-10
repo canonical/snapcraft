@@ -7,6 +7,10 @@ grade: stable
 confinement: strict
 base: core22
 
+lint:
+  ignore:
+    - gpu
+
 apps:
   linter-ros2-humble:
     command: usr/bin/hello
