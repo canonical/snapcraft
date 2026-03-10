@@ -33,6 +33,24 @@ def part_info(new_dir):
     )
 
 
+def test_get_pull_commands_release(part_info):
+    properties = KernelPlugin.properties_class.unmarshal(
+        {"kernel-ubuntu-release-name": "noble"}
+    )
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    expected_commands = [
+        " ".join(
+            [
+                "git clone --depth 1 --branch master-next",
+                "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/noble",
+            ]
+        )
+    ]
+
+    assert plugin.get_pull_commands() == expected_commands
+
+
 def test_get_build_snaps(part_info):
     properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
@@ -115,96 +133,6 @@ def test_get_build_packages_core24(part_info, new_dir):
     }
 
 
-def test_get_build_packages_zfs_core22(part_info, new_dir):
-    part_info = PartInfo(
-        project_info=ProjectInfo(
-            application_name="test",
-            project_name="test-snap",
-            base="core22",
-            cache_dir=new_dir,
-        ),
-        part=Part("my-part", {}),
-    )
-
-    properties = KernelPlugin.properties_class.unmarshal(
-        {"kernel-enable-zfs-support": "true"}
-    )
-    plugin = KernelPlugin(properties=properties, part_info=part_info)
-    assert plugin.get_build_packages() == {
-        "bc",
-        "binutils",
-        "bison",
-        "cmake",
-        "cpio",
-        "cryptsetup",
-        "debhelper",
-        "fakeroot",
-        "flex",
-        "gawk",
-        "gcc-x86-64-linux-gnu",
-        "kmod",
-        "kpartx",
-        "libelf-dev",
-        "libssl-dev",
-        "lz4",
-        "systemd",
-        "xz-utils",
-        "zstd",
-        "autoconf",
-        "automake",
-        "libblkid-dev",
-        "libtool",
-        "python3",
-    }
-
-
-def test_get_build_packages_zfs_core24(part_info, new_dir):
-    part_info = PartInfo(
-        project_info=ProjectInfo(
-            application_name="test",
-            project_name="test-snap",
-            base="core24",
-            cache_dir=new_dir,
-        ),
-        part=Part("my-part", {}),
-    )
-
-    properties = KernelPlugin.properties_class.unmarshal(
-        {"kernel-enable-zfs-support": "true"}
-    )
-    plugin = KernelPlugin(properties=properties, part_info=part_info)
-    assert plugin.get_build_packages() == {
-        "bc",
-        "binutils",
-        "bison",
-        "clang",
-        "cmake",
-        "cpio",
-        "cryptsetup",
-        "debhelper",
-        "fakeroot",
-        "flex",
-        "gawk",
-        "gcc-x86-64-linux-gnu",
-        "kmod",
-        "kpartx",
-        "libdw-dev",
-        "libelf-dev",
-        "libssl-dev",
-        "llvm",
-        "lz4",
-        "rustc",
-        "systemd",
-        "xz-utils",
-        "zstd",
-        "autoconf",
-        "automake",
-        "libblkid-dev",
-        "libtool",
-        "python3",
-    }
-
-
 def test_get_build_environment(part_info):
     properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
@@ -228,8 +156,11 @@ def test_get_build_commands(part_info):
                 "CONFIG_FOO=y",
                 "CONFIG_BAR=m",
             ],
-            "kernel-enable-zfs-support": "true",
-            "kernel-enable-perf": "true",
+            "kernel-tools": [
+                "bpftool",
+                "cpupower",
+                "perf",
+            ],
         }
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
@@ -239,6 +170,7 @@ def test_get_build_commands(part_info):
         "kernel-kconfigflavour= "
         "kernel-kdefconfig=snappy_defconfig,foo_config "
         "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
-        "kernel-enable-zfs=True "
-        "kernel-enable-perf=True"
+        "kernel-tools=bpftool,cpupower,perf "
+        "kernel-ubuntu-release-name= "
+        "kernel-ubuntu-binary-package=False"
     ]
