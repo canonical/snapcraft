@@ -330,10 +330,6 @@ run() {
     cleanup
   fi
 
-  if [ "${UBUNTU_SERIES}" = "focal" ]; then
-    pull_kernel "${kernel_kconfigflavour}"
-  fi
-
   if [ "$kernel_ubuntu_binary_package" = "True" ]; then
     kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
     repack_deb "${kver}"
@@ -372,23 +368,6 @@ run() {
 # main sets some important variables and kicks off the script
 main() {
   set -eux
-
-  # This script is used by both legacy and current behavior. If the new
-  # variables are unset fallback to old ones and use new names in the script.
-  : "${CRAFT_PART_SRC:=$SNAPCRAFT_PART_SRC}"
-  : "${CRAFT_PART_BUILD:=$SNAPCRAFT_PART_BUILD}"
-  : "${CRAFT_PROJECT_DIR:=$SNAPCRAFT_PROJECT_DIR}"
-  : "${CRAFT_PART_INSTALL:=$SNAPCRAFT_PART_INSTALL}"
-  : "${CRAFT_ARCH_BUILD_FOR:=$SNAPCRAFT_ARCH_BUILD_FOR}"
-  : "${CRAFT_PARALLEL_BUILD_COUNT:=$SNAPCRAFT_PARALLEL_BUILD_COUNT}"
-  : "${CRAFT_ARCH_TRIPLET_BUILD_FOR:=$SNAPCRAFT_ARCH_TRIPLET_BUILD_FOR}"
-
-  # Get the build environment's VERSION_CODENAME as this should match our target
-  # shellcheck disable=1091
-  . /etc/os-release
-
-  # UBUNTU_SERIES should match the host build environment
-  UBUNTU_SERIES="${VERSION_CODENAME}"
 
   # required_boot are Kconfigs required for booting Ubuntu Core
   required_boot="SQUASHFS"
