@@ -35,17 +35,10 @@ The following kernel-specific options are provided by this plugin:
       configs will be fixed using the defaults encoded in the Kbuild config
       definitions.
 
-    - kernel-enable-zfs-support
-      (boolean; default: false)
-      Build ZFS kernel modules.
-
-    - kernel-enable-perf
-      (boolean; default: false)
-      Enable or disable building the perf binary.
-
-    - kernel-dkms
+    - kernel-tools
       (list of strings; default: none)
-      a list of additional packages to build DKMS-style
+      a list of tools to build alongside the kernel. Accepted values are bpftool,
+      cpupower, and perf
 
     - kernel-ubuntu-release-name
       (string; default: none)
@@ -95,15 +88,7 @@ class KernelPlugin(PluginV2):
                     "items": {"type": "string"},
                     "default": [],
                 },
-                "kernel-enable-zfs-support": {
-                    "type": "boolean",
-                    "default": False,
-                },
-                "kernel-enable-perf": {
-                    "type": "boolean",
-                    "default": False,
-                },
-                "kernel-dkms": {
+                "kernel-tools": {
                     "type": "array",
                     "uniqueItems": True,
                     "items": {"type": "string"},
@@ -126,66 +111,6 @@ class KernelPlugin(PluginV2):
         kernel_arch = _KERNEL_ARCH_FROM_SNAP_ARCH[target_arch]
 
         return kernel_arch
-
-    # TODO: This still needs to be figured out.
-    # @overrides
-    # def get_pull_commands(self) -> list[str]:
-    #     _base = "focal"
-    #     _target_arch = ProjectOptions().arch_build_for
-    #     _flavour = self.options.kernel_kconfigflavour
-    #     _ubuntu_repo_base = (
-    #         "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/"
-    #     )
-    #     _ubuntu_repo_release = "focal"
-
-    #     # This option takes precedence
-    #     if self.options.kernel_ubuntu_binary_package:
-    #         _package_names = {
-    #             f"linux-image-{_flavour}",
-    #             f"linux-modules-{_flavour}",
-    #             f"linux-modules-extra-{_flavour}",
-    #         }
-
-    #         _install_path = pathlib.Path(self.part_install_dir)
-    #         _stage_packages_path = _install_path.parent / "stage_packages"
-
-    #         Repo.configure("snapcraft")
-    #         stage_cache_dir = pathlib.Path(
-    #             BaseDirectory.save_cache_path("snapcraft", "stage-packages")
-    #         )
-
-    #         _fetched_stage_packages = Repo.fetch_stage_packages(
-    #             cache_dir=Path(stage_cache_dir),
-    #             package_names=_package_names,
-    #             arch=_target_arch,
-    #             base=_base,
-    #             stage_packages_path=_stage_packages_path,
-    #         )
-
-    #         _fetched_stage_packages = Repo.fetch_stage_packages(
-    #             cache_dir=Path(stage_cache_dir),
-    #             package_names="linux-firmware",
-    #             arch="all",
-    #             base=_base,
-    #             stage_packages_path=_stage_packages_path,
-    #         )
-
-    #         Repo.unpack_stage_packages(
-    #             stage_packages_path=_stage_packages_path, install_path=_install_path
-    #         )
-
-    #     if self.options.kernel_ubuntu_release_name:
-    #         return [
-    #             " ".join(
-    #                 [
-    #                     "git clone --depth 1 --branch master-next",
-    #                     f"{_ubuntu_repo_base}{_ubuntu_repo_release}",
-    #                 ]
-    #             )
-    #         ]
-
-    #     else:
-    #         return super().get_pull_commands()
 
     @overrides
     def get_build_snaps(self) -> Set[str]:
@@ -223,21 +148,6 @@ class KernelPlugin(PluginV2):
             "zstd",
         }
 
-        if self.options.kernel_enable_zfs_support:
-            _host_arch = ProjectOptions().arch_build_on
-            _target_arch = ProjectOptions().arch_build_for
-
-            build_packages |= {
-                "autoconf",
-                "automake",
-                "libblkid-dev",
-                "libtool",
-                "python3",
-            }
-
-            if _host_arch != _target_arch:
-                build_packages |= {f"libc6-dev:{_target_arch}"}
-
         return build_packages
 
     @overrides
@@ -270,6 +180,8 @@ class KernelPlugin(PluginV2):
         kconfigflavour = self.options.kernel_kconfigflavour
         if self.options.kernel_kdefconfig != ["defconfig"]:
             kconfigflavour = ""
+        if not self.options.kernel_ubuntu_release_name:
+            release_name = "None"
 
         return [
             " ".join(
@@ -278,8 +190,9 @@ class KernelPlugin(PluginV2):
                     f"kernel-kconfigflavour={kconfigflavour}",
                     f"kernel-kdefconfig={','.join(self.options.kernel_kdefconfig)}",
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
-                    f"kernel-enable-zfs={self.options.kernel_enable_zfs_support}",
-                    f"kernel-enable-perf={self.options.kernel_enable_perf}",
+                    f"kernel-tools={','.join(self.options.kernel_tools)}",
+                    f"kernel-ubuntu-release-name={release_name}",
+                    f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package}",
                 ]
             )
         ]
