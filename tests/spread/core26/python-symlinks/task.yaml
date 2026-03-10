@@ -45,8 +45,6 @@ execute: |
     ls -l squashfs-root/bin
     [ -x squashfs-root/bin/hello ]
     [ "$(readlink squashfs-root/bin/python3)" == "$(cat expected-symlink)" ]
-    rm -rf squashfs-root
-    rm -f ./*.snap
   else
     snapcraft pack 2>&1 | MATCH "No suitable Python interpreter found, giving up."
   fi
