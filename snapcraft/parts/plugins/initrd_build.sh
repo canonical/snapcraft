@@ -205,7 +205,7 @@ chroot_configure() {
   fi
 
   chroot_run "apt-get update"
-  chroot_run "apt-get install --no-install-recommends -y ubuntu-core-initramfs"
+  chroot_run "apt-get install --no-install-recommends --allow-downgrades -y ubuntu-core-initramfs"
 
   # actual ubuntu-core initramfs build is performed in chroot
   # where tmp is not really tmpfs, avoid excessive use of cp
