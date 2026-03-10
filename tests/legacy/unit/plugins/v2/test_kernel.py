@@ -34,24 +34,25 @@ def test_schema():
                 "items": {"type": "string"},
                 "default": [],
             },
-            "kernel-enable-zfs-support": {
-                "type": "boolean",
-                "default": False,
+            "kernel-tools": {
+                "type": "array",
+                "uniqueItems": True,
+                "items": {"type": "string"},
+                "default": [],
             },
-            "kernel-enable-perf": {
+            "kernel-ubuntu-release-name": {
+                "type": "string",
+                "default": "",
+            },
+            "kernel-ubuntu-binary-package": {
                 "type": "boolean",
                 "default": False,
             }
         },
-        "required": ["source"],
     }
 
 def test_get_build_packages():
-    class Options:
-        kernel_enable_zfs_support = False
-
-    plugin = KernelPlugin(part_name="my-part", options=Options())
-
+    plugin = KernelPlugin(part_name="my-part", options=lambda: None)
     assert plugin.get_build_packages() == {
         "bc",
         "binutils",
@@ -71,38 +72,6 @@ def test_get_build_packages():
         "systemd",
         "xz-utils",
         "zstd",
-    }
-
-def test_get_build_packages_zfs():
-    class Options:
-        kernel_enable_zfs_support = True
-
-    plugin = KernelPlugin(part_name="my-part", options=Options())
-
-    assert plugin.get_build_packages() == {
-        "bc",
-        "binutils",
-        "bison",
-        "cmake",
-        "cpio",
-        "cryptsetup",
-        "debhelper",
-        "fakeroot",
-        "flex",
-        "gcc-x86-64-linux-gnu",
-        "kmod",
-        "kpartx",
-        "libelf-dev",
-        "libssl-dev",
-        "lz4",
-        "systemd",
-        "xz-utils",
-        "zstd",
-        "autoconf",
-        "automake",
-        "libblkid-dev",
-        "libtool",
-        "python3",
     }
 
 def test_get_build_environment():
@@ -120,8 +89,9 @@ def test_get_build_commands():
         kernel_kconfigflavour = "aflavour"
         kernel_kdefconfig = ["snappy_defconfig", "foo_config"]
         kernel_kconfigs = ["CONFIG_FOO=y", "CONFIG_BAR=m"]
-        kernel_enable_zfs_support = True
-        kernel_enable_perf = True
+        kernel_tools = ["bpf", "cpupower", "perf"]
+        kernel_ubuntu_release_name = "focal"
+        kernel_ubuntu_binary_package = False
 
     plugin = KernelPlugin(part_name="my-part", options=Options())
 
@@ -130,6 +100,7 @@ def test_get_build_commands():
                 "kernel-kconfigflavour= "
                 "kernel-kdefconfig=snappy_defconfig,foo_config "
                 "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
-                "kernel-enable-zfs=True "
-                "kernel-enable-perf=True"
+                "kernel-tools=bpf,cpupower,perf "
+                "kernel-ubuntu-release-name=focal "
+                "kernel-ubuntu-binary-package=False"
     ]

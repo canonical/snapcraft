@@ -27,6 +27,7 @@ def part_info(new_dir):
         project_info=ProjectInfo(
             application_name="test",
             project_name="test-snap",
+            base="core22",
             cache_dir=new_dir,
         ),
         part=Part("my-part", {}),
@@ -35,7 +36,7 @@ def part_info(new_dir):
 
 def test_get_pull_commands_release(part_info):
     properties = KernelPlugin.properties_class.unmarshal(
-        {"kernel-ubuntu-release-name": "noble"}
+        {"kernel-ubuntu-release-name": "jammy"}
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
 
@@ -43,7 +44,7 @@ def test_get_pull_commands_release(part_info):
         " ".join(
             [
                 "git clone --depth 1 --branch master-next",
-                "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/noble",
+                "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy",
             ]
         )
     ]
@@ -161,6 +162,7 @@ def test_get_build_commands(part_info):
                 "cpupower",
                 "perf",
             ],
+            "kernel-ubuntu-release-name": "noble",
         }
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
@@ -171,6 +173,6 @@ def test_get_build_commands(part_info):
         "kernel-kdefconfig=snappy_defconfig,foo_config "
         "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
         "kernel-tools=bpftool,cpupower,perf "
-        "kernel-ubuntu-release-name= "
+        "kernel-ubuntu-release-name=noble "
         "kernel-ubuntu-binary-package=False"
     ]
