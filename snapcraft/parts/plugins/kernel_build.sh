@@ -390,24 +390,6 @@ main() {
   # UBUNTU_SERIES should match the host build environment
   UBUNTU_SERIES="${VERSION_CODENAME}"
 
-  # The "source" can come from many places; either we're:
-  #   * fetching a prebuilt deb,
-  #   * fetching from a specific release,
-  #   * using a specified "source" in the part, or
-  #   * using the project directory source
-  # The first three are self-explanatory and handled by snapcraft. If a source isn't
-  # provided, perhaps the user has a kernel tree in the project root. If not, fail - we
-  # need something to build.
-  if [ -n "$kernel_ubuntu_release_name" ] &&
-     [ "$kernel_ubuntu_release_name" != "None" ] ||
-     [ -d "${CRAFT_PART_SRC}/kernel" ]; then
-    # KERNEL_SRC is the true location of the kernel source tree
-    KERNEL_SRC="${CRAFT_PART_SRC}"
-  elif [ -d "${CRAFT_PROJECT_DIR}/kernel" ]; then
-    KERNEL_SRC="${CRAFT_PROJECT_DIR}"
-  else echo "Source missing from kernel part! Please specify a source" && exit 1
-  fi
-
   # required_boot are Kconfigs required for booting Ubuntu Core
   required_boot="SQUASHFS"
 
@@ -474,6 +456,25 @@ main() {
            build_target
 
   parse_args "$@"
+
+  # The "source" can come from many places; either we're:
+  #   * fetching a prebuilt deb,
+  #   * fetching from a specific release,
+  #   * using a specified "source" in the part, or
+  #   * using the project directory source
+  # The first three are self-explanatory and handled by snapcraft. If a source isn't
+  # provided, perhaps the user has a kernel tree in the project root. If not, fail - we
+  # need something to build.
+  if [ -n "$kernel_ubuntu_release_name" ] &&
+     [ "$kernel_ubuntu_release_name" != "None" ] ||
+     [ -d "${CRAFT_PART_SRC}/kernel" ]; then
+    # KERNEL_SRC is the true location of the kernel source tree
+    KERNEL_SRC="${CRAFT_PART_SRC}"
+  elif [ -d "${CRAFT_PROJECT_DIR}/kernel" ]; then
+    KERNEL_SRC="${CRAFT_PROJECT_DIR}"
+  else echo "Source missing from kernel part! Please specify a source" && exit 1
+  fi
+
   run
 }
 
