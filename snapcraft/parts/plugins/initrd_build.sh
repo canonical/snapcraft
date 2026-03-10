@@ -73,8 +73,39 @@ clean() {
   umnt "${INITRD_ROOT}/sys"
 }
 
+# fetch_base downloads and unpacks the Ubuntu base for building the initrd within.
+# This function is only relevant when using the legacy plugin (core20), as the new
+# plugins implement overriding the pull command.
+fetch_base() {
+  # Make sure no initrd chroot is lingering
+  [ -e "${INITRD_ROOT}" ] && rm -rf "${INITRD_ROOT}"
+
+  tar_base_url=https://cdimage.ubuntu.com/ubuntu-base
+  tar_release="focal/daily/current"
+  tar_name="focal-base-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
+  tar_url="${tar_base_url}/${tar_release}/${tar_name}"
+  ubuntu_base="ubuntu-base-focal-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
+
+  curl --output "${ubuntu_base}" "${tar_url}"
+
+  # Extract chroot base
+  mkdir -p "${INITRD_ROOT}"
+  tar --extract --file "${ubuntu_base}" --directory "${INITRD_ROOT}"
+}
+
 # chroot_setup creates the chroot base and mounts certain filesystems from host
 chroot_setup() {
+  # Legacy plugin does not fetch the relevant tarball like the new plugin does
+  if [ "${UBUNTU_SERIES}" = "focal" ]; then
+    fetch_base
+  fi
+
+  # Ensure networking in chroot
+  cp --no-dereference /etc/resolv.conf "${INITRD_ROOT}/etc/resolv.conf"
+
+  # /dev/null isn't in the chroot base but it is used to mask some systemd service units
+  touch "${INITRD_ROOT}/dev/null"
+
     # This is a minimum viable collection of mounts.
     # Even though we try to settle any existing processes, on some systems this isn't
     # sufficient for ensuring an unmount can happen right now. Therefore, unmount lazily

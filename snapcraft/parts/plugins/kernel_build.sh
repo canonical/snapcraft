@@ -38,6 +38,29 @@ cleanup() {
   unlink "${CRAFT_PART_INSTALL}/lib/modules"
 }
 
+# pull_kernel fetches the correct kernel based on the given options
+# kernel_ubuntu_release_name or kernel_ubuntu_binary_package. pull_kernel is only
+# relevant when using the legacy plugin (core20) as the new plugin implements an pull
+# command accomplishing this behavior.
+pull_kernel() {
+  _flavour="${1}"
+
+  _repo_base="https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/focal"
+
+  if [ "$kernel_ubuntu_binary_package" = "True" ]; then
+    apt download linux-firmware             \
+                "linux-image-${_flavour}"   \
+                "linux-modules-${_flavour}" \
+                "linux-modules-extra-${_flavour}"
+
+    for deb in *.deb; do
+      dpkg -x "${deb}" "${CRAFT_PART_INSTALL}"
+    done
+  elif [ -n "$kernel_ubuntu_release_name" ] && [ "$kernel_ubuntu_release_name" != "None" ]; then
+    git clone --depth 1 --branch master-next "${_repo_base}" "${CRAFT_PART_SRC}"
+  fi
+}
+
 # gen_defconfig creates a config from one or more defconfigs
 gen_defconfig() {
   # kernel-kdefconfig is passed as comma-separated
@@ -307,6 +330,10 @@ run() {
     cleanup
   fi
 
+  if [ "${UBUNTU_SERIES}" = "focal" ]; then
+    pull_kernel "${kernel_kconfigflavour}"
+  fi
+
   if [ "$kernel_ubuntu_binary_package" = "True" ]; then
     kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
     repack_deb "${kver}"
@@ -359,6 +386,9 @@ main() {
   # Get the build environment's VERSION_CODENAME as this should match our target
   # shellcheck disable=1091
   . /etc/os-release
+
+  # UBUNTU_SERIES should match the host build environment
+  UBUNTU_SERIES="${VERSION_CODENAME}"
 
   # The "source" can come from many places; either we're:
   #   * fetching a prebuilt deb,
