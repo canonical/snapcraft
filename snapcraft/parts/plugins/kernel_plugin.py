@@ -282,6 +282,7 @@ class KernelPlugin(plugins.Plugin):
     @overrides
     def get_build_commands(self) -> list[str]:
         kconfigflavour = self.options.kernel_kconfigflavour
+        release_name = self.options.kernel_ubuntu_release_name
         if self.options.kernel_kdefconfig != ["defconfig"]:
             kconfigflavour = ""
         if not self.options.kernel_ubuntu_release_name:
