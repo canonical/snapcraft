@@ -75,8 +75,8 @@ _KERNEL_ARCH_FROM_SNAP_ARCH = {
 }
 
 _KERNEL_RELEASE_FROM_SNAP_BASE = {
-    "22": "jammy",
-    "24": "noble",
+    "core22": "jammy",
+    "core24": "noble",
 }
 
 
