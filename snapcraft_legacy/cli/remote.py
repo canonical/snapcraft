@@ -272,7 +272,7 @@ def _determine_architectures(project: Project, user_specified_arch: str):
         offending_flag = "--build-for" if "--build-for" in sys.argv else "--build-on"
         raise click.BadOptionUsage(
             offending_flag,
-            f"{offending_flag} can only be used with the shorthand architecture notation.",
+            f"{offending_flag} can only be used with project files that use the shorthand architecture notation.",
         )
 
     if project_architectures:
