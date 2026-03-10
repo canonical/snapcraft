@@ -7,9 +7,6 @@ environment:
   CMD/pack_directory: pack prime
   CMD/pack_directory_output: pack prime --output output.snap
   CMD/pack_directory_output_subdir: pack prime --output subdir/output.snap
-  CMD/default: ""
-  CMD/default_output: -o output.snap
-  CMD/default_output_subdir: --output subdir/output.snap
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

@@ -31,7 +31,7 @@ from craft_application import Application, AppMetadata, launchpad, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
 from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
-from overrides import override
+from typing_extensions import override
 
 from snapcraft import cli, commands, errors, models, services, store
 from snapcraft.utils import get_effective_base
@@ -306,6 +306,7 @@ class Snapcraft(Application):
             summary=str(self.app.summary),
             extra_global_args=self._global_arguments,
             default_command=commands.PackCommand,
+            allow_default_command=False,
         )
 
     def _get_project_raw(self) -> dict[str, Any] | None:

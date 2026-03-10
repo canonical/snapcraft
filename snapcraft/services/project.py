@@ -23,7 +23,7 @@ import craft_platforms
 import craft_providers.bases
 from craft_application import ProjectService
 from craft_application.errors import CraftValidationError
-from overrides import override
+from typing_extensions import override
 
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import ComponentProject, Platform, apply_root_packages

@@ -21,7 +21,7 @@ import functools
 import re
 from typing import Any
 
-from overrides import overrides
+from typing_extensions import override
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
@@ -71,21 +71,21 @@ class GNOME(Extension):
     """
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
-    @overrides
+    @override
     def is_experimental(base: str | None) -> bool:
         return False
 
-    @overrides
+    @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
@@ -126,7 +126,7 @@ class GNOME(Extension):
 
         return GNOMESnaps(sdk=sdk_snap, content=content, builtin=builtin)
 
-    @overrides
+    @override
     def get_root_snippet(self) -> dict[str, Any]:
         platform_snap = self.gnome_snaps.content
         base = self.yaml_data["base"]
@@ -220,7 +220,7 @@ class GNOME(Extension):
             },
         }
 
-    @overrides
+    @override
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         sdk_snap = self.gnome_snaps.sdk
 
@@ -329,7 +329,7 @@ class GNOME(Extension):
             ],
         }
 
-    @overrides
+    @override
     def get_parts_snippet(self) -> dict[str, Any]:
         """Get the parts snippet for the GNOME extension.
 

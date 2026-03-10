@@ -61,4 +61,4 @@ execute: |
   grep "^base: core24" snap/snapcraft.yaml
 
   # 'snapcraft init' should create a usable snapcraft.yaml file
-  snapcraft
+  snapcraft pack

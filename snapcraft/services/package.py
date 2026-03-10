@@ -25,7 +25,7 @@ from typing import cast
 
 from craft_application import PackageService
 from craft_application.util import strtobool
-from overrides import override
+from typing_extensions import override
 
 from snapcraft import errors, linters, models, pack
 from snapcraft.linters import LinterStatus

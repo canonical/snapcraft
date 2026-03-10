@@ -22,7 +22,7 @@ import functools
 import re
 from typing import Any
 
-from overrides import overrides
+from typing_extensions import override
 
 from .extension import Extension, get_extensions_data_dir, prepend_to_env
 
@@ -80,21 +80,21 @@ class KDENeonQt6(Extension):
     """
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
-    @overrides
+    @override
     def is_experimental(base: str | None) -> bool:
         return False
 
-    @overrides
+    @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
@@ -166,7 +166,7 @@ class KDENeonQt6(Extension):
             gpu_plugs=gpu_plugs,
         )
 
-    @overrides
+    @override
     def get_root_snippet(self) -> dict[str, Any]:
         platform_qt6_snap = self.kde_snaps.content_qt6
         content_qt6_snap = self.kde_snaps.content_qt6 + "-all"
@@ -224,7 +224,7 @@ class KDENeonQt6(Extension):
             },
         }
 
-    @overrides
+    @override
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
 
@@ -365,7 +365,7 @@ class KDENeonQt6(Extension):
             ],
         }
 
-    @overrides
+    @override
     def get_parts_snippet(self) -> dict[str, Any]:
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from

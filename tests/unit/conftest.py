@@ -32,8 +32,8 @@ from craft_parts import Features, callbacks, plugins
 from craft_platforms import BuildInfo, DebianArchitecture
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
-from overrides import override
 from pymacaroons import Caveat, Macaroon
+from typing_extensions import override
 
 from snapcraft import const, models, services
 from snapcraft.extensions import extension, register, unregister

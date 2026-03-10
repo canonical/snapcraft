@@ -108,6 +108,13 @@ by their equivalent environment variables:
       - Export the credentials to the environment variable ``SNAPCRAFT_STORE_CREDENTIALS``.
 
 
+Removed default command
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, running ``snapcraft`` alone implicitly ran ``snapcraft pack``. This default
+behavior has been removed. You must now run ``snapcraft pack`` to build a snap.
+
+
 Removed legacy remote builder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -136,6 +143,15 @@ instances of ``snapcraftctl`` in your scripts.
 
 Core22 and core24 aren't affected by this change.
 
+Removed support for Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Snapcraft previously supported running on Windows. This workflow was uncommon,
+because snaps aren't compatible with Windows.
+
+Snapcraft 9 drops all official support for Windows. To build snaps on Windows
+technology, use Windows Subsystem for Linux (WSL) as described in
+:ref:`how-to-set-up-snapcraft`.
 
 Updated documentation system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

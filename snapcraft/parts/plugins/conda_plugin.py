@@ -22,7 +22,7 @@ import textwrap
 from typing import Literal, cast
 
 from craft_parts import plugins
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import errors
 
@@ -93,15 +93,15 @@ class CondaPlugin(plugins.Plugin):
 
     properties_class = CondaPluginProperties
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         return {"PATH": "${HOME}/miniconda/bin:${PATH}"}
 
@@ -134,7 +134,7 @@ class CondaPlugin(plugins.Plugin):
 
         return " ".join(deploy_cmd)
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         options = cast(CondaPluginProperties, self._options)
         url = _get_miniconda_source(options.conda_miniconda_version)
