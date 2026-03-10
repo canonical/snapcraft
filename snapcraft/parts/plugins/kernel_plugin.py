@@ -296,7 +296,7 @@ class KernelPlugin(plugins.Plugin):
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
                     f"kernel-tools={','.join(self.options.kernel_tools)}",
                     f"kernel-ubuntu-release-name={release_name}",
-                    f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package},",
+                    f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package}",
                 ]
             )
         ]
