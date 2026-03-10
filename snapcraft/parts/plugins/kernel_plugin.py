@@ -99,10 +99,6 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
             raise errors.PartsError(
                 "cannot use 'kernel-ubuntu-release-name' and 'source' keys at same time"
             )
-        if not self.kernel_ubuntu_release_name and not self.source:
-            raise errors.PartsError(
-                "missing either 'kernel-ubuntu-release-name' or 'source' key"
-            )
         return self
 
     @pydantic.model_validator(mode="after")
