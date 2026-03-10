@@ -288,6 +288,8 @@ class KernelPlugin(plugins.Plugin):
         kconfigflavour = self.options.kernel_kconfigflavour
         if self.options.kernel_kdefconfig != ["defconfig"]:
             kconfigflavour = ""
+        if not self.options.kernel_ubuntu_release_name:
+            release_name = "None"
 
         return [
             " ".join(
@@ -297,7 +299,7 @@ class KernelPlugin(plugins.Plugin):
                     f"kernel-kdefconfig={','.join(self.options.kernel_kdefconfig)}",
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
                     f"kernel-tools={','.join(self.options.kernel_tools)}",
-                    f"kernel-ubuntu-release-name={self.options.kernel_ubuntu_release_name}",
+                    f"kernel-ubuntu-release-name={release_name}",
                     f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package},",
                 ]
             )
