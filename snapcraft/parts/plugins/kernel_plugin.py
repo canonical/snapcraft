@@ -95,12 +95,12 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     @pydantic.model_validator(mode="after")
     def validate_release_name_and_source_exclusive(self) -> Self:
         """Enforce release_name and source options are mutually exclusive."""
-        if self.kernel_release_name and self.source:
-            raise errors.SnapcraftError(
+        if self.kernel_ubuntu_release_name and self.source:
+            raise errors.PartsError(
                 "cannot use 'kernel-ubuntu-release-name' and 'source' keys at same time"
             )
-        if not self.kernel_release_name and not self.source:
-            raise errors.SnapcraftError(
+        if not self.kernel_ubuntu_release_name and not self.source:
+            raise errors.PartsError(
                 "missing either 'kernel-ubuntu-release-name' or 'source' key"
             )
         return self
@@ -110,7 +110,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
         self,
     ) -> Self:
         """Enforce binary package and source-only options are exclusive."""
-        if self.kernel_use_binary_package:
+        if self.kernel_ubuntu_binary_package:
             conflicting_options = [
                 "source",
                 "kernel_kconfigs",
@@ -118,7 +118,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
             ]
             for option in conflicting_options:
                 if getattr(self, option):
-                    raise errors.SnapcraftError(
+                    raise errors.PartsError(
                         "'kernel-ubuntu-binary-package' and "
                         f"'{option.replace('_', '-')}' keys are mutually exclusive"
                     )
@@ -131,7 +131,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
         """Ensure only a valid list of tools is specified."""
         for tool in self.kernel_tools:
             if tool not in self.kernel_tools:
-                raise errors.SnapcraftError(
+                raise errors.PartsError(
                     f"tool '{tool}' is not a valid choice! Valid choices are perf, cpupower, and bpftool"
                 )
         return self
@@ -160,15 +160,15 @@ class KernelPlugin(plugins.Plugin):
 
         # This option takes precedence
         if self.options.kernel_ubuntu_binary_package:
-            _package_names = {
+            _package_names = [
                 f"linux-image-{_flavour}",
                 f"linux-modules-{_flavour}",
                 f"linux-modules-extra-{_flavour}",
-            }
+            ]
 
             # On Jammy and earlier, linux-firmware is an "all" architectures package
             if _ubuntu_repo_release != "jammy":
-                _package_names.extend("linux-firmware")
+                _package_names.append("linux-firmware")
 
             _install_path = pathlib.Path(self._part_info.part_install_dir)
             _stage_packages_path = _install_path.parent / "stage_packages"
@@ -186,7 +186,7 @@ class KernelPlugin(plugins.Plugin):
             if _ubuntu_repo_release == "jammy":
                 _fetched_stage_packages = Repo.fetch_stage_packages(
                     cache_dir=Path(self._part_info.cache_dir.resolve()),
-                    package_names="linux-firmware",
+                    package_names=["linux-firmware"],
                     arch="all",
                     base=_base,
                     stage_packages_path=_stage_packages_path,
