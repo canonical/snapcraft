@@ -81,8 +81,8 @@ from overrides import overrides
 from typing_extensions import Self
 
 _INITRD_RELEASE_FROM_SNAP_BASE = {
-    "22": "jammy",
-    "24": "noble",
+    "core22": "jammy",
+    "core24": "noble",
 }
 
 

@@ -95,11 +95,6 @@ fetch_base() {
 
 # chroot_setup creates the chroot base and mounts certain filesystems from host
 chroot_setup() {
-  # Legacy plugin does not fetch the relevant tarball like the new plugin does
-  if [ "${UBUNTU_SERIES}" = "focal" ]; then
-    fetch_base
-  fi
-
   # Ensure networking in chroot
   cp --no-dereference /etc/resolv.conf "${INITRD_ROOT}/etc/resolv.conf"
 
@@ -176,7 +171,7 @@ chroot_configure() {
 
   chroot_run "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
 
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     # snapd deb is required
     # The most common failure one may see in this circumstance is an error from dpkg
     # that /etc/resolv.conf and /run/systemd/resolve/stub-resolv.conf are the same file
@@ -227,7 +222,7 @@ add_modules() {
   initrd_conf="${initrd_conf_dir}/ubuntu-core-initramfs.conf"
 
   # A bug in releases pre-24.04; ensure modules are properly added
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     modules=""
     while read -r m; do
       modules="${modules} ${m}"
@@ -236,10 +231,7 @@ add_modules() {
 
   rm -f "${initrd_modules_conf}"
 
-  if [ "${UBUNTU_SERIES}" = "focal" ]; then
-       initrd_modules_conf="${initrd_modules_conf%/*}/main/extra-modules.conf"
-  else initrd_modules_conf="${initrd_modules_conf%/*}/modules/main/extra-modules.conf"
-  fi
+  initrd_modules_conf="${initrd_modules_conf%/*}/modules/main/extra-modules.conf"
 
   mkdir -p "${initrd_conf_dir}"    \
            "${initrd_modules_dir}" \
@@ -385,7 +377,7 @@ create_initrd() {
   # snapd version information should be at the top-level of the kernel snap
   # The location of the file is different between jammy and noble
   snapd_info=usr/lib/snapd/info
-  if [ "$UBUNTU_SERIES" = "focal" ] || [ "$UBUNTU_SERIES" = "jammy" ]; then
+  if [ "$UBUNTU_SERIES" = "jammy" ]; then
     snapd_info="${INITRD_ROOT}/${snapd_info}"
   else
     snapd_info="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/${snapd_info}"
@@ -400,7 +392,7 @@ create_initrd() {
                 --output /boot/initrd.img"
 
   # ubuntu-core-initramfs will only generate a manifest for noble and later
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     generate_manifest "${INITRD_ROOT}/boot/manifest-initramfs.yaml-${KERNEL_VERSION}"
   fi
 
@@ -494,13 +486,6 @@ run() {
 main() {
   set -eux
 
-  # This script is used by both legacy and current behavior. If the new
-  # variables are unset fallback to old ones and use new names in the script.
-  : "${CRAFT_STAGE:=$SNAPCRAFT_STAGE}"
-  : "${CRAFT_PART_SRC:=$SNAPCRAFT_PART_SRC}"
-  : "${CRAFT_PART_INSTALL:=$SNAPCRAFT_PART_INSTALL}"
-  : "${CRAFT_ARCH_BUILD_FOR:=$SNAPCRAFT_ARCH_BUILD_FOR}"
-
   # Get the build environment's VERSION_CODENAME as this should match our target
   # shellcheck disable=1091
   . /etc/os-release
@@ -541,13 +526,6 @@ main() {
            BASE_CREATED    \
            BASE_CONFIGURED \
            SRC_LIST
-
-  # Building UKIs is only supported on jammy or later
-  if [ "${UBUNTU_SERIES}" = "focal" ]; then
-    initrd_build_efi_image="False"
-    initrd_efi_image_key=""
-    initrd_efi_image_cert=""
-  fi
 
   # clean if we fail
   trap 'clean "${INITRD_ROOT}"' EXIT INT
