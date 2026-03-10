@@ -29,5 +29,5 @@ parts:
     plugin: nil
     stage-packages:
       - python3-minimal
-      - python3.13-minimal
+      - python3-minimal
       - python3-venv
