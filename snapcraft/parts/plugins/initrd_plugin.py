@@ -126,6 +126,7 @@ class InitrdPlugin(plugins.Plugin):
 
     @overrides
     def get_pull_commands(self) -> list[str]:
+        commands = []
         _target_arch = self._part_info.target_arch
         _release = _INITRD_RELEASE_FROM_SNAP_BASE[self._part_info.base]
 
@@ -142,7 +143,7 @@ class InitrdPlugin(plugins.Plugin):
         _initrd_root = "uc-initramfs-build"
 
         # Pull the base
-        return " ".join(
+        commands.extend(
             [
                 f"curl {_ubuntu_base} {_tar_url}",
                 f"mkdir -p {_initrd_root}",
@@ -152,8 +153,11 @@ class InitrdPlugin(plugins.Plugin):
             ]
         )
 
-        # Perform a regular pull step just in case the user has specified a source
-        return super().get_pull_commands()
+        if not commands:
+            # Perform a regular pull step just in case the user has specified a source
+            return super().get_pull_commands()
+
+        return commands
 
     @overrides
     def get_build_snaps(self) -> set[str]:
