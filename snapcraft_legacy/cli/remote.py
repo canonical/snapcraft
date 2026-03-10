@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import time
 from typing import List
 
@@ -266,9 +267,12 @@ def _determine_architectures(project: Project, user_specified_arch: str):
     # Launchpad defaults using --build-on.
     project_architectures = _get_project_architectures(project)
     if project_architectures and user_specified_arch:
+        # Both of these flags could cause this error, but click can only complain about
+        # one at a time, so just pick the first one we see.
+        offending_flag = "--build-for" if "--build-for" in sys.argv else "--build-on"
         raise click.BadOptionUsage(
-            "--build-on",
-            "Cannot use --build-on, architecture list is already set in snapcraft.yaml.",
+            offending_flag,
+            f"{offending_flag} can only be used with the shorthand architecture notation.",
         )
 
     if project_architectures:

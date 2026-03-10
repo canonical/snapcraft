@@ -145,6 +145,15 @@ Snapcraft 8.14.3
 - `#6020 <https://github.com/canonical/snapcraft/issues/6020>`__ The Python plugin can
   now be used for strictly-confined core26 snaps.
 
+.. _release-notes-fixes-8.14.4:
+
+Snapcraft 8.14.4
+~~~~~~~~~~~~~~~~
+
+- `#5817`_ The error message given by ``snapcraft remote-build`` when using the
+  ``--build-for`` flag on core20 projects not using the architecture shorthand has been
+  improved.
+
 Contributors
 ------------
 
