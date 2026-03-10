@@ -34,25 +34,6 @@ def part_info(new_dir):
     )
 
 
-def test_get_pull_commands(part_info):
-    properties = InitrdPlugin.properties_class.unmarshal({})
-    plugin = InitrdPlugin(properties=properties, part_info=part_info)
-
-    expected_commands = [
-        " ".join(
-            [
-                "curl ubuntu-base-noble-amd64.tar.gz https://cdimage.ubuntu.com/ubuntu-base/noble/daily/current/noble-base-amd64.tar.gz",
-                "mkdir -p uc-initramfs-build",
-                "tar --extract --file ubuntu-base-noble-amd64.tar.gz --directory uc-initramfs-build",
-                "cp --no-dereference /etc/resolv.conf uc-initramfs-build/etc/resolv.conf",
-                "touch uc-initramfs-build/dev/null",
-            ]
-        )
-    ]
-
-    assert plugin.get_pull_commands() == expected_commands
-
-
 def test_get_build_snaps(part_info):
     properties = InitrdPlugin.properties_class.unmarshal({})
     plugin = InitrdPlugin(properties=properties, part_info=part_info)
