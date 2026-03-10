@@ -1,0 +1,34 @@
+summary: Build and run Python-based snaps in core26
+
+environment:
+  PARAM/strict: ""
+  PARAM/classic: "--classic"
+
+  # failing because 26.04 uses poetry v2, which isn't compatible with the poetry v1 plugin
+  # PARAM/poetry: ""
+
+  # failing due to a broken symlink:
+  # /snap/python-hello-uv/current/bin/python -> /root/parts/hello/install/usr/bin/python3
+  # PARAM/uv: ""
+
+prepare: |
+  # remove after core26 is stable (#6088)
+  snap install core26 --edge
+
+restore: |
+  cd ./"${SPREAD_VARIANT}"
+  snapcraft clean
+  rm -f ./*.snap
+  snap remove "python-hello-${SPREAD_VARIANT}"
+  # remove after core26 is stable (#6088)
+  snap remove core26 --purge
+
+execute: |
+  cp -r src ./"${SPREAD_VARIANT}"/
+  cd ./"${SPREAD_VARIANT}"
+
+  snapcraft
+  # shellcheck disable=SC2086
+  snap install python-hello-"${SPREAD_VARIANT}"_1.0_*.snap --dangerous ${PARAM}
+
+  python-hello-"${SPREAD_VARIANT}" | MATCH "hello world! black version"
