@@ -13,7 +13,7 @@ if [ -z "${SNAP}" ]; then
 fi
 
 if [ ! -f "${GPU_WRAPPER}" ]; then
-  echo "Content snap command-chain for $1 not found: ensure slot is connected"
+  echo "Content snap GPU wrapper '${GPU_WRAPPER}' not found: ensure slot is connected"
   exit 3
 fi
 

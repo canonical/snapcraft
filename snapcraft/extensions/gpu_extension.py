@@ -18,6 +18,8 @@
 
 from typing import Any
 
+from typing_extensions import override
+
 from .extension import Extension, get_extensions_data_dir
 
 
@@ -29,8 +31,7 @@ class GPUExtension(Extension):
     - Prepending the gpu-2404-wrapper to the command chain in ``get_app_snippet``.
     - Adding the gpu-2404 plug and layouts in ``get_root_snippet``.
 
-    Both methods only act when the base is ``core24``; for other bases they return
-    an empty dict so subclasses are not affected.
+    Currently only supports the core24 base and raises ``AssertionError`` on unsupported ones.
 
     Subclasses should call ``super()`` when overriding these methods to inherit the
     gpu-2404 integration and build on top of it.
@@ -50,12 +51,14 @@ class GPUExtension(Extension):
         "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
     }
 
+    @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         """Return the gpu-2404-wrapper command-chain entry for core24."""
         if self.yaml_data["base"] == "core24":
             return {"command-chain": ["snap/command-chain/gpu-2404-wrapper"]}
         raise AssertionError(f"Unsupported base: {self.yaml_data['base']}")
 
+    @override
     def get_root_snippet(self) -> dict[str, Any]:
         """Return the gpu-2404 plug and layouts for core24."""
         if self.yaml_data["base"] == "core24":
@@ -65,6 +68,7 @@ class GPUExtension(Extension):
             }
         raise AssertionError(f"Unsupported base: {self.yaml_data['base']}")
 
+    @override
     def get_parts_snippet(self) -> dict[str, Any]:
         """Return the part for the gpu-2404-wrapper for core24."""
         source = get_extensions_data_dir() / "gpu" / "command-chain"
