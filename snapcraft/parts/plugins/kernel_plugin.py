@@ -54,8 +54,6 @@ the build-environment is configured accordingly and has foreign
 architectures set up accordingly.
 """
 
-import pathlib
-from pathlib import Path
 from typing import Literal, cast
 
 import pydantic
@@ -145,61 +143,27 @@ class KernelPlugin(plugins.Plugin):
 
     @override
     def get_pull_commands(self) -> list[str]:
+        commands = []
         _base = self._part_info.base
         _target_arch = self._part_info.target_arch
         _flavour = self.options.kernel_kconfigflavour
         _ubuntu_repo_base = (
-            "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/"
+            "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git"
         )
         _ubuntu_repo_release = _KERNEL_RELEASE_FROM_SNAP_BASE[_base]
 
-        # This option takes precedence
-        if self.options.kernel_ubuntu_binary_package:
-            _package_names = [
-                f"linux-image-{_flavour}",
-                f"linux-modules-{_flavour}",
-                f"linux-modules-extra-{_flavour}",
-            ]
-
-            # On Jammy and earlier, linux-firmware is an "all" architectures package
-            if _ubuntu_repo_release != "jammy":
-                _package_names.append("linux-firmware")
-
-            _install_path = pathlib.Path(self._part_info.part_install_dir)
-            _stage_packages_path = _install_path.parent / "stage_packages"
-
-            Repo.configure("snapcraft")
-
-            _fetched_stage_packages = Repo.fetch_stage_packages(
-                cache_dir=Path(self._part_info.cache_dir.resolve()),
-                package_names=_package_names,
-                arch=_target_arch,
-                base=_base,
-                stage_packages_path=_stage_packages_path,
-            )
-
-            if _ubuntu_repo_release == "jammy":
-                _fetched_stage_packages = Repo.fetch_stage_packages(
-                    cache_dir=Path(self._part_info.cache_dir.resolve()),
-                    package_names=["linux-firmware"],
-                    arch="all",
-                    base=_base,
-                    stage_packages_path=_stage_packages_path,
-                )
-
-            Repo.unpack_stage_packages(
-                stage_packages_path=_stage_packages_path, install_path=_install_path
-            )
-
         if self.options.kernel_ubuntu_release_name:
-            return [
-                " ".join(
-                    [
-                        "git clone --depth 1 --branch master-next",
-                        f"{_ubuntu_repo_base}{_ubuntu_repo_release}",
-                    ]
-                )
-            ]
+            commands.extend(
+                [
+                    "git init",
+                    f"git remote add origin {_ubuntu_repo_base}/{_ubuntu_repo_release}",
+                    "git fetch --depth 1 origin master-next",
+                    "git checkout FETCH_HEAD",
+                ]
+            )
+
+        if commands:
+            return commands
         return super().get_pull_commands()
 
     @override

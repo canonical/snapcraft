@@ -172,12 +172,33 @@ redepmod() {
   depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
 }
 
-# repack_deb transforms the debian package structure into one for a snap
-# The debian package(s) should be staged
+# repack_deb unpacks the primary linux-image deb package for some flavour passed as $1
+# as well as the corresponding firmware, modules, and modules-extras packages and then
+# repacks them
 repack_deb() {
-  _kver="${1}"
+  _flavour="${1}"
 
-  mv -f "${CRAFT_PART_INSTALL}/boot/linux-image-${kver}" \
+  # Get the total version string and cut the upload number
+  _kver="$(apt info "linux-image-${_flavour}" | grep '^Version: ')"
+  _kver="${_kver%.*}"
+
+  # For Jammy and earlier releases, linux-firmware is an ":all" package
+  if [ "$UBUNTU_SERIES" = "jammy" ]; then
+       apt download linux-firmware:all
+  else apt download "linux-firmware:${CRAFT_ARCH_BUILD_FOR}"
+  fi
+
+  # Download the linux image binary and the corresponding modules
+  apt download "linux-image-${_flavour}"           \
+              "linux-modules-${_kver}-${_flavour}" \
+              "linux-modules-extra-${_kver}-${_flavour}"
+
+  # Unpack the debs into the expected locations
+  for deb in *.deb; do
+    dpkg -x "${deb}" "${CRAFT_PART_INSTALL}"
+  done
+
+  mv -f "${CRAFT_PART_INSTALL}/boot/linux-image-${_kver}" \
     "${CRAFT_PART_INSTALL}/kernel.img"
 
   ln -sf "kernel.img-${_kver}" "${CRAFT_PART_INSTALL}/kernel.img"
@@ -331,8 +352,7 @@ run() {
   fi
 
   if [ "$kernel_ubuntu_binary_package" = "True" ]; then
-    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
-    repack_deb "${kver}"
+    repack_deb "${kernel_kconfigflavour}"
   elif [ "$kernel_ubuntu_binary_package" = "False" ]; then
     # Ensure the config is setup properly
     setup_kernel
@@ -368,6 +388,11 @@ run() {
 # main sets some important variables and kicks off the script
 main() {
   set -eux
+
+  # /etc/os-release is guaranteed as build host is Ubuntu
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  UBUNTU_SERIES="${UBUNTU_CODENAME}"
 
   # required_boot are Kconfigs required for booting Ubuntu Core
   required_boot="SQUASHFS"
