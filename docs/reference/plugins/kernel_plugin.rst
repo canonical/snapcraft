@@ -1,7 +1,7 @@
 .. _reference-kernel-plugin:
 
 Kernel plugin
-==============
+=============
 
 The Kernel plugin is the recommended way of building kernel snaps. It helps with
 both Ubuntu-specific kernels as well as other upstream sources, such as the
@@ -55,24 +55,39 @@ in the base configurations established by the ``kernel-kdefconfig`` and
 configuration dependencies or invalid combinations.
 
 
-kernel-enable-zfs-support
-~~~~~~~~~~~~~~~~~~~~~~~~~
+kernel-tools
+~~~~~~~~~~~~
+
+**Type**: list of strings
+
+A list of kernel tools to build. If set, the specified tools will be built and added to
+the final snap package.
+
+Valid values are ``perf``, ``cpupower``, and ``bpf``.
+
+
+kernel-ubuntu-release-name
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Type**: string
+
+A string which specifies a particular Ubuntu release to build an Ubuntu kernel from.
+This option will fetch the ``master-next`` branch of one of the release kernels
+available on Launchpad.
+
+Valid values are names like ``jammy``, ``noble``, etc.
+
+
+kernel-ubuntu-binary-package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Type**: bool
 
-**Default**: ``false``
+**Default**: ``False``
 
-Enabling this option will build the ZFS kernel modules alongside the kernel.
-
-
-kernel-enable-perf
-~~~~~~~~~~~~~~~~~~
-
-**Type**: bool
-
-**Default**: ``false``
-
-Enabling this option will build the ``perf`` binary.
+If enabled, the kernel compilation process will be skipped. Instead, the latest kernel
+image, modules, modules-extra, and firmware from the Ubuntu archive will be fetched and
+repackaged into a snap.
 
 
 Environment variables
@@ -154,8 +169,8 @@ During the build step the plugin performs the following actions:
 #. The configuration file is checked against a minimal list of required kernel
    config values.
 #. The kernel image and any modules or device tree files are built.
-#. If enabled, ZFS for the target Ubuntu series is downloaded and built.
-#. If enabled, the perf binary ``tools/perf`` is built.
+#. If provided, the specified list of kernel tools are built and installed to
+   ``${CRAFT_PART_INSTALL}``.
 #. The kernel image, system symbol map, and kernel config are installed to
    ``${CRAFT_PART_INSTALL}``.
 #. The modules are moved to ``${CRAFT_PART_INSTALL}/modules`` and a symlink to
@@ -168,10 +183,10 @@ During the build step the plugin performs the following actions:
 Examples
 --------
 
-The following snippet declares a part using the Kernel plugin. It specifies
-the Ubuntu 22.04 kernel as the source, and so a generic
-``kernel-kconfigflavour`` is used (as this is the default behavior, no option is
-specified). A kernel config value is specified to remove debug information.
+The following snippet declares a part using the Kernel plugin. It specifies the Ubuntu
+22.04 kernel as the source via the ``kernel-ubuntu-release-name`` plugin option, and so
+a generic ``kernel-kconfigflavour`` is used (as this is the default behavior, no option
+is specified). A kernel config value is specified to remove debug information.
 
 The linux-firmware and wireless-regdb packages are staged with this part for
 convenience but are not necessarily required.
@@ -182,15 +197,12 @@ convenience but are not necessarily required.
     parts:
       kernel:
         plugin: kernel
-        source: https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy
-        source-depth: 1
-        source-type: git
-        source-branch: master
         stage-packages:
           - linux-firmware
           - wireless-regdb
         kernel-kconfigs:
           - CONFIG_DEBUG_INFO=n
+        kernel-ubuntu-release-name: jammy
 
 Some further examples of snaps using this plugin can be found at the following links:
 
