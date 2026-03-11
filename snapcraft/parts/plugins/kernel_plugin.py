@@ -19,7 +19,7 @@
 The following kernel-specific options are provided by this plugin:
 
     - kernel-kdefconfig:
-      (list of strings, default: defconfig))
+      (list of strings, default: none))
       defconfig target to use as the base configuration. default: "defconfig"
 
     - kernel-kconfigflavour:
@@ -85,7 +85,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
     kernel_kconfigs: list[str] = []
     kernel_kconfigflavour: str = "generic"
-    kernel_kdefconfig: list[str] = ["defconfig"]
+    kernel_kdefconfig: list[str] = []
     kernel_tools: list[str] = []
     kernel_ubuntu_release_name: str = ""
     kernel_ubuntu_binary_package: bool = False
@@ -111,12 +111,11 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                 "kernel_kdefconfig",
             ]
             for option in conflicting_options:
-                if option != "kdefconfig":
-                    if getattr(self, option):
-                        raise errors.PartsError(
-                            "'kernel-ubuntu-binary-package' and "
-                            f"'{option.replace('_', '-')}' keys are mutually exclusive"
-                        )
+                if getattr(self, option):
+                    raise errors.PartsError(
+                        "'kernel-ubuntu-binary-package' and "
+                        f"'{option.replace('_', '-')}' keys are mutually exclusive"
+                    )
         return self
 
     @pydantic.model_validator(mode="after")
@@ -248,17 +247,22 @@ class KernelPlugin(plugins.Plugin):
     def get_build_commands(self) -> list[str]:
         kconfigflavour = self.options.kernel_kconfigflavour
         release_name = self.options.kernel_ubuntu_release_name
+
         if self.options.kernel_kdefconfig != ["defconfig"]:
             kconfigflavour = ""
+
         if not self.options.kernel_ubuntu_release_name:
             release_name = "None"
+
+        if self.options.kernel_ubuntu_binary_package:
+            kconfigflavour = "generic"
 
         return [
             " ".join(
                 [
                     "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh",
                     f"kernel-kconfigflavour={kconfigflavour}",
-                    f"kernel-kdefconfig={','.join(self.options.kernel_kdefconfig)}",
+                    f"kernel-kdefconfig={self.options.kernel_kdefconfig}",
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
                     f"kernel-tools={','.join(self.options.kernel_tools)}",
                     f"kernel-ubuntu-release-name={release_name}",
