@@ -31,9 +31,7 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  snapcraft pack > output.txt 2>&1
-
-  grep "GPU support library should be provided by a content interface" output.txt && exit 1
+  snapcraft pack | NOMATCH "GPU support library should be provided by a content interface"
 
   snap install gpu-hello_*.snap --dangerous
 

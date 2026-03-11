@@ -6,7 +6,7 @@ GPU extension
 The GPU extension, referred to internally as ``gpu``, provides hardware-accelerated graphics support for applications that need OpenGL, Vulkan, and other GPU capabilities.
 This extension integrates GPU content interfaces and sets up the necessary command chain wrapper for GPU acceleration.
 
-This extension is compatible with the ``core22`` and ``core24`` bases.
+This extension is compatible with the core22 and core24 bases.
 
 For core24, it integrates the gpu-2404 provider snaps. For core22, it integrates the graphics-core22 provider snaps.
 
@@ -66,12 +66,12 @@ The GPU extension defaults to snap providers that include:
     .. tab-item:: core24
         :sync: core24
 
-        The `mesa-2404 snap <https://snapcraft.io/mesa-2404>`_ is maintained by Canonical and provides up-to-date GPU driver support for applications built on the ``core24`` base.
+        The `mesa-2404 snap <https://snapcraft.io/mesa-2404>`_ is maintained by Canonical and provides up-to-date GPU driver support for applications built on the core24 base.
 
     .. tab-item:: core22
         :sync: core22
 
-        The `mesa-core22 snap <https://snapcraft.io/mesa-core22>`_ is maintained by Canonical and provides GPU driver support for applications built on the ``core22`` base. It also supports Nvidia drivers installed with debs on the host system.
+        The `mesa-core22 snap <https://snapcraft.io/mesa-core22>`_ is maintained by Canonical and provides GPU driver support for applications built on the core22 base. It also supports Nvidia drivers installed with debs on the host system.
 
 
 Runtime wrapper
