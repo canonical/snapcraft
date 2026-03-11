@@ -37,7 +37,7 @@ The following kernel-specific options are provided by this plugin:
 
     - kernel-tools
       (list of strings; default: none)
-      a list of tools to build alongside the kernel. Accepted values are bpftool,
+      a list of tools to build alongside the kernel. Accepted values are bpf,
       cpupower, and perf
 
     - kernel-ubuntu-release-name
@@ -126,7 +126,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
         for tool in self.kernel_tools:
             if tool not in self.kernel_tools:
                 raise errors.PartsError(
-                    f"tool '{tool}' is not a valid choice! Valid choices are perf, cpupower, and bpftool"
+                    f"tool '{tool}' is not a valid choice! Valid choices are perf, cpupower, and bpf"
                 )
         return self
 
