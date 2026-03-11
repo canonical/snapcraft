@@ -111,11 +111,12 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                 "kernel_kdefconfig",
             ]
             for option in conflicting_options:
-                if getattr(self, option):
-                    raise errors.PartsError(
-                        "'kernel-ubuntu-binary-package' and "
-                        f"'{option.replace('_', '-')}' keys are mutually exclusive"
-                    )
+                if option != "kdefconfig":
+                    if getattr(self, option):
+                        raise errors.PartsError(
+                            "'kernel-ubuntu-binary-package' and "
+                            f"'{option.replace('_', '-')}' keys are mutually exclusive"
+                        )
         return self
 
     @pydantic.model_validator(mode="after")
