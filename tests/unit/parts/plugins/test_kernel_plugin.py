@@ -41,12 +41,10 @@ def test_get_pull_commands_release(part_info):
     plugin = KernelPlugin(properties=properties, part_info=part_info)
 
     expected_commands = [
-        " ".join(
-            [
-                "git clone --depth 1 --branch master-next",
-                "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy",
-            ]
-        )
+        "git init",
+        "git remote add origin https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy"
+        "git fetch --depth 1 origin master-next",
+        "git checkout FETCH_HEAD",
     ]
 
     assert plugin.get_pull_commands() == expected_commands
