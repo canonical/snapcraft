@@ -1,7 +1,7 @@
 .. meta::
     :description: How to make a code change in Snapcraft. Code, test, and review changes in the project within the standard workflow.
 
-:relatedlinks: [Pytest&#32;test&#32;pattern](https://docs.pytest.org/en/stable/explanation/anatomy.html), [Spread](https://github.com/canonical/spread/blob/master/README.md)
+:relatedlinks: [Pytest&#32;test&#32;pattern](https://docs.pytest.org/en/stable/explanation/anatomy.html), [Spread](https://github.com/canonical/spread/blob/master/README.md), [Conventional&#32;Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
 
 .. _contribute-development:
@@ -24,7 +24,7 @@ For security, you must sign your commits. If you haven't already, `configure Git
 with your GPG or SSH key
 <https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key>`__.
 
-`Create a personal fork <https://github.com/canonical/snapcraft/fork>`_ of the
+`Create a personal fork <https://github.com/canonical/snapcraft/fork>`__ of the
 repository on GitHub.
 
 Next, clone your fork onto your local machine:
@@ -34,7 +34,7 @@ Next, clone your fork onto your local machine:
     .. tab-item:: With SSH
 
         If you authenticate your GitHub account with `SSH
-        <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account>`_,
+        <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account>`__,
         run:
 
         .. code-block:: bash
@@ -47,7 +47,7 @@ Next, clone your fork onto your local machine:
     .. tab-item:: With HTTPS
 
         If you don't authenticate with SSH, clone with `HTTPS
-        <https://docs.github.com/en/get-started/git-basics/about-remote-repositories#cloning-with-https-urls>`_
+        <https://docs.github.com/en/get-started/git-basics/about-remote-repositories#cloning-with-https-urls>`__
         instead:
 
         .. code-block:: bash
@@ -102,22 +102,6 @@ For tasks that require coordination with the Snap Store or snapd, create a post 
 working on snaps.
 
 
-Bounties
-~~~~~~~~
-
-At the Starcraft team's discretion, high-impact GitHub issues are allocated monetary
-bounties. A bounty is paid when the solution is merged into the codebase and its
-implementation meets all business and technical specifications outlined in the issue. To
-keep things fair, you can work on only one bounty at a time.
-
-If you're interested in bounties, enroll in the `GitHub Sponsors program
-<https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors>`__.
-
-To show interest in a bounty, provide a plan for its solution in a comment in its GitHub
-issue. The Snapcraft maintainers review all proposals for technical soundness. If your
-proposal is accepted, they will assign you the bounty, after which you can begin work.
-
-
 Draft your work
 ---------------
 
@@ -140,7 +124,7 @@ changes on:
         .. code-block:: bash
 
             git fetch upstream
-            git switch -c <new-branch-nameupstream/hotfix/<current-release>
+            git switch -c <new-branch-name> upstream/hotfix/<current-release>
             make setup
 
     .. tab-item:: Future releases
@@ -174,10 +158,12 @@ the organization of the code and the design of its structures, changes much less
 If in your work you need to change structures or reorganize the code, consult the team
 first.
 
-Snapcraft has 10-year long-term support commitments. All changes must be
-backward-compatible unless stated otherwise in the issue.
+Snapcraft has 10-year long-term support (LTS) commitments. One of our most important
+reliability principles is that a snap on an LTS core, if unaltered, must rebuild without
+intervention for the duration of the LTS period. All changes you make to Snapcraft must
+be backward-compatible unless stated otherwise in the issue.
 
-All nontrivial changes must accompanied by new or updated tests. The Snapcraft test
+All nontrivial changes must be accompanied by new or updated tests. The Snapcraft test
 suite includes both pytest unit tests and Spread integration tests. When adding unit
 tests, follow the arrange-act-assert-cleanup pattern from Pytest. Tests are rarely
 perfect on the first try. Additional tests can always be added during the review
@@ -191,24 +177,28 @@ of responsibility -- you are ultimately responsible for the code in your work.
 Commit
 ~~~~~~
 
-Once you've made the changes to the code and you're ready to test it, start by
-committing:
+Register the changes to your branch with a Git commit:
 
 .. code-block:: bash
 
     git add -A
     git commit
 
+Format the commit message as a `conventional commit
+<https://www.conventionalcommits.org/en/v1.0.0/>`__. For example, a new feature would be
+written as:
 
-Format the commit message according to the `Conventional Commits
-<https://www.conventionalcommits.org/en/v1.0.0/>`__ style. For the sanitizer example, an
-appropriate commit title would be:
+    feat: <description of new feature>
 
-    feat: add text sanitizer
+Keep the message short, at 80 characters or less, so other contributors and the project
+maintainers can see the gist of what you did.
 
-If you need help determining the type of conventional commit for your change, look at
-the history of the file in question with ``git log --oneline <filename>``. When you're
-done browsing, press :kbd:`Q` to exit the interactive log.
+Commit early and often. It's normal to make multiple commits for a single piece of work,
+especially when you come back to review it later. It's a good practice to get into to
+keep your changes safe.
+
+Committing triggers the pre-commit hook, which runs autoformatters. If any files were
+autoformatted, re-add them and redo the commit.
 
 .. admonition:: Committing complex changes
     :class: tip
@@ -236,12 +226,6 @@ done browsing, press :kbd:`Q` to exit the interactive log.
     - docs
     - chore
 
-Committing triggers the pre-commit hook, which runs the automatic code formatter and the
-fast linters.
-
-If the linters reformatted any of the files, the commit was cancelled. To make the
-changes stick, restage the modified files with ``git add -A`` and commit again.
-
 
 Test
 ~~~~
@@ -254,19 +238,18 @@ All code changes are subjected to local and remote testing.
     It usually means your code made a breaking change. Diagnose what went wrong and why,
     and iterate until it passes.
 
-For low-complexity changes that require basic testing, run the fast tests:
+For low-complexity changes that require basic testing, run the fast suite, which takes a
+few seconds:
 
 .. code-block:: bash
 
     make test-fast
 
-For complex work, run the full test suite:
+For complex work, run the full test suite, which takes several minutes:
 
 .. code-block:: bash
 
     make test
-
-Running all tests can take a very long time, in some cases an hour.
 
 When iterating and testing, it's a good practice to clean the local temporary files that
 the tests generate:

@@ -94,6 +94,12 @@ channels:
 - ``latest/edge/pr-<PR-number>`` for PR snaps
 - ``latest/edge/<branch-name>`` for feature branch snaps
 
+To start, enable parallel snap instances on your host:
+
+.. code-block:: bash
+
+    sudo snap set system experimental.parallel-instances=true
+
 Once you have the PR or branch you'd like to test, download and run its build as an
 instance of Snapcraft:
 
