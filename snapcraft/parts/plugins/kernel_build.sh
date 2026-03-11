@@ -161,7 +161,7 @@ build_tool() {
 
   make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
        -C "${KERNEL_SRC}/tools/${_tool}"     \
-        O="${CRAFT_PART_BUILD}/tools/${_tool#*/}"
+        O="${CRAFT_PART_BUILD}/tools/${_tool}"
 
   install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
 }
