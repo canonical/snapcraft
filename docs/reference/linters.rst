@@ -26,4 +26,4 @@ Snapcraft runs the following linters:
   :ref:`metadata <reference-anatomy-of-snapcraft-yaml-metadata>` needed for a better
   listing in the Snap Store.
 - :ref:`GPU <how-to-use-the-gpu-linter>`. Checks that the snap doesn't contain GPU support
-  libraries, that should generally be provided by a GPU content snap.
+  libraries that should generally be provided by a GPU content snap.
