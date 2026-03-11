@@ -145,7 +145,7 @@ class InitrdPlugin(plugins.Plugin):
         # Pull the base
         commands.extend(
             [
-                f"curl {_ubuntu_base} {_tar_url}",
+                f"curl -fLo {_ubuntu_base} {_tar_url}",
                 f"mkdir -p {_initrd_root}",
                 f"tar --extract --file {_ubuntu_base} --directory {_initrd_root}",
                 f"cp --no-dereference /etc/resolv.conf {_initrd_root}/etc/resolv.conf",
