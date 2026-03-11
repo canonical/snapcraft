@@ -469,9 +469,12 @@ main() {
   # The first three are self-explanatory and handled by snapcraft. If a source isn't
   # provided, perhaps the user has a kernel tree in the project root. If not, fail - we
   # need something to build.
-  if [ -n "$kernel_ubuntu_release_name" ] &&
-     [ "$kernel_ubuntu_release_name" != "None" ] ||
-     [ -d "${CRAFT_PART_SRC}/kernel" ]; then
+  if [ "$kernel_ubuntu_binary_package" = "True" ]; then
+    # We don't actually have a true KERNEL_SRC, just set it
+    KERNEL_SRC="${CRAFT_PART_INSTALL}"
+  elif [ -n "$kernel_ubuntu_release_name" ]        &&
+       [ "$kernel_ubuntu_release_name" != "None" ] ||
+       [ -d "${CRAFT_PART_SRC}/kernel" ]; then
     # KERNEL_SRC is the true location of the kernel source tree
     KERNEL_SRC="${CRAFT_PART_SRC}"
   elif [ -d "${CRAFT_PROJECT_DIR}/kernel" ]; then
