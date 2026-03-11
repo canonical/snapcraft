@@ -156,8 +156,13 @@ repack_deb() {
   _flavour="${1}"
 
   # Get the total version string and cut the upload number
-  _kver="$(apt info "linux-image-${_flavour}" | grep '^Version: ')"
+  _kver="$(apt info "linux-image-${_flavour}" | grep '^Version: ' | cut -d' ' -f2)"
   _kver="${_kver%.*}"
+  # linux-image-${_flavour} is of the form x.y.z.a-b, but ver in
+  # linux-modules-<ver>-${_flavour} is of the form x.y.z-a-b on Jammy
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
+    _kver="$(echo "$_kver" | sed 's/(.*)./\1-/')"
+  fi
 
   # For Jammy and earlier releases, linux-firmware is an ":all" package
   if [ "$UBUNTU_SERIES" = "jammy" ]; then
