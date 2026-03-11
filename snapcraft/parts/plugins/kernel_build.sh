@@ -157,13 +157,13 @@ build_tool() {
 
   echo "Building tool" "${_tool#*/}"
 
-  mkdir -p "${CRAFT_PART_BUILD}/tools/$_tool"
+  mkdir -p "${CRAFT_PART_BUILD}/tools/${_tool}"
 
   make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-       -C "${KERNEL_SRC}/tools/_tool"     \
+       -C "${KERNEL_SRC}/tools/${_tool}"     \
         O="${CRAFT_PART_BUILD}/tools/${_tool#*/}"
 
-  install -Dm0755 "${CRAFT_PART_BUILD}/tools/$_tool" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
+  install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
 }
 # redepmod reruns depmod for the entire built kernel's module tree
 redepmod() {
