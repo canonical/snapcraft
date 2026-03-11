@@ -28,6 +28,7 @@ def part_info(new_dir):
             application_name="test",
             project_name="test-snap",
             cache_dir=new_dir,
+            base="core22",
             arch="amd64",
         ),
         part=Part("my-part", {}),
