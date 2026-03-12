@@ -190,7 +190,7 @@ continue developing:
     git submodule deinit -f docs/sphinx-docs-starter-pack
     rm -r docs/sphinx-docs-starter-pack
 
-Loosened the metadata linter
+No linting of donation links
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :ref:`metadata linter <how-to-use-the-metadata-linter>` no longer checks for the
