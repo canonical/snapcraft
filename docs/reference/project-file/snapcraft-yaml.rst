@@ -124,6 +124,9 @@ Platform keys
 
 .. kitbash-field:: Project platforms
 
+    More information about naming platforms is provided in the
+    :ref:`Platforms reference <reference-platform-naming-rules>`.
+
 .. kitbash-field:: Platform build_on
     :prepend-name: platforms.<platform-name>
     :override-type: str | list[str]

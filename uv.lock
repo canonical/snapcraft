@@ -497,7 +497,7 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "6.1.0"
+version = "6.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
@@ -516,11 +516,12 @@ dependencies = [
     { name = "pyyaml" },
     { name = "requests" },
     { name = "snap-helpers" },
+    { name = "snap-http" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/d7/11fb39172bb1381084aa284fcfd2ccc8372c78fdb4782e86c23acf0508b8/craft_application-6.1.0.tar.gz", hash = "sha256:a12c302e3b2ac6d2b1958cf9ad1596ab9d634a91d94fee662ec46bd62604ac0e", size = 585353, upload-time = "2026-01-20T20:45:23.209Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/df/72c6e7265bcc312bc9156387bb15293ee8572cbf0e20f463502bdf132f7e/craft_application-6.2.1.tar.gz", hash = "sha256:ae08c2f879757372841b0be49b669f3b24fd7b69374bf0516c462c92a4058f4d", size = 595995, upload-time = "2026-03-06T16:18:22.499Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/53/87630797853e23ceeefa212ddf929fdebd98ca06c0d1149d89eaa4527a26/craft_application-6.1.0-py3-none-any.whl", hash = "sha256:827b970907de7129d88463f40904df3810296a8f8855e85b149fd738e32755ec", size = 195058, upload-time = "2026-01-20T20:45:21.746Z" },
+    { url = "https://files.pythonhosted.org/packages/ae/8f/30412ff58410b8ebabb4a6d1e431057beff85320ff1b774e7f403faf800b/craft_application-6.2.1-py3-none-any.whl", hash = "sha256:084fc51abbe38fea4bf8fbca826d6889c614cd4caaf10ea68af97cbbc3aee6ec", size = 197267, upload-time = "2026-03-06T16:18:20.281Z" },
 ]
 
 [package.optional-dependencies]
@@ -2784,6 +2785,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/50/2a/221ab0a9c0200065bdd8a5d2b131997e3e19ce81832fdf8138a7f5247216/snap-helpers-0.4.2.tar.gz", hash = "sha256:ef3b8621e331bb71afe27e54ef742a7dd2edd9e8026afac285beb42109c8b9a9", size = 20100, upload-time = "2023-08-06T09:38:53.907Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9b/2c/c1304eb8787bbed23cfc0b07cee6b21e1310ceb6a6f7a4193dab02525c91/snap_helpers-0.4.2-py3-none-any.whl", hash = "sha256:04d0ebd167c943849c99ec68b87829fef4a915cbe9b02d8afc3891d889327327", size = 22805, upload-time = "2023-08-06T09:38:52.06Z" },
+]
+
+[[package]]
+name = "snap-http"
+version = "1.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/0b/97fa751d236936dbb4cfc227e04c677fee110e824ce623ed382b7e66caea/snap_http-1.11.0.tar.gz", hash = "sha256:ee9afbe38e53c242cd7970ebda6f79fcad517998d79bae50ad24ff6b357f4965", size = 15993, upload-time = "2026-01-30T21:28:58.961Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c3/8a/e17a649f9d75514877b641c9ddb8414d1dcd9cfffc6bdb8ce361a810c733/snap_http-1.11.0-py3-none-any.whl", hash = "sha256:856afe2de663673104e4a431ea175c84fb342deb88003157541f3f4d4a336645", size = 17055, upload-time = "2026-01-30T21:28:57.753Z" },
 ]
 
 [[package]]
