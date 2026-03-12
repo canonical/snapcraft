@@ -190,6 +190,16 @@ continue developing:
     git submodule deinit -f docs/sphinx-docs-starter-pack
     rm -r docs/sphinx-docs-starter-pack
 
+Loosened the metadata linter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`metadata linter <how-to-use-the-metadata-linter>` no longer checks for the
+:ref:`Project.donation` key, as this key was generally rarely set and was silenced more
+often than not.
+
+If your project is configured to skip linting this field, you must remove the ``ignore``
+directive for this key from :ref:`Project.lint`.
+
 
 Fixed bugs and issues
 ---------------------
@@ -216,3 +226,5 @@ this release.
 :literalref:`@blair<https://example.com/blair>`,
 :literalref:`@cam<https://example.com/cam>`,
 and :literalref:`@devin<https://example.com/devin>`
+
+.. _snapcraft#6054: https://github.com/canonical/snapcraft/issues/6054

@@ -77,12 +77,6 @@ _FIELDS: list[MetadataField] = [
     ),
     # Rank 2 fields
     MetadataField(
-        "donation",
-        LinterResult.INFO,
-        lambda meta: _get_links_attr(meta, "donation"),
-        f"{_HELP_URL}#donation",
-    ),
-    MetadataField(
         "issues",
         LinterResult.INFO,
         lambda meta: _get_links_attr(meta, "issues"),
