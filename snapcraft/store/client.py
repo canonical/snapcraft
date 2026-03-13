@@ -186,7 +186,7 @@ class LegacyStoreClientCLI:
         """Log in to the Snap Store and prompt if required."""
         if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
             raise errors.SnapcraftError(
-                f"Cannot login with {constants.ENVIRONMENT_STORE_CREDENTIALS!r} set.",
+                f"Cannot login while {constants.ENVIRONMENT_STORE_CREDENTIALS!r} is set.",
                 resolution=f"Unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
             )
 
