@@ -14,8 +14,8 @@ body:
     attributes:
       label: Request
       value: >
-        <!-- Describe your request and the problem it solves. Include any relevant
-        context, screenshots, or examples. -->
+        Describe your request and the problem it solves. Include any relevant
+        context, screenshots, or examples.
     validations:
       required: true
   - type: input
@@ -23,6 +23,6 @@ body:
     attributes:
       label: Document location
       value: >
-        <!-- Provide the URL or file path of the relevant page. -->
+        Provide the URL or file path of the relevant page.
     validations:
       required: false

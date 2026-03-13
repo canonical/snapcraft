@@ -108,6 +108,13 @@ by their equivalent environment variables:
       - Export the credentials to the environment variable ``SNAPCRAFT_STORE_CREDENTIALS``.
 
 
+Removed default command
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, running ``snapcraft`` alone implicitly ran ``snapcraft pack``. This default
+behavior has been removed. You must now run ``snapcraft pack`` to build a snap.
+
+
 Removed legacy remote builder
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
