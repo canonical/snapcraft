@@ -83,6 +83,30 @@ as ``meta.<snap-name>`` and ``snap.<snap-name>`` for cases where assets from tho
 locations are desired for reuse.
 
 
+Build-time packages
+-------------------
+
+Use ``build-packages`` to specify system packages that are required to
+build a part and are not included in the resulting snap.
+
+These packages are installed in the build environment before the part's
+build step runs.
+
+Example::
+
+  parts:
+    my-part:
+      plugin: make
+      source: .
+      build-packages:
+        - gcc
+        - make
+
+Packages listed under ``build-packages`` are available only during the
+build phase and are not included in the resulting snap. If a package is
+required at runtime, it should be listed under ``stage-packages`` instead.
+
+
 Resolve missing dependencies
 ----------------------------
 
