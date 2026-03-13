@@ -57,7 +57,7 @@ Ways to contribute
 There are multiple ways you can make a valuable contribution:
 
 - :ref:`Develop <contribute-development>` features and fix problems
-- :ref:`Add to and improve <contribute-documentation>` the documentation
+- :ref:`Document <contribute-documentation>` Snapcraft
 - :ref:`Share feedback or report a problem <contribute-feedback>`
 - :ref:`Test upcoming features and fixes <contribute-test-builds>`
 - Work on Snapcraft tasks in :ref:`contribute-coda`

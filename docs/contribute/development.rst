@@ -1,5 +1,5 @@
 .. meta::
-    :description: How to make a code change in Snapcraft. Code, test, and review changes in the project within the standard workflow.
+    :description: How to make a code change to Snapcraft. Code, test, and review changes in the project within the standard workflow.
 
 :relatedlinks: [Pytest&#32;test&#32;pattern](https://docs.pytest.org/en/stable/explanation/anatomy.html), [Conventional&#32;Commits](https://www.conventionalcommits.org/en/v1.0.0/), [Spread](https://github.com/canonical/spread/blob/master/README.md)
 
@@ -9,7 +9,7 @@
 Contribute to development
 =========================
 
-This guide describes how to contribute a code change in Snapcraft.
+This guide describes how to contribute a code change to Snapcraft.
 
 It requires familiarity with Python, Git, and GitHub.
 
@@ -17,8 +17,9 @@ It requires familiarity with Python, Git, and GitHub.
 Set up your work environment
 ----------------------------
 
-Snapcraft development and documentation use the same build and test environment. If you
-previously set up your local machine to document Snapcraft, skip to the next section.
+Snapcraft development and documentation use the same build and test environment. If
+you've already set up your local machine to document Snapcraft, skip to the next
+section.
 
 For security, you must sign your commits. If you haven't already, `configure Git to sign
 with your GPG or SSH key
@@ -76,7 +77,7 @@ Every task must be tracked as a `GitHub issue
 `create one <https://github.com/canonical/snapcraft/issues/new/choose>`__ for it.
 
 Tasks come in different sizes and complexity. It's important to choose a task that you
-have the capacity to finish. It's also important to check to see if the task is already
+have the capacity to finish. It's also important to check whether the task is already
 planned. You might save time and effort by checking for prior work.
 
 
@@ -166,13 +167,13 @@ be backward-compatible unless stated otherwise in the issue.
 
 All nontrivial changes must be accompanied by new or updated tests. The Snapcraft test
 suite includes both pytest unit tests and Spread integration tests. When adding unit
-tests, follow the arrange-act-assert-cleanup pattern from Pytest. Tests are rarely
+tests, follow the arrange-act-assert-cleanup pattern from pytest. Tests are rarely
 perfect on the first try. Additional tests can always be added during the review
 process.
 
-Snapcraft is amenable to code generated with LLM assistance. Generating code is a time
-saver, but like all code it needs testing and careful review. An LLM doesn't absolve you
-of responsibility -- you are ultimately responsible for the code in your work.
+Snapcraft is amenable to code generated with LLM assistance. Generated code takes less
+effort, but like all code it needs testing and careful review. An LLM doesn't absolve
+you of responsibility -- you are ultimately responsible for the code in your work.
 
 
 Commit
@@ -263,10 +264,6 @@ code. If that happens, delete your virtual environment and start over:
     make setup
 
 
-There are also special tests that are feature-specific. Run ``make help`` to view and
-select them.
-
-
 Document your work
 ~~~~~~~~~~~~~~~~~~
 
@@ -318,19 +315,19 @@ automatic checks will fail. To address these issues, review the logs in the fail
 checks. The error messages in the logs will have remedies and hints for what needs
 fixing.
 
-When the maintainers review the PR, they may suggest improvements to your code. Address
-them in follow-up commits to your branch, the same way you committed and pushed changes
-while drafting. If you feel a particular point should go in a different direction than
-what they suggest, discuss it with the maintainer in the PR. They'll be happy to explore
+When the maintainers review the PR, they may suggest improvements. Address them in
+follow-up commits to your branch, the same way you committed and pushed changes while
+drafting. If you feel a particular point should go in a different direction than what
+they suggest, discuss it with the maintainer in the PR. They'll be happy to explore
 alternatives.
 
 
 Wrap up the review
 ~~~~~~~~~~~~~~~~~~
 
-Once all suggestions are addressed, both maintainers approve the PR, and merge it soon
-after. **After the PR is approved, there may be a delay before merge.** The maintainers
-might need time to coordinate the PR with other development on the project.
+Once all suggestions are addressed, both maintainers will approve the PR. **After the PR
+is approved, there may be a delay before merge.** The maintainers might need time to
+coordinate the PR with other active developments.
 
 After approval, **don't** force-push to your branch. It's difficult for the maintainers
 to see whether any additional changes mixed into the push.
@@ -341,9 +338,9 @@ Once the PR is merged, your work is complete.
 Get help and support
 --------------------
 
-Open source contribution can be difficult. Even the most experienced writers become
+Open source contribution can be difficult. Even the most experienced developers become
 tangled or have moments of uncertainty.
 
-If you're stuck, or need more information about a task, ask the issue creator, the
-project's technical author, or a maintainer. If you need hands-on help, ask in the
-`Snapcraft Matrix channel <https://matrix.to/#/#snapcraft:ubuntu.com>`__.
+If you're stuck, or need more information about a task, ask the issue creator or a
+maintainer. If you need hands-on help, ask in the `Snapcraft Matrix channel
+<https://matrix.to/#/#snapcraft:ubuntu.com>`__.

@@ -26,8 +26,8 @@ experience in :ref:`contribute-coda`.
 Set up your work environment
 ----------------------------
 
-Snapcraft documentation and development use the same build and test environment. If you
-previously set up your local machine to develop Snapcraft, skip to the next section.
+Snapcraft documentation and development use the same build and test environment. If
+you've already set up your local machine to develop Snapcraft, skip to the next section.
 
 For security, you must sign your commits. If you haven't already, `configure Git to sign
 with your GPG or SSH key
@@ -174,14 +174,13 @@ If successful, the terminal prints:
 
 .. terminal::
 
-    The HTML pages are in _build.
-    [sphinx-autobuild] Serving on http://127.0.0.1:8000
-    [sphinx-autobuild] Waiting to detect changes...
+    build succeeded.
+    The HTML pages are in docs/_build.
 
 Preview your changes in a web browser. Make sure the elements you've changed render as
 expected. Double-check nested elements, such as content inside tabs and admonitions.
 
-If everything looks good, check for problems in your code:
+If everything looks good, check for problems in your document sources:
 
 .. code-block:: bash
 
@@ -243,19 +242,19 @@ automatic checks will fail. To address these issues, review the logs in the fail
 checks. The error messages in the logs will have remedies and hints for what needs
 fixing.
 
-When the maintainers review the PR, they may suggest improvements to your code. Address
-them in follow-up commits to your branch, the same way you committed and pushed changes
-while drafting. If you feel a particular point should go in a different direction than
-what they suggest, discuss it with the maintainer in the PR. They'll be happy to explore
+When the maintainers review the PR, they may suggest improvements. Address them in
+follow-up commits to your branch, the same way you committed and pushed changes while
+drafting. If you feel a particular point should go in a different direction than what
+they suggest, discuss it with the maintainer in the PR. They'll be happy to explore
 alternatives.
 
 
 Wrap up the review
 ~~~~~~~~~~~~~~~~~~
 
-Once all suggestions are addressed, both maintainers approve the PR, and merge it soon
-after. **After the PR is approved, there may be a delay before merge.** The maintainers
-might need time to coordinate the PR with other development on the project.
+Once all suggestions are addressed, both maintainers will approve the PR. **After the PR
+is approved, there may be a delay before merge.** The maintainers might need time to
+coordinate the PR with other active developments.
 
 After approval, **don't** force-push to your branch. It's difficult for the maintainers
 to see whether any additional changes mixed into the push.
@@ -269,6 +268,6 @@ Get help and support
 Open source contribution can be difficult. Even the most experienced writers become
 tangled or have moments of uncertainty.
 
-If you're stuck, or need more information about a task, ask the issue creator, the
-project's technical author, or a maintainer. If you need hands-on help, ask in the
-`Snapcraft Matrix channel <https://matrix.to/#/#snapcraft:ubuntu.com>`__.
+If you're stuck, or need more information about a task, ask the issue creator or a
+maintainer. If you need hands-on help, ask in the `Snapcraft Matrix channel
+<https://matrix.to/#/#snapcraft:ubuntu.com>`__.
