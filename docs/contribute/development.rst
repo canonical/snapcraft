@@ -200,20 +200,17 @@ keep your changes safe.
 Committing triggers the pre-commit hook, which runs autoformatters. If any files were
 autoformatted, re-add them and redo the commit.
 
-.. admonition:: Committing complex changes
+.. admonition:: Complex commits
     :class: tip
 
-    With complex changes, you might get stuck choosing a conventional commit type.
+    It might be difficult to choose a conventional commit type for a commit message. It
+    could mean that your change is too complex, and should be split into smaller
+    commits. A commit shouldn't, for example, refactor code *and* fix a bug.
 
-    This may signal that a commit is doing more than one thing and should be broken into
-    multiple smaller commits. A commit should not, for example, refactor code and fix a
-    bug. That should be two separate commits.
+    In some cases, multiple types could be appropriate because of the nature of the
+    commit. This happens often with thee ``test`` and ``docs`` types.
 
-    In other scenarios, multiple types could be appropriate because of the nature of the
-    commit. This can happen with ``test`` and ``docs``, which can be used as either
-    types or scopes.
-
-    When combining commit types, select the highest-ranked type that fits:
+    If you decide to make a complex commit, select the highest-ranked type that fits:
 
     - :vale-ignore:`ci`
     - build
