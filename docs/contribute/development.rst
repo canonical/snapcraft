@@ -151,12 +151,13 @@ related links on this page. If you're looking for a way to develop something tha
 covered by a convention, explore the existing codebase.
 
 The Snapcraft codebase is large. You might be tempted to tweak related behavior or fix
-tangential inconsistencies. Don't. Stay focused on your task and keep its scope narrow.
+tangential inconsistencies in addition to your task. Don't. Stay focused on your task
+and keep its scope narrow.
 
-Most development tasks involve adding or changing algorithms. The architecture, meaning
-the organization of the code and the design of its structures, changes much less often.
-If in your work you need to change structures or reorganize the code, consult the team
-first.
+Most development tasks involve adding or changing algorithms or business logic. The
+architecture, meaning the organization of the code and the design of its structures,
+changes much less often. If in your work you need to change structures or reorganize the
+code, consult the team first.
 
 Snapcraft has 10-year long-term support (LTS) commitments. One of our most important
 reliability principles is that a snap on an LTS core, if unaltered, must rebuild without
