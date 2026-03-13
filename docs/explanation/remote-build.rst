@@ -191,7 +191,8 @@ The legacy remote builder accepts ``--build-on`` and ``--build-for``.
 Since developers are typically interested in the ``build-for`` of
 a snap, snapcraft converts the ``--build-for`` to ``--build-on``.
 Additionally, limitations of the legacy remote builder limit these
-flags to only work on projects that use the :ref:`shorthand notation <reference-architectures>`
+flags to only work on projects that use the `shorthand notation
+<https://canonical-ubuntu-documentation-library--6090.com.readthedocs.build/snapcraft/6090/reference/architectures/#shorthand-format>`_
 in the ``architectures`` key.
 
 These parameters are not mutually exclusive and ``--build-for`` takes

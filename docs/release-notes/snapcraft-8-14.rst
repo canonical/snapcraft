@@ -150,9 +150,7 @@ Snapcraft 8.14.3
 Snapcraft 8.14.4
 ~~~~~~~~~~~~~~~~
 
-- `#5817`_ The error message given by ``snapcraft remote-build`` when using the
-  ``--build-for`` flag on core20 projects not using the architecture shorthand has been
-  improved.
+- `#5817`_ Unclear remote build error with ``--build-for`` on core20
 
 Contributors
 ------------
