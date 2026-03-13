@@ -271,4 +271,4 @@ tangled or have moments of uncertainty.
 
 If you're stuck, or need more information about a task, ask the issue creator, the
 project's technical author, or a maintainer. If you need hands-on help, ask in the
-Snapcraft Matrix channel.
+`Snapcraft Matrix channel <https://matrix.to/#/#snapcraft:ubuntu.com>`__.
