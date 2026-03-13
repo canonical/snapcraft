@@ -41,7 +41,5 @@ documents follow:
 - `Diátaxis <https://diataxis.fr>`__
 - :external+starflow:ref:`how-to-starcraft-style-guide`
 - `Canonical Style Guide <https://docs.ubuntu.com/styleguide>`__
-- `Inclusive terms
-  <https://github.com/canonical/Inclusive-naming/blob/main/config.yml>`__
 - `reStructuredText syntax reference
   <https://canonical-starter-pack.readthedocs-hosted.com/stable/reference/rst-syntax-reference>`__

@@ -1,7 +1,7 @@
 .. meta::
     :description: How to make a code change in Snapcraft. Code, test, and review changes in the project within the standard workflow.
 
-:relatedlinks: [Pytest&#32;test&#32;pattern](https://docs.pytest.org/en/stable/explanation/anatomy.html), [Spread](https://github.com/canonical/spread/blob/master/README.md), [Conventional&#32;Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+:relatedlinks: [Pytest&#32;test&#32;pattern](https://docs.pytest.org/en/stable/explanation/anatomy.html), [Conventional&#32;Commits](https://www.conventionalcommits.org/en/v1.0.0/), [Spread](https://github.com/canonical/spread/blob/master/README.md)
 
 
 .. _contribute-development:
@@ -232,11 +232,8 @@ Test
 
 All code changes are subjected to local and remote testing.
 
-.. admonition:: If a test breaks
-    :class: caution
-
-    It usually means your code made a breaking change. Diagnose what went wrong and why,
-    and iterate until it passes.
+**If a test breaks, it usually means your code made a breaking change**. Diagnose what
+went wrong and why, and iterate until it passes.
 
 For low-complexity changes that require basic testing, run the fast suite, which takes a
 few seconds:
@@ -275,7 +272,7 @@ select them.
 Document your work
 ~~~~~~~~~~~~~~~~~~
 
-Add all changes and fixes in the upcoming release notes.
+Add all changes and fixes to the upcoming release notes.
 
 Small changes usually require updates to the pages that describe the feature's behavior.
 Make any necessary changes to how-to guides and references that cover the feature.
