@@ -90,17 +90,18 @@ Use ``build-packages`` to specify system packages that are required to
 build a part and are not included in the resulting snap.
 
 These packages are installed in the build environment before the part's
-build step runs.
+build step runs. For example:
 
-Example::
+.. code-block:: yaml
+    :caption: Parts definition in snapcraft.yaml
 
-  parts:
-    my-part:
-      plugin: make
-      source: .
-      build-packages:
-        - gcc
-        - make
+    parts:
+      my-part:
+        plugin: make
+        source: .
+        build-packages:
+          - gcc
+          - libyaml-dev
 
 Packages listed under ``build-packages`` are available only during the
 build phase and are not included in the resulting snap. If a package is
