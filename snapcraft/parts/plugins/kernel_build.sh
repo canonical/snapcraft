@@ -6,7 +6,7 @@ parse_args() {
     case ${arg} in
       kernel-kdefconfig=*)
       # kernel_kdefconfig is a list one or more kernel defconfigs
-      # Default value is "[defconfig]".
+      # Default value is "defconfig".
       kernel_kdefconfig=${arg#*=}             ;;
       kernel-kconfigflavour=*)
       # kernel_kconfigflavour is a single Ubuntu-specific kernel flavour and supersedes defconfig

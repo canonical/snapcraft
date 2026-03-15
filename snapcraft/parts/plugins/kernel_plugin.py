@@ -274,7 +274,7 @@ class KernelPlugin(plugins.Plugin):
                 [
                     "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh",
                     f"kernel-kconfigflavour={kconfigflavour}",
-                    f"kernel-kdefconfig={self.options.kernel_kdefconfig}",
+                    f"kernel-kdefconfig={','.join(self.options.kernel_kdefconfig)}",
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
                     f"kernel-tools={','.join(self.options.kernel_tools)}",
                     f"kernel-ubuntu-release-name={release_name}",
