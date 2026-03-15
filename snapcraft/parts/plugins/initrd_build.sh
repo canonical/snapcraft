@@ -488,7 +488,7 @@ main() {
   UBUNTU_SERIES="${VERSION_CODENAME}"
 
   # INITRD_ROOT sets the chroot location
-  INITRD_ROOT="${CRAFT_PART_SRC}/uc-initramfs-build-root"
+  INITRD_ROOT="${CRAFT_PART_SRC}/uc-initramfs-build"
 
   # PPA_FINGERPRINT is the snappy-dev PPA fingerprint providing ubuntu-core-initramfs deb
   PPA_FINGERPRINT=F1831DDAFC42E99D
