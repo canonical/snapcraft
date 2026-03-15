@@ -136,9 +136,24 @@ build_tool() {
 
   mkdir -p "${CRAFT_PART_BUILD}/tools/${_tool}"
 
-  make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-       -C "${KERNEL_SRC}/tools/${_tool}"     \
-        O="${CRAFT_PART_BUILD}/tools/${_tool}"
+  if [ "$_tool" = "bpf/bpftool" ]; then
+    # bpf is weird and won't build correctly if we aren't in the tools directory
+    cd "${KERNEL_SRC}/tools/bpf"
+    make -j "${CRAFT_PARALLEL_BUILD_COUNT}"      \
+          O="${CRAFT_PART_BUILD}/tools/${_tool}" \
+         -C bpftool all
+
+    make DESTDIR="${CRAFT_PART_INSTALL}" \
+      -C bpftool install
+    cd "$OLDPWD"
+    else
+      make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
+           -C "${KERNEL_SRC}/tools/${_tool}"  \
+            O="${CRAFT_PART_BUILD}/tools/${_tool}"
+
+    make DESTDIR="${CRAFT_PART_INSTALL}" \
+      -C "${KERNEL_SRC}/tools/${_tool}" install
+  fi
 
   install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}/${_tool#*/}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
 }
