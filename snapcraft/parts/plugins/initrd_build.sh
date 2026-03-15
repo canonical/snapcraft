@@ -95,12 +95,6 @@ fetch_base() {
 
 # chroot_setup creates the chroot base and mounts certain filesystems from host
 chroot_setup() {
-  # Ensure networking in chroot
-  cp --no-dereference /etc/resolv.conf "${INITRD_ROOT}/etc/resolv.conf"
-
-  # /dev/null isn't in the chroot base but it is used to mask some systemd service units
-  touch "${INITRD_ROOT}/dev/null"
-
     # This is a minimum viable collection of mounts.
     # Even though we try to settle any existing processes, on some systems this isn't
     # sufficient for ensuring an unmount can happen right now. Therefore, unmount lazily
