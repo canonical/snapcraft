@@ -23,9 +23,7 @@ package-repositories:
 parts:
   kernel:
     plugin: kernel
-    source: https://git.launchpad.net/~canonical-kernel/ubuntu/+source/linux-riscv/+git/jammy
-    source-depth: 1
-    source-type: git
+    kernel-ubuntu-release-name: jammy
     kernel-kdefconfig: [defconfig, test.config]
     kernel-kconfigs:
       - CONFIG_RTW88_SDIO=m
@@ -34,7 +32,6 @@ parts:
       # pahole required, but this is just a test
       - CONFIG_DEBUG_INFO_BTF=n
     stage-packages:
-      - linux-firmware:${CRAFT_ARCH_BUILD_FOR}
       - wireless-regdb
     override-pull: |
       craftctl default
