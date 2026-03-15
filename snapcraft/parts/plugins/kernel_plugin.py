@@ -214,6 +214,19 @@ class KernelPlugin(plugins.Plugin):
                 "llvm",
             }
 
+        # bpftool requires libelf, zlib to build
+        if "bpf" in self.options.kernel_tools:
+            build_packages |= {
+                f"libelf-dev:{_target_arch}",
+                f"zlib1g-dev:{_target_arch}",
+            }
+
+        # cpupower requires libpci to build
+        if "cpupower" in self.options.kernel_tools:
+            build_packages |= {
+                "libpci-dev",
+            }
+
         return build_packages
 
     @override

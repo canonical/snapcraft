@@ -89,6 +89,10 @@ If enabled, the kernel compilation process will be skipped. Instead, the latest 
 image, modules, modules-extra, and firmware from the Ubuntu archive will be fetched and
 repackaged into a snap.
 
+.. warning::
+   Building a kernel snap for a different target architecture than the build host may
+   result in build failures when using this option.
+
 
 Environment variables
 ---------------------
