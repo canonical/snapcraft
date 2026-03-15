@@ -13,10 +13,8 @@ adopt-info: kernel
 parts:
   kernel:
     plugin: kernel
-    source: https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy
-    source-depth: 1
-    source-type: git
-    source-branch: master
+    kernel-ubuntu-release-name: jammy
+    kernel-tools: [bpf, cpupower, perf]
     kernel-kdefconfig: [defconfig, test.config]
     kernel-kconfigs:
       - CONFIG_MODULE_SIG_KEY=""
