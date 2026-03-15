@@ -250,6 +250,7 @@ class KernelPlugin(plugins.Plugin):
                 _kernel_image = "vmlinux.strip"
 
         return {
+            "CROSS": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "ARCH": _kernel_arch,
             "KERNEL_IMAGE": _kernel_image,
