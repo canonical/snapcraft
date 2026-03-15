@@ -160,24 +160,17 @@ build_tool() {
 # redepmod reruns depmod for the entire built kernel's module tree
 redepmod() {
   _kver="${1}"
+  _flavour="${2}"
   echo "Rebuilding module dependencies"
-  depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
+  depmod -b "${CRAFT_PART_INSTALL}" "${_kver}${_flavour}"
 }
 
 # repack_deb unpacks the primary linux-image deb package for some flavour passed as $1
 # as well as the corresponding firmware, modules, and modules-extras packages and then
 # repacks them
 repack_deb() {
-  _flavour="${1}"
-
-  # Get the total version string and cut the upload number
-  _kver="$(apt info "linux-image-${_flavour}" | grep '^Version: ' | cut -d' ' -f2)"
-  _kver="${_kver%.*}"
-  # linux-image-${_flavour} is of the form x.y.z.a-b, but ver in
-  # linux-modules-<ver>-${_flavour} is of the form x.y.z-a-b on Jammy
-  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
-    _kver="$(echo "$_kver" | sed 's/(.*)./\1-/')"
-  fi
+  _kver="${1}"
+  _flavour="${2}"
 
   # For Jammy and earlier releases, linux-firmware is an ":all" package
   if [ "$UBUNTU_SERIES" = "jammy" ]; then
@@ -186,9 +179,9 @@ repack_deb() {
   fi
 
   # Download the linux image binary and the corresponding modules
-  apt download "linux-image-${_flavour}"           \
-              "linux-modules-${_kver}-${_flavour}" \
-              "linux-modules-extra-${_kver}-${_flavour}"
+  apt download "linux-image-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}"  \
+              "linux-modules-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}" \
+              "linux-modules-extra-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}"
 
   # Unpack the debs into the expected locations
   for deb in *.deb; do
@@ -348,8 +341,23 @@ run() {
     cleanup
   fi
 
+  # Set kconfigflavour
+  if [ -n "${kernel_kconfigflavour}" ]; then
+    kconfigflavour="-${kernel_kconfigflavour}"
+  fi
+
   if [ "$kernel_ubuntu_binary_package" = "True" ]; then
-    repack_deb "${kernel_kconfigflavour}"
+    # Get the total version string and cut the upload number
+    kver="$(apt info "linux-image${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
+    kver="${kver%.*}"
+    # linux-image-${kconfigflavour} is of the form x.y.z.a-b, but ver in
+    # linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy
+    # trim -b and swap .a for -a
+    if [ "${UBUNTU_SERIES}" = "jammy" ]; then
+      kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
+    fi
+
+    repack_deb "${kver}" "${kconfigflavour}"
   elif [ "$kernel_ubuntu_binary_package" = "False" ]; then
     # Ensure the config is setup properly
     setup_kernel
@@ -379,12 +387,12 @@ run() {
   create_snap_structure
 
   # Run depmod to ensure all modules are accounted for
-  redepmod "${kver}"
+  redepmod "${kver}" "${kconfigflavour}"
 }
 
 # main sets some important variables and kicks off the script
 main() {
-  set -eux
+  set -ex
 
   # /etc/os-release is guaranteed as build host is Ubuntu
   # shellcheck disable=SC1091
