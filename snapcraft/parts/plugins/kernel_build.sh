@@ -188,10 +188,12 @@ repack_deb() {
     dpkg -x "${deb}" "${CRAFT_PART_INSTALL}"
   done
 
-  mv -f "${CRAFT_PART_INSTALL}/boot/linux-image-${_kver}" \
-    "${CRAFT_PART_INSTALL}/kernel.img"
+  mv -f "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}${_flavour}" \
+    "${CRAFT_PART_INSTALL}/kernel.img-${_kver}${_flavour}"
 
-  ln -sf "kernel.img-${_kver}" "${CRAFT_PART_INSTALL}/kernel.img"
+  ln -sf "kernel.img-${_kver}${_flavour}" "${CRAFT_PART_INSTALL}/kernel.img"
+
+  rm -rf "${CRAFT_PART_INSTALL:?}/usr"
 }
 
 # setup_kernel will create a kernel config if one does not exist as specified by the
