@@ -42,7 +42,7 @@ def test_get_pull_commands_release(part_info):
 
     expected_commands = [
         "git init",
-        "git remote add origin https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy"
+        "git remote add origin https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy",
         "git fetch --depth 1 origin master-next",
         "git checkout FETCH_HEAD",
     ]
@@ -137,6 +137,7 @@ def test_get_build_environment(part_info):
     plugin = KernelPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_environment() == {
+        "CROSS": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
         "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
         "ARCH": "x86",
         "KERNEL_IMAGE": "bzImage",
