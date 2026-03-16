@@ -481,3 +481,22 @@ class TestUnsquashSnap:
         assert f"could not unsquash snap file {fake_snap_file.name!r}" in str(
             raised.value
         )
+
+    def test_unsquash_snap_extra_args(self, fake_process, fake_snap_file):
+        """Pass extra args to unsquashfs."""
+        fake_process.register_subprocess(
+            [
+                "unsquashfs",
+                "-force",
+                "-dest",
+                fake_process.any(),
+                str(fake_snap_file),
+                "-extract-file",
+                "meta/gui",
+            ]
+        )
+
+        with utils.unsquash_snap(
+            fake_snap_file, extra_args=["-extract-file", "meta/gui"]
+        ) as unsquashed_snap:
+            assert unsquashed_snap.is_dir()
