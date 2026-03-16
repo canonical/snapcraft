@@ -231,6 +231,9 @@ Address quality concerns
 Before the PR is merged, it must pass all automatic checks, and it needs separate
 approvals from two maintainers.
 
+Each PR builds a preview of the documentation on Read the Docs. For safety, it's a good
+idea to manually verify that the preview looks identical to your local build.
+
 If there are any issues in your branch that your local testing didn't catch, then the
 automatic checks will fail. To address these issues, review the logs in the failed
 checks. The error messages in the logs will have remedies and hints for what needs
