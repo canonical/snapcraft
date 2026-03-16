@@ -82,9 +82,10 @@ For staged snaps, the ``meta`` and ``snap`` directories from the snap will be av
 as ``meta.<snap-name>`` and ``snap.<snap-name>`` for cases where assets from those
 locations are desired for reuse.
 
+.. index:: build-packages
 
-Build-time packages
--------------------
+build-packages
+--------------
 
 Use ``build-packages`` to specify system packages that are required to
 build a part and are not included in the resulting snap.

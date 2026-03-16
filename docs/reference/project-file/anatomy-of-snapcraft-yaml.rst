@@ -266,3 +266,5 @@ instance, a foo build package from core22 would be installed (``apt install
 foo``) in the snap build environment during build. In the case of wethr, the
 snap needs Git to retrieve the sources from a remote Git repository and sed
 to search and replace the string and yield a Git tag.
+
+For practical guidance and examples, see :ref:`how-to-manage-dependencies`.
