@@ -39,7 +39,7 @@ from craft_platforms import DebianArchitecture
 from snapcraft import errors
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Iterable, Iterator, Sequence
 
     from craft_parts import ProjectInfo
 
@@ -378,10 +378,11 @@ def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, P
 
 
 @contextmanager
-def unsquash_snap(snap_file: Path) -> Iterator[Path]:
+def unsquash_snap(snap_file: Path, extra_args: Sequence[str] = ()) -> Iterator[Path]:
     """Unsquash a snap file to a temporary directory.
 
     :param snap_file: Snap package to extract.
+    :param extra_args: Extra args to pass to unsquashfs.
 
     :yields: Path to the snap's unsquashed directory.
 
@@ -401,6 +402,7 @@ def unsquash_snap(snap_file: Path) -> Iterator[Path]:
             "-dest",
             temp_dir,
             str(snap_file),
+            *extra_args,
         ]
 
         try:

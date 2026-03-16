@@ -399,6 +399,7 @@ def test_lint_managed_mode(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
@@ -452,6 +453,7 @@ def test_lint_managed_mode_without_snapcraft_yaml(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
@@ -584,6 +586,7 @@ def test_lint_managed_mode_assert(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
@@ -645,6 +648,7 @@ def test_lint_managed_mode_assert_error(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
@@ -740,6 +744,7 @@ def test_lint_managed_mode_with_lint_config(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     # lint config from project should be passed to `run_linter()`
     mock_run_linters.assert_called_once_with(
         lint=expected_lint, location=Path("/snap/test/current")
