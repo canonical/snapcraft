@@ -12,15 +12,9 @@ Contribute to this documentation
 
 This guide describes how to make a change to the documentation in Snapcraft.
 
-Changing the documentation involves:
-
-- Running commands in a command-line interface or terminal
-- Writing in reStructuredText
-- Saving changes in Git
-- Syncing changes with a personal GitHub account
-
-If you're unfamiliar with any of these activities, we recommend you first build some
-experience in :ref:`contribute-coda`.
+Documenting involves running commands in a command-line interface and syncing code with
+Git and GitHub. If you're new to these tools, we recommend you make your first
+contribution to Snapcraft with the help of :ref:`contribute-coda`.
 
 
 Set up your work environment
