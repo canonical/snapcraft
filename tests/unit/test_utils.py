@@ -411,3 +411,73 @@ def test_confirm_with_user_pause_emitter(mock_isatty, emitter):
 
     with patch("snapcraft.utils.input", fake_input):
         utils.confirm_with_user("prompt")
+
+
+class TestUnsquashSnap:
+    """Tests for unsquash_snap()."""
+
+    @pytest.fixture
+    def fake_snap_file(self, tmp_path):
+        snap_file = tmp_path / "test-snap.snap"
+        snap_file.touch()
+        return snap_file
+
+    def test_unsquash_snap_success(self, emitter, fake_process, fake_snap_file):
+        """Unsquash a snap file to a temporary directory."""
+        fake_process.register_subprocess(
+            [
+                "unsquashfs",
+                "-force",
+                "-dest",
+                fake_process.any(),
+                str(fake_snap_file),
+            ]
+        )
+
+        with utils.unsquash_snap(fake_snap_file) as unsquashed_snap:
+            assert unsquashed_snap.is_dir()
+
+        emitter.assert_interactions(
+            [call("progress", f"Unsquashing snap file {fake_snap_file.name!r}.")]
+        )
+
+    def test_unsquash_snap_resolves_path(self, emitter, fake_process, tmp_path):
+        """The snap file path is resolved before passing to unsquashfs."""
+        snap_file = tmp_path / "test-snap.snap"
+        snap_file.touch()
+        symlink = tmp_path / "link.snap"
+        symlink.symlink_to(snap_file)
+
+        fake_process.register_subprocess(
+            [
+                "unsquashfs",
+                "-force",
+                "-dest",
+                fake_process.any(),
+                str(snap_file),  # resolved path, not the symlink
+            ]
+        )
+
+        with utils.unsquash_snap(symlink) as unsquashed_snap:
+            assert unsquashed_snap.is_dir()
+
+    def test_unsquash_snap_error(self, fake_process, fake_snap_file):
+        """Raise a SnapcraftError when unsquash fails."""
+        fake_process.register_subprocess(
+            [
+                "unsquashfs",
+                "-force",
+                "-dest",
+                fake_process.any(),
+                str(fake_snap_file),
+            ],
+            returncode=1,
+        )
+
+        with pytest.raises(errors.SnapcraftError) as raised:
+            with utils.unsquash_snap(fake_snap_file):
+                pass
+
+        assert f"could not unsquash snap file {fake_snap_file.name!r}" in str(
+            raised.value
+        )

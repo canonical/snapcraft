@@ -23,7 +23,10 @@ import os
 import pathlib
 import re
 import shutil
+import subprocess
 import sys
+import tempfile
+from contextlib import contextmanager
 from getpass import getpass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -36,7 +39,7 @@ from craft_platforms import DebianArchitecture
 from snapcraft import errors
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from craft_parts import ProjectInfo
 
@@ -372,3 +375,39 @@ def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, P
             component_prime_dirs[component] = prime_dir
 
     return component_prime_dirs
+
+
+@contextmanager
+def unsquash_snap(snap_file: Path) -> Iterator[Path]:
+    """Unsquash a snap file to a temporary directory.
+
+    :param snap_file: Snap package to extract.
+
+    :yields: Path to the snap's unsquashed directory.
+
+    :raises errors.SnapcraftError: If the snap fails to unsquash.
+    """
+    snap_file = snap_file.resolve()
+
+    with tempfile.TemporaryDirectory(dir=str(snap_file.parent)) as temp_dir:
+        emit.progress(f"Unsquashing snap file {snap_file.name!r}.")
+
+        # unsquashfs [options] filesystem [directories or files to extract] options:
+        # -force: if file already exists then overwrite
+        # -dest <pathname>: unsquash to <pathname>
+        extract_command = [
+            "unsquashfs",
+            "-force",
+            "-dest",
+            temp_dir,
+            str(snap_file),
+        ]
+
+        try:
+            subprocess.run(extract_command, capture_output=True, check=True)
+        except subprocess.CalledProcessError as error:
+            raise errors.SnapcraftError(
+                f"could not unsquash snap file {snap_file.name!r}"
+            ) from error
+
+        yield Path(temp_dir)

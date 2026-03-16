@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import shlex
 import sys
 from pathlib import Path
@@ -121,6 +122,14 @@ def mock_run_linters(mocker):
 @pytest.fixture
 def mock_report(mocker):
     return mocker.patch("snapcraft.commands.lint.linters.report")
+
+
+@pytest.fixture
+def mock_unsquash_snap(mocker, tmp_path):
+    return mocker.patch(
+        "snapcraft.commands.lint.unsquash_snap",
+        return_value=contextlib.nullcontext(tmp_path),
+    )
 
 
 def test_lint_default(
@@ -359,6 +368,7 @@ def test_lint_managed_mode(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """Run the linter in managed mode."""
@@ -366,11 +376,6 @@ def test_lint_managed_mode(
 
     # create a snap file
     fake_snap_file.touch()
-
-    # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
 
     # build snap install command
     command = ["snap", "install", str(fake_snap_file)]
@@ -405,7 +410,6 @@ def test_lint_managed_mode(
         [
             call("progress", "Running linter.", permanent=True),
             call("debug", f"Assertion file {str(fake_assert_file)!r} does not exist."),
-            call("progress", f"Unsquashing snap file {fake_snap_file.name!r}."),
             call("progress", f"Installing snap with {shlex.join(command)!r}."),
             call("verbose", "No lint filters defined in 'snapcraft.yaml'."),
         ]
@@ -423,6 +427,7 @@ def test_lint_managed_mode_without_snapcraft_yaml(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """Run the linter in managed mode without a snapcraft.yaml file."""
@@ -432,9 +437,6 @@ def test_lint_managed_mode_without_snapcraft_yaml(
     fake_snap_file.touch()
 
     # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
     fake_process.register_subprocess(
         ["snap", "install", str(fake_snap_file), "--dangerous"]
     )
@@ -461,7 +463,6 @@ def test_lint_managed_mode_without_snapcraft_yaml(
         [
             call("progress", "Running linter.", permanent=True),
             call("debug", f"Assertion file {str(fake_assert_file)!r} does not exist."),
-            call("progress", f"Unsquashing snap file {fake_snap_file.name!r}."),
             call(
                 "progress",
                 f"Installing snap with 'snap install {str(fake_snap_file)} "
@@ -479,35 +480,24 @@ def test_lint_managed_mode_without_snapcraft_yaml(
 def test_lint_managed_mode_unsquash_error(
     capsys,
     emitter,
-    fake_process,
     fake_snap_file,
-    fake_snap_metadata,
-    fake_snapcraft_project,
     mock_argv,
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
     mocker,
 ):
-    """Raise an error if the snap file cannot be installed."""
+    """Raise an error if the snap file cannot be unsquashed."""
     mock_is_managed_mode.return_value = True
 
     # create a snap file
     fake_snap_file.touch()
 
-    # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)],
-        returncode=1,
-    )
-
-    # mock data from the unsquashed snap
     mocker.patch(
-        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
-    )
-    mocker.patch(
-        "snapcraft.commands.lint.LintCommand._load_project",
-        return_value=fake_snapcraft_project,
+        "snapcraft.commands.lint.unsquash_snap",
+        side_effect=SnapcraftError(
+            f"could not unsquash snap file {fake_snap_file.name!r}"
+        ),
     )
 
     application.main()
@@ -528,6 +518,7 @@ def test_lint_managed_mode_snap_install_error(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """Raise an error if the snap file cannot be installed."""
@@ -537,9 +528,6 @@ def test_lint_managed_mode_snap_install_error(
     fake_snap_file.touch()
 
     # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
     fake_process.register_subprocess(
         ["snap", "install", str(fake_snap_file), "--dangerous"], returncode=1
     )
@@ -571,6 +559,7 @@ def test_lint_managed_mode_assert(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """Run the linter in managed mode with an assert file."""
@@ -581,9 +570,6 @@ def test_lint_managed_mode_assert(
     fake_assert_file.touch()
 
     # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
     fake_process.register_subprocess(["snap", "ack", str(fake_assert_file)])
     fake_process.register_subprocess(["snap", "install", str(fake_snap_file)])
 
@@ -609,7 +595,6 @@ def test_lint_managed_mode_assert(
         [
             call("progress", "Running linter.", permanent=True),
             call("debug", f"Found assertion file {str(fake_assert_file)!r}."),
-            call("progress", "Unsquashing snap file 'test-snap.snap'."),
             call(
                 "progress",
                 f"Installing assertion file with 'snap ack {fake_assert_file}'.",
@@ -631,6 +616,7 @@ def test_lint_managed_mode_assert_error(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """If the assert file fails to be installed, install the snap dangerously."""
@@ -641,9 +627,6 @@ def test_lint_managed_mode_assert_error(
     fake_assert_file.touch()
 
     # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
     fake_process.register_subprocess(
         ["snap", "ack", str(fake_assert_file)], returncode=1
     )
@@ -673,7 +656,6 @@ def test_lint_managed_mode_assert_error(
         [
             call("progress", "Running linter.", permanent=True),
             call("debug", f"Found assertion file {str(fake_assert_file)!r}."),
-            call("progress", "Unsquashing snap file 'test-snap.snap'."),
             call(
                 "progress",
                 f"Installing assertion file with 'snap ack {fake_assert_file}'.",
@@ -733,6 +715,7 @@ def test_lint_managed_mode_with_lint_config(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
     project_lint,
 ):
