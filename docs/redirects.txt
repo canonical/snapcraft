@@ -77,3 +77,6 @@
 "reference/commands/list-keys.rst" "reference/commands/keys.rst"
 "reference/commands/push.rst" "reference/commands/upload.rst"
 "reference/commands/snap.rst" "reference/commands/pack.rst"
+
+# Other
+"contribute-to-this-documentation.rst" "contribute/documentation.rst"
