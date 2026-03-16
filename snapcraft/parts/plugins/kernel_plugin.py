@@ -57,7 +57,7 @@ architectures set up accordingly.
 from typing import Literal, cast
 
 import pydantic
-from craft_parts import infos, plugins
+from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
 _KERNEL_ARCH_FROM_SNAP_ARCH = {
