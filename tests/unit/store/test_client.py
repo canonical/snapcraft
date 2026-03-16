@@ -631,7 +631,7 @@ def test_login_with_env(monkeypatch):
         == "Login is not required if 'SNAPCRAFT_STORE_CREDENTIALS' is set."
     )
     assert raised.value.resolution == (
-        "Continue without running login, or unset 'SNAPCRAFT_STORE_CREDENTIALS' and try again."
+        "Continue without running 'login', or unset 'SNAPCRAFT_STORE_CREDENTIALS' and try again."
     )
 
 
