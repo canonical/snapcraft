@@ -23,6 +23,7 @@ import pytest
 
 from snapcraft import errors
 from snapcraft.parts.yaml_utils import _SNAP_PROJECT_FILES
+from snapcraft.services.init import MAX_SNAP_NAME_LENGTH, _normalize_snap_name
 
 
 @pytest.fixture()
@@ -67,7 +68,7 @@ def test_init_valid_name(name, init_service, new_dir, emitter):
 
 
 @pytest.mark.parametrize(
-    "name,error",
+    "name, error",
     [
         ("name_with_underscores", "snap names can only use"),
         ("name-with-UPPERCASE", "snap names can only use"),
@@ -78,7 +79,7 @@ def test_init_valid_name(name, init_service, new_dir, emitter):
         ("123456", "snap names can only use"),
         (
             "a2345678901234567890123456789012345678901",
-            "snap names must be 40 characters or less",
+            f"snap names must be {MAX_SNAP_NAME_LENGTH} characters or less",
         ),
     ],
 )
@@ -111,6 +112,20 @@ def test_init_snap_dir_exists(init_service, new_dir, emitter):
         "See https://documentation.ubuntu.com/snapcraft/stable/reference/project-file "
         "for reference information about the snapcraft.yaml format."
     )
+
+
+def test_normalize_snap_name_truncates():
+    """Long derived names are truncated to the maximum snap name length."""
+    long_name = "a" * (MAX_SNAP_NAME_LENGTH + 10)
+
+    assert _normalize_snap_name(long_name) == long_name[:MAX_SNAP_NAME_LENGTH]
+
+
+def test_normalize_snap_name_removes_trailing_hyphen():
+    """Trailing hyphens are removed after truncation."""
+    name = ("a" * (MAX_SNAP_NAME_LENGTH - 1)) + "-extra"
+
+    assert _normalize_snap_name(name) == ("a" * (MAX_SNAP_NAME_LENGTH - 1))
 
 
 @pytest.mark.parametrize(

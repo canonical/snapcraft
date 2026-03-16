@@ -23,6 +23,7 @@ import pytest
 from snapcraft import application
 from snapcraft.models.project import Project
 from snapcraft.parts.yaml_utils import apply_yaml, process_yaml
+from snapcraft.services.init import MAX_SNAP_NAME_LENGTH
 
 
 @pytest.fixture
@@ -32,6 +33,67 @@ def valid_new_dir(tmp_path, monkeypatch):
     new_dir.mkdir()
     monkeypatch.chdir(new_dir)
     return new_dir
+
+
+@pytest.fixture
+def long_named_new_dir(tmp_path, monkeypatch):
+    """Change to a new temporary directory whose name exceeds the snap name limit."""
+    new_dir = (
+        tmp_path / "this-working-directory-has-a-very-very-long-name-over-maximum-chars"
+    )
+    new_dir.mkdir()
+    monkeypatch.chdir(new_dir)
+    return new_dir
+
+
+def test_init_default_long_directory_name(emitter, long_named_new_dir, mocker):
+    """Test 'snapcraft init' succeeds when the current directory name is too long."""
+    expected_name = long_named_new_dir.name[:MAX_SNAP_NAME_LENGTH].rstrip("-")
+
+    snapcraft_yaml = long_named_new_dir / "snap/snapcraft.yaml"
+    cmd = _create_command(profile=None, project_dir=None, name=None)
+    mocker.patch.object(sys, "argv", cmd)
+
+    app = application.create_app()
+    app.run()
+
+    assert snapcraft_yaml.exists()
+
+    data = apply_yaml(process_yaml(snapcraft_yaml), "amd64", "amd64")
+    project = Project.unmarshal(data)
+
+    assert project.name == expected_name
+
+    emitter.assert_progress("Checking for an existing 'snapcraft.yaml'.")
+    emitter.assert_debug("Could not find an existing 'snapcraft.yaml'.")
+    emitter.assert_message(
+        "See https://documentation.ubuntu.com/snapcraft/stable/reference/project-file "
+        "for reference information about the snapcraft.yaml format."
+    )
+    emitter.assert_message("Successfully initialised project.")
+
+
+def test_init_default_explicit_long_name_fails(valid_new_dir, mocker, capsys):
+    """Test 'snapcraft init --name' fails for names longer than the snap limit."""
+    long_name = "a" * (MAX_SNAP_NAME_LENGTH + 1)
+    snapcraft_yaml = valid_new_dir / "snap/snapcraft.yaml"
+    cmd = _create_command(profile=None, project_dir=None, name=long_name)
+    mocker.patch.object(sys, "argv", cmd)
+
+    app = application.create_app()
+    app.run()
+
+    captured = capsys.readouterr()
+
+    assert "Invalid snap name" in captured.err
+    assert (
+        f"snap names must be {MAX_SNAP_NAME_LENGTH} characters or less" in captured.err
+    )
+    assert (
+        "Provide a valid name with '--name' or rename the project directory."
+        in captured.err
+    )
+    assert not snapcraft_yaml.exists()
 
 
 def _create_command(

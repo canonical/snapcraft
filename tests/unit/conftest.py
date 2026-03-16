@@ -339,6 +339,15 @@ def fake_provider(mock_instance):
     class FakeProvider(Provider):
         """Fake provider."""
 
+        def list_instances(
+            self,
+            *,
+            project_name: str | None = None,
+            instance_name_prefix: str | None = None,
+            include_base_instances: bool = False,
+        ):
+            return []
+
         @property
         @override
         def name(self) -> str:
