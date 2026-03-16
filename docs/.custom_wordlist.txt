@@ -5,6 +5,7 @@
 aex
 appstream
 Autoconf
+autoformatte(d|rs?)
 Autogen
 Automake
 Autotools
@@ -116,6 +117,7 @@ pulseaudio
 pyfiglet
 Pygments
 pymarkdown
+pytest
 QEMU
 qmake
 Read the Docs
@@ -140,6 +142,7 @@ snapctl
 Sphinx
 Spread
 spread_test_example
+Starcraft
 stderr
 stdin
 stdout
