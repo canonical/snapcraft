@@ -196,8 +196,8 @@ Keep the message short, at 80 characters or less, so other contributors and the 
 maintainers can see the gist of what you did.
 
 Commit early and often. It's normal to make multiple commits for a single piece of work,
-especially when you come back to review it later. It's a good practice to get into to
-keep your changes safe.
+especially when you come back to review it later. It's a good habit that keeps your
+changes safe.
 
 Committing triggers the pre-commit hook, which runs autoformatters. If any files were
 autoformatted, re-add them and redo the commit.

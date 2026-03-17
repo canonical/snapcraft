@@ -11,7 +11,7 @@ Snapcraft has a community from all over the world, and the Snapcraft team welcom
 contributions.
 
 Contributing offers an opportunity to polish your technical skills, develop as a
-professional, and get involved in the growing open source community. Snapcraft
+professional, and become involved in the growing open source community. Snapcraft
 contributors are also recognized in any releases that they work on.
 
 All contributors should become familiar with these guides. They outline the expectations
@@ -54,10 +54,8 @@ Snapcraft is licensed under `GPL-3.0
 Ways to contribute
 ------------------
 
-There are multiple ways you can make a valuable contribution:
-
-- :ref:`Develop <contribute-development>` features and fix problems
-- :ref:`Document <contribute-documentation>` Snapcraft
+- :ref:`contribute-development`
+- :ref:`contribute-documentation`
 - :ref:`Share feedback or report a problem <contribute-feedback>`
 - :ref:`Test upcoming features and fixes <contribute-test-builds>`
 - Work on Snapcraft tasks in :ref:`contribute-coda`
@@ -122,7 +120,7 @@ give hands-on help and mentoring to anyone wanting to participate in open source
 coordinates documentation work for open-source projects from all over, including
 Snapcraft. It's an initiative led by the documentation team at Canonical.
 
-Getting involved with documentation is an opportunity to grow and learn. You'll practice
+Joining the documentation efforts is an opportunity to grow and learn. You'll practice
 technical writing and product testing, which are valuable personal and professional
 skills. You'll have a chance to work very visibly with industry professionals and
 technical authors on interesting problems, and add to your professional portfolio.
@@ -134,9 +132,9 @@ If you've never contributed to open source, CODA is the best way to start. It pr
 - Direct support for contributions in Snapcraft and other projects
 - Skill development in documentation and writing
 
-To get started, introduce yourself in the `CODA Matrix channel
-<https://matrix.to/#/#documentation:ubuntu.com>`__ and volunteer for a topic in the
-`CODA task aggregator
+To join, introduce yourself in the `CODA Matrix channel
+<https://matrix.to/#/#documentation:ubuntu.com>`__ or volunteer for a topic in the `CODA
+task aggregator
 <https://github.com/canonical/open-documentation-academy/issues?q=is%3Aissue%20state%3Aopen%20snapcraft>`__.
 
 
