@@ -12,15 +12,9 @@ Contribute to this documentation
 
 This guide describes how to make a change to the documentation in Snapcraft.
 
-Changing the documentation involves:
-
-- Running commands in a command-line interface or terminal
-- Writing in reStructuredText
-- Saving changes in Git
-- Syncing changes with a personal GitHub account
-
-If you're unfamiliar with any of these activities, we recommend you first build some
-experience in :ref:`contribute-coda`.
+Documenting involves running commands in a command-line interface and syncing code with
+Git and GitHub. If you're new to these tools, we recommend you make your first
+contribution to Snapcraft with the help of :ref:`contribute-coda`.
 
 
 Set up your work environment
@@ -205,8 +199,8 @@ Keep the message short, at 80 characters or less, so other contributors and the 
 maintainers can see the gist of what you did.
 
 Commit early and often. It's normal to make multiple commits for a single piece of work,
-especially when you come back to review it later. It's a good practice to get into to
-keep your changes safe.
+especially when you come back to review it later. It's a good habit that keeps your
+changes safe.
 
 Committing triggers the pre-commit hook, which runs autoformatters. If any files were
 autoformatted, re-add them and redo the commit.
@@ -236,6 +230,9 @@ Address quality concerns
 
 Before the PR is merged, it must pass all automatic checks, and it needs separate
 approvals from two maintainers.
+
+Each PR builds a preview of the documentation on Read the Docs. For safety, it's a good
+idea to manually verify that the preview looks identical to your local build.
 
 If there are any issues in your branch that your local testing didn't catch, then the
 automatic checks will fail. To address these issues, review the logs in the failed

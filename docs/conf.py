@@ -132,6 +132,7 @@ linkcheck_ignore = [
     r"^https://www.freedesktop.org/",
     r"^https://www.npmjs.com/",
     "https://matrix.to/#",
+    "https://gitlab.gnome.org",
 ]
 
 # give linkcheck multiple tries on failure
