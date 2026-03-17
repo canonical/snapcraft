@@ -155,7 +155,7 @@ extensions = [
     # "sphinx_config_options",
     # "sphinx_contributor_listing",
     # "sphinx_filtered_toctree",
-    # "sphinx_related_links",
+    "sphinx_related_links",
     "sphinx_roles",
     "sphinx_terminal",
     # "sphinx_ubuntu_images",
@@ -264,7 +264,8 @@ intersphinx_mapping = {
     # "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
-    "ubuntu-frame": ("https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/", None),
+    "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
+    "ubuntu-frame": ("https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/24", None),
 }
 
 

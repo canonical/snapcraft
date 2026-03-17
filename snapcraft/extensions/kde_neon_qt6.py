@@ -24,7 +24,8 @@ from typing import Any
 
 from typing_extensions import override
 
-from .extension import Extension, get_extensions_data_dir, prepend_to_env
+from .extension import get_extensions_data_dir, prepend_to_env
+from .gpu_extension import GPUExtension
 
 _QT6_SDK_SNAP = {"core22": "kde-qt6-core22-sdk", "core24": "kde-qt6-core24-sdk"}
 
@@ -35,19 +36,15 @@ class KDESnapsQt6:
 
     :cvar qt6_sdk_snap: The name of the qt6 SDK snap to use.
     :cvar content_qt6: The name of the qt6 content snap to use.
-    :cvar gpu_plugs: The gpu plugs to use with gpu-2404.
-    :cvar gpu_layouts: The gpu layouts to use with gpu-2404.
     :cvar qt6_builtin: True if the SDK is built into the qt6 content snap.
     """
 
     qt6_sdk_snap: str
     content_qt6: str
-    gpu_plugs: dict[str, Any]
-    gpu_layouts: dict[str, Any]
     qt6_builtin: bool = True
 
 
-class KDENeonQt6(Extension):
+class KDENeonQt6(GPUExtension):
     r"""The KDE Neon Qt6 extension.
 
     This extension makes it easy to assemble Qt6 based applications
@@ -96,52 +93,33 @@ class KDENeonQt6(Extension):
 
     @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
-        command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
-            command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
-        return {
-            "command-chain": command_chain,
-            "plugs": [
-                "desktop",
-                "desktop-legacy",
-                "opengl",
-                "wayland",
-                "x11",
-                "audio-playback",
-                "unity7",
-                "network",
-                "network-bind",
-            ],
-        }
+            snippet = super().get_app_snippet(app_name=app_name)
+        else:
+            snippet = {}
+        snippet["command-chain"] = [
+            *snippet.get("command-chain", []),
+            "snap/command-chain/desktop-launch",
+        ]
+        snippet["plugs"] = [
+            *snippet.get("plugs", []),
+            "desktop",
+            "desktop-legacy",
+            "opengl",
+            "wayland",
+            "x11",
+            "audio-playback",
+            "unity7",
+            "network",
+            "network-bind",
+        ]
+        return snippet
 
     @functools.cached_property
     def kde_snaps(self) -> KDESnapsQt6:
         """Return the KDE related snaps to use to construct the environment."""
         base = self.yaml_data["base"]
         qt6_sdk_snap = _QT6_SDK_SNAP[base]
-
-        match base:
-            case "core22":
-                gpu_plugs = {}
-                gpu_layouts = {
-                    "/usr/share/libdrm": {
-                        "bind": "$SNAP/kde-qt6-core22/usr/share/libdrm"
-                    },
-                }
-            case "core24":
-                gpu_plugs = {
-                    "gpu-2404": {
-                        "interface": "content",
-                        "target": "$SNAP/gpu-2404",
-                        "default-provider": "mesa-2404",
-                    },
-                }
-                gpu_layouts = {
-                    "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
-                    "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-                }
-            case _:
-                raise AssertionError(f"Unsupported base: {base}")
 
         build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
@@ -162,67 +140,79 @@ class KDENeonQt6(Extension):
             qt6_sdk_snap=qt6_sdk_snap,
             content_qt6=content_qt6_snap,
             qt6_builtin=qt6_builtin,
-            gpu_layouts=gpu_layouts,
-            gpu_plugs=gpu_plugs,
         )
 
     @override
     def get_root_snippet(self) -> dict[str, Any]:
         platform_qt6_snap = self.kde_snaps.content_qt6
         content_qt6_snap = self.kde_snaps.content_qt6 + "-all"
-        gpu_plugs = self.kde_snaps.gpu_plugs
-        gpu_layouts = self.kde_snaps.gpu_layouts
+        base = self.yaml_data["base"]
 
-        return {
-            "assumes": ["snapd2.58.3"],  # for cups support
-            "compression": "lzo",
-            "plugs": {
-                "desktop": {"mount-host-font-cache": False},
-                "gtk-2-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes",
-                },
-                "gtk-3-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes",
-                },
-                "icon-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes",
-                },
-                "sound-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes",
-                },
-                platform_qt6_snap: {
-                    "content": content_qt6_snap,
-                    "interface": "content",
-                    "default-provider": platform_qt6_snap,
-                    "target": "$SNAP/qt6",
-                },
-                **gpu_plugs,
-            },
-            "environment": {
-                "SNAP_DESKTOP_RUNTIME": "$SNAP/qt6",
-                "GTK_USE_PORTAL": "1",
-                "PLATFORM_PLUG": platform_qt6_snap,
-            },
-            "hooks": {
-                "configure": {
-                    "plugs": ["desktop"],
-                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+        snippet: dict[str, Any] = {}
+        if base == "core24":
+            snippet = super().get_root_snippet()
+        else:
+            snippet = {
+                "layout": {
+                    "/usr/share/libdrm": {
+                        "bind": "$SNAP/kde-qt6-core22/usr/share/libdrm"
+                    },
                 }
+            }
+
+        snippet["assumes"] = ["snapd2.58.3"]  # for cups support
+        snippet["compression"] = "lzo"
+        snippet["plugs"] = {
+            **snippet.get("plugs", {}),
+            "desktop": {"mount-host-font-cache": False},
+            "gtk-2-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes",
             },
-            "layout": {
-                "/usr/share/X11": {"symlink": "$SNAP/qt6/usr/share/X11"},
-                "/usr/share/qt6": {"symlink": "$SNAP/qt6/usr/share/qt6"},
-                **gpu_layouts,
+            "gtk-3-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes",
+            },
+            "icon-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/icons",
+                "default-provider": "gtk-common-themes",
+            },
+            "sound-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/sounds",
+                "default-provider": "gtk-common-themes",
+            },
+            platform_qt6_snap: {
+                "content": content_qt6_snap,
+                "interface": "content",
+                "default-provider": platform_qt6_snap,
+                "target": "$SNAP/qt6",
             },
         }
+        snippet["environment"] = {
+            "SNAP_DESKTOP_RUNTIME": "$SNAP/qt6",
+            "GTK_USE_PORTAL": "1",
+            "PLATFORM_PLUG": platform_qt6_snap,
+        }
+        snippet["hooks"] = {
+            "configure": {
+                "plugs": ["desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+            }
+        }
+        snippet["layout"] = {
+            **{
+                k: v
+                for k, v in snippet.get("layout", {}).items()
+                if not k.startswith("/usr/share/X11")
+            },
+            "/usr/share/X11": {"symlink": "$SNAP/qt6/usr/share/X11"},
+            "/usr/share/qt6": {"symlink": "$SNAP/qt6/usr/share/qt6"},
+        }
+        return snippet
 
     @override
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
@@ -373,33 +363,33 @@ class KDENeonQt6(Extension):
 
         source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
-        gpu_opts = {}
-        if self.yaml_data["base"] == "core24":
-            gpu_opts["make-parameters"] = [
-                "GPU_WRAPPER=gpu-2404-wrapper",
-                "PLATFORM_PLUG=kde-qt6-core24",
-            ]
+        base = self.yaml_data["base"]
+        if base != "core22":
+            parts = {
+                f"kde-neon-qt6/{k}": v for k, v in super().get_parts_snippet().items()
+            }
         else:
-            gpu_opts["make-parameters"] = [
-                "PLATFORM_PLUG=kde-qt6-core22",
-            ]
+            parts = {}
 
-        if self.kde_snaps.qt6_builtin:
-            return {
+        parts.update(
+            {
                 "kde-neon-qt6/sdk": {
                     "source": str(source),
                     "plugin": "make",
+                    "make-parameters": [
+                        f"PLATFORM_PLUG=kde-qt6-{base}",
+                    ],
+                },
+            }
+        )
+
+        if self.kde_snaps.qt6_builtin:
+            parts["kde-neon-qt6/sdk"].update(
+                {
                     "build-snaps": [
                         self.kde_snaps.qt6_sdk_snap,
                     ],
-                    **gpu_opts,
-                },
-            }
+                }
+            )
 
-        return {
-            "kde-neon-qt6/sdk": {
-                "source": str(source),
-                "plugin": "make",
-                **gpu_opts,
-            },
-        }
+        return parts
