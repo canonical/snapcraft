@@ -68,7 +68,8 @@ class StoreLoginCommand(AppCommand):
 
         The login command requires a working keyring on the system it is used on.
         As an alternative, export {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r}
-        with the exported credentials.
+        with the exported credentials. The login command cannot be used while this
+        environment variable is set.
         """
     )
 

@@ -626,9 +626,12 @@ def test_login_with_env(monkeypatch):
             channels=["stable/fake", "edge/fake"],
         )
 
-    assert str(raised.value) == "Cannot login with 'SNAPCRAFT_STORE_CREDENTIALS' set."
+    assert (
+        str(raised.value)
+        == "Login is not required if 'SNAPCRAFT_STORE_CREDENTIALS' is set."
+    )
     assert raised.value.resolution == (
-        "Unset 'SNAPCRAFT_STORE_CREDENTIALS' and try again."
+        "Continue without running 'login', or unset 'SNAPCRAFT_STORE_CREDENTIALS' and try again."
     )
 
 
