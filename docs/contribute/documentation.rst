@@ -49,7 +49,7 @@ Next, clone your fork onto your local machine:
 
     .. tab-item:: With HTTPS
 
-        If you don't authenticate with SSH, clone with `HTTPS
+        If you don't authenticate with SSH, `clone with HTTPS
         <https://docs.github.com/en/get-started/git-basics/about-remote-repositories#cloning-with-https-urls>`__
         instead:
 
@@ -82,8 +82,8 @@ planning.
 
 If you intend to make a large or complex change, like a page rewrite or a bulk edit, the
 task must be tracked as a `GitHub issue
-<https://github.com/canonical/snapcraft/issues>`__. If no issue exists for your task,
-`create one <https://github.com/canonical/snapcraft/issues/new/choose>`__ for it.
+<https://github.com/canonical/snapcraft/issues>`__. If your task isn't tracked, `create
+an issue <https://github.com/canonical/snapcraft/issues/new/choose>`__ for it.
 
 Once you choose an issue, volunteer for it in the issue's comments. A maintainer will
 review your request and assign it to you.

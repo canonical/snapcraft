@@ -47,7 +47,7 @@ Next, clone your fork onto your local machine:
 
     .. tab-item:: With HTTPS
 
-        If you don't authenticate with SSH, clone with `HTTPS
+        If you don't authenticate with SSH, `clone with HTTPS
         <https://docs.github.com/en/get-started/git-basics/about-remote-repositories#cloning-with-https-urls>`__
         instead:
 
@@ -73,8 +73,8 @@ Choose a task
 -------------
 
 Every task must be tracked as a `GitHub issue
-<https://github.com/canonical/snapcraft/issues>`__. If no issue exists for your task,
-`create one <https://github.com/canonical/snapcraft/issues/new/choose>`__ for it.
+<https://github.com/canonical/snapcraft/issues>`__. If your task isn't tracked, `create
+an issue <https://github.com/canonical/snapcraft/issues/new/choose>`__ for it.
 
 Tasks come in different sizes and complexity. It's important to choose a task that you
 have the capacity to finish. It's also important to check whether the task is already
@@ -99,8 +99,8 @@ For very complex tasks, like refactors, contact the team in the `Snapcraft Matri
 channel <https://matrix.to/#/#snapcraft:ubuntu.com>`__.
 
 For tasks that require coordination with the Snap Store or snapd, create a post on the
-`forum <https://forum.snapcraft.io>`__, which serves as a central point for all teams
-working on snaps.
+`Snapcraft forum <https://forum.snapcraft.io>`__, which serves as a central point for
+all teams working on snaps.
 
 
 Draft your work
@@ -176,6 +176,61 @@ effort, but like all code it needs testing and careful review. An LLM doesn't ab
 you of responsibility -- you are ultimately responsible for the code in your work.
 
 
+Test
+~~~~
+
+As you develop, test all your changes in the local test suite. **If a test breaks, it
+usually means your code made a breaking change**. Diagnose what went wrong and why, and
+iterate until it passes.
+
+For low-complexity changes that require basic testing, run the fast suite, which takes a
+few seconds:
+
+.. code-block:: bash
+
+    make test-fast
+
+For complex work, run the full test suite, which takes several minutes:
+
+.. code-block:: bash
+
+    make test
+
+When iterating and testing, it's a good practice to clean the local temporary files that
+the tests generate:
+
+.. code-block:: bash
+
+    make clean
+
+In rare instances, tests can fail in unpredictable ways, regardless of the state of your
+code. If that happens, delete your virtual environment and start over:
+
+.. code-block:: bash
+
+    rm -rf .venv
+    make clean
+    make setup
+
+
+Document your work
+~~~~~~~~~~~~~~~~~~
+
+Add all changes and fixes to the upcoming release notes.
+
+Small changes usually require updates to the pages that describe the feature's behavior.
+Make any necessary changes to how-to guides and references that cover the feature.
+
+Major changes require new documentation describing the feature's usage and
+specifications. For example, if you implement a new CLI command, describe its usage in
+one of the how-to guides and add reference information for its options and flags.
+
+The documentation contribution guide shows how to:
+
+- :ref:`Write the docs <contribute-documentation-write>`
+- :ref:`Test the docs <contribute-documentation-test>`
+
+
 Commit
 ~~~~~~
 
@@ -224,62 +279,6 @@ autoformatted, re-add them and redo the commit.
     - test
     - docs
     - chore
-
-
-Test
-~~~~
-
-All code changes are subjected to local and remote testing.
-
-**If a test breaks, it usually means your code made a breaking change**. Diagnose what
-went wrong and why, and iterate until it passes.
-
-For low-complexity changes that require basic testing, run the fast suite, which takes a
-few seconds:
-
-.. code-block:: bash
-
-    make test-fast
-
-For complex work, run the full test suite, which takes several minutes:
-
-.. code-block:: bash
-
-    make test
-
-When iterating and testing, it's a good practice to clean the local temporary files that
-the tests generate:
-
-.. code-block:: bash
-
-    make clean
-
-In rare instances, tests can fail in unpredictable ways, regardless of the state of your
-code. If that happens, delete your virtual environment and start over:
-
-.. code-block:: bash
-
-    rm -rf .venv
-    make clean
-    make setup
-
-
-Document your work
-~~~~~~~~~~~~~~~~~~
-
-Add all changes and fixes to the upcoming release notes.
-
-Small changes usually require updates to the pages that describe the feature's behavior.
-Make any necessary changes to how-to guides and references that cover the feature.
-
-Major changes require new documentation describing the feature's usage and
-specifications. For example, if you implement a new CLI command, describe its usage in
-one of the how-to guides and add reference information for its options and flags.
-
-The documentation contribution guide shows how to:
-
-- :ref:`Write the docs <contribute-documentation-write>`
-- :ref:`Test the docs <contribute-documentation-test>`
 
 
 Review with the team
