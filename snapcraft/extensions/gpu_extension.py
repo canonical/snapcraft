@@ -142,7 +142,7 @@ class GPUExtension(Extension):
                         "craftctl default\n"
                         "${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22\n"
                         "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
-                        'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+                        'mkdir -p "${CRAFT_PRIME}/graphics-core22"'
                     ),
                 },
             }

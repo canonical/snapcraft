@@ -1,3 +1,6 @@
+.. meta::
+    description: Reference documentation for the GPU extension, which enables hardware-accelerated graphics support for snaps.
+
 .. _reference-gpu-extension:
 
 GPU extension
