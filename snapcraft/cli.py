@@ -98,7 +98,7 @@ COMMAND_GROUPS = [
             commands.StoreLegacyListRegisteredCommand,
             commands.StoreLegacyListCommand,
             commands.StoreLegacyMetricsCommand,
-            commands.StoreLegacyUploadMetadataCommand,
+            commands.StoreUploadMetadataCommand,
         ],
     ),
     craft_cli.CommandGroup(

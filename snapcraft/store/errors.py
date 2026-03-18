@@ -76,9 +76,11 @@ class StoreMetadataError(SnapcraftError):
                 ),
             )
         elif "error_list" in response_json:
+            craft_cli.emit.debug(str(response_json))
             message = response_json["error_list"][0]["message"]
             super().__init__(message)
         else:
+            craft_cli.emit.debug(str(response_json))
             text = response_json.get("text", "")
             super().__init__(f"Store error {response.status_code!r}: {text!r}")
 
