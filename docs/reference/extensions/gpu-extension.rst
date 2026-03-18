@@ -4,14 +4,14 @@ GPU extension
 =============
 
 The GPU extension, referred to internally as ``gpu``, provides hardware-accelerated graphics support for applications that need OpenGL, Vulkan, and other GPU capabilities.
-This extension integrates GPU content interfaces and sets up the necessary command chain wrapper for GPU acceleration.
+This extension adds the required GPU content interface to the snap, and sets up the necessary command chain wrapper for GPU acceleration.
 
 This extension is compatible with the core22 and core24 bases.
 
 For core24, it integrates the gpu-2404 provider snaps. For core22, it integrates the graphics-core22 provider snaps.
 
 
-.. _gpu-extension-included-plugs:
+.. _reference-gpu-extension-included-plugs:
 
 Included plugs
 --------------
@@ -66,12 +66,12 @@ The GPU extension defaults to snap providers that include:
     .. tab-item:: core24
         :sync: core24
 
-        The `mesa-2404 snap <https://snapcraft.io/mesa-2404>`_ is maintained by Canonical and provides up-to-date GPU driver support for applications built on the core24 base.
+        The `mesa-2404 snap <https://snapcraft.io/mesa-2404>`__ is maintained by Canonical and provides up-to-date GPU driver support for apps built on the core24 base.
 
     .. tab-item:: core22
         :sync: core22
 
-        The `mesa-core22 snap <https://snapcraft.io/mesa-core22>`_ is maintained by Canonical and provides GPU driver support for applications built on the core22 base. It also supports Nvidia drivers installed with debs on the host system.
+        The `mesa-core22 snap <https://snapcraft.io/mesa-core22>`__ is maintained by Canonical and provides GPU driver support for apps built on the core22 base. It also supports Nvidia drivers installed with Debian packages on the host system.
 
 
 Runtime wrapper
@@ -201,7 +201,7 @@ The extension automatically adds parts to build and install the GPU wrapper and 
 Example usage
 -------------
 
-Here's a simple example of using the GPU extension in a snapcraft.yaml file:
+Here's a simple example of using the GPU extension in a project file:
 
 .. tab-set::
 
@@ -406,7 +406,7 @@ This is the output before build, showing the expanded configuration:
 Combining with other extensions
 -------------------------------
 
-The GPU extension can be used as a base class for other desktop extensions (like GNOME and KDE) that need GPU acceleration support.
-It can also be used standalone for applications that need GPU acceleration without the full desktop environment setup.
+The ``GPUExtension`` base class can be extended by other desktop extensions that need GPU acceleration support, like GNOME and KDE.
+It can also be used standalone for apps that need GPU acceleration without the full desktop environment setup.
 
-When combining extensions, the GPU extension's functionality should be inherited by desktop extensions, so you don't need to specify both explicitly.
+When combining extensions, the GPU extension's functionality is inherited by desktop extensions, so you don't need to specify both explicitly.
