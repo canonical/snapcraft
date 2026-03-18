@@ -29,7 +29,6 @@ from typing_extensions import override
 
 from snapcraft import errors, store, utils
 from snapcraft.meta import SnapMetadata
-from snapcraft_legacy._store import get_data_from_snap_file
 
 if TYPE_CHECKING:
     import argparse
@@ -116,7 +115,8 @@ class StoreUploadCommand(AppCommand):
 
         client = store.StoreClientCLI()
 
-        snap_yaml, manifest_yaml = get_data_from_snap_file(snap_file)
+        snap_yaml, manifest_yaml = utils.get_data_from_snap_file(snap_file)
+
         snap_metadata = SnapMetadata.unmarshal(snap_yaml)
         snap_name = snap_metadata.name
         built_at = None

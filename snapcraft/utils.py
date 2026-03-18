@@ -31,6 +31,7 @@ from getpass import getpass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import yaml
 from craft_application.util import strtobool
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
@@ -413,3 +414,27 @@ def unsquash_snap(snap_file: Path, extra_args: Sequence[str] = ()) -> Iterator[P
             ) from error
 
         yield Path(temp_dir)
+
+
+def get_data_from_snap_file(snap_path: Path) -> tuple[dict, dict | None]:
+    """Extract snap.yaml and manifest.yaml data from a snap file.
+
+    :param snap_path: Path to the snap file.
+
+    :returns: A tuple of (snap.yaml, manifest.yaml) where manifest.yaml may be None.
+
+    :raises SnapcraftError: If the snap file cannot be read.
+    :raises FileNotFoundError: If snap.yaml doesn't exist.
+    """
+    with unsquash_snap(snap_path) as snap_dir:
+        snap_yaml_path = snap_dir / "meta" / "snap.yaml"
+        with snap_yaml_path.open() as yaml_file:
+            snap_yaml = yaml.safe_load(yaml_file)
+
+        manifest_yaml: dict | None = None
+        manifest_path = snap_dir / "snap" / "manifest.yaml"
+        if manifest_path.exists():
+            with manifest_path.open() as manifest_yaml_file:
+                manifest_yaml = yaml.safe_load(manifest_yaml_file)
+
+    return snap_yaml, manifest_yaml

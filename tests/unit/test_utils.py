@@ -15,10 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
+import yaml
 
 from snapcraft import errors, utils
 
@@ -500,3 +502,75 @@ class TestUnsquashSnap:
             fake_snap_file, extra_args=["-extract-file", "meta/gui"]
         ) as unsquashed_snap:
             assert unsquashed_snap.is_dir()
+
+
+class TestGetDataFromSnapFile:
+    """Tests for get_data_from_snap_file()."""
+
+    SNAP_YAML_CONTENT = {
+        "name": "test-snap",
+        "version": "test-version",
+        "summary": "test-summary",
+    }
+    MANIFEST_YAML_CONTENT = {"snapcraft-started-at": "2026-01-01T00:00:00Z"}
+
+    @pytest.fixture
+    def snap_dir(self, tmp_path):
+        """A directory mimicking the contents of an unsquashed snap."""
+        (tmp_path / "meta").mkdir()
+        (tmp_path / "snap").mkdir()
+        return tmp_path
+
+    @pytest.fixture
+    def fake_snap_file(self, tmp_path):
+        snap_file = tmp_path / "test-snap.snap"
+        snap_file.touch()
+        return snap_file
+
+    @pytest.fixture
+    def mock_unsquash(self, mocker, snap_dir):
+        """Mock unsquash_snap to yield snap_dir."""
+
+        @contextmanager
+        def _fake_unsquash(snap_file, extra_args=()):
+            yield snap_dir
+
+        return mocker.patch("snapcraft.utils.unsquash_snap", side_effect=_fake_unsquash)
+
+    def test_snap_yaml(self, mock_unsquash, snap_dir, fake_snap_file):
+        """Return snap.yaml."""
+        (snap_dir / "meta" / "snap.yaml").write_text(
+            yaml.dump(self.SNAP_YAML_CONTENT), encoding="utf-8"
+        )
+
+        snap_yaml, manifest_yaml = utils.get_data_from_snap_file(fake_snap_file)
+
+        assert snap_yaml == self.SNAP_YAML_CONTENT
+        assert manifest_yaml is None
+
+    def test_snap_and_manifest_yaml(self, mock_unsquash, snap_dir, fake_snap_file):
+        """Return snap.yaml and manifest.yaml."""
+        (snap_dir / "meta" / "snap.yaml").write_text(
+            yaml.dump(self.SNAP_YAML_CONTENT), encoding="utf-8"
+        )
+        (snap_dir / "snap" / "manifest.yaml").write_text(
+            yaml.dump(self.MANIFEST_YAML_CONTENT), encoding="utf-8"
+        )
+
+        snap_yaml, manifest_yaml = utils.get_data_from_snap_file(fake_snap_file)
+
+        assert snap_yaml == self.SNAP_YAML_CONTENT
+        assert manifest_yaml == self.MANIFEST_YAML_CONTENT
+
+    def test_error_on_unsquash_failure(self, mocker, fake_snap_file):
+        """Error when unsquashfs fails."""
+
+        @contextmanager
+        def _failing_unsquash(snap_file, extra_args=()):
+            raise errors.SnapcraftError("test error")
+            yield
+
+        mocker.patch("snapcraft.utils.unsquash_snap", side_effect=_failing_unsquash)
+
+        with pytest.raises(errors.SnapcraftError, match="test error"):
+            utils.get_data_from_snap_file(fake_snap_file)
