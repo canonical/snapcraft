@@ -28,6 +28,7 @@ from craft_store.models import RevisionsResponseModel
 from snapcraft import errors, models
 from snapcraft.store import LegacyUbuntuOne, client, constants
 from snapcraft.store.channel_map import ChannelMap
+from snapcraft.store.errors import NoSnapIdError, SnapNotFoundError
 from snapcraft_legacy.storeapi.v2.releases import Releases
 
 from .utils import FakeResponse
@@ -948,6 +949,165 @@ def test_verify_upload(fake_client):
             headers={"Accept": "application/json"},
         )
     ]
+
+
+###################
+# Upload Metadata #
+###################
+
+
+@pytest.fixture
+def mock_metadata_handler(mocker):
+    return mocker.patch("snapcraft.store.client._metadata.StoreMetadataHandler")
+
+
+@pytest.fixture
+def fake_snap_account_info(monkeypatch):
+    monkeypatch.setattr(
+        client.StoreClientCLI,
+        "get_account_info",
+        lambda self: {
+            "snaps": {constants.DEFAULT_SERIES: {"test-snap": {"snap-id": "test-id"}}}
+        },
+    )
+
+
+@pytest.mark.parametrize("force", [True, False])
+@pytest.mark.usefixtures("fake_client", "fake_snap_account_info")
+def test_upload_metadata(force, mock_metadata_handler):
+    metadata = {"summary": "test summary", "description": "test description"}
+    store_client = client.StoreClientCLI()
+
+    store_client.upload_metadata(
+        snap_name="test-snap",
+        metadata=metadata,
+        force=force,
+    )
+
+    mock_metadata_handler.assert_called_once_with(
+        base_url=store_client._base_url,
+        request_method=store_client.request,
+        snap_id="test-id",
+        snap_name="test-snap",
+    )
+    mock_metadata_handler.return_value.upload.assert_called_once_with(metadata, force)
+
+
+@pytest.mark.usefixtures("fake_client")
+def test_upload_metadata_snap_not_found(monkeypatch):
+    monkeypatch.setattr(
+        client.StoreClientCLI,
+        "get_account_info",
+        lambda self: {"snaps": {constants.DEFAULT_SERIES: {}}},
+    )
+
+    with pytest.raises(SnapNotFoundError, match="'test-snap' was not found"):
+        client.StoreClientCLI().upload_metadata(
+            snap_name="test-snap",
+            metadata={"summary": "test summary"},
+            force=False,
+        )
+
+
+@pytest.mark.usefixtures("fake_client")
+def test_upload_metadata_no_snap_id(monkeypatch):
+    monkeypatch.setattr(
+        client.StoreClientCLI,
+        "get_account_info",
+        lambda self: {
+            "snaps": {constants.DEFAULT_SERIES: {"test-snap": {"snap-id": None}}}
+        },
+    )
+
+    with pytest.raises(
+        NoSnapIdError, match="Failed to get snap ID for snap 'test-snap'"
+    ):
+        client.StoreClientCLI().upload_metadata(
+            snap_name="test-snap",
+            metadata={},
+            force=False,
+        )
+
+
+##########################
+# Upload Binary Metadata #
+##########################
+
+
+@pytest.mark.parametrize("force", [True, False])
+@pytest.mark.usefixtures("fake_client", "fake_snap_account_info")
+def test_upload_binary_metadata(force, mock_metadata_handler, tmp_path):
+    icon = tmp_path / "icon.png"
+    icon.write_bytes(b"fake-icon-content")
+    metadata = {"icon": icon.open("rb")}
+    store_client = client.StoreClientCLI()
+
+    store_client.upload_binary_metadata(
+        snap_name="test-snap",
+        metadata=metadata,
+        force=force,
+    )
+
+    mock_metadata_handler.assert_called_once_with(
+        base_url=store_client._base_url,
+        request_method=store_client.request,
+        snap_id="test-id",
+        snap_name="test-snap",
+    )
+    mock_metadata_handler.return_value.upload_binary.assert_called_once_with(
+        metadata, force
+    )
+
+
+@pytest.mark.usefixtures("fake_client", "fake_snap_account_info")
+@pytest.mark.parametrize("metadata", [{}, {"icon": None}])
+def test_upload_binary_metadata_no_icon(mock_metadata_handler, metadata):
+    """The metadata is passed through to upload_binary regardless of icon presence."""
+    client.StoreClientCLI().upload_binary_metadata(
+        snap_name="test-snap",
+        metadata=metadata,
+        force=False,
+    )
+
+    mock_metadata_handler.return_value.upload_binary.assert_called_once_with(
+        metadata, False
+    )
+
+
+@pytest.mark.usefixtures("fake_client")
+def test_upload_binary_metadata_snap_not_found(monkeypatch):
+    monkeypatch.setattr(
+        client.StoreClientCLI,
+        "get_account_info",
+        lambda self: {"snaps": {constants.DEFAULT_SERIES: {}}},
+    )
+
+    with pytest.raises(SnapNotFoundError, match="'test-snap' was not found"):
+        client.StoreClientCLI().upload_binary_metadata(
+            snap_name="test-snap",
+            metadata={},
+            force=False,
+        )
+
+
+@pytest.mark.usefixtures("fake_client")
+def test_upload_binary_metadata_no_snap_id(monkeypatch):
+    monkeypatch.setattr(
+        client.StoreClientCLI,
+        "get_account_info",
+        lambda self: {
+            "snaps": {constants.DEFAULT_SERIES: {"test-snap": {"snap-id": None}}}
+        },
+    )
+
+    with pytest.raises(
+        NoSnapIdError, match="Failed to get snap ID for snap 'test-snap'"
+    ):
+        client.StoreClientCLI().upload_binary_metadata(
+            snap_name="test-snap",
+            metadata={},
+            force=False,
+        )
 
 
 #################

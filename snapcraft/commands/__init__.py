@@ -38,7 +38,6 @@ from .legacy import (
     StoreLegacyRegisterKeyCommand,
     StoreLegacySetDefaultTrackCommand,
     StoreLegacySignBuildCommand,
-    StoreLegacyUploadMetadataCommand,
     StoreLegacyValidateCommand,
 )
 from .lifecycle import PackCommand, SnapCommand, TryCommand
@@ -64,7 +63,11 @@ from .status import (
     StoreStatusCommand,
     StoreTracksCommand,
 )
-from .upload import StoreLegacyPushCommand, StoreUploadCommand
+from .upload import (
+    StoreLegacyPushCommand,
+    StoreUploadCommand,
+    StoreUploadMetadataCommand,
+)
 from .validation_sets import (
     StoreEditValidationSetsCommand,
     StoreListValidationSetsCommand,
@@ -98,7 +101,6 @@ __all__ = [
     "StoreLegacyRegisterKeyCommand",
     "StoreLegacySetDefaultTrackCommand",
     "StoreLegacySignBuildCommand",
-    "StoreLegacyUploadMetadataCommand",
     "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
@@ -113,6 +115,7 @@ __all__ = [
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",
+    "StoreUploadMetadataCommand",
     "StoreValidationSetsCommand",
     "StoreWhoAmICommand",
     "TryCommand",

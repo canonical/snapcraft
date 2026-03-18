@@ -16,7 +16,6 @@
 
 import json
 import operator
-import os
 from datetime import date, timedelta
 from textwrap import dedent
 from typing import Dict, List, Union
@@ -24,7 +23,6 @@ from typing import Dict, List, Union
 import click
 from tabulate import tabulate
 
-import snapcraft_legacy
 from snapcraft_legacy import storeapi
 from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
@@ -71,41 +69,6 @@ def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
         expires:     {expires}
     """.format(**human_readable_acl)
     )
-
-
-@storecli.command("upload-metadata")
-@click.option(
-    "--force",
-    is_flag=True,
-    help="Force metadata update to override any possible conflict",
-)
-@click.argument(
-    "snap-file",
-    metavar="<snap-file>",
-    type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
-)
-@add_verbosity_options()
-def upload_metadata(snap_file, force, **kwargs):
-    """Upload metadata from <snap-file> to the store.
-
-    The following information will be retrieved from <snap-file> and used
-    to update the store:
-
-    \b
-    - summary
-    - description
-    - icon
-
-    If --force is given, it will force the local metadata into the Store,
-    ignoring any possible conflict.
-
-    \b
-    Examples:
-        snapcraft upload-metadata my-snap_0.1_amd64.snap
-        snapcraft upload-metadata my-snap_0.1_amd64.snap --force
-    """
-    click.echo("Uploading metadata from {!r}".format(os.path.basename(snap_file)))
-    snapcraft_legacy.upload_metadata(snap_file, force)
 
 
 @storecli.command()
