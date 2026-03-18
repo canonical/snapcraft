@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -37,6 +37,10 @@ def test_get_extension_names():
         "ros2-jazzy-ros-core",
         "ros2-jazzy-ros-base",
         "ros2-jazzy-desktop",
+        "ros2-lyrical",
+        "ros2-lyrical-ros-core",
+        "ros2-lyrical-ros-base",
+        "ros2-lyrical-desktop",
         "kde-neon",
         "kde-neon-6",
         "kde-neon-qt6",

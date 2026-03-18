@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2018-2022 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -36,6 +36,10 @@ from .ros2_jazzy import ROS2JazzyExtension
 from .ros2_jazzy_desktop import ROS2JazzyDesktopExtension
 from .ros2_jazzy_ros_base import ROS2JazzyRosBaseExtension
 from .ros2_jazzy_ros_core import ROS2JazzyRosCoreExtension
+from .ros2_lyrical import ROS2LyricalExtension
+from .ros2_lyrical_desktop import ROS2LyricalDesktopExtension
+from .ros2_lyrical_ros_base import ROS2LyricalRosBaseExtension
+from .ros2_lyrical_ros_core import ROS2LyricalRosCoreExtension
 
 if TYPE_CHECKING:
     from .extension import Extension
@@ -56,6 +60,10 @@ _EXTENSIONS: dict[str, "ExtensionType"] = {
     "ros2-jazzy-ros-core": ROS2JazzyRosCoreExtension,
     "ros2-jazzy-ros-base": ROS2JazzyRosBaseExtension,
     "ros2-jazzy-desktop": ROS2JazzyDesktopExtension,
+    "ros2-lyrical": ROS2LyricalExtension,
+    "ros2-lyrical-ros-core": ROS2LyricalRosCoreExtension,
+    "ros2-lyrical-ros-base": ROS2LyricalRosBaseExtension,
+    "ros2-lyrical-desktop": ROS2LyricalDesktopExtension,
     "kde-neon": KDENeon,
     "kde-neon-6": KDENeon6,
     "kde-neon-qt6": KDENeonQt6,
