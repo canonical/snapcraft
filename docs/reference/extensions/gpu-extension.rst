@@ -409,7 +409,6 @@ This is the output before build, showing the expanded configuration:
 Combining with other extensions
 -------------------------------
 
-The ``GPUExtension`` base class can be extended by other desktop extensions that need GPU acceleration support, like GNOME and KDE.
-It can also be used standalone for apps that need GPU acceleration without the full desktop environment setup.
+The GPU extension is used as a base class for the GNOME and KDE extensions.
 
-When combining extensions, the GPU extension's functionality is inherited by desktop extensions, so you don't need to specify both explicitly.
+The GPU extension shouldn't be listed when using the GNOME or KDE extensions, as its functionality is already included.
