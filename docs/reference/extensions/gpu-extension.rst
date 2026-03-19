@@ -171,7 +171,7 @@ The extension automatically adds parts to build and install the GPU wrapper and 
                     plugin: nil
                     override-prime: |
                       craftctl default
-                      ${CRAFT_PART_SRC}/bin/graphics-gpu-2404-cleanup mesa-core24
+                      ${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24
                       # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
                       mkdir -p "${CRAFT_PRIME}/gpu-2404"
 
@@ -198,7 +198,7 @@ The extension automatically adds parts to build and install the GPU wrapper and 
                       craftctl default
                       ${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22
                       # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
-                      mkdir -p "${CRAFT_PRIME}/gpu-2404"
+                      mkdir -p "${CRAFT_PRIME}/graphics-core22"
 
 
 Example usage
@@ -329,7 +329,7 @@ This is the output before build, showing the expanded configuration:
                 +    plugin: nil
                 +    override-prime: |
                 +      craftctl default
-                +      ${CRAFT_PART_SRC}/bin/graphics-gpu-2404-cleanup mesa-core24
+                +      ${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24
                 +      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
                 +      mkdir -p "${CRAFT_PRIME}/gpu-2404"
                 +
@@ -398,7 +398,7 @@ This is the output before build, showing the expanded configuration:
                 +      craftctl default
                 +      ${CRAFT_PART_SRC}/bin/graphics-core22-cleanup mesa-core22
                 +      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
-                +      mkdir -p "${CRAFT_PRIME}/gpu-2404"
+                +      mkdir -p "${CRAFT_PRIME}/graphics-core22"
                 +
                   my-app:
                     plugin: nil
