@@ -35,9 +35,9 @@ configuration files.
 Interpreting options
 --------------------
 
-Internally, snaps view and change their configuration with :ref:`craftctl
-<how-to-customize-the-build-and-part-variables>` and its ``get``, ``set``, and ``unset``
-arguments.
+Internally, snaps view and change their configuration with `snapctl
+<https://snapcraft.io/docs/how-to-guides/snap-development/use-snapctl/>`__ and its
+``get``, ``set``, and ``unset`` arguments.
 
 The snapctl command works anywhere within the snap context, during execution of your
 apps and services, and in all the snap's hooks.

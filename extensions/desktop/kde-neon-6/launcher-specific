@@ -15,6 +15,9 @@ append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/blas"
 # lapack
 append_dir LD_LIBRARY_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/lapack"
 
+# lxqt-support
+append_dir LD_LIBRARY_PATH "$SNAP/lxqt-support/usr/lib/$ARCH"
+
 # KConfig uses QStandardPaths:GenericConfigLocation to get the config dir paths
 # and checks for the kdeglobals file there for theming. The kdeglobals file is
 # stored in $SNAP_REAL_HOME/.config folder.
@@ -26,6 +29,7 @@ append_dir QT_PLUGIN_PATH "$SNAP/usr/lib/$ARCH/qt6/plugins"
 append_dir QT_PLUGIN_PATH "$SNAP/usr/lib/$ARCH"
 append_dir QT_PLUGIN_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/qt6/plugins"
 append_dir QT_PLUGIN_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/"
+append_dir QT_PLUGIN_PATH "$SNAP/lxqt-support/usr/lib/$ARCH/qt6/plugins"
 # And QML2_IMPORT_PATH (Qt Modules).
 append_dir QML2_IMPORT_PATH "$SNAP/usr/lib/$ARCH/qt6/qml"
 append_dir QML2_IMPORT_PATH "$SNAP/lib/$ARCH"
@@ -57,4 +61,11 @@ if [ -e "$SNAP_DESKTOP_RUNTIME/usr/share/i18n" ]; then
     ensure_dir_exists "$locpath"
     export LOCPATH="$locpath:/usr/lib/locale"
     LC_ALL=C.UTF-8 async_exec "$SNAP/snap/command-chain/locale-gen"
+fi
+
+# Kvantum configuration folder
+KVANTUM_CONFIG_PATH="$XDG_CONFIG_HOME/Kvantum"
+if [ ! -L "$KVANTUM_CONFIG_PATH" ] && [ -d "$SNAP_REAL_HOME/.config/Kvantum" ]; then
+    ensure_dir_exists "$(dirname "$KVANTUM_CONFIG_PATH")"
+    ln -sfn "$SNAP_REAL_HOME/.config/Kvantum" "$KVANTUM_CONFIG_PATH"
 fi

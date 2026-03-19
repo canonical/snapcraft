@@ -1,0 +1,24 @@
+name: python-hello-strict
+version: "1.0"
+summary: simple python application
+description: build a python application using core26
+base: core26
+build-base: devel
+grade: devel
+confinement: strict
+
+apps:
+  python-hello-strict:
+    command: bin/python $SNAP/bin/hello
+parts:
+  hello:
+    plugin: python
+    source: src
+    python-packages:
+      - black
+    stage-packages:
+      - libpython3.13-minimal
+      - libpython3.13-stdlib
+      - python3.13-minimal
+      - python3-venv
+      - python3-minimal # (for the "python3" symlink)

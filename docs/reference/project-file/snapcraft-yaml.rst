@@ -124,6 +124,9 @@ Platform keys
 
 .. kitbash-field:: Project platforms
 
+    More information about naming platforms is provided in the
+    :ref:`Platforms reference <reference-platform-naming-rules>`.
+
 .. kitbash-field:: Platform build_on
     :prepend-name: platforms.<platform-name>
     :override-type: str | list[str]
@@ -155,10 +158,6 @@ App keys
 --------
 
 .. kitbash-field:: Project apps
-
-.. kitbash-model:: App
-    :skip-description:
-    :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App command
     :prepend-name: apps.<app-name>
@@ -220,6 +219,9 @@ App keys
 .. kitbash-field:: App restart_condition
     :prepend-name: apps.<app-name>
 
+.. kitbash-field:: App success_exit_status
+    :prepend-name: apps.<app-name>
+
 .. kitbash-field:: App install_mode
     :prepend-name: apps.<app-name>
 
@@ -236,6 +238,9 @@ App keys
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App command_chain
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App sockets
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App daemon_scope

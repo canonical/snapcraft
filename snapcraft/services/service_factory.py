@@ -36,6 +36,7 @@ _SERVICES: dict[str, str] = {
     "provider": "Provider",
     "project": "Project",
     "remote_build": "RemoteBuild",
+    "validation_sets": "ValidationSets",
 }
 
 
@@ -46,10 +47,14 @@ class SnapcraftServiceFactory(ServiceFactory):
 
     # Allow static type check to report correct types for Snapcraft services
     if TYPE_CHECKING:
-        from . import ConfdbSchemas  # noqa: PLC0415 (import-outside-top-level)
+        from . import (  # noqa: PLC0415 (import-outside-top-level)
+            ConfdbSchemas,
+            ValidationSets,
+        )
 
         # Allow static type check to report correct types for Snapcraft services
         confdb_schemas: ConfdbSchemas = None  # type: ignore[assignment]
+        validation_sets: ValidationSets = None  # type: ignore[assignment]
 
 
 def register_snapcraft_services() -> None:

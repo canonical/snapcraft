@@ -33,7 +33,7 @@ There are three extensions in this family, each for a different version of ROS 2
 
         :ref:`Experimental extensions enabled <how-to-enable-experimental-extensions>`
 
-All three extensions require Snapcraft 7.3 or higiher.
+All three extensions require Snapcraft 7.3 or higher.
 
 
 Included parts
@@ -41,11 +41,12 @@ Included parts
 
 The extension adds its own part to the project, which pulls in the ROS 2 build packages.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: ROS 2 Foxy
+    .. tab-item:: ROS 2 Foxy
+        :sync: foxy
 
-        .. collapse:: Included parts
+        .. dropdown:: Included parts
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -59,9 +60,10 @@ The extension adds its own part to the project, which pulls in the ROS 2 build p
                   plugin: make
                   source: $SNAPCRAFT_EXTENSIONS_DIR/ros2
 
-    .. group-tab:: ROS 2 Humble
+    .. tab-item:: ROS 2 Humble
+        :sync: humble
 
-        .. collapse:: Included parts
+        .. dropdown:: Included parts
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -75,9 +77,10 @@ The extension adds its own part to the project, which pulls in the ROS 2 build p
                     - ros-humble-ament-index-cpp
                     - ros-humble-ament-index-python
 
-    .. group-tab:: ROS 2 Jazzy
+    .. tab-item:: ROS 2 Jazzy
+        :sync: jazzy
 
-        .. collapse:: Included parts
+        .. dropdown:: Included parts
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -98,11 +101,12 @@ Included build environment variables
 For the main part of the project, the extension sets the following build environment
 variables.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: ROS 2 Foxy
+    .. tab-item:: ROS 2 Foxy
+        :sync: foxy
 
-        .. collapse:: Included build environment variables
+        .. dropdown:: Included build environment variables
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -111,9 +115,10 @@ variables.
                   - ROS_VERSION: "2"
                   - ROS_DISTRO: foxy
 
-    .. group-tab:: ROS 2 Humble
+    .. tab-item:: ROS 2 Humble
+        :sync: humble
 
-        .. collapse:: Included build environment variables
+        .. dropdown:: Included build environment variables
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -122,9 +127,10 @@ variables.
                   - ROS_VERSION: "2"
                   - ROS_DISTRO: humble
 
-    .. group-tab:: ROS 2 Jazzy
+    .. tab-item:: ROS 2 Jazzy
+        :sync: jazzy
 
-        .. collapse:: Included build environment variables
+        .. dropdown:: Included build environment variables
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -141,11 +147,12 @@ For all apps that use the extension, it initializes a runtime environment requir
 ROS 2 before launching the app, similar to sourcing the typical ROS 2
 ``local_setup.bash``.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: ROS 2 Foxy
+    .. tab-item:: ROS 2 Foxy
+        :sync: foxy
 
-        .. collapse:: Included runtime environment settings
+        .. dropdown:: Included runtime environment settings
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -157,9 +164,10 @@ ROS 2 before launching the app, similar to sourcing the typical ROS 2
                   ROS_DISTRO: foxy
                   ROS_VERSION: "2"
 
-    .. group-tab:: ROS 2 Humble
+    .. tab-item:: ROS 2 Humble
+        :sync: humble
 
-        .. collapse:: Included runtime environment settings
+        .. dropdown:: Included runtime environment settings
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -173,9 +181,10 @@ ROS 2 before launching the app, similar to sourcing the typical ROS 2
                   - snap/command-chain/ros2-launch
 
 
-    .. group-tab:: ROS 2 Jazzy
+    .. tab-item:: ROS 2 Jazzy
+        :sync: jazzy
 
-        .. collapse:: Included runtime environment settings
+        .. dropdown:: Included runtime environment settings
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -196,11 +205,12 @@ The extension adds the `ROS 2 APT package repository
 <http://repo.ros2.org/ubuntu/main>`_ build-time configuration for the snap, which
 installs the necessary GPG key.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: ROS 2 Foxy
+    .. tab-item:: ROS 2 Foxy
+        :sync: foxy
 
-        .. collapse:: Included package repositories
+        .. dropdown:: Included package repositories
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -217,9 +227,10 @@ installs the necessary GPG key.
                     type: apt
                     url: http://repo.ros2.org/ubuntu/main
 
-    .. group-tab:: ROS 2 Humble
+    .. tab-item:: ROS 2 Humble
+        :sync: humble
 
-        .. collapse:: Included package repositories
+        .. dropdown:: Included package repositories
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -236,9 +247,10 @@ installs the necessary GPG key.
                     suites:
                       - jammy
 
-    .. group-tab:: ROS 2 Jazzy
+    .. tab-item:: ROS 2 Jazzy
+        :sync: jazzy
 
-        .. collapse:: Included package repositories
+        .. dropdown:: Included package repositories
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -270,29 +282,32 @@ text has been altered for ease of reading.
 The files are based on the :ref:`ros2-talker-listener
 <how-to-craft-an-ros-2-app-project-files>` project.
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: ROS 2 Foxy
+    .. tab-item:: ROS 2 Foxy
+        :sync: foxy
 
-        .. collapse:: Expanded project file for ros2-talker-listener
+        .. dropdown:: Expanded project file for ros2-talker-listener
 
             .. literalinclude:: code/ros-2-foxy-extension-talker-listener-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 18-28, 33-52
 
-    .. group-tab:: ROS 2 Humble
+    .. tab-item:: ROS 2 Humble
+        :sync: humble
 
-        .. collapse:: Expanded project file for ros2-talker-listener
+        .. dropdown:: Expanded project file for ros2-talker-listener
 
             .. literalinclude:: code/ros-2-humble-extension-talker-listener-expanded.diff
                 :language: diff
                 :lines: 3-
                 :emphasize-lines: 24-34, 39-59
 
-    .. group-tab:: ROS 2 Jazzy
+    .. tab-item:: ROS 2 Jazzy
+        :sync: jazzy
 
-        .. collapse:: Expanded project file for ros2-talker-listener
+        .. dropdown:: Expanded project file for ros2-talker-listener
 
             .. literalinclude:: code/ros-2-jazzy-extension-talker-listener-expanded.diff
                 :language: diff

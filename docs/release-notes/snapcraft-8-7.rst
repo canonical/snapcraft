@@ -112,9 +112,9 @@ The following issues have been resolved in Snapcraft 8.7:
   the same ``build-on`` and ``build-for`` architectures.
 - `craft-application#618`_ The remote builder would clean up projects after
   they timed out.
-- `craft-application#619`_ The remote builder suggested using a nonextistent
+- `craft-application#619`_ The remote builder suggested using a nonexistent
   ``--build-id`` option if the build timed out.
-- `craft-application#620`_ The remote builder help suggested using a nonextistent
+- `craft-application#620`_ The remote builder help suggested using a nonexistent
   ``--status`` option.
 
 .. _release-notes-fixes-8.7.1:
@@ -150,7 +150,7 @@ The following issues have been resolved in Snapcraft 8.7:
 ~~~~~
 
 - `#5270`_ The remote-builder gave an unfriendly error when using the
-  ``--build-for`` argument and shorthand :doc:`platforms </reference/architectures>`
+  ``--build-for`` argument and shorthand :ref:`reference-platforms`
   entries in the project file.
 - `#5330`_ The Crystal plugin would fail to properly quote environment variables.
 

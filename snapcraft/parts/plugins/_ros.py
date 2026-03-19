@@ -32,7 +32,7 @@ from catkin_pkg import packages as catkin_packages
 from craft_parts import plugins
 from craft_parts.packages import Repository as Repo
 from craft_parts.packages.snaps import _get_parsed_snap
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft.errors import SnapcraftError
 
@@ -87,7 +87,7 @@ class RosPlugin(plugins.Plugin):
 
     _MAP_CORE_ROSDISTRO = {"core24": "jazzy"}
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return (
             set(self._options.colcon_ros_build_snaps)  # type: ignore
@@ -95,14 +95,14 @@ class RosPlugin(plugins.Plugin):
             else set()
         )
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         base = self._part_info.base
         if base == "core22":
             return {"python3-rosdep", "rospack-tools"}
         return {"python3-rosdep", f"ros-{self._MAP_CORE_ROSDISTRO[base]}-ros2pkg"}
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         return {"ROS_PYTHON_VERSION": "3"}
 
@@ -120,7 +120,7 @@ class RosPlugin(plugins.Plugin):
         the build step, so these commands can affect the commands that
         follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
@@ -134,7 +134,7 @@ class RosPlugin(plugins.Plugin):
         of the build step, so these commands can be affected by the commands
         preceding it, and can affect those that follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
@@ -240,7 +240,7 @@ class RosPlugin(plugins.Plugin):
             )
         ]
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         return (
             [  # noqa S608 (false positive on SQL injection)

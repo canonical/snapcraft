@@ -107,8 +107,8 @@ Snapcraft is released under the [GPL-3.0 license](LICENSE).
 [snapcraft-site]: https://snapcraft.io/snapcraft
 [rtd-badge]: https://readthedocs.com/projects/canonical-snapcraft/badge/?version=latest
 [rtd-latest]: https://documentation.ubuntu.com/snapcraft/latest/?badge=latest
-[gha-spread-badge]: https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml/badge.svg?branch=main
-[gha-spread]: https://github.com/canonical/snapcraft/actions/workflows/spread-scheduled.yaml
+[gha-spread-badge]: https://github.com/canonical/snapcraft/actions/workflows/spread-manual.yaml/badge.svg?branch=main
+[gha-spread]: https://github.com/canonical/snapcraft/actions/workflows/spread-manual.yaml
 [ruff-badge]: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
 [ruff-site]: https://github.com/astral-sh/ruff
 [codecov-badge]: https://codecov.io/github/canonical/snapcraft/coverage.svg?branch=master

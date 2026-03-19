@@ -9,7 +9,7 @@ Crafting
 
     configure-package-information
     specify-a-base
-    select-architectures
+    select-platforms
     manage-dependencies
     add-a-snap-configuration
     use-layouts

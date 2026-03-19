@@ -6,7 +6,7 @@ description: |
 version: "1.0"
 grade: stable
 confinement: strict
-base: core20
+base: core22
 issues:
   - https://github.com/acme/project/issues
   - https://bugs.launchpad.net/project/filebug

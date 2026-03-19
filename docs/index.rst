@@ -45,7 +45,7 @@ In this documentation
         :ref:`how-to-configure-package-information`
     * - **Platform compatibility**
       - :ref:`explanation-bases` • :ref:`how-to-specify-a-base` •
-        :ref:`explanation-architectures` • :ref:`how-to-select-architectures` •
+        :ref:`explanation-platforms` • :ref:`how-to-select-platforms` •
         :ref:`reference-advanced-grammar`
     * - **Software integration**
       - :ref:`how-to-integrations` • :ref:`explanation-parts` • :ref:`reference-plugins`
@@ -118,5 +118,9 @@ Governance and policies
     how-to/index
     reference/index
     explanation/index
-    contribute-to-this-documentation
+
+.. toctree::
+    :hidden:
+
     release-notes/index
+    contribute/index

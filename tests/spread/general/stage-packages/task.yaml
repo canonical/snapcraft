@@ -9,12 +9,6 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "./snaps/$SNAP/snap/snapcraft.yaml"
 
-  base=$(get_base)
-  if [[ "$base" =~ "core18" ]] || [[ "$base" =~ "core20" ]]; then
-    # shellcheck disable=SC2016
-    sed -i "s/build-for/run-on/" "./snaps/$SNAP/snap/snapcraft.yaml"
-  fi
-
 restore: |
   cd "./snaps/$SNAP"
   snapcraft clean --destructive-mode

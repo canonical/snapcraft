@@ -84,6 +84,11 @@
 +      - LD_LIBRARY_PATH: /snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/kde-qt6-core24-sdk/current/usr/lib:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy:/snap/kf6-core24-sdk/current/usr/lib:$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:$CRAFT_STAGE/usr/lib:$CRAFT_STAGE/lib/${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 +      - CMAKE_PREFIX_PATH: $CRAFT_STAGE;/snap/kde-qt6-core24-sdk/current;/snap/kf6-core24-sdk/current;/usr${CMAKE_PREFIX_PATH:+;$CMAKE_PREFIX_PATH}
 +      - CMAKE_FIND_ROOT_PATH: $CRAFT_STAGE;/snap/kde-qt6-core24-sdk/current;/snap/kf6-core24-sdk/current;/usr${CMAKE_FIND_ROOT_PATH:+;$CMAKE_FIND_ROOT_PATH}
++  kde-neon-6/gpu/wrapper:
++    source: /snap/snapcraft/x2/share/snapcraft/extensions/gpu/command-chain
++    plugin: make
++    make-parameters:
++      - GPU_WRAPPER=gpu-2404-wrapper
 +  kde-neon-6/sdk:
 +    source: /snap/snapcraft/current/share/snapcraft/extensions/desktop/command-chain-kde
 +    plugin: make
@@ -100,8 +105,6 @@
 +      - libglx-dev
 +      - libgl-dev
 +      - libglvnd-dev
-+    make-parameters:
-+      - GPU_WRAPPER=gpu-2404-wrapper
 +compression: lzo
 
 +layout:

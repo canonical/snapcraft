@@ -29,6 +29,7 @@ from .service_factory import (
     SnapcraftServiceFactory,
     register_snapcraft_services,
 )
+from .validationsets import ValidationSets
 
 __all__ = [
     "Assertion",
@@ -42,4 +43,5 @@ __all__ = [
     "register_snapcraft_services",
     "RemoteBuild",
     "SnapcraftServiceFactory",
+    "ValidationSets",
 ]

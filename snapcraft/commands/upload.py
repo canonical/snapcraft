@@ -25,9 +25,9 @@ from typing import TYPE_CHECKING
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
-from overrides import overrides
+from typing_extensions import override
 
-from snapcraft import const, errors, store, utils
+from snapcraft import errors, store, utils
 from snapcraft.meta import SnapMetadata
 from snapcraft_legacy._store import get_data_from_snap_file
 
@@ -77,7 +77,7 @@ class StoreUploadCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
@@ -104,7 +104,7 @@ class StoreUploadCommand(AppCommand):
             ),
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         snap_file = pathlib.Path(parsed_args.snap_file)
         if not snap_file.exists() or not snap_file.is_file():
@@ -215,15 +215,11 @@ def create_callback(encoder: MultipartEncoder):
 
 
 class StoreLegacyPushCommand(StoreUploadCommand):
-    """Legacy command to upload a snap to the Snap Store."""
+    """Removed command alias to upload a snap to the Snap Store."""
 
     name = "push"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

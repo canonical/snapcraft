@@ -33,7 +33,7 @@ from craft_cli.errors import ArgumentParsingError
 from craft_platforms import DebianArchitecture
 from craft_providers.multipass import MultipassProvider
 from craft_providers.util import snap_cmd
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import errors, linters, models, providers
 from snapcraft.meta import snap_yaml
@@ -60,7 +60,7 @@ class LintCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
@@ -275,7 +275,7 @@ class LintCommand(AppCommand):
         try:
             # process_yaml will not parse core, core18, and core20 snaps
             yaml_data = process_yaml(snapcraft_yaml_file)
-        except (errors.LegacyFallback, errors.MaintenanceBase) as error:
+        except errors.MaintenanceBase as error:
             raise errors.SnapcraftError(
                 "can not lint snap using a base older than core22"
             ) from error

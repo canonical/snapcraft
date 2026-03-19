@@ -453,7 +453,7 @@ fi
 
 # GTK theme and behavior modifier
 # Those can impact the theme engine used by Qt as well
-gtk_configs=(gtk-3.0/settings.ini gtk-3.0/bookmarks gtk-2.0/gtkfilechooser.ini)
+gtk_configs=(gtk-4.0/settings.ini gtk-4.0/gtk.css gtk-4.0/bookmarks gtk-4.0/colors.css gtk-3.0/settings.ini gtk-3.0/gtk.css gtk-3.0/bookmarks gtk-3.0/colors.css gtk-2.0/gtkfilechooser.ini)
 for f in "${gtk_configs[@]}"; do
   dest="$XDG_CONFIG_HOME/$f"
   if [ ! -L "$dest" ]; then

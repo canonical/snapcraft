@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2024 Canonical Ltd.
+# Copyright 2026 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,35 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Snapcraft RemoteBuild service tests."""
-
-import pathlib
+"""Snapcraft Remote Build service tests."""
 
 import pytest
+from craft_application import launchpad
 
 
-@pytest.mark.parametrize(
-    ("new_exists", "legacy_exists", "expected"),
-    [
-        (False, False, pathlib.Path("launchpad-credentials")),
-        (False, True, pathlib.Path("provider/launchpad/credentials")),
-        (True, False, pathlib.Path("launchpad-credentials")),
-        (True, True, pathlib.Path("launchpad-credentials")),
-    ],
-)
 @pytest.mark.usefixtures("emitter")
-def test_credentials_filepaths(
-    new_exists, legacy_exists, expected, fake_services, mocker, new_dir
-):
-    """Load legacy credentials only when they exist and the new ones do not."""
-    mocker.patch("platformdirs.user_data_path", return_value=new_dir)
-    if new_exists:
-        (new_dir / "launchpad-credentials").touch()
-    if legacy_exists:
-        (new_dir / "provider/launchpad/credentials").mkdir(parents=True)
-        (new_dir / "provider/launchpad/credentials").touch()
-    remote_build_service = fake_services.get("remote_build")
+def test_recipe_class(fake_services):
+    """Snapcraft should use SnapRecipes."""
+    service = fake_services.get("remote_build")
 
-    credentials_filepath = remote_build_service.credentials_filepath
-
-    assert credentials_filepath == new_dir / expected
+    assert service.RecipeClass == launchpad.SnapRecipe

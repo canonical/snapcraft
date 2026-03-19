@@ -23,9 +23,10 @@ import re
 from typing import Any
 
 from craft_application.errors import CraftValidationError
-from overrides import overrides
+from typing_extensions import override
 
-from .extension import Extension, get_extensions_data_dir, prepend_to_env
+from .extension import get_extensions_data_dir, prepend_to_env
+from .gpu_extension import GPUExtension
 
 _QT6_SDK_SNAP = {"core22": "kde-qt6-core22-sdk", "core24": "kde-qt6-core24-sdk"}
 _KF6_SDK_SNAP = {"core22": "kf6-core22-sdk", "core24": "kf6-core24-sdk"}
@@ -39,8 +40,6 @@ class KDESnaps6:
     :cvar kf6_sdk_snap: The name of the kf6 SDK snap to use.
     :cvar content_qt6: The name of the qt6 content snap to use.
     :cvar content_kf6: The name of the kf6 content snap to use.
-    :cvar gpu_plugs: The gpu plugs to use with gpu-2404.
-    :cvar gpu_layouts: The gpu layouts to use with gpu-2404.
     :cvar qt6_builtin: True if the SDK is built into the qt6 content snap.
     :cvar kf6_builtin: True if the SDK is built into the kf6 content snap.
     """
@@ -49,13 +48,11 @@ class KDESnaps6:
     kf6_sdk_snap: str
     content_qt6: str
     content_kf6: str
-    gpu_plugs: dict[str, Any]
-    gpu_layouts: dict[str, Any]
     qt6_builtin: bool = True
     kf6_builtin: bool = True
 
 
-class KDENeon6(Extension):
+class KDENeon6(GPUExtension):
     r"""The KDE Neon extension.
 
     This extension makes it easy to assemble KDE based applications
@@ -88,39 +85,43 @@ class KDENeon6(Extension):
     """
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
-    @overrides
+    @override
     def is_experimental(base: str | None) -> bool:
         return False
 
-    @overrides
+    @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
-        command_chain = ["snap/command-chain/desktop-launch"]
         if self.yaml_data["base"] == "core24":
-            command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
-        return {
-            "command-chain": command_chain,
-            "plugs": [
-                "desktop",
-                "desktop-legacy",
-                "opengl",
-                "wayland",
-                "x11",
-                "audio-playback",
-                "unity7",
-                "network",
-                "network-bind",
-            ],
-        }
+            snippet = super().get_app_snippet(app_name=app_name)
+        else:
+            snippet = {}
+        snippet["command-chain"] = [
+            *snippet.get("command-chain", []),
+            "snap/command-chain/desktop-launch",
+        ]
+        snippet["plugs"] = [
+            *snippet.get("plugs", []),
+            "desktop",
+            "desktop-legacy",
+            "opengl",
+            "wayland",
+            "x11",
+            "audio-playback",
+            "unity7",
+            "network",
+            "network-bind",
+        ]
+        return snippet
 
     @functools.cached_property
     def kde_snaps(self) -> KDESnaps6:
@@ -128,27 +129,6 @@ class KDENeon6(Extension):
         base = self.yaml_data["base"]
         qt6_sdk_snap = _QT6_SDK_SNAP[base]
         kf6_sdk_snap = _KF6_SDK_SNAP[base]
-
-        match base:
-            case "core22":
-                gpu_plugs = {}
-                gpu_layouts = {
-                    "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
-                }
-            case "core24":
-                gpu_plugs = {
-                    "gpu-2404": {
-                        "interface": "content",
-                        "target": "$SNAP/gpu-2404",
-                        "default-provider": "mesa-2404",
-                    },
-                }
-                gpu_layouts = {
-                    "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
-                    "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-                }
-            case _:
-                raise AssertionError(f"Unsupported base: {base}")
 
         build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
@@ -180,92 +160,101 @@ class KDENeon6(Extension):
             kf6_sdk_snap=kf6_sdk_snap,
             content_kf6=content_kf6_snap,
             kf6_builtin=kf6_builtin,
-            gpu_layouts=gpu_layouts,
-            gpu_plugs=gpu_plugs,
         )
 
-    @overrides
+    @override
     def get_root_snippet(self) -> dict[str, Any]:
         platform_kf6_snap = self.kde_snaps.content_kf6
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
-        gpu_plugs = self.kde_snaps.gpu_plugs
-        gpu_layouts = self.kde_snaps.gpu_layouts
         if not (base := self.yaml_data.get("base")):
             raise CraftValidationError("The 'base' key is required.")
         lxqt_support_snap = f"lxqt-support-{base}"
 
-        return {
-            "assumes": ["snapd2.58.3"],  # for cups support
-            "compression": "lzo",
-            "plugs": {
-                "desktop": {"mount-host-font-cache": False},
-                "gtk-2-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes",
-                },
-                "gtk-3-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes",
-                },
-                "icon-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes",
-                },
-                "sound-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes",
-                },
-                platform_kf6_snap: {
-                    "content": content_kf6_snap,
-                    "interface": "content",
-                    "default-provider": platform_kf6_snap,
-                    "target": "$SNAP/kf6",
-                },
-                lxqt_support_snap: {
-                    "content": lxqt_support_snap,
-                    "interface": "content",
-                    "target": f"$SNAP/{lxqt_support_snap}",
-                    "default-provider": lxqt_support_snap,
-                },
-                **gpu_plugs,
-            },
-            "environment": {
-                "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
-                "GTK_USE_PORTAL": "1",
-                "PLATFORM_PLUG": platform_kf6_snap,
-                "LD_LIBRARY_PATH": (
-                    f"$SNAP/{lxqt_support_snap}/usr/lib/"
-                    "${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}"
-                ),
-                "QT_PLUGIN_PATH": (
-                    f"$SNAP/{lxqt_support_snap}/usr/lib/"
-                    "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}"
-                ),
-            },
-            "hooks": {
-                "configure": {
-                    "plugs": ["desktop"],
-                    "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+        snippet: dict[str, Any] = {}
+        if base == "core24":
+            snippet = super().get_root_snippet()
+        else:
+            snippet = {
+                "layout": {
+                    "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"}
                 }
+            }
+
+        snippet["assumes"] = ["snapd2.58.3"]  # for cups support
+        snippet["compression"] = "lzo"
+        snippet["plugs"] = {
+            **snippet.get("plugs", {}),
+            "desktop": {"mount-host-font-cache": False},
+            "gtk-2-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes",
             },
-            "layout": {
-                "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
-                "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
-                "/usr/share/color-schemes": {
-                    "symlink": f"$SNAP/{lxqt_support_snap}/usr/share/color-schemes"
-                },
-                "/usr/share/Kvantum": {
-                    "symlink": f"$SNAP/{lxqt_support_snap}/usr/share/Kvantum"
-                },
-                **gpu_layouts,
+            "gtk-3-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes",
+            },
+            "icon-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/icons",
+                "default-provider": "gtk-common-themes",
+            },
+            "sound-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/sounds",
+                "default-provider": "gtk-common-themes",
+            },
+            platform_kf6_snap: {
+                "content": content_kf6_snap,
+                "interface": "content",
+                "default-provider": platform_kf6_snap,
+                "target": "$SNAP/kf6",
+            },
+            lxqt_support_snap: {
+                "content": lxqt_support_snap,
+                "interface": "content",
+                "target": f"$SNAP/{lxqt_support_snap}",
+                "default-provider": lxqt_support_snap,
             },
         }
+        snippet["environment"] = {
+            "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
+            "GTK_USE_PORTAL": "1",
+            "PLATFORM_PLUG": platform_kf6_snap,
+            "LD_LIBRARY_PATH": (
+                f"$SNAP/{lxqt_support_snap}/usr/lib/"
+                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}"
+            ),
+            "QT_PLUGIN_PATH": (
+                f"$SNAP/{lxqt_support_snap}/usr/lib/"
+                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}"
+            ),
+        }
+        snippet["hooks"] = {
+            "configure": {
+                "plugs": ["desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-desktop"],
+            }
+        }
+        snippet["layout"] = {
+            **{
+                k: v
+                for k, v in snippet.get("layout", {}).items()
+                if not k.startswith("/usr/share/X11")
+            },
+            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
+            "/usr/share/color-schemes": {
+                "symlink": f"$SNAP/{lxqt_support_snap}/usr/share/color-schemes"
+            },
+            "/usr/share/Kvantum": {
+                "symlink": f"$SNAP/{lxqt_support_snap}/usr/share/Kvantum"
+            },
+        }
+        return snippet
 
-    @overrides
+    @override
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
         kf6_sdk_snap = self.kde_snaps.kf6_sdk_snap
@@ -427,7 +416,7 @@ class KDENeon6(Extension):
             ],
         }
 
-    @overrides
+    @override
     def get_parts_snippet(self) -> dict[str, Any]:
         # We can change this to the lightweight command-chain when
         # the content snap includes the desktop-launch from
@@ -435,22 +424,29 @@ class KDENeon6(Extension):
 
         source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
-        gpu_opts = {}
-        if self.yaml_data["base"] == "core24":
-            gpu_opts["make-parameters"] = [
-                "GPU_WRAPPER=gpu-2404-wrapper",
-                "PLATFORM_PLUG=kf6-core24",
-            ]
+        base = self.yaml_data["base"]
+        if base != "core22":
+            parts = {
+                f"kde-neon-6/{k}": v for k, v in super().get_parts_snippet().items()
+            }
         else:
-            gpu_opts["make-parameters"] = [
-                "PLATFORM_PLUG=kf6-core22",
-            ]
+            parts = {}
 
-        if self.kde_snaps.kf6_builtin:
-            return {
+        parts.update(
+            {
                 "kde-neon-6/sdk": {
                     "source": str(source),
                     "plugin": "make",
+                    "make-parameters": [
+                        f"PLATFORM_PLUG=kf6-{base}",
+                    ],
+                },
+            }
+        )
+
+        if self.kde_snaps.kf6_builtin:
+            parts["kde-neon-6/sdk"].update(
+                {
                     "build-snaps": [
                         self.kde_snaps.qt6_sdk_snap,
                         self.kde_snaps.kf6_sdk_snap,
@@ -466,14 +462,7 @@ class KDENeon6(Extension):
                         "libgl-dev",
                         "libglvnd-dev",
                     ],
-                    **gpu_opts,
-                },
-            }
+                }
+            )
 
-        return {
-            "kde-neon-6/sdk": {
-                "source": str(source),
-                "plugin": "make",
-                **gpu_opts,
-            },
-        }
+        return parts

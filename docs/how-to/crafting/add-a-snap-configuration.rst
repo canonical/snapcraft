@@ -219,8 +219,8 @@ Example live snap
 
 The `Nextcloud snap <https://snapcraft.io/nextcloud>`_ has a working example of a
 configuration option. Its `setup
-<https://github.com/nextcloud/nextcloud-snap#configuration>`_ configures the hostname,
-ports, and PHP memory limit:
+<https://github.com/nextcloud-snap/nextcloud-snap/blob/master/README.md#configuration>`__
+configures the hostname, ports, and PHP memory limit:
 
 .. code-block:: bash
 

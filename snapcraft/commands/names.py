@@ -25,10 +25,10 @@ from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
-from overrides import overrides
 from tabulate import tabulate
+from typing_extensions import override
 
-from snapcraft import const, store, utils
+from snapcraft import errors, store, utils
 
 if TYPE_CHECKING:
     import argparse
@@ -77,7 +77,7 @@ class StoreRegisterCommand(AppCommand):
         at which time you become the publisher for the snap."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap-name",
@@ -105,7 +105,7 @@ class StoreRegisterCommand(AppCommand):
             help="Do not ask for confirmation",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         # dest does not work when filling the parser so getattr instead
         snap_name = getattr(parsed_args, "snap-name")
@@ -137,7 +137,7 @@ class StoreNamesCommand(AppCommand):
         visibility and any additional notes."""
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--format",
@@ -147,7 +147,7 @@ class StoreNamesCommand(AppCommand):
             default="table",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         store_client = store.StoreClientCLI()
         snaps = store_client.get_names()
@@ -181,30 +181,22 @@ class StoreNamesCommand(AppCommand):
 
 
 class StoreLegacyListCommand(StoreNamesCommand):
-    """Legacy command to list the snap names registered with the current account."""
+    """Removed command to list the snap names registered with the current account."""
 
     name = "list"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreLegacyListRegisteredCommand(StoreNamesCommand):
-    """Legacy command to list the snap names registered with the current account."""
+    """Removed command to list the snap names registered with the current account."""
 
     name = "list-registered"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

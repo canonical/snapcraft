@@ -38,6 +38,6 @@ parts:
     source: https://github.com/get-woke/woke
     source-type: git
     override-pull: |
-      snapcraftctl pull
-      snapcraftctl set-version \
-      "$(git describe --long --tags --always --match=v*.*.* | sed 's/v//')"
+      craftctl default
+      craftctl set \
+      version="$(git describe --long --tags --always --match=v*.*.* | sed 's/v//')"
