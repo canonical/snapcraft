@@ -64,6 +64,9 @@ restore_each() {
     true
 }
 
+# If you want to allocate LXD VMs from remotes other than
+# "ubuntu", such as "ubuntu-daily", this function should be
+# modified to point there.
 allocate_lxdvm() {
     name=$(echo "$SPREAD_SYSTEM" | tr '[:punct:]' -)
     system=$(echo "$SPREAD_SYSTEM" | tr / -)
