@@ -51,7 +51,7 @@ When this extension is used, the following plug is connected for the snap:
                       target: $SNAP/graphics-core22
                       default-provider: mesa-core22
 
-The :external+ubuntu-frame:ref:`Ubuntu Frame documentation <use-snap-graphics>` describes how to use the GPU content provider snap in your snap.
+:external+ubuntu-frame:ref:`use-snap-graphics` in the Ubuntu Frame documentation shows how to include the GPU content provider snap.
 
 
 Included packages
