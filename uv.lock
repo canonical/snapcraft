@@ -3029,7 +3029,7 @@ docs = [
     { name = "sphinx-roles", specifier = ">=0.1.0" },
     { name = "sphinx-sitemap", specifier = ">=2.6.0" },
     { name = "sphinx-substitution-extensions", specifier = "==2025.1.2" },
-    { name = "sphinx-terminal", specifier = "==0.1.1" },
+    { name = "sphinx-terminal", specifier = "==1.0.3" },
     { name = "sphinxcontrib-jquery", specifier = ">=4.1" },
     { name = "sphinxext-opengraph", specifier = ">=0.13.0" },
     { name = "sphinxext-rediraffe", specifier = "==0.3.0" },
@@ -3301,15 +3301,16 @@ wheels = [
 
 [[package]]
 name = "sphinx-terminal"
-version = "0.1.1"
+version = "1.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
     { name = "sphinx" },
+    { name = "sphinx-copybutton" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/14/3dedb40eabe81082ac4ae940530b8d05bbd191adde18bbe494d23e856461/sphinx_terminal-0.1.1.tar.gz", hash = "sha256:25f1bf84f73908cc73274c363077b54742abb87bae0633acbe267636f9d9944d", size = 93978, upload-time = "2025-10-15T00:08:42.061Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/f7/c48cfa302ba9e82687972334b1995e687cab79999a1805cb3d96d67b80dd/sphinx_terminal-1.0.3.tar.gz", hash = "sha256:7a5ae9d20f5e9fd96d7df753e62b5415e33816a4833b73fcd8d60afee4695cbb", size = 95465, upload-time = "2025-12-02T01:10:18.08Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/aa/19739053afdfbf335c4f5277623dda1adf5122a0f47c83033c032fcf1bb4/sphinx_terminal-0.1.1-py3-none-any.whl", hash = "sha256:6cfd0d7bdc8cedae6a5b8cd65c984a2ab5f6b0c80f3268714948e11701a6fd17", size = 19523, upload-time = "2025-10-15T00:08:40.292Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/09/6afb984b5b58f6d522dea00f59b19ffa2405fb72b298803f51ac3df0f31d/sphinx_terminal-1.0.3-py3-none-any.whl", hash = "sha256:127ca5f21d4a4880bb5f8d18e7114f89d66f96df425478fb376376697e8315ac", size = 20096, upload-time = "2025-12-02T01:10:16.851Z" },
 ]
 
 [[package]]

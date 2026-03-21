@@ -95,7 +95,7 @@ docs = [
     "sphinx-lint~=1.0",
     "sphinxext-rediraffe==0.3.0",
     "sphinx-substitution-extensions==2025.1.2",
-    "sphinx-terminal==0.1.1",
+    "sphinx-terminal==1.0.3",
     "sphinx-copybutton",
     {include-group = "docs-starter-pack"},
 ]
