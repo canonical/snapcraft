@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -27,7 +27,7 @@ jobs:
         uses: canonical/action-build@v1
 
       - name: Upload snapcraft snap
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: snap
           path: ${{ steps.build-snapcraft.outputs.snap }}
@@ -53,13 +53,13 @@ jobs:
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: true
 
       - name: Download snapcraft snap
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: snap
           path: tests
@@ -104,14 +104,14 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: true
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: snap
           path: tests
