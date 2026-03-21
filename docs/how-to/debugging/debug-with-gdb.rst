@@ -36,13 +36,13 @@ Run GDB directly against an installed snap with:
 
 .. code-block:: bash
 
-   snap run --gdb <snap>
+   snap run --gdbserver <snap>
 
 When running on an app with debug symbols, the symbols will be located and the source
 code can be referenced, as demonstrated below:
 
 .. terminal::
-    :input: snap run --gdb test-gdb.test-gdb
+    :input: snap run --gdbserver test-gdb.test-gdb
     :user: crafter
     :host: home
 
@@ -140,7 +140,7 @@ For example, to connect to a gdbserver session at 192.168.122.138 on port 43041:
     :user: crafter
     :host: home
 
-    Welcome to `snap run --gdb`.
+    Welcome to "snap run --gdbserver".
     You are right before your application is execed():
     - set any options you may need
     - (optionally) set a breakpoint in 'main'
