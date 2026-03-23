@@ -95,10 +95,13 @@ For example, to connect to a gdbserver session at 192.168.122.138 on port 43041:
     :host: home
 
     Welcome to "snap run --gdbserver".
-    You are right before your application is execed():
-    - set any options you may need
-    - (optionally) set a breakpoint in 'main'
-    - use 'cont' to start
+    You are right before your application is run.
+    Please open a different terminal and run:
+
+    gdb -ex="target remote :43041" -ex=continue -ex="signal SIGCONT"
+    (gdb) continue
+
+    or use your favorite gdb frontend and connect to :43041
 
 
 Debug with VS Code and gdbserver
