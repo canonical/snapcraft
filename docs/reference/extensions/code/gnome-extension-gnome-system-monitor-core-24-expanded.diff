@@ -127,7 +127,7 @@
 +    source: /snap/snapcraft/13181/share/snapcraft/extensions/gpu/command-chain
 +    plugin: make
 +    make-parameters:
-+      - GPU_WRAPPER=gpu-2404-wrapper
++      - GPU_INTERFACE=gpu-2404
 +  gnome/sdk:
 +    source: /snap/snapcraft/13181/share/snapcraft/extensions/desktop/command-chain
 +    plugin: make

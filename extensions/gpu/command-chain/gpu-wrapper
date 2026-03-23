@@ -1,9 +1,9 @@
 #!/bin/bash
 
-GPU_WRAPPER="${SNAP}/gpu-2404/bin/gpu-2404-provider-wrapper"
+GPU_WRAPPER="${SNAP}/%GPU_INTERFACE%/bin/%GPU_INTERFACE%-provider-wrapper"
 
 if [ -z "$1" ]; then
-  echo "Usage: gpu-2404-wrapper <command>"
+  echo "Usage: %GPU_INTERFACE%-wrapper <command>"
   exit 1
 fi
 

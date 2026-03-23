@@ -176,6 +176,7 @@ vendored
 venv
 virtualized?
 VMs
+Vulkan
 WCAG
 wethr
 whatime
