@@ -24,59 +24,11 @@ For example, to enable debug symbols for a typical C-based project using the
 to the project's ``CMakeLists.txt``, then rebuild and install the snap.
 
 
-Locally debug a snap
---------------------
-
-Snaps are run within a `confined environment`_, so running GDB directly against a snap
-app would introspect both the snapd runtime environment and the app itself, making the
-identification of any issues specific to the snap app difficult. For this reason, snapd
-encapsulates GDB within its own runtime.
-
-Run GDB directly against an installed snap with:
-
-.. code-block:: bash
-
-   snap run --gdbserver <snap>
-
-When running on an app with debug symbols, the symbols will be located and the source
-code can be referenced, as demonstrated below:
-
-.. terminal::
-    :input: snap run --gdbserver test-gdb.test-gdb
-    :user: crafter
-    :host: home
-
-    [...]
-    You are right before your application is execed():
-    - set any options you may need
-    - use 'cont' to start
-    [...]
-    (gdb) dir test-gdb/src/
-    Source directories searched: test-gdb/src:$cdir:$cwd
-    (gdb) list
-    1       #include <stdio.h>
-    2
-    3       int main (int argc, char *argv[])
-    4       {
-    5         printf ("GDB from a snap is working\n");
-    6
-    7         return 0;
-    8       }
-    (gdb) cont
-    Continuing.
-    GDB from a snap is working
-    [Inferior 1 (process 153259) exited normally]
-    (gdb) quit
-
-When GDB is instantiated by snapd, it behaves just as it would if it was called against
-the same app outside of the snapd runtime environment.
-
-
 Locally debug with gdbserver
 ----------------------------
 
-In addition to GDB, snapd integrates with `gdbserver`_ for remote access. With it you
-can debug snaps with GDB through an IDE on the same host.
+snapd integrates with `gdbserver`_ for local and remote debugging. With it you
+can debug snaps with GDB directly, or connect through an IDE on the same host.
 
 To start a gdbserver session with a local snap, run:
 
@@ -97,6 +49,8 @@ This enters a gdbserver shell:
 
     gdb -ex="target remote :43041" -ex=continue -ex="signal SIGCONT"
     (gdb) continue
+
+    or use your favorite gdb frontend and connect to :43041
 
 You can specify a port when starting the gdbserver. For example, to use port 43041, run:
 
