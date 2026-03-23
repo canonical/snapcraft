@@ -27,7 +27,7 @@ to the project's ``CMakeLists.txt``, then rebuild and install the snap.
 Locally debug with gdbserver
 ----------------------------
 
-snapd integrates with `gdbserver`_ for local and remote debugging. With it you
+The snap daemon integrates with `gdbserver`_ for local and remote debugging. With it you
 can debug snaps with GDB directly, or connect through an IDE on the same host.
 
 To start a gdbserver session with a local snap, run:
