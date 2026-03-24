@@ -3,7 +3,7 @@ version: "1.0"
 summary: passthrough-tests
 description: passthrough-tests
 
-base: core20
+base: core22
 grade: devel
 confinement: strict
 
@@ -11,8 +11,7 @@ parts:
   passthrough-tests:
     plugin: nil
     source: .
-    override-build:
-      install -m 0755 test-cmd $SNAPCRAFT_PART_INSTALL/
+    override-build: install -m 0755 test-cmd $SNAPCRAFT_PART_INSTALL/
 
 apps:
   test-cmd:

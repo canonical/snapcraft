@@ -22,11 +22,11 @@ from typing import Any
 
 import craft_application.commands
 from craft_cli import emit
-from overrides import override
+from typing_extensions import override
 
 import snapcraft.errors
 import snapcraft.pack
-from snapcraft import const
+from snapcraft import errors
 
 
 class PackCommand(craft_application.commands.lifecycle.PackCommand):
@@ -126,7 +126,7 @@ class TryCommand(PackCommand):
 
 
 class SnapCommand(PackCommand):
-    """Deprecated legacy command to pack the final snap payload."""
+    """Removed command to pack the final snap payload."""
 
     name = "snap"
     hidden = True
@@ -138,9 +138,4 @@ class SnapCommand(PackCommand):
         step_name: str | None = None,
         **kwargs: Any,
     ) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-
-        super()._run(parsed_args, step_name, **kwargs)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

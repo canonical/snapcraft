@@ -17,13 +17,14 @@
 
 import io
 import pathlib
+import re
 from textwrap import dedent
 
 import craft_application.errors
 import pytest
 from craft_parts import ProjectVar, ProjectVarInfo
 
-from snapcraft import errors
+from snapcraft import const, errors
 from snapcraft.parts import yaml_utils
 
 
@@ -110,47 +111,33 @@ def test_yaml_load_build_base():
     }
 
 
-def test_yaml_load_not_core22_base():
-    with pytest.raises(errors.LegacyFallback) as raised:
-        yaml_utils.load(
-            io.StringIO(
-                dedent(
-                    """\
-            base: core20
-    """
-                )
-            )
-        )
-
-    assert str(raised.value) == "base is core20"
-
-
-def test_yaml_load_esm_base():
+@pytest.mark.parametrize("base", const.ESM_BASES)
+def test_yaml_load_esm_base(base):
     with pytest.raises(errors.MaintenanceBase):
         yaml_utils.load(
             io.StringIO(
                 dedent(
-                    """\
-            base: core
-    """
+                    f"""\
+                    base: {base}
+                    """
                 )
             )
         )
 
 
 def test_yaml_load_no_base():
-    with pytest.raises(errors.LegacyFallback) as raised:
+    expected = re.escape("Project file has no base or build-base.")
+
+    with pytest.raises(errors.MissingBase, match=expected):
         yaml_utils.load(
             io.StringIO(
                 dedent(
                     """\
-            entry: foo
-    """
+                    entry: foo
+                    """
                 )
             )
         )
-
-    assert str(raised.value) == "no base defined"
 
 
 def test_extract_parse_info():

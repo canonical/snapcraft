@@ -13,16 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from datetime import datetime
 
 import click
-from tabulate import tabulate
 
 import snapcraft_legacy
 from snapcraft_legacy import storeapi
-from snapcraft_legacy._store import StoreClientCLI
 
-from . import echo
 from ._options import add_verbosity_options
 
 
@@ -108,57 +104,3 @@ def validate(
 def gated(snap_name: str, **kwargs) -> None:
     """Get the list of snaps and revisions gating a snap."""
     snapcraft_legacy.gated(snap_name)
-
-
-@assertionscli.command("list-validation-sets")
-@click.option(
-    "--name",
-    metavar="<name>",
-    help="Only show results for a given Validation Set name.",
-)
-@click.option("--sequence", metavar="<sequence>", help="Sequences to show.")
-@add_verbosity_options()
-def list_validation_sets(name, sequence, **kwargs):
-    """Get the list of validation sets.
-
-    The sequence option can be a sequence number or a keyword.
-
-    \b
-    Examples:
-        snapcraft validation-sets
-        snapcraft validation-sets --sequence all
-        snapcraft validation-sets --name my-set --sequence 1
-
-    Refer to https://documentation.ubuntu.com/snapcraft/stable/reference/commands/validation-sets/ for further information
-    on Validation Sets.
-    """
-    store_client = StoreClientCLI()
-    asserted_validation_sets = store_client.get_validation_sets(
-        name=name,
-        sequence=sequence,
-    )
-
-    if not asserted_validation_sets.assertions and (name or sequence):
-        echo.warning("No validation sets found for the requested name or sequence.")
-    elif not asserted_validation_sets.assertions:
-        echo.warning("No validation sets found for this account.")
-    else:
-        headers = ["Account-ID", "Name", "Sequence", "Revision", "When"]
-        assertions = list()
-        for assertion_header in asserted_validation_sets.assertions:
-            assertion = assertion_header.headers
-            assertions.append(
-                [
-                    assertion.account_id,
-                    assertion.name,
-                    assertion.sequence,
-                    assertion.revision,
-                    datetime.strptime(
-                        assertion.timestamp, "%Y-%m-%dT%H:%M:%SZ"
-                    ).strftime("%Y-%m-%d"),
-                ]
-            )
-
-        click.echo(
-            tabulate(assertions, numalign="left", headers=headers, tablefmt="plain")
-        )

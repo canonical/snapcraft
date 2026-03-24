@@ -21,7 +21,7 @@ import subprocess
 from pathlib import Path
 
 from craft_cli import emit
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft.elf import ElfFile, SonameCache, elf_utils
 from snapcraft.elf import errors as elf_errors
@@ -41,7 +41,7 @@ class LibraryLinter(Linter):
         """Get the specific sub-categories that can be filtered against."""
         return ["unused-library", "missing-library"]
 
-    @overrides
+    @override
     def run(self) -> list[LinterIssue]:
         if self._snap_metadata.type not in ("app", None):
             return []

@@ -587,7 +587,7 @@ Review the project file
 Here's the complete code for the ukuzama-pyfiglet project. Yours should look similar to
 it.
 
-.. collapse:: snapcraft.yaml of ukuzama-pyfiglet
+.. dropdown:: snapcraft.yaml of ukuzama-pyfiglet
 
     .. literalinclude:: code/craft-a-snap/snapcraft.yaml
         :language: yaml

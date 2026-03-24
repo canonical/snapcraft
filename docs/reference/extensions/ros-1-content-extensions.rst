@@ -64,7 +64,7 @@ text has been altered for ease of reading.
 The file is based on the :ref:`ros1-talker-listener
 <how-to-craft-an-ros-1-app-project-files>` project.
 
-.. collapse:: Expanded project file for ros2-talker-listener
+.. dropdown:: Expanded project file for ros2-talker-listener
 
     .. literalinclude:: code/ros-1-content-desktop-extension-talker-listener-expanded.diff
         :language: diff

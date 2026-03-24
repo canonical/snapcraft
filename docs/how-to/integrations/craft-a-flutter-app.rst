@@ -16,7 +16,7 @@ The following code comprises the project file of a simple Flutter app, `my-flutt
 <https://github.com/snapcraft-docs/my-flutter-app>`_. This project is merely a
 demonstration of a clicker window for GNOME.
 
-.. collapse:: Flutter app project file
+.. dropdown:: Flutter app project file
 
     .. literalinclude:: ../code/integrations/example-flutter-recipe.yaml
         :caption: snapcraft.yaml

@@ -6,8 +6,7 @@ environment:
   SNAP/conda: conda-hello
   SNAP/flutter: flutter-hello
   SNAP/npm: npm-hello
-  # https://github.com/canonical/snapcraft/issues/5207
-  # SNAP/python: python-hello
+  SNAP/python: python-hello
   SNAP/poetry: poetry-hello
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
@@ -52,7 +51,7 @@ execute: |
   snapcraft build
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
@@ -61,7 +60,7 @@ execute: |
 
   # Clean the hello part, then build and run again.
   snapcraft clean hello
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
@@ -101,7 +100,7 @@ execute: |
 
   sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
 
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then

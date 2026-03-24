@@ -1,7 +1,5 @@
 summary: Build a snap that uses build-environment
 
-systems: [ubuntu-20.04]
-
 environment:
   SNAP_DIR: snaps/build-environment-test
 
@@ -12,7 +10,7 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  output="$(snapcraft)"
+  output="$(snapcraft pack 2>&1 >/dev/null)"
 
   # Verify that part1 had FOO defined as expected
   echo "$output" | MATCH "part1: BAR"

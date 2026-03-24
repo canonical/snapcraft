@@ -16,7 +16,7 @@ The following code comprises the project file of a .NET tool, `whatime
 <https://github.com/snapcraft-docs/whatime>`_. This project is a CLI command for
 returning the current time in cities across the globe.
 
-.. collapse:: whatime project file
+.. dropdown:: whatime project file
 
     .. literalinclude:: ../code/integrations/example-dotnet-recipe.yaml
         :caption: snapcraft.yaml

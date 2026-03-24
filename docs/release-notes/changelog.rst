@@ -502,7 +502,7 @@ Command line
 * Fix a regression where store errors would be raised as an internal error
   (`#4930`_).
 
-* Add documentation links for error messages about using an `ESM base`_.
+* Add documentation links for error messages about using an ESM base.
 
 Remote build
 ============
@@ -591,7 +591,7 @@ Command line
 
 * Improve error messages when parsing a ``snapcraft.yaml`` file (`#4941`_).
 
-* Improve error messages when using an `ESM base`_.
+* Improve error messages when using an ESM base.
 
 * Improve error messages for missing files (`canonical/craft-parts#802`_).
 
@@ -767,11 +767,11 @@ Remote build
 Documentation
 =============
 
-* Add an :ref:`explanation <explanation-architectures>` for the remote builders
+* Add an :ref:`explanation <explanation-platforms>` for the remote builders
   (`#4842`_).
 
-* Update :ref:`reference <reference-architectures>`, :ref:`how-to guide
-  <how-to-select-architectures>`, and :ref:`explanation <explanation-architectures>` for
+* Update :ref:`reference <reference-platforms>`, :ref:`how-to guide
+  <how-to-select-platforms>`, and :ref:`explanation <explanation-platforms>` for
   platforms and architectures.
 
 For a complete list of commits, check out the `8.3.1`_ release on GitHub.
@@ -1427,7 +1427,7 @@ Add new environment variables for ``build-on`` and ``build-for`` architectures:
 * ``CRAFT_ARCH_BUILD_FOR``, supersedes ``CRAFT_TARGET_ARCH``
 * ``CRAFT_ARCH_BUILD_ON``
 
-For more information, see :doc:`/reference/architectures`.
+For more information, see :ref:`reference-platforms`.
 
 core20
 """"""
@@ -1439,7 +1439,7 @@ Add new environment variables for ``build-on`` and ``build-for`` architectures:
 * ``SNAPCRAFT_ARCH_BUILD_FOR``, supersedes ``SNAPCRAFT_TARGET_ARCH``
 * ``SNAPCRAFT_ARCH_BUILD_ON``
 
-For more information, see :doc:`/reference/architectures`.
+For more information, see :ref:`reference-platforms`.
 
 core18
 """"""
@@ -1545,7 +1545,6 @@ For more information on the file-based keyring, see :ref:`how-to-authenticate`.
 For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 
 
-.. _ESM base: https://snapcraft.io/docs/snapcraft-esm
 .. _canonical-sphinx: https://github.com/canonical/canonical-sphinx
 .. _Craft Application: https://github.com/canonical/craft-application
 .. _gpu 2404 interface docs: https://mir-server.io/docs/the-gpu-2404-snap-interface#heading--consuming-the-interface

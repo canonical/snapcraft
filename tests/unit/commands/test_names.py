@@ -16,12 +16,13 @@
 
 import argparse
 import json
+import re
 from textwrap import dedent
 from unittest.mock import ANY, call
 
 import pytest
 
-from snapcraft import commands
+from snapcraft import commands, errors
 
 ############
 # Fixtures #
@@ -195,20 +196,35 @@ def test_register_store_id(emitter, fake_store_register, fake_app_config):
 #################
 
 
-@pytest.mark.parametrize(
-    "command_class",
-    [
-        commands.StoreNamesCommand,
-        commands.StoreLegacyListCommand,
-        commands.StoreLegacyListRegisteredCommand,
-    ],
-)
 @pytest.mark.usefixtures("memory_keyring")
 class TestNames:
     """Tests for the names command."""
 
-    def test_table(self, emitter, fake_store_get_names, command_class, fake_app_config):
+    @pytest.mark.parametrize(
+        "command_class",
+        [commands.StoreLegacyListCommand, commands.StoreLegacyListRegisteredCommand],
+    )
+    def test_removed_command_error(
+        self, emitter, fake_store_get_names, command_class, fake_app_config
+    ):
+        """Error on removed commands."""
         cmd = command_class(fake_app_config)
+        namespace = argparse.Namespace(
+            store_id="1234",
+            private=False,
+            yes=True,
+            format="table",
+            **{"snap-name": "test-snap"},
+        )
+        expected = re.escape(
+            f"The {command_class.name!r} command was renamed to 'names'."
+        )
+
+        with pytest.raises(errors.RemovedCommand, match=expected):
+            cmd.run(namespace)
+
+    def test_table(self, emitter, fake_store_get_names, fake_app_config):
+        cmd = commands.StoreNamesCommand(fake_app_config)
 
         cmd.run(
             argparse.Namespace(
@@ -220,12 +236,6 @@ class TestNames:
             )
         )
 
-        if command_class.hidden:
-            emitter.assert_progress(
-                f"The '{command_class.name}' command was renamed to 'names'. Use 'names' instead. "
-                "The old name will be removed in a future release.",
-                permanent=True,
-            )
         emitter.assert_message(
             dedent(
                 """\
@@ -235,8 +245,8 @@ class TestNames:
             )
         )
 
-    def test_json(self, emitter, fake_store_get_names, command_class, fake_app_config):
-        cmd = command_class(fake_app_config)
+    def test_json(self, emitter, fake_store_get_names, fake_app_config):
+        cmd = commands.StoreNamesCommand(fake_app_config)
 
         cmd.run(
             argparse.Namespace(
@@ -247,13 +257,6 @@ class TestNames:
                 **{"snap-name": "test-snap"},
             )
         )
-
-        if command_class.hidden:
-            emitter.assert_progress(
-                f"The '{command_class.name}' command was renamed to 'names'. Use 'names' instead. "
-                "The old name will be removed in a future release.",
-                permanent=True,
-            )
 
         emitter.assert_message(
             json.dumps(
@@ -277,10 +280,8 @@ class TestNames:
             )
         )
 
-    def test_format_error(
-        self, emitter, fake_store_get_names, command_class, fake_app_config
-    ):
-        cmd = command_class(fake_app_config)
+    def test_format_error(self, emitter, fake_store_get_names, fake_app_config):
+        cmd = commands.StoreNamesCommand(fake_app_config)
 
         with pytest.raises(NotImplementedError) as exc_info:
             cmd.run(

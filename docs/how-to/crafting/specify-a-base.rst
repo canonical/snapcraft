@@ -29,13 +29,12 @@ How to use a deprecated base
 ----------------------------
 
 The latest release of Snapcraft does not support older bases. Prior major
-Snapcraft releases are supported and can be installed from Snapcraft's
-`tracks`_.
+Snapcraft releases are supported and can be installed from their respective tracks.
 
 See :ref:`base snaps<base-snap-reference>` for a list of which Snapcraft
 major releases support a particular base.
 
-See `Snapcraft and ESM`_ for details on support for deprecated bases.
+The :ref:`reference-support-schedule` details the support timeline of each base.
 
 ``core18``
 ^^^^^^^^^^
@@ -170,4 +169,3 @@ environment.
 .. _`Snapcraft and ESM`: https://snapcraft.io/docs/snapcraft-esm
 .. _`Snapcraft rocks`: https://github.com/canonical/snapcraft-rocks
 .. _`parallel installs`: https://snapcraft.io/docs/parallel-installs
-.. _`tracks`: https://snapcraft.io/docs/channels#heading--tracks

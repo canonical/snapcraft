@@ -22,10 +22,9 @@ import textwrap
 from typing import TYPE_CHECKING
 
 import craft_application.commands
-from craft_cli import emit
 from typing_extensions import override
 
-from snapcraft import const, services
+from snapcraft import const, errors, services
 
 if TYPE_CHECKING:
     import argparse
@@ -42,9 +41,9 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
 
         Shows the account ID, name, revision, and last modified date of each confdb-schema.
 
-        If a name is provided, only the confdb schema with that name will be listed.
+        If a name is provided, only the confdb schema with that name is listed.
 
-        Use the ``edit-confdb-schema`` command create and edit confdb schemas.
+        Use the 'edit-confdb-schema' command modify confdb schemas.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
@@ -56,7 +55,7 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
             metavar="name",
             required=False,
             type=str,
-            help="Name of the confb schema to list",
+            help="Name of the confdb schema to list",
         )
         parser.add_argument(
             "--format",
@@ -78,37 +77,33 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
 
 
 class StoreListConfdbSchemasCommand(StoreConfdbSchemasCommand):
-    """A command alias to list confdb schemas."""
+    """Removed command alias to list confdb schemas."""
 
     name = "list-confdb-schemas"
     hidden = True
 
     @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
     """Edit a confdb schema."""
 
     name = "edit-confdb-schema"
-    help_msg = "Edit or create a confdb-schema"
+    help_msg = "Edit a confdb-schema"
     overview = textwrap.dedent(
         """
         Edit a confdb schema.
 
-        If the confdb schema does not exist, then a new confdb schema will be created.
+        If the confdb schema does not exist, then a new one is created.
 
         If a key name is not provided, the default key is used.
 
         The account ID of the authenticated account can be determined with the
-        ``snapcraft whoami`` command.
+        'snapcraft whoami' command.
 
-        Use the ``confdb-schemas`` command to view existing confdb schemas.
+        Use the 'confdb-schemas' command to view existing confdb schemas.
         """
     )
     _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
@@ -118,13 +113,13 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
         parser.add_argument(
             "account_id",
             metavar="account-id",
-            help="The account ID of the confb schema to edit",
+            help="The account ID of the confdb schema to edit",
         )
         parser.add_argument(
-            "name", metavar="name", help="Name of the confb schema to edit"
+            "name", metavar="name", help="Name of the confdb schema to edit"
         )
         parser.add_argument(
-            "--key-name", metavar="key-name", help="Key used to sign the confb schema"
+            "--key-name", metavar="key-name", help="Key used to sign the confdb schema"
         )
 
     @override

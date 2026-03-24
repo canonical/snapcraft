@@ -9,6 +9,7 @@ confinement: strict
 
 lint:
   ignore:
+    - gpu
     - metadata
 
 parts:

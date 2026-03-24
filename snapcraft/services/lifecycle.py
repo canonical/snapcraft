@@ -25,7 +25,7 @@ from typing import Any, cast
 from craft_application import AppMetadata, LifecycleService, ServiceFactory
 from craft_parts import StepInfo, callbacks
 from craft_parts.packages import Repository as Repo
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import __version__, errors, models, os_release, parts, utils
 from snapcraft.parts.yaml_utils import get_snap_project
@@ -53,7 +53,7 @@ class Lifecycle(LifecycleService):
         self._start_time = datetime.now()
         self._manifest: models.Manifest
 
-    @overrides
+    @override
     def setup(self) -> None:
         project = cast(models.Project, self._services.get("project").get())
 
@@ -78,7 +78,7 @@ class Lifecycle(LifecycleService):
         callbacks.register_pre_step(parts.set_step_environment)
         super().setup()
 
-    @overrides
+    @override
     def post_prime(self, step_info: StepInfo) -> bool:
         """Run post-prime parts steps for Snapcraft."""
         from snapcraft.parts.plugins import (  # noqa: PLC0415 (import-outside-top-level)
@@ -183,7 +183,7 @@ class Lifecycle(LifecycleService):
             primed_stage_packages=sorted(primed_stage_packages),
         )
 
-    @overrides
+    @override
     def _get_local_keys_path(self) -> Path | None:
         snap_project = get_snap_project()
         keys_dir = snap_project.assets_dir / "keys"
