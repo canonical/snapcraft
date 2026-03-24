@@ -22,6 +22,14 @@ Snapcraft is for developers, package maintainers, fleet administrators, and hobb
 who are interested in publishing snaps for Linux and IoT devices.
 
 
+project.base: :ref:`project.base` -> snapcraft
+
+project.build-base: :ref:`project.build_base` -> rockcraft
+
+project.stablebaseproject.build_base: :ref:`stablebaseproject.build_base` -> snapcraft
+
+
+
 In this documentation
 ---------------------
 
