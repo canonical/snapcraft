@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import argparse
 import contextlib
 import functools
 import os
@@ -25,18 +26,14 @@ import pathlib
 import stat
 import textwrap
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import store, utils
-
-if TYPE_CHECKING:
-    import argparse
-
 
 _VALID_DATE_FORMATS = [
     "%Y-%m-%d",
@@ -71,11 +68,12 @@ class StoreLoginCommand(AppCommand):
 
         The login command requires a working keyring on the system it is used on.
         As an alternative, export {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r}
-        with the exported credentials.
+        with the exported credentials. The login command cannot be used while this
+        environment variable is set.
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
@@ -84,36 +82,30 @@ class StoreLoginCommand(AppCommand):
             dest="login_with",
             type=str,
             default=None,
-            help="File to use for imported credentials",
+            help=argparse.SUPPRESS,
         )
         parser.add_argument(
             "--experimental-login",
             action="store_true",
             default=False,
-            help=(
-                "(deprecated) Enable candid login. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
-            ),
+            help=argparse.SUPPRESS,
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
-                "--experimental-login no longer supported. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead",
+                "'--experimental-login' is no longer supported. "
+                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead.",
             )
 
         if parsed_args.login_with:
-            config_content = _read_config(parsed_args.login_with)
-            emit.progress(
-                "--with is no longer supported, export the auth to the environment "
-                f"variable {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r} instead",
-                permanent=True,
+            raise ArgumentParsingError(
+                "'--with' is no longer supported. Export the auth to the environment "
+                f"variable {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r} instead."
             )
-            store.LegacyUbuntuOne.store_credentials(config_content)
-        else:
-            store.StoreClientCLI().login()
+
+        store.StoreClientCLI().login()
 
         emit.message("Login successful")
 
@@ -136,7 +128,7 @@ class StoreExportLoginCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
@@ -181,18 +173,15 @@ class StoreExportLoginCommand(AppCommand):
             "--experimental-login",
             action="store_true",
             default=False,
-            help=(
-                "(deprecated) Enable candid login. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
-            ),
+            help=argparse.SUPPRESS,
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
-                "--experimental-login no longer supported. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead",
+                "'--experimental-login' is no longer supported. "
+                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead.",
             )
 
         kwargs: dict[str, Any] = {}
@@ -255,7 +244,7 @@ class StoreWhoAmICommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         whoami = store.StoreClientCLI().store_client.whoami()
 
@@ -301,7 +290,7 @@ class StoreLogoutCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         store.StoreClientCLI().store_client.logout()
         emit.message("Credentials cleared")

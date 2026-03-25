@@ -21,7 +21,7 @@ Simple project file
 yt-dlp is a command line tool for extracting online videos, and is a
 self-contained Python project.
 
-.. collapse:: yt-dlp project file
+.. dropdown:: yt-dlp project file
 
     .. literalinclude:: code/yt-dlp-recipe.yaml
         :caption: snapcraft.yaml
@@ -177,7 +177,7 @@ retrieving local weather conditions.
 The metadata, base, and confinement declarations are rather similar to the
 simple example, but with some notable differences.
 
-.. collapse:: wethr project file
+.. dropdown:: wethr project file
 
     .. literalinclude:: code/wethr-recipe.yaml
         :caption: snapcraft.yaml
@@ -211,7 +211,7 @@ in two stages:
 
    #. A step in the build lifecycle is manually overridden.
    #. A custom script is used to derive the version string.
-   #. The version string is set using the Snapcraftctl scriptlet.
+   #. The version string is set using the craftctl scriptlet.
 
 Alternatively, in this particular example, the version field could also be
 manually set with ``version: '1.5'``.
@@ -228,10 +228,9 @@ either of the stable or candidate channels in the Snap Store.
 Architectures
 ~~~~~~~~~~~~~
 
-The ``architectures`` key defines the target :doc:`platforms
-</reference/architectures>` for which the snap should be built on and built
-for. It requires the build system that is running the Snapcraft tool to be able
-to compile and build the snap for the listed platforms.
+The ``architectures`` key defines the target :ref:`reference-platforms` for which the
+snap should be built on and built for. It requires the build system that is running the
+Snapcraft tool to be able to compile and build the snap for the listed platforms.
 
 
 Parts
@@ -257,7 +256,7 @@ The ``override-pull`` key is an inline Bash script that runs during the pull ste
 that can't be satisfied by the default pull operation in the lifecycle. In the wethr
 example, the listed commands are used to derive the correct version of the app, and set
 it using the craftctl scriptlet. More details about overrides can be found in
-:ref:`how-to-override-the-default-build`.
+:ref:`explanation-build-overrides`.
 
 The ``build-packages`` key defines the list of tools and libraries required to
 successfully build or compile the part. The build packages are obtained from

@@ -22,10 +22,9 @@ import textwrap
 from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
-from craft_cli import emit
 from typing_extensions import override
 
-from snapcraft import const
+from snapcraft import errors
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.store._legacy_account import set_legacy_env
 
@@ -47,46 +46,6 @@ class LegacyAppCommand(AppCommand):
 #########
 # Store #
 #########
-
-
-class StoreLegacyUploadMetadataCommand(LegacyAppCommand):
-    """Command passthrough for the upload-metadata command."""
-
-    name = "upload-metadata"
-    help_msg = "Upload metadata from <snap-file> to the store"
-    overview = textwrap.dedent(
-        """
-        The following information will be retrieved from <snap-file> and used to
-        update the store:
-
-        - summary
-        - description
-        - icon
-
-        If --force is used, it will force the local metadata into the Store,
-        ignoring any possible conflict.
-
-        Examples::
-
-            snapcraft upload-metadata my-snap_0.1_amd64.snap
-            snapcraft upload-metadata my-snap_0.1_amd64.snap --force
-        """
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "snap_file",
-            metavar="snap-file",
-            type=str,
-            help="Snap to upload metadata from",
-        )
-        parser.add_argument(
-            "--force",
-            action="store_true",
-            default=False,
-            help="Force metadata update to override any possible conflict",
-        )
 
 
 class StoreLegacyPromoteCommand(LegacyAppCommand):
@@ -212,18 +171,14 @@ class StoreLegacyKeysCommand(LegacyAppCommand):
 
 
 class StoreLegacyListKeysCommand(StoreLegacyKeysCommand):
-    """Alias command passthrough for the keys command."""
+    """Removed command alias for the keys command."""
 
     name = "list-keys"
     hidden = True
 
     @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreLegacyCreateKeyCommand(LegacyAppCommand):
@@ -326,35 +281,3 @@ class StoreLegacyGatedCommand(LegacyAppCommand):
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("snap_name", metavar="snap-name")
-
-
-class StoreLegacyValidationSetsCommand(LegacyAppCommand):
-    """Command passthrough for the validation-sets command."""
-
-    name = "validation-sets"
-    help_msg = "Get the list of validation sets"
-    overview = textwrap.dedent(
-        """
-        List all validation-sets snaps.
-        """
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--name", help="limit results to <name>")
-        parser.add_argument("--sequence", help="limit results to <sequence>")
-
-
-class StoreLegacyListValidationSetsCommand(StoreLegacyValidationSetsCommand):
-    """Alias command passthrough for the validation-sets command."""
-
-    name = "list-validation-sets"
-    hidden = True
-
-    @override
-    def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)

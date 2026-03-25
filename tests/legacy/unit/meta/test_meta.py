@@ -286,7 +286,7 @@ class CreateTestCase(CreateBaseTestCase):
             fake_logger.output,
         )
         self.assertIn(
-            "See http://snapcraft.io/docs/deprecation-notices/dn3", fake_logger.output
+            "See https://documentation.ubuntu.com/snapcraft/stable/release-notes/", fake_logger.output
         )
 
     @patch("os.link", side_effect=OSError("Invalid cross-device link"))

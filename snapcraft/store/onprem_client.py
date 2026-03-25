@@ -21,7 +21,7 @@ from typing import Any, Final
 
 import craft_store.creds
 from craft_store import BaseClient, endpoints, models
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import errors
 
@@ -40,7 +40,7 @@ ON_PREM_ENDPOINTS: Final = endpoints.Endpoints(
 class OnPremClient(BaseClient):
     """On Premises Snapcraft Store Client."""
 
-    @overrides
+    @override
     def _get_macaroon(self, token_request: dict[str, Any]) -> str:
         macaroon_env = os.getenv(constants.ENVIRONMENT_ADMIN_MACAROON)
         if macaroon_env is None:
@@ -49,7 +49,7 @@ class OnPremClient(BaseClient):
             )
         return macaroon_env
 
-    @overrides
+    @override
     def _get_discharged_macaroon(self, root_macaroon: str, **kwargs) -> str:
         response = self.http_client.request(
             "POST",
@@ -59,7 +59,7 @@ class OnPremClient(BaseClient):
 
         return craft_store.creds.marshal_candid_credentials(response.json()["macaroon"])
 
-    @overrides
+    @override
     def _get_authorization_header(self) -> str:
         auth = craft_store.creds.unmarshal_candid_credentials(
             self._auth.get_credentials()

@@ -1,14 +1,24 @@
 import argparse
+import contextlib
 import pathlib
+import re
 import sys
 from unittest.mock import ANY, call
 
 import craft_cli.errors
 import pytest
 
-from snapcraft import cli, commands
+from snapcraft import cli, commands, errors
 from snapcraft.commands.upload import ComponentOption
 from tests import unit
+
+_BASIC_SNAP_YAML = {
+    "name": "basic",
+    "summary": "test summary",
+    "description": "test description",
+    "version": "0.1",
+}
+
 
 ############
 # Fixtures #
@@ -50,6 +60,52 @@ def fake_store_verify_upload(mocker):
 
 
 @pytest.fixture
+def fake_store_upload_metadata(mocker):
+    return mocker.patch(
+        "snapcraft.store.StoreClientCLI.upload_metadata",
+        autospec=True,
+    )
+
+
+@pytest.fixture
+def fake_store_upload_binary_metadata(mocker):
+    return mocker.patch(
+        "snapcraft.store.StoreClientCLI.upload_binary_metadata",
+        autospec=True,
+    )
+
+
+@pytest.fixture
+def fake_get_data_from_snap_file(mocker):
+    return mocker.patch(
+        "snapcraft.utils.get_data_from_snap_file",
+        return_value=(_BASIC_SNAP_YAML, None),
+    )
+
+
+@pytest.fixture
+def fake_unsquash_no_icon(mocker, tmp_path):
+    @contextlib.contextmanager
+    def _fake(snap_path, extra_args=()):
+        (tmp_path / "meta" / "gui").mkdir(parents=True, exist_ok=True)
+        yield tmp_path
+
+    return mocker.patch("snapcraft.utils.unsquash_snap", new=_fake)
+
+
+@pytest.fixture
+def fake_unsquash_with_icon(mocker, tmp_path):
+    @contextlib.contextmanager
+    def _fake(snap_path, extra_args=()):
+        icon_dir = tmp_path / "meta" / "gui"
+        icon_dir.mkdir(parents=True, exist_ok=True)
+        (icon_dir / "icon.png").write_bytes(b"fake-icon-content")
+        yield tmp_path
+
+    return mocker.patch("snapcraft.utils.unsquash_snap", new=_fake)
+
+
+@pytest.fixture
 def data_path() -> pathlib.Path:
     return pathlib.Path(unit.__file__).parents[1] / "legacy" / "data"
 
@@ -80,19 +136,14 @@ def component_file(data_path):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-@pytest.mark.parametrize(
-    "command_class",
-    (commands.StoreUploadCommand, commands.StoreLegacyPushCommand),
-)
 def test_default(
     emitter,
     fake_store_notify_upload,
     fake_store_verify_upload,
     snap_file,
-    command_class,
     fake_app_config,
 ):
-    cmd = command_class(fake_app_config)
+    cmd = commands.StoreUploadCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -102,12 +153,6 @@ def test_default(
         )
     )
 
-    if command_class.hidden:
-        emitter.assert_progress(
-            f"The '{command_class.name}' command was renamed to 'upload'. Use 'upload' instead. "
-            "The old name will be removed in a future release.",
-            permanent=True,
-        )
     assert fake_store_verify_upload.mock_calls == [call(ANY, snap_name="basic")]
     assert fake_store_notify_upload.mock_calls == [
         call(
@@ -124,19 +169,33 @@ def test_default(
 
 
 @pytest.mark.usefixtures("memory_keyring")
-@pytest.mark.parametrize(
-    "command_class",
-    (commands.StoreUploadCommand, commands.StoreLegacyPushCommand),
-)
+def test_push_error(
+    snap_file,
+    fake_app_config,
+):
+    """Error on the removed 'push' command."""
+    cmd = commands.StoreLegacyPushCommand(fake_app_config)
+    expected = re.escape("The 'push' command was renamed to 'upload'.")
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        cmd.run(
+            argparse.Namespace(
+                snap_file=snap_file,
+                channels=None,
+                component=[],
+            )
+        )
+
+
+@pytest.mark.usefixtures("memory_keyring")
 def test_built_at(
     emitter,
     fake_store_notify_upload,
     fake_store_verify_upload,
     snap_file_with_started_at,
-    command_class,
     fake_app_config,
 ):
-    cmd = command_class(fake_app_config)
+    cmd = commands.StoreUploadCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -336,3 +395,125 @@ def test_components(
         )
     ]
     emitter.assert_message("Revision 10 created for 'test-snap-with-component'")
+
+
+###########################
+# Upload Metadata Command #
+###########################
+
+
+@pytest.mark.parametrize("force", [True, False])
+@pytest.mark.usefixtures(
+    "memory_keyring", "fake_get_data_from_snap_file", "fake_unsquash_no_icon"
+)
+def test_upload_metadata(
+    force,
+    emitter,
+    fake_store_verify_upload,
+    fake_store_upload_metadata,
+    fake_store_upload_binary_metadata,
+    snap_file,
+    fake_app_config,
+):
+    cmd = commands.StoreUploadMetadataCommand(fake_app_config)
+    cmd.run(argparse.Namespace(snap_file=snap_file, force=force))
+
+    assert fake_store_verify_upload.mock_calls == [call(ANY, snap_name="basic")]
+    assert fake_store_upload_metadata.mock_calls == [
+        call(
+            ANY,
+            snap_name="basic",
+            metadata={
+                "summary": "test summary",
+                "description": "test description",
+            },
+            force=force,
+        )
+    ]
+    assert fake_store_upload_binary_metadata.mock_calls == [
+        call(ANY, snap_name="basic", metadata={"icon": None}, force=force)
+    ]
+    emitter.assert_message("Updated metadata for basic.")
+
+
+@pytest.mark.parametrize("force", [True, False])
+@pytest.mark.usefixtures("memory_keyring", "fake_unsquash_no_icon")
+def test_upload_metadata_optional_fields(
+    force,
+    mocker,
+    fake_store_verify_upload,
+    fake_store_upload_metadata,
+    fake_store_upload_binary_metadata,
+    snap_file,
+    fake_app_config,
+):
+    """Upload title and license when present in snap.yaml."""
+    mocker.patch(
+        "snapcraft.utils.get_data_from_snap_file",
+        return_value=(
+            {
+                **_BASIC_SNAP_YAML,
+                "license": "test-license",
+                "title": "Test Snap",
+            },
+            None,
+        ),
+    )
+
+    cmd = commands.StoreUploadMetadataCommand(fake_app_config)
+    cmd.run(argparse.Namespace(snap_file=snap_file, force=force))
+
+    assert fake_store_upload_metadata.mock_calls == [
+        call(
+            ANY,
+            snap_name="basic",
+            metadata={
+                "summary": "test summary",
+                "description": "test description",
+                "license": "test-license",
+                "title": "Test Snap",
+            },
+            force=force,
+        )
+    ]
+    assert fake_store_upload_binary_metadata.mock_calls == [
+        call(ANY, snap_name="basic", metadata={"icon": None}, force=force)
+    ]
+
+
+@pytest.mark.parametrize("force", [True, False])
+@pytest.mark.usefixtures(
+    "memory_keyring", "fake_get_data_from_snap_file", "fake_unsquash_with_icon"
+)
+def test_upload_metadata_with_icon(
+    force,
+    fake_store_verify_upload,
+    fake_store_upload_metadata,
+    fake_store_upload_binary_metadata,
+    snap_file,
+    fake_app_config,
+    tmp_path,
+):
+    """Upload an icon from the snap."""
+    cmd = commands.StoreUploadMetadataCommand(fake_app_config)
+    cmd.run(argparse.Namespace(snap_file=snap_file, force=force))
+
+    assert fake_store_upload_binary_metadata.mock_calls == [
+        call(
+            ANY,
+            snap_name="basic",
+            metadata=ANY,
+            force=force,
+        )
+    ]
+    icon = fake_store_upload_binary_metadata.mock_calls[0].kwargs["metadata"]["icon"]
+    assert icon is not None
+    assert icon.name == str(tmp_path / "meta" / "gui" / "icon.png")
+
+
+def test_upload_metadata_invalid_file(fake_app_config):
+    """Error when the snap file does not exist."""
+    cmd = commands.StoreUploadMetadataCommand(fake_app_config)
+
+    with pytest.raises(errors.SnapcraftError, match="Could not find snap"):
+        cmd.run(argparse.Namespace(snap_file="nonexistent.snap", force=False))

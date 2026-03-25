@@ -43,4 +43,4 @@ UBUNTU_ONE_SSO_URL = "https://login.ubuntu.com"
 """Default Ubuntu One Login URL."""
 
 DEFAULT_SERIES = "16"
-"""Legacy value for older generation Snap Store APIs."""
+"""Used for the Snap Store's v1 API endpoints."""

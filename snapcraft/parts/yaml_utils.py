@@ -153,17 +153,15 @@ def load(filestream: TextIO) -> dict[str, Any]:
     :returns: A dictionary of the yaml data.
 
     :raises SnapcraftError: if loading didn't succeed.
-    :raises LegacyFallback: if the project's base is a legacy base.
+    :raises MissingBase: if there isn't a base in the project file.
     :raises MaintenanceBase: if the base is not supported.
     """
     build_base = get_base(filestream)
 
     if build_base is None:
-        raise errors.LegacyFallback("no base defined")
+        raise errors.MissingBase()
     if build_base in const.ESM_BASES:
         raise errors.MaintenanceBase(build_base)
-    if build_base in const.LEGACY_BASES:
-        raise errors.LegacyFallback(f"base is {build_base}")
 
     filestream.seek(0)
 
@@ -207,7 +205,7 @@ def apply_yaml(
         )
 
     if any(
-        b.startswith("core20") or b.startswith("core22")
+        b.startswith("core22")
         for b in (
             yaml_data.get("base", ""),
             yaml_data.get("build-base", ""),
@@ -288,6 +286,8 @@ def process_yaml(project_file: Path) -> dict[str, Any]:
     :param project_file: Path to project.
 
     :raises SnapcraftError: if the project yaml file cannot be loaded.
+    :raises MissingBase: if there isn't a base in the project file.
+    :raises MaintenanceBase: if the base is not supported.
 
     :return: The processed YAML data.
     """

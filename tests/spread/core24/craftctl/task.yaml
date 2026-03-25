@@ -3,6 +3,7 @@ summary: Test craftctl commands on core24
 environment:
   SNAP/test_craftctl_default: test-craftctl-default
   SNAP/test_craftctl_get_set: test-craftctl-get-set
+  SNAP/test_snapcraftctl_compat: test-craftctl-snapcraftctl-compat
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

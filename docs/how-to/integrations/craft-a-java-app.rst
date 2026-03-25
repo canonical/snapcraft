@@ -19,7 +19,7 @@ The following code comprises the project file of a Java tool, `cal
 <https://github.com/frossm/cal>`_. This project is both a driver and a CLI tool for
 power and cooling components in PCs.
 
-.. collapse:: Cal project file
+.. dropdown:: Cal project file
 
     .. literalinclude:: ../code/integrations/example-java-recipe.yaml
         :caption: snapcraft.yaml

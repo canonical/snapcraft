@@ -25,16 +25,16 @@ import textwrap
 
 from craft_application.util import strtobool
 from craft_cli import BaseCommand, emit
-from overrides import overrides
+from typing_extensions import override
 
-from snapcraft import const, pack, utils
+from snapcraft import errors, pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 
 class _LifecycleCommand(BaseCommand, abc.ABC):
     """Lifecycle-related commands."""
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
@@ -108,30 +108,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             help="Allow using experimental (unstable) plugins.",
         )
 
-        # --enable-experimental-extensions is only available in legacy
-        parser.add_argument(
-            "--enable-experimental-extensions",
-            action="store_true",
-            help=argparse.SUPPRESS,
-        )
-        # --enable-developer-debug is only available in legacy
-        parser.add_argument(
-            "--enable-developer-debug",
-            action="store_true",
-            help=argparse.SUPPRESS,
-        )
-        # --enable-experimental-target-arch is only available in legacy
-        parser.add_argument(
-            "--enable-experimental-target-arch",
-            action="store_true",
-            help=argparse.SUPPRESS,
-        )
-        # --target-arch is only available in legacy
-        parser.add_argument("--target-arch", help=argparse.SUPPRESS)
-        # --provider is only available in legacy
-        parser.add_argument("--provider", help=argparse.SUPPRESS)
-
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         """Run the command."""
         if not self.name:
@@ -144,7 +121,7 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
 class _LifecycleStepCommand(_LifecycleCommand):
     """Lifecycle step commands."""
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         super().fill_parser(parser)
         parser.add_argument(
@@ -236,7 +213,7 @@ class PackCommand(_LifecycleCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the pack command."""
         super().fill_parser(parser)
@@ -256,7 +233,7 @@ class PackCommand(_LifecycleCommand):
             help="Path to the resulting snap",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         """Run the command."""
         if parsed_args.directory:
@@ -282,7 +259,7 @@ class SnapCommand(_LifecycleCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the pack command."""
         super().fill_parser(parser)
@@ -294,13 +271,9 @@ class SnapCommand(_LifecycleCommand):
             help="Path to the resulting snap",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new="pack"),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command="pack")
 
 
 class CleanCommand(_LifecycleStepCommand):
@@ -328,7 +301,7 @@ class TryCommand(_LifecycleCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         """Overridden to give a helpful message when the lifecycle finishes."""
         super().run(parsed_args)

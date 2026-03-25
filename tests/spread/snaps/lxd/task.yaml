@@ -1,10 +1,6 @@
 summary: Build lxd using LXD and on host
 kill-timeout: 90m
 
-systems:
-- ubuntu-20.04-64
-- ubuntu-20.04
-
 environment:
   SNAP_REPO: https://github.com/lxc/lxd-pkg-snap
   PROVIDER_OPTION/lxd: "--use-lxd"

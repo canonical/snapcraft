@@ -14,7 +14,7 @@ solutions for snaps that have extra plugin-specific configurations to accommodat
 Set the confinement level
 -------------------------
 
-You can enable classic confinment with a single key in the project file:
+You can enable classic confinement with a single key in the project file:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -72,7 +72,7 @@ Autotools plugin
 <https://github.com/snapcraft-doc-samples-unofficial/autotools-classic-example>`_ is a
 project with a main part that uses the Autotools plugin.
 
-.. collapse:: autotools-classic-example project file
+.. dropdown:: autotools-classic-example project file
 
     .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-autotools.yaml
         :caption: snapcraft.yaml
@@ -87,7 +87,7 @@ Make plugin
 <https://github.com/snapcraft-doc-samples-unofficial/makefile-lib-example>`_ is a
 project with a main part that uses the Make plugin.
 
-.. collapse:: makefile-lib-example project file
+.. dropdown:: makefile-lib-example project file
 
     .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-make.yaml
         :caption: snapcraft.yaml
@@ -101,7 +101,7 @@ CMake plugin
 `cmake-classic-example <https://github.com/snapcraft-docs/cmake-classic-example>`_ is a
 project with a main part that uses the CMake plugin.
 
-.. collapse:: cmake-classic-example project file
+.. dropdown:: cmake-classic-example project file
 
     .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-cmake.yaml
         :caption: snapcraft.yaml
@@ -115,7 +115,7 @@ Python plugin
 `python-ctypes-example <https://github.com/snapcraft-docs/python-ctypes-example>`_ is a
 project with a main part that uses the Python plugin.
 
-.. collapse:: python-ctypes-example project file
+.. dropdown:: python-ctypes-example project file
 
     .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-python.yaml
         :caption: snapcraft.yaml
@@ -167,7 +167,7 @@ Go plugin
 `golang-classic-example <https://github.com/snapcraft-docs/golang-classic-example>`_ is
 a project with a main part that uses the Go plugin.
 
-.. collapse:: golang-classic-example project file
+.. dropdown:: golang-classic-example project file
 
     .. literalinclude:: ../code/crafting/enable-classic-confinement/example-classic-confinement-go.yaml
         :language: yaml

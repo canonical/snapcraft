@@ -55,16 +55,12 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     :raises SnapcraftError: if the step name is invalid, or the project
         yaml file cannot be loaded.
-    :raises LegacyFallback: if the project's base is core20 or below.
     """
     emit.debug(f"command: {command_name}, arguments: {parsed_args}")
 
     snap_project = yaml_utils.get_snap_project()
     yaml_data = yaml_utils.process_yaml(snap_project.project_file)
     start_time = datetime.now()
-
-    if parsed_args.provider:
-        raise errors.SnapcraftError("Option --provider is not supported.")
 
     if yaml_data.get("ua-services"):
         if not parsed_args.ua_token:
@@ -862,5 +858,5 @@ def _warn_on_multiple_builds(
         )
         emit.message(
             "For more information, check out: "
-            "https://snapcraft.io/docs/explanation-architectures#core22-8"
+            "https://documentation.ubuntu.com/snapcraft/stable/explanation/architectures/#core22"
         )

@@ -137,9 +137,8 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
     assert project.website == ["website1"]  # already set in project
     assert project.source_code == ["vcs-browser"]
     assert project.icon == "assets/icon.png"
-    assert (
-        project.apps["app3"].desktop == "assets/file.desktop"  # pyright: ignore[reportOptionalSubscript]
-    )
+    assert project.apps is not None
+    assert project.apps["app3"].desktop == "assets/file.desktop"
 
 
 @pytest.mark.parametrize(
@@ -184,7 +183,7 @@ def test_update_project_metadata_fields(
         "parts": {},
         **project_entries,
     }
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         version="4.5.6",
         summary="metadata summary",
@@ -251,7 +250,7 @@ def test_update_project_metadata_multiple(
         "parts": {},
         **project_entries,
     }
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata1 = ExtractedMetadata(version="4.5.6")
     metadata2 = ExtractedMetadata(
         summary="metadata summary",
@@ -318,7 +317,7 @@ def test_update_project_metadata_overriding_appstream(new_dir):
         "source-code": "https://test.com/source-code",
         "website": "https://test.com/website",
     }
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         version="4.5.6",
         summary="metadata summary",
@@ -383,7 +382,7 @@ def test_update_project_metadata_icon(
     yaml_data = project_yaml_data(
         {"version": "1.0", "adopt-info": "part", "parts": {}, **project_entries}
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(icon="metadata_icon.png")
 
     # create icon file
@@ -502,7 +501,7 @@ def test_update_project_metadata_desktop(
     yaml_data = project_yaml_data(
         {"version": "1.0", "adopt-info": "part", "parts": {}, **project_entries}
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id", desktop_file_paths=["metadata/foo.desktop"]
     )
@@ -545,7 +544,7 @@ def test_update_project_metadata_desktop_multiple(project_yaml_data, new_dir):
             },
         }
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id",
         desktop_file_paths=["metadata/foo.desktop", "metadata/bar.desktop"],
@@ -588,7 +587,7 @@ def test_update_project_metadata_multiple_apps(project_yaml_data, new_dir):
             },
         }
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata1 = ExtractedMetadata(
         common_id="foo.id",
         desktop_file_paths=["metadata/foo.desktop"],
@@ -626,7 +625,7 @@ def test_update_project_metadata_desktop_no_apps(project_yaml_data, new_dir):
             "parts": {},
         }
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id",
         desktop_file_paths=["metadata/foo.desktop", "metadata/bar.desktop"],

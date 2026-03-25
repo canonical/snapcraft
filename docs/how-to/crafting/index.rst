@@ -9,14 +9,13 @@ Crafting
 
     configure-package-information
     specify-a-base
-    select-architectures
+    select-platforms
     manage-dependencies
     add-a-snap-configuration
     use-layouts
     manage-data-compatibility
     include-local-files-and-remote-resources
-    override-the-default-build
-    customize-lifecycle-steps-and-part-variables
+    override-the-parts-lifecycle
     reuse-packages-between-builds
     create-a-component
     enable-classic-confinement

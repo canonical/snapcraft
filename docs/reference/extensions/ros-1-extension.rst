@@ -15,7 +15,7 @@ Included parts
 
 The extension adds its own part to the project, which pulls in the ROS build packages.
 
-.. collapse:: Included parts
+.. dropdown:: Included parts
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -33,7 +33,7 @@ Included build environment variables
 For the main part of the project, the extension sets the following build environment
 variables.
 
-.. collapse:: Included build environment variables
+.. dropdown:: Included build environment variables
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -50,7 +50,7 @@ For all apps that use the extension, it initializes a runtime environment requir
 ROS before launching the app, similar to sourcing the typical ROS ``setup.sh`` or
 ``local_setup.sh``.
 
-.. collapse:: Included runtime environment settings
+.. dropdown:: Included runtime environment settings
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -70,7 +70,7 @@ The extension adds the `ROS APT package repository
 <http://packages.ros.org/ros/ubuntu>`_ to the build-time configuration for the snap,
 which installs the necessary GPG key.
 
-.. collapse:: Included package repositories
+.. dropdown:: Included package repositories
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -102,7 +102,7 @@ text has been altered for ease of reading.
 The file is based on the :ref:`ros2-talker-listener
 <how-to-craft-an-ros-1-app-project-files>` project.
 
-.. collapse:: Expanded project file for ros2-talker-listener
+.. dropdown:: Expanded project file for ros2-talker-listener
 
     .. literalinclude:: code/ros-1-extension-talker-listener-expanded.diff
         :language: diff

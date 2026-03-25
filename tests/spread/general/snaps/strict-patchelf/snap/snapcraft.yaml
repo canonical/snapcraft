@@ -4,7 +4,6 @@ summary: Build a strictly confined snap
 description: |
   Build a strictly confined snap to test ELF patching
 base: core
-
 grade: devel
 confinement: strict
 
@@ -24,7 +23,7 @@ parts:
       - patchelf
     build-attributes: [enable-patchelf]
     override-build: |
-      snapcraftctl build
+      craftctl default
       mv $SNAPCRAFT_PART_INSTALL/bin/hello-strict $SNAPCRAFT_PART_INSTALL/bin/hello-strict-existing-rpath
       patchelf --force-rpath --set-rpath "\$ORIGIN/../fake-lib" $SNAPCRAFT_PART_INSTALL/bin/hello-strict-existing-rpath
   hello-enable-patchelf:
@@ -35,5 +34,5 @@ parts:
       - libcurl4-openssl-dev
     build-attributes: [enable-patchelf]
     override-build: |
-      snapcraftctl build
+      craftctl default
       mv $SNAPCRAFT_PART_INSTALL/bin/hello-strict $SNAPCRAFT_PART_INSTALL/bin/hello-strict-enable-patchelf

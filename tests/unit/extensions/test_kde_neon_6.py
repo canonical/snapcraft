@@ -765,11 +765,26 @@ def test_get_parts_snippet_core24(kde_neon_6_extension_core24):
     source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
     assert kde_neon_6_extension_core24.get_parts_snippet() == {
+        "kde-neon-6/gpu/wrapper": {
+            "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
+            "plugin": "make",
+            "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+        },
+        "kde-neon-6/gpu/cleanup": {
+            "after": [],
+            "source": "https://github.com/canonical/gpu-snap.git",
+            "plugin": "nil",
+            "override-prime": (
+                "craftctl default\n"
+                "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24\n"
+                "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+            ),
+        },
         "kde-neon-6/sdk": {
             "source": str(source),
             "plugin": "make",
             "make-parameters": [
-                "GPU_WRAPPER=gpu-2404-wrapper",
                 "PLATFORM_PLUG=kf6-core24",
             ],
             "build-snaps": ["kde-qt6-core24-sdk", "kf6-core24-sdk"],
@@ -784,7 +799,7 @@ def test_get_parts_snippet_core24(kde_neon_6_extension_core24):
                 "libgl-dev",
                 "libglvnd-dev",
             ],
-        }
+        },
     }
 
 
@@ -809,13 +824,28 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
     assert (
         kde_neon_6_extension_with_default_build_snap_from_latest_edge_core24.get_parts_snippet()
         == {
+            "kde-neon-6/gpu/wrapper": {
+                "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
+                "plugin": "make",
+                "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+            },
+            "kde-neon-6/gpu/cleanup": {
+                "after": ["part1"],
+                "source": "https://github.com/canonical/gpu-snap.git",
+                "plugin": "nil",
+                "override-prime": (
+                    "craftctl default\n"
+                    "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24\n"
+                    "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                    'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+                ),
+            },
             "kde-neon-6/sdk": {
                 "source": str(source),
                 "plugin": "make",
                 "make-parameters": [
-                    "GPU_WRAPPER=gpu-2404-wrapper",
                     "PLATFORM_PLUG=kf6-core24",
                 ],
-            }
+            },
         }
     )
