@@ -48,46 +48,6 @@ class LegacyAppCommand(AppCommand):
 #########
 
 
-class StoreLegacyUploadMetadataCommand(LegacyAppCommand):
-    """Command passthrough for the upload-metadata command."""
-
-    name = "upload-metadata"
-    help_msg = "Upload metadata from <snap-file> to the store"
-    overview = textwrap.dedent(
-        """
-        The following information will be retrieved from <snap-file> and used to
-        update the store:
-
-        - summary
-        - description
-        - icon
-
-        If --force is used, it will force the local metadata into the Store,
-        ignoring any possible conflict.
-
-        Examples::
-
-            snapcraft upload-metadata my-snap_0.1_amd64.snap
-            snapcraft upload-metadata my-snap_0.1_amd64.snap --force
-        """
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "snap_file",
-            metavar="snap-file",
-            type=str,
-            help="Snap to upload metadata from",
-        )
-        parser.add_argument(
-            "--force",
-            action="store_true",
-            default=False,
-            help="Force metadata update to override any possible conflict",
-        )
-
-
 class StoreLegacyPromoteCommand(LegacyAppCommand):
     """Command passthrough for the promote command."""
 
