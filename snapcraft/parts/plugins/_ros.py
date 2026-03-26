@@ -272,7 +272,7 @@ DebianPackageName = str
 ROSPackageName = str
 
 
-def get_installed_dependencies(installed_packages_path: str) -> set[ROSPackageName]:
+def _get_installed_dependencies(installed_packages_path: str) -> set[ROSPackageName]:
     """Retrieve recursive ROS packages name given package list."""
     if os.path.isfile(installed_packages_path):
         try:
@@ -283,7 +283,7 @@ def get_installed_dependencies(installed_packages_path: str) -> set[ROSPackageNa
     return set()
 
 
-def get_debian_package_names(
+def _get_debian_package_names(
     ros_package_name: ROSPackageName,
     ros_distro: str,
 ) -> set[DebianPackageName]:
@@ -313,7 +313,7 @@ def get_debian_package_names(
     return cast(set[DebianPackageName], parsed.get("apt", set()))
 
 
-def find_installed_debian_dependencies(
+def _find_installed_debian_dependencies(
     build_snap_packages: set[ROSPackageName],
     ros_distro: str,
 ) -> set[DebianPackageName]:
@@ -322,7 +322,7 @@ def find_installed_debian_dependencies(
     debian_packages = set()
     # find the apt depends for each rosdep resolve
     for package in build_snap_packages:
-        debian_packages.update(get_debian_package_names(package, ros_distro))
+        debian_packages.update(_get_debian_package_names(package, ros_distro))
 
     for package in debian_packages:
         cmd = [
@@ -381,7 +381,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
     # @todo: support python packages (only apt currently supported)
     apt_packages: set[str] = set()
 
-    build_snap_packages_ros = get_installed_dependencies(
+    build_snap_packages_ros = _get_installed_dependencies(
         part_install + "/.installed_packages.txt"
     )
     installed_pkgs = cast(
@@ -437,7 +437,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
 
         Repo.configure("snapcraft")
 
-        build_snap_packages = find_installed_debian_dependencies(
+        build_snap_packages = _find_installed_debian_dependencies(
             build_snap_packages_ros, ros_distro
         )
         click.echo(f"Fetching stage packages: {package_names!r}")
