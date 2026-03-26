@@ -163,16 +163,16 @@ class RosPlugin(plugins.Plugin):
                         # Retrieve the list of all ROS packages available in the build snap
                         f"if [ -d {base_path} ]; then",
                         f"AMENT_PREFIX_PATH={search_path} "
-                        f'ros2 pkg list >> "${{CRAFT_PART_INSTALL}}/.installed_packages.txt"',
+                        'ros2 pkg list >> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
                         "fi",
                         # Retrieve the list of all non-ROS packages available in the build snap
                         f'if [ -d "{path_ros_sys}" ]; then',
                         f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path_ros_sys}" --ignore-packages-from-source '
-                        f'>> "${{CRAFT_PART_INSTALL}}"/.installed_packages.txt',
+                        '>> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
                         "fi",
                         f'if [ -d "{path_ros_app}" ]; then',
                         f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path_ros_app}" --ignore-packages-from-source '
-                        '>> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+                        '>> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
                         "fi",
                     ]
                 )
