@@ -138,6 +138,7 @@ sed
 sequenceDiagram
 sitecustomize
 sitemapindex
+snapcraftctl
 snapctl
 Sphinx
 Spread

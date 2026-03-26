@@ -1,0 +1,116 @@
+.. meta::
+    :description: How to migrate a snap's base from core24 to core26.
+
+.. _how-to-change-from-core24-to-core26:
+
+Change from core24 to core26
+============================
+
+This is a guide for migrating a snap that uses core24 as its base to core26.
+
+core26 is built from Ubuntu 26.04 LTS. For most snaps, the migration consists of
+checking dependencies and extensions. If your snap has strict confinement and runs
+Python code, you need to add a Python runtime.
+
+Check extension support
+-----------------------
+
+Not all extensions are compatible with core26 at launch. If your snap uses an extension,
+run ``snapcraft extensions`` to see if it's available for core26. If your snap uses an
+extension that does not yet support core26, it's best to wait to upgrade.
+
+Update the base
+---------------
+
+Start with updating the ``base`` key:
+
+.. code-block:: diff
+    :caption: snapcraft.yaml
+
+    - base: core24
+    + base: core26
+
+Update packages
+---------------
+
+Package names and versions change between Ubuntu releases. If you have parts that
+declare :ref:`build-packages <PartSpec.build_packages>` or :ref:`stage-packages
+<PartSpec.stage_packages>`, those packages may need to be updated in your project file.
+
+Build your snap and note any dependent packages that fail to resolve. Search the
+`Ubuntu package archive <https://packages.ubuntu.com>`__ for the equivalent on Ubuntu
+26.04, and update ``build-packages`` and ``stage-packages`` accordingly.
+
+A package may have been split, merged, or renamed. When you make a non-obvious
+substitution, it's good practice to leave a comment so that future maintainers
+understand the change:
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    stage-packages:
+    - libexample3t64  # renamed from libexample3 in Ubuntu 26.04
+
+Repackage Python
+----------------
+
+Core26 has `updated its Python support commitment
+<https://forum.snapcraft.io/t/core26-bundled-python-changes/50178>`__, and doesn't ship
+with Python. Going forward, all strictly-confined snaps that run Python must pack a
+separate Python binary.
+
+The optimal solution is to define a separate part, and stage the Python runtime inside it:
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    parts:
+      python-runtime:
+        plugin: nil
+        stage-packages:
+          - libpython3.14-minimal
+          - libpython3.14-stdlib
+          - python3.14-minimal
+          - python3-venv
+          - python3-minimal
+
+      my-app:
+        after: [python-runtime]
+        source: .
+        plugin: python
+
+Replace snapcraftctl
+--------------------
+
+With core26, snapcraftctl is replaced with :ref:`craftctl <reference-external-package-scriptlets>`.
+
+In your project file's scriptlets, find and replace all instances of ``snapcraftctl`` with
+``craftctl``. For example:
+
+
+.. code-block:: diff
+    :caption: snapcraft.yaml
+
+    - snapcraftctl pull
+    + craftctl default
+    - snapcraftctl set-grade stable
+    + craftctl set grade=stable
+
+Update Spread test systems
+--------------------------
+
+Snaps should behave the same regardless of the host operating system, but testing
+on Ubuntu 26.04 may expose failures, such as classically-confined snaps incorrectly
+accessing host packages.
+
+If your project uses the :ref:`test <ref_commands_test>` command for integration
+testing, it’s recommended to test your snap with Ubuntu 26.04. Add it to the list of
+systems in your project's ``spread.yaml``:
+
+.. code-block:: diff
+    :caption: spread.yaml
+
+    systems:
+    + - ubuntu-26.04
+
+Retaining older releases in the Spread configuration is recommended.
