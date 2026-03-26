@@ -193,6 +193,34 @@ to core22 as follows:
     * - ``SNAPCRAFT_PART_INSTALL``
       - ``CRAFT_PART_INSTALL``
 
+Passthrough
+~~~~~~~~~~~
+
+For production snaps targeting core22 and newer, remove the ``passthrough`` key.
+Historically, ``passthrough`` allowed experimental data to be forwarded to snapd,
+but for core22 and higher it is flagged by the store review tools.
+
+For example, if a hook uses ``passthrough`` only to define an environment, migrate:
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    hooks:
+      configure:
+        passthrough:
+          environment:
+            FOO: BAR
+
+to:
+
+.. code-block:: yaml
+    :caption: snapcraft.yaml
+
+    hooks:
+      configure:
+        environment:
+          FOO: BAR
+
 
 Get the grade
 ~~~~~~~~~~~~~
