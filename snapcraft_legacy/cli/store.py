@@ -24,7 +24,6 @@ import click
 from tabulate import tabulate
 
 from snapcraft_legacy import storeapi
-from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
 
 from . import echo
@@ -156,23 +155,6 @@ def promote(snap_name, from_channel, to_channel, yes, **kwargs):
         )
     else:
         echo.wrapped("Channel promotion cancelled")
-
-
-@storecli.command()
-@click.argument("snap-name", metavar="<snap-name>")
-@click.argument("track_name", metavar="<track>")
-@add_verbosity_options()
-def set_default_track(snap_name: str, track_name: str, **kwargs):
-    """Set the default track for <snap-name> to <track>.
-
-    The track must be a valid active track for this operation to be successful.
-    """
-    store_client_cli = StoreClientCLI()
-
-    metadata = dict(default_track=track_name)
-    store_client_cli.upload_metadata(snap_name=snap_name, metadata=metadata, force=True)
-
-    echo.info(f"Default track for {snap_name!r} set to {track_name!r}.")
 
 
 _YESTERDAY = str(date.today() - timedelta(days=1))

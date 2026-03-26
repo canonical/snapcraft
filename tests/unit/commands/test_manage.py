@@ -64,6 +64,14 @@ def fake_store_get_account_info(mocker):
     return fake_client
 
 
+@pytest.fixture
+def fake_store_upload_metadata(mocker):
+    return mocker.patch(
+        "snapcraft.store.StoreClientCLI.upload_metadata",
+        autospec=True,
+    )
+
+
 ###################
 # Release Command #
 ###################
@@ -176,3 +184,24 @@ def test_close_no_snap_id(emitter, fake_app_config):
         "KeyError('test-unknown-snap') no found in "
         "{'snaps': {'16': {'test-snap': {'snap-id': '12345678'}}}}"
     )
+
+
+###########################
+# SetDefaultTrack Command #
+###########################
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_upload_metadata(emitter, fake_store_upload_metadata, fake_app_config):
+    cmd = commands.StoreSetDefaultTrackCommand(fake_app_config)
+    cmd.run(argparse.Namespace(snap_name="test-snap", track="test-track"))
+
+    assert fake_store_upload_metadata.mock_calls == [
+        call(
+            ANY,
+            snap_name="test-snap",
+            metadata={"default_track": "test-track"},
+            force=True,
+        )
+    ]
+    emitter.assert_message("Default track for 'test-snap' set to 'test-track'.")

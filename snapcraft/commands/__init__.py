@@ -36,13 +36,16 @@ from .legacy import (
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacyRegisterKeyCommand,
-    StoreLegacySetDefaultTrackCommand,
     StoreLegacySignBuildCommand,
     StoreLegacyValidateCommand,
 )
 from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
-from .manage import StoreCloseCommand, StoreReleaseCommand
+from .manage import (
+    StoreCloseCommand,
+    StoreReleaseCommand,
+    StoreSetDefaultTrackCommand,
+)
 from .names import (
     StoreLegacyListCommand,
     StoreLegacyListRegisteredCommand,
@@ -99,7 +102,6 @@ __all__ = [
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
     "StoreLegacyRegisterKeyCommand",
-    "StoreLegacySetDefaultTrackCommand",
     "StoreLegacySignBuildCommand",
     "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
@@ -112,6 +114,7 @@ __all__ = [
     "StoreRegisterCommand",
     "StoreReleaseCommand",
     "StoreRevisionsCommand",
+    "StoreSetDefaultTrackCommand",
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",
