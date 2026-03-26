@@ -124,7 +124,9 @@ class StoreExportLoginCommand(AppCommand):
         environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
 
         This command exports credentials to use on systems where login is not
-        possible or desired.
+        possible or desired. The '--acls' option limits the scope of operations
+        for exported credentials. See
+        https://dashboard.snapcraft.io/docs/reference/v1/macaroon.html#reference
         """
     )
 
