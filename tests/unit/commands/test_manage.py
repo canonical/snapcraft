@@ -192,7 +192,7 @@ def test_close_no_snap_id(emitter, fake_app_config):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_upload_metadata(emitter, fake_store_upload_metadata, fake_app_config):
+def test_set_default_track(emitter, fake_store_upload_metadata, fake_app_config):
     cmd = commands.StoreSetDefaultTrackCommand(fake_app_config)
     cmd.run(argparse.Namespace(snap_name="test-snap", track="test-track"))
 
