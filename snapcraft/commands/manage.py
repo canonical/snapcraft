@@ -154,3 +154,38 @@ class StoreCloseCommand(AppCommand):
         emit.message(
             f"Channel {parsed_args.channel!r} for {parsed_args.name!r} is now closed"
         )
+
+
+class StoreSetDefaultTrackCommand(AppCommand):
+    """Set the default track for a snap."""
+
+    name = "set-default-track"
+    help_msg = "Set the default track for a snap"
+    overview = textwrap.dedent(
+        """
+        Set the default track for <snap-name> to <track>;
+        the <track> must already exist.
+        """
+    )
+
+    @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "snap_name",
+            metavar="snap-name",
+        )
+        parser.add_argument("track")
+
+    @override
+    def run(self, parsed_args: argparse.Namespace):
+        client = store.StoreClientCLI()
+
+        client.upload_metadata(
+            snap_name=parsed_args.snap_name,
+            metadata={"default_track": parsed_args.track},
+            force=True,
+        )
+
+        emit.message(
+            f"Default track for {parsed_args.snap_name!r} set to {parsed_args.track!r}."
+        )

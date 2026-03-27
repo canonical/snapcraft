@@ -119,7 +119,7 @@ COMMAND_GROUPS = [
         [
             commands.StoreListTracksCommand,  # hidden (alias to tracks)
             commands.StoreTracksCommand,
-            commands.StoreLegacySetDefaultTrackCommand,
+            commands.StoreSetDefaultTrackCommand,
         ],
     ),
     craft_cli.CommandGroup(
