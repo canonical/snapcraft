@@ -193,12 +193,12 @@ to core22 as follows:
     * - ``SNAPCRAFT_PART_INSTALL``
       - ``CRAFT_PART_INSTALL``
 
-Passthrough
-~~~~~~~~~~~
+Remove ``passthrough`` key
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For production snaps targeting core22 and newer, remove the ``passthrough`` key.
+For production snaps, remove the ``passthrough`` key.
 Historically, ``passthrough`` allowed experimental data to be forwarded to snapd,
-but for core22 and higher it is flagged by the store review tools.
+but the Snap store doesn't permit this key.
 
 For example, if a hook uses ``passthrough`` only to define an environment, migrate:
 
