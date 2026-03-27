@@ -22,7 +22,7 @@ constraints = [
 ]
 build-constraints = [
     { name = "maturin", marker = "python_full_version < '3.14'", specifier = "<1.10.0" },
-    { name = "setuptools-scm", specifier = "!=10.0.2,!=10.0.3" },
+    { name = "setuptools-scm", specifier = "<10.0.2" },
 ]
 
 [[package]]
