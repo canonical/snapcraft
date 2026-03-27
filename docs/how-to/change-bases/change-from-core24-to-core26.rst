@@ -1,5 +1,5 @@
 .. meta::
-    :description: How to migrate a snap's base from core24 to core26.
+    :description: How to migrate a snap from core24 to core26.
 
 .. _how-to-change-from-core24-to-core26:
 
@@ -8,21 +8,14 @@ Change from core24 to core26
 
 This is a guide for migrating a snap that uses core24 as its base to core26.
 
-core26 is built from Ubuntu 26.04 LTS. For most snaps, the migration consists of
+Core26 is built from Ubuntu 26.04 LTS. For most snaps, the migration consists of
 checking dependencies and extensions. If your snap has strict confinement and runs
 Python code, you need to add a Python runtime.
-
-Check extension support
------------------------
-
-Not all extensions are compatible with core26 at launch. If your snap uses an extension,
-run ``snapcraft extensions`` to see if it's available for core26. If your snap uses an
-extension that does not yet support core26, it's best to wait to upgrade.
 
 Update the base
 ---------------
 
-Start with updating the ``base`` key:
+Start by updating the ``base`` key:
 
 .. code-block:: diff
     :caption: snapcraft.yaml
@@ -30,12 +23,19 @@ Start with updating the ``base`` key:
     - base: core24
     + base: core26
 
-Update packages
----------------
+Check extension support
+-----------------------
+
+Not all extensions are compatible with core26 at its launch. If your snap uses an
+extension, run ``snapcraft extensions`` to see if it's available for core26. If your
+snap uses an extension that does not yet support core26, it's best to wait to upgrade.
+
+Update the packages
+-------------------
 
 Package names and versions change between Ubuntu releases. If you have parts that
 declare :ref:`build-packages <PartSpec.build_packages>` or :ref:`stage-packages
-<PartSpec.stage_packages>`, those packages may need to be updated in your project file.
+<PartSpec.stage_packages>`, you might need to update those packages in your project file.
 
 Build your snap and note any dependent packages that fail to resolve. Search the
 `Ubuntu package archive <https://packages.ubuntu.com>`__ for the equivalent on Ubuntu
@@ -49,7 +49,7 @@ understand the change:
     :caption: snapcraft.yaml
 
     stage-packages:
-    - libexample3t64  # renamed from libexample3 in Ubuntu 26.04
+      - libexample3t64  # renamed from libexample3 in core26
 
 Repackage Python
 ----------------
@@ -63,6 +63,7 @@ The optimal solution is to define a separate part, and stage the Python runtime 
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
+    :emphasize-lines: 2-9,12
 
     parts:
       python-runtime:
@@ -104,13 +105,15 @@ on Ubuntu 26.04 may expose failures, such as classically-confined snaps incorrec
 accessing host packages.
 
 If your project uses the :ref:`test <ref_commands_test>` command for integration
-testing, it’s recommended to test your snap with Ubuntu 26.04. Add it to the list of
+testing, it's recommended to test your snap with Ubuntu 26.04. Add it to the list of
 systems in your project's ``spread.yaml``:
 
-.. code-block:: diff
+.. code-block:: yaml
     :caption: spread.yaml
+    :emphasize-lines: 3
 
     systems:
-    + - ubuntu-26.04
+      - ubuntu-24.04
+      - ubuntu-26.04
 
 Retaining older releases in the Spread configuration is recommended.
