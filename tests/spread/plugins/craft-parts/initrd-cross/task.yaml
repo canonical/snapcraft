@@ -3,9 +3,9 @@ manual: true
 kill-timeout: 180m
 
 systems:
-  - ubuntu-20.04
-  - ubuntu-20.04-64
-  - ubuntu-20.04-amd64
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
 
 environment:
   SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS: 1
@@ -17,6 +17,25 @@ restore: |
 execute: |
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
   unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+
+  # Fixup for cross-compiling, required on Jammy and earlier
+  cat > /etc/apt/sources.list.d/cross.sources << EOF
+  Types: deb
+      URIs: http://ports.ubuntu.com/ubuntu-ports
+      Suites: jammy jammy-updates jammy-backports
+      Components: main universe restricted multiverse
+      Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+      Architectures: riscv64
+  EOF
+
+  sed -i 's/deb h/deb [arch=amd64] h/' /etc/apt/sources.list
+  dpkg --add-architecture riscv64
+
+  apt update
+  apt install libc6-riscv64-cross
+
+  ln -sf /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1 /lib
 
   rm -f ./*.snap
   snapcraft pack
