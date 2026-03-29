@@ -105,7 +105,6 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
         """Enforce binary package and source-only options are exclusive."""
         if self.kernel_ubuntu_binary_package:
             conflicting_options = [
-                "source",
                 "kernel_kconfigs",
                 "kernel_kdefconfig",
             ]
@@ -123,7 +122,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     ) -> Self:
         """Ensure only a valid list of tools is specified."""
         for tool in self.kernel_tools:
-            if tool not in self.kernel_tools:
+            if tool not in ["bpf", "cpupower", "perf"]:
                 raise errors.PartsError(
                     f"tool '{tool}' is not a valid choice! Valid choices are perf, cpupower, and bpf"
                 )
