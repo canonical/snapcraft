@@ -234,19 +234,22 @@ class KernelPlugin(plugins.Plugin):
     def get_build_environment(self) -> dict[str, str]:
         _kernel_arch = _KERNEL_ARCH_FROM_SNAP_ARCH[self._part_info.target_arch]
 
-        _kernel_image = "Image"
+        # This is the image name for amd64 and s390x, the only choice is a compressed image
+        # The default kernel image is a compressed one
+        _kernel_image = "bzImage"
         _kernel_target = "modules"
 
         if _kernel_arch != "x86":
             _kernel_target = "modules dtbs"
 
+        # Choose a different _kernel_image name based on the target architecture
         match _kernel_arch:
-            case "x86" | "s390":
-                _kernel_image = "bzImage"
             case "arm":
                 _kernel_image = "zImage"
             case "powerpc":
-                _kernel_image = "vmlinux.strip"
+                _kernel_image = "zImage.xz"
+            case "arm64" | "riscv":
+                _kernel_image = "Image.xz"
 
         return {
             "CROSS": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",

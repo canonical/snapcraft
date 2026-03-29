@@ -115,10 +115,29 @@ KERNEL_IMAGE
 This value specifies the name of the target kernel image to build, and the
 value is target-architecture dependent:
 
+* amd64, s390x: ``bzImage``
 * armhf: ``zImage``
-* arm64, riscv64: ``Image``
-* powerpc, ppc64el: ``vmlinux.strip``
-* x86, x86_64, s390x: ``bzImage``
+* arm64, riscv64: ``Image.xz``
+* ppc64el: ``zImage``
+
+The default behavior is to build a compressed kernel image. On some systems, an
+uncompressed kernel image is preferred. In this cases, ``KERNEL_IMAGE`` may be
+set to the uncompressed names:
+
+* armhf, arm64, riscv64: ``Image``
+
+Some architectures support many different compression algorithms. For instance on
+arm64 and riscv64 the following are valid choices:
+
+* ``Image``
+* ``Image.gz``
+* ``Image.xz``
+* ``Image.bz2``
+* ``Image.lz4``
+* ``Image.zst``
+* ``Image.lzma``
+
+An uncompressed image is not available for amd64 or s390x.
 
 
 KERNEL_TARGET
