@@ -167,6 +167,8 @@ constraint-dependencies = [
 build-constraint-dependencies = [
     # needed until we have rustc >= 1.78
     "maturin<1.10.0 ; python_version < '3.14'",
+    # Circular dependency with setuptools 10.0 see https://github.com/pypa/setuptools-scm/issues/1302
+    "setuptools-scm!=10.0.2,!=10.0.3",
 ]
 
 [[tool.uv.index]]

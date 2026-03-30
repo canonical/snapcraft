@@ -97,29 +97,6 @@ class StoreLegacyPromoteCommand(LegacyAppCommand):
         )
 
 
-class StoreLegacySetDefaultTrackCommand(LegacyAppCommand):
-    """Command passthrough for the set-default-track command."""
-
-    name = "set-default-track"
-    help_msg = "Set the default track for a snap"
-    overview = textwrap.dedent(
-        """
-        Set the default track for <snap-name> to <track>;
-        the <track> must already exist.
-        """
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "snap_name",
-            metavar="snap-name",
-        )
-        parser.add_argument(
-            "track",
-        )
-
-
 class StoreLegacyMetricsCommand(LegacyAppCommand):
     """Command passthrough for the metrics command."""
 
