@@ -12,6 +12,17 @@ Core26 is built from Ubuntu 26.04 LTS. For most snaps, the migration consists of
 checking dependencies and extensions. If your snap has strict confinement and runs
 Python code, you need to add a Python runtime.
 
+Stability and workarounds
+-------------------------
+
+In the wake of a new core, some of the updated features and packages your snap relies on
+will be unstable for a time.
+
+This is to be expected with complex software. A short-term fix or workaround in your
+snap's parts, packages, and scriptlets might be needed. But sometimes, a temporary fix
+becomes permanent. It's a good practice to explain your workarounds with comments in
+your project's ``snapcraft.yaml``.
+
 Update the base
 ---------------
 
@@ -41,9 +52,7 @@ Build your snap and note any dependent packages that fail to resolve. Search the
 `Ubuntu package archive <https://packages.ubuntu.com>`__ for the equivalent on Ubuntu
 26.04, and update ``build-packages`` and ``stage-packages`` accordingly.
 
-A package may have been split, merged, or renamed. When you make a non-obvious
-substitution, it's good practice to leave a comment so that future maintainers
-understand the change:
+A package may have been split, merged, or renamed:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
