@@ -158,24 +158,6 @@ class StoreLegacyListKeysCommand(StoreLegacyKeysCommand):
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
-class StoreLegacyCreateKeyCommand(LegacyAppCommand):
-    """Command passthrough for the create-key command."""
-
-    name = "create-key"
-    help_msg = "Create a key to sign assertions."
-    overview = textwrap.dedent(
-        """
-        Create a key and store it locally. Use the register-key command to register
-        it in the store."""
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "key_name", metavar="key-name", help="Key used to sign the assertion"
-        )
-
-
 class StoreLegacyRegisterKeyCommand(LegacyAppCommand):
     """Command passthrough for the register-key command."""
 
