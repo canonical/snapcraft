@@ -125,7 +125,7 @@ class StoreExportLoginCommand(AppCommand):
 
         This command exports credentials to use on systems where login is not
         possible or desired. The '--acls' option limits the scope of operations
-        for exported credentials. See
+        for exported credentials. The complete list of ACLs is available at
         https://dashboard.snapcraft.io/docs/reference/v1/macaroon.html#reference
         """
     )
