@@ -28,6 +28,9 @@ from snapcraft import commands, store
 from snapcraft.commands.keys import _get_usable_keys
 from tests.unit.store.utils import FakeResponse
 
+_TEST_KEY_1 = {"name": "test-key-1", "sha3-384": "abc123"}
+_TEST_KEY_2 = {"name": "test-key-2", "sha3-384": "deadbeef"}
+
 
 @pytest.fixture
 def mock_subprocess_check(mocker):
@@ -60,15 +63,15 @@ class TestGetUsableKeys:
             pytest.param(
                 None,
                 [
-                    {"name": "test-key-1", "sha3-384": "abc123"},
-                    {"name": "test-key-2", "sha3-384": "deadbeef"},
+                    _TEST_KEY_1,
+                    _TEST_KEY_2,
                 ],
                 id="no-name",
             ),
             pytest.param(
                 "test-key-1",
                 [
-                    {"name": "test-key-1", "sha3-384": "abc123"},
+                    _TEST_KEY_1,
                 ],
                 id="matching-name",
             ),
@@ -84,8 +87,8 @@ class TestGetUsableKeys:
             "subprocess.check_output",
             return_value=json.dumps(
                 [
-                    {"name": "test-key-1", "sha3-384": "abc123"},
-                    {"name": "test-key-2", "sha3-384": "deadbeef"},
+                    _TEST_KEY_1,
+                    _TEST_KEY_2,
                 ]
             ),
         )
@@ -163,9 +166,7 @@ class TestCreateKeyCommand:
         fake_app_config,
         fake_get_usable_keys,
     ):
-        fake_get_usable_keys.return_value = [
-            {"name": "test-key-1", "sha3-384": "abc123"}
-        ]
+        fake_get_usable_keys.return_value = [_TEST_KEY_1]
 
         cmd = commands.StoreCreateKeyCommand(fake_app_config)
 
