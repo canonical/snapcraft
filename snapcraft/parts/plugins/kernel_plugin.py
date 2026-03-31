@@ -60,7 +60,7 @@ import pydantic
 from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
-_KERNEL_ARCH_FROM_SNAP_ARCH = {
+KERNEL_ARCH_FROM_SNAP_ARCH = {
     "i386": "x86",
     "amd64": "x86",
     "armhf": "arm",
@@ -70,7 +70,7 @@ _KERNEL_ARCH_FROM_SNAP_ARCH = {
     "s390x": "s390",
 }
 
-_KERNEL_RELEASE_FROM_SNAP_BASE = {
+KERNEL_RELEASE_FROM_SNAP_BASE = {
     "core22": "jammy",
     "core24": "noble",
     "core26": "resolute",
@@ -143,19 +143,17 @@ class KernelPlugin(plugins.Plugin):
     @override
     def get_pull_commands(self) -> list[str]:
         commands = []
-        _base = self._part_info.base
-        _target_arch = self._part_info.target_arch
-        _flavour = self.options.kernel_kconfigflavour
-        _ubuntu_repo_base = (
+        base = self._part_info.base
+        ubuntu_repo_base = (
             "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git"
         )
-        _ubuntu_repo_release = _KERNEL_RELEASE_FROM_SNAP_BASE[_base]
+        ubuntu_repo_release = KERNEL_RELEASE_FROM_SNAP_BASE[base]
 
         if self.options.kernel_ubuntu_release_name:
             commands.extend(
                 [
                     "git init",
-                    f"git remote add origin {_ubuntu_repo_base}/{_ubuntu_repo_release}",
+                    f"git remote add origin {ubuntu_repo_base}/{ubuntu_repo_release}",
                     "git fetch --depth 1 origin master-next",
                     "git checkout FETCH_HEAD",
                 ]
@@ -171,17 +169,16 @@ class KernelPlugin(plugins.Plugin):
 
     @override
     def get_build_packages(self) -> set[str]:
-        _base = self._part_info.base
-        _host_arch = self._part_info.host_arch
-        _target_arch = self._part_info.target_arch
-        _target_arch_triplet = self._part_info.arch_triplet_build_for
+        base = self._part_info.base
+        target_arch = self._part_info.target_arch
+        target_arch_triplet = self._part_info.arch_triplet_build_for
 
         # We should install gcc for the target, but the x86_64 gcc package is named
         # differently from its triplet
-        _gcc_arch = _target_arch_triplet
-        match _target_arch_triplet:
+        gcc_arch = target_arch_triplet
+        match target_arch_triplet:
             case "x86_64-linux-gnu":
-                _gcc_arch = "x86-64-linux-gnu"
+                gcc_arch = "x86-64-linux-gnu"
 
         build_packages = {
             "bc",
@@ -194,7 +191,7 @@ class KernelPlugin(plugins.Plugin):
             "fakeroot",
             "flex",
             "gawk",
-            f"gcc-{_gcc_arch}",
+            f"gcc-{gcc_arch}",
             "kmod",
             "kpartx",
             "libelf-dev",
@@ -206,7 +203,7 @@ class KernelPlugin(plugins.Plugin):
         }
 
         # Rust was introduced in 23.04
-        if _base != "core22":
+        if base != "core22":
             build_packages |= {
                 "clang",
                 "rustc",
@@ -217,8 +214,8 @@ class KernelPlugin(plugins.Plugin):
         # bpftool requires libelf, zlib to build
         if "bpf" in self.options.kernel_tools:
             build_packages |= {
-                f"libelf-dev:{_target_arch}",
-                f"zlib1g-dev:{_target_arch}",
+                f"libelf-dev:{target_arch}",
+                f"zlib1g-dev:{target_arch}",
             }
 
         # cpupower requires libpci to build
@@ -231,31 +228,31 @@ class KernelPlugin(plugins.Plugin):
 
     @override
     def get_build_environment(self) -> dict[str, str]:
-        _kernel_arch = _KERNEL_ARCH_FROM_SNAP_ARCH[self._part_info.target_arch]
+        kernel_arch = KERNEL_ARCH_FROM_SNAP_ARCH[self._part_info.target_arch]
 
         # This is the image name for amd64 and s390x, the only choice is a compressed image
         # The default kernel image is a compressed one
-        _kernel_image = "bzImage"
-        _kernel_target = "modules"
+        kernel_image = "bzImage"
+        kernel_target = "modules"
 
-        if _kernel_arch != "x86":
-            _kernel_target = "modules dtbs"
+        if kernel_arch != "x86":
+            kernel_target = "modules dtbs"
 
         # Choose a different _kernel_image name based on the target architecture
-        match _kernel_arch:
+        match kernel_arch:
             case "arm":
-                _kernel_image = "zImage"
+                kernel_image = "zImage"
             case "powerpc":
-                _kernel_image = "zImage.xz"
+                kernel_image = "zImage.xz"
             case "arm64" | "riscv":
-                _kernel_image = "Image.xz"
+                kernel_image = "Image.xz"
 
         return {
             "CROSS": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
             "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
-            "ARCH": _kernel_arch,
-            "KERNEL_IMAGE": _kernel_image,
-            "KERNEL_TARGET": _kernel_target,
+            "ARCH": kernel_arch,
+            "KERNEL_IMAGE": kernel_image,
+            "KERNEL_TARGET": kernel_target,
         }
 
     @override

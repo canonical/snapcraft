@@ -80,7 +80,7 @@ from craft_parts import infos, plugins
 from overrides import overrides
 from typing_extensions import Self
 
-_INITRD_RELEASE_FROM_SNAP_BASE = {
+INITRD_RELEASE_FROM_SNAP_BASE = {
     "core22": "jammy",
     "core24": "noble",
     "core26": "resolute",
@@ -102,11 +102,11 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     # part properties required by the plugin
     @pydantic.model_validator(mode="after")
     def validate_plugin_options(self) -> Self:
-        _signing_key = self.initrd_efi_image_key
-        _signing_cert = self.initrd_efi_image_cert
+        signing_key = self.initrd_efi_image_key
+        signing_cert = self.initrd_efi_image_cert
 
         # Validate that either both key and cert are specified or neither is
-        if bool(_signing_key) ^ bool(_signing_cert):
+        if bool(signing_key) ^ bool(signing_cert):
             raise ValueError(
                 "If one of initrd-efi-image-key or initrd-efi-image-cert is set, both must be set"
             )
@@ -128,29 +128,29 @@ class InitrdPlugin(plugins.Plugin):
     @overrides
     def get_pull_commands(self) -> list[str]:
         commands = []
-        _target_arch = self._part_info.target_arch
-        _release = _INITRD_RELEASE_FROM_SNAP_BASE[self._part_info.base]
+        target_arch = self._part_info.target_arch
+        release = INITRD_RELEASE_FROM_SNAP_BASE[self._part_info.base]
 
         # URL pieces for Ubuntu base
-        _tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
-        _tar_release = f"{_release}/daily/current"
+        tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
+        tar_release = f"{release}/daily/current"
 
         # Tarball name
-        _tar_name = f"{_release}-base-{_target_arch}.tar.gz"
+        tar_name = f"{release}-base-{target_arch}.tar.gz"
 
         # Compose the URL
-        _tar_url = f"{_tar_base_url}/{_tar_release}/{_tar_name}"
-        _ubuntu_base = f"ubuntu-base-{_release}-{_target_arch}.tar.gz"
-        _initrd_root = "uc-initramfs-build"
+        tar_url = f"{tar_base_url}/{tar_release}/{tar_name}"
+        ubuntu_base = f"ubuntu-base-{release}-{target_arch}.tar.gz"
+        initrd_root = "uc-initramfs-build"
 
         # Pull the base
         commands.extend(
             [
-                f"curl -fLo {_ubuntu_base} {_tar_url}",
-                f"mkdir -p {_initrd_root}",
-                f"tar --extract --file {_ubuntu_base} --directory {_initrd_root}",
-                f"cp --no-dereference /etc/resolv.conf {_initrd_root}/etc/resolv.conf",
-                f"touch {_initrd_root}/dev/null",
+                f"curl -fLo {ubuntu_base} {tar_url}",
+                f"mkdir -p {initrd_root}",
+                f"tar --extract --file {ubuntu_base} --directory {initrd_root}",
+                f"cp --no-dereference /etc/resolv.conf {initrd_root}/etc/resolv.conf",
+                f"touch {initrd_root}/dev/null",
             ]
         )
 
@@ -166,8 +166,8 @@ class InitrdPlugin(plugins.Plugin):
 
     @overrides
     def get_build_packages(self) -> set[str]:
-        _host_arch = self._part_info.host_arch
-        _target_arch = self._part_info.target_arch
+        host_arch = self._part_info.host_arch
+        target_arch = self._part_info.target_arch
 
         build_packages = {
             "curl",
@@ -176,9 +176,9 @@ class InitrdPlugin(plugins.Plugin):
         }
         # if running as non-root and cross-building
         # we need libfake{ch}root for the target arch
-        if _host_arch != _target_arch and (os.getuid() != 0):
+        if host_arch != target_arch and (os.getuid() != 0):
             build_packages |= {
-                f"libfakeroot:{_target_arch}",
+                f"libfakeroot:{target_arch}",
             }
         return build_packages
 
@@ -188,8 +188,8 @@ class InitrdPlugin(plugins.Plugin):
 
     @overrides
     def get_build_commands(self) -> list[str]:
-        _base = self._part_info.base
-        _arch = self._part_info.target_arch
+        base = self._part_info.base
+        arch = self._part_info.target_arch
         build_efi_image = self.options.initrd_build_efi_image
 
         # It only makes sense to provide a key and cert when building a UKI
@@ -198,11 +198,11 @@ class InitrdPlugin(plugins.Plugin):
 
         if build_efi_image:
             # There are no EFI stubs for s390x or ppc64el
-            if _arch in {"s390x", "ppc64el"}:
-                raise ValueError("initrd-build-efi-image not allowed for " + _arch)
+            if arch in {"s390x", "ppc64el"}:
+                raise ValueError("initrd-build-efi-image not allowed for " + arch)
 
             # There are no EFI stubs for riscv until 24.04
-            if _arch == "riscv64" and _base == "core22":
+            if arch == "riscv64" and base == "core22":
                 raise ValueError("initrd-build-efi-image not allowed for riscv64")
 
         return [
