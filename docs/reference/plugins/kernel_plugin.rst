@@ -75,7 +75,7 @@ A string which specifies a particular Ubuntu release to build an Ubuntu kernel f
 This option will fetch the ``master-next`` branch of one of the release kernels
 available on Launchpad.
 
-Valid values are names like ``jammy``, ``noble``, etc.
+Valid values are Ubuntu release codenames like ``jammy``, ``lunar``, ``noble``, etc.
 
 
 kernel-ubuntu-binary-package
@@ -83,7 +83,7 @@ kernel-ubuntu-binary-package
 
 **Type**: bool
 
-**Default**: ``False``
+**Default**: ``false``
 
 If enabled, the kernel compilation process will be skipped. Instead, the latest kernel
 image, modules, modules-extra, and firmware from the Ubuntu archive will be fetched and
