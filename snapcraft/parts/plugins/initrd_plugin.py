@@ -77,8 +77,7 @@ from typing import Literal, cast
 
 import pydantic
 from craft_parts import infos, plugins
-from overrides import overrides
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 INITRD_RELEASE_FROM_SNAP_BASE = {
     "core22": "jammy",
@@ -125,7 +124,7 @@ class InitrdPlugin(plugins.Plugin):
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(InitrdPluginProperties, self._options)
 
-    @overrides
+    @override
     def get_pull_commands(self) -> list[str]:
         commands = []
         target_arch = self._part_info.target_arch
@@ -160,11 +159,11 @@ class InitrdPlugin(plugins.Plugin):
 
         return commands
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         host_arch = self._part_info.host_arch
         target_arch = self._part_info.target_arch
@@ -182,11 +181,11 @@ class InitrdPlugin(plugins.Plugin):
             }
         return build_packages
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         return {}
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         base = self._part_info.base
         arch = self._part_info.target_arch
