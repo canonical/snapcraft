@@ -73,26 +73,6 @@ clean() {
   umnt "${INITRD_ROOT}/sys"
 }
 
-# fetch_base downloads and unpacks the Ubuntu base for building the initrd within.
-# This function is only relevant when using the legacy plugin (core20), as the new
-# plugins implement overriding the pull command.
-fetch_base() {
-  # Make sure no initrd chroot is lingering
-  [ -e "${INITRD_ROOT}" ] && rm -rf "${INITRD_ROOT}"
-
-  tar_base_url=https://cdimage.ubuntu.com/ubuntu-base
-  tar_release="focal/daily/current"
-  tar_name="focal-base-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
-  tar_url="${tar_base_url}/${tar_release}/${tar_name}"
-  ubuntu_base="ubuntu-base-focal-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
-
-  curl --output "${ubuntu_base}" "${tar_url}"
-
-  # Extract chroot base
-  mkdir -p "${INITRD_ROOT}"
-  tar --extract --file "${ubuntu_base}" --directory "${INITRD_ROOT}"
-}
-
 # chroot_setup creates the chroot base and mounts certain filesystems from host
 chroot_setup() {
     # This is a minimum viable collection of mounts.
