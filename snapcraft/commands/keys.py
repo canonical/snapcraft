@@ -42,7 +42,8 @@ class StoreCreateKeyCommand(AppCommand):
     overview = textwrap.dedent(
         """
         Create a key and store it locally. Use the register-key command to register
-        it in the store."""
+        it in the store.
+        """
     )
 
     @override
