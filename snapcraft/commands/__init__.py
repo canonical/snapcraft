@@ -32,11 +32,11 @@ from .keys import (
     StoreCreateKeyCommand,
     StoreListKeysCommand,
     StoreKeysCommand,
+    StoreRegisterKeyCommand,
 )
 from .legacy import (
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
-    StoreLegacyRegisterKeyCommand,
     StoreLegacySignBuildCommand,
     StoreLegacyValidateCommand,
 )
@@ -102,7 +102,6 @@ __all__ = [
     "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
-    "StoreLegacyRegisterKeyCommand",
     "StoreLegacySignBuildCommand",
     "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
@@ -114,6 +113,7 @@ __all__ = [
     "StoreLogoutCommand",
     "StoreNamesCommand",
     "StoreRegisterCommand",
+    "StoreRegisterKeyCommand",
     "StoreReleaseCommand",
     "StoreRevisionsCommand",
     "StoreSetDefaultTrackCommand",

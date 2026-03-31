@@ -145,9 +145,6 @@ class StoreClient:
     def get_account_information(self):
         return self.dashboard.get_account_information()
 
-    def register_key(self, account_key_request):
-        return self.dashboard.register_key(account_key_request)
-
     def register(self, snap_name: str, is_private: bool = False, store_id: str = None):
         return self.dashboard.register(
             snap_name,

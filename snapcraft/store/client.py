@@ -302,6 +302,17 @@ class LegacyStoreClientCLI:
             json=data,
         )
 
+    def register_key(self, account_key_request: str) -> None:
+        """Register a key with the Snap Store.
+
+        :param account_key_request: The serialized key assertion.
+        """
+        self.request(
+            "POST",
+            self._base_url + "/dev/api/account/account-key",
+            json={"account_key_request": account_key_request},
+        )
+
     def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
         """Return the channel map for snap_name."""
         response = self.request(

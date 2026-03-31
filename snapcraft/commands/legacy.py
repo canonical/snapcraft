@@ -134,23 +134,6 @@ class StoreLegacyMetricsCommand(LegacyAppCommand):
 ##############
 
 
-class StoreLegacyRegisterKeyCommand(LegacyAppCommand):
-    """Command passthrough for the register-key command."""
-
-    name = "register-key"
-    help_msg = "Register a key to sign assertions with the Snap Store."
-    overview = textwrap.dedent(
-        """
-        Register a locally-created key with the Snap Store."""
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "key_name", metavar="key-name", help="Key used to sign the assertion"
-        )
-
-
 class StoreLegacySignBuildCommand(LegacyAppCommand):
     """Command passthrough for the sign-build command."""
 

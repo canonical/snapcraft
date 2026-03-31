@@ -233,11 +233,6 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_release)
 
-        self.fake_store_register_key = fixtures.MockPatchObject(
-            storeapi._dashboard_api.DashboardAPI, "register_key"
-        )
-        self.useFixture(self.fake_store_register_key)
-
         self.metrics = metrics.MetricsResults(
             metrics=[
                 metrics.MetricResults(
