@@ -56,7 +56,8 @@ options to the previous command:
     * - ``--channels``
       - Comma-separated list of allowed channels
     * - ``--acls``
-      - Comma-separated list of allowed ACLs
+      - Comma-separated list of `allowed ACLs
+        <https://dashboard.snapcraft.io/docs/reference/v1/macaroon.html#post--dev-api-acl->`__
     * - ``--expires``
       - The date and time (in ISO 8601) the exported
         credentials will expire.
