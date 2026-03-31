@@ -81,22 +81,6 @@ class DashboardAPI(Requests):
 
         return response.json()
 
-    def register_key(self, account_key_request):
-        data = {"account_key_request": account_key_request}
-        try:
-            self.post(
-                "/dev/api/account/account-key",
-                json=data,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-            )
-        except craft_store.errors.StoreServerError as store_error:
-            raise errors.StoreKeyRegistrationError(
-                store_error.response
-            ) from store_error
-
     def register(
         self, snap_name: str, *, is_private: bool, series: str, store_id: Optional[str]
     ) -> None:
