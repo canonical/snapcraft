@@ -108,6 +108,11 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                 "kernel_kconfigs",
                 "kernel_kdefconfig",
             ]
+
+            # This is set by default, don't fail in this case
+            if self.kernel_kdefconfig == ["defconfig"]:
+                return self
+
             for option in conflicting_options:
                 if getattr(self, option):
                     raise errors.PartsError(
