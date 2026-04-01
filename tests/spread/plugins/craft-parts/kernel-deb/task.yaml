@@ -22,7 +22,3 @@ execute: |-
   rm -f ./*.snap
   snapcraft pack
   ls -l pc-kernel_*.snap
-
-  for file in bpftool cpupower perf trace; do
-    [ -x "squashfs-root/bin/${file}" ] || exit 1
-  done

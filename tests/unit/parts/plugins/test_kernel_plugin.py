@@ -36,14 +36,17 @@ def part_info(new_dir):
 
 def test_get_pull_commands_release(part_info):
     properties = KernelPlugin.properties_class.unmarshal(
-        {"kernel-ubuntu-release-name": "jammy"}
+        {
+            "kernel-ubuntu-release-name": "jammy",
+            "kernel-ubuntu-abinumber": "Ubuntu-5.15.0-176.186",
+        }
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
 
     expected_commands = [
         "git init",
         "git remote add origin https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy",
-        "git fetch --depth 1 origin master-next",
+        "git fetch --depth 1 origin Ubuntu-5.15.0-176.186",
         "git checkout FETCH_HEAD",
     ]
 
@@ -157,7 +160,7 @@ def test_get_build_commands(part_info):
                 "CONFIG_BAR=m",
             ],
             "kernel-tools": [
-                "bpftool",
+                "bpf",
                 "cpupower",
                 "perf",
             ],
@@ -168,10 +171,11 @@ def test_get_build_commands(part_info):
 
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
-        "kernel-kconfigflavour= "
         "kernel-kdefconfig=snappy_defconfig,foo_config "
         "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
-        "kernel-tools=bpftool,cpupower,perf "
+        "kernel-tools=bpf,cpupower,perf "
+        "kernel-ubuntu-kconfigflavour= "
         "kernel-ubuntu-release-name=noble "
-        "kernel-ubuntu-binary-package=False"
+        "kernel-ubuntu-binary-package=False "
+        "kernel-ubuntu-abinumber="
     ]
