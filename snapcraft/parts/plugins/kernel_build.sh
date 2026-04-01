@@ -151,7 +151,7 @@ build_tool() {
       -C "${KERNEL_SRC}/tools/${_tool}" install
   fi
 
-  # install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}/${_tool#*/}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
+  install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}/${_tool#*/}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
 }
 # redepmod reruns depmod for the entire built kernel's module tree
 redepmod() {
