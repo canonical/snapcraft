@@ -281,14 +281,13 @@ class KernelPlugin(plugins.Plugin):
         if kdefconfig != ["defconfig"]:
             kconfigflavour = ""
 
-        if not release_name:
-            release_name = "None"
-
         if self.options.kernel_ubuntu_binary_package and kconfigflavour == "":
             kconfigflavour = "generic"
 
         if abinumber == "master-next":
             abinumber = ""
+
+        release_name = release_name or "None"
 
         return [
             " ".join(
