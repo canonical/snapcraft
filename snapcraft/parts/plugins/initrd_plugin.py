@@ -139,15 +139,18 @@ class InitrdPlugin(plugins.Plugin):
 
         # Compose the URL
         tar_url = f"{tar_base_url}/{tar_release}/{tar_name}"
-        ubuntu_base = f"ubuntu-base-{release}-{target_arch}.tar.gz"
+        sum_url = f"{tar_base_url}/{tar_release}/SHA256SUMS"
+
         initrd_root = "uc-initramfs-build"
 
-        # Pull the base
+        # Pull the base, verify checksum
         commands.extend(
             [
-                f"curl -fLo {ubuntu_base} {tar_url}",
+                f"curl -fLo {tar_name} {tar_url}",
+                f"curl -fL {sum_url} | grep {tar_name} > {tar_name}.sha256sum",
+                f"sha256sum -c {tar_name}.sha256sum || exit 1",
                 f"mkdir -p {initrd_root}",
-                f"tar --extract --file {ubuntu_base} --directory {initrd_root}",
+                f"tar --extract --file {tar_name} --directory {initrd_root}",
                 f"cp --no-dereference /etc/resolv.conf {initrd_root}/etc/resolv.conf",
                 f"touch {initrd_root}/dev/null",
             ]
