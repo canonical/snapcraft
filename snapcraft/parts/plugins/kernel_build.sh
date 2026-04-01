@@ -118,10 +118,11 @@ release_info() {
 build_tool() {
   _tool="${1}"
 
+  # Some tools are in odd paths. perf is an exception
   case $_tool in
     bpf)      _tool=bpf/bpftool    ;;
     cpupower) _tool=power/cpupower ;;
-    *)                             ;;
+    perf)                          ;;
   esac
 
   echo "Building tool" "${_tool#*/}"
@@ -138,16 +139,16 @@ build_tool() {
     make DESTDIR="${CRAFT_PART_INSTALL}" \
       -C bpftool install
     cd "$OLDPWD"
-    else
-      make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-           -C "${KERNEL_SRC}/tools/${_tool}"  \
-            O="${CRAFT_PART_BUILD}/tools/${_tool}"
+  else
+    make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
+         -C "${KERNEL_SRC}/tools/${_tool}"  \
+          O="${CRAFT_PART_BUILD}/tools/${_tool}"
 
     make DESTDIR="${CRAFT_PART_INSTALL}" \
       -C "${KERNEL_SRC}/tools/${_tool}" install
   fi
 
-  install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}/${_tool#*/}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
+  # install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}/${_tool#*/}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
 }
 # redepmod reruns depmod for the entire built kernel's module tree
 redepmod() {
