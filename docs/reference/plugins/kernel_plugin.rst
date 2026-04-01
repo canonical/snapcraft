@@ -84,7 +84,7 @@ A string which specifies a particular Ubuntu release to build an Ubuntu kernel f
 This key will fetch the ``master-next`` branch (by default) of one of the release
 kernels available on Launchpad.
 
-Valid values are Ubuntu release codenames like ``jammy``, ``lunar``, ``noble``, etc.
+Valid values are Ubuntu release code names like ``jammy``, ``lunar``, ``noble``, etc.
 
 
 kernel-ubuntu-binary-package
