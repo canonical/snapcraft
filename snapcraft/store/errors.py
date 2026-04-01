@@ -132,3 +132,13 @@ class NoSnapIdError(SnapcraftError):
                 f"Please open a new topic in the 'store' category in the forum: {_FORUM_URL}"
             ),
         )
+
+
+class KeyAlreadyExistsError(SnapcraftError):
+    def __init__(self, key_name: str):
+        super().__init__(f"The key {key_name!r} already exists.")
+
+
+class KeyAlreadyRegisteredError(SnapcraftError):
+    def __init__(self, key_name: str):
+        super().__init__(f"You have already registered a key named {key_name!r}.")

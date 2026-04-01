@@ -37,14 +37,6 @@ def list_keys(**kwargs):
     snapcraft_legacy.list_keys()
 
 
-@assertionscli.command("create-key")
-@click.argument("key-name", metavar="<key-name>", required=False)
-@add_verbosity_options()
-def create_key(key_name: str, **kwargs) -> None:
-    """Create a key to sign assertions."""
-    snapcraft_legacy.create_key(key_name)
-
-
 @assertionscli.command("register-key")
 @click.argument("key-name", metavar="<key-name>", required=False)
 @click.option(

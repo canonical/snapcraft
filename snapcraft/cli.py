@@ -125,7 +125,7 @@ COMMAND_GROUPS = [
     craft_cli.CommandGroup(
         "Store Key Management",
         [
-            commands.StoreLegacyCreateKeyCommand,
+            commands.StoreCreateKeyCommand,
             commands.StoreLegacyRegisterKeyCommand,
             commands.StoreLegacySignBuildCommand,
             commands.StoreLegacyListKeysCommand,

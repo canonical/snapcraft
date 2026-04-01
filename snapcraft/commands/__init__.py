@@ -28,8 +28,10 @@ from .extensions import (
     ExtensionsCommand,
     ListExtensionsCommand,
 )
+from .keys import (
+    StoreCreateKeyCommand,
+)
 from .legacy import (
-    StoreLegacyCreateKeyCommand,
     StoreLegacyGatedCommand,
     StoreLegacyListKeysCommand,
     StoreLegacyKeysCommand,
@@ -89,10 +91,10 @@ __all__ = [
     "SnapCommand",
     "StoreCloseCommand",
     "StoreConfdbSchemasCommand",
+    "StoreCreateKeyCommand",
     "StoreEditValidationSetsCommand",
     "StoreEditConfdbSchemaCommand",
     "StoreExportLoginCommand",
-    "StoreLegacyCreateKeyCommand",
     "StoreLegacyGatedCommand",
     "StoreLegacyKeysCommand",
     "StoreLegacyListCommand",

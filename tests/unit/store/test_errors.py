@@ -19,7 +19,13 @@ import re
 
 import pytest
 
-from snapcraft.store.errors import NoSnapIdError, SnapNotFoundError, StoreMetadataError
+from snapcraft.store.errors import (
+    KeyAlreadyExistsError,
+    KeyAlreadyRegisteredError,
+    NoSnapIdError,
+    SnapNotFoundError,
+    StoreMetadataError,
+)
 
 from .utils import FakeResponse
 
@@ -224,3 +230,21 @@ class TestNoSnapIdError:
             "Please open a new topic in the 'store' category in "
             "the forum: https://forum.snapcraft.io/c/store"
         )
+
+
+class TestKeyAlreadyExistsError:
+    """Tests for KeyAlreadyExistsError."""
+
+    def test_error(self):
+        err = KeyAlreadyExistsError("test-key")
+
+        assert str(err) == "The key 'test-key' already exists."
+
+
+class TestKeyAlreadyRegisteredError:
+    """Tests for KeyAlreadyRegisteredError."""
+
+    def test_error(self):
+        err = KeyAlreadyRegisteredError("test-key")
+
+        assert str(err) == "You have already registered a key named 'test-key'."
