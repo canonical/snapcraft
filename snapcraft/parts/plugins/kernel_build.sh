@@ -159,25 +159,27 @@ redepmod() {
 }
 
 # repack_deb unpacks the primary linux-image deb package for some flavour passed as $1
-# as well as the corresponding firmware, modules, and modules-extras packages and then
-# repacks them
+# as well as the corresponding modules and modules-extras packages and then repacks them
 repack_deb() {
   _kver="${1}"
   _flavour="${2}"
 
-  # For Jammy and earlier releases, linux-firmware is an ":all" package
-  if [ "$UBUNTU_SERIES" = "jammy" ]; then
-       apt download linux-firmware:all
-  else apt download "linux-firmware:${CRAFT_ARCH_BUILD_FOR}"
-  fi
-
   # Download the linux image binary and the corresponding modules
-  apt download "linux-image-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}"  \
-              "linux-modules-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}" \
-              "linux-modules-extra-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}"
+  # Some kernels only have an image and modules-extra
+  # apt commands tend to succeed even if they return an error message
+  for pkg in modules modules-extra; do
+    apt download "linux-${pkg}-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}" ||
+    echo "No candidate for linux-${pkg}-${_kver}${_flavour} found"
+  done
+
+  # Fail if no linux-image package exists, as that's the whole point of this thing
+  apt download "linux-image-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}" || {
+    echo "A linux-image package does not exist for ${_kver}${_flavour} on ${CRAFT_ARCH_BUILD_FOR}"
+    exit 1
+  }
 
   # Unpack the debs into the expected locations
-  for deb in *.deb; do
+  for deb in "${CRAFT_PART_BUILD}/"*.deb; do
     dpkg -x "${deb}" "${CRAFT_PART_INSTALL}"
   done
 
@@ -186,6 +188,7 @@ repack_deb() {
 
   ln -sf "kernel.img-${_kver}${_flavour}" "${CRAFT_PART_INSTALL}/kernel.img"
 
+  # In theory this is never unset. But to be extra safe...
   rm -rf "${CRAFT_PART_INSTALL:?}/usr"
 }
 
