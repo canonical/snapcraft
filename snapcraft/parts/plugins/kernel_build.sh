@@ -30,14 +30,6 @@ parse_args() {
   done
 }
 
-# cleanup removes artifacts from prior builds
-cleanup() {
-  echo "Cleaning previous build first..."
-
-  rm -rf "${CRAFT_PART_INSTALL}/modules"
-  unlink "${CRAFT_PART_INSTALL}/lib/modules"
-}
-
 # gen_defconfig creates a config from one or more defconfigs
 gen_defconfig() {
   # kernel-kdefconfig is passed as comma-separated
@@ -338,10 +330,13 @@ create_snap_structure() {
 # run executes the meat of this script
 run() {
   # Cleanup previous builds
-  if [ -e "${CRAFT_PART_INSTALL}/modules" ] ||
-     [ -L "${CRAFT_PART_INSTALL}/lib/modules" ]; then
-    cleanup
-  fi
+  echo "Checking if previous build should be cleaned..."
+  for output in firmware modules; do
+    [ ! -e "${CRAFT_PART_INSTALL:?}/${output}"     ] ||
+      rm -rf "${CRAFT_PART_INSTALL:?}/${output}"
+    [ ! -L "${CRAFT_PART_INSTALL:?}/lib/${output}" ] ||
+      unlink "${CRAFT_PART_INSTALL:?}/lib/${output}"
+  done
 
   # Set kconfigflavour
   if [ -n "${kernel_kconfigflavour}" ]; then
