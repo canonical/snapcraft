@@ -273,7 +273,7 @@ ROSPackageName = str
 
 
 def _get_installed_dependencies(installed_packages_path: str) -> set[ROSPackageName]:
-    """Retrieve recursive ROS packages name given package list."""
+    """Retrieve ROS package names from a package-list file."""
     if os.path.isfile(installed_packages_path):
         try:
             with open(installed_packages_path, encoding="utf8") as file:
