@@ -42,7 +42,7 @@ def test_get_pull_commands_release(part_info):
     expected_commands = [
         "curl -fLo jammy-base-amd64.tar.gz https://cdimage.ubuntu.com/ubuntu-base/jammy/daily/current/jammy-base-amd64.tar.gz",
         "curl -fL https://cdimage.ubuntu.com/ubuntu-base/jammy/daily/current/SHA256SUMS | grep jammy-base-amd64.tar.gz > jammy-base-amd64.tar.gz.sha256sum",
-        "sha256sum -c jammy-base-amd64-.tar.gz || exit 1",
+        "sha256sum -c jammy-base-amd64.tar.gz.sha256sum || exit 1",
         "mkdir -p uc-initramfs-build",
         "tar --extract --file jammy-base-amd64.tar.gz --directory uc-initramfs-build",
         "cp --no-dereference /etc/resolv.conf uc-initramfs-build/etc/resolv.conf",
