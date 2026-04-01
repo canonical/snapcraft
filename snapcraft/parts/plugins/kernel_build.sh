@@ -382,7 +382,7 @@ run() {
     # the version varies by if we specified a flavour or not.
     kver="$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")"
 
-    # Cleanup final snap packaging
+    # Tidy final snap packaging
     pack_kernel "${kver}"
 
     if [ -n "${kernel_tools}" ]; then
@@ -402,7 +402,7 @@ run() {
 
 # main sets some important variables and kicks off the script
 main() {
-  set -ex
+  set -eux
 
   # /etc/os-release is guaranteed as build host is Ubuntu
   # shellcheck disable=SC1091
