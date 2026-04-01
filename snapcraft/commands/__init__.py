@@ -30,11 +30,11 @@ from .extensions import (
 )
 from .keys import (
     StoreCreateKeyCommand,
+    StoreListKeysCommand,
+    StoreKeysCommand,
 )
 from .legacy import (
     StoreLegacyGatedCommand,
-    StoreLegacyListKeysCommand,
-    StoreLegacyKeysCommand,
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacyRegisterKeyCommand,
@@ -95,10 +95,9 @@ __all__ = [
     "StoreEditValidationSetsCommand",
     "StoreEditConfdbSchemaCommand",
     "StoreExportLoginCommand",
+    "StoreKeysCommand",
     "StoreLegacyGatedCommand",
-    "StoreLegacyKeysCommand",
     "StoreLegacyListCommand",
-    "StoreLegacyListKeysCommand",
     "StoreLegacyListRegisteredCommand",
     "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
@@ -108,6 +107,7 @@ __all__ = [
     "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
+    "StoreListKeysCommand",
     "StoreListTracksCommand",
     "StoreListValidationSetsCommand",
     "StoreLoginCommand",

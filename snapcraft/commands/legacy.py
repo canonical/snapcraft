@@ -24,7 +24,6 @@ from typing import TYPE_CHECKING
 from craft_application.commands import AppCommand
 from typing_extensions import override
 
-from snapcraft import errors
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.store._legacy_account import set_legacy_env
 
@@ -133,29 +132,6 @@ class StoreLegacyMetricsCommand(LegacyAppCommand):
 ##############
 # Assertions #
 ##############
-
-
-class StoreLegacyKeysCommand(LegacyAppCommand):
-    """Command passthrough for the keys command."""
-
-    name = "keys"
-    help_msg = "List the keys available to sign assertions"
-    overview = textwrap.dedent(
-        """
-        List the available keys to sign assertions together with their
-        local availability."""
-    )
-
-
-class StoreLegacyListKeysCommand(StoreLegacyKeysCommand):
-    """Removed command alias for the keys command."""
-
-    name = "list-keys"
-    hidden = True
-
-    @override
-    def run(self, parsed_args: argparse.Namespace) -> None:
-        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreLegacyRegisterKeyCommand(LegacyAppCommand):
