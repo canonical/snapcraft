@@ -61,6 +61,7 @@ architectures set up accordingly.
 from typing import Literal, cast
 
 import pydantic
+import requests
 from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
@@ -72,12 +73,6 @@ KERNEL_ARCH_FROM_SNAP_ARCH = {
     "ppc64el": "powerpc",
     "riscv64": "riscv",
     "s390x": "s390",
-}
-
-KERNEL_RELEASE_FROM_SNAP_BASE = {
-    "core22": "jammy",
-    "core24": "noble",
-    "core26": "resolute",
 }
 
 
@@ -144,24 +139,44 @@ class KernelPlugin(plugins.Plugin):
     @override
     def get_pull_commands(self) -> list[str]:
         commands = []
-        base = self._part_info.base
-        ubuntu_repo_base = (
-            "https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git"
-        )
-        ubuntu_repo_release = KERNEL_RELEASE_FROM_SNAP_BASE[base]
+        pkg = "linux"
+        branch = self.options.kernel_ubuntu_abinumber
+        flavour = self.options.kernel_ubuntu_kconfigflavour
+        release = self.options.kernel_ubuntu_release_name
+        team_names = ["ubuntu-kernel", "canonical-kernel"]
 
-        if self.options.kernel_ubuntu_release_name:
-            commands.extend(
-                [
-                    "git init",
-                    f"git remote add origin {ubuntu_repo_base}/{ubuntu_repo_release}",
-                    "git fetch --depth 1 origin master-next",
-                    "git checkout FETCH_HEAD",
-                ]
-            )
+        if self.options.kernel_ubuntu_binary_package:
+            return super().get_pull_commands()
 
-        if commands:
+        if flavour != "generic":
+            pkg = f"linux-{flavour}"
+
+        for name in team_names:
+            url = f"https://code.launchpad.net/~{name}/+git"
+            try:
+                response = requests.get(url, timeout=5)
+            except requests.RequestException as exc:
+                raise errors.PartsError(f"Failed to fetch {url}") from exc
+
+            # Look for the source package repository for the release name
+            # The URL pattern is typically: /~{name}/ubuntu/+source/{pkg}/+git/{release}
+            match_part = f"~{name}/ubuntu/+source/{pkg}/+git/{release}"
+            if match_part in response.text:
+                repo = f"https://git.launchpad.net/~{name}/ubuntu/+source/{pkg}/+git/{release}"
+
+            if self.options.kernel_ubuntu_release_name:
+                commands.extend(
+                    [
+                        "git init",
+                        f"git remote add origin {repo}",
+                        f"git fetch --depth 1 origin {branch}",
+                        "git checkout FETCH_HEAD",
+                    ]
+                )
+
             return commands
+        raise errors.PartsError(f"failed to find kernel source url: {repo}")
+
         return super().get_pull_commands()
 
     @override
