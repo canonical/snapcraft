@@ -232,12 +232,12 @@ During the build step the plugin performs the following actions:
 Examples
 --------
 
-The following snippet declares a part using the Kernel plugin. It specifies the Ubuntu
-22.04 kernel as the source via the ``kernel-ubuntu-release-name`` plugin key,
+The following snippet declares a part using the Kernel plugin. It specifies the
+Ubuntu 22.04 kernel as the source via the ``kernel-ubuntu-release-name`` plugin key,
 and so a generic ``kernel-kconfigflavour`` is used (as this is the default behavior,
 no key is specified). A specific tag (Ubuntu-5.15.0-176.186) is named with the
-``kernel-ubuntu-abinumber` key, which means that tag of the Jammy tree will be cloned. A
-kernel config value is specified to remove debug information.
+``kernel-ubuntu-abinumber`` key, which means that tag of the Jammy tree will be cloned.
+A kernel config value is specified to remove debug information.
 
 The linux-firmware and wireless-regdb packages are staged with this part for
 convenience but are not necessarily required.
