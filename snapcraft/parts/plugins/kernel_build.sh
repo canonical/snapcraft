@@ -8,10 +8,6 @@ parse_args() {
       # kernel_kdefconfig is a list one or more kernel defconfigs
       # Default value is "defconfig".
       kernel_kdefconfig=${arg#*=}             ;;
-      kernel-kconfigflavour=*)
-      # kernel_kconfigflavour is a single Ubuntu-specific kernel flavour and supersedes defconfig
-      # Default value is "generic".
-      kernel_kconfigflavour=${arg#*=}         ;;
       kernel-kconfigs=*)
       # kernel_kconfigs is a list of of kernel kconfigs to override in the generated config
       kernel_kconfigs=${arg#*=}               ;;
@@ -19,12 +15,19 @@ parse_args() {
       # kernel_tools specifies a list of tools to build
       # Default value is "".
       kernel_tools=${arg#*=}                  ;;
+      kernel-ubuntu-kconfigflavour=*)
+      # kernel_ubuntu_kconfigflavour is a single Ubuntu-specific kernel flavour and supersedes defconfig
+      # Default value is "generic".
+      kernel_ubuntu_kconfigflavour=${arg#*=}  ;;
       kernel-ubuntu-release-name=*)
       # kernel_ubuntu_release_name specifies the specific release to build from
       kernel_ubuntu_release_name=${arg#*=}    ;;
       kernel-ubuntu-binary-package=*)
       # kernel_ubuntu_binary_package specifies if prebuilt debs should be used
       kernel_ubuntu_binary_package=${arg#*=}  ;;
+      # kernel_ubuntu_abinumber specifies a particular linux-image package version to fetch
+      kernel-ubuntu-abinumber=*)
+      kernel_ubuntu_abinumber=${arg#*=}       ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac
   done
@@ -45,7 +48,7 @@ gen_defconfig() {
 # gen_flavour_config generates a kernel config based on the chosen flavour
 gen_flavour_config() {
   OLDPWD="${PWD}"
-  ubuntuconfig="${KERNEL_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${kernel_kconfigflavour}"
+  ubuntuconfig="${KERNEL_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${kernel_ubuntu_kconfigflavour}"
   cd "${KERNEL_SRC}"
 
   # Generate the configs
@@ -199,8 +202,8 @@ repack_deb() {
 setup_kernel() {
   [ -e "${CRAFT_PART_BUILD}/.config" ] || {
     # Privilege a specified flavour over all else
-    if [ -n "${kernel_kconfigflavour}" ] && [ "${kernel_kconfigflavour}" != "generic" ]; then
-      echo "Using Ubuntu config flavour ${kernel_kconfigflavour}"
+    if [ -n "${kernel_ubuntu_kconfigflavour}" ] && [ "${kernel_ubuntu_kconfigflavour}" != "generic" ]; then
+      echo "Using Ubuntu config flavour ${kernel_ubuntu_kconfigflavour}"
       gen_flavour_config
     # Privilege specified config(s) over most
     elif [ -n "${kernel_kdefconfig}" ] && [ "${kernel_kdefconfig}" != "defconfig" ]; then
@@ -234,13 +237,13 @@ build_kernel() {
   # shellcheck disable=2086
   # If kconfigflavour has been chosen, we're building an Ubuntu kernel.
   # Otherwise, we're building a "regular" kernel.
-  if [ -n "${kernel_kconfigflavour}" ]; then
+  if [ -n "${kernel_ubuntu_kconfigflavour}" ]; then
     # Set release ABI information if a flavour is specified
     release_info
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}"         \
          -C "${KERNEL_SRC}"                         \
           O="${CRAFT_PART_BUILD}"                   \
-          KERNELVERSION="${abi_release}-${kernel_kconfigflavour}" \
+          KERNELVERSION="${abi_release}-${kernel_ubuntu_kconfigflavour}" \
           KBUILD_BUILD_VERSION="${uploadnum}"       \
           CONFIG_DEBUG_SECTION_MISMATCH=y           \
           LOCALVERSION=                             \
@@ -343,19 +346,25 @@ run() {
   done
 
   # Set kconfigflavour
-  if [ -n "${kernel_kconfigflavour}" ]; then
-    kconfigflavour="-${kernel_kconfigflavour}"
+  if [ -n "${kernel_ubuntu_kconfigflavour}" ]; then
+    kconfigflavour="-${kernel_ubuntu_kconfigflavour}"
   fi
 
   if [ "$kernel_ubuntu_binary_package" = "True" ]; then
-    # Get the total version string and cut the upload number
-    kver="$(apt info "linux-image${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
-    kver="${kver%.*}"
-    # linux-image-${kconfigflavour} is of the form x.y.z.a-b, but ver in
-    # linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy
-    # trim -b and swap .a for -a
-    if [ "${UBUNTU_SERIES}" = "jammy" ]; then
-      kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
+    if [ -z "$kernel_ubuntu_abinumber" ]; then
+      # Get the total version string and cut the upload number
+      kver="$(apt info "linux-image${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
+      # Trim ~<LTS> as kernels like partner, HWE, or riscv64 append ~<LTS>
+      kver="${kver%~*}"
+      # Trim the kernel release from the string
+      kver="${kver%.*}"
+      # linux-image-${kconfigflavour} has version of the form x.y.z.a-b, but ver in
+      # linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy so
+      # swap .a for -a
+      if [ "${UBUNTU_SERIES}" = "jammy" ]; then
+        kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
+      fi
+    else kver="${kernel_ubuntu_abinumber}"
     fi
 
     repack_deb "${kver}" "${kconfigflavour}"
@@ -388,7 +397,7 @@ run() {
   create_snap_structure
 
   # Run depmod to ensure all modules are accounted for
-  redepmod "${kver}" "${kconfigflavour}"
+  redepmod "${kver}" "${kconfigflavour:-}"
 }
 
 # main sets some important variables and kicks off the script
