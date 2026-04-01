@@ -19,13 +19,8 @@
 The following kernel-specific options are provided by this plugin:
 
     - kernel-kdefconfig:
-      (list of strings, default: none))
-      defconfig target to use as the base configuration. default: "defconfig"
-
-    - kernel-kconfigflavour:
-      (string; default: generic)
-      Ubuntu config flavour to use as base configuration. If provided this
-      option wins over kernel-kdefconfig. default: None
+      (list of strings, default: defconfig))
+      defconfig target to use as the base configuration.
 
     - kernel-kconfigs:
       (list of strings; default: none)
@@ -40,14 +35,23 @@ The following kernel-specific options are provided by this plugin:
       a list of tools to build alongside the kernel. Accepted values are bpf,
       cpupower, and perf
 
+    - kernel-ubuntu-kconfigflavour:
+      (string; default: generic)
+      Ubuntu config flavour to use as base configuration. If provided this
+      option wins over kernel-kdefconfig.
+
     - kernel-ubuntu-release-name
       (string; default: none)
-      a specific Ubuntu release to build a kernel from
+      a specific Ubuntu release to fetch the source of and to build a kernel of.
 
     - kernel-ubuntu-binary-package
       (boolean; default: False)
-      use this flag to specify whether or not a prebuilt debian kernel package should be
-      used. Conflicts with specifying a source
+      Specifies whether or not a prebuilt debian kernel package should be used.
+
+    - kernel-ubuntu-abinumber
+      (string; defualt: none)
+      A string to specify either a particular kernel version and ABI, or a particular
+      tag when cloning an Ubuntu kernel tree.
 
 This plugin supports cross compilation, for which plugin expects
 the build-environment is configured accordingly and has foreign
@@ -83,10 +87,11 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     plugin: Literal["kernel"] = "kernel"
 
     kernel_kconfigs: list[str] = []
-    kernel_kconfigflavour: str = "generic"
-    kernel_kdefconfig: list[str] = []
+    kernel_kdefconfig: list[str] = ["defconfig"]
     kernel_tools: list[str] = []
+    kernel_ubuntu_kconfigflavour: str = "generic"
     kernel_ubuntu_release_name: str = ""
+    kernel_ubuntu_abinumber: str = "master-next"
     kernel_ubuntu_binary_package: bool = False
 
     @pydantic.model_validator(mode="after")
@@ -262,28 +267,34 @@ class KernelPlugin(plugins.Plugin):
 
     @override
     def get_build_commands(self) -> list[str]:
-        kconfigflavour = self.options.kernel_kconfigflavour
+        kdefconfig = self.options.kernel_kdefconfig
+        abinumber = self.options.kernel_ubuntu_abinumber
+        kconfigflavour = self.options.kernel_ubuntu_kconfigflavour
         release_name = self.options.kernel_ubuntu_release_name
 
-        if self.options.kernel_kdefconfig != ["defconfig"]:
+        if kdefconfig != ["defconfig"]:
             kconfigflavour = ""
 
-        if not self.options.kernel_ubuntu_release_name:
+        if not release_name:
             release_name = "None"
 
-        if self.options.kernel_ubuntu_binary_package:
+        if self.options.kernel_ubuntu_binary_package and kconfigflavour == "":
             kconfigflavour = "generic"
+
+        if abinumber == "master-next":
+            abinumber = ""
 
         return [
             " ".join(
                 [
                     "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh",
-                    f"kernel-kconfigflavour={kconfigflavour}",
                     f"kernel-kdefconfig={','.join(self.options.kernel_kdefconfig)}",
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
                     f"kernel-tools={','.join(self.options.kernel_tools)}",
+                    f"kernel-ubuntu-kconfigflavour={kconfigflavour}",
                     f"kernel-ubuntu-release-name={release_name}",
                     f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package}",
+                    f"kernel-ubuntu-abinumber={abinumber}",
                 ]
             )
         ]
