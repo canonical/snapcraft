@@ -406,7 +406,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
             if any(p for p in installed_pkgs if p.name == dep.name):
                 continue
             # No need to resolve this dependency if it's provided by the build snap
-            if any(p for p in build_snap_packages_ros if p == dep.name):
+            if dep.name in build_snap_packages_ros:
                 continue
 
             cmd = ["rosdep", "resolve", dep.name, "--rosdistro", ros_distro]
