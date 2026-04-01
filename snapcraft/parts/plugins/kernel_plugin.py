@@ -95,15 +95,6 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     kernel_ubuntu_binary_package: bool = False
 
     @pydantic.model_validator(mode="after")
-    def validate_release_name_and_source_exclusive(self) -> Self:
-        """Enforce release_name and source options are mutually exclusive."""
-        if self.kernel_ubuntu_release_name and self.source:
-            raise errors.PartsError(
-                "cannot use 'kernel-ubuntu-release-name' and 'source' keys at same time"
-            )
-        return self
-
-    @pydantic.model_validator(mode="after")
     def validate_binary_package_and_source_build_options_mutually_exclusive(
         self,
     ) -> Self:
