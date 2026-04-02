@@ -141,7 +141,7 @@ value is target-architecture dependent:
 
 * amd64, s390x: ``bzImage``
 * armhf: ``zImage``
-* arm64, riscv64: ``Image.xz``
+* arm64, riscv64: ``Image.gz``
 * ppc64el: ``zImage``
 
 The default behavior is to build a compressed kernel image. On some systems, an
@@ -150,8 +150,8 @@ set to the uncompressed names:
 
 * armhf, arm64, riscv64: ``Image``
 
-Some architectures support many different compression algorithms. For instance on
-arm64 and riscv64 the following are valid choices:
+Some architectures support many different compression algorithms. Depending on
+the kernel version, on arm64 and riscv64 the following could be valid choices:
 
 * ``Image``
 * ``Image.gz``
@@ -163,7 +163,8 @@ arm64 and riscv64 the following are valid choices:
 
 Ensure the chosen compressor is listed in the part's ``build-packages``.
 
-An uncompressed image is not available for amd64 or s390x.
+Inspect ``arch/<arch>/boot/Makefile`` in your kernel source tree to see what
+targets are valid.
 
 
 KERNEL_TARGET
