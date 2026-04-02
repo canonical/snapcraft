@@ -22,30 +22,16 @@ package-repositories:
 
 parts:
   kernel:
-    plugin: nil
+    plugin: kernel
+    kernel-ubuntu-binary-package: true
     stage-packages:
-      - linux-firmware
-      - linux-image-generic:riscv64
       - wireless-regdb
     override-build: |
       craftctl default
 
-      mv -f "${CRAFT_PART_INSTALL}/lib/modules"  "${CRAFT_PART_INSTALL}/modules"
-      mv -f "${CRAFT_PART_INSTALL}/lib/firmware" "${CRAFT_PART_INSTALL}/firmware"
-
-      ln -sf ../modules  "${CRAFT_PART_INSTALL}/lib/modules"
-      ln -sf ../firmware "${CRAFT_PART_INSTALL}/lib/firmware"
-
       kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
 
       craftctl set version="${kver}"
-
-      depmod -b "${CRAFT_PART_INSTALL}" "${kver}"
-
-      mv -f "${CRAFT_PART_INSTALL}/boot/"* "${CRAFT_PART_INSTALL}"
-      mv -f "${CRAFT_PART_INSTALL}/vmlinuz"* "${CRAFT_PART_INSTALL}/kernel.img-${kver}"
-
-      ln -sf "kernel.img-${kver}" "${CRAFT_PART_INSTALL}/kernel.img"
 
   initrd:
     after: [kernel]

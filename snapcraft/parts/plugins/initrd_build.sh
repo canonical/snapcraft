@@ -75,27 +75,6 @@ clean() {
 
 # chroot_setup creates the chroot base and mounts certain filesystems from host
 chroot_setup() {
-    # Make sure no initrd chroot is lingering
-    [ -e "${INITRD_ROOT}" ] && rm -rf "${INITRD_ROOT}"
-
-    tar_base_url=https://cdimage.ubuntu.com/ubuntu-base
-    tar_release="${UBUNTU_SERIES}/daily/current"
-    tar_name="${UBUNTU_SERIES}-base-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
-    tar_url="${tar_base_url}/${tar_release}/${tar_name}"
-    ubuntu_base="ubuntu-base-${UBUNTU_SERIES}-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
-
-    curl --output "${ubuntu_base}" "${tar_url}"
-
-    # Extract chroot base
-    mkdir -p "${INITRD_ROOT}"
-    tar --extract --file "${ubuntu_base}" --directory "${INITRD_ROOT}"
-
-    # Ensure networking in chroot
-    cp --no-dereference /etc/resolv.conf "${INITRD_ROOT}/etc/resolv.conf"
-
-    # /dev/null isn't in the chroot base but it is used to mask some systemd service units
-    touch "${INITRD_ROOT}/dev/null"
-
     # This is a minimum viable collection of mounts.
     # Even though we try to settle any existing processes, on some systems this isn't
     # sufficient for ensuring an unmount can happen right now. Therefore, unmount lazily
@@ -166,7 +145,7 @@ chroot_configure() {
 
   chroot_run "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
 
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     # snapd deb is required
     # The most common failure one may see in this circumstance is an error from dpkg
     # that /etc/resolv.conf and /run/systemd/resolve/stub-resolv.conf are the same file
@@ -195,7 +174,7 @@ chroot_configure() {
   fi
 
   chroot_run "apt-get update"
-  chroot_run "apt-get install --no-install-recommends -y ubuntu-core-initramfs"
+  chroot_run "apt-get install --no-install-recommends --allow-downgrades -y ubuntu-core-initramfs"
 
   # actual ubuntu-core initramfs build is performed in chroot
   # where tmp is not really tmpfs, avoid excessive use of cp
@@ -217,7 +196,7 @@ add_modules() {
   initrd_conf="${initrd_conf_dir}/ubuntu-core-initramfs.conf"
 
   # A bug in releases pre-24.04; ensure modules are properly added
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     modules=""
     while read -r m; do
       modules="${modules} ${m}"
@@ -226,10 +205,7 @@ add_modules() {
 
   rm -f "${initrd_modules_conf}"
 
-  if [ "${UBUNTU_SERIES}" = "focal" ]; then
-       initrd_modules_conf="${initrd_modules_conf%/*}/main/extra-modules.conf"
-  else initrd_modules_conf="${initrd_modules_conf%/*}/modules/main/extra-modules.conf"
-  fi
+  initrd_modules_conf="${initrd_modules_conf%/*}/modules/main/extra-modules.conf"
 
   mkdir -p "${initrd_conf_dir}"    \
            "${initrd_modules_dir}" \
@@ -375,7 +351,7 @@ create_initrd() {
   # snapd version information should be at the top-level of the kernel snap
   # The location of the file is different between jammy and noble
   snapd_info=usr/lib/snapd/info
-  if [ "$UBUNTU_SERIES" = "focal" ] || [ "$UBUNTU_SERIES" = "jammy" ]; then
+  if [ "$UBUNTU_SERIES" = "jammy" ]; then
     snapd_info="${INITRD_ROOT}/${snapd_info}"
   else
     snapd_info="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/${snapd_info}"
@@ -390,7 +366,7 @@ create_initrd() {
                 --output /boot/initrd.img"
 
   # ubuntu-core-initramfs will only generate a manifest for noble and later
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     generate_manifest "${INITRD_ROOT}/boot/manifest-initramfs.yaml-${KERNEL_VERSION}"
   fi
 
@@ -484,13 +460,6 @@ run() {
 main() {
   set -eux
 
-  # This script is used by both legacy and current behavior. If the new
-  # variables are unset fallback to old ones and use new names in the script.
-  : "${CRAFT_STAGE:=$SNAPCRAFT_STAGE}"
-  : "${CRAFT_PART_SRC:=$SNAPCRAFT_PART_SRC}"
-  : "${CRAFT_PART_INSTALL:=$SNAPCRAFT_PART_INSTALL}"
-  : "${CRAFT_ARCH_BUILD_FOR:=$SNAPCRAFT_ARCH_BUILD_FOR}"
-
   # Get the build environment's VERSION_CODENAME as this should match our target
   # shellcheck disable=1091
   . /etc/os-release
@@ -499,7 +468,7 @@ main() {
   UBUNTU_SERIES="${VERSION_CODENAME}"
 
   # INITRD_ROOT sets the chroot location
-  INITRD_ROOT="${CRAFT_PART_SRC}/uc-initramfs-build-root"
+  INITRD_ROOT="${CRAFT_PART_SRC}/uc-initramfs-build"
 
   # PPA_FINGERPRINT is the snappy-dev PPA fingerprint providing ubuntu-core-initramfs deb
   PPA_FINGERPRINT=F1831DDAFC42E99D
@@ -531,13 +500,6 @@ main() {
            BASE_CREATED    \
            BASE_CONFIGURED \
            SRC_LIST
-
-  # Building UKIs is only supported on jammy or later
-  if [ "${UBUNTU_SERIES}" = "focal" ]; then
-    initrd_build_efi_image="False"
-    initrd_efi_image_key=""
-    initrd_efi_image_cert=""
-  fi
 
   # clean if we fail
   trap 'clean "${INITRD_ROOT}"' EXIT INT

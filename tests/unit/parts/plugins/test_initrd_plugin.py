@@ -28,10 +28,28 @@ def part_info(new_dir):
             application_name="test",
             project_name="test-snap",
             cache_dir=new_dir,
+            base="core22",
             arch="amd64",
         ),
         part=Part("my-part", {}),
     )
+
+
+def test_get_pull_commands_release(part_info):
+    properties = InitrdPlugin.properties_class.unmarshal({})
+    plugin = InitrdPlugin(properties=properties, part_info=part_info)
+
+    expected_commands = [
+        "curl -fLo jammy-base-amd64.tar.gz https://cdimage.ubuntu.com/ubuntu-base/jammy/daily/current/jammy-base-amd64.tar.gz",
+        "curl -fL https://cdimage.ubuntu.com/ubuntu-base/jammy/daily/current/SHA256SUMS | grep jammy-base-amd64.tar.gz > jammy-base-amd64.tar.gz.sha256sum",
+        "sha256sum -c jammy-base-amd64.tar.gz.sha256sum || exit 1",
+        "mkdir -p uc-initramfs-build",
+        "tar --extract --file jammy-base-amd64.tar.gz --directory uc-initramfs-build",
+        "cp --no-dereference /etc/resolv.conf uc-initramfs-build/etc/resolv.conf",
+        "touch uc-initramfs-build/dev/null",
+    ]
+
+    assert plugin.get_pull_commands() == expected_commands
 
 
 def test_get_build_snaps(part_info):

@@ -62,27 +62,25 @@ The kernel modules to add to the initrd. If a listed module has dependencies,
 the plugin sources and installs them automatically.
 
 
-Core22 and higher
-~~~~~~~~~~~~~~~~~
-
-For snaps on core22 and higher, the following keys are also available. However,
-they will only work if the target architecture has a package in the Ubuntu
-archive providing an EFI stub. Otherwise, the build will fail.
+The following keys will only work if the target architecture has a package in
+the Ubuntu archive providing an EFI stub. Otherwise, the build will fail.
 
 
 initrd-build-efi-image
-^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~
 
 **Type**: bool
 
 **Default**: ``false``
 
-If true, a Unified Kernel Image (UKI) will be built instead of a standalone
-initrd compressed CPIO archive.
+If true, a Unified Kernel Image (UKI) will be created using the initrd
+compressed CPIO archive created by this plugin and a kernel image file. The
+kernel image must be present in ``${CRAFT_STAGE}`` and must be named
+``kernel.img`.
 
 
 initrd-efi-image-key
-^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~
 
 **Type**: string
 
@@ -90,12 +88,14 @@ A signing key file to use when creating a UKI EFI executable, provided as a
 relative path to ``${CRAFT_STAGE}/signing``.
 
 If set, the ``initrd-build-efi-image`` key should be set to ``true``, and
-the ``initrd-efi-image-cert`` key must also be set. If not set, the snakeoil key
-provided by the ubuntu-core-initramfs package is used.
+the ``initrd-efi-image-cert`` key must also be set.
+
+If this key is not set, the snakeoil key provided by the ubuntu-core-initramfs
+package is used.
 
 
 initrd-efi-image-cert
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 **Type**: string
 
@@ -103,8 +103,10 @@ A certificate file to use when creating a UKI EFI executable, provided as a
 relative path to ``${CRAFT_STAGE}/signing``.
 
 If set, the ``initrd-build-efi-image`` key should be ``true`` and the
-``initrd-efi-image-key`` key must be specified. If not specified, the snakeoil
-certificate provided by the ubuntu-core-initramfs package is used.
+``initrd-efi-image-key`` key must be specified.
+
+If this key is not set, the snakeoil certificate provided by the
+ubuntu-core-initramfs package is used.
 
 
 Dependencies
