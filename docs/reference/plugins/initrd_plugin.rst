@@ -62,11 +62,7 @@ The kernel modules to add to the initrd. If a listed module has dependencies,
 the plugin sources and installs them automatically.
 
 
-Core22 and higher
-~~~~~~~~~~~~~~~~~
-
-For snaps on core22 and higher, the following keys are also available. However,
-they will only work if the target architecture has a package in the Ubuntu
+These keys will only work if the target architecture has a package in the Ubuntu
 archive providing an EFI stub. Otherwise, the build will fail.
 
 
