@@ -124,7 +124,9 @@ def test_stage_runtime_dependencies_skips_build_snap_packages(monkeypatch, tmp_p
     monkeypatch.setattr(_ros.Repo, "fetch_stage_packages", _fetch_stage_packages)
     monkeypatch.setattr(_ros.Repo, "unpack_stage_packages", lambda **_kwargs: None)
 
-    _ros.stage_runtime_dependencies.callback(
+    callback = _ros.stage_runtime_dependencies.callback
+    assert callback is not None
+    callback(
         part_src=str(part_src),
         part_install=str(part_install),
         ros_version="2",
