@@ -48,7 +48,15 @@ gen_defconfig() {
 # gen_flavour_config generates a kernel config based on the chosen flavour
 gen_flavour_config() {
   OLDPWD="${PWD}"
-  ubuntuconfig="${KERNEL_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${kernel_ubuntu_kconfigflavour}"
+
+  # riscv64 is a snowflake and everything is <riscv> when you'd think it should be <generic>
+  # Generate the config for debian.riscv, but the config file will be named .config
+  if [ "${kernel_ubuntu_kconfigflavour}" = "riscv" ]; then
+    _kconfigflavour=generic
+  else _kconfigflavour="${kernel_ubuntu_kconfigflavour}"
+  fi
+
+  ubuntuconfig="${KERNEL_SRC}/CONFIGS/${CRAFT_ARCH_BUILD_FOR}-config.flavour.${_kconfigflavour}"
   cd "${KERNEL_SRC}"
 
   # Generate the configs
@@ -156,9 +164,9 @@ build_tool() {
 # redepmod reruns depmod for the entire built kernel's module tree
 redepmod() {
   _kver="${1}"
-  _flavour="${2}"
+
   echo "Rebuilding module dependencies"
-  depmod -b "${CRAFT_PART_INSTALL}" "${_kver}${_flavour}"
+  depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
 }
 
 # repack_deb unpacks the primary linux-image deb package for some flavour passed as $1
@@ -171,13 +179,13 @@ repack_deb() {
   # Some kernels only have an image and modules-extra
   # apt commands tend to succeed even if they return an error message
   for pkg in modules modules-extra; do
-    apt download "linux-${pkg}-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}" ||
-    echo "No candidate for linux-${pkg}-${_kver}${_flavour} found"
+    apt download "linux-${pkg}-${_kver}-${_flavour}:${CRAFT_ARCH_BUILD_FOR}" ||
+    echo "No candidate for linux-${pkg}-${_kver}-${_flavour} found"
   done
 
   # Fail if no linux-image package exists, as that's the whole point of this thing
-  apt download "linux-image-${_kver}${_flavour}:${CRAFT_ARCH_BUILD_FOR}" || {
-    echo "A linux-image package does not exist for ${_kver}${_flavour} on ${CRAFT_ARCH_BUILD_FOR}"
+  apt download "linux-image-${_kver}-${_flavour}:${CRAFT_ARCH_BUILD_FOR}" || {
+    echo "A linux-image package does not exist for ${_kver}-${_flavour} on ${CRAFT_ARCH_BUILD_FOR}"
     exit 1
   }
 
@@ -186,10 +194,10 @@ repack_deb() {
     dpkg -x "${deb}" "${CRAFT_PART_INSTALL}"
   done
 
-  mv -f "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}${_flavour}" \
-    "${CRAFT_PART_INSTALL}/kernel.img-${_kver}${_flavour}"
+  mv -f "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}-${_flavour}" \
+    "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}"
 
-  ln -sf "kernel.img-${_kver}${_flavour}" "${CRAFT_PART_INSTALL}/kernel.img"
+  ln -sf "kernel.img-${_kver}-${_flavour}" "${CRAFT_PART_INSTALL}/kernel.img"
 
   # In theory this is never unset. But to be extra safe...
   rm -rf "${CRAFT_PART_INSTALL:?}/usr"
@@ -347,13 +355,13 @@ run() {
 
   # Set kconfigflavour
   if [ -n "${kernel_ubuntu_kconfigflavour}" ]; then
-    kconfigflavour="-${kernel_ubuntu_kconfigflavour}"
+    kconfigflavour="${kernel_ubuntu_kconfigflavour}"
   fi
 
   if [ "$kernel_ubuntu_binary_package" = "True" ]; then
     if [ -z "$kernel_ubuntu_abinumber" ]; then
       # Get the total version string and cut the upload number
-      kver="$(apt info "linux-image${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
+      kver="$(apt info "linux-image-${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
       # Trim ~<LTS> as kernels like partner, HWE, or riscv64 append ~<LTS>
       kver="${kver%~*}"
       # Trim the kernel release from the string
@@ -368,6 +376,11 @@ run() {
     fi
 
     repack_deb "${kver}" "${kconfigflavour}"
+
+    # Update kver to be whatever the kernel debian package says kver should be
+    # This is primarily for redepmod as it needs to know this path
+    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+
   elif [ "$kernel_ubuntu_binary_package" = "False" ]; then
     # Ensure the config is setup properly
     setup_kernel
@@ -380,7 +393,7 @@ run() {
 
     # kver depends on if release information is known or not, so
     # the version varies by if we specified a flavour or not.
-    kver="$(cat "${CRAFT_PART_BUILD}/include/config/kernel.release")"
+    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
 
     # Tidy final snap packaging
     pack_kernel "${kver}"
@@ -397,7 +410,7 @@ run() {
   create_snap_structure
 
   # Run depmod to ensure all modules are accounted for
-  redepmod "${kver}" "${kconfigflavour:-}"
+  redepmod "${kver}"
 }
 
 # main sets some important variables and kicks off the script
