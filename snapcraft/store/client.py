@@ -569,6 +569,22 @@ class LegacyStoreClientCLI:
 
         return Revisions.unmarshal(response.json())
 
+    def list_validations(self, snap_id: str) -> list[dict[str, Any]]:
+        """Return a list of validations for snap_name.
+
+        :param snap_id: the id of the snap to query.
+        """
+        response = self.request(
+            "GET",
+            f"{self._base_url}/dev/api/snaps/{snap_id}/validations",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        return response.json()
+
     @staticmethod
     def _unmarshal_confdb_schema(
         confdb_schema_data: dict[str, Any],
