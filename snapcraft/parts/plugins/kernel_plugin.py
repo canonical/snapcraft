@@ -144,6 +144,7 @@ class KernelPlugin(plugins.Plugin):
         branch = self.options.kernel_ubuntu_abinumber
         flavour = self.options.kernel_ubuntu_kconfigflavour
         release = self.options.kernel_ubuntu_release_name
+        deb = self.options.kernel_ubuntu_binary_package
         team_names = ["ubuntu-kernel", "canonical-kernel"]
 
         if self.options.kernel_ubuntu_binary_package:
@@ -152,7 +153,7 @@ class KernelPlugin(plugins.Plugin):
         if flavour != "generic":
             pkg = f"linux-{flavour}"
 
-        if self.options.kernel_ubuntu_release_name:
+        if release and not deb:
             for name in team_names:
                 url = f"https://code.launchpad.net/~{name}/+git"
                 try:
