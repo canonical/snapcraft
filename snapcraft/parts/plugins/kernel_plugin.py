@@ -166,7 +166,7 @@ class KernelPlugin(plugins.Plugin):
             for name in team_names:
                 url = f"https://code.launchpad.net/~{name}/+git"
                 try:
-                    response = requests.get(url, timeout=5)
+                    response = requests.get(url, timeout=10)
                 except requests.RequestException as exc:
                     raise errors.PartsError(f"Failed to fetch {url}") from exc
 
