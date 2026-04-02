@@ -49,7 +49,7 @@ The following kernel-specific options are provided by this plugin:
       Specifies whether or not a prebuilt debian kernel package should be used.
 
     - kernel-ubuntu-abinumber
-      (string; defualt: none)
+      (string; default: none)
       A string to specify either a particular kernel version and ABI, or a particular
       tag when cloning an Ubuntu kernel tree.
 
@@ -139,6 +139,7 @@ class KernelPlugin(plugins.Plugin):
     @override
     def get_pull_commands(self) -> list[str]:
         commands = []
+        repo = ""
         pkg = "linux"
         branch = self.options.kernel_ubuntu_abinumber
         flavour = self.options.kernel_ubuntu_kconfigflavour
@@ -151,31 +152,31 @@ class KernelPlugin(plugins.Plugin):
         if flavour != "generic":
             pkg = f"linux-{flavour}"
 
-        for name in team_names:
-            url = f"https://code.launchpad.net/~{name}/+git"
-            try:
-                response = requests.get(url, timeout=5)
-            except requests.RequestException as exc:
-                raise errors.PartsError(f"Failed to fetch {url}") from exc
+        if self.options.kernel_ubuntu_release_name:
+            for name in team_names:
+                url = f"https://code.launchpad.net/~{name}/+git"
+                try:
+                    response = requests.get(url, timeout=5)
+                except requests.RequestException as exc:
+                    raise errors.PartsError(f"Failed to fetch {url}") from exc
 
-            # Look for the source package repository for the release name
-            # The URL pattern is typically: /~{name}/ubuntu/+source/{pkg}/+git/{release}
-            match_part = f"~{name}/ubuntu/+source/{pkg}/+git/{release}"
-            if match_part in response.text:
-                repo = f"https://git.launchpad.net/~{name}/ubuntu/+source/{pkg}/+git/{release}"
+                # Look for the source package repository for the release name
+                # The URL pattern is typically: /~{name}/ubuntu/+source/{pkg}/+git/{release}
+                match_part = f"~{name}/ubuntu/+source/{pkg}/+git/{release}"
+                if match_part in response.text:
+                    repo = f"https://git.launchpad.net/~{name}/ubuntu/+source/{pkg}/+git/{release}"
 
-            if self.options.kernel_ubuntu_release_name:
-                commands.extend(
-                    [
-                        "git init",
-                        f"git remote add origin {repo}",
-                        f"git fetch --depth 1 origin {branch}",
-                        "git checkout FETCH_HEAD",
-                    ]
-                )
+                    commands.extend(
+                        [
+                            "git init",
+                            f"git remote add origin {repo}",
+                            f"git fetch --depth 1 origin {branch}",
+                            "git checkout FETCH_HEAD",
+                        ]
+                    )
 
-            return commands
-        raise errors.PartsError(f"failed to find kernel source url: {repo}")
+                return commands
+            raise errors.PartsError(f"failed to find kernel source url: {repo}")
 
         return super().get_pull_commands()
 
