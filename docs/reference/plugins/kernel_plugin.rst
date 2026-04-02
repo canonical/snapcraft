@@ -150,8 +150,9 @@ set to the uncompressed names:
 
 * armhf, arm64, riscv64: ``Image``
 
-Some architectures support many different compression algorithms. Depending on
-the kernel version, on arm64 and riscv64 the following could be valid choices:
+Some architectures support many different compression algorithms. For instance,
+Depending on the kernel version, on arm64 and riscv64 the following could be
+valid choices:
 
 * ``Image``
 * ``Image.gz``
@@ -161,9 +162,10 @@ the kernel version, on arm64 and riscv64 the following could be valid choices:
 * ``Image.zst``
 * ``Image.lzma``
 
-Ensure the chosen compressor is listed in the part's ``build-packages``.
+Ensure the chosen compressor is available in the build environment or listed in
+the part's ``build-packages``.
 
-Inspect ``arch/<arch>/boot/Makefile`` in your kernel source tree to see what
+Inspect ``arch/${arch}/boot/Makefile`` in the kernel source tree to see what
 targets are valid.
 
 
@@ -234,11 +236,12 @@ Examples
 --------
 
 The following snippet declares a part using the Kernel plugin. It specifies the
-Ubuntu 22.04 kernel as the source via the ``kernel-ubuntu-release-name`` plugin key,
-and so a generic ``kernel-kconfigflavour`` is used (as this is the default behavior,
-no key is specified). A specific tag (Ubuntu-5.15.0-176.186) is named with the
-``kernel-ubuntu-abinumber`` key, which means that tag of the Jammy tree will be cloned.
-A kernel config value is specified to remove debug information.
+Ubuntu 22.04 kernel as the source via the ``kernel-ubuntu-release-name`` plugin
+key, and so a generic ``kernel-ubuntu-kconfigflavour`` is used (as this is the
+default behavior, no key is specified). A specific tag (Ubuntu-5.15.0-176.186)
+is named with the ``kernel-ubuntu-abinumber`` key, which means that tag of the
+Jammy tree will be cloned. A kernel config value is specified to remove debug
+information.
 
 The linux-firmware and wireless-regdb packages are staged with this part for
 convenience but are not necessarily required.
