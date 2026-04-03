@@ -32,7 +32,6 @@ from .keys import (
     StoreCreateKeyCommand,
 )
 from .legacy import (
-    StoreLegacyGatedCommand,
     StoreLegacyListKeysCommand,
     StoreLegacyKeysCommand,
     StoreLegacyMetricsCommand,
@@ -75,6 +74,7 @@ from .upload import (
 )
 from .validation_sets import (
     StoreEditValidationSetsCommand,
+    StoreGatedCommand,
     StoreListValidationSetsCommand,
     StoreValidationSetsCommand,
 )
@@ -95,8 +95,8 @@ __all__ = [
     "StoreEditValidationSetsCommand",
     "StoreEditConfdbSchemaCommand",
     "StoreExportLoginCommand",
-    "StoreLegacyGatedCommand",
     "StoreLegacyKeysCommand",
+    "StoreGatedCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListKeysCommand",
     "StoreLegacyListRegisteredCommand",
