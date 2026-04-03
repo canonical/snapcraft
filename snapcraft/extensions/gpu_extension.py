@@ -99,7 +99,7 @@ class GPUExtension(Extension):
     @override
     def is_experimental(base: str | None) -> bool:
         """Return whether this extension is experimental for the given base."""
-        return base == "core26"
+        return False
 
     @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:

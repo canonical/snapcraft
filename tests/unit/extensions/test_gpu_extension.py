@@ -74,11 +74,11 @@ def test_get_supported_confinement():
 
 
 @pytest.mark.parametrize(
-    ("base", "experimental"), [("core22", False), ("core24", False), ("core26", True)]
+    ("base",), [("core22",), ("core24",), ("core26",)]
 )
-def test_is_experimental(base, experimental):
+def test_is_experimental(base):
     """Test that GPU extension is not experimental."""
-    assert gpu_extension.GPUExtension.is_experimental(base=base) is experimental
+    assert gpu_extension.GPUExtension.is_experimental(base=base) is False
 
 
 def test_get_app_snippet(gpu_extension_core24):
