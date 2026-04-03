@@ -2,7 +2,9 @@
 
 get_base()
 {
-    if [[ "$SPREAD_SYSTEM" =~ ubuntu-24.04 ]]; then
+    if [[ "$SPREAD_SYSTEM" =~ ubuntu-26.04 ]]; then
+        echo "core26"
+    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-24.04 ]]; then
         echo "core24"
     elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
         echo "core22"
@@ -26,6 +28,15 @@ set_base()
     else
         # Insert at the very top to be safe
         sed -i "1ibase: $base"  "$snapcraft_yaml_path"
+    fi
+
+    if [ "$base" == "core26" ]; then
+        if grep -q "^build-base:" "$snapcraft_yaml_path"; then
+            sed -i "s/^build-base:.*/build-base: devel/g" "$snapcraft_yaml_path"
+        else
+            # Insert at the very top to be safe
+            sed -i "/^base:.*/a\build-base: devel"  "$snapcraft_yaml_path"
+        fi
     fi
 }
 

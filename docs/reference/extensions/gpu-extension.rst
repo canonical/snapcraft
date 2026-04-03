@@ -9,9 +9,9 @@ GPU extension
 The GPU extension, referred to internally as ``gpu``, provides hardware-accelerated graphics support for applications that need OpenGL, Vulkan, and other GPU capabilities.
 This extension adds the required GPU content interface to the snap, and sets up the necessary command chain wrapper for GPU acceleration.
 
-This extension is compatible with the core22 and core24 bases.
+This extension is compatible with the core22, core24 and core26 bases.
 
-For core24, it integrates the gpu-2404 provider snaps. For core22, it integrates the graphics-core22 provider snaps.
+It integrates the provider snaps appropriate for the base.
 
 
 .. _reference-gpu-extension-included-plugs:
@@ -22,6 +22,20 @@ Included plugs
 When this extension is used, the following plug is connected for the snap:
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. dropdown:: Included snap-wide plugs
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                plugs:
+                  gpu-2604:
+                      interface: content
+                      target: $SNAP/gpu-2604
+                      default-provider: mesa-2604
 
     .. tab-item:: core24
         :sync: core24
@@ -66,6 +80,11 @@ The GPU extension defaults to snap providers that include:
 
 .. tab-set::
 
+    .. tab-item:: core26
+        :sync: core26
+
+        The `mesa-2604 snap <https://snapcraft.io/mesa-2604>`_ is maintained by Canonical and provides up-to-date GPU driver support for applications built on the ``core26`` base.
+
     .. tab-item:: core24
         :sync: core24
 
@@ -83,6 +102,15 @@ Runtime wrapper
 The extension adds a command chain entry that runs before the application:
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. code-block:: yaml
+            :caption: snapcraft.yaml
+
+            command-chain:
+              - snap/command-chain/gpu-2604-wrapper
 
     .. tab-item:: core24
         :sync: core24
@@ -111,6 +139,18 @@ Included layouts
 This extension uses :ref:`layouts <reference-layouts>` to provide access to GPU resources:
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. dropdown:: Included layouts
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                layout:
+                  /usr/share/X11/XErrorDB:
+                    symlink: $SNAP/gpu-2604/X11/XErrorDB
 
     .. tab-item:: core24
         :sync: core24
@@ -149,6 +189,31 @@ Included parts
 The extension automatically adds parts to build and install the GPU wrapper and perform cleanup:
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. dropdown:: Included parts
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                parts:
+                  gpu/wrapper:
+                    source: <extensions-data-dir>/gpu/command-chain
+                    plugin: make
+                    make-parameters:
+                      - GPU_INTERFACE=gpu-2604
+                  gpu/cleanup:
+                    after:
+                      - <all-user-parts>
+                    source: https://github.com/canonical/gpu-snap.git
+                    plugin: nil
+                    override-prime: |
+                      craftctl default
+                      ${CRAFT_PART_SRC}/bin/graphics-gpu-2604-cleanup mesa-2604
+                      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
+                      mkdir -p "${CRAFT_PRIME}/gpu-2604"
 
     .. tab-item:: core24
         :sync: core24
@@ -207,6 +272,36 @@ Example usage
 Here's a simple example of using the GPU extension in a project file:
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. code-block:: yaml
+            :caption: snapcraft.yaml
+
+            name: my-gpu-app
+            base: core26
+            version: '1.0'
+            summary: An application using GPU acceleration
+            description: |
+              An application that requires hardware-accelerated graphics.
+
+            confinement: strict
+
+            apps:
+              my-gpu-app:
+                command: usr/bin/my-gpu-app
+                extensions: [gpu]
+                plugs:
+                  - opengl
+                  - x11
+                  - wayland
+
+            parts:
+              my-app:
+                plugin: nil
+                stage-packages:
+                  - my-gpu-application
 
     .. tab-item:: core24
         :sync: core24
@@ -276,6 +371,67 @@ Here's an example showing what Snapcraft adds when the GPU extension is used.
 This is the output before build, showing the expanded configuration:
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. dropdown:: Expanded project with GPU extension
+
+            .. code-block:: diff
+                :caption: snapcraft.yaml
+
+                name: my-gpu-app
+                base: core26
+                version: '1.0'
+                summary: An application using GPU acceleration
+                description: |
+                  An application that requires hardware-accelerated graphics.
+
+                confinement: strict
+
+                +plugs:
+                +  gpu-2604:
+                +    interface: content
+                +    target: $SNAP/gpu-2604
+                +    default-provider: mesa-2604
+                +
+                +layout:
+                +  /usr/share/X11/XErrorDB:
+                +    symlink: $SNAP/gpu-2604/X11/XErrorDB
+                +
+                apps:
+                  my-gpu-app:
+                    command: usr/bin/my-gpu-app
+                -   extensions: [gpu]
+                +   command-chain:
+                +     - snap/command-chain/gpu-2604-wrapper
+                    plugs:
+                      - opengl
+                      - x11
+                      - wayland
+
+                parts:
+                +  gpu/wrapper:
+                +    source: <extensions-data-dir>/gpu/command-chain
+                +    plugin: make
+                +    make-parameters:
+                +      - GPU_INTERFACE=gpu-2604
+                +
+                +  gpu/cleanup:
+                +    after:
+                +      - my-app
+                +    source: https://github.com/canonical/gpu-snap.git
+                +    plugin: nil
+                +    override-prime: |
+                +      craftctl default
+                +      ${CRAFT_PART_SRC}/bin/graphics-gpu-2604-cleanup mesa-2604
+                +      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
+                +      mkdir -p "${CRAFT_PRIME}/gpu-2604"
+                +
+                  my-app:
+                    plugin: nil
+                    stage-packages:
+                      - my-gpu-application
 
     .. tab-item:: core24
         :sync: core24
