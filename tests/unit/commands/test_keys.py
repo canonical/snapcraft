@@ -406,7 +406,6 @@ class TestRegisterKeyCommand:
         mocker.patch("craft_cli.emit.prompt", return_value=selection)
         cmd = commands.StoreRegisterKeyCommand(fake_app_config)
 
-        # key-name is a required arg, so this isn't scenario isn't possible
         cmd.run(argparse.Namespace(key_name=None))
 
         assert mock_subprocess_check_output.mock_calls == [
