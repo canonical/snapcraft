@@ -81,10 +81,10 @@ provides a minimal set of libraries common to most snaps. It's mounted and used
 as the root filesystem for the apps inside the snap. In essence, this means the
 snaps behave as though they were running on a system that matches the base.
 
-The core24, core22, and core20 bases are available. Bases correspond to Ubuntu LTS
-releases. For example, the library set in core24 is equivalent to a subset found in the
-Ubuntu 24.04 LTS general release. For most practical purposes, the use of either core24
-and core22 is recommended, depending on the :ref:`plugins <reference-plugins>` the snap
+The core26, core24, and core22 bases are available. Bases correspond to Ubuntu LTS
+releases. For example, the library set in core26 is equivalent to a subset found in the
+Ubuntu 26.04 LTS general release. For most practical purposes, the use of either core26
+and core24 is recommended, depending on the :ref:`plugins <reference-plugins>` the snap
 uses.
 
 Confinement
@@ -262,7 +262,7 @@ The ``build-packages`` key defines the list of tools and libraries required to
 successfully build or compile the part. The build packages are obtained from
 the repository archives that match the base, and need to be written in the
 syntax that can be correctly interpreted by the apt package manager. For
-instance, a foo build package from core22 would be installed (``apt install
+instance, a foo build package from core26 would be installed (``apt install
 foo``) in the snap build environment during build. In the case of wethr, the
 snap needs Git to retrieve the sources from a remote Git repository and sed
 to search and replace the string and yield a Git tag.

@@ -17,7 +17,7 @@ In addition to architecture-related variables, the following environment variabl
 also set:
 
 
-core22 and core24
+core22 and higher
 ~~~~~~~~~~~~~~~~~
 
 .. list-table::
@@ -63,11 +63,11 @@ See :ref:`explanation-parts-lifecycle` for details on which directories are crea
 building a part.
 
 
-core22 and core24
+core22 and higher
 ~~~~~~~~~~~~~~~~~
 
 Snapcraft exposes the following directory-related environment variables when building with
-core22 and core24:
+core22 and higher bases:
 
 .. list-table::
 
