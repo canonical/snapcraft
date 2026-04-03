@@ -351,7 +351,6 @@ from snapcraft_legacy import sources  # noqa
 # FIXME LP: #1662658
 from snapcraft_legacy._store import (  # noqa
     download,
-    gated,
     login,
     register,
     register_key,

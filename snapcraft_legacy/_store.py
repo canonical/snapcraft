@@ -686,45 +686,6 @@ def status(snap_name, arch):
     print(tabulated_status)
 
 
-def gated(snap_name):
-    """Print list of snaps gated by snap_name."""
-    store_client = StoreClientCLI()
-    account_info = store_client.get_account_information()
-    # Get data for the gating snap
-    snaps = account_info.get("snaps", {})
-
-    # Resolve name to snap-id
-    try:
-        snap_id = snaps[DEFAULT_SERIES][snap_name]["snap-id"]
-    except KeyError:
-        raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
-
-    validations = store_client.get_assertion(snap_id, endpoint="validations")
-
-    if validations:
-        table_data = []
-        for v in validations:
-            name = v["approved-snap-name"]
-            revision = v["approved-snap-revision"]
-            if revision == "-":
-                revision = None
-            required = str(v.get("required", True))
-            # Currently timestamps have microseconds, which look bad
-            timestamp = v["timestamp"]
-            if "." in timestamp:
-                timestamp = timestamp.split(".")[0] + "Z"
-            table_data.append([name, revision, required, timestamp])
-        tabulated = tabulate(
-            table_data,
-            headers=["Name", "Revision", "Required", "Approved"],
-            tablefmt="plain",
-            missingval="-",
-        )
-        print(tabulated)
-    else:
-        print("There are no validations for snap {!r}".format(snap_name))
-
-
 def validate(
     snap_name: str,
     validations: List[str],

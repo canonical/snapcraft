@@ -201,18 +201,3 @@ class StoreLegacyValidateCommand(LegacyAppCommand):
         parser.add_argument("--revoke", action="store_true", help="revoke validations")
         parser.add_argument("snap_name", metavar="snap-name")
         parser.add_argument("validations", nargs="+")
-
-
-class StoreLegacyGatedCommand(LegacyAppCommand):
-    """Command passthrough for the gated command."""
-
-    name = "gated"
-    help_msg = "List all gated snaps for <snap-name>"
-    overview = textwrap.dedent(
-        """
-        Get the list of snaps and revisions gating a snap"""
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("snap_name", metavar="snap-name")

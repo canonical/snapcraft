@@ -139,7 +139,7 @@ COMMAND_GROUPS = [
             commands.StoreListValidationSetsCommand,  # hidden (alias to validation-sets)
             commands.StoreValidationSetsCommand,
             commands.StoreLegacyValidateCommand,
-            commands.StoreLegacyGatedCommand,
+            commands.StoreGatedCommand,
         ],
     ),
     craft_cli.CommandGroup(

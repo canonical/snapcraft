@@ -78,11 +78,3 @@ def validate(
     -  <snap-id>=<revision>
     """
     snapcraft_legacy.validate(snap_name, validations, revoke=revoke, key=key_name)
-
-
-@assertionscli.command()
-@click.argument("snap-name", metavar="<snap-name>")
-@add_verbosity_options()
-def gated(snap_name: str, **kwargs) -> None:
-    """Get the list of snaps and revisions gating a snap."""
-    snapcraft_legacy.gated(snap_name)

@@ -1414,6 +1414,72 @@ def test_list_revisions(fake_client, list_revisions_payload):
     ]
 
 
+####################
+# List Validations #
+####################
+
+
+class TestListValidations:
+    """Tests for the 'list_validations' function."""
+
+    def test_list_validations(self, fake_client):
+        validations = [
+            {
+                "approved-snap-id": "test-id-1",
+                "approved-snap-revision": "1",
+                "authority-id": "test-authority-1",
+                "revoked": "false",
+                "series": "16",
+                "sign-key-sha3-384": "deadbeef",
+                "snap-id": "test-gated-id",
+                "timestamp": "2026-04-02T12:06:42.646917Z",
+                "type": "validation",
+                "approved-snap-name": "test-snap-1",
+                "required": False,
+            },
+            {
+                "approved-snap-id": "test-id-2",
+                "approved-snap-revision": "1",
+                "authority-id": "test-authority-2",
+                "revoked": "false",
+                "series": "16",
+                "sign-key-sha3-384": "abc123",
+                "snap-id": "test-gated-id",
+                "timestamp": "2026-04-02T12:03:31.211621Z",
+                "type": "validation",
+                "approved-snap-name": "test-snap-2",
+                "required": False,
+            },
+        ]
+
+        fake_client.request.return_value = FakeResponse(
+            status_code=200, content=json.dumps(validations).encode()
+        )
+
+        actual = client.StoreClientCLI().list_validations(snap_id="snap-id-gating")
+
+        assert actual == validations
+        assert fake_client.request.mock_calls == [
+            call(
+                "GET",
+                "https://dashboard.snapcraft.io/dev/api/snaps/snap-id-gating/validations",
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        ]
+
+    def test_list_validations_empty(self, fake_client):
+        fake_client.request.return_value = FakeResponse(
+            status_code=200, content=json.dumps([]).encode()
+        )
+
+        validations = client.StoreClientCLI().list_validations(snap_id="test-gated-id")
+
+        assert validations == []
+
+
 #######################
 # List Confdb Schemas #
 #######################
