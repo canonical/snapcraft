@@ -33,6 +33,12 @@ channel non-interactively with the ``--yes`` flag.
 The :ref:`ref_commands_validation-sets` command now supports a ``--format`` option to
 output validation sets as either a table or JSON.
 
+Interactive key selection for ``register-key``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`ref_commands_register-key` command now prompts users to select a key
+when no key name is given.
+
 
 Backwards-incompatible changes
 ------------------------------

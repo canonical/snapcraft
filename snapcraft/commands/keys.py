@@ -18,7 +18,10 @@
 
 from __future__ import annotations
 
+import datetime
+import functools
 import json
+import os
 import subprocess
 import textwrap
 from typing import TYPE_CHECKING, Any
@@ -33,7 +36,7 @@ from snapcraft import errors, store
 
 if TYPE_CHECKING:
     import argparse
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
 
 class StoreKeysCommand(AppCommand):
@@ -155,6 +158,135 @@ class StoreCreateKeyCommand(AppCommand):
         if parsed_args.key_name in enabled_names:
             raise store.errors.KeyAlreadyRegisteredError(parsed_args.key_name)
         subprocess.check_call(["snap", "create-key", parsed_args.key_name])
+
+
+class StoreRegisterKeyCommand(AppCommand):
+    """Register a key with the Snap store."""
+
+    name = "register-key"
+    help_msg = "Register a key to sign assertions with the Snap Store."
+    overview = textwrap.dedent(
+        """
+        Register a locally-created key with the Snap Store.
+        """
+    )
+
+    @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "key_name",
+            metavar="key-name",
+            help="Key used to sign the assertion",
+            nargs="?",
+        )
+
+    @staticmethod
+    def _save_key(func: Callable) -> Callable:
+        """Temporarily unset store credentials.
+
+        Registering a key requires a login with specific ACLs, so store credentials
+        are temporarily removed from the environment.
+        """
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            credentials = os.getenv(store.constants.ENVIRONMENT_STORE_CREDENTIALS)
+            if credentials:
+                del os.environ[store.constants.ENVIRONMENT_STORE_CREDENTIALS]
+            try:
+                return func(*args, **kwargs)
+            finally:
+                if credentials:
+                    os.environ[store.constants.ENVIRONMENT_STORE_CREDENTIALS] = (
+                        credentials
+                    )
+
+        return wrapper
+
+    @_save_key
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        """Register a locally-created key with the Snap Store.
+
+        Prompts for the key if multiple keys exist, then logs in with a
+        short-lived token scoped to ``modify_account_key``, exports the key assertion,
+        and registers it with the store.
+        """
+        key = self._maybe_prompt_for_key(parsed_args.key_name)
+
+        client = store.StoreClientCLI(ephemeral=True)
+        client.login(
+            acls=["modify_account_key"],
+            ttl=int(datetime.timedelta(days=1).total_seconds()),
+        )
+
+        emit.progress("Registering key ...")
+        account_info = client.get_account_info()
+        account_key_request = self._export_key(key["name"], account_info["account_id"])
+        client.register_key(account_key_request)
+        emit.message(
+            f"Done. The key {key['name']!r} ({key['sha3-384']!r}) may be used to sign your assertions."
+        )
+
+    def _maybe_prompt_for_key(self, name: str | None) -> dict[str, Any]:
+        """Return a key, prompting if more than one key exists.
+
+        :param name: The key name supplied by the user.
+
+        :returns: The selected key dict from snapd.
+
+        :raises NoSuchKeyError: If no key with 'name' exists locally.
+        :raises NoKeysError: If no keys are present and name is None.
+        """
+        keys = list(_get_usable_keys(name=name))
+        if not keys:
+            if name is not None:
+                raise store.errors.NoSuchKeyError(name)
+            else:
+                raise store.errors.NoKeysError()
+        return self._select_key(keys)
+
+    @staticmethod
+    def _export_key(name: str, account_id: str) -> str:
+        """Export a snapd key as an assertion.
+
+        :param name: The local key name to export.
+        :param account_id: The account ID for the key.
+
+        :returns: The serialized key assertion string.
+
+        :raises subprocess.CalledProcessError: If the snap command fails.
+        """
+        return subprocess.check_output(
+            ["snap", "export-key", f"--account={account_id}", name],
+            universal_newlines=True,
+        )
+
+    @staticmethod
+    def _select_key(keys: list[dict[str, Any]]) -> dict[str, Any]:
+        """Interactively select a key when multiple are available.
+
+        :param keys: A list of key dicts.
+
+        :returns: The selected key.
+        """
+        if len(keys) > 1:
+            emit.progress("Select a key:\n", permanent=True)
+            tabulated_keys = tabulate(
+                [(i + 1, key["name"], key["sha3-384"]) for i, key in enumerate(keys)],
+                headers=["Number", "Name", "SHA3-384 fingerprint"],
+                tablefmt="plain",
+            )
+            emit.progress(f"{tabulated_keys}\n", permanent=True)
+            while True:
+                try:
+                    keynum = int(emit.prompt("Key number: ")) - 1
+                except ValueError:
+                    continue
+                if keynum >= 0 and keynum < len(keys):
+                    return keys[keynum]
+        else:
+            return keys[0]
 
 
 def _get_usable_keys(name: str | None = None) -> Iterator[dict[str, Any]]:

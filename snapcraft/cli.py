@@ -126,7 +126,7 @@ COMMAND_GROUPS = [
         "Store Key Management",
         [
             commands.StoreCreateKeyCommand,
-            commands.StoreLegacyRegisterKeyCommand,
+            commands.StoreRegisterKeyCommand,
             commands.StoreLegacySignBuildCommand,
             commands.StoreListKeysCommand,
             commands.StoreKeysCommand,
