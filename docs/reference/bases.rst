@@ -18,6 +18,9 @@ There are six supported base snaps:
    * - Name
      - Description
      - Latest snapcraft track with support
+   * - `core26`_
+     - built from `Ubuntu 26.04 LTS`_
+     - 9.x
    * - `core24`_
      - built from `Ubuntu 24.04 LTS`_
      - 8.x
@@ -105,10 +108,12 @@ use ``build-base`` for kernel snaps.
 .. _`Ubuntu 20.04 LTS`: https://releases.ubuntu.com/20.04/
 .. _`Ubuntu 22.04 LTS`: https://releases.ubuntu.com/22.04/
 .. _`Ubuntu 24.04 LTS`: https://releases.ubuntu.com/24.04/
+.. _`Ubuntu 26.04 LTS`: https://releases.ubuntu.com/26.04/
 .. _`bare`: https://snapcraft.io/bare
 .. _`core18`: https://snapcraft.io/core18
 .. _`core20`: https://snapcraft.io/core20
 .. _`core22`: https://snapcraft.io/core22
 .. _`core24`: https://snapcraft.io/core24
+.. _`core26`: https://snapcraft.io/core26
 .. _`core`: https://snapcraft.io/core
 .. _`supported LTS or interim release`: https://ubuntu.com/about/release-cycle

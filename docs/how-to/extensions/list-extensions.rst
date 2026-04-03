@@ -26,6 +26,7 @@ differentiating them.
     gnome-3-28              core18
     gnome-3-34              core18
     gnome-3-38              core20
+    gpu                     core22, core24, core26
     kde-neon                core18, core20, core22, core24
     [...]
 
