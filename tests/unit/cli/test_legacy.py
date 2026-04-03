@@ -89,17 +89,3 @@ def test_sign_build(mocker, legacy_run):
     assert legacy_run.mock_calls == [
         call(argparse.Namespace(local=True, snap_file="foo.snap", key_name=None))
     ]
-
-
-def test_list_keys_error(mocker, capsys):
-    """Error on removed 'list-keys' command."""
-    mocker.patch.object(sys, "argv", ["cmd", "list-keys"])
-
-    cli.run()
-
-    out, err = capsys.readouterr()
-    assert not out
-    assert (
-        "The 'list-keys' command was renamed to 'keys'.\n"
-        "Recommended resolution: Use 'keys' instead."
-    ) in err

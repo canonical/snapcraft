@@ -27,16 +27,6 @@ def assertionscli():
     """Store assertion commands"""
 
 
-@assertionscli.command("list-keys")
-@add_verbosity_options()
-def list_keys(**kwargs):
-    """List the keys available to sign assertions.
-
-    This command has an alias of `keys`.
-    """
-    snapcraft_legacy.list_keys()
-
-
 @assertionscli.command("register-key")
 @click.argument("key-name", metavar="<key-name>", required=False)
 @click.option(

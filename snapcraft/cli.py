@@ -128,8 +128,8 @@ COMMAND_GROUPS = [
             commands.StoreCreateKeyCommand,
             commands.StoreLegacyRegisterKeyCommand,
             commands.StoreLegacySignBuildCommand,
-            commands.StoreLegacyListKeysCommand,
-            commands.StoreLegacyKeysCommand,
+            commands.StoreListKeysCommand,
+            commands.StoreKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(

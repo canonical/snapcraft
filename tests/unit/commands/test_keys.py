@@ -19,14 +19,18 @@
 import argparse
 import json
 import subprocess
+import sys
 from unittest.mock import call
 
 import craft_store
 import pytest
 
-from snapcraft import commands, store
+from snapcraft import cli, commands, store
 from snapcraft.commands.keys import _get_usable_keys
 from tests.unit.store.utils import FakeResponse
+
+_TEST_KEY_1 = {"name": "test-key-1", "sha3-384": "abc123"}
+_TEST_KEY_2 = {"name": "test-key-2", "sha3-384": "deadbeef"}
 
 
 @pytest.fixture
@@ -60,15 +64,15 @@ class TestGetUsableKeys:
             pytest.param(
                 None,
                 [
-                    {"name": "test-key-1", "sha3-384": "abc123"},
-                    {"name": "test-key-2", "sha3-384": "deadbeef"},
+                    _TEST_KEY_1,
+                    _TEST_KEY_2,
                 ],
                 id="no-name",
             ),
             pytest.param(
                 "test-key-1",
                 [
-                    {"name": "test-key-1", "sha3-384": "abc123"},
+                    _TEST_KEY_1,
                 ],
                 id="matching-name",
             ),
@@ -84,8 +88,8 @@ class TestGetUsableKeys:
             "subprocess.check_output",
             return_value=json.dumps(
                 [
-                    {"name": "test-key-1", "sha3-384": "abc123"},
-                    {"name": "test-key-2", "sha3-384": "deadbeef"},
+                    _TEST_KEY_1,
+                    _TEST_KEY_2,
                 ]
             ),
         )
@@ -143,6 +147,69 @@ class TestGetUsableKeys:
             list(_get_usable_keys(name="test-key-1"))
 
 
+class TestKeysCommand:
+    """Tests for the 'keys' command."""
+
+    def test_keys(
+        self, fake_store_client, fake_app_config, emitter, fake_get_usable_keys
+    ):
+        """Test local keys, registered keys, and keys not on the system."""
+        fake_get_usable_keys.return_value = [_TEST_KEY_1, _TEST_KEY_2]
+        fake_store_client.get_account_info.return_value = {
+            "account_keys": [
+                {
+                    "name": _TEST_KEY_1["name"],
+                    "public-key-sha3-384": _TEST_KEY_1["sha3-384"],
+                },
+                {"name": "not-on-system-key", "public-key-sha3-384": "def456"},
+            ]
+        }
+
+        cmd = commands.StoreKeysCommand(fake_app_config)
+
+        cmd.run(argparse.Namespace())
+
+        emitter.assert_message("The following keys are available on this system:")
+        emitter.assert_message(
+            "    Name        SHA3-384 fingerprint\n"
+            "*   test-key-1  abc123\n"
+            "-   test-key-2  deadbeef                (not registered)"
+        )
+        emitter.assert_message(
+            "The following SHA3-384 key fingerprints have been registered but are not available on this system:\n"
+            "- def456"
+        )
+
+    @pytest.mark.usefixtures("fake_get_usable_keys")
+    def test_keys_no_keys(self, fake_store_client, fake_app_config, emitter):
+        """No local keys and no registered keys."""
+        cmd = commands.StoreKeysCommand(fake_app_config)
+
+        cmd.run(argparse.Namespace())
+
+        emitter.assert_message(
+            "No keys have been created on this system. "
+            "See 'snapcraft create-key --help' to create a key."
+        )
+        emitter.assert_message(
+            "No keys have been registered with this account. "
+            "See 'snapcraft register-key --help' to register a key."
+        )
+
+    def test_list_keys_error(self, mocker, capsys):
+        """Error on removed 'list-keys' command."""
+        mocker.patch.object(sys, "argv", ["cmd", "list-keys"])
+
+        cli.run()
+
+        out, err = capsys.readouterr()
+        assert not out
+        assert (
+            "The 'list-keys' command was renamed to 'keys'.\n"
+            "Recommended resolution: Use 'keys' instead."
+        ) in err
+
+
 class TestCreateKeyCommand:
     """Tests for the 'create-key' command."""
 
@@ -163,9 +230,7 @@ class TestCreateKeyCommand:
         fake_app_config,
         fake_get_usable_keys,
     ):
-        fake_get_usable_keys.return_value = [
-            {"name": "test-key-1", "sha3-384": "abc123"}
-        ]
+        fake_get_usable_keys.return_value = [_TEST_KEY_1]
 
         cmd = commands.StoreCreateKeyCommand(fake_app_config)
 

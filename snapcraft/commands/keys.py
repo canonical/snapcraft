@@ -25,13 +25,87 @@ from typing import TYPE_CHECKING, Any
 
 import craft_store
 from craft_application.commands import AppCommand
+from craft_cli import emit
+from tabulate import tabulate
 from typing_extensions import override
 
-from snapcraft import store
+from snapcraft import errors, store
 
 if TYPE_CHECKING:
     import argparse
     from collections.abc import Iterator
+
+
+class StoreKeysCommand(AppCommand):
+    """List local keys and registered keys."""
+
+    name = "keys"
+    help_msg = "List the keys available to sign assertions"
+    overview = textwrap.dedent(
+        """
+        List the available keys to sign assertions together with their
+        local availability."""
+    )
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        """Lists all snap keys."""
+        keys = list(_get_usable_keys())
+        client = store.StoreClientCLI()
+        account_info = client.get_account_info()
+        enabled_keys = [
+            account_key["public-key-sha3-384"]
+            for account_key in account_info["account_keys"]
+        ]
+
+        if keys:
+            tabulated_keys = tabulate(
+                [
+                    (
+                        "*" if key["sha3-384"] in enabled_keys else "-",
+                        key["name"],
+                        key["sha3-384"],
+                        "" if key["sha3-384"] in enabled_keys else "(not registered)",
+                    )
+                    for key in keys
+                ],
+                headers=["", "Name", "SHA3-384 fingerprint", ""],
+                tablefmt="plain",
+            )
+            emit.message("The following keys are available on this system:")
+            emit.message(tabulated_keys)
+        else:
+            emit.message(
+                "No keys have been created on this system. "
+                "See 'snapcraft create-key --help' to create a key."
+            )
+
+        if enabled_keys:
+            local_hashes = {key["sha3-384"] for key in keys}
+            registered_keys = "\n".join(
+                f"- {key}" for key in enabled_keys if key not in local_hashes
+            )
+            if registered_keys:
+                emit.message(
+                    "The following SHA3-384 key fingerprints have been registered "
+                    f"but are not available on this system:\n{registered_keys}"
+                )
+        else:
+            emit.message(
+                "No keys have been registered with this account. "
+                "See 'snapcraft register-key --help' to register a key."
+            )
+
+
+class StoreListKeysCommand(StoreKeysCommand):
+    """Removed command alias for the keys command."""
+
+    name = "list-keys"
+    hidden = True
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class StoreCreateKeyCommand(AppCommand):
