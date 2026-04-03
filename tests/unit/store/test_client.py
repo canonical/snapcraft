@@ -642,7 +642,7 @@ def test_login_with_env(monkeypatch):
 
 
 @pytest.mark.usefixtures("fake_user_password", "fake_hostname")
-def test_login_from_401_request(fake_client):
+def test_login_from_401_request(fake_client, emitter):
     fake_client.request.side_effect = [
         craft_store.errors.StoreServerError(
             FakeResponse(
@@ -668,6 +668,7 @@ def test_login_from_401_request(fake_client):
         call("GET", "http://url.com/path"),
         call("GET", "http://url.com/path"),
     ]
+    emitter.assert_message("You are required to re-login before continuing")
     assert fake_client.login.mock_calls == [
         call(
             ttl=31536000,
@@ -752,6 +753,40 @@ def test_login_from_401_request_with_legacy_credentials(mocker, legacy_config_pa
         raised.value.resolution
         == "Run snapcraft login or export-login to obtain new credentials."
     )
+
+
+@pytest.mark.usefixtures("fake_user_password", "fake_hostname")
+def test_request_not_logged_in(fake_client, emitter):
+    """Login when no credentials are available."""
+    fake_client.request.side_effect = [
+        craft_store.errors.CredentialsUnavailable(
+            application="snapcraft", host="api.snapcraft.io"
+        ),
+        FakeResponse(status_code=200, content=b"ok"),
+    ]
+
+    client.StoreClientCLI().request("GET", "http://api.snapcraft.io")
+
+    emitter.assert_message("You are required to login before continuing")
+    assert fake_client.login.mock_calls == [
+        call(
+            ttl=31536000,
+            permissions=[
+                "package_access",
+                "package_manage",
+                "package_metrics",
+                "package_push",
+                "package_register",
+                "package_release",
+                "package_update",
+            ],
+            channels=None,
+            packages=[],
+            description="snapcraft@fake-host",
+            email="fake-username@acme.com",
+            password="fake-password",
+        )
+    ]
 
 
 ############
