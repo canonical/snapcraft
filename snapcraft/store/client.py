@@ -570,7 +570,7 @@ class LegacyStoreClientCLI:
         return Revisions.unmarshal(response.json())
 
     def list_validations(self, snap_id: str) -> list[dict[str, Any]]:
-        """Return a list of validations for snap_name.
+        """Return a list of validations for snap_id.
 
         :param snap_id: the id of the snap to query.
         """

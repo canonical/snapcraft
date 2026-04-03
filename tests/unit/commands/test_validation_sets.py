@@ -17,11 +17,12 @@
 """Tests for validation sets commands."""
 
 import argparse
+import os
 import sys
 
 import pytest
 
-from snapcraft import cli, commands, const, store
+from snapcraft import application, commands, const, store
 
 
 @pytest.fixture
@@ -86,7 +87,8 @@ class TestValidationSetsCommand:
         """Error on removed 'list-validation-sets' command."""
         mocker.patch.object(sys, "argv", ["cmd", "list-validation-sets"])
 
-        cli.run()
+        app = application.create_app()
+        return_code = app.run()
 
         out, err = capsys.readouterr()
         assert not out
@@ -94,6 +96,7 @@ class TestValidationSetsCommand:
             "The 'list-validation-sets' command was renamed to 'validation-sets'.\n"
             "Recommended resolution: Use 'validation-sets' instead."
         ) in err
+        assert return_code == os.EX_USAGE
 
 
 class TestEditValidationSetsCommand:
