@@ -13,11 +13,11 @@ depends on the base snap.
 
 .. _explanation_cryptography_core24:
 
-core24 and newer
-----------------
+core24 and higher
+-----------------
 
 Snapcraft is built upon Craft Application and derives much of its functionality from
-it. In particular, snaps using core24 or newer as their base use Craft Application to
+it. In particular, snaps using core24 or higher as their base use Craft Application to
 build, so much of Snapcraft's cryptographic functionality is described in the `Craft
 Application cryptography`_ documentation.
 

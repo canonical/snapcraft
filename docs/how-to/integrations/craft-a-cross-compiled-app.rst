@@ -110,8 +110,8 @@ To build the snap, navigate to the project directory and run:
 
     snapcraft
 
-Because linters are enabled by default for ``core24`` snaps, this will produce warnings
-like the following:
+Because linters are enabled by default for core24 and higher snaps, this will
+produce warnings like the following:
 
 .. terminal::
     :input: snapcraft
