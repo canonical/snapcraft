@@ -27,8 +27,6 @@ contact:
 
 lint:
   ignore:
-    - metadata:
-        - donation
     - library:
         - usr/lib/**/libicu*.so*
 
