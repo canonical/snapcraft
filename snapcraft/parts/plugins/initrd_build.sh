@@ -379,7 +379,8 @@ create_initrd() {
     "${CRAFT_PART_INSTALL}/initrd.img-${KERNEL_VERSION}"
 
   # Create a symlink for useful shorthanding
-  ln -sf "initrd.img-${KERNEL_VERSION}" "${CRAFT_PART_INSTALL}/initrd.img"
+  ln -f "${CRAFT_PART_INSTALL}/initrd.img-${KERNEL_VERSION}" \
+    "${CRAFT_PART_INSTALL}/initrd.img"
 }
 
 # create_efi creates an EFI UKI object from a kernel and initrd.img
@@ -401,6 +402,9 @@ create_efi() {
                 --output    /boot/kernel.efi"
 
   install -Dm644 "${INITRD_ROOT}/boot/kernel.efi-${KERNEL_VERSION}" \
+    "${CRAFT_PART_INSTALL}/kernel.efi-${KERNEL_VERSION}"
+
+  ln -f "${CRAFT_PART_INSTALL}/kernel.efi-${KERNEL_VERSION}" \
     "${CRAFT_PART_INSTALL}/kernel.efi"
 }
 

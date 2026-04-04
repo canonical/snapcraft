@@ -197,7 +197,8 @@ repack_deb() {
   mv -f "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}-${_flavour}" \
     "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}"
 
-  ln -sf "kernel.img-${_kver}-${_flavour}" "${CRAFT_PART_INSTALL}/kernel.img"
+  ln -f "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}" \
+    "${CRAFT_PART_INSTALL}/kernel.img"
 
   # In theory this is never unset. But to be extra safe...
   rm -rf "${CRAFT_PART_INSTALL:?}/usr"
@@ -316,7 +317,8 @@ pack_kernel() {
   cp -f "${CRAFT_PART_BUILD}/.config" \
         "${CRAFT_PART_INSTALL}/config-${_kver}"
 
-  ln -sf "kernel.img-${_kver}" "${CRAFT_PART_INSTALL}/kernel.img"
+  ln -f "${CRAFT_PART_INSTALL}/kernel.img-${_kver}" \
+    "${CRAFT_PART_INSTALL}/kernel.img"
 
   # Remove symlinks lib/modules/${_kver}/{build,source}
   # It's possible that these are not even installed, however
