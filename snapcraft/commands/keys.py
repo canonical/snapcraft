@@ -177,6 +177,7 @@ class StoreRegisterKeyCommand(AppCommand):
             "key_name",
             metavar="key-name",
             help="Key used to sign the assertion",
+            nargs="?",
         )
 
     @staticmethod
