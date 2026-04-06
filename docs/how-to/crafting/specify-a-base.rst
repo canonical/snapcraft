@@ -145,7 +145,7 @@ This snippet will do the following:
 
 * create a kernel snap for Ubuntu 26.04
 * build the snap inside an Ubuntu 26.04 build environment
-* use the ``core26`` feature set and ``snapcraft.yaml`` schema
+* use the core26 feature set and ``snapcraft.yaml`` schema
 
 How to build a bare base snap
 -----------------------------

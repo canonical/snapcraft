@@ -92,12 +92,12 @@ linked binaries will try to load the required dependencies at runtime:
 
 - It tries to load the dependencies, including stage packages and any other
   libraries, inside the snap.
-- (core24 and higher) If not found, it looks for the dependencies in the base snap under
+- Starting with core24, if not found, it looks for the dependencies in the base snap under
   ``/snap/<base>``. The libraries must match the name and version of libraries as
   provided by the Ubuntu package archives for the specific base. In other words, snaps
-  built with core26 must use the relevant libraries by name or version, the way they are
-  defined for Ubuntu 26.04 LTS.
-- (core22) If not found, it looks for the dependencies on the host system. If found
+  built with core24 and higher must use the relevant libraries by name or version, the way they are
+  defined for their corresponding Ubuntu LTS release (such as Ubuntu 26.04 LTS for core26).
+- With core22, if not found, it looks for the dependencies on the host system. If found
   there, the snap daemon can't guarantee that the dependencies will match the expected
   snap and core version. They might result in app instability, unknown behavior, or
   crashing.
