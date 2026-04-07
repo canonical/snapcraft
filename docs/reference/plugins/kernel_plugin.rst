@@ -52,13 +52,15 @@ kernel-tools
 A list of kernel tools to build. If set, the specified tools will be built and added to
 the final snap package.
 
-Valid values are ``perf``, ``cpupower``, and ``bpf``.
+Valid values are ``bpf``, ``cpupower``, and ``perf``.
 
-.. warning::
-   Building a kernel snap for a different target architecture than
-   the build host may result in build failures when using this key
-   with ``base: core22`` snaps. Refer to the `kernel-cross spread test`_
-   for a viable workaround.
+.. admonition:: Warning
+    :class: warning
+
+    Building a kernel snap for a different target architecture than
+    the build host may result in build failures when using this key
+    with core22 snaps. Refer to the `kernel-cross spread test <https://github.com/canonical/snapcraft/tree/main/tests/spread/plugins/craft-parts/kernel-cross/task.yaml>`__
+    for a viable workaround.
 
 
 kernel-ubuntu-kconfigflavour
@@ -81,10 +83,10 @@ kernel-ubuntu-release-name
 **Type**: string
 
 A string which specifies a particular Ubuntu release to build an Ubuntu kernel from.
-This key will fetch the ``master-next`` branch (by default) of one of the release
+By default, this key will fetch the ``master-next`` branch of one of the release
 kernels available on Launchpad.
 
-Valid values are Ubuntu release code names like ``jammy``, ``lunar``, ``noble``, etc.
+Valid values are Ubuntu release code names like ``jammy``, ``lunar``, or ``noble``.
 
 
 kernel-ubuntu-binary-package
@@ -98,10 +100,12 @@ If enabled, the kernel compilation process will be skipped. Instead, the latest 
 image and, if available, modules and modules-extra packages from the Ubuntu archive will be fetched and
 repackaged into a snap. A particular ABI may be specified with ``kernel-ubuntu-abinumber``.
 
-.. warning::
+.. admonition:: Warning
+   :class: warning
+
    Building a kernel snap for a different target architecture than
    the build host may result in build failures when using this key
-   with ``base: core22`` snaps. Refer to the `kernel-cross spread test`_
+   for core22 snaps. Refer to the `kernel-cross spread test <https://github.com/canonical/snapcraft/tree/main/tests/spread/plugins/craft-parts/kernel-cross/task.yaml>`__
    for a viable workaround.
 
 

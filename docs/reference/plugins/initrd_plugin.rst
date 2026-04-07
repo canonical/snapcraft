@@ -14,7 +14,9 @@ architecture. This plugin alleviates those challenges by constructing a minimal
 chroot for the target architecture where any required packages can be added to
 end up in the final initrd.
 
-.. note:
+.. admonition: Note
+   :class: note
+
    in order to cross-build an initrd the system requires ``binfmt_misc``. This
    means that your host must have qemu-user-static or the equivalent(s)
    installed. If you are building with ``--use-lxd``, restart the LXD snap after
@@ -82,7 +84,7 @@ initrd-build-efi-image
 If true, a Unified Kernel Image (UKI) will be created using the initrd
 compressed CPIO archive created by this plugin and a kernel image file. The
 kernel image must be present in ``${CRAFT_STAGE}`` and must be named
-``kernel.img`.
+``kernel.img``.
 
 
 initrd-efi-image-key
