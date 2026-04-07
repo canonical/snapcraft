@@ -83,7 +83,7 @@ The GPU extension defaults to snap providers that include:
     .. tab-item:: core26
         :sync: core26
 
-        The `mesa-2604 snap <https://snapcraft.io/mesa-2604>`_ is maintained by Canonical and provides up-to-date GPU driver support for applications built on the ``core26`` base.
+        The `mesa-2604 snap <https://snapcraft.io/mesa-2604>`__ is maintained by Canonical and provides up-to-date GPU driver support for applications built on the ``core26`` base.
 
     .. tab-item:: core24
         :sync: core24
