@@ -44,7 +44,4 @@ execute: |
 
   snap install gpu-hello_*.snap --dangerous
 
-  # TODO: Remove this once mesa-2604 is autoconnected
-  [[ "$SPREAD_SYSTEM" =~ ubuntu-26.04 ]] && snap connect gpu-hello:gpu-2604 mesa-2604:gpu-2604
-
   gpu-hello.gpuinfo
