@@ -253,7 +253,12 @@ install_extra() {
       # If the location includes the name, strip it out
       # This can happen if the filename is just 'foo' instead of 'foo/bar'
       [ "${loc}" != "${extra_path}/${obj}" ] || loc="${loc%/*}"
-      { mkdir -p "$loc" && cp -rf "${oobj}" "${loc}" ; } || {
+      {
+        mkdir -p "${loc}"
+        # It's possible the user is replacing a dangling link, such as /init
+        # --remove-destination ensures write-through.
+        cp -rf --remove-destination "${oobj}" "${loc}"
+      } || {
         echo "Failed to copy ${oobj##*/} to ${loc}!"
         [ "$type" = "firmware" ] || exit 1
       }
