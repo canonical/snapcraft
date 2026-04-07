@@ -441,8 +441,10 @@ run() {
   add_modules "${initrd_modules}"
 
   # Add any extra files from plugin options to initrd
-  [ -z "${initrd_addons}"   ] || install_extra addons "${initrd_addons}"
-  [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
+  [ -z "${initrd_addons}"         ] || install_extra addons   "${initrd_addons}"
+  [ -z "${initrd_firmware}"       ] || install_extra firmware "${initrd_firmware}"
+  [ -z "${initrd_efi_image_key}"  ] || install_extra signing  "${initrd_efi_image_key}"
+  [ -z "${initrd_efi_image_cert}" ] || install_extra signing  "${initrd_efi_image_cert}"
 
   # Configure chroot
   chroot_configure
@@ -451,18 +453,8 @@ run() {
   create_initrd
 
   # Build the EFI image if requested
-  [ "${initrd_build_efi_image}" = "False" ] || {
-    # If a key and image weren't provided, use the snakeoil key and cert
-    { [ -n "${initrd_efi_image_key}" ] && [ -n "${initrd_efi_image_cert}" ] ; } || {
-      initrd_efi_image_key="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
-      initrd_efi_image_cert="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
-
-      cp -f "${initrd_efi_image_key}" "${initrd_efi_image_cert}" \
-        "${INITRD_ROOT}/root"
-    }
-
-    create_efi "${initrd_efi_image_key}" "${initrd_efi_image_cert}"
-  }
+  [ "${initrd_build_efi_image}" = "False" ] ||
+  create_efi "${initrd_efi_image_key}" "${initrd_efi_image_cert}"
 }
 
 # main sets some important variables and kicks off the script
@@ -509,6 +501,13 @@ main() {
            BASE_CREATED    \
            BASE_CONFIGURED \
            SRC_LIST
+
+  # Ensure we have the correct values for key and cert if they're snakeoil
+  if [ "${initrd_efi_image_key##*/}"  = PkKek-1-snakeoil.key ] &&
+     [ "${initrd_efi_image_cert##*/}" = PkKek-1-snakeoil.pem ]; then
+    initrd_efi_image_key="${INITRD_ROOT}/${initrd_efi_image_key}"
+    initrd_efi_image_cert="${INITRD_ROOT}/${initrd_efi_image_cert}"
+  fi
 
   # clean if we fail
   trap 'clean "${INITRD_ROOT}"' EXIT INT
