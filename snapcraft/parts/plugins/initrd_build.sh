@@ -455,6 +455,9 @@ run() {
   # Build the EFI image if requested
   [ "${initrd_build_efi_image}" = "False" ] ||
   create_efi "${initrd_efi_image_key}" "${initrd_efi_image_cert}"
+
+  # Cleanup. It's only kind.
+  clean "${INITRD_ROOT}"
 }
 
 # main sets some important variables and kicks off the script
@@ -502,6 +505,11 @@ main() {
            BASE_CONFIGURED \
            SRC_LIST
 
+  # clean if we fail
+  trap 'clean "${INITRD_ROOT}"' EXIT INT
+
+  parse_args "$@"
+
   # Ensure we have the correct values for key and cert if they're snakeoil
   if [ "${initrd_efi_image_key##*/}"  = PkKek-1-snakeoil.key ] &&
      [ "${initrd_efi_image_cert##*/}" = PkKek-1-snakeoil.pem ]; then
@@ -509,10 +517,6 @@ main() {
     initrd_efi_image_cert="${INITRD_ROOT}/${initrd_efi_image_cert}"
   fi
 
-  # clean if we fail
-  trap 'clean "${INITRD_ROOT}"' EXIT INT
-
-  parse_args "$@"
   run
 }
 
