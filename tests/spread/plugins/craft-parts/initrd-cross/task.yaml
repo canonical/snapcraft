@@ -33,7 +33,7 @@ execute: |
   dpkg --add-architecture riscv64
 
   apt update
-  apt install libc6-riscv64-cross
+  apt install --yes libc6-riscv64-cross
 
   ln -sf /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1 /lib
 
