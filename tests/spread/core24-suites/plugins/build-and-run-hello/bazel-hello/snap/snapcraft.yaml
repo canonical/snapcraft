@@ -1,0 +1,19 @@
+name: bazel-hello
+version: "1.0"
+summary: test the bazel plugin
+description: Check that the bazel plugin works across snapcraft calls
+
+grade: devel
+base: core24
+confinement: strict
+
+apps:
+  bazel-hello:
+    command: hello
+
+parts:
+  hello:
+    plugin: bazel
+    source: .
+    bazel-targets:
+      - //:hello
