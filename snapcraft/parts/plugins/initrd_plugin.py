@@ -156,10 +156,6 @@ class InitrdPlugin(plugins.Plugin):
             ]
         )
 
-        if not commands:
-            # Perform a regular pull step just in case the user has specified a source
-            return super().get_pull_commands()
-
         return commands
 
     @override
