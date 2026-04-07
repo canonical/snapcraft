@@ -30,6 +30,7 @@ set_base()
         sed -i "1ibase: $base"  "$snapcraft_yaml_path"
     fi
 
+    # remove once core26 is stable (#6088)
     if [ "$base" == "core26" ]; then
         if grep -q "^build-base:" "$snapcraft_yaml_path"; then
             sed -i "s/^build-base:.*/build-base: devel/g" "$snapcraft_yaml_path"

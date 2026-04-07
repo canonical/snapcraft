@@ -211,7 +211,7 @@ The extension automatically adds parts to build and install the GPU wrapper and 
                     plugin: nil
                     override-prime: |
                       craftctl default
-                      ${CRAFT_PART_SRC}/bin/graphics-gpu-2604-cleanup mesa-2604
+                      ${CRAFT_PART_SRC}/bin/gpu-2604-cleanup mesa-2604
                       # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
                       mkdir -p "${CRAFT_PRIME}/gpu-2604"
 
@@ -424,7 +424,7 @@ This is the output before build, showing the expanded configuration:
                 +    plugin: nil
                 +    override-prime: |
                 +      craftctl default
-                +      ${CRAFT_PART_SRC}/bin/graphics-gpu-2604-cleanup mesa-2604
+                +      ${CRAFT_PART_SRC}/bin/gpu-2604-cleanup mesa-2604
                 +      # Workaround for https://bugs.launchpad.net/snapd/+bug/2055273
                 +      mkdir -p "${CRAFT_PRIME}/gpu-2604"
                 +

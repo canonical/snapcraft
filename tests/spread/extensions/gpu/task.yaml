@@ -22,7 +22,7 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
-  # TODO: Remove this once core26 is stable
+  # TODO: Remove this once core26 is stable (#6088)
   if [[ "$SPREAD_SYSTEM" =~ ubuntu-26.04 ]]; then
     snap install core26 --edge
     snap install mesa-2604 --edge
