@@ -251,6 +251,10 @@ class KernelPlugin(plugins.Plugin):
                 "libpci-dev",
             }
 
+        if "perf" in self.options.kernel_tools:
+            build_packages |= {
+                f"libtraceevent-dev:{target_arch}",
+            }
         return build_packages
 
     @override
