@@ -194,12 +194,20 @@ repack_deb() {
     dpkg -x "${deb}" "${CRAFT_PART_INSTALL}"
   done
 
+  # Move the relevant files to the expected location
+  # Rename vmlinuz to kernel.img, the others can keep their name
   mv -f "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}-${_flavour}" \
-    "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}"
+        "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}"
+
+  mv -f "${CRAFT_PART_INSTALL}/boot/System.map-${_kver}-${_flavour}" \
+        "${CRAFT_PART_INSTALL}/boot/config-${_kver}-${_flavour}"     \
+        "${CRAFT_PART_INSTALL}"
 
   ln -f "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}" \
     "${CRAFT_PART_INSTALL}/kernel.img"
 
+  # A little deb cleanup
+  rmdir "${CRAFT_PART_INSTALL}/boot"
   # In theory this is never unset. But to be extra safe...
   rm -rf "${CRAFT_PART_INSTALL:?}/usr"
 }
