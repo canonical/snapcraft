@@ -148,6 +148,7 @@ sed
 sequenceDiagram
 sitecustomize
 sitemapindex
+snakeoil
 snapctl
 Sphinx
 Spread
