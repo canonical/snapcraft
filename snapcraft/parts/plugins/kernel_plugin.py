@@ -61,6 +61,7 @@ architectures set up accordingly.
 from typing import Literal, cast
 
 import pydantic
+from craft_cli import emit
 from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
@@ -111,15 +112,15 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                 "kernel_ubuntu_release_name",
             ]
 
-            # This is set by default, don't fail in this case
-            if self.kernel_kdefconfig == ["defconfig"]:
-                return self
-
             for option in conflicting_options:
                 if getattr(self, option):
-                    raise errors.PartsError(
-                        "'kernel-ubuntu-binary-package' and "
-                        f"'{option.replace('_', '-')}' keys are mutually exclusive"
+                    if option == "kernel_kdefconfig" and self.kernel_kdefconfig == [
+                        "defconfig"
+                    ]:
+                        continue
+                    emit.progress(
+                        f"'kernel-ubuntu-binary-package' and '{option.replace('_', '-')} keys are mutually exclusive and '{option.replace('_', '-')} will be ignored",
+                        permanent=True,
                     )
         return self
 
