@@ -28,7 +28,7 @@ parts:
       craftctl default
 
       cp -f "${CRAFT_PROJECT_DIR}/test_defconfig" "${CRAFT_PART_SRC}/kernel/configs/test.config"
-    override-build: |-
+    override-build: |
       craftctl default
 
       kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"

@@ -24,6 +24,8 @@ parts:
   kernel:
     plugin: kernel
     kernel-ubuntu-binary-package: true
+    kernel-ubuntu-abinumber: 6.8.0-63
+    kernel-ubuntu-kconfigflavour: generic
     stage-packages:
       - wireless-regdb
     override-build: |
