@@ -279,14 +279,15 @@ class KernelPlugin(plugins.Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         kdefconfig = self.options.kernel_kdefconfig
+        deb = self.options.kernel_ubuntu_binary_package
         abinumber = self.options.kernel_ubuntu_abinumber
-        kconfigflavour = self.options.kernel_ubuntu_kconfigflavour
         release_name = self.options.kernel_ubuntu_release_name
+        kconfigflavour = self.options.kernel_ubuntu_kconfigflavour
 
         if kdefconfig != ["defconfig"]:
             kconfigflavour = ""
 
-        if self.options.kernel_ubuntu_binary_package and kconfigflavour == "":
+        if deb and kconfigflavour == "":
             kconfigflavour = "generic"
 
         if abinumber == "master-next":
