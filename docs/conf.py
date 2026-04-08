@@ -211,7 +211,6 @@ exclude_patterns = [
     "how-to/crafting/add-a-part.rst",
     "how-to/publishing/build-snaps-remotely.rst",
     "README.md",
-    "release-notes/snapcraft-9-0.rst",
 ]
 
 # Adds custom CSS files, located under 'html_static_path'

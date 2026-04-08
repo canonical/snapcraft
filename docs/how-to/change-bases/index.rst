@@ -19,9 +19,10 @@ At its simplest, migrating from one base snap to another requires only that the 
 key is updated:
 
 .. code-block:: diff
+    :caption: snapcraft.yaml
 
-    - base: core18
-    + base: core20
+    - base: core24
+    + base: core26
 
 But further changes will most likely be needed. These will depend on the
 original base and the packages that are bundled with the application.

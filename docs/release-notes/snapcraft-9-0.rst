@@ -207,7 +207,7 @@ The following issues have been resolved in Snapcraft 9.0.
 Snapcraft 9.0.0
 ~~~~~~~~~~~~~~~~
 
-- `snapcraft#6054`_ In the GNOME extension, fix a missing link to libproxy
+- `#6054`_ In the GNOME extension, fix a missing link to libproxy
 
 
 Contributors
@@ -216,9 +216,7 @@ Contributors
 We would like to express a big thank you to all the people who contributed to
 this release.
 
-.. update contributors before releasing
+.. add contributors before releasing
 
-:literalref:`@alex<https://example.com/alex>`,
-:literalref:`@blair<https://example.com/blair>`,
-:literalref:`@cam<https://example.com/cam>`,
-and :literalref:`@devin<https://example.com/devin>`
+
+.. _#6054: https://github.com/canonical/snapcraft/issues/6054

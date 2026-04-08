@@ -30,10 +30,10 @@ common elements with special names in the Snapcraft world.
 * The *base* describes which set of libraries the snap will use for its
   functionality. The base also defines the operating system version for the
   snap build instance in the virtual machine (VM) or container during build.
-  For instance, ``base: core24`` means that Snapcraft will launch an Ubuntu
-  24.04 LTS VM or container, the set of tools and libraries used inside the
-  snap will originate from the Ubuntu 24.04 LTS repository archives, and the
-  snap apps will run as if on an Ubuntu 24.04 host, regardless of the
+  For instance, ``base: core26`` means that Snapcraft will launch an Ubuntu
+  26.04 LTS VM or container, the set of tools and libraries used inside the
+  snap will originate from the Ubuntu 26.04 LTS repository archives, and the
+  snap apps will run as if on an Ubuntu 26.04 host, regardless of the
   actual system's actual underlying Linux distribution.
 * *Parts* describe the software components inside the snap.
 * *Apps* describes the apps and their commands that are to run inside
