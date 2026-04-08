@@ -61,7 +61,6 @@ architectures set up accordingly.
 from typing import Literal, cast
 
 import pydantic
-import requests
 from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
@@ -144,7 +143,6 @@ class KernelPlugin(plugins.Plugin):
         flavour = self.options.kernel_ubuntu_kconfigflavour
         release = self.options.kernel_ubuntu_release_name
         deb = self.options.kernel_ubuntu_binary_package
-        team_names = ["ubuntu-kernel", "canonical-kernel"]
 
         if self.options.kernel_ubuntu_binary_package:
             return super().get_pull_commands()
@@ -153,30 +151,31 @@ class KernelPlugin(plugins.Plugin):
             pkg = f"linux-{flavour}"
 
         if release and not deb:
-            for name in team_names:
-                url = f"https://code.launchpad.net/~{name}/+git"
-                try:
-                    response = requests.get(url, timeout=10)
-                except requests.RequestException as exc:
-                    raise errors.PartsError(f"Failed to fetch {url}") from exc
+            # Check for a valid URL
+            # Launchpad will return "Invalid OpenID transaction" if a repository
+            # doesn't exist, rather than curl failing. This string check is beholden to
+            # Launchpad remaining consistent in their handling.
+            commands.extend(
+                [
+                    "for name in canonical-kernel ubuntu-kernel; do",
+                    f'team_url="https://git.launchpad.net/~$name/ubuntu/+source/{pkg}/+git/{release}"',
+                    'if [ "$(curl -fsSL "$team_url")" != "Invalid OpenID transaction" ]; then',
+                    'actual_url="$team_url"',
+                    "fi",
+                    "done",
+                ]
+            )
+            commands.extend(
+                [
+                    "git init",
+                    'git remote add origin "$actual_url"',
+                    f"git fetch --depth 1 origin {branch}",
+                    "git checkout FETCH_HEAD",
+                ]
+            )
 
-                # Look for the source package repository for the release name
-                # The URL pattern is typically: /~{name}/ubuntu/+source/{pkg}/+git/{release}
-                match_part = f"~{name}/ubuntu/+source/{pkg}/+git/{release}"
-                if match_part in response.text:
-                    repo = f"https://git.launchpad.net/~{name}/ubuntu/+source/{pkg}/+git/{release}"
-
-                    commands.extend(
-                        [
-                            "git init",
-                            f"git remote add origin {repo}",
-                            f"git fetch --depth 1 origin {branch}",
-                            "git checkout FETCH_HEAD",
-                        ]
-                    )
-
-                    return commands
-            raise errors.PartsError(f"failed to find kernel source url: {repo}")
+            return commands
+        raise errors.PartsError(f"failed to find kernel source url: {repo}")
 
         return super().get_pull_commands()
 
