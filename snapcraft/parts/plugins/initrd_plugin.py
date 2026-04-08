@@ -76,6 +76,7 @@ import os
 from typing import Literal, cast
 
 import pydantic
+from craft_application.util import humanize_list
 from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
@@ -135,7 +136,7 @@ class InitrdPlugin(plugins.Plugin):
         target_arch = self._part_info.target_arch
         if (release := INITRD_RELEASE_FROM_SNAP_BASE.get(base)) is None:
             raise errors.PartsError(
-                f"base '{base}' is not supported for the initrd plugin. Supported bases are f{'craft_cli.humanize_list(INITRD_RELEASE_FROM_SNAP_BASE.keys())'}"
+                f"base {base!r} is not supported for the initrd plugin. Supported bases are {humanize_list(INITRD_RELEASE_FROM_SNAP_BASE.keys(), 'and')}"
             )
 
         # URL pieces for Ubuntu base
