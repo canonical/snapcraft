@@ -20,11 +20,11 @@ parse_args() {
       initrd_build_efi_image="${arg#*=}"      ;;
       initrd-efi-image-key=*)
       # initrd_efi_image_key is a key file used to sign the EFI UKI relative to CRAFT_STAGE
-      # Default value is /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key
+      # Default value is /usr/share/ovmf/PkKek-1-snakeoil.key
       initrd_efi_image_key="${arg#*=}"        ;;
       initrd-efi-image-cert=*)
       # initrd_efi_image_cert is a cert file used to sign the EFI UKI relative to CRAFT_STAGE
-      # Default value is /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem
+      # Default value is /usr/share/ovmf/PkKek-1-snakeoil.pem
       initrd_efi_image_cert="${arg#*=}"       ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac
@@ -141,7 +141,7 @@ EOF
 chroot_configure() {
   chroot_run "apt-get update"
   chroot_run "apt-get dist-upgrade -y"
-  chroot_run "apt-get install --no-install-recommends -y ca-certificates gpg dirmngr gpg-agent debconf-utils lz4 xz-utils zstd"
+  chroot_run "apt-get install --no-install-recommends -y ca-certificates gpg dirmngr gpg-agent debconf-utils lz4 xz-utils zstd ovmf"
 
   chroot_run "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
 
@@ -444,21 +444,21 @@ run() {
   [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
   [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
 
-  # Ensure we have the correct values for key and cert if they're snakeoil
-  if [ "${initrd_efi_image_key##*/}"  = PkKek-1-snakeoil.key ] &&
-     [ "${initrd_efi_image_cert##*/}" = PkKek-1-snakeoil.pem ]; then
-    cp -f "${INITRD_ROOT}/{initrd_efi_image_key}"  \
-          "${INITRD_ROOT}/{initrd_efi_image_cert}" \
-          "${INITRD_ROOT}/root"
-  else install_extra signing "${initrd_efi_image_key}"
-       install_extra signing "${initrd_efi_image_cert}"
-  fi
-
   # Configure chroot
   chroot_configure
 
   # Build the initrd image file
   create_initrd
+
+  # Ensure we have the correct values for key and cert if they're snakeoil
+  if [ "${initrd_efi_image_key##*/}"  = PkKek-1-snakeoil.key ] &&
+     [ "${initrd_efi_image_cert##*/}" = PkKek-1-snakeoil.pem ]; then
+    cp -f "${INITRD_ROOT}/${initrd_efi_image_key}"  \
+          "${INITRD_ROOT}/${initrd_efi_image_cert}" \
+          "${INITRD_ROOT}/root"
+  else install_extra signing "${initrd_efi_image_key}"
+       install_extra signing "${initrd_efi_image_cert}"
+  fi
 
   # Build the EFI image if requested
   [ "${initrd_build_efi_image}" = "False" ] ||

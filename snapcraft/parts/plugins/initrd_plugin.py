@@ -50,7 +50,7 @@
   initrd files.
 
 - initrd-efi-image-key
-  (string; default: snake oil key (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key))
+  (string; default: snake oil key (/usr/share/ovmf/PkKek-1-snakeoil.key))
   Requires initrd-build-efi-image to be true.
   Key to be used when creating the EFI image, provided as a relative path to
   $CRAFT_STAGE/signing. For example,
@@ -61,7 +61,7 @@
   initrd chroot as /root/signing.key.
 
 - initrd-efi-image-cert
-  (string; default: snake oil certificate (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem))
+  (string; default: snake oil certificate (/usr/share/ovmf/PkKek-1-snakeoil.pem))
   Requires initrd-build-efi-image to be true.
   Certificate to be used when creating the EFI image, provided as a relative
   path to $CRAFT_STAGE/signing. For example,
@@ -92,12 +92,8 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     plugin: Literal["initrd"] = "initrd"
 
     initrd_build_efi_image: bool = False
-    initrd_efi_image_key: str = (
-        "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
-    )
-    initrd_efi_image_cert: str = (
-        "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
-    )
+    initrd_efi_image_key: str = "/usr/share/ovmf/PkKek-1-snakeoil.key"
+    initrd_efi_image_cert: str = "/usr/share/ovmf/PkKek-1-snakeoil.pem"
     initrd_modules: list[str] = []
     initrd_firmware: list[str] = []
     initrd_addons: list[str] = []
@@ -193,10 +189,6 @@ class InitrdPlugin(plugins.Plugin):
         base = self._part_info.base
         arch = self._part_info.target_arch
         build_efi_image = self.options.initrd_build_efi_image
-
-        # It only makes sense to provide a key and cert when building a UKI
-        if self.options.initrd_efi_image_key and self.options.initrd_efi_image_cert:
-            build_efi_image = True
 
         if build_efi_image:
             # There are no EFI stubs for s390x or ppc64el
