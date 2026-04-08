@@ -85,7 +85,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
     kernel_kconfigs: list[str] = []
     kernel_kdefconfig: list[str] = ["defconfig"]
-    kernel_tools: set[KernelTools] = []
+    kernel_tools: set[KernelTools] = pydantic.Field(default_factory=set)
     kernel_ubuntu_kconfigflavour: str = "generic"
     kernel_ubuntu_release_name: str = ""
     kernel_ubuntu_abinumber: str = "master-next"
