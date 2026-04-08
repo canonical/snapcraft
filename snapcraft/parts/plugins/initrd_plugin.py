@@ -76,7 +76,7 @@ import os
 from typing import Literal, cast
 
 import pydantic
-from craft_parts import infos, plugins
+from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
 INITRD_RELEASE_FROM_SNAP_BASE = {
@@ -127,8 +127,12 @@ class InitrdPlugin(plugins.Plugin):
     @override
     def get_pull_commands(self) -> list[str]:
         commands = []
+        base = self._part_info.base
         target_arch = self._part_info.target_arch
-        release = INITRD_RELEASE_FROM_SNAP_BASE[self._part_info.base]
+        if (release := INITRD_RELEASE_FROM_SNAP_BASE.get(base)) is None:
+            raise errors.PartsError(
+                f"base '{base}' is not supported for the initrd plugin. Supported bases are f{'craft_cli.humanize_list(INITRD_RELEASE_FROM_SNAP_BASE.keys())'}"
+            )
 
         # URL pieces for Ubuntu base
         tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
