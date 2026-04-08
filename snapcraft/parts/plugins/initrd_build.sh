@@ -383,7 +383,7 @@ create_initrd() {
   install -Dm644 "${INITRD_ROOT}/boot/initrd.img-${KERNEL_VERSION}" \
     "${CRAFT_PART_INSTALL}/initrd.img-${KERNEL_VERSION}"
 
-  # Create a symlink for useful shorthanding
+  # Create a link for useful shorthanding
   ln -f "${CRAFT_PART_INSTALL}/initrd.img-${KERNEL_VERSION}" \
     "${CRAFT_PART_INSTALL}/initrd.img"
 }

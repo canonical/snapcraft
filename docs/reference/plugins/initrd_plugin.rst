@@ -17,10 +17,10 @@ end up in the final initrd.
 .. admonition: Note
    :class: note
 
-   in order to cross-build an initrd the system requires ``binfmt_misc``. This
+   In order to cross-build an initrd the system requires ``binfmt_misc``. This
    means that your host must have qemu-user-static or the equivalent(s)
-   installed. If you are building with ``--use-lxd``, restart the LXD snap after
-   installing.
+   installed. By default, snaps are built in a managed LXD container. This means
+   LXD must be restarted.
 
 
 Keys
