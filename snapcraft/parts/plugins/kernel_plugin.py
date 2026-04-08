@@ -119,7 +119,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                     ]:
                         continue
                     emit.progress(
-                        f"'kernel-ubuntu-binary-package' and '{option.replace('_', '-')} keys are mutually exclusive and '{option.replace('_', '-')} will be ignored",
+                        f"'kernel-ubuntu-binary-package' and '{option.replace('_', '-')}' keys are mutually exclusive and '{option.replace('_', '-')}' will be ignored",
                         permanent=True,
                     )
         return self
