@@ -47,7 +47,7 @@
 - initrd-build-efi-image
   (string; default: false)
   Set to true if an EFI or UKI image is preferred over discrete kernel and
-  initrd files.
+  initrd files. Only valid on systems where an EFI stub file is available.
 
 - initrd-efi-image-key
   (string; default: snake oil key (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key))
@@ -181,12 +181,14 @@ class InitrdPlugin(plugins.Plugin):
             "dracut-core",
             "fakeroot",
         }
-        # if running as non-root and cross-building
-        # we need libfake{ch}root for the target arch
+
+        # if running as non-root and cross-building we need libfake{ch}root for
+        # the target arch
         if host_arch != target_arch and (os.getuid() != 0):
             build_packages |= {
                 f"libfakeroot:{target_arch}",
             }
+
         return build_packages
 
     @override

@@ -25,10 +25,10 @@ The following kernel-specific options are provided by this plugin:
     - kernel-kconfigs:
       (list of strings; default: none)
       explicit list of configs to force; this will override the configs that
-      were set as base through kernel-kdefconfig;
-      dependent configs will be fixed using the defaults encoded in the kbuild
-      config definitions.  If you don't want default for one or more implicit
-      configs coming out of these, just add them to this list as well.
+      were set as base through kernel-kdefconfig; dependent configs will be
+      fixed using the defaults encoded in the kbuild config definitions. If you
+      don't want default for one or more implicit configs coming out of these,
+      just add them to this list as well.
 
     - kernel-tools
       (list of strings; default: none)
@@ -42,20 +42,19 @@ The following kernel-specific options are provided by this plugin:
 
     - kernel-ubuntu-release-name
       (string; default: none)
-      a specific Ubuntu release to fetch the source of and to build a kernel of.
+      A specific Ubuntu release to fetch the source of and to build a kernel of.
 
     - kernel-ubuntu-binary-package
       (boolean; default: False)
       Specifies whether or not a prebuilt debian kernel package should be used.
 
     - kernel-ubuntu-abinumber
-      (string; default: none)
-      A string to specify either a particular kernel version and ABI, or a particular
-      tag when cloning an Ubuntu kernel tree.
+      (string; default: master-next)
+      A string to specify either a particular kernel version and ABI, or a
+      particular tag when cloning an Ubuntu kernel tree.
 
-This plugin supports cross compilation, for which plugin expects
-the build-environment is configured accordingly and has foreign
-architectures set up accordingly.
+This plugin supports cross compilation, for which the plugin expects the
+build-environment is configured accordingly.
 """
 
 from typing import Literal, cast
@@ -260,7 +259,7 @@ class KernelPlugin(plugins.Plugin):
         # The default kernel image is a compressed one
         # This is the default image name for amd64 and s390x
         kernel_image = "bzImage"
-        # Choose a different _kernel_image name based on the target architecture
+        # Choose a different kernel_image name based on the target architecture
         match kernel_arch:
             case "arm":
                 kernel_image = "zImage"
