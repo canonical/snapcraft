@@ -75,6 +75,8 @@ KERNEL_ARCH_FROM_SNAP_ARCH = {
     "s390x": "s390",
 }
 
+KernelTools = Literal["bpf", "cpupower", "perf"]
+
 
 class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     """The part properties used by the Kernel plugin."""
@@ -83,7 +85,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
     kernel_kconfigs: list[str] = []
     kernel_kdefconfig: list[str] = ["defconfig"]
-    kernel_tools: list[str] = []
+    kernel_tools: set[KernelTools] = []
     kernel_ubuntu_kconfigflavour: str = "generic"
     kernel_ubuntu_release_name: str = ""
     kernel_ubuntu_abinumber: str = "master-next"
@@ -119,18 +121,6 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                         "'kernel-ubuntu-binary-package' and "
                         f"'{option.replace('_', '-')}' keys are mutually exclusive"
                     )
-        return self
-
-    @pydantic.model_validator(mode="after")
-    def validate_list_of_tools(
-        self,
-    ) -> Self:
-        """Ensure only a valid list of tools is specified."""
-        for tool in self.kernel_tools:
-            if tool not in ["bpf", "cpupower", "perf"]:
-                raise errors.PartsError(
-                    f"tool '{tool}' is not a valid choice! Valid choices are perf, cpupower, and bpf"
-                )
         return self
 
 
