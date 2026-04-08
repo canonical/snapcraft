@@ -108,6 +108,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
             conflicting_options = [
                 "kernel_kconfigs",
                 "kernel_kdefconfig",
+                "kernel_ubuntu_release_name",
             ]
 
             # This is set by default, don't fail in this case
