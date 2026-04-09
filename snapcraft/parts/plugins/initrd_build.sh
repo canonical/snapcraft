@@ -2,28 +2,30 @@
 
 # parse_args parses arguments passed to this script
 parse_args() {
-  # initrd-build-efi-image|initrd-efi-image-{key,cert} are from snapcraft/parts/plugins/v2/initrd.py
   for arg; do
     case "${arg}" in
       initrd-modules=*)
       # initrd_modules is a list of modules by name to add to the initrd
+      # Default value is "".
       initrd_modules="${arg#*=}"              ;;
       initrd-firmware=*)
       # initrd_firmware is a list of firmware files relative to CRAFT_STAGE to add to the initrd
+      # Default value is "".
       initrd_firmware="${arg#*=}"             ;;
       initrd-addons=*)
       # initrd_addons is a list of files relative to CRAFT_STAGE to add to the initrd
+      # Default value is "".
       initrd_addons="${arg#*=}"               ;;
       initrd-build-efi-image=*)
       # initrd_build_efi_image if true builds an EFI file instead of an initrd.img
       # Default value is "False".
       initrd_build_efi_image="${arg#*=}"      ;;
       initrd-efi-image-key=*)
-      # initrd_efi_image_key is a key file used to sign the EFI UKI relative to CRAFT_STAGE
+      # initrd_efi_image_key is a key file used to sign the EFI UKI relative to ${CRAFT_STAGE}/signing
       # Default value is /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key
       initrd_efi_image_key="${arg#*=}"        ;;
       initrd-efi-image-cert=*)
-      # initrd_efi_image_cert is a cert file used to sign the EFI UKI relative to CRAFT_STAGE
+      # initrd_efi_image_cert is a cert file used to sign the EFI UKI relative to ${CRAFT_STAGE}/signing
       # Default value is /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem
       initrd_efi_image_cert="${arg#*=}"       ;;
       *) echo "err: invalid option: '${arg}'" ;;
@@ -43,7 +45,7 @@ umnt() {
   mountpoint "${dir}" || umount "$@" "${dir}"
 }
 
-# clean kills processes and unmounts certain paths
+# clean kills processes and unmounts certain paths from the chroot
 clean() {
   if [ ! -d "${INITRD_ROOT}" ]; then
     echo "No chroot to clean"
@@ -75,27 +77,6 @@ clean() {
 
 # chroot_setup creates the chroot base and mounts certain filesystems from host
 chroot_setup() {
-    # Make sure no initrd chroot is lingering
-    [ -e "${INITRD_ROOT}" ] && rm -rf "${INITRD_ROOT}"
-
-    tar_base_url=https://cdimage.ubuntu.com/ubuntu-base
-    tar_release="${UBUNTU_SERIES}/daily/current"
-    tar_name="${UBUNTU_SERIES}-base-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
-    tar_url="${tar_base_url}/${tar_release}/${tar_name}"
-    ubuntu_base="ubuntu-base-${UBUNTU_SERIES}-${CRAFT_ARCH_BUILD_FOR}.tar.gz"
-
-    curl --output "${ubuntu_base}" "${tar_url}"
-
-    # Extract chroot base
-    mkdir -p "${INITRD_ROOT}"
-    tar --extract --file "${ubuntu_base}" --directory "${INITRD_ROOT}"
-
-    # Ensure networking in chroot
-    cp --no-dereference /etc/resolv.conf "${INITRD_ROOT}/etc/resolv.conf"
-
-    # /dev/null isn't in the chroot base but it is used to mask some systemd service units
-    touch "${INITRD_ROOT}/dev/null"
-
     # This is a minimum viable collection of mounts.
     # Even though we try to settle any existing processes, on some systems this isn't
     # sufficient for ensuring an unmount can happen right now. Therefore, unmount lazily
@@ -118,23 +99,27 @@ chroot_setup() {
 }
 
 # chroot_run runs command within chroot
-# 1: path to chroot
-# 2: command to run, must be quoted
+# $1 is the command to run; must be quoted
 chroot_run() {
-    cmd="$1"
+    cmd="${1}"
     chroot "${INITRD_ROOT}" /bin/bash -c "${cmd}"
 }
 
 # setup_ppa adds a PPA to chroot
-# 1: fingerprint of PPA
+# $1 is the fingerprint of the PPA
 setup_ppa() {
-  fingerprint="$1"
+  fingerprint="${1}"
 
+  # dirmngr_conf is the path to dirmngr.conf to setup gpg
   dirmngr_conf=/root/.gnupg/dirmngr.conf
+  # gpg_file is the path to the PPA key
   gpg_file=/etc/apt/keyrings/snappy-dev.gpg
+  # snappy_key is the path to the PPA keyring
   snappy_key=/usr/share/keyrings/snappy-dev.kbx
+  # source_file is the path to the PPA sources.list
   source_file=/etc/apt/sources.list.d/snappy-dev-image.sources
 
+  # Cleanup existing gpg files and setup the PPA
   chroot_run "rm -rf /root/.gnupg ${gpg_file} ${snappy_key}"
   chroot_run "mkdir -p --mode 700 /root/.gnupg"
   chroot_run "mkdir -p            ${gpg_file%/*}"
@@ -149,6 +134,7 @@ setup_ppa() {
                   --keyring \"${snappy_key}\"    \
                   --export --out \"${gpg_file}\""
 
+  # Create the PPA sources.list file
   cat > "${INITRD_ROOT}/${source_file}" << EOF
 Types: deb
 URIs: https://ppa.launchpadcontent.net/snappy-dev/image/ubuntu/
@@ -166,7 +152,7 @@ chroot_configure() {
 
   chroot_run "echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections"
 
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     # snapd deb is required
     # The most common failure one may see in this circumstance is an error from dpkg
     # that /etc/resolv.conf and /run/systemd/resolve/stub-resolv.conf are the same file
@@ -178,6 +164,7 @@ chroot_configure() {
   else
     chroot_run "apt-get install --no-install-recommends -y libsystemd-shared"
 
+    # Install the microcode packages for x86_64
     if [ "${CRAFT_ARCH_BUILD_FOR}" = "amd64" ]; then
       chroot_run "apt-get install --no-install-recommends -y intel-microcode amd64-microcode"
     fi
@@ -195,7 +182,7 @@ chroot_configure() {
   fi
 
   chroot_run "apt-get update"
-  chroot_run "apt-get install --no-install-recommends -y ubuntu-core-initramfs"
+  chroot_run "apt-get install --no-install-recommends --allow-downgrades -y ubuntu-core-initramfs"
 
   # actual ubuntu-core initramfs build is performed in chroot
   # where tmp is not really tmpfs, avoid excessive use of cp
@@ -207,17 +194,23 @@ chroot_configure() {
   touch "${BASE_CONFIGURED}"
 }
 
-# add_modules adds modules and their dependencies to list of modules to include in initrd
+# add_modules adds modules and their dependencies to a list of modules to include in
+# the initrd
+# $1 is a list of module ko filenames
 add_modules() {
   modules="$1"
 
+  # initrd_modules_dir is intended to shorten initrd_conf_dir
   initrd_modules_dir="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/kernel-modules"
+  # initrd_modules_conf is the path to an extra-modules.conf modules list
   initrd_modules_conf="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/extra-modules.conf"
+  # initrd_conf_dir is intended to shorten initrd_conf
   initrd_conf_dir="${initrd_modules_dir}/usr/lib/modules-load.d"
+  # initrd_conf is the list of $modules to be in the initrd
   initrd_conf="${initrd_conf_dir}/ubuntu-core-initramfs.conf"
 
   # A bug in releases pre-24.04; ensure modules are properly added
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     modules=""
     while read -r m; do
       modules="${modules} ${m}"
@@ -226,22 +219,23 @@ add_modules() {
 
   rm -f "${initrd_modules_conf}"
 
-  if [ "${UBUNTU_SERIES}" = "focal" ]; then
-       initrd_modules_conf="${initrd_modules_conf%/*}/main/extra-modules.conf"
-  else initrd_modules_conf="${initrd_modules_conf%/*}/modules/main/extra-modules.conf"
-  fi
+  # Shorten initrd_modules_conf
+  initrd_modules_conf="${initrd_modules_conf%/*}/modules/main/extra-modules.conf"
 
+  # Create the file tree hierarchy
   mkdir -p "${initrd_conf_dir}"    \
            "${initrd_modules_dir}" \
            "${initrd_modules_conf%/*}"
 
   echo "Adding '${modules}' to ubuntu-core-initramfs.conf"
 
+  # Add the $modules to the conf file
   IFS=,
   for m in ${modules}; do
     echo "${m}"
   done | sort -fuo "${initrd_modules_conf}"
 
+  # Ensure any dependencies for $modules are also included
   echo "Gathering module dependencies"
   echo "# configured modules" > "${initrd_conf}"
   for m in ${modules}; do
@@ -253,14 +247,18 @@ add_modules() {
 }
 
 # install_extra adds files to initrd
-# 1: "type", of addons|firmware|signing, determines search path
-# 2: a comma-separated list of files or directories
+# $1 is a "type", of addons|firmware|signing; determines search path
+# $2 is a comma-separated list of files or directories
 install_extra() {
   type="$1"
   objects="$2"
 
+  # ramdisk_feature_path is the feature skeleton directory used by ubuntu-core-initramfs
+  # to add additional files to the initrd
   ramdisk_feature_path="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main"
 
+  # extra_path is the relevant path for any particular type to ensure use by
+  # ubuntu-core-initramfs
   case $type in
     addons)   extra_path="${ramdisk_feature_path}"          ;;
     firmware) extra_path="${ramdisk_feature_path}/usr/lib/" ;;
@@ -270,15 +268,21 @@ install_extra() {
   echo "Installing specified extra files..."
   IFS=,
 
-  # Iterate over objects list in CRAFT_STAGE and install them to extra_path
+  # Iterate over objects list in ${CRAFT_STAGE} and install them to $extra_path
   for obj in $objects; do
     find "${CRAFT_STAGE}/${type}" -name "${obj##*/}" | while read -r oobj; do
       loc="${extra_path}/${obj%/*}"
       # If the location includes the name, strip it out
       # This can happen if the filename is just 'foo' instead of 'foo/bar'
       [ "${loc}" != "${extra_path}/${obj}" ] || loc="${loc%/*}"
-      { mkdir -p "$loc" && cp -rf "${oobj}" "${loc}" ; } || {
+      {
+        mkdir -p "${loc}"
+        # It's possible the user is replacing a dangling link, such as /init
+        # --remove-destination ensures write-through.
+        cp -rf --remove-destination "${oobj}" "${loc}"
+      } || {
         echo "Failed to copy ${oobj##*/} to ${loc}!"
+        # Only some copy failures should be allowed
         [ "$type" = "firmware" ] || exit 1
       }
     done || {
@@ -293,8 +297,9 @@ install_extra() {
 
 # generate_manifest generates a YAML-formatted list of apt repositories and
 # debian packages installed to $INITRD_ROOT
+# $1 is the target location of the generated manifest
 generate_manifest() {
-  manifest_file="$1"
+  manifest_file="${1}"
 
   # Generate a list of repositories from their URIs
   for path in $SRC_LIST; do
@@ -305,11 +310,13 @@ generate_manifest() {
       done
   done
 
+  # Create a unique list of repositories from the generated list
   sort -u < repo_list > uri_list
 
   # Generate a list of components and suites for each repository
   while read -r uri; do
     for path in ${SRC_LIST}; do
+      # sc is the suite and component for each URI, formatted as suite/component
       apt-cache policy -o "${path}" |\
       grep "${uri}" | while read -r _ _ sc _; do
           comp="${sc##*/}"
@@ -327,9 +334,10 @@ generate_manifest() {
     sort -u < "${_list}" > "${_list}.uniq"
   done
 
+  # Begin creating the manifest json
   echo package-repositories: > "${manifest_file}"
 
-  # Print the package-repositories used to fetch packages
+  # Write the package-repositories used to fetch packages to the manifest json
   while read -r uri; do
     # Use correct filename and put suites/components in comma-separated list
     _uri="$(echo "${uri}" | sed -e 's/\//\+/g')"
@@ -348,9 +356,10 @@ generate_manifest() {
       "${uri}" "${suites}" "${comps}" >> "${manifest_file}"
   done < uri_list
 
+  # Begin the package list in the manifest json
   echo packages: >> "${manifest_file}"
 
-  # Print the packages installed to $INITRD_ROOT
+  # Print the packages installed to $INITRD_ROOT to the manifest json
   for pkg in "${INITRD_ROOT}/var/lib/dpkg/info/"*.md5sums; do
     # Strip leading /
     pkg=${pkg##*/}
@@ -368,6 +377,7 @@ generate_manifest() {
 
 # create_initrd uses ubuntu-core-initramfs to create an initrd.img
 create_initrd() {
+  # Cleanup any existing initrd.img file from the snap package
   if [ -e "${CRAFT_PART_INSTALL}/initrd.img" ]; then
     rm -f "${CRAFT_PART_INSTALL}/initrd.img"
   fi
@@ -375,7 +385,7 @@ create_initrd() {
   # snapd version information should be at the top-level of the kernel snap
   # The location of the file is different between jammy and noble
   snapd_info=usr/lib/snapd/info
-  if [ "$UBUNTU_SERIES" = "focal" ] || [ "$UBUNTU_SERIES" = "jammy" ]; then
+  if [ "$UBUNTU_SERIES" = "jammy" ]; then
     snapd_info="${INITRD_ROOT}/${snapd_info}"
   else
     snapd_info="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/main/${snapd_info}"
@@ -383,14 +393,16 @@ create_initrd() {
 
   cp -f "${snapd_info}" "${CRAFT_PART_INSTALL}/snapd-info"
 
+  # Clean any existing initrd.img file from the chroot
   rm -rf "${INITRD_ROOT}/boot/initrd"*
 
+  # Create the initrd.img file
   chroot_run "ubuntu-core-initramfs create-initrd \
                 --kernelver \"${KERNEL_VERSION}\" \
                 --output /boot/initrd.img"
 
   # ubuntu-core-initramfs will only generate a manifest for noble and later
-  if [ "${UBUNTU_SERIES}" = "focal" ] || [ "${UBUNTU_SERIES}" = "jammy" ]; then
+  if [ "${UBUNTU_SERIES}" = "jammy" ]; then
     generate_manifest "${INITRD_ROOT}/boot/manifest-initramfs.yaml-${KERNEL_VERSION}"
   fi
 
@@ -398,24 +410,28 @@ create_initrd() {
   install -Dm644 "${INITRD_ROOT}/boot/manifest-initramfs.yaml-${KERNEL_VERSION}" \
     "${CRAFT_PART_INSTALL}/manifest-initramfs.yaml-${KERNEL_VERSION}"
 
-  # Install the initrd image file
+  # Install the initrd.img file
   install -Dm644 "${INITRD_ROOT}/boot/initrd.img-${KERNEL_VERSION}" \
     "${CRAFT_PART_INSTALL}/initrd.img-${KERNEL_VERSION}"
 
-  # Create a symlink for useful shorthanding
-  ln -sf "initrd.img-${KERNEL_VERSION}" "${CRAFT_PART_INSTALL}/initrd.img"
+  # Create a link for useful shorthanding
+  ln -f "${CRAFT_PART_INSTALL}/initrd.img-${KERNEL_VERSION}" \
+    "${CRAFT_PART_INSTALL}/initrd.img"
 }
 
-# create_efi creates an EFI UKI object from a kernel and initrd.img
+# create_efi creates an EFI UKI object from a kernel.img and initrd.img
+# $1 is the signing key to sign the UKI
+# $2 is the corresponding certificate
 create_efi() {
-  key="$1"
-  cert="$2"
+  key="${1}"
+  cert="${2}"
 
   # Remove unnecessary initrd file or existing kernel EFI
   rm -f "${INITRD_ROOT}/boot/kernel.efi"*
   rm -f "${CRAFT_PART_INSTALL}/initrd.img"*
   rm -f "${CRAFT_PART_INSTALL}/boot/kernel.efi"*
 
+  # Create the UKI
   chroot_run "ubuntu-core-initramfs create-efi    \
                 --kernelver \"${KERNEL_VERSION}\" \
                 --key       \"/root/${key##*/}\"  \
@@ -424,22 +440,28 @@ create_efi() {
                 --kernel    /boot/kernel.img      \
                 --output    /boot/kernel.efi"
 
+  # Install the UKI to the snap
   install -Dm644 "${INITRD_ROOT}/boot/kernel.efi-${KERNEL_VERSION}" \
+    "${CRAFT_PART_INSTALL}/kernel.efi-${KERNEL_VERSION}"
+
+  # Create a link for easy shorthanding
+  ln -f "${CRAFT_PART_INSTALL}/kernel.efi-${KERNEL_VERSION}" \
     "${CRAFT_PART_INSTALL}/kernel.efi"
 }
 
 # run executes the meat of this script
 run() {
-  # Ensure building the initrd in a native environment, so build within a chroot
-  # Build within CRAFT_PART_SRC to avoid issues related to iterative builds
+  # The build occurs within ${CRAFT_PART_SRC} to avoid issues related to iterative
+  # builds with the Ubuntu base fetched by the plugin during the pull step.
   printf 'Preparing to build initrd for arch %s using series %s in %s\n' \
     "${CRAFT_ARCH_BUILD_FOR}" "${UBUNTU_SERIES}" "${CRAFT_PART_SRC}"
   chroot_setup
 
-  # Install kernel, firmware, modules into chroot
   echo "Installing kernel, firmware, and modules into chroot"
+  # Remove any existing firmware and modules first
   rm -rf "${INITRD_ROOT}/usr/lib/firmware/"* \
          "${INITRD_ROOT}/usr/lib/modules"/*
+  # Install kernel, firmware, modules into chroot
   cp --archive --link --force "${KERNEL_FIRMWARE}" \
                               "${KERNEL_MODULES}"  \
                               "${INITRD_ROOT}/usr/lib"
@@ -456,7 +478,7 @@ run() {
   add_modules "${initrd_modules}"
 
   # Add any extra files from plugin options to initrd
-  [ -z "${initrd_addons}"   ] || install_extra addons "${initrd_addons}"
+  [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
   [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
 
   # Configure chroot
@@ -467,29 +489,27 @@ run() {
 
   # Build the EFI image if requested
   [ "${initrd_build_efi_image}" = "False" ] || {
-    # If a key and image weren't provided, use the snakeoil key and cert
-    { [ -n "${initrd_efi_image_key}" ] && [ -n "${initrd_efi_image_cert}" ] ; } || {
-      initrd_efi_image_key="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
-      initrd_efi_image_cert="${INITRD_ROOT}/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
+    # Ensure we have the correct values for key and cert if they're snakeoil
+    if [ "${initrd_efi_image_key##*/}"  = PkKek-1-snakeoil.key ] &&
+       [ "${initrd_efi_image_cert##*/}" = PkKek-1-snakeoil.pem ]; then
+      cp -f "${INITRD_ROOT}/${initrd_efi_image_key}"  \
+            "${INITRD_ROOT}/${initrd_efi_image_cert}" \
+            "${INITRD_ROOT}/root"
+    else install_extra signing "${initrd_efi_image_key}"
+         install_extra signing "${initrd_efi_image_cert}"
+    fi
 
-      cp -f "${initrd_efi_image_key}" "${initrd_efi_image_cert}" \
-        "${INITRD_ROOT}/root"
-    }
-
+    # Create the EFI UKI
     create_efi "${initrd_efi_image_key}" "${initrd_efi_image_cert}"
   }
+
+  # Cleanup. It's only kind.
+  clean
 }
 
 # main sets some important variables and kicks off the script
 main() {
   set -eux
-
-  # This script is used by both legacy and current behavior. If the new
-  # variables are unset fallback to old ones and use new names in the script.
-  : "${CRAFT_STAGE:=$SNAPCRAFT_STAGE}"
-  : "${CRAFT_PART_SRC:=$SNAPCRAFT_PART_SRC}"
-  : "${CRAFT_PART_INSTALL:=$SNAPCRAFT_PART_INSTALL}"
-  : "${CRAFT_ARCH_BUILD_FOR:=$SNAPCRAFT_ARCH_BUILD_FOR}"
 
   # Get the build environment's VERSION_CODENAME as this should match our target
   # shellcheck disable=1091
@@ -499,7 +519,7 @@ main() {
   UBUNTU_SERIES="${VERSION_CODENAME}"
 
   # INITRD_ROOT sets the chroot location
-  INITRD_ROOT="${CRAFT_PART_SRC}/uc-initramfs-build-root"
+  INITRD_ROOT="${CRAFT_PART_SRC}/uc-initramfs-build"
 
   # PPA_FINGERPRINT is the snappy-dev PPA fingerprint providing ubuntu-core-initramfs deb
   PPA_FINGERPRINT=F1831DDAFC42E99D
@@ -532,17 +552,11 @@ main() {
            BASE_CONFIGURED \
            SRC_LIST
 
-  # Building UKIs is only supported on jammy or later
-  if [ "${UBUNTU_SERIES}" = "focal" ]; then
-    initrd_build_efi_image="False"
-    initrd_efi_image_key=""
-    initrd_efi_image_cert=""
-  fi
-
   # clean if we fail
-  trap 'clean "${INITRD_ROOT}"' EXIT INT
+  trap 'clean' EXIT INT
 
   parse_args "$@"
+
   run
 }
 

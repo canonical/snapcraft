@@ -27,14 +27,40 @@ def part_info(new_dir):
         project_info=ProjectInfo(
             application_name="test",
             project_name="test-snap",
+            base="core22",
             cache_dir=new_dir,
         ),
         part=Part("my-part", {}),
     )
 
 
+def test_get_pull_commands_release(part_info):
+    properties = KernelPlugin.properties_class.unmarshal(
+        {
+            "kernel-ubuntu-release-name": "jammy",
+            "kernel-ubuntu-abinumber": "Ubuntu-5.15.0-176.186",
+        }
+    )
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    expected_commands = [
+        "for name in canonical-kernel ubuntu-kernel; do",
+        'team_url="https://git.launchpad.net/~$name/ubuntu/+source/linux/+git/jammy"',
+        'if [ "$(curl -fsSL "$team_url")" != "Invalid OpenID transaction" ]; then',
+        'actual_url="$team_url"',
+        "fi",
+        "done",
+        "git init",
+        'git remote add origin "$actual_url"',
+        "git fetch --depth 1 origin Ubuntu-5.15.0-176.186",
+        "git checkout FETCH_HEAD",
+    ]
+
+    assert plugin.get_pull_commands() == expected_commands
+
+
 def test_get_build_snaps(part_info):
-    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_snaps() == set()
 
@@ -50,7 +76,7 @@ def test_get_build_packages_core22(part_info, new_dir):
         part=Part("my-part", {}),
     )
 
-    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
         "bc",
@@ -63,7 +89,7 @@ def test_get_build_packages_core22(part_info, new_dir):
         "fakeroot",
         "flex",
         "gawk",
-        "gcc",
+        "gcc-x86-64-linux-gnu",
         "kmod",
         "kpartx",
         "libelf-dev",
@@ -86,7 +112,7 @@ def test_get_build_packages_core24(part_info, new_dir):
         part=Part("my-part", {}),
     )
 
-    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
     assert plugin.get_build_packages() == {
         "bc",
@@ -100,7 +126,7 @@ def test_get_build_packages_core24(part_info, new_dir):
         "fakeroot",
         "flex",
         "gawk",
-        "gcc",
+        "gcc-x86-64-linux-gnu",
         "kmod",
         "kpartx",
         "libdw-dev",
@@ -112,104 +138,15 @@ def test_get_build_packages_core24(part_info, new_dir):
         "systemd",
         "xz-utils",
         "zstd",
-    }
-
-
-def test_get_build_packages_zfs_core22(part_info, new_dir):
-    part_info = PartInfo(
-        project_info=ProjectInfo(
-            application_name="test",
-            project_name="test-snap",
-            base="core22",
-            cache_dir=new_dir,
-        ),
-        part=Part("my-part", {}),
-    )
-
-    properties = KernelPlugin.properties_class.unmarshal(
-        {"source": ".", "kernel-enable-zfs-support": "true"}
-    )
-    plugin = KernelPlugin(properties=properties, part_info=part_info)
-    assert plugin.get_build_packages() == {
-        "bc",
-        "binutils",
-        "bison",
-        "cmake",
-        "cpio",
-        "cryptsetup",
-        "debhelper",
-        "fakeroot",
-        "flex",
-        "gawk",
-        "gcc",
-        "kmod",
-        "kpartx",
-        "libelf-dev",
-        "libssl-dev",
-        "lz4",
-        "systemd",
-        "xz-utils",
-        "zstd",
-        "autoconf",
-        "automake",
-        "libblkid-dev",
-        "libtool",
-        "python3",
-    }
-
-
-def test_get_build_packages_zfs_core24(part_info, new_dir):
-    part_info = PartInfo(
-        project_info=ProjectInfo(
-            application_name="test",
-            project_name="test-snap",
-            base="core24",
-            cache_dir=new_dir,
-        ),
-        part=Part("my-part", {}),
-    )
-
-    properties = KernelPlugin.properties_class.unmarshal(
-        {"source": ".", "kernel-enable-zfs-support": "true"}
-    )
-    plugin = KernelPlugin(properties=properties, part_info=part_info)
-    assert plugin.get_build_packages() == {
-        "bc",
-        "binutils",
-        "bison",
-        "clang",
-        "cmake",
-        "cpio",
-        "cryptsetup",
-        "debhelper",
-        "fakeroot",
-        "flex",
-        "gawk",
-        "gcc",
-        "kmod",
-        "kpartx",
-        "libdw-dev",
-        "libelf-dev",
-        "libssl-dev",
-        "llvm",
-        "lz4",
-        "rustc",
-        "systemd",
-        "xz-utils",
-        "zstd",
-        "autoconf",
-        "automake",
-        "libblkid-dev",
-        "libtool",
-        "python3",
     }
 
 
 def test_get_build_environment(part_info):
-    properties = KernelPlugin.properties_class.unmarshal({"source": "."})
+    properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_environment() == {
+        "CROSS": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
         "CROSS_COMPILE": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
         "ARCH": "x86",
         "KERNEL_IMAGE": "bzImage",
@@ -220,7 +157,6 @@ def test_get_build_environment(part_info):
 def test_get_build_commands(part_info):
     properties = KernelPlugin.properties_class.unmarshal(
         {
-            "source": ".",
             "kernel-kdefconfig": [
                 "snappy_defconfig",
                 "foo_config",
@@ -229,17 +165,23 @@ def test_get_build_commands(part_info):
                 "CONFIG_FOO=y",
                 "CONFIG_BAR=m",
             ],
-            "kernel-enable-zfs-support": "true",
-            "kernel-enable-perf": "true",
+            "kernel-tools": [
+                "bpf",
+                "cpupower",
+                "perf",
+            ],
+            "kernel-ubuntu-release-name": "noble",
         }
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
-        "kernel-kconfigflavour= "
         "kernel-kdefconfig=snappy_defconfig,foo_config "
         "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
-        "kernel-enable-zfs=True "
-        "kernel-enable-perf=True"
+        "kernel-tools=bpf,cpupower,perf "
+        "kernel-ubuntu-kconfigflavour= "
+        "kernel-ubuntu-release-name=noble "
+        "kernel-ubuntu-binary-package=False "
+        "kernel-ubuntu-abinumber="
     ]
