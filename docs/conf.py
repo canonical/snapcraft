@@ -129,6 +129,7 @@ linkcheck_ignore = [
     r"^https://([\w-]*\.)?npmjs.org",
     r"^https://rsync.samba.org",
     r"^https://ubuntu.com",
+    r"^https://packages.ubuntu.com",
     r"^https://www.freedesktop.org/",
     r"^https://www.npmjs.com/",
     "https://matrix.to/#",
@@ -206,6 +207,8 @@ exclude_patterns = [
     "common/craft-parts/reference/plugins/python_plugin.rst",
     "common/craft-parts/reference/plugins/python_v2_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
+    # Excluded because Snapcraft has its own version
+    "common/craft-parts/reference/plugins/colcon_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
