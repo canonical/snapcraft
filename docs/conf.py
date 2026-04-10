@@ -261,12 +261,16 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 # Add configuration for intersphinx mapping
 intersphinx_mapping = {
     # https://github.com/canonical/snapcraft/issues/6036
-    # "snap": ("https://snapcraft.io/docs/", None),
+    "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
     "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
     "ubuntu-frame": ("https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/24", None),
 }
+
+# Block Intersphinx from looking up external sources with internal references. In other
+# words, only :external+<project>... will search in other projects.
+intersphinx_disabled_reftypes = ["std:*"]
 
 
 ##############################

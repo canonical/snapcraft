@@ -53,9 +53,9 @@ Set an environment variable
 ---------------------------
 
 When an app in a snap has behavior bound to an environment variable, the user can set it
-either through the `snap's configuration
-<https://snapcraft.io/docs/configuration-in-snaps>`_ or by reading an environment
-(``.env``) file.
+either through the :external+snap:ref:`snap's configuration
+<how-to-guides-work-with-snaps-configure-snaps>` or by reading an environment (``.env``)
+file.
 
 Environment variables are applied to apps in one of two ways:
 
@@ -105,7 +105,7 @@ The user can pass environment variables in ``.env`` files to the snap with the `
 set`` command.
 
 If a snap is confined, its file system needs access to the file, either by storing the
-file in its `writable area <https://snapcraft.io/docs/data-locations>`_ or through a
+file in its :external+snap:ref:`writable area <interfaces-data-locations>` or through a
 file interface.
 
 For a simple example, to globally export the contents of an environment file stored in

@@ -80,9 +80,8 @@ require re-downloading Snapcraft.
 Parallel installs
 ^^^^^^^^^^^^^^^^^
 
-Multiple instances of Snapcraft can be installed via ``snapd``'s experimental
-parallel install feature. See the `Parallel installs`_ documentation for
-details.
+Multiple instances of Snapcraft can be installed with the experimental
+:external+snap:ref:`parallel installs <interfaces-parallel-installs>` feature in SnapD.
 
 .. code-block:: bash
 
@@ -166,6 +165,4 @@ This snippet will build a bare base snap inside an Ubuntu 26.04 build
 environment.
 
 
-.. _`Snapcraft and ESM`: https://snapcraft.io/docs/snapcraft-esm
 .. _`Snapcraft rocks`: https://github.com/canonical/snapcraft-rocks
-.. _`parallel installs`: https://snapcraft.io/docs/parallel-installs
