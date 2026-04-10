@@ -22,6 +22,8 @@ parts:
     source: src
     python-packages: [black]
     stage-packages:
-      - python3-minimal
-      - python3-minimal
-      - python3-venv
+      - libpython3.14-minimal
+      - libpython3.14-stdlib
+      - python3-minimal # for the "python3" symlink
+      - python3.14-minimal
+      - python3.14-venv
