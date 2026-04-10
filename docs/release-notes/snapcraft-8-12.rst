@@ -51,7 +51,12 @@ The output of ``snapcraft status`` was reworked to allow for easier parsing.
 Prior to the change, the output was formatted as follows:
 
 .. terminal::
-    :input: snapcraft status snapcraft | grep pr- | head
+    :user:
+    :host:
+    :dir:
+
+    snapcraft status snapcraft | grep pr- | head
+
                       edge/pr-5718  8.11.1.post15             15744       -           2025-09-19T00:00:00Z
                       edge/pr-5715  8.11.1.post10             15719       -           2025-09-18T00:00:00Z
                       edge/pr-5714  8.11.1.post10             15712       -           2025-09-18T00:00:00Z
@@ -66,7 +71,11 @@ Prior to the change, the output was formatted as follows:
 The same status query now produces the following output:
 
 .. terminal::
-    :input: snapcraft status snapcraft | grep pr- | head
+    :user:
+    :host:
+    :dir:
+
+    snapcraft status snapcraft | grep pr- | head
 
     latest   amd64    edge/pr-5718  8.11.1.post15             15744       -           2025-09-19T00:00:00Z
     latest   amd64    edge/pr-5715  8.11.1.post10             15719       -           2025-09-18T00:00:00Z
