@@ -97,9 +97,11 @@ Each configuration option can be retrieved by using the same dotted path, or you
 retrieve the entire collection as a JSON document by specifying their common key:
 
 .. terminal::
-    :input: snapctl get server
-    :user: crafter
-    :host: host
+    :user:
+    :host:
+    :dir:
+
+    snapctl get server
 
     {
         "protocol": "tcp",

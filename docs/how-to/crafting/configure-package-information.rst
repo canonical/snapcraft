@@ -25,7 +25,7 @@ The placeholder values looks similar to this:
     :caption: snapcraft.yaml
 
     name: newtest
-    base: core24
+    base: core26
     version: '0.1'
     summary: Single-line elevator pitch for your amazing snap
     description: |
@@ -58,7 +58,7 @@ When crafting a snap, fill these keys as follows:
       - Set the version of Ubuntu that the snap will use for its runtime environment.
         :ref:`how-to-specify-a-base` are a complex topic that is out of scope for this
         guide. Unless you're building a snap compatible with older code, leave this as
-        ``core24``.
+        ``core26``.
     * - ``version``
       - Set the initial version of your snap. This key is a simple string, so you can
         use any version schema. You can later replace this with a different version, or

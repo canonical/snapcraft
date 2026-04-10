@@ -401,13 +401,6 @@ def _select_key(keys):
         return keys[0]
 
 
-def _export_key(name, account_id):
-    return subprocess.check_output(
-        ["snap", "export-key", "--account={}".format(account_id), name],
-        universal_newlines=True,
-    )
-
-
 def _maybe_prompt_for_key(name):
     keys = list(_get_usable_keys(name=name))
     if not keys:
@@ -416,44 +409,6 @@ def _maybe_prompt_for_key(name):
         else:
             raise storeapi.errors.NoKeysError
     return _select_key(keys)
-
-
-def save_key(func):
-    def wrapped_env(*args, **kwargs):
-        credentials = os.getenv(storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS)
-        if credentials:
-            del os.environ[storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS]
-        try:
-            return func(*args, **kwargs)
-        finally:
-            if credentials:
-                os.environ[storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS] = (
-                    credentials
-                )
-
-    return wrapped_env
-
-
-@save_key
-def register_key(name) -> None:
-    key = _maybe_prompt_for_key(name)
-
-    store_client = StoreClientCLI(ephemeral=True)
-    login(
-        store_client=store_client,
-        acls=["modify_account_key"],
-        ttl=int(timedelta(days=1).total_seconds()),
-    )
-
-    logger.info("Registering key ...")
-    account_info = store_client.get_account_information()
-    account_key_request = _export_key(key["name"], account_info["account_id"])
-    store_client.register_key(account_key_request)
-    logger.info(
-        'Done. The key "{}" ({}) may be used to sign your assertions.'.format(
-            key["name"], key["sha3-384"]
-        )
-    )
 
 
 def register(snap_name: str, is_private: bool = False, store_id: str = None) -> None:

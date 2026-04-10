@@ -7,6 +7,14 @@ This page lists the notes for past releases of Snapcraft, which summarize new fe
 bug fixes and backwards-incompatible changes in each version. It also contains the
 release and support policies for Snapcraft.
 
+Upcoming releases
+-----------------
+
+Snapcraft 9
+~~~~~~~~~~~
+
+- :ref:`Snapcraft 9.0 <release-9.0>`
+
 
 .. _current-releases:
 
@@ -29,7 +37,7 @@ Snapcraft 8
 Snapcraft 7
 ~~~~~~~~~~~
 
-Snapcraft 7 is available for building ``core18`` snaps. When building for newer bases,
+Snapcraft 7 is available for building core18 snaps. When building for higher bases,
 use Snapcraft 8. See :ref:`how-to-set-up-snapcraft-multiple-instances` for more
 information.
 
@@ -45,7 +53,7 @@ base, see the :ref:`Base snaps reference <base-snap-reference>`.
 Snapcraft 6
 ~~~~~~~~~~~
 
-Snapcraft 6 is available for building ``core`` snaps.
+Snapcraft 6 is available for building core snaps.
 
 - `Snapcraft 6.1 <https://github.com/canonical/snapcraft/releases/tag/6.1>`_
 
@@ -88,6 +96,7 @@ development keeps pace with the OS's new releases and support lifecycle.
 .. toctree::
     :hidden:
 
+    Snapcraft 9.0 <snapcraft-9-0>
     Snapcraft 8.14 <snapcraft-8-14>
     Snapcraft 8.13 <snapcraft-8-13>
     Snapcraft 8.12 <snapcraft-8-12>

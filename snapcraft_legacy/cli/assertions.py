@@ -17,7 +17,6 @@
 import click
 
 import snapcraft_legacy
-from snapcraft_legacy import storeapi
 
 from ._options import add_verbosity_options
 
@@ -25,24 +24,6 @@ from ._options import add_verbosity_options
 @click.group()
 def assertionscli():
     """Store assertion commands"""
-
-
-@assertionscli.command("register-key")
-@click.argument("key-name", metavar="<key-name>", required=False)
-@click.option(
-    "--experimental-login",
-    is_flag=True,
-    help="*EXPERIMENTAL* Enables login through candid.",
-    envvar="SNAPCRAFT_LOGIN",
-)
-@add_verbosity_options()
-def register_key(key_name: str, experimental_login: bool, **kwargs) -> None:
-    """Register a key with the store to sign assertions."""
-    if experimental_login:
-        raise click.BadArgumentUsage(
-            f"Set {storeapi.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
-        )
-    snapcraft_legacy.register_key(key_name)
 
 
 @assertionscli.command("sign-build")

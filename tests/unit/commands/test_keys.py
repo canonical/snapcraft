@@ -18,6 +18,7 @@
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from unittest.mock import call
@@ -26,7 +27,7 @@ import craft_store
 import pytest
 
 from snapcraft import cli, commands, store
-from snapcraft.commands.keys import _get_usable_keys
+from snapcraft.commands.keys import StoreRegisterKeyCommand, _get_usable_keys
 from tests.unit.store.utils import FakeResponse
 
 _TEST_KEY_1 = {"name": "test-key-1", "sha3-384": "abc123"}
@@ -34,15 +35,28 @@ _TEST_KEY_2 = {"name": "test-key-2", "sha3-384": "deadbeef"}
 
 
 @pytest.fixture
-def mock_subprocess_check(mocker):
+def mock_subprocess_check_call(mocker):
     return mocker.patch("subprocess.check_call")
+
+
+@pytest.fixture
+def mock_subprocess_check_output(mocker):
+    return mocker.patch("subprocess.check_output")
+
+
+@pytest.fixture
+def mock_isatty(mocker):
+    yield mocker.patch("snapcraft.utils.sys.stdin.isatty", return_value=True)
 
 
 @pytest.fixture
 def fake_store_client(mocker):
     """Fake StoreClientCLI with a get_account_info endpoint."""
     mock_cls = mocker.patch("snapcraft.store.StoreClientCLI")
-    mock_cls.return_value.get_account_info.return_value = {"account_keys": []}
+    mock_cls.return_value.get_account_info.return_value = {
+        "account_id": "test-account-id",
+        "account_keys": [],
+    }
     return mock_cls.return_value
 
 
@@ -180,8 +194,8 @@ class TestKeysCommand:
             "- def456"
         )
 
-    @pytest.mark.usefixtures("fake_get_usable_keys")
-    def test_keys_no_keys(self, fake_store_client, fake_app_config, emitter):
+    @pytest.mark.usefixtures("fake_get_usable_keys", "fake_store_client")
+    def test_keys_no_keys(self, fake_app_config, emitter):
         """No local keys and no registered keys."""
         cmd = commands.StoreKeysCommand(fake_app_config)
 
@@ -214,18 +228,18 @@ class TestCreateKeyCommand:
     """Tests for the 'create-key' command."""
 
     @pytest.mark.usefixtures("fake_store_client", "fake_get_usable_keys")
-    def test_create_key(self, mock_subprocess_check, fake_app_config):
+    def test_create_key(self, mock_subprocess_check_call, fake_app_config):
         cmd = commands.StoreCreateKeyCommand(fake_app_config)
 
         cmd.run(argparse.Namespace(key_name="test-key-1"))
 
-        assert mock_subprocess_check.mock_calls == [
+        assert mock_subprocess_check_call.mock_calls == [
             call(["snap", "create-key", "test-key-1"])
         ]
 
     def test_create_key_already_exists(
         self,
-        mock_subprocess_check,
+        mock_subprocess_check_call,
         fake_store_client,
         fake_app_config,
         fake_get_usable_keys,
@@ -237,12 +251,12 @@ class TestCreateKeyCommand:
         with pytest.raises(store.errors.KeyAlreadyExistsError):
             cmd.run(argparse.Namespace(key_name="test-key-1"))
 
-        mock_subprocess_check.assert_not_called()
+        mock_subprocess_check_call.assert_not_called()
         fake_store_client.get_account_info.assert_not_called()
 
     @pytest.mark.usefixtures("fake_get_usable_keys")
     def test_create_key_already_registered(
-        self, fake_store_client, mock_subprocess_check, fake_app_config
+        self, fake_store_client, mock_subprocess_check_call, fake_app_config
     ):
         fake_store_client.get_account_info.return_value = {
             "account_keys": [{"name": "test-key-1"}]
@@ -253,11 +267,11 @@ class TestCreateKeyCommand:
         with pytest.raises(store.errors.KeyAlreadyRegisteredError):
             cmd.run(argparse.Namespace(key_name="test-key-1"))
 
-        mock_subprocess_check.assert_not_called()
+        mock_subprocess_check_call.assert_not_called()
 
     @pytest.mark.usefixtures("fake_get_usable_keys")
     def test_create_key_not_logged_in(
-        self, mock_subprocess_check, fake_store_client, fake_app_config
+        self, mock_subprocess_check_call, fake_store_client, fake_app_config
     ):
         """Ignore 401 from store."""
         fake_store_client.get_account_info.side_effect = (
@@ -279,13 +293,13 @@ class TestCreateKeyCommand:
 
         cmd.run(argparse.Namespace(key_name="test-key-1"))
 
-        assert mock_subprocess_check.mock_calls == [
+        assert mock_subprocess_check_call.mock_calls == [
             call(["snap", "create-key", "test-key-1"])
         ]
 
     @pytest.mark.usefixtures("fake_get_usable_keys")
     def test_create_key_store_error(
-        self, mock_subprocess_check, fake_store_client, fake_app_config
+        self, mock_subprocess_check_call, fake_store_client, fake_app_config
     ):
         """A non-401 store error is re-raised."""
         fake_store_client.get_account_info.side_effect = (
@@ -311,4 +325,129 @@ class TestCreateKeyCommand:
         with pytest.raises(craft_store.errors.StoreServerError):
             cmd.run(argparse.Namespace(key_name="test-key-1"))
 
-        mock_subprocess_check.assert_not_called()
+        mock_subprocess_check_call.assert_not_called()
+
+
+class TestRegisterKeyCommand:
+    """Tests for the 'register-key' command."""
+
+    def test_register_key(
+        self,
+        fake_store_client,
+        fake_app_config,
+        fake_get_usable_keys,
+        mock_subprocess_check_output,
+        monkeypatch,
+        emitter,
+    ):
+        monkeypatch.setenv(store.constants.ENVIRONMENT_STORE_CREDENTIALS, "creds")
+        fake_get_usable_keys.return_value = [_TEST_KEY_1]
+        mock_subprocess_check_output.return_value = "test-serialized-assertion"
+        cmd = commands.StoreRegisterKeyCommand(fake_app_config)
+
+        cmd.run(argparse.Namespace(key_name="test-key-1"))
+
+        fake_store_client.login.assert_called_once_with(
+            acls=["modify_account_key"],
+            ttl=86400,
+        )
+        assert mock_subprocess_check_output.mock_calls == [
+            call(
+                ["snap", "export-key", "--account=test-account-id", "test-key-1"],
+                universal_newlines=True,
+            )
+        ]
+        fake_store_client.register_key.assert_called_once_with(
+            "test-serialized-assertion"
+        )
+        emitter.assert_message(
+            "Done. The key 'test-key-1' ('abc123') may be used to sign your assertions."
+        )
+        # restore credentials after running
+        assert os.environ[store.constants.ENVIRONMENT_STORE_CREDENTIALS] == "creds"
+
+    def test_register_key_no_key(
+        self,
+        fake_store_client,
+        fake_app_config,
+        fake_get_usable_keys,
+    ):
+        """Error when the provided key doesn't exist."""
+        fake_get_usable_keys.return_value = []
+        cmd = commands.StoreRegisterKeyCommand(fake_app_config)
+
+        with pytest.raises(store.errors.NoSuchKeyError):
+            cmd.run(argparse.Namespace(key_name="missing-key"))
+
+        fake_store_client.login.assert_not_called()
+        fake_store_client.register_key.assert_not_called()
+
+    def test_register_key_no_keys_exist(
+        self,
+        fake_store_client,
+        fake_app_config,
+        fake_get_usable_keys,
+    ):
+        """Error when no keys exist and no key name is provided."""
+        fake_get_usable_keys.return_value = []
+        cmd = commands.StoreRegisterKeyCommand(fake_app_config)
+
+        with pytest.raises(store.errors.NoKeysError):
+            cmd.run(argparse.Namespace(key_name=None))
+
+        fake_store_client.login.assert_not_called()
+        fake_store_client.register_key.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ("selection", "key_name"),
+        [
+            ("1", _TEST_KEY_1["name"]),
+            ("2", _TEST_KEY_2["name"]),
+        ],
+    )
+    def test_register_key_selects_from_multiple_keys(
+        self,
+        mocker,
+        fake_store_client,
+        fake_app_config,
+        fake_get_usable_keys,
+        mock_subprocess_check_output,
+        mock_isatty,
+        selection,
+        key_name,
+        emitter,
+    ):
+        fake_get_usable_keys.return_value = [_TEST_KEY_1, _TEST_KEY_2]
+        mock_subprocess_check_output.return_value = "test-serialized-assertion"
+        mocker.patch("craft_cli.emit.prompt", return_value=selection)
+        cmd = commands.StoreRegisterKeyCommand(fake_app_config)
+
+        cmd.run(argparse.Namespace(key_name=None))
+
+        assert mock_subprocess_check_output.mock_calls == [
+            call(
+                ["snap", "export-key", "--account=test-account-id", key_name],
+                universal_newlines=True,
+            )
+        ]
+        fake_store_client.register_key.assert_called_once_with(
+            "test-serialized-assertion"
+        )
+        emitter.assert_progress("Select a key:\n", permanent=True)
+        emitter.assert_progress(
+            "  Number  Name        SHA3-384 fingerprint\n"
+            "       1  test-key-1  abc123\n"
+            "       2  test-key-2  deadbeef\n",
+            permanent=True,
+        )
+
+    def test_select_key_skips_invalid_input(self, mocker):
+        """Retry key selection until a valid key is chosen."""
+        mocker.patch(
+            "craft_cli.emit.prompt",
+            side_effect=["x", "", "99", "0", "1"],
+        )
+
+        result = StoreRegisterKeyCommand._select_key([_TEST_KEY_1, _TEST_KEY_2])
+
+        assert result == _TEST_KEY_1

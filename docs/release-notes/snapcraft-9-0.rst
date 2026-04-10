@@ -33,6 +33,12 @@ channel non-interactively with the ``--yes`` flag.
 The :ref:`ref_commands_validation-sets` command now supports a ``--format`` option to
 output validation sets as either a table or JSON.
 
+Interactive key selection for ``register-key``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`ref_commands_register-key` command now prompts you to select a key
+when no key name is given.
+
 
 Backwards-incompatible changes
 ------------------------------
@@ -201,7 +207,7 @@ The following issues have been resolved in Snapcraft 9.0.
 Snapcraft 9.0.0
 ~~~~~~~~~~~~~~~~
 
-- `snapcraft#6054`_ In the GNOME extension, fix a missing link to libproxy
+- `#6054`_ In the GNOME extension, fix a missing link to libproxy
 
 
 Contributors
@@ -210,9 +216,7 @@ Contributors
 We would like to express a big thank you to all the people who contributed to
 this release.
 
-.. update contributors before releasing
+.. add contributors before releasing
 
-:literalref:`@alex<https://example.com/alex>`,
-:literalref:`@blair<https://example.com/blair>`,
-:literalref:`@cam<https://example.com/cam>`,
-and :literalref:`@devin<https://example.com/devin>`
+
+.. _#6054: https://github.com/canonical/snapcraft/issues/6054

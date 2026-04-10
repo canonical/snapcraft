@@ -43,7 +43,7 @@ values such as its confinement level and supported architectures.
     The base snap to be used as the run-time environment.
 
     If the ``build-base`` key is unset, then the ``base`` key also determines the build
-    environment. For example, ``base: core24`` builds the snap in an Ubuntu 24.04
+    environment. For example, ``base: core26`` builds the snap in an Ubuntu 26.04
     environment.
 
     For more information about the ``base`` and ``build-base`` keys, see
@@ -53,7 +53,7 @@ values such as its confinement level and supported architectures.
 
     .. code-block:: yaml
 
-        base: core24
+        base: core26
 
 .. kitbash-field:: StableBaseProject build_base
 
@@ -347,9 +347,9 @@ Part keys
           - Description
         * - ``core22-step-dependencies``
           - For snaps using core20. Orders lifecycle steps as they are ordered for
-            core22 and newer snaps.
+            core22 and higher snaps.
         * - ``enable-patchelf``
-          - For classically-confined snaps using core22 and newer. Patches executables
+          - For classically-confined snaps using core22 and higher. Patches executables
             for files primed by the part. By default, executables primed by the part
             aren't patched.
         * - ``no-patchelf``
@@ -361,8 +361,8 @@ Part keys
             part.
 
     For core20 snaps, the ``core22-step-dependencies`` customization alters the part
-    processing order to align with newer bases, where all parts are pulled prior to build.
-    For more details on part processing for core22 and newer, see `Processing order and
+    processing order to align with higher bases, where all parts are pulled prior to build.
+    For more details on part processing for core22 and higher, see `Processing order and
     dependencies <https://documentation.ubuntu.com/snapcraft/stable/explanation/parts-lifecycle/#processing-order-and-dependencies>`_.
 
 .. kitbash-field:: PartSpec override_build

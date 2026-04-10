@@ -24,7 +24,7 @@ Build environment
 
 Snaps are built to run on top of a :ref:`base snap <explanation-bases>` runtime. This
 base is provided by an automatically-installed snap. Currently, the most widely-used
-core images are based on Ubuntu 22.04 LTS and Ubuntu 24.04 LTS.
+core images are based on Ubuntu 22.04 LTS, Ubuntu 24.04 LTS, and Ubuntu 26.04 LTS.
 
 
 Missing libraries
@@ -132,6 +132,7 @@ step, run:
 The last line of the output contains a bang (#), indicating you're in a shell:
 
 .. terminal::
+    :output-only:
 
     Using 'snap/snapcraft.yaml': Project assets will be searched for from
     the 'snap' directory.
@@ -171,6 +172,7 @@ usually easy to resolve.
 For example, the following error is related to a missing key:
 
 .. terminal::
+    :output-only:
 
     Issues while validating snapcraft.yaml: 'adopt-info' is a required property or
     'version' is a required property:
@@ -183,6 +185,7 @@ processed until later in the build, which means any error in adopt-info isn't ge
 until the prime step:
 
 .. terminal::
+    :output-only:
 
     Failed to generate snap metadata: 'adopt-info' refers to part 'mypart', but that
     part is lacking the 'parse-info' property.
@@ -207,6 +210,7 @@ with the part that's failing to build, before updating your snap.
 As an example:
 
 .. terminal::
+    :output-only:
 
     Package ncursesw was not found in the pkg-config search path.
     Perhaps you should add the directory containing 'ncursesw.pc'
@@ -245,6 +249,7 @@ system.
 For example:
 
 .. terminal::
+    :output-only:
 
     Unable to successfully call git binary. If git is not in $PATH then please set the
     config variable git-binary-file-path

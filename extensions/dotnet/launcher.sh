@@ -7,7 +7,7 @@ fi
 
 if ! snapctl is-connected "${DOTNET_EXT_PLUG_NAME}"; then
   >&2 echo "Plug '${DOTNET_EXT_PLUG_NAME}' isn't connected."
-  >&2 echo "Please run: 'snap connect ${DOTNET_EXT_SNAP_NAME}:${DOTNET_EXT_PLUG_NAME} ${DOTNET_EXT_CONTENT_SNAP}:${DOTNET_EXT_PLUG_NAME}'."
+  >&2 echo "Please run: 'snap connect ${DOTNET_EXT_SNAP_NAME}:${DOTNET_EXT_PLUG_NAME} ${DOTNET_EXT_CONTENT_SNAP}:dotnet-runtime'."
   exit 1
 fi
 

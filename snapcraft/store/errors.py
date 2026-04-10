@@ -142,3 +142,19 @@ class KeyAlreadyExistsError(SnapcraftError):
 class KeyAlreadyRegisteredError(SnapcraftError):
     def __init__(self, key_name: str):
         super().__init__(f"You have already registered a key named {key_name!r}.")
+
+
+class NoKeysError(SnapcraftError):
+    def __init__(self):
+        super().__init__(
+            "You have no usable keys.\nPlease create at least one key with "
+            "`snapcraft create-key` for use with snap."
+        )
+
+
+class NoSuchKeyError(SnapcraftError):
+    def __init__(self, key_name: str):
+        super().__init__(
+            f"You have no usable key named {key_name!r}.\nSee the keys available "
+            "in your system with `snapcraft keys`."
+        )

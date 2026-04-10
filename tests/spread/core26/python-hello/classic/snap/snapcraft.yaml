@@ -23,8 +23,8 @@ parts:
     build-attributes:
       - enable-patchelf
     stage-packages:
-      - libpython3.13-minimal
-      - libpython3.13-stdlib
-      - python3.13-minimal
+      - libpython3.14-minimal
+      - libpython3.14-stdlib
+      - python3.14-minimal
       - python3-venv
       - python3-minimal # (for the "python3" symlink)

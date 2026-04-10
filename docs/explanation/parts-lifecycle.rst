@@ -180,6 +180,7 @@ each step the parts are processed in alphabetical order.
 
 
 .. terminal::
+    :output-only:
 
     Pulling Alex
     Pulling Blair
@@ -211,6 +212,7 @@ Example 2 -- Order override
 
 
 .. terminal::
+    :output-only:
 
     Pulling Cam
     Pulling Alex
