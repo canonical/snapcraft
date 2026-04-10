@@ -1,0 +1,7 @@
+# https://github.com/canonical/copilot-collections
+
+copilot:
+  version: v0.9.0
+  collections:
+    - starcraft-core
+    - starcraft-docs
