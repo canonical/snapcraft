@@ -810,7 +810,7 @@ class App(models.CraftBaseModel):
 
     Slots are used to define what code and data can be shared with other snaps.
 
-    See :external+snap:ref:`interfaces-content-interface` in the snap documenation for
+    See :external+snap:ref:`interfaces-content-interface` in the snap documentation for
     more information about plugs and slots.
     """
 
@@ -821,7 +821,7 @@ class App(models.CraftBaseModel):
     )
     """The list of interfaces that the app can connect to.
 
-    See :external+snap:ref:`interfaces-content-interface` in the snap documenation for
+    See :external+snap:ref:`interfaces-content-interface` in the snap documentation for
     more information about plugs and slots.
     """
 

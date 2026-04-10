@@ -72,7 +72,8 @@ class SnapApp(SnapcraftMetadata):
     https://snapcraft.io/docs/reference/development/yaml-schemas/the-snap-format/ for
     details.
 
-    TODO: implement desktop (CRAFT-804) TODO: implement extensions (CRAFT-805)
+    TODO: implement desktop (CRAFT-804)
+    TODO: implement extensions (CRAFT-805)
     """
 
     command: str

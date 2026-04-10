@@ -32,8 +32,8 @@ All snaps have one default track, called *latest*. Most operations and commands 
 Snapcraft and the snap ecosystem assume this track, unless otherwise specified. If a
 snap has need for other tracks, they must be vetted and granted on a snap-by-snap basis
 by the Snap Store team. The process for requesting a track is outlined in
-:external+snap:ref:`Process for aliases, auto-connections and tracks
-<interfaces-process-for-aliases-auto-connections-and-tracks>` in the snap documentation.
+:external+snap:ref:`interfaces-process-for-aliases-auto-connections-and-tracks` in the
+snap documentation.
 
 The release semantics for a track is at the snap author's discretion. A track
 could, for examples, encompass minor updates, major updates, or long-term
