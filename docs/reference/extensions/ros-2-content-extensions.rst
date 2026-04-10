@@ -4,7 +4,7 @@ ROS 2 Content extensions
 ========================
 
 The ROS 2 Content extensions comprise the main ROS 2 extensions, plus additional
-settings to enable `content sharing <https://snapcraft.io/docs/content-interface>`_.
+settings to enable :external+snap:ref:`content sharing <interfaces-content-interface>`.
 
 These extensions are split across ROS 2 versions and content types, and are declared
 with the format ``ros2-<version>-<metapackage>``. The available extensions are:
@@ -36,8 +36,8 @@ Included interface connections
 ------------------------------
 
 The most important modification the content extensions make to the project file is to
-connect the `content plug <https://snapcraft.io/docs/content-interface>`_ which mounts
-the provider snap content at ``$SNAP/opt/ros/underlay_ws`` and defines a default
+connect the :external+snap:ref:`content plug <interfaces-content-interface>` which
+mounts the provider snap content at ``$SNAP/opt/ros/underlay_ws`` and defines a default
 provider.
 
 

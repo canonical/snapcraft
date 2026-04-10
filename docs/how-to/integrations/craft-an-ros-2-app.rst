@@ -226,9 +226,9 @@ Share content between ROS 2 snaps
 ---------------------------------
 
 The core20, core22 and core24 bases also offer the option to build your ROS snap using
-the `content-sharing interface <https://snapcraft.io/docs/content-interface>`_. It
-shares the ROS 2 content packages across multiple snaps, saving space and ensuring
-package consistency throughout your snap build environment.
+the :external+snap:ref:`interfaces-content-interface`. It shares the ROS 2 content
+packages across multiple snaps, saving space and ensuring package consistency throughout
+your snap build environment.
 
 You can find more information in `ROS architectures with snaps
 <https://ubuntu.com/robotics/docs/ros-architectures-with-snaps>`_ in the Canonical ROS

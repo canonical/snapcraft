@@ -102,7 +102,6 @@ Kernel snaps
 See :ref:`How to build a kernel snap<kernel-snap-how-to>` for details on how to
 use ``build-base`` for kernel snaps.
 
-.. _`Snapcraft and ESM`: https://snapcraft.io/docs/snapcraft-esm
 .. _`Ubuntu 16.04 ESM`: https://releases.ubuntu.com/16.04/
 .. _`Ubuntu 18.04 ESM`: https://releases.ubuntu.com/18.04/
 .. _`Ubuntu 20.04 LTS`: https://releases.ubuntu.com/20.04/

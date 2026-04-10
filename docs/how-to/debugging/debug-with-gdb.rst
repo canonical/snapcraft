@@ -173,7 +173,6 @@ you would a normally built app.
 .. image:: https://assets.ubuntu.com/v1/430a49e2-vscode_03.png
    :alt: GDB output in the Debug Console in VS Code.
 
-.. _confined environment: https://snapcraft.io/docs/snap-confinement
 .. _GNU Debugger: https://sourceware.org/gdb
 .. _gdbserver: https://sourceware.org/gdb/current/onlinedocs/gdb.html/Server.html
 .. _GDB documentation: https://sourceware.org/gdb/current/onlinedocs/gdb/

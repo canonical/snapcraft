@@ -446,9 +446,9 @@ class App(models.CraftBaseModel):
     in the ``Exec=`` line in the ``.desktop`` file when the desktop environment is
     started.
 
-    See `The snap format
-    <https://snapcraft.io/docs/reference/development/yaml-schemas/the-snap-format>`__ in
-    the snap docs for an example of both the desktop file and the ``Exec`` file entry.
+    See :external+snap:ref:`reference-development-yaml-schemas-the-snap-format` in the
+    snap documentation for an example of both the desktop file and the ``Exec`` file
+    entry.
     """
 
     common_id: str | None = pydantic.Field(
@@ -793,10 +793,9 @@ class App(models.CraftBaseModel):
             service. This will start the service too.
         * - ``disable``
           - The service is not automatically started. Instead, the service will be
-            started with `snapctl
-            <https://snapcraft.io/docs/how-to-guides/snap-development/use-snapctl/>`__.
-            and another management agent, which is most commonly a :ref:`hooks
-            <reference-hooks>`.
+            started with :external+snap:ref:`snapctl
+            <how-to-guides-manage-snaps-use-snapctl>` and another management agent,
+            which is most commonly a :ref:`hooks <reference-hooks>`.
 
     """
 
@@ -807,13 +806,12 @@ class App(models.CraftBaseModel):
     )
     """The list of slots that the app provides.
 
-    Slot connections are only made when the snap is running in ``strict``
-    confinement.
+    Slot connections are only made when the snap is running in ``strict`` confinement.
 
     Slots are used to define what code and data can be shared with other snaps.
 
-    See the `content interface <https://snapcraft.io/docs/content-interface>`_
-    for more information about plugs and slots.
+    See :external+snap:ref:`interfaces-content-interface>` in the snap documenation for
+    more information about plugs and slots.
     """
 
     plugs: UniqueList[str] | None = pydantic.Field(
@@ -823,8 +821,8 @@ class App(models.CraftBaseModel):
     )
     """The list of interfaces that the app can connect to.
 
-    See the `content interface <https://snapcraft.io/docs/content-interface>`_
-    for more information about plugs and slots.
+    See :external+snap:ref:`interfaces-content-interface>` in the snap documenation for
+    more information about plugs and slots.
     """
 
     aliases: UniqueList[str] | None = pydantic.Field(
@@ -834,8 +832,8 @@ class App(models.CraftBaseModel):
     )
     """The aliases that can be used to run the app.
 
-    See `Commands and aliases <https://snapcraft.io/docs/commands-and-aliases>`_
-    for more information.
+    See :external+snap:ref:`how-to-guides-work-with-snaps-apps-and-aliases` in the snap
+    documentation for more information.
     """
 
     environment: dict[str, str] | None = pydantic.Field(
@@ -932,16 +930,15 @@ class App(models.CraftBaseModel):
     )
     """The attributes to pass to the snap's metadata file for the app.
 
-    These attributes are passed to the ``snap.yaml`` file without validation from Snapcraft.
-    This is useful for early testing of a new feature in snapd that isn't supported yet
-    by Snapcraft.
+    These attributes are passed to the ``snap.yaml`` file without validation from
+    Snapcraft. This is useful for early testing of a new feature in snapd that isn't
+    supported yet by Snapcraft.
 
     To pass a value for the entire project, see the top-level :ref:`passthrough key
     <Project.passthrough>`.
 
-    See `Using development features in Snapcraft
-    <https://snapcraft.io/docs/using-in-development-features>`_ for more
-    details.
+    :external+snap:ref:`interfaces-using-in-development-features` in the snap
+    documentation offers more guidance.
     """
 
     extensions: UniqueList[str] | None = pydantic.Field(
@@ -1063,8 +1060,8 @@ class Hook(models.CraftBaseModel):
     )
     """The list of interfaces that the hook can connect to.
 
-    See the `content interface <https://snapcraft.io/docs/content-interface>`_ for more
-    information about plugs and slots.
+    See :external+snap:ref:`interfaces-content-interface` in the snap documentation for
+    more information about plugs and slots.
     """
 
     passthrough: dict[str, Any] | None = pydantic.Field(
@@ -1081,8 +1078,8 @@ class Hook(models.CraftBaseModel):
     To pass a value for the entire project, see the top-level :ref:`passthrough key
     <Project.passthrough>`.
 
-    See `Using development features in Snapcraft
-    <https://snapcraft.io/docs/using-in-development-features>`_ for more details.
+    :external+snap:ref:`interfaces-using-in-development-features` in the snap
+    documentation offers more guidance.
     """
 
     @pydantic.field_validator("command_chain")
@@ -1146,8 +1143,8 @@ class ContentPlug(models.CraftBaseModel):
     )
     """The name of the interface.
 
-    See `Supported interfaces <https://snapcraft.io/docs/supported-interfaces>`_ for a
-    list of supported interfaces.
+    See :external+snap:ref:`ref-index_interfaces` in the snap documentation for a list
+    of supported interfaces.
 
     When using the content interface, this should be set to ``content``.
     """
@@ -1158,8 +1155,9 @@ class ContentPlug(models.CraftBaseModel):
     )
     """The path to where the producer's files will be available in the snap.
 
-    This is only needed when using the content interface. See the `Content
-    interface <https://snapcraft.io/docs/content-interface>`_ for more information.
+    This is only needed when using the content interface. See
+    :external+snap:ref:`interfaces-content-interface` in the snap documentation for more
+    information.
     """
 
     default_provider: str | None = pydantic.Field(
@@ -1169,8 +1167,9 @@ class ContentPlug(models.CraftBaseModel):
     )
     """The name of the producer snap.
 
-    This is only needed when using the content interface. See the `Content interface
-    <https://snapcraft.io/docs/content-interface>`_ for more information.
+    This is only needed when using the content interface. See
+    :external+snap:ref:`interfaces-content-interface` in the snap documentation for more
+    information.
     """
 
     @pydantic.field_validator("default_provider")
@@ -1501,14 +1500,14 @@ class Project(models.Project):
     )
     """The amount of isolation the snap has from the host system.
 
-    Snap confinement determines the amount of access an application has to
-    system resources, such as files, the network, peripherals and services.
+    Snap confinement determines the amount of access an application has to system
+    resources, such as files, the network, peripherals and services.
 
-    For core22 and newer bases, confinement is a required property and has no
-    default value.
+    For core22 and newer bases, confinement is a required property and has no default
+    value.
 
-    For more information, see `Snap confinement
-    <https://snapcraft.io/docs/snap-confinement>`_.
+    For more information, see :external+snap:ref:`explanation-security-snap-confinement`
+    in the snap documentation.
 
     **Values**
 
@@ -1684,8 +1683,8 @@ class Project(models.Project):
     To pass a value for a particular app, see the :ref:`passthrough key
     <App.passthrough>` for apps.
 
-    See `Using development features in Snapcraft
-    <https://snapcraft.io/docs/using-in-development-features>`_.
+    :external+snap:ref:`interfaces-using-in-development-features` in the snap
+    documentation offers more guidance.
     """
 
     apps: dict[str, App] | None = pydantic.Field(
@@ -1793,11 +1792,11 @@ class Project(models.Project):
     )
     """The system usernames the snap can use to run daemons and services.
 
-    This is used to run daemons with the ``snap_daemon`` user defined by
-    snapd. Otherwise, this is an uncommon key.
+    This is used to run daemons with the ``snap_daemon`` user defined by snapd.
+    Otherwise, this is an uncommon key.
 
-    See `system usernames <https://snapcraft.io/docs/system-usernames>`_ for more
-    information.
+    See :external+snap:ref:`interfaces-system-usernames` in the snap documentation for
+    more information.
     """
 
     environment: dict[str, str | None] | None = pydantic.Field(

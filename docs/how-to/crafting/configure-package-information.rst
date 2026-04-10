@@ -251,8 +251,8 @@ First, in the main app's definition, set the ``desktop`` key to the path of the
 ``.desktop`` file. The key accepts a path relative to the ``prime`` directory during the
 prime step of the build, so it must match the file's location during that step.
 
-While you're still in the main app, connect the `desktop interface
-<https://snapcraft.io/docs/desktop-interface>`_.
+While you're still in the main app, connect the
+:external+snap:ref:`interfaces-desktop-interface`.
 
 Lastly, make sure that the ``Icon`` path in the desktop entry is available in the
 ``prime`` folder. During build, Snapcraft will attempt to automatically resolve the
