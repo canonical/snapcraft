@@ -32,10 +32,8 @@ release = snapcraft.__version__
 if ".post" in release:
     release = "dev"
 else:
-    major_minor = release.split(".")
-    release = f"{major_minor[0]}.{major_minor[1]}"
-
-html_title = f"{project} {release} documentation"
+    major, minor, *_ = release.split(".")
+    release = f"{major}.{minor}"
 
 # Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
