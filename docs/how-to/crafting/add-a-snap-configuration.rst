@@ -205,10 +205,7 @@ Build and install the snap.
 
 Then, test getting and setting the port with:
 
-.. terminal::
-    :user:
-    :host:
-    :dir:
+.. code-block:: bash
 
     snap set example-server ports.http=8090
 
