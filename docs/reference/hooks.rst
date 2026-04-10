@@ -57,6 +57,7 @@ A hook can be added to a snap by placing the hook executable in the project's
 hook executable:
 
 .. terminal::
+   :output-only:
 
    .
    └── snap

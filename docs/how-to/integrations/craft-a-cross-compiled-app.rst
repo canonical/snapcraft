@@ -114,7 +114,11 @@ Because linters are enabled by default for core24 and higher snaps, this will
 produce warnings like the following:
 
 .. terminal::
-    :input: snapcraft
+    :user:
+    :host:
+    :dir:
+
+    snapcraft pack
 
     not a dynamic executable
     arm-binfmt-P: Could not open '/lib/ld-linux-armhf.so.3': No such file or directory

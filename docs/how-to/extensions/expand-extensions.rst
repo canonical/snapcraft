@@ -10,9 +10,11 @@ project's root directory to see how the project file will look with the extensio
 applied.
 
 .. terminal::
-    :user: crafter
-    :host: home
-    :input: snapcraft expand-extensions
+    :user:
+    :host:
+    :dir:
+
+    snapcraft expand-extensions
 
     name: foliate
     [...]
