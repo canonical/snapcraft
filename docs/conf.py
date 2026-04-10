@@ -29,11 +29,13 @@ author = "Canonical Ltd."
 # Sidebar documentation title; best kept reasonably short
 # The full version, including alpha/beta/rc tags
 release = snapcraft.__version__
-# The commit hash in the dev release version confuses the spellchecker
 if ".post" in release:
     release = "dev"
+else:
+    major_minor = release.split(".")
+    release = f"{major_minor[0]}.{major_minor[1]}"
 
-html_title = project + " documentation"
+html_title = f"{project} {release} documentation"
 
 # Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
