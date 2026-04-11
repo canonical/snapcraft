@@ -28,9 +28,11 @@ project = "Snapcraft"
 author = "Canonical Group Ltd"
 # The full version, including alpha/beta/rc tags
 release = snapcraft.__version__
-# The commit hash in the dev release version confuses the spellchecker
 if ".post" in release:
     release = "dev"
+else:
+    major, minor, *_ = release.split(".")
+    release = f"{major}.{minor}"
 
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
