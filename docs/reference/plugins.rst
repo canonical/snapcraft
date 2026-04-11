@@ -8,6 +8,7 @@ This section contains an in-depth description of the plugins available in Snapcr
 .. toctree::
     :maxdepth: 1
 
+    /common/craft-parts/reference/plugins/bazel_plugin
     /common/craft-parts/reference/plugins/dotnet_plugin
     /common/craft-parts/reference/plugins/dotnet_v2_plugin
     /common/craft-parts/reference/plugins/ant_plugin
