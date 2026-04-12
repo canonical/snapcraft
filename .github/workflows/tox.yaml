@@ -13,11 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
       - name: Install dependencies
@@ -57,11 +57,11 @@ jobs:
             tox_python: py310
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Set up Python version ${{ matrix.python_version }} on ${{ matrix.platform }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python_version }}
       - name: Install dependencies
@@ -82,7 +82,7 @@ jobs:
         run: tox run --skip-pkg-install --result-json results/tox-${{ matrix.platform }}-${{ matrix.python_version }}.json -e test-${{ matrix.tox_python }},test-legacy-${{ matrix.tox_python }}
       - name: Upload test results
         if: success() || failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.platform }}-${{ matrix.python_version }}
           path: results/
