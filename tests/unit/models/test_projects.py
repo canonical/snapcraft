@@ -654,6 +654,27 @@ class TestProjectValidation:
 
         assert project.grade == "devel"
 
+    def test_project_base_snap_grade_stable(self, project_yaml_data):
+        """Base snaps can have a stable grade to allow bootstrapping new bases."""
+        project = Project.unmarshal(
+            {
+                "name": "core26",
+                "type": "base",
+                "build-base": "devel",
+                "version": "20260423",
+                "summary": "summary",
+                "description": "description",
+                "grade": "stable",
+                "confinement": "strict",
+                "parts": {},
+            }
+        )
+
+        # the real test is that the unmarshal doesn't raise a validation error, but
+        # we can still assert the import attributes:
+        assert project.type == "base"
+        assert project.grade == "stable"
+
     @pytest.mark.parametrize("build_base", ["core22", "devel"])
     def test_project_grade_not_defined(self, build_base, project_yaml_data):
         """Do not validate the grade if it is not defined, regardless of build_base."""

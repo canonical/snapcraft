@@ -1,0 +1,16 @@
+name: core26
+version: '1.0'
+summary: core26 base snap
+description: Build a core26 base snap with a devel build-base
+confinement: strict
+
+type: base
+build-base: devel
+
+# grade can be stable to allow bootstrapping new bases
+grade: stable
+
+parts:
+  core26:
+    plugin: nil
+    stage-packages: [base-files]

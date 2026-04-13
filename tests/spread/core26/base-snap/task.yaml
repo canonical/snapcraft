@@ -1,0 +1,8 @@
+summary: Build a stable core26 base snaps
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft pack

@@ -2021,8 +2021,15 @@ class Project(models.Project):
 
     @pydantic.model_validator(mode="after")
     def _validate_grade_and_build_base(self) -> Self:
-        """If build_base is devel, then grade must be devel."""
-        if self.build_base == "devel" and self.grade == "stable":
+        """If build_base is devel, then grade must be devel.
+
+        Base snaps are an exception to this rule, so they can be bootstrapped.
+        """
+        if (
+            self.build_base == "devel"
+            and self.grade == "stable"
+            and self.type != "base"
+        ):
             raise ValueError("grade must be 'devel' when build-base is 'devel'")
         return self
 
