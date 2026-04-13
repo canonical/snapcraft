@@ -1,0 +1,48 @@
+summary: Build a strict snap and validate elf patching
+
+prepare: |
+  apt-get install patchelf dpkg-dev -y
+  apt-mark auto patchelf dpkg-dev
+
+restore: |
+  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  snapcraft pack
+
+  unsquashfs -dest snap-contents strict-patchelf_0.1_amd64.snap
+
+  arch_triplet="$(dpkg-architecture -q DEB_HOST_MULTIARCH)"
+
+  # Verify typical strict binary has an untouched rpath
+  patchelf --print-interpreter snap-contents/bin/hello-strict | MATCH "^/lib.*ld.*.so.*"
+  rpath="$(patchelf --print-rpath snap-contents/bin/hello-strict)"
+  if [[ -n "${rpath}" ]]; then
+     echo "found rpath on strict binary: ${rpath}"
+     exit 1
+  fi
+
+  # Account for /usr merge.
+  RPATH_MATCH="^/snap/core24/current/lib/$arch_triplet"
+  RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/core24/current/lib/$arch_triplet"
+
+  # Verify binary rpath patching with existing rpath
+  patchelf --print-interpreter snap-contents/bin/hello-strict-existing-rpath | MATCH "^/snap/core24/current/lib.*ld.*.so.*"
+  patchelf --print-rpath snap-contents/bin/hello-strict-existing-rpath | MATCH "${RPATH_ORIGIN_MATCH}"
+
+  # Verify binary rpath patching without existing rpath
+  patchelf --print-interpreter snap-contents/bin/hello-strict-enable-patchelf | MATCH "^/snap/core24/current/lib.*ld.*.so.*"
+  patchelf --print-rpath snap-contents/bin/hello-strict-enable-patchelf | MATCH "${RPATH_MATCH}"
+
+  # verify `patchelf --no-default-lib` was not applied
+  readelf --dynamic snap-contents/bin/hello-classic | NOMATCH "FLAGS_1.*NODEFLIB"

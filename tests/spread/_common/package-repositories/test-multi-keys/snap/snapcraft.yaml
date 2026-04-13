@@ -1,0 +1,33 @@
+name: test-multi-keys
+version: '1.0'
+summary: test
+description: test installing a package repository with an asset file with multiple keys
+confinement: strict
+base: core24
+
+parts:
+  test-ppa:
+    plugin: nil
+    build-packages:
+      - test-ppa
+    stage-packages:
+      - test-ppa
+      - puppet-tools-release # Comes from the Puppet repo
+
+apps:
+  test-multi-keys:
+    command: usr/bin/test-ppa
+
+package-repositories:
+  - type: apt
+    formats: [deb, deb-src]
+    components: [main]
+    suites: [focal]
+    key-id: 78E1918602959B9C59103100F1831DDAFC42E99D
+    url: http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu
+  - type: apt # puppet bolt
+    components: [puppet-tools]
+    suites: [focal]
+    url: http://apt.puppet.com
+    # Asset 9E61EF26.asc has multiple keys inside
+    key-id: D6811ED3ADEEB8441AF5AA8F4528B6CD9E61EF26

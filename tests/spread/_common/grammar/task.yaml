@@ -1,0 +1,21 @@
+summary: Build snaps that test the grammar keywords.
+
+systems:
+  - ubuntu-24.04-64
+  - ubuntu-24.04-amd64
+
+environment:
+  BUILD_FOR/arm64: arm64
+  BUILD_FOR/amd64: amd64
+
+restore: |
+  snapcraft clean --destructive-mode
+
+execute: |
+  snapcraft prime --destructive-mode --build-for "${BUILD_FOR}"
+
+  # verify `on amd64 to amd64` grammar was processed
+  if ! grep "I was built on amd64 and built for ${BUILD_FOR}." "prime/hello-world-${BUILD_FOR}.sh"; then
+    echo "Grammar was not processed as expected!"
+    exit 1
+  fi

@@ -1,0 +1,16 @@
+name: package-filter
+summary: test package filtering
+description: |
+  Verify that some packages are pulled in as stage-packages even though they are
+  present in the base.
+version: "1.0"
+grade: devel
+confinement: strict
+base: core24
+
+parts:
+  nil:
+    plugin: nil
+    stage-packages:
+      - python3-cffi
+      - python3-jsonschema

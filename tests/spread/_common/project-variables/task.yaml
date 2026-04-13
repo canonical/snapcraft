@@ -1,0 +1,24 @@
+summary: Test project variables on core24
+
+environment:
+  SNAPCRAFT_PARALLEL_BUILD_COUNT: 1
+
+prepare: |
+  snap install yq
+
+restore: |
+  snap remove --purge yq
+  rm -f ./*.snap
+  snapcraft clean
+
+execute: |
+  snapcraft pack
+
+  actual=$(snap info ./project-variables_1.0.0_amd64.snap | yq ".description")
+  expected=$(< expected.txt)
+
+  if [ "$actual" != "$expected" ]; then
+    echo "Unexpected project variables:"
+    diff -u --label expected <(printf "%s\n" "$expected") --label actual <(printf "%s\n" "$actual")
+    exit 1
+  fi
