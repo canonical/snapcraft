@@ -1,3 +1,5 @@
+# Regression test for https://github.com/canonical/snapcraft/issues/6148
+
 summary: Verify stage packages cutoff works
 
 prepare: |
