@@ -1,0 +1,8 @@
+summary: Pack a snap that uses craft.git
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft pack

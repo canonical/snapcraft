@@ -1,0 +1,15 @@
+summary: Test parts lifecycle commands in core24
+
+environment:
+  LIFECYCLE_COMMAND/pull: pull
+  LIFECYCLE_COMMAND/build: build
+  LIFECYCLE_COMMAND/stage: stage
+  LIFECYCLE_COMMAND/prime: prime
+
+restore: |
+  snapcraft clean
+
+execute: |
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  snapcraft "${LIFECYCLE_COMMAND}"

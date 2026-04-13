@@ -1,0 +1,40 @@
+name: test-key-conflict
+version: '1.0'
+summary: test package repos with keys already present on the system
+description: test package repos with keys already present on the system
+confinement: strict
+base: core24
+platforms:
+  amd64:
+
+package-repositories:
+  # In core24+ this pair of url + suite is already listed in
+  # /etc/apt/sources.list.d/ubuntu.sources. Add it here to make sure this setup
+  # is working.
+  - type: apt
+    url: http://archive.ubuntu.com/ubuntu
+    suites: [noble]
+    components: [main, universe]
+    architectures: [i386]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    key-server: keyserver.ubuntu.com
+  # This ports.ubuntu.com repo is not affected by the bug, but add it here to
+  # ensure that a different repo with the same key-id still works.
+  - type: apt
+    url: http://ports.ubuntu.com/ubuntu-ports
+    suites: [noble]
+    architectures: [armhf]
+    components: [main]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+
+parts:
+  mypart:
+    plugin: nil
+    stage-packages:
+      - zlib1g:i386 # To ensure the package-repo is setup correctly
+      - zlib1g:armhf
+      - hello       # there is no hello:i386 in the archives
+
+apps:
+  test-key-conflict:
+    command: usr/bin/hello -g hello

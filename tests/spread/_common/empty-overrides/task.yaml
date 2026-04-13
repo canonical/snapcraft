@@ -1,0 +1,18 @@
+summary: Execute empty scriptlets
+
+systems:
+  - ubuntu-24.04*
+
+environment:
+  SNAPCRAFT_BUILD_ENVIRONMENT: host
+
+restore: |
+  snapcraft clean
+
+execute: |
+  snapcraft prime
+
+  if [ -f prime/foo.bar ]; then
+      echo "prime directory should be empty"
+      false
+  fi
