@@ -2,11 +2,13 @@
 
 get_base()
 {
-    if [[ "$SPREAD_SYSTEM" =~ ubuntu-26.04 ]]; then
+    # SPREAD_SUITE contains the path to the task.yaml (like tests/spread/core26/package-cutoff)
+    # so matching on this first allows testing new bases before their corresponding Ubuntu release is available
+    if [[ "$SPREAD_SUITE" =~ core26 ]] || [[ "$SPREAD_SYSTEM" =~ ubuntu-26.04 ]]; then
         echo "core26"
-    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-24.04 ]]; then
+    elif [[ "$SPREAD_SUITE" =~ core24 ]] || [[ "$SPREAD_SYSTEM" =~ ubuntu-24.04 ]]; then
         echo "core24"
-    elif [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
+    elif [[ "$SPREAD_SUITE" =~ core22 ]] || [[ "$SPREAD_SYSTEM" =~ ubuntu-22.04 ]]; then
         echo "core22"
     else
         exit 1
@@ -37,6 +39,12 @@ set_base()
         else
             # Insert at the very top to be safe
             sed -i "/^base:.*/a\build-base: devel"  "$snapcraft_yaml_path"
+        fi
+
+        if grep -q "^grade:" "$snapcraft_yaml_path"; then
+            sed -i "s/^grade:.*/grade: devel/g" "$snapcraft_yaml_path"
+        else
+            sed -i "/^build-base:.*/a\grade: devel"  "$snapcraft_yaml_path"
         fi
     fi
 }
