@@ -6,9 +6,6 @@ environment:
 prepare: |
   snap install yq
 
-restore: |
-  snapcraft clean --destructive-mode
-
 execute: |
   # Create a snap to trigger `snap pack`.
   snapcraft prime --destructive-mode
@@ -55,3 +52,6 @@ execute: |
   cat "${SNAP_YAML}" | yq eval --exit-status '.links.website' -
   # shellcheck disable=SC2002
   cat "${SNAP_YAML}" | yq eval '.links.website[0]' - | MATCH "https://project.acme.org"
+
+restore: |
+  snapcraft clean --destructive-mode

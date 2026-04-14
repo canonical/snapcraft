@@ -1,12 +1,12 @@
 summary: Pack a simple snap
 
-restore: |
-  snap remove simple-snap
-  snapcraft clean
-  rm -f ./*.snap
-
 execute: |
   cd "./snap"
   snapcraft pack
   snap install --dangerous ./*.snap
   /snap/bin/simple-snap.hello
+
+restore: |
+  snap remove simple-snap
+  snapcraft clean
+  rm -f ./*.snap

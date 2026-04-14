@@ -38,15 +38,6 @@ prepare: |
   # adding a date ensures each test has a unique build id
   date > date.txt
 
-restore: |
-  cd "./snaps/$SNAP"
-
-  # remove snaps, logs, and date files
-  rm -f ./*.snap ./snapcraft-*.txt ./date.txt
-
-  # remove the temporary git repository
-  rm -rf .git
-
 execute: |
   cd "./snaps/$SNAP"
 
@@ -81,3 +72,12 @@ execute: |
       exit 1
     fi
   fi
+
+restore: |
+  cd "./snaps/$SNAP"
+
+  # remove snaps, logs, and date files
+  rm -f ./*.snap ./snapcraft-*.txt ./date.txt
+
+  # remove the temporary git repository
+  rm -rf .git

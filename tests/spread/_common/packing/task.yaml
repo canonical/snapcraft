@@ -13,20 +13,6 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   # set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
-restore: |
-  rm -Rf subdir ./*.snap
-
-  # 'pack_directory' tests are run in destructive-mode
-  if [[ "$SPREAD_VARIANT" =~ "pack_directory" ]]; then
-    snapcraft clean --destructive-mode
-  else
-    snapcraft clean
-  fi
-
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  restore_yaml "snap/snapcraft.yaml"
-
 execute: |
   # create a local directory to pack
   if [[ "$SPREAD_VARIANT" =~ "pack_directory" ]]; then
@@ -43,3 +29,17 @@ execute: |
   else
     test -f my-snap-name_0.1_*.snap
   fi
+
+restore: |
+  rm -Rf subdir ./*.snap
+
+  # 'pack_directory' tests are run in destructive-mode
+  if [[ "$SPREAD_VARIANT" =~ "pack_directory" ]]; then
+    snapcraft clean --destructive-mode
+  else
+    snapcraft clean
+  fi
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

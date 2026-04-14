@@ -1,13 +1,9 @@
 summary: Core24 matter SDK plugin test
-manual: true
 kill-timeout: 180m
 
+manual: true
 systems:
   - ubuntu-22.04-64
-
-restore: |
-  snapcraft clean
-  rm -f ./*.snap
 
 execute: |
   # Build and install the snap
@@ -38,3 +34,6 @@ execute: |
     echo "Error: matter-lighting initialization failed."
     exit 1
   fi
+restore: |
+  snapcraft clean
+  rm -f ./*.snap

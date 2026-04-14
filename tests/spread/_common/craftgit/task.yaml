@@ -1,8 +1,8 @@
 summary: Pack a snap that uses craft.git
 
+execute: |
+  snapcraft pack
+
 restore: |
   snapcraft clean
   rm -f ./*.snap
-
-execute: |
-  snapcraft pack

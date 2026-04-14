@@ -3,11 +3,6 @@ summary: Run snapcraft lint on a snap file.
 environment:
   SNAP: lint-file
 
-restore: |
-  cd "${SNAP}"
-  rm -f ./*.snap ./*.assert ./linter_output.txt
-  snapcraft clean --destructive-mode
-
 execute: |
   cd "${SNAP}"
 
@@ -29,3 +24,8 @@ execute: |
 
   MATCH "library: linter-test: missing dependency 'libcaca.so.0'" < output.txt
   MATCH "library: libogg.so.0: unused library" < output.txt
+
+restore: |
+  cd "${SNAP}"
+  rm -f ./*.snap ./*.assert ./linter_output.txt
+  snapcraft clean --destructive-mode

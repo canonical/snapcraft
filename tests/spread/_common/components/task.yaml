@@ -1,9 +1,5 @@
 summary: Build a snap with components
 
-restore: |
-  snapcraft clean
-  rm -f ./*.snap ./*.comp
-
 execute: |
   snapcraft pack
 
@@ -52,3 +48,7 @@ execute: |
     echo "Expected component hooks to be present."
     exit 1
   fi
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap ./*.comp

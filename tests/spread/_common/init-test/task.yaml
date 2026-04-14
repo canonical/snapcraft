@@ -6,10 +6,6 @@ environment:
 prepare: |
   rm -rf test-snap
 
-restore: |
-  rm -rf test-snap
-  rm -rf ./*.snap
-
 execute: |
   mkdir test-snap
   cd test-snap
@@ -18,3 +14,7 @@ execute: |
   systemctl unmask unattended-upgrades.service
   snapcraft test
   systemctl is-enabled unattended-upgrades.service | MATCH masked
+
+restore: |
+  rm -rf test-snap
+  rm -rf ./*.snap

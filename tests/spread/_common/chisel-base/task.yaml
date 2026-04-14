@@ -1,9 +1,5 @@
 summary: Build a simple snap
 
-restore: |
-  snapcraft clean
-  rm -f ./*.snap
-
 execute: |
   snapcraft pack
   snap install core2x_*.snap --dangerous
@@ -12,3 +8,7 @@ execute: |
   [ -d /snap/core2x/current/bin ] || exit 1
   [ -d /snap/core2x/current/lib ] || exit 1
   [ -d /snap/core2x/current/var ] || exit 1
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap

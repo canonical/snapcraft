@@ -6,14 +6,6 @@ systems:
 prepare: |
   snap install review-tools
 
-restore: |
-  # The regular clean can potentially fail depending on if/when the test itself failed, but
-  # they should always both be attempted
-  snapcraft clean || true
-  snapcraft clean --destructive-mode
-  rm -f ./*.snap
-  rm -f ~/manifest_0.1_*.snap
-
 execute: |
   export SNAPCRAFT_BUILD_INFO=1
   export SNAPCRAFT_IMAGE_INFO='{"test-var": "value"}'
@@ -36,3 +28,10 @@ execute: |
 
   cp manifest_0.1_*.snap ~
   review-tools.snap-review ~/manifest_0.1_*.snap
+restore: |
+  # The regular clean can potentially fail depending on if/when the test itself failed, but
+  # they should always both be attempted
+  snapcraft clean || true
+  snapcraft clean --destructive-mode
+  rm -f ./*.snap
+  rm -f ~/manifest_0.1_*.snap

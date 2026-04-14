@@ -1,8 +1,5 @@
 summary: Test the package filtering in core24
 
-restore: |
-  snapcraft clean --destructive-mode
-
 execute: |
   snapcraft prime --destructive-mode
 
@@ -12,3 +9,6 @@ execute: |
 
   # Same for "python3-jsonschema": should also stage "python3-attr"
   test -d prime/usr/lib/python3/dist-packages/attr
+
+restore: |
+  snapcraft clean --destructive-mode

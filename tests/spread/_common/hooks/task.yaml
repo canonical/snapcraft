@@ -4,12 +4,6 @@ environment:
   SNAP/default: default
   SNAP/build_aux: aux
 
-restore: |
-  cd "${SNAP}"
-
-  snapcraft clean --destructive-mode
-  rm -rf hooks_*.snap
-
 execute: |
   cd "${SNAP}"
 
@@ -34,3 +28,9 @@ execute: |
 
   # verify snap is installable
   snap install hooks_1.0_*.snap --dangerous
+
+restore: |
+  cd "${SNAP}"
+
+  snapcraft clean --destructive-mode
+  rm -rf hooks_*.snap

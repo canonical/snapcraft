@@ -6,9 +6,6 @@ systems:
 environment:
   SNAPCRAFT_BUILD_ENVIRONMENT: host
 
-restore: |
-  snapcraft clean
-
 execute: |
   snapcraft prime
 
@@ -16,3 +13,5 @@ execute: |
       echo "prime directory should be empty"
       false
   fi
+restore: |
+  snapcraft clean

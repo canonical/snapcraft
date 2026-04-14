@@ -4,9 +4,6 @@ systems:
   - ubuntu-24.04-64
   - ubuntu-24.04-amd64
 
-restore: |
-  snapcraft clean --destructive-mode
-
 execute: |
   snapcraft prime --destructive-mode --build-for all
 
@@ -15,3 +12,6 @@ execute: |
     echo "Grammar was not processed as expected!"
     exit 1
   fi
+
+restore: |
+  snapcraft clean --destructive-mode

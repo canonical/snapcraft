@@ -1,10 +1,5 @@
 summary: Cross-compile a snap with build-packages and stage-packages from a foreign architecture.
 
-restore: |
-  snapcraft clean
-  rm -f ./*.snap
-  rm -rf ./squashfs-root
-
 execute: |
   snapcraft pack
 
@@ -12,3 +7,8 @@ execute: |
 
   # check that the binary is compiled for riscv64
   readelf -h squashfs-root/usr/bin/curl-consumer | grep "Machine" | MATCH "RISC-V"
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+  rm -rf ./squashfs-root

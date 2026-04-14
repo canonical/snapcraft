@@ -15,11 +15,6 @@ environment:
   # We're checking the output text, so override the normal trace output.
   CRAFT_VERBOSITY_LEVEL: brief
 
-restore: |
-  cd "${SNAP}"
-  snapcraft clean
-  rm -f ./*.snap ./linter_output.txt
-
 execute: |
   cd "${SNAP}"
 
@@ -32,3 +27,8 @@ execute: |
     sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
     diff -u linter_output.txt expected_linter_output.txt
   fi
+
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap ./linter_output.txt
