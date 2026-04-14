@@ -1,5 +1,10 @@
 summary: Build a snap that uses the content interface with a non published snap
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
 execute: |
   output=$(snapcraft prime --destructive-mode 2>&1 >/dev/null || true)
 
@@ -7,3 +12,7 @@ execute: |
 
 restore: |
   snapcraft clean --destructive-mode
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

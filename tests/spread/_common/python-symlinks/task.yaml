@@ -30,6 +30,11 @@ environment:
   # using the gnome extension
   # SNAP/strict_gnome_extension: strict-gnome-extension
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP}/snapcraft.yaml"
+
 execute: |
   cd "${SNAP}"
 
@@ -47,3 +52,7 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
   rm -rf squashfs-root
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

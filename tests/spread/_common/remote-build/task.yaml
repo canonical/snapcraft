@@ -38,6 +38,10 @@ prepare: |
   # adding a date ensures each test has a unique build id
   date > date.txt
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
 execute: |
   cd "./snaps/$SNAP"
 
@@ -81,3 +85,7 @@ restore: |
 
   # remove the temporary git repository
   rm -rf .git
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

@@ -17,6 +17,10 @@ prepare: |
 
   sudo systemctl restart squid.service
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP_DIR}/snap/snapcraft.yaml"
+
 execute: |
   cd "$SNAP_DIR"
 
@@ -52,3 +56,7 @@ restore: |
   rm -f ./*.snap
 
   sudo apt-get remove --purge --yes squid
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

@@ -6,6 +6,9 @@ systems:
 prepare: |
   snap install review-tools
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
 execute: |
   export SNAPCRAFT_BUILD_INFO=1
   export SNAPCRAFT_IMAGE_INFO='{"test-var": "value"}'
@@ -35,3 +38,7 @@ restore: |
   snapcraft clean --destructive-mode
   rm -f ./*.snap
   rm -f ~/manifest_0.1_*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

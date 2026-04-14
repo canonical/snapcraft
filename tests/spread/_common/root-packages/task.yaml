@@ -1,5 +1,10 @@
 summary: Test build-snaps and build-packages at the root
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
 execute: |
   snapcraft pull snapcraft/core --destructive-mode
 
@@ -15,3 +20,7 @@ execute: |
 
 restore: |
   snapcraft clean --destructive-mode
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

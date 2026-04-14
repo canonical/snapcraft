@@ -11,6 +11,11 @@ environment:
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 5
   SNAPCRAFT_BUILD_ENVIRONMENT: host
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "../snaps/${SNAP}/snap/snapcraft.yaml"
+
 execute: |
   cd "../snaps/$SNAP"
 
@@ -67,3 +72,7 @@ restore: |
   cd "../snaps/$SNAP"
   rm -f ./*.snap
   snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

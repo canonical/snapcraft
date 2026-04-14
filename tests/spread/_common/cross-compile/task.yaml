@@ -1,5 +1,10 @@
 summary: Cross-compile a snap with build-packages and stage-packages from a foreign architecture.
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
 execute: |
   snapcraft pack
 
@@ -12,3 +17,7 @@ restore: |
   snapcraft clean
   rm -f ./*.snap
   rm -rf ./squashfs-root
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

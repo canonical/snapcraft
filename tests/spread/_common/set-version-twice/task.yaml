@@ -3,6 +3,8 @@ summary: Test fix for version setting corner case
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "original-snapcraft.yaml"
+  set_base "modified-snapcraft.yaml"
 
 execute: |
   mkdir -p snap
@@ -27,3 +29,5 @@ restore: |  # If this next line fails, delete it and replace it with the one fol
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "original-snapcraft.yaml"
+  restore_yaml "modified-snapcraft.yaml"

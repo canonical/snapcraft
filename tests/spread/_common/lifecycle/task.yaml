@@ -6,6 +6,11 @@ environment:
   LIFECYCLE_COMMAND/stage: stage
   LIFECYCLE_COMMAND/prime: prime
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
 execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
@@ -13,3 +18,7 @@ execute: |
 
 restore: |
   snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"
