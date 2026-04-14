@@ -6,9 +6,8 @@ description: |
   venv symlink must point to the staged interpreter. The expected
   symlink is python3 -> ../usr/bin/<staged interpreter>.
 
-grade: devel
+grade: stable
 base: core26
-build-base: devel
 confinement: devmode
 
 apps:

@@ -9,9 +9,8 @@ description: |
   stages the python interpreter). The expected symlink is
   python3 -> ../usr/bin/<staged interpreter>.
 
-grade: devel
+grade: stable
 base: core26
-build-base: devel
 confinement: strict
 
 apps:

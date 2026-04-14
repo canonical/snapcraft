@@ -6,10 +6,9 @@ description: |
   symlink must point to the staged interpreter. The expected
   symlink is python3 -> ../usr/bin/<staged interpreter>.
 
-grade: devel
+grade: stable
 base: bare
-# update once core26 is stable (#6088)
-build-base: core24
+build-base: core26
 confinement: strict
 
 apps:

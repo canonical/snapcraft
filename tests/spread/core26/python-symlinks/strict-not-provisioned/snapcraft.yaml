@@ -3,9 +3,8 @@ version: "1.0"
 summary: Strict confinement without staged python
 description: The core26 base doesn't include Python, so the build must fail.
 
-grade: devel
+grade: stable
 base: core26
-build-base: devel
 confinement: strict
 
 apps:
