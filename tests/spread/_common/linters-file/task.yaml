@@ -14,10 +14,11 @@ execute: |
   # build the test snap destructively to save time
   snapcraft pack --destructive-mode
 
+  # drop conditional once the core26 is stable (#6088)
   snapcraft lint lint-file_0.1_*.snap 2> output.txt || {
     lxc --project snapcraft start snapcraft-linter &&
     sleep 10 &&
-    lxc --project snapcraft exec snapcraft-linter -- snap install --edge core24 &&
+    lxc --project snapcraft exec snapcraft-linter -- snap install --edge core26 &&
     snapcraft lint lint-file_0.1_*.snap 2> output.txt
   }
 

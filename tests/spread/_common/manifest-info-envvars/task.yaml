@@ -1,20 +1,17 @@
 summary: Test manifest file creation
 
-systems:
-  - ubuntu-24.04*
-
 prepare: |
   snap install review-tools
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "snap/snapcraft.yaml"
+
 execute: |
   export SNAPCRAFT_BUILD_INFO=1
   export SNAPCRAFT_IMAGE_INFO='{"test-var": "value"}'
 
-  # If this next line fails, delete it and replace it with the one following it
-  snapcraft pack --use-lxd
+  snapcraft pack
 
   unsquashfs manifest_0.1_*.snap
   grep '^  test-var: value' squashfs-root/snap/manifest.yaml
@@ -31,6 +28,7 @@ execute: |
 
   cp manifest_0.1_*.snap ~
   review-tools.snap-review ~/manifest_0.1_*.snap
+
 restore: |
   # The regular clean can potentially fail depending on if/when the test itself failed, but
   # they should always both be attempted

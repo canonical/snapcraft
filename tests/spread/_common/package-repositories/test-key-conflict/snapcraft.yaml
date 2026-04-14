@@ -13,7 +13,7 @@ package-repositories:
   # is working.
   - type: apt
     url: http://archive.ubuntu.com/ubuntu
-    suites: [noble]
+    suites: [SUITES-PLACEHOLDER]
     components: [main, universe]
     architectures: [i386]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
@@ -22,7 +22,7 @@ package-repositories:
   # ensure that a different repo with the same key-id still works.
   - type: apt
     url: http://ports.ubuntu.com/ubuntu-ports
-    suites: [noble]
+    suites: [SUITES-PLACEHOLDER]
     architectures: [armhf]
     components: [main]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C

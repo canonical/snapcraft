@@ -1,8 +1,13 @@
 summary: Build snaps that test the 'all' target in advanced grammar
 
+# This test snap is limited to amd64 arch due to the expected advanced grammar.
 systems:
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
   - ubuntu-24.04-64
   - ubuntu-24.04-amd64
+  - ubuntu-26.04-64
+  - ubuntu-26.04-amd64
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

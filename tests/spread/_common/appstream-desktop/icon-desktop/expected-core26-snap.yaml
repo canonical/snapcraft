@@ -16,13 +16,13 @@ description: |-
 license: GPL-2.0+
 architectures:
 - amd64
-base: core24
+base: core26
 apps:
   appstream-desktop:
     command: usr/bin/appstream-desktop
     common-id: io.snapcraft.appstream
 confinement: strict
-grade: stable
+grade: devel
 environment:
   LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH

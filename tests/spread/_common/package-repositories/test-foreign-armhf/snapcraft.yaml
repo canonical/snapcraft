@@ -13,7 +13,7 @@ package-repositories:
     formats: [deb]
     architectures: [armhf]
     components: [main]
-    suites: [jammy]
+    suites: [DEADSNAKES-SUITES-PLACEHOLDER]
     key-id: F23C5A6CF475977595C89F51BA6932366A755776
     url: https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu
   # Also add the armhf arch for the "ports" repo, to fetch python's deps. We
@@ -21,7 +21,7 @@ package-repositories:
   - type: apt
     architectures: [ armhf ]
     components: [ main ]
-    suites: [ jammy, jammy-security, jammy-updates ]
+    suites: [PORTS-SUITES-PLACEHOLDER]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
     url: http://ports.ubuntu.com/ubuntu-ports
 

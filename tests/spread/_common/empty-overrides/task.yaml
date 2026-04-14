@@ -1,25 +1,19 @@
 summary: Execute empty scriptlets
 
-systems:
-  - ubuntu-24.04*
-
-environment:
-  SNAPCRAFT_BUILD_ENVIRONMENT: host
-
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "snap/snapcraft.yaml"
 
 execute: |
-  snapcraft prime
+  snapcraft prime --destructive-mode
 
   if [ -f prime/foo.bar ]; then
       echo "prime directory should be empty"
       false
   fi
 restore: |
-  snapcraft clean
+  snapcraft clean --destructive-mode
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

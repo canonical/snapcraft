@@ -12,5 +12,5 @@ parts:
   nil:
     plugin: nil
     stage-packages:
-      - python3-cffi
-      - python3-jsonschema
+      - zlib1g
+      - libzstd1

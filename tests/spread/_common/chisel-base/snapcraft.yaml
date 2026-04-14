@@ -1,7 +1,7 @@
 name: core2x
 type: base
 build-base: core24
-summary: base using chisel from core24 assets
+summary: base using chisel from a base snap's assets
 description: |
   Test creating a base using a stable release of chisel
 version: 0+git

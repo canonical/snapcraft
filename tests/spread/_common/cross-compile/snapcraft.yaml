@@ -27,7 +27,8 @@ package-repositories:
     architectures: [$CRAFT_ARCH_BUILD_FOR]
     formats: [deb, deb-src]
     components: [main]
-    suites: [noble, noble-updates, noble-backports]
+    # task.yaml should replace this with the appropriate suites for the base
+    suites: [SUITES-PLACEHOLDER]
     key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
     url: http://ports.ubuntu.com/ubuntu-ports
 

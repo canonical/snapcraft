@@ -12,8 +12,6 @@ prepare: |
   set_base "snapcraft.yaml"
 
 execute: |
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
-
   snapcraft "${LIFECYCLE_COMMAND}"
 
 restore: |
