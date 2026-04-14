@@ -6,6 +6,7 @@ prepare: |
   set_base "snapcraft.yaml"
 
 execute: |
+  # root build-packages and build-snaps are added to an implicit part named `snapcraft/core`
   snapcraft pull snapcraft/core --destructive-mode
 
   if ! snap list hello; then

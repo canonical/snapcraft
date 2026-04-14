@@ -1,13 +1,14 @@
-name: python-hello-uv
+name: python-hello
 version: "1.0"
 summary: simple python application
-description: build a python application
+description: build a python application using core24
 base: core24
 confinement: strict
 
 apps:
-  python-hello-uv:
-    command: bin/python3 $SNAP/bin/hello
+  python-hello:
+    command: bin/hello
+    extensions: [gnome]
 
 parts:
   python-runtime:
@@ -21,7 +22,5 @@ parts:
 
   hello:
     after: [python-runtime]
-    plugin: uv
+    plugin: python
     source: src
-    build-snaps:
-      - astral-uv

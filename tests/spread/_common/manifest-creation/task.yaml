@@ -1,11 +1,5 @@
 summary: Test manifest file creation
 
-systems:
-  - ubuntu-24.04*
-
-environment:
-  CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft pack --destructive-mode
-
 prepare: |
   snap install review-tools
   snap install yq
@@ -15,7 +9,11 @@ prepare: |
   set_base "snap/snapcraft.yaml"
 
 execute: |
-  $CMD
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  env SNAPCRAFT_BUILD_INFO=y snapcraft pack --destructive-mode
 
   test -f manifest_0.1_*.snap
   test -f prime/snap/manifest.yaml
@@ -28,7 +26,7 @@ execute: |
     ["name"]=manifest
     ["version"]='0.1'
     ["summary"]='Single-line elevator pitch for your amazing snap'
-    ["base"]=core24
+    ["base"]="$base"
     ["grade"]=devel
     ["confinement"]=devmode
     ["parts_my_part_plugin"]=nil
@@ -53,6 +51,7 @@ execute: |
 
   cp manifest_0.1_*.snap ~/
   review-tools.snap-review ~/manifest_0.1_*.snap
+
 restore: |
   snapcraft clean --destructive-mode
   rm -f ./*.snap

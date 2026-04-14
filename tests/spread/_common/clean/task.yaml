@@ -1,4 +1,4 @@
-summary: Test clean commands on core24
+summary: Test clean commands
 
 environment:
   SNAP/clean: clean
@@ -11,9 +11,6 @@ prepare: |
 
 execute: |
   cd "./snaps/$SNAP"
-
-  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
 
   snapcraft pack
   snapcraft clean part1

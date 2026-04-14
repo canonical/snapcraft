@@ -11,8 +11,8 @@ environment:
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
   SNAP/ruby: ruby-hello
-  SNAP/uv: uv-hello
   SNAP/dotnet: dotnet-hello
+  SNAP/uv: uv-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/package-utils.sh
@@ -21,14 +21,27 @@ prepare: |
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  if [ -f "${SNAP}/snap/snapcraft.yaml" ]; then
-    set_base "${SNAP}/snap/snapcraft.yaml"
-  else
-    set_base "${SNAP}/snapcraft.yaml"
+  base="$(get_base)"
+
+  # some tests have base-specific snapcraft.yamls
+  if [ -f "${SNAP}/snap/snapcraft-${base}.yaml" ]; then
+    cp "${SNAP}/snap/snapcraft-${base}.yaml" "${SNAP}/snap/snapcraft.yaml"
   fi
+
+  set_base "${SNAP}/snap/snapcraft.yaml"
 
 execute: |
   cd "${SNAP}"
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the gnome extension supports core26 (#6185)
+  if [[ "$base" == "core26" && ( "$SPREAD_VARIANT" == "flutter" || "$SPREAD_VARIANT" == "python" ) ]]; then
+    snapcraft pack 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
+    exit 0
+  fi
 
   # Make sure expand-extensions works
   snapcraft expand-extensions
@@ -93,8 +106,20 @@ execute: |
   if [ "${SNAP}" != "flutter-hello" ]; then
     [ "$($SNAP)" = "hello rebuilt world" ]
   fi
+
 restore: |
   cd "${SNAP}"
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the gnome extension supports core26 (#6185)
+  if [[ "$base" == "core26" && ( "$SPREAD_VARIANT" == "flutter" || "$SPREAD_VARIANT" == "python" ) ]]; then
+    snapcraft clean 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
+    exit 0
+  fi
+
   snapcraft clean
   rm -f ./*.snap
 
@@ -113,11 +138,3 @@ restore: |
   #shellcheck source=tests/spread/tools/package-utils.sh
   . "$TOOLS_DIR/package-utils.sh"
   dpkg_restore_point
-
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  if [ -f "snap/snapcraft.yaml" ]; then
-    restore_yaml "snap/snapcraft.yaml"
-  else
-    restore_yaml "snapcraft.yaml"
-  fi

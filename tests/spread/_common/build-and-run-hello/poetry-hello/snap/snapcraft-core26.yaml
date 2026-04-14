@@ -1,13 +1,13 @@
-name: python-hello-uv
+name: poetry-hello
 version: "1.0"
 summary: simple python application
-description: build a python application
+description: build a python application using core24
 base: core24
 confinement: strict
 
 apps:
-  python-hello-uv:
-    command: bin/python3 $SNAP/bin/hello
+  poetry-hello:
+    command: bin/python $SNAP/bin/hello
 
 parts:
   python-runtime:
@@ -21,7 +21,5 @@ parts:
 
   hello:
     after: [python-runtime]
-    plugin: uv
+    plugin: poetry
     source: src
-    build-snaps:
-      - astral-uv

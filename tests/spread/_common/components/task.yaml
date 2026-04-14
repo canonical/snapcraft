@@ -8,6 +8,10 @@ prepare: |
 execute: |
   snapcraft pack
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
   # assert snap contents
   unsquashfs -dest "snap-contents" "hello-components_1.0-updated_amd64.snap"
   if [ ! -e "snap-contents/bin/hello" ]; then
@@ -16,7 +20,7 @@ execute: |
   fi
 
   # assert snap metadata
-  if ! diff -u snap-contents/meta/snap.yaml expected-snap.yaml; then
+  if ! diff -u snap-contents/meta/snap.yaml expected-$base-snap.yaml; then
     echo "Metadata for the snap is incorrect."
     exit 1
   fi
@@ -57,6 +61,7 @@ execute: |
 restore: |
   snapcraft clean
   rm -f ./*.snap ./*.comp
+  rm -rf ./snap-contents ./component-contents
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

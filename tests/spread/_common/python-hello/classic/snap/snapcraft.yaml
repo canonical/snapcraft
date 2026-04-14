@@ -1,10 +1,8 @@
 name: python-hello-classic
 version: "1.0"
 summary: simple python application
-description: build a python application using core26
-base: core26
-build-base: devel
-grade: devel
+description: build a python application using core24
+base: core24
 confinement: classic
 
 apps:
@@ -15,16 +13,22 @@ apps:
     command: bin/python $SNAP/bin/hello
 
 parts:
-  hello:
-    plugin: python
-    source: src
-    python-packages:
-      - black
-    build-attributes:
-      - enable-patchelf
+  python-runtime:
+    plugin: nil
     stage-packages:
       - libpython3.14-minimal
       - libpython3.14-stdlib
       - python3-minimal # for the "python3" symlink
       - python3.14-minimal
       - python3.14-venv
+    build-attributes:
+      - enable-patchelf
+
+  hello:
+    after: [python-runtime]
+    plugin: python
+    source: src
+    python-packages:
+      - black
+    build-attributes:
+      - enable-patchelf

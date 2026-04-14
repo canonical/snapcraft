@@ -10,7 +10,8 @@ execute: |
 
   echo "${snapcraft_log}" | NOMATCH "^should have failed set-version"
   echo "${snapcraft_log}" | NOMATCH "^should have failed build"
-restore: |  # If this next line fails, delete it and replace it with the one following it
+
+restore: |
   snapcraft clean
   rm -f ./*.snap
 

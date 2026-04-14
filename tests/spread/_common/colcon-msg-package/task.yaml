@@ -4,23 +4,36 @@ summary: >-
 kill-timeout: 180m
 manual: true
 
-systems:
-  - ubuntu-24.04*
-
 environment:
   SNAP/colcon_msg_package: colcon-msg-package
   SNAPCRAFT_BUILD_ENVIRONMENT: host
 
 prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the colcon plugin and extensions support core26 (#6190)
+  if [[ "$base" == "core26" ]]; then
+    exit 0
+  fi
+
   #shellcheck source=tests/spread/tools/package-utils.sh
   . "$TOOLS_DIR/package-utils.sh"
   create_dpkg_restore_point
 
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "${SNAP}/snap/snapcraft.yaml"
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the colcon plugin and extensions support core26 (#6190)
+  if [[ "$base" == "core26" ]]; then
+    exit 0
+  fi
+
   cd "$SNAP"
 
   # Build the snap and verify that a message only package could be build
@@ -30,6 +43,15 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
 restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the colcon plugin and extensions support core26 (#6190)
+  if [[ "$base" == "core26" ]]; then
+    exit 0
+  fi
+
   cd "$SNAP"
   snapcraft clean
   rm -f ./*.snap
@@ -38,6 +60,4 @@ restore: |
   . "$TOOLS_DIR/package-utils.sh"
   dpkg_restore_point
 
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"

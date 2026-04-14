@@ -7,8 +7,12 @@ environment:
 # This test snap is limited to amd64 arch due to architectures specified
 # in expected_snap.yaml.
 systems:
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
   - ubuntu-24.04-64
   - ubuntu-24.04-amd64
+  - ubuntu-26.04-64
+  - ubuntu-26.04-amd64
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -16,31 +20,33 @@ prepare: |
   set_base "${SNAP}/snap/snapcraft.yaml"
 
 execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
   cd "${SNAP}"
 
-  # make sure we can create the snap using a build provider...
-  snapcraft prime
+  snapcraft pack
 
-  # and also in destructive mode
-  snapcraft prime --destructive-mode
+  # assert snap contents
+  unsquashfs -dest "snap-contents" appstream-desktop*.snap
 
-  if ! diff -U10 prime/meta/snap.yaml expected_snap.yaml; then
+  if ! diff -U10 snap-contents/meta/snap.yaml "expected-$base-snap.yaml"; then
       echo "The formatting for snap.yaml is incorrect"
       exit 1
   fi
 
-  if ! diff -U10 prime/meta/gui/appstream-desktop.desktop expected_appstream-desktop.desktop; then
+  if ! diff -U10 snap-contents/meta/gui/appstream-desktop.desktop expected-appstream-desktop.desktop; then
       echo "The formatting for appstream-desktop.desktop is incorrect"
       exit 1
   fi
 
 restore: |
   cd "${SNAP}"
-  # The regular clean can potentially fail depending on if/when the test itself failed, but
-  # they should always both be attempted
-  snapcraft clean || true
-  snapcraft clean --destructive-mode
+
+  snapcraft clean
   rm -f ./*.snap
+  rm -rf ./snap-contents
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

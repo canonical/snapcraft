@@ -5,6 +5,15 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "snapcraft.yaml"
 
+  # set the correct package repositories
+  base="$(get_base)"
+  case "$base" in
+    core26) suites="resolute" ;;
+    core24) suites="noble, noble-updates, noble-backports" ;;
+    core22) suites="jammy, jammy-updates, jammy-backports" ;;
+  esac
+  sed -i "s/SUITES-PLACEHOLDER/$suites/" snapcraft.yaml
+
 execute: |
   snapcraft pack
 

@@ -9,6 +9,8 @@ environment:
   CMD/pack_directory_output_subdir: pack prime --output subdir/output.snap
 
 prepare: |
+  snapcraft init
+
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "snap/snapcraft.yaml"
@@ -27,12 +29,10 @@ execute: |
   elif echo "$CMD" | grep output; then
     test -f output.snap
   else
-    test -f my-snap-name_0.1_*.snap
+    test -f packing_0.1_*.snap
   fi
 
 restore: |
-  rm -Rf subdir ./*.snap
-
   # 'pack_directory' tests are run in destructive-mode
   if [[ "$SPREAD_VARIANT" =~ "pack_directory" ]]; then
     snapcraft clean --destructive-mode
@@ -40,6 +40,4 @@ restore: |
     snapcraft clean
   fi
 
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  restore_yaml "snap/snapcraft.yaml"
+  rm -Rf subdir ./*.snap snap

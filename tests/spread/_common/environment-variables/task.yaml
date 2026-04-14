@@ -1,27 +1,29 @@
-summary: Test scriptlets variables on core24
+summary: Test scriptlets variables
 
 # limit to amd64 for BUILD_ON variables
 systems:
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
   - ubuntu-24.04
   - ubuntu-24.04-64
   - ubuntu-24.04-amd64
+  - ubuntu-26.04
+  - ubuntu-26.04-64
+  - ubuntu-26.04-amd64
 
 environment:
-  SNAP/test_variables: test-variables
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 5
-  SNAPCRAFT_BUILD_ENVIRONMENT: host
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "../snaps/${SNAP}/snap/snapcraft.yaml"
+  set_base "snapcraft.yaml"
 
 execute: |
-  cd "../snaps/$SNAP"
-
   check_vars() {
     file="$1"
-    root="/snapcraft/tests/spread/core24-suites/environment/snaps/test-variables"
+    root="$(readlink -f "$PWD")"
     echo "==== $file ===="
     cat "$file"
     for exp in \
@@ -57,22 +59,22 @@ execute: |
 
   # exercise lifecycle commands with and without `--platform` and `--build-for`
 
-  snapcraft pull --platform s390x
+  snapcraft pull --destructive-mode --platform s390x
   check_vars pull.txt
 
-  snapcraft build --build-for s390x
+  snapcraft build --destructive-mode --build-for s390x
   check_vars build.txt
 
-  snapcraft stage
+  snapcraft stage --destructive-mode
   check_vars stage.txt
 
-  snapcraft prime
+  snapcraft prime --destructive-mode
   check_vars prime.txt
+
 restore: |
-  cd "../snaps/$SNAP"
   rm -f ./*.snap
-  snapcraft clean
+  snapcraft clean --destructive-mode
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  restore_yaml "snap/snapcraft.yaml"
+  restore_yaml "snapcraft.yaml"

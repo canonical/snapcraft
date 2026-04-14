@@ -22,7 +22,7 @@ execute: |
   snapcraft build part2
   snapcraft prime
 
-restore: |  # If this next line fails, delete it and replace it with the one following it
+restore: |
   snapcraft clean
   rm -Rf subdir ./*.snap
   rm -f snap/*.yaml

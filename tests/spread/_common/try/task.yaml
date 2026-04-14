@@ -1,4 +1,4 @@
-summary: Test "snapcraft try" in core24
+summary: Test "snapcraft try"
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
