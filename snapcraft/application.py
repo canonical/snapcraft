@@ -306,7 +306,6 @@ class Snapcraft(Application):
             summary=str(self.app.summary),
             extra_global_args=self._global_arguments,
             default_command=commands.PackCommand,
-            allow_default_command=False,
         )
 
     def _get_project_raw(self) -> dict[str, Any] | None:

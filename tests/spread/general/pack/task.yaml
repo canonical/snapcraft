@@ -5,6 +5,9 @@ environment:
   COMPRESSION/lzo: lzo
   COMPRESSION/xz: xz
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  COMMAND: "pack"
+  COMMAND/default: ""
+  COMMAND/pack: "pack"
 
 prepare: |
   mkdir test-snap
