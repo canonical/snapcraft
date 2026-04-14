@@ -10,6 +10,10 @@ prepare: |
   snap install review-tools
   snap install yq
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
 execute: |
   $CMD
 
@@ -54,3 +58,7 @@ restore: |
   rm -f ./*.snap
   rm -f ~/manifest_0.1_*.snap
   rm -f ~/manifest.yaml
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

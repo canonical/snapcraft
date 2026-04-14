@@ -5,6 +5,10 @@ manual: true
 systems:
   - ubuntu-22.04-64
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
 execute: |
   # Build and install the snap
   snapcraft pack
@@ -37,3 +41,7 @@ execute: |
 restore: |
   snapcraft clean
   rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

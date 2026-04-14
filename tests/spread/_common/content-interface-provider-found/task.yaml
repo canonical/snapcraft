@@ -1,5 +1,10 @@
 summary: Build a snap that uses the content interface
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
 execute: |
   snapcraft prime --destructive-mode
 
@@ -10,3 +15,7 @@ execute: |
 
 restore: |
   snapcraft clean --destructive-mode
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

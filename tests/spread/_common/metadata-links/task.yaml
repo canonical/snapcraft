@@ -6,6 +6,10 @@ environment:
 prepare: |
   snap install yq
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
 execute: |
   # Create a snap to trigger `snap pack`.
   snapcraft prime --destructive-mode
@@ -55,3 +59,7 @@ execute: |
 
 restore: |
   snapcraft clean --destructive-mode
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

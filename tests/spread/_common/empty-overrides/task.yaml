@@ -6,6 +6,11 @@ systems:
 environment:
   SNAPCRAFT_BUILD_ENVIRONMENT: host
 
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
 execute: |
   snapcraft prime
 
@@ -15,3 +20,7 @@ execute: |
   fi
 restore: |
   snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

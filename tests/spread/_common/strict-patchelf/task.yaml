@@ -4,6 +4,10 @@ prepare: |
   apt-get install patchelf dpkg-dev -y
   apt-mark auto patchelf dpkg-dev
 
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
 execute: |
   # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
   unset SNAPCRAFT_BUILD_ENVIRONMENT
