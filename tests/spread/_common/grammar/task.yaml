@@ -8,9 +8,6 @@ environment:
   BUILD_FOR/arm64: arm64
   BUILD_FOR/amd64: amd64
 
-restore: |
-  snapcraft clean --destructive-mode
-
 execute: |
   snapcraft prime --destructive-mode --build-for "${BUILD_FOR}"
 
@@ -19,3 +16,6 @@ execute: |
     echo "Grammar was not processed as expected!"
     exit 1
   fi
+
+restore: |
+  snapcraft clean --destructive-mode

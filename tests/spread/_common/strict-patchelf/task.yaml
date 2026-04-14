@@ -4,16 +4,6 @@ prepare: |
   apt-get install patchelf dpkg-dev -y
   apt-mark auto patchelf dpkg-dev
 
-restore: |
-  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
-  unset SNAPCRAFT_BUILD_ENVIRONMENT
-  snapcraft clean
-  rm -f ./*.snap
-
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-  restore_yaml "snap/snapcraft.yaml"
-
 execute: |
   # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
   unset SNAPCRAFT_BUILD_ENVIRONMENT
@@ -46,3 +36,12 @@ execute: |
 
   # verify `patchelf --no-default-lib` was not applied
   readelf --dynamic snap-contents/bin/hello-classic | NOMATCH "FLAGS_1.*NODEFLIB"
+restore: |
+  # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

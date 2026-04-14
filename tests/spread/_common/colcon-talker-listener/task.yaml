@@ -3,19 +3,14 @@ summary: Build and run a basic colcon snap
 kill-timeout: 180m
 manual: true
 
-environment:
-  SNAP/catkin_ros2_run: colcon-talker-listener
-
 systems:
   - ubuntu-22.04
   - ubuntu-22.04-64
   - ubuntu-22.04-amd64
   - ubuntu-22.04-arm64
 
-restore: |
-  cd "$SNAP"
-  snapcraft clean
-  rm -f ./*.snap
+environment:
+  SNAP/catkin_ros2_run: colcon-talker-listener
 
 execute: |
   cd "$SNAP"
@@ -28,3 +23,7 @@ execute: |
   # an `exit_after_receive` parameter that, if true, will cause the system to
   # shutdown after the listener has successfully received a message.
   "$SNAP" exit_after_receive:=true | MATCH "I heard: 'Hello, world! 0'"
+restore: |
+  cd "$SNAP"
+  snapcraft clean
+  rm -f ./*.snap

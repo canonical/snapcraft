@@ -16,18 +16,6 @@ prepare: |
   . "$TOOLS_DIR/package-utils.sh"
   create_dpkg_restore_point
 
-restore: |
-  cd "${SNAP}"
-  snapcraft clean
-  rm -f ./*.snap
-
-  # Undo changes to hello
-  git checkout src/hello.cpp
-
-  #shellcheck source=tests/spread/tools/package-utils.sh
-  . "$TOOLS_DIR/package-utils.sh"
-  dpkg_restore_point
-
 execute: |
   cd "${SNAP}"
 
@@ -58,3 +46,14 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   [ "$($SNAP)" = "hello rebuilt world" ]
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+
+  # Undo changes to hello
+  git checkout src/hello.cpp
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point

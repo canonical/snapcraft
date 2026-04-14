@@ -10,6 +10,13 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   # set_base "$SNAP/snap/snapcraft.yaml"
 
+execute: |
+  cd "$SNAP"
+  snapcraft pack --destructive-mode
+  TESTBIN="${SNAP##*test-}"
+  snap install craftctl-*.snap --dangerous
+  $TESTBIN | grep hello
+
 restore: |
   cd "$SNAP"
   rm -f ./*.snap
@@ -19,10 +26,3 @@ restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
-
-execute: |
-  cd "$SNAP"
-  snapcraft pack --destructive-mode
-  TESTBIN="${SNAP##*test-}"
-  snap install craftctl-*.snap --dangerous
-  $TESTBIN | grep hello

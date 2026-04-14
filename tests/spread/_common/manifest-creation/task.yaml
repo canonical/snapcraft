@@ -10,12 +10,6 @@ prepare: |
   snap install review-tools
   snap install yq
 
-restore: |
-  snapcraft clean --destructive-mode
-  rm -f ./*.snap
-  rm -f ~/manifest_0.1_*.snap
-  rm -f ~/manifest.yaml
-
 execute: |
   $CMD
 
@@ -55,3 +49,8 @@ execute: |
 
   cp manifest_0.1_*.snap ~/
   review-tools.snap-review ~/manifest_0.1_*.snap
+restore: |
+  snapcraft clean --destructive-mode
+  rm -f ./*.snap
+  rm -f ~/manifest_0.1_*.snap
+  rm -f ~/manifest.yaml

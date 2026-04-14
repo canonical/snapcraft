@@ -16,17 +16,6 @@ prepare: |
   # Snapcraft itself is installing them when necessary.
   sudo dpkg --remove --force-depends gpg dirmngr
 
-restore: |
-  sudo apt install -y gpg dirmngr
-
-  cd "$SNAP"
-  rm -f ./*.snap
-  # The regular clean can potentially fail depending on if/when the test itself failed, but
-  # they should always both be attempted
-  snapcraft clean || true
-  snapcraft clean --destructive-mode
-  snap remove "${SNAP}"
-
 execute: |
   cd "$SNAP"
 
@@ -50,3 +39,14 @@ execute: |
   # Exclamation mark is not allowed in command, so do a
   # more relaxed match
   "${SNAP}" | MATCH hello
+
+restore: |
+  sudo apt install -y gpg dirmngr
+
+  cd "$SNAP"
+  rm -f ./*.snap
+  # The regular clean can potentially fail depending on if/when the test itself failed, but
+  # they should always both be attempted
+  snapcraft clean || true
+  snapcraft clean --destructive-mode
+  snap remove "${SNAP}"

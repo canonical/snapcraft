@@ -4,14 +4,6 @@ prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
 
-restore: |  # If this next line fails, delete it and replace it with the one following it
-  snapcraft clean
-  rm -Rf subdir ./*.snap
-  rm -f snap/*.yaml
-
-  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
-  . "$TOOLS_DIR/snapcraft-yaml.sh"
-
 execute: |
   mkdir -p snap
   cp original-snapcraft.yaml snap/snapcraft.yaml
@@ -27,3 +19,11 @@ execute: |
 
   snapcraft build part2
   snapcraft prime
+
+restore: |  # If this next line fails, delete it and replace it with the one following it
+  snapcraft clean
+  rm -Rf subdir ./*.snap
+  rm -f snap/*.yaml
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"

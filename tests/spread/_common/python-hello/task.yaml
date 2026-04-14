@@ -15,14 +15,6 @@ prepare: |
   # remove after core26 is stable (#6088)
   snap install core26 --edge
 
-restore: |
-  cd ./"${SPREAD_VARIANT}"
-  snapcraft clean
-  rm -f ./*.snap
-  snap remove "python-hello-${SPREAD_VARIANT}"
-  # remove after core26 is stable (#6088)
-  snap remove core26 --purge
-
 execute: |
   cp -r src ./"${SPREAD_VARIANT}"/
   cd ./"${SPREAD_VARIANT}"
@@ -32,3 +24,10 @@ execute: |
   snap install python-hello-"${SPREAD_VARIANT}"_1.0_*.snap --dangerous ${PARAM}
 
   python-hello-"${SPREAD_VARIANT}" | MATCH "hello world! black version"
+restore: |
+  cd ./"${SPREAD_VARIANT}"
+  snapcraft clean
+  rm -f ./*.snap
+  snap remove "python-hello-${SPREAD_VARIANT}"
+  # remove after core26 is stable (#6088)
+  snap remove core26 --purge

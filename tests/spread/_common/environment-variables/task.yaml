@@ -11,11 +11,6 @@ environment:
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 5
   SNAPCRAFT_BUILD_ENVIRONMENT: host
 
-restore: |
-  cd "../snaps/$SNAP"
-  rm -f ./*.snap
-  snapcraft clean
-
 execute: |
   cd "../snaps/$SNAP"
 
@@ -68,3 +63,7 @@ execute: |
 
   snapcraft prime
   check_vars prime.txt
+restore: |
+  cd "../snaps/$SNAP"
+  rm -f ./*.snap
+  snapcraft clean

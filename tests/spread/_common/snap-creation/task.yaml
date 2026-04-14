@@ -3,6 +3,11 @@ summary: Test snap file creation
 environment:
   SNAP/package_cutoff: package-cutoff
 
+execute: |
+  cd "$SNAP"
+  snapcraft pack 2>&1 | tee progress.txt
+  grep "Packed ${SNAP}_1.0_amd64.snap" progress.txt
+
 restore: |
   cd "$SNAP"
   rm -f ./*.snap
@@ -11,8 +16,3 @@ restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   restore_yaml "snap/snapcraft.yaml"
-
-execute: |
-  cd "$SNAP"
-  snapcraft pack 2>&1 | tee progress.txt
-  grep "Packed ${SNAP}_1.0_amd64.snap" progress.txt

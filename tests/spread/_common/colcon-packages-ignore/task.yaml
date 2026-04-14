@@ -4,27 +4,18 @@ summary: >-
 kill-timeout: 180m
 manual: true
 
+systems:
+  - ubuntu-24.04*
+
 environment:
   SNAP/colcon_packages_ignore: colcon-packages-ignore
   SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
   SNAPCRAFT_BUILD_ENVIRONMENT: host
 
-systems:
-  - ubuntu-24.04*
-
 prepare: |
   #shellcheck source=tests/spread/tools/package-utils.sh
   . "$TOOLS_DIR/package-utils.sh"
   create_dpkg_restore_point
-
-restore: |
-  cd "$SNAP"
-  snapcraft clean
-  rm -f ./*.snap
-
-  #shellcheck source=tests/spread/tools/package-utils.sh
-  . "$TOOLS_DIR/package-utils.sh"
-  dpkg_restore_point
 
 execute: |
   cd "$SNAP"
@@ -37,3 +28,11 @@ execute: |
 
   snap install "${SNAP}"_1.0_*.snap --dangerous
   [ "$($SNAP)" = "I am package1" ]
+restore: |
+  cd "$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point

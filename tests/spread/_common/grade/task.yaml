@@ -9,10 +9,10 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_grade "snapcraft.yaml" "${SNAP_GRADE}"
 
-restore: |
-  snapcraft clean --destructive-mode
-
 execute: |
   snapcraft prime --destructive-mode
 
   grep -q "grade: ${SNAP_GRADE}" prime/meta/snap.yaml
+
+restore: |
+  snapcraft clean --destructive-mode

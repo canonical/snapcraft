@@ -30,12 +30,6 @@ environment:
   # using the gnome extension
   # SNAP/strict_gnome_extension: strict-gnome-extension
 
-restore: |
-  cd "${SNAP}"
-  snapcraft clean
-  rm -f ./*.snap
-  rm -rf squashfs-root
-
 execute: |
   cd "${SNAP}"
 
@@ -48,3 +42,8 @@ execute: |
   else
     snapcraft pack 2>&1 | MATCH "No suitable Python interpreter found, giving up."
   fi
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+  rm -rf squashfs-root

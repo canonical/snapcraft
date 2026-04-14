@@ -19,27 +19,6 @@ prepare: |
   . "$TOOLS_DIR/package-utils.sh"
   create_dpkg_restore_point
 
-restore: |
-  cd "${SNAP}"
-  snapcraft clean
-  rm -f ./*.snap
-
-  # Undo changes to hello
-  [ -f hello ] && git checkout hello
-  [ -f hello.c ] && git checkout hello.c
-  [ -f hello.cs ] && git checkout hello.cs
-  [ -f subdir/hello.c ] && git checkout subdir/hello.c
-  [ -f hello.js ] && git checkout hello.js
-  [ -f main.go ] && git checkout main.go
-  [ -f src/main.rs ] && git checkout src/main.rs
-  [ -f hello.rb ] && git checkout hello.rb
-  [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
-  [ -f lib/main.dart ] && git checkout lib/main.dart
-
-  #shellcheck source=tests/spread/tools/package-utils.sh
-  . "$TOOLS_DIR/package-utils.sh"
-  dpkg_restore_point
-
 execute: |
   cd "${SNAP}"
 
@@ -106,3 +85,23 @@ execute: |
   if [ "${SNAP}" != "flutter-hello" ]; then
     [ "$($SNAP)" = "hello rebuilt world" ]
   fi
+restore: |
+  cd "${SNAP}"
+  snapcraft clean
+  rm -f ./*.snap
+
+  # Undo changes to hello
+  [ -f hello ] && git checkout hello
+  [ -f hello.c ] && git checkout hello.c
+  [ -f hello.cs ] && git checkout hello.cs
+  [ -f subdir/hello.c ] && git checkout subdir/hello.c
+  [ -f hello.js ] && git checkout hello.js
+  [ -f main.go ] && git checkout main.go
+  [ -f src/main.rs ] && git checkout src/main.rs
+  [ -f hello.rb ] && git checkout hello.rb
+  [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
+  [ -f lib/main.dart ] && git checkout lib/main.dart
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
