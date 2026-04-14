@@ -57,7 +57,7 @@ A hook can be added to a snap by placing the hook executable in the project's
 ``snap/hooks/`` directory. The following example shows the location of a configure
 hook executable:
 
-.. terminal::
+.. code-block:: text
 
    .
    └── snap

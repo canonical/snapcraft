@@ -229,7 +229,11 @@ Plugins can now be queried with the ``snapcraft help <plugin name> --base <base 
 command:
 
 .. terminal::
-    :input: snapcraft help npm --base core20
+    :user:
+    :host:
+    :dir:
+
+    snapcraft help npm --base core20
 
     Displaying help for the 'npm' plugin for 'core20'.
     [...]
@@ -238,7 +242,11 @@ You can also list plugins for a specific base with ``snapcraft list plugins --ba
 name>``:
 
 .. terminal::
-    :input: snapcraft plugins --base core20
+    :user:
+    :host:
+    :dir:
+
+    snapcraft plugins --base core20
 
     Displaying plugins available for 'core20'
     autotools  catkin  catkin-tools  cmake  colcon  dump  go  make

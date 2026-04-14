@@ -29,11 +29,11 @@ author = "Canonical Ltd."
 # Sidebar documentation title; best kept reasonably short
 # The full version, including alpha/beta/rc tags
 release = snapcraft.__version__
-# The commit hash in the dev release version confuses the spellchecker
 if ".post" in release:
     release = "dev"
-
-html_title = project + " documentation"
+else:
+    major, minor, *_ = release.split(".")
+    release = f"{major}.{minor}"
 
 # Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
@@ -129,6 +129,7 @@ linkcheck_ignore = [
     r"^https://([\w-]*\.)?npmjs.org",
     r"^https://rsync.samba.org",
     r"^https://ubuntu.com",
+    r"^https://packages.ubuntu.com",
     r"^https://www.freedesktop.org/",
     r"^https://www.npmjs.com/",
     "https://matrix.to/#",
@@ -206,6 +207,8 @@ exclude_patterns = [
     "common/craft-parts/reference/plugins/python_plugin.rst",
     "common/craft-parts/reference/plugins/python_v2_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
+    # Excluded because Snapcraft has its own version
+    "common/craft-parts/reference/plugins/colcon_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",

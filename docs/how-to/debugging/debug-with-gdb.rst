@@ -39,9 +39,11 @@ To start a gdbserver session with a local snap, run:
 This enters a gdbserver shell:
 
 .. terminal::
-    :input: snap run --gdbserver test-gdb
-    :user: crafter
-    :host: home
+    :user:
+    :host:
+    :dir:
+
+    snap run --gdbserver test-gdb
 
     Welcome to "snap run --gdbserver".
     You are right before your application is run.
@@ -61,14 +63,15 @@ You can specify a port when starting the gdbserver. For example, to use port 430
 The GDB session can now be accessed from an IDE or GDB itself:
 
 .. terminal::
-    :input: gdb -ex="target remote :43041"
-    :user: crafter
-    :host: home
+    :user:
+    :host:
+    :dir:
+
+    gdb -ex="target remote :43041"
 
     GNU gdb (Ubuntu 12.1-0ubuntu1~22.04) 12.1
     [...]
     (gdb)
-
 
 Remotely debug with gdbserver
 -----------------------------
@@ -90,9 +93,11 @@ used by gdbserver:
 For example, to connect to a gdbserver session at 192.168.122.138 on port 43041:
 
 .. terminal::
-    :input: gdb -ex="target remote 192.168.122.138:43041"
-    :user: crafter
-    :host: home
+    :user:
+    :host:
+    :dir:
+
+    gdb -ex="target remote 192.168.122.138:43041"
 
     Welcome to "snap run --gdbserver".
     You are right before your application is run.
@@ -102,7 +107,6 @@ For example, to connect to a gdbserver session at 192.168.122.138 on port 43041:
     (gdb) continue
 
     or use your favorite gdb frontend and connect to :43041
-
 
 Debug with VS Code and gdbserver
 --------------------------------
