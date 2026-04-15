@@ -42,8 +42,9 @@ Requirements
 
 Layouts and their definitions must satisfy the following requirements.
 
-**Strictly-confined snaps**. Layouts only work with `strictly-confined
-<https://snapcraft.io/docs/snap-confinement>`_ snaps, and not with classic confinement.
+**Strictly-confined snaps**. Layouts only work with
+:external+snap:ref:`strictly-confined <explanation-security-snap-confinement>` snaps,
+and not classically-confined snaps.
 
 **Disallowed target paths**. The target path in a layout definition can't be:
 

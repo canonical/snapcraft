@@ -121,7 +121,7 @@ Troubleshoot access to metric data
 ----------------------------------
 
 The `Snap Store metrics API
-<https://dashboard.snapcraft.io/docs/reference/v1/snap.html#fetch-metrics-for-snaps>`_,
+<https://dashboard.snapcraft.io/docs/reference/v1/snap.html#fetch-metrics-for-snaps>`__,
 called by the ``snapcraft metrics`` command, requires your account to have the
 package_metrics permission.
 

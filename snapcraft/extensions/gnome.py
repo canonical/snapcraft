@@ -63,12 +63,12 @@ class GNOME(GPUExtension):
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
 
-    - desktop (https://snapcraft.io/docs/desktop-interface)
-    - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
-    - gsettings (https://snapcraft.io/docs/gsettings-interface)
-    - opengl (https://snapcraft.io/docs/opengl-interface)
-    - wayland (https://snapcraft.io/docs/wayland-interface)
-    - x11 (https://snapcraft.io/docs/x11-interface)
+    - desktop (https://snapcraft.io/docs/reference/interfaces/desktop-interface)
+    - desktop-legacy (https://snapcraft.io/docs/reference/interfaces/desktop-legacy-interface)
+    - gsettings (https://snapcraft.io/docs/reference/interfaces/gsettings-interface)
+    - opengl (https://snapcraft.io/docs/reference/interfaces/opengl-interface)
+    - wayland (https://snapcraft.io/docs/reference/interfaces/wayland-interface)
+    - x11 (https://snapcraft.io/docs/reference/interfaces/x11-interface)
     """
 
     @staticmethod

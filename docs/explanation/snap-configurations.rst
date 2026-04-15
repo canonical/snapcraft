@@ -3,9 +3,9 @@
 Snap configurations
 ===================
 
-Snaps can provide `configurable options
-<https://snapcraft.io/docs/configuration-in-snaps>`_ so that the user can change
-behavior at runtime.
+Snaps can provide :external+snap:ref:`configurable options
+<how-to-guides-work-with-snaps-configure-snaps>` so that the user can change behavior at
+runtime.
 
 
 Implementation in a snap
@@ -35,9 +35,9 @@ configuration files.
 Interpreting options
 --------------------
 
-Internally, snaps view and change their configuration with `snapctl
-<https://snapcraft.io/docs/how-to-guides/snap-development/use-snapctl/>`__ and its
-``get``, ``set``, and ``unset`` arguments.
+Internally, snaps view and change their configuration with :external+snap:ref:`snapctl
+<how-to-guides-manage-snaps-use-snapctl>` and its ``get``, ``set``, and ``unset``
+arguments.
 
 The snapctl command works anywhere within the snap context, during execution of your
 apps and services, and in all the snap's hooks.
@@ -75,11 +75,12 @@ Setting these values explicitly is preferred over using implicit defaults in the
 because this way, users can easily discover which configuration options your snap
 supports.
 
-On Ubuntu Core, a device's `gadget snap <https://snapcraft.io/docs/the-gadget-snap>`_
-can share default configuration options with the snaps listed in its ``gadget.yaml``
-file. These options are shared when a snap is first installed using either the
-:ref:`default-configure hook <how-to-add-a-snap-configuration-default-configure-hook>`,
-which is run before services are started, or with the :ref:`configure hook
+On Ubuntu Core, a device's :external+snap:ref:`gadget snap
+<reference-development-yaml-schemas-the-gadget-snap>` can share default configuration
+options with the snaps listed in its ``gadget.yaml`` file. These options are shared when
+a snap is first installed using either the :ref:`default-configure hook
+<how-to-add-a-snap-configuration-default-configure-hook>`, which is run before services
+are started, or with the :ref:`configure hook
 <how-to-add-a-snap-configuration-configure-hook>`, which runs after services are
 started.
 

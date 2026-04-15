@@ -66,7 +66,7 @@ app when the snap is installed on a device.
 Interfaces
 ~~~~~~~~~~
 
-The `list of interfaces <https://snapcraft.io/docs/supported-interfaces>`_ details the
+:external+snap:ref:`ref-index_interfaces` in the snap documentation details the
 capabilities that each brings. When an interface is omitted, this may result in the app
 misbehaving. Consult the list to identify the necessary interfaces required by their
 app.
@@ -267,6 +267,6 @@ Debug with snapd
 ----------------
 
 The ``snap`` command itself has many diagnostic features that can help with debugging
-runtime and configuration errors. `Debugging snaps
-<https://snapcraft.io/docs/debug-snaps>`_ in the snapd documentation covers how and when
-to use them.
+runtime and configuration errors.
+:external+snap:ref:`how-to-guides-fix-common-issues-debug-snaps` in the snapd
+documentation covers how and when to use them.
