@@ -852,22 +852,18 @@ class TestPluginColconPlugin:
             'rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
             'rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"',
             "if [ -d /snap/foo/current/opt/ros ]; then",
-            "AMENT_PREFIX_PATH=/snap/foo/current/opt/ros/${ROS_DISTRO}/:/snap/foo/current/opt/ros/snap/ ros2 pkg list | (xargs "
-            'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | awk '
-            '"/#apt/{getline;print;}" >> '
-            '"${CRAFT_PART_INSTALL}/.installed_packages.txt"',
+            "AMENT_PREFIX_PATH=/snap/foo/current/opt/ros/${ROS_DISTRO}/:/snap/foo/current/opt/ros/snap/ ros2 pkg list "
+            '>> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
             "fi",
             'if [ -d "/snap/foo/current/opt/ros/${ROS_DISTRO}/" ]; then',
             'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
-            '"/snap/foo/current/opt/ros/${ROS_DISTRO}/" --ignore-packages-from-source | '
-            '(xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" '
-            '>> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+            '"/snap/foo/current/opt/ros/${ROS_DISTRO}/" --ignore-packages-from-source '
+            '>> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
             "fi",
             'if [ -d "/snap/foo/current/opt/ros/snap/" ]; then',
             'rosdep keys --rosdistro "${ROS_DISTRO}" --from-paths '
-            '"/snap/foo/current/opt/ros/snap/" --ignore-packages-from-source | (xargs '
-            'rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> '
-            '"${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+            '"/snap/foo/current/opt/ros/snap/" --ignore-packages-from-source '
+            '>> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
             "fi",
             "",
             'rosdep install --default-yes --ignore-packages-from-source --from-paths "${CRAFT_PART_SRC_WORK}"',
