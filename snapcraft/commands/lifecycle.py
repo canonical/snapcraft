@@ -21,6 +21,7 @@ import textwrap
 from typing import Any
 
 import craft_application.commands
+import craft_application.errors
 from craft_cli import emit
 from typing_extensions import override
 
@@ -120,8 +121,12 @@ class TryCommand(PackCommand):
         step_name: str | None = None,
         **kwargs: Any,
     ) -> None:
-        project = self._services.get("project").get_raw()
-        base = project.get("base", "unknown")
+        base = "unknown"
+        try:
+            project = self._services.get("project").get_raw()
+            base = project.get("base", "unknown")
+        except craft_application.errors.ProjectFileError:
+            pass
         raise snapcraft.errors.FeatureNotImplemented(
             f'"snapcraft try" is not implemented for {base}'
         )

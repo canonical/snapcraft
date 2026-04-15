@@ -18,6 +18,7 @@ import argparse
 import re
 from unittest.mock import call
 
+import craft_application.errors
 import pytest
 
 import snapcraft.commands.core22.lifecycle as core22_lifecycle
@@ -116,6 +117,29 @@ def test_try_command(tmp_path, fake_services, mocker, base):
     assert str(raised.value) == (
         'Command or feature not implemented: "snapcraft try" is not '
         f"implemented for {base}"
+    )
+
+
+@pytest.mark.usefixtures("emitter")
+def test_try_command_no_project(tmp_path, fake_services, mocker):
+    """Test that TryCommand falls back to 'unknown' when project file is missing."""
+    parsed_args = argparse.Namespace(parts=[], output=tmp_path)
+    cmd = lifecycle.TryCommand({"app": APP_METADATA, "services": fake_services})
+
+    mocker.patch.object(
+        fake_services.get("project"),
+        "get_raw",
+        side_effect=craft_application.errors.ProjectFileError(
+            "snapcraft.yaml", "File not found."
+        ),
+    )
+
+    with pytest.raises(snapcraft.errors.FeatureNotImplemented) as raised:
+        cmd.run(parsed_args=parsed_args)
+
+    assert str(raised.value) == (
+        'Command or feature not implemented: "snapcraft try" is not '
+        "implemented for unknown"
     )
 
 
