@@ -120,8 +120,10 @@ class TryCommand(PackCommand):
         step_name: str | None = None,
         **kwargs: Any,
     ) -> None:
+        project = self._services.get("project").get_raw()
+        base = project.get("base", "unknown")
         raise snapcraft.errors.FeatureNotImplemented(
-            '"snapcraft try" is not implemented for core24'
+            f'"snapcraft try" is not implemented for {base}'
         )
 
 
