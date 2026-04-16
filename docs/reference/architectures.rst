@@ -1,4 +1,4 @@
-.. _arch-reference:
+.. _archictectures-reference:
 
 Architectures
 =============
@@ -7,7 +7,7 @@ snapcraft.yaml
 --------------
 
 The :ref:`architectures how-to guide <how-to-select-architectures>` provides examples of
-how to use the ``platforms`` and ``architectures`` key.
+how to use the ``platforms`` and ``architectures`` keys.
 
 core24
 ^^^^^^
@@ -114,7 +114,7 @@ The ``build-on`` field is required and can contain multiple architectures.
 """""""""""""
 
 The ``build-for`` field is optional and should be a single element list. If it
-is not defined, the ``build-for`` will be set the ``build-on`` for each build
+is not defined, the ``build-for`` will be set to ``build-on`` for each build
 in the :ref:`build plan<build-plans>`.
 
 ``build-for: [all]`` is a special key to denote an architecture-independent
@@ -145,7 +145,7 @@ Shorthand format
     multi-architecture artifact.
 
 As an alternative to the explicit format described above, ``core20`` snaps
-support a shorthand format can be used for simple multi-architecture ``build-on``
+support a shorthand format for simple multi-architecture ``build-on``
 definitions.
 
 .. code-block:: yaml

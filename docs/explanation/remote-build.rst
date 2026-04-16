@@ -15,8 +15,8 @@ Information on the remote build can be found below.
 Public and private projects
 ---------------------------
 
-By default, prospective snaps are publicly uploaded to `Launchpad`_, where
-apt packages are available.
+By default, prospective snaps are publicly uploaded to `Launchpad`_ for
+remote building.
 
 Developers are reminded of this by confirming that their project will be
 publicly available when starting a remote build. This prompt can be
@@ -174,7 +174,7 @@ Attempt to recover previously interrupted builds.
 Project platforms and architectures
 ***********************************
 
-The project file is always parsed by the new remote builder.
+The project file is always parsed by the current remote builder.
 
 If the project metadata contains a ``platforms`` or ``architectures`` entry,
 Snapcraft will request a build for each unique ``build-for`` architecture.
