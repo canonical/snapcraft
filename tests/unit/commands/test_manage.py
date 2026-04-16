@@ -145,7 +145,9 @@ def test_release_progressive(emitter, fake_store_release, fake_app_config):
             progressive_percentage=10,
         )
     ]
-    emitter.assert_message("Released 'test-snap' revision 10 to channels: 'edge'")
+    emitter.assert_message(
+        "Released 'test-snap' revision 10 to channels: 'edge' for 10% of users"
+    )
 
 
 #################
