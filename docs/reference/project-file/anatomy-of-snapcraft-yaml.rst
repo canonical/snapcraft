@@ -90,11 +90,10 @@ uses.
 Confinement
 ^^^^^^^^^^^
 
-Security confinement distinguishes snaps from software distributed using the
-traditional repository methods. `Confinement
-<https://snapcraft.io/docs/snap-confinement>`_ allows for a high level of
-isolation and security, and prevents snaps from being affected by underlying
-system changes, snaps affecting each other, or snaps affecting the host.
+Security confinement distinguishes snaps from software distributed using the traditional
+repository methods. :external+snap:ref:`explanation-security-snap-confinement` provides
+a high level of isolation and security, and prevents snaps from being affected by
+underlying system changes, snaps affecting each other, or snaps affecting the host.
 
 The ``confinement`` key describes what type of access the snap's apps will have
 once installed on the host. Confinement levels can be treated as filters that
@@ -121,12 +120,12 @@ There are three confinement levels:
   as a stop-gap measure to enable developers to publish apps that need more
   access than the current set of permissions allow.
 
-  This confinement should be used only when required for functionality, as its
-  lack of restrictions is a security risk. Before a snap can be published with
-  classic confinement, it must be approved by the Snap Store team according to
-  a `candidate review process
-  <https://forum.snapcraft.io/t/process-for-reviewing-classic-confinement-snaps/1460>`_.
-  Snaps may be rejected if they don't meet the necessary requirements.
+  This confinement should be used only when required for functionality, as its lack of
+  restrictions is a security risk. Before a snap can be published with classic
+  confinement, it must be approved by the Snap Store team according to a
+  :external+snap:ref:`candidate review process
+  <interfaces-reviewing-classic-confinement-snaps>`. Snaps may be rejected if they
+  don't meet the necessary requirements.
 
 Parts
 ~~~~~

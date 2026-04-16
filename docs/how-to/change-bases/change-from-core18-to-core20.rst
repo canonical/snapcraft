@@ -155,10 +155,10 @@ Audio interfaces
 ----------------
 
 For applications which play or record audio, the interface names have changed.
-Previously the `pulseaudio <https://snapcraft.io/docs/pulseaudio-interface>`_ interface
-was used for both playback and recording of audio. This has been replaced by
-`audio-playback <https://snapcraft.io/docs/audio-playback-interface>`_ and
-`audio-record <https://snapcraft.io/docs/audio-record-interface>`_:
+Previously the :external+snap:ref:`interfaces-pulseaudio-interface` was used for both
+playback and recording of audio. This has been replaced by
+:external+snap:ref:`interfaces-audio-playback-interface` and
+:external+snap:ref:`interfaces-audio-record-interface`:
 
 .. code-block:: diff
     :caption: snapcraft.yaml of Xonotic

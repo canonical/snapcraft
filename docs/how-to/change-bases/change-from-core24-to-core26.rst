@@ -80,9 +80,9 @@ The optimal solution is to define a separate part, and stage the Python runtime 
         stage-packages:
           - libpython3.14-minimal
           - libpython3.14-stdlib
+          - python3-minimal # for the "python3" symlink
           - python3.14-minimal
-          - python3-venv
-          - python3-minimal
+          - python3.14-venv
 
       my-app:
         after: [python-runtime]

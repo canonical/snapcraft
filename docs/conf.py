@@ -29,11 +29,11 @@ author = "Canonical Ltd."
 # Sidebar documentation title; best kept reasonably short
 # The full version, including alpha/beta/rc tags
 release = snapcraft.__version__
-# The commit hash in the dev release version confuses the spellchecker
 if ".post" in release:
     release = "dev"
-
-html_title = project + " documentation"
+else:
+    major, minor, *_ = release.split(".")
+    release = f"{major}.{minor}"
 
 # Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
@@ -264,12 +264,16 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 # Add configuration for intersphinx mapping
 intersphinx_mapping = {
     # https://github.com/canonical/snapcraft/issues/6036
-    # "snap": ("https://snapcraft.io/docs/", None),
+    "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
     "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
     "ubuntu-frame": ("https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/24", None),
 }
+
+# Block Intersphinx from looking up external sources with internal references. In other
+# words, only :external+<project>... will search in other projects.
+intersphinx_disabled_reftypes = ["std:*"]
 
 
 ##############################
