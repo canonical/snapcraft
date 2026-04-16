@@ -1,5 +1,7 @@
 .. _arch-reference:
 
+.. meta::
+   :description: Learn about Snapcraft architectures, including platforms, build-on, and build-for settings in snapcraft.yaml.
 Architectures
 =============
 
@@ -7,7 +9,7 @@ snapcraft.yaml
 --------------
 
 The :ref:`architectures how-to guide <how-to-select-architectures>` provides examples of
-how to use the ``platforms`` and ``architectures`` key.
+how to use the ``platforms`` and ``architectures`` keys.
 
 core24
 ^^^^^^
@@ -137,15 +139,14 @@ multi-architecture snaps.
 Shorthand format
 """"""""""""""""
 
-.. admonition:: Legacy behavior
-    :class: important
+.. important::
 
     Shorthand architectures are resolved differently depending on the snap's base. In
     core20 snaps, declaring multiple shorthand architectures yields a single
     multi-architecture artifact.
 
 As an alternative to the explicit format described above, ``core20`` snaps
-support a shorthand format can be used for simple multi-architecture ``build-on``
+support a shorthand format that can be used for simple multi-architecture ``build-on``
 definitions.
 
 .. code-block:: yaml
