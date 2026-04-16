@@ -71,6 +71,7 @@ support (LTS) for it.
     build-environment-options
     project-file/index
     bases
+    architectures
     platforms
     parts/index
     plugins
