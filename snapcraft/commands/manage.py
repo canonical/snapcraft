@@ -104,10 +104,15 @@ class StoreReleaseCommand(AppCommand):
         )
 
         humanized_channels = utils.humanize_list(channels, conjunction="and")
+        progressive = parsed_args.progressive_percentage
+        progressive_suffix = (
+            f" for {progressive}% of users" if progressive is not None else ""
+        )
         emit.message(
             f"Released {parsed_args.name!r} "
             f"revision {parsed_args.revision!r} "
             f"to channels: {humanized_channels}"
+            f"{progressive_suffix}"
         )
 
 
