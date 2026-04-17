@@ -1,1 +1,0 @@
-single-arch_1.0_platform1.snap
