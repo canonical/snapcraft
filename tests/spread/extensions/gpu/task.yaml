@@ -10,6 +10,9 @@ systems:
   - ubuntu-24.04
   - ubuntu-24.04-64
   - ubuntu-24.04-amd64
+  - ubuntu-26.04
+  - ubuntu-26.04-64
+  - ubuntu-26.04-amd64
 
 environment:
   SNAP_DIR: ../snaps/gpu-hello
