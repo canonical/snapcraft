@@ -2,7 +2,6 @@
 
 .. meta::
    :description: Learn about Snapcraft remote build feature, which allows building snaps on Launchpad.
-   
 Remote build
 ============
 
@@ -176,7 +175,7 @@ Attempt to recover previously interrupted builds.
 Project platforms and architectures
 ***********************************
 
-The project file is always parsed by the new remote builder.
+The project file is always parsed by the current remote builder.
 
 If the project metadata contains a ``platforms`` or ``architectures`` entry,
 Snapcraft will request a build for each unique ``build-for`` architecture.

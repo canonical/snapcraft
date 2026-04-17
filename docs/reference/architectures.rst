@@ -117,7 +117,7 @@ The ``build-on`` field is required and can contain multiple architectures.
 """""""""""""
 
 The ``build-for`` field is optional and should be a single element list. If it
-is not defined, the ``build-for`` will be set the ``build-on`` for each build
+is not defined, the ``build-for`` will be set to ``build-on`` for each build
 in the :ref:`build plan<build-plans>`.
 
 ``build-for: [all]`` is a special key to denote an architecture-independent

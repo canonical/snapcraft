@@ -31,6 +31,7 @@ CPU architectures.
 
 - :ref:`reference-bases`
 - :ref:`reference-platforms`
+- :ref:`archictectures-reference`
 
 
 Parts
