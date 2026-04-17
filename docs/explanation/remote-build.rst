@@ -8,7 +8,7 @@ Remote build is one of Snapcraft's features that offloads the build process to
 different architectures.
 
 Architectures supported by Launchpad can be found
-:ref:`here<supported-architectures>`.
+:ref:`here <supported-architectures>`.
 
 Information on the remote build can be found below.
 

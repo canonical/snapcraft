@@ -1,4 +1,4 @@
-.. _archictectures-reference:
+.. _architectures-reference:
 
 Architectures
 =============
@@ -28,7 +28,7 @@ platform
 """"""""
 
 The platform name describes a ``build-on``/``build-for`` pairing. If the
-platform name is a valid debian architecture, then ``build-on`` and
+platform name is a valid Debian architecture, then ``build-on`` and
 ``build-for`` can be omitted (see below for details).
 
 For a list of supported architectures, see :ref:`arch-supported`.
@@ -53,7 +53,7 @@ assume the platform name.
 
 ``build-for: [all]`` is a special key to denote an architecture-independent
 snap. If the ``all`` key is used, no other ``build-on/build-for`` pairs can
-be defined. See :ref:`this page<how-to-arch-build-for-all>` to learn how to
+be defined. See :ref:`this page <how-to-arch-build-for-all>` to learn how to
 use the ``all`` key.
 
 ``all`` cannot be used for ``build-on``.
@@ -115,11 +115,11 @@ The ``build-on`` field is required and can contain multiple architectures.
 
 The ``build-for`` field is optional and should be a single element list. If it
 is not defined, the ``build-for`` will be set to ``build-on`` for each build
-in the :ref:`build plan<build-plans>`.
+in the :ref:`build plan <build-plans>`.
 
 ``build-for: [all]`` is a special key to denote an architecture-independent
 snap. If the ``all`` key is used, no other ``build-on/build-for`` pairs can
-be defined. See :ref:`this page<how-to-arch-build-for-all>` to learn how to
+be defined. See :ref:`this page <how-to-arch-build-for-all>` to learn how to
 use the ``all`` key.
 
 ``all`` cannot be used for ``build-on``.
