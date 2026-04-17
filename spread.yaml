@@ -262,16 +262,6 @@ suites:
     environment:
       SNAPCRAFT_BUILD_ENVIRONMENT: ""
 
-  tests/spread/core26/:
-    summary: core26 specific tests
-    systems:
-      - ubuntu-24.04*
-    environment:
-      SNAPCRAFT_BUILD_ENVIRONMENT: ""
-    # This allows running core26 tests in their own CI job, separate from the core24
-    # suite, since they both run on ubuntu-24.04. Remove once 26.04 is available (#6088).
-    manual: true
-
   # General, core suite
   tests/spread/general/:
     summary: tests of snapcraft core functionality
