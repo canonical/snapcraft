@@ -80,7 +80,7 @@ class GPUExtension(Extension):
     }
 
     _GPU_2604_LAYOUTS: dict[str, Any] = {
-        "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2604/X11/XErrorDB"},
+        "/usr/share/X11/XErrorDB": {"bind-file": "$SNAP/gpu-2604/X11/XErrorDB"},
     }
 
     @staticmethod

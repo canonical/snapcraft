@@ -163,7 +163,7 @@ def test_get_root_snippet_core26(gpu_extension_core26):
         },
         "layout": {
             "/usr/share/X11/XErrorDB": {
-                "symlink": "$SNAP/gpu-2604/X11/XErrorDB",
+                "bind-file": "$SNAP/gpu-2604/X11/XErrorDB",
             },
         },
     }
