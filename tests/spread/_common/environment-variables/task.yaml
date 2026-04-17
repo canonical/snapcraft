@@ -1,13 +1,13 @@
 summary: Test scriptlets variables
 
 # limit to amd64 for BUILD_ON variables
-systems:
-  - ubuntu-22.04
-  - ubuntu-22.04-64
-  - ubuntu-22.04-amd64
-  - ubuntu-24.04
-  - ubuntu-24.04-64
-  - ubuntu-24.04-amd64
+# systems:
+#   - ubuntu-22.04
+#   - ubuntu-22.04-64
+#   - ubuntu-22.04-amd64
+#   - ubuntu-24.04
+#   - ubuntu-24.04-64
+#   - ubuntu-24.04-amd64
 
 environment:
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 5

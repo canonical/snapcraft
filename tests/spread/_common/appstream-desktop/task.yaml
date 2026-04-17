@@ -6,11 +6,11 @@ environment:
 
 # This test snap is limited to amd64 arch due to architectures specified
 # in expected_snap.yaml.
-systems:
-  - ubuntu-22.04-64
-  - ubuntu-22.04-amd64
-  - ubuntu-24.04-64
-  - ubuntu-24.04-amd64
+# systems:
+#   - ubuntu-22.04-64
+#   - ubuntu-22.04-amd64
+#   - ubuntu-24.04-64
+#   - ubuntu-24.04-amd64
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

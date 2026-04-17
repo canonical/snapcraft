@@ -1,8 +1,8 @@
 summary: Build snaps that test the grammar keywords.
 
-systems:
-  - ubuntu-24.04-64
-  - ubuntu-24.04-amd64
+# systems:
+#   - ubuntu-24.04-64
+#   - ubuntu-24.04-amd64
 
 environment:
   BUILD_FOR/arm64: arm64

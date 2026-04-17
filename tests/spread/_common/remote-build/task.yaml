@@ -1,9 +1,9 @@
 summary: Test the remote builder for core24
 manual: true
 kill-timeout: 180m
-systems:
-  - fedora-*
-  - ubuntu-*
+# systems:
+#   - fedora-*
+#   - ubuntu-*
 
 environment:
   LAUNCHPAD_TOKEN: "$(HOST: echo ${LAUNCHPAD_TOKEN})"
