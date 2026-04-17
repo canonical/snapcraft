@@ -110,14 +110,14 @@ class Package(PackageService):
             else:
                 ltype, path = next(iter(self._project.layout[target].items()))
 
-            prefix, _, file = path.partition("/")
+            prefix, _, suffix = path.partition("/")
             if prefix != "$SNAP":
                 continue
             match ltype:
                 case "bind" | "tmpfs":
-                    (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
+                    (prime_dir / suffix).mkdir(0o0755, parents=True, exist_ok=True)
                 case "bind-file":
-                    file = prime_dir / file
+                    file = prime_dir / suffix
                     file.parent.mkdir(0o0755, parents=True, exist_ok=True)
                     file.touch(0o0644)
                 case _:  # "symlink" requires no action and other values are raised elsewhere as a project file error
