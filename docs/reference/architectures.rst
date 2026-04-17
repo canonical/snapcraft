@@ -1,4 +1,4 @@
-.. _arch-reference:
+.. _reference-architectures:
 
 .. meta::
    :description: Learn about Snapcraft architectures, including platforms, build-on, and build-for settings in snapcraft.yaml.
