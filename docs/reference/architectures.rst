@@ -2,6 +2,7 @@
 
 .. meta::
    :description: Learn about Snapcraft architectures, including platforms, build-on, and build-for settings in snapcraft.yaml.
+
 Architectures
 =============
 
@@ -30,7 +31,7 @@ platform
 """"""""
 
 The platform name describes a ``build-on``/``build-for`` pairing. If the
-platform name is a valid debian architecture, then ``build-on`` and
+platform name is a valid Debian architecture, then ``build-on`` and
 ``build-for`` can be omitted (see below for details).
 
 For a list of supported architectures, see :ref:`arch-supported`.

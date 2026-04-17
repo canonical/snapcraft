@@ -1,5 +1,8 @@
 .. _explanation-remote-build:
 
+.. meta::
+   :description: Learn about Snapcraft remote build feature, which allows building snaps on Launchpad.
+   
 Remote build
 ============
 
@@ -16,7 +19,7 @@ Public and private projects
 ---------------------------
 
 By default, prospective snaps are publicly uploaded to `Launchpad`_, where
-apt packages are available.
+source uploads, build logs, and build artifacts are visible.
 
 Developers are reminded of this by confirming that their project will be
 publicly available when starting a remote build. This prompt can be
