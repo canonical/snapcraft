@@ -209,6 +209,8 @@ Snapcraft 9.0.0
 ~~~~~~~~~~~~~~~~
 
 - `#6054`_ In the GNOME extension, fix a missing link to libproxy
+- `#6122`_ When using layouts and plugs with core26 and higher, create the target files
+  and directories during packing
 
 
 Contributors
@@ -221,3 +223,4 @@ this release.
 
 
 .. _#6054: https://github.com/canonical/snapcraft/issues/6054
+.. _#6122: https://github.com/canonical/snapcraft/issues/6122

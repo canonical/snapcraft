@@ -83,6 +83,59 @@ class Package(PackageService):
             prime_dir=project_info.prime_dir,
         )
 
+        if self._project.get_effective_base() == "core26":
+            self._precreate_layout_targets()
+            self._precreate_plug_targets()
+
+    def _precreate_layout_targets(self) -> None:
+        if self._project.layout is None:
+            return
+
+        prime_dir = self._services.lifecycle.prime_dir
+        for target in self._project.layout:
+            # Layouts can either look like:
+            # real_path:
+            #   layout_type: snap_path
+            #
+            # or
+            #
+            # snap_path:
+            #   "type": layout_type
+            #
+            # Either way, we only care about the snap_path and layout_type.
+            prefix, _, _ = target.partition("/")
+            if prefix == "$SNAP":
+                path = target
+                _, ltype = next(iter(self._project.layout[target].items()))
+            else:
+                ltype, path = next(iter(self._project.layout[target].items()))
+
+            prefix, _, file = path.partition("/")
+            if prefix != "$SNAP":
+                continue
+            match ltype:
+                case "bind" | "tmpfs":
+                    (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
+                case "bind-file":
+                    file = prime_dir / file
+                    file.parent.mkdir(0o0755, parents=True, exist_ok=True)
+                    file.touch(0o0644)
+                case _:  # "symlink" requires no action and other values are raised elsewhere as a project file error
+                    pass
+
+    def _precreate_plug_targets(self) -> None:
+        if self._project.plugs is None:
+            return
+
+        prime_dir = self._services.lifecycle.prime_dir
+        plug_targets = [plug.target for plug in self._project.plugs.values()]
+        for target in plug_targets:
+            prefix, _, file = target.partition("/")
+            if prefix != "$SNAP":
+                continue
+
+            (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
+
     def _pack_components(self, dest: pathlib.Path) -> dict[str, pathlib.Path]:
         component_map: dict[str, pathlib.Path] = {}
         for component in self._project.get_component_names():

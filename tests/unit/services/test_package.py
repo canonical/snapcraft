@@ -17,15 +17,20 @@
 """Tests for the Snapcraft Package service."""
 
 import datetime
+from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
+from typing import Any, cast
 
 import pytest
 import yaml
+from craft_application import ServiceFactory
+from pytest_mock import MockerFixture
 
-from snapcraft import __version__, linters, meta, models, pack
+from snapcraft import __version__, const, linters, meta, models, pack
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
+from snapcraft.services import Package
 
 
 def test_pack(default_project, fake_services, setup_project, mocker):
@@ -334,3 +339,245 @@ def test_update_project_parse_info(
         assets_dir=in_project_path / "snap",
         prime_dir=tmp_path / "prime",
     )
+
+
+def test_extra_project_updates_makes_targets_core26(
+    snapcraft_yaml: Callable[..., None],
+    setup_project: Callable[..., None],
+    fake_services: ServiceFactory,
+    mocker: MockerFixture,
+) -> None:
+    setup_project(fake_services, snapcraft_yaml(base="core26"))
+    package_service = fake_services.get("package")
+    mock_precreate_layout = mocker.patch.object(
+        package_service, "_precreate_layout_targets"
+    )
+    mock_precreate_plugs = mocker.patch.object(
+        package_service, "_precreate_plug_targets"
+    )
+
+    package_service.update_project()
+
+    mock_precreate_layout.assert_called_once()
+    mock_precreate_plugs.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "base", [base for base in const.CURRENT_BASES if base != "core26"]
+)
+def test_extra_project_updates_no_make_targets_legacy(
+    snapcraft_yaml: Callable[..., None],
+    setup_project: Callable[..., None],
+    fake_services: ServiceFactory,
+    mocker: MockerFixture,
+    base: str,
+) -> None:
+    setup_project(fake_services, snapcraft_yaml(base=base))
+    package_service = fake_services.get("package")
+    mock_precreate_layout = mocker.patch.object(
+        package_service, "_precreate_layout_targets"
+    )
+    mock_precreate_plugs = mocker.patch.object(
+        package_service, "_precreate_plug_targets"
+    )
+
+    package_service.update_project()
+
+    mock_precreate_layout.assert_not_called()
+    mock_precreate_plugs.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("layouts", "expected_files"),
+    [
+        pytest.param({}, {"dirs": [], "files": []}, id="none"),
+        pytest.param(
+            {
+                "/opt/foo": {"bind": "$SNAP/foo"},
+            },
+            {"dirs": [Path("foo")], "files": []},
+            id="dir",
+        ),
+        pytest.param(
+            {"/usr/lib/foo": {"bind": "$SNAP/foo/gpu-2404"}},
+            {"dirs": [Path("foo"), Path("foo", "gpu-2404")], "files": []},
+            id="dir-recursive",
+        ),
+        pytest.param(
+            {"/usr/lib/foo/ids": {"bind-file": "$SNAP/foo/gpu-2404.ids"}},
+            {
+                "dirs": [Path("foo")],
+                "files": [Path("foo", "gpu-2404.ids")],
+            },
+            id="file",
+        ),
+        pytest.param(
+            {
+                "/var/lib/bar": {"bind": "$SNAP_DATA/bar"},
+            },
+            {
+                "dirs": [],
+                "files": [],
+            },
+            id="no-op",
+        ),
+        pytest.param(
+            {
+                "$SNAP/baz": {"type": "tmpfs"},
+            },
+            {
+                "dirs": [Path("baz")],
+                "files": [],
+            },
+            id="path-in-key",
+        ),
+        pytest.param(
+            {
+                "/opt/foo": {"bind": "$SNAP/foo"},
+                "/usr/lib/foo": {"bind": "$SNAP/foo/gpu-2404"},
+                "/usr/lib/foo/ids": {"bind-file": "$SNAP/foo/gpu-2404.ids"},
+                "/var/lib/bar": {"bind": "$SNAP_DATA/bar"},
+                "$SNAP/baz": {"type": "tmpfs"},
+            },
+            {
+                "dirs": [Path("foo"), Path("foo", "gpu-2404"), Path("baz")],
+                "files": [Path("foo", "gpu-2404.ids")],
+            },
+            id="all",
+        ),
+    ],
+)
+def test_precreate_layout_targets(
+    snapcraft_yaml: Callable[..., None],
+    setup_project: Callable[..., None],
+    fake_services: ServiceFactory,
+    layouts: dict[str, Any],
+    expected_files: dict[str, list[Path]],
+    tmp_path: Path,
+) -> None:
+    project = snapcraft_yaml(layout=layouts, base="core26")
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    package_service._precreate_layout_targets()
+
+    prime_dir = fake_services.lifecycle.prime_dir
+    prime_dir.mkdir(0o755, exist_ok=True)
+
+    primed_files = [
+        file.relative_to(tmp_path / "prime") for file in prime_dir.rglob("*")
+    ]
+
+    all_expected_files = [*expected_files["dirs"], *expected_files["files"]]
+    assert sorted(primed_files) == sorted(all_expected_files)
+
+    for path in expected_files["dirs"]:
+        file = tmp_path / "prime" / path
+        assert file.stat().st_mode & 0o0755
+        assert file.is_dir()
+
+    for path in expected_files["files"]:
+        file = tmp_path / "prime" / path
+        assert file.stat().st_mode & 0o0644
+        assert file.is_file()
+
+
+@pytest.mark.parametrize(
+    ("plugs", "expected_files"),
+    [
+        pytest.param({}, [], id="none"),
+        pytest.param(
+            {
+                "usb": {
+                    "interface": "content",
+                    "target": "$SNAP/usb",
+                },
+            },
+            [Path("usb")],
+            id="one",
+        ),
+        pytest.param(
+            {
+                "usb": {
+                    "interface": "content",
+                    "target": "$SNAP/usb",
+                },
+                "serial": {
+                    "interface": "content",
+                    "target": "$SNAP/serial",
+                },
+            },
+            [Path("usb"), Path("serial")],
+            id="two",
+        ),
+        pytest.param(
+            {
+                "hdmi": {
+                    "interface": "content",
+                    "target": "$SNAP/hdmi/2.1",
+                },
+            },
+            [Path("hdmi"), Path("hdmi", "2.1")],
+            id="recursive",
+        ),
+        pytest.param(
+            {
+                "flash-drive": {
+                    "interface": "content",
+                    "target": "$SNAP_DATA/flash-drive",
+                },
+            },
+            [],
+            id="no-op",
+        ),
+        pytest.param(
+            {
+                "usb": {
+                    "interface": "content",
+                    "target": "$SNAP/usb",
+                },
+                "serial": {
+                    "interface": "content",
+                    "target": "$SNAP/serial",
+                },
+                "hdmi": {
+                    "interface": "content",
+                    "target": "$SNAP/hdmi/2.1",
+                },
+                "flash-drive": {
+                    "interface": "content",
+                    "target": "$SNAP_DATA/flash-drive",
+                },
+            },
+            [Path("usb"), Path("serial"), Path("hdmi"), Path("hdmi", "2.1")],
+            id="all",
+        ),
+    ],
+)
+def test_precreate_plug_targets(
+    snapcraft_yaml: Callable[..., None],
+    setup_project: Callable[..., None],
+    fake_services: ServiceFactory,
+    plugs: dict[str, Any],
+    expected_files: list[Path],
+    tmp_path: Path,
+) -> None:
+    project = snapcraft_yaml(plugs=plugs, base="core26")
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    package_service._precreate_plug_targets()
+
+    prime_dir = fake_services.lifecycle.prime_dir
+    prime_dir.mkdir(0o755, exist_ok=True)
+
+    primed_files = [
+        file.relative_to(tmp_path / "prime") for file in prime_dir.rglob("*")
+    ]
+
+    assert sorted(primed_files) == sorted(expected_files)
+
+    for path in expected_files:
+        file = tmp_path / "prime" / path
+        assert file.stat().st_mode & 0o0755
+        assert file.is_dir()
