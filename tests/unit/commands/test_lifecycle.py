@@ -100,15 +100,12 @@ def test_snap_command_error(mocker):
 
 @pytest.mark.usefixtures("emitter")
 @pytest.mark.parametrize("base", ["core24", "core26"])
-def test_try_command(tmp_path, fake_services, base, mocker):
+def test_try_command(tmp_path, fake_services, base, setup_project, default_project):
     parsed_args = argparse.Namespace(parts=[], output=tmp_path)
     cmd = lifecycle.TryCommand({"app": APP_METADATA, "services": fake_services})
-    mocker.patch.object(
-        fake_services.get("project"),
-        "get_raw",
-        return_value={"base": base},
+    setup_project(
+        fake_services, {**default_project.marshal(), "base": base}, write_project=True
     )
-
     with pytest.raises(snapcraft.errors.FeatureNotImplemented) as raised:
         cmd.run(parsed_args=parsed_args)
 

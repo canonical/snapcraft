@@ -18,17 +18,16 @@
 
 import argparse
 import textwrap
-from typing import Any
+from typing import Any, cast
 
 import craft_application.commands
-import craft_application.errors
 from craft_cli import emit
 from typing_extensions import override
 
 import snapcraft.errors
 import snapcraft.pack
 from snapcraft import errors
-from snapcraft.utils import get_effective_base
+from snapcraft.models.project import Project
 
 
 class PackCommand(craft_application.commands.lifecycle.PackCommand):
@@ -122,17 +121,8 @@ class TryCommand(PackCommand):
         step_name: str | None = None,
         **kwargs: Any,
     ) -> None:
-        try:
-            project = self.services.get("project").get_raw()
-        except craft_application.errors.ProjectFileError:
-            project = {}
-
-        effective_base = get_effective_base(
-            base=project.get("base"),
-            build_base=project.get("build-base"),
-            project_type=project.get("type"),
-            name=project.get("name"),
-        )
+        project = cast(Project, self.services.get("project").get())
+        effective_base = project.get_effective_base()
 
         raise snapcraft.errors.FeatureNotImplemented(
             f'"snapcraft try" is not implemented for {effective_base}'
