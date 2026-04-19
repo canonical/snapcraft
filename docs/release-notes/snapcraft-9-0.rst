@@ -39,6 +39,14 @@ Interactive key selection for ``register-key``
 The :ref:`ref_commands_register-key` command now prompts you to select a key
 when no key name is given.
 
+Progressive percentage shown after ``release``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`ref_commands_release` command now reports the progressive percentage
+when releasing a snap progressively. For example::
+
+    Released 'my-snap' revision 42 to channels: 'stable' for 30% of users
+
 
 Backwards-incompatible changes
 ------------------------------

@@ -150,7 +150,7 @@ This extension uses :ref:`layouts <reference-layouts>` to provide access to GPU 
 
                 layout:
                   /usr/share/X11/XErrorDB:
-                    symlink: $SNAP/gpu-2604/X11/XErrorDB
+                    bind-file: $SNAP/gpu-2604/X11/XErrorDB
 
     .. tab-item:: core24
         :sync: core24
@@ -397,7 +397,7 @@ This is the output before build, showing the expanded configuration:
                 +
                 +layout:
                 +  /usr/share/X11/XErrorDB:
-                +    symlink: $SNAP/gpu-2604/X11/XErrorDB
+                +    bind-file: $SNAP/gpu-2604/X11/XErrorDB
                 +
                 apps:
                   my-gpu-app:
