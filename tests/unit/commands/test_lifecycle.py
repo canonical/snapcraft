@@ -106,13 +106,12 @@ def test_try_command(tmp_path, fake_services, base, setup_project, default_proje
     setup_project(
         fake_services, {**default_project.marshal(), "base": base}, write_project=True
     )
-    with pytest.raises(snapcraft.errors.FeatureNotImplemented) as raised:
-        cmd.run(parsed_args=parsed_args)
 
-    assert str(raised.value) == (
-        'Command or feature not implemented: "snapcraft try" is not '
-        f"implemented for {base}"
-    )
+    expected = f"Command or feature not implemented: 'snapcraft try' is not implemented for {base!r}"
+    with pytest.raises(
+        snapcraft.errors.FeatureNotImplemented, match=re.escape(expected)
+    ):
+        cmd.run(parsed_args=parsed_args)
 
 
 def test_core24_pack(mocker, emitter, fake_services, tmp_path):

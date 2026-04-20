@@ -125,7 +125,7 @@ class TryCommand(PackCommand):
         effective_base = project.get_effective_base()
 
         raise snapcraft.errors.FeatureNotImplemented(
-            f'"snapcraft try" is not implemented for {effective_base}'
+            f"'snapcraft try' is not implemented for {effective_base!r}"
         )
 
 
