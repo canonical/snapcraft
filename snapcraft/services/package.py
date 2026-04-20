@@ -96,6 +96,7 @@ class Package(PackageService):
             self._precreate_plug_targets()
 
     def _precreate_layout_targets(self) -> None:
+        """Create layout targets ahead of time for snapd to avoid ENOENT errors."""
         if self._project.layout is None:
             return
 
@@ -132,6 +133,7 @@ class Package(PackageService):
                     pass
 
     def _precreate_plug_targets(self) -> None:
+        """Create plug targets ahead of time for snapd to avoid ENOENT errors."""
         if self._project.plugs is None:
             return
 
