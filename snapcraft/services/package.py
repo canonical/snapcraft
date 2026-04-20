@@ -25,6 +25,7 @@ from typing import cast
 
 from craft_application import PackageService
 from craft_application.util import strtobool
+from craft_cli import emit
 from typing_extensions import override
 
 from snapcraft import errors, linters, models, pack
@@ -100,6 +101,8 @@ class Package(PackageService):
         if self._project.layout is None:
             return
 
+        emit.debug("Pre-creating layout targets inside of snap")
+
         prime_dir = self._services.lifecycle.prime_dir
         for target in self._project.layout:
             # Layouts can either look like:
@@ -125,8 +128,16 @@ class Package(PackageService):
 
             match ltype:
                 case "bind" | "tmpfs":
+                    emit.debug(
+                        f"Layout target directory {path!r} maps to {str(file)!r} inside of the snap"
+                    )
+                    emit.debug(f"Creating {str(file)!r} in the prime directory")
                     (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
                 case "bind-file":
+                    emit.debug(
+                        f"Layout target file {path!r} maps to {str(file)!r} inside of the snap"
+                    )
+                    emit.debug(f"Creating {str(file)!r} in the prime directory")
                     snap_file = prime_dir / file
                     snap_file.parent.mkdir(0o0755, parents=True, exist_ok=True)
                     snap_file.touch(0o0644)
@@ -138,6 +149,8 @@ class Package(PackageService):
         if self._project.plugs is None:
             return
 
+        emit.debug("Pre-creating plug targets inside of snap")
+
         prime_dir = self._services.lifecycle.prime_dir
         plug_targets = [plug.target for plug in self._project.plugs.values()]
         for target in plug_targets:
@@ -145,6 +158,10 @@ class Package(PackageService):
             if file is None:
                 continue
 
+            emit.debug(
+                f"Plug target directory {target!r} maps to {str(file)!r} inside of the snap"
+            )
+            emit.debug(f"Creating {str(file)!r} in the prime directory")
             (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
 
     @staticmethod

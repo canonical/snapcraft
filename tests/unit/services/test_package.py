@@ -25,6 +25,7 @@ from typing import Any, cast
 import pytest
 import yaml
 from craft_application import ServiceFactory
+from craft_cli.pytest_plugin import RecordingEmitter
 from pytest_mock import MockerFixture
 
 from snapcraft import __version__, linters, meta, models, pack
@@ -486,6 +487,33 @@ def test_precreate_layout_targets(
         assert file.is_file()
 
 
+def test_precreate_layout_targets_messages(
+    snapcraft_yaml: Callable[..., None],
+    setup_project: Callable[..., None],
+    fake_services: ServiceFactory,
+    emitter: RecordingEmitter,
+) -> None:
+    layout = {
+        "/opt/foo": {"bind": "$SNAP/foo"},
+        "/usr/lib/foo/ids": {"bind-file": "$SNAP/foo/gpu-2404.ids"},
+    }
+    project = snapcraft_yaml(layout=layout, base="core26")
+    setup_project(fake_services, project)
+    package_service = cast("Package", fake_services.get("package"))
+
+    package_service._precreate_layout_targets()
+
+    emitter.assert_debug("Pre-creating layout targets inside of snap")
+    emitter.assert_debug(
+        "Layout target directory '$SNAP/foo' maps to 'foo' inside of the snap"
+    )
+    emitter.assert_debug("Creating 'foo' in the prime directory")
+    emitter.assert_debug(
+        "Layout target file '$SNAP/foo/gpu-2404.ids' maps to 'foo/gpu-2404.ids' inside of the snap"
+    )
+    emitter.assert_debug("Creating 'foo/gpu-2404.ids' in the prime directory")
+
+
 @pytest.mark.parametrize(
     ("plugs", "expected_files"),
     [
@@ -585,6 +613,31 @@ def test_precreate_plug_targets(
         file = tmp_path / "prime" / path
         assert file.stat().st_mode & 0o0755
         assert file.is_dir()
+
+
+def test_precreate_plug_targets_messages(
+    snapcraft_yaml: Callable[..., None],
+    setup_project: Callable[..., None],
+    fake_services: ServiceFactory,
+    emitter: RecordingEmitter,
+) -> None:
+    plugs = {
+        "usb": {
+            "interface": "content",
+            "target": "$SNAP/usb",
+        }
+    }
+    project = snapcraft_yaml(plugs=plugs, base="core26")
+    setup_project(fake_services, project)
+    package_service = cast("Package", fake_services.get("package"))
+
+    package_service._precreate_plug_targets()
+
+    emitter.assert_debug("Pre-creating plug targets inside of snap")
+    emitter.assert_debug(
+        "Plug target directory '$SNAP/usb' maps to 'usb' inside of the snap"
+    )
+    emitter.assert_debug("Creating 'usb' in the prime directory")
 
 
 @pytest.mark.parametrize(
