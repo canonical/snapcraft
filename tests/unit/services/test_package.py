@@ -585,3 +585,25 @@ def test_precreate_plug_targets(
         file = tmp_path / "prime" / path
         assert file.stat().st_mode & 0o0755
         assert file.is_dir()
+
+
+@pytest.mark.parametrize(
+    ("in_path", "expected"),
+    [
+        pytest.param("$SNAP/foo", Path("foo"), id="simple"),
+        pytest.param("/foo", Path("foo"), id="absolute"),
+        pytest.param("foo", Path("foo"), id="relative"),
+        pytest.param("$SNAP/foo/bar", Path("foo/bar"), id="nested"),
+        pytest.param("$SNAP", None, id="no-op-base"),
+        pytest.param("/", None, id="no-op-absolute"),
+        pytest.param("$SNAP/", None, id="no-op-suffixed"),
+        pytest.param("///foo", Path("foo"), id="absolute-recursive"),
+        pytest.param("///", None, id="no-op-recursive"),
+        pytest.param("$SNAP_DATA/foo", None, id="no-op-unwanted"),
+    ],
+)
+def test_maybe_get_target_in_snap(
+    fake_services: ServiceFactory, in_path: str, expected: Path | None
+) -> None:
+    package_service = cast("Package", fake_services.get("package"))
+    assert package_service._maybe_get_target_in_snap(in_path) == expected

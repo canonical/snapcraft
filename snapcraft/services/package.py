@@ -119,16 +119,17 @@ class Package(PackageService):
             else:
                 ltype, path = next(iter(self._project.layout[target].items()))
 
-            prefix, _, suffix = path.partition("/")
-            if prefix != "$SNAP":
+            file = self._maybe_get_target_in_snap(path)
+            if file is None:
                 continue
+
             match ltype:
                 case "bind" | "tmpfs":
-                    (prime_dir / suffix).mkdir(0o0755, parents=True, exist_ok=True)
+                    (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
                 case "bind-file":
-                    file = prime_dir / suffix
-                    file.parent.mkdir(0o0755, parents=True, exist_ok=True)
-                    file.touch(0o0644)
+                    snap_file = prime_dir / file
+                    snap_file.parent.mkdir(0o0755, parents=True, exist_ok=True)
+                    snap_file.touch(0o0644)
                 case _:  # "symlink" requires no action and other values are raised elsewhere as a project file error
                     pass
 
@@ -140,11 +141,42 @@ class Package(PackageService):
         prime_dir = self._services.lifecycle.prime_dir
         plug_targets = [plug.target for plug in self._project.plugs.values()]
         for target in plug_targets:
-            prefix, _, file = target.partition("/")
-            if prefix != "$SNAP":
+            file = self._maybe_get_target_in_snap(target)
+            if file is None:
                 continue
 
             (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
+
+    @staticmethod
+    def _maybe_get_target_in_snap(path: str) -> pathlib.Path | None:
+        """Determine the path to create inside of a snap, if any, based on a layout or plug target.
+
+        Paths beginning with "/" or "$SNAP" will end up in the final artifact, as will relative
+        paths that do not begin with a variable (e.g. "foo", but not "$SNAP_DATA/foo").
+
+        If the path is only "/" or "$SNAP", this is just the snap root and should always
+        exist (no-op).
+
+        :param path: String path to investigate
+        :returns: A Path object that needs to be created, or None if nothing needs to be done."""
+        # Make explicit references to the snap root ($SNAP) relative
+        if path.startswith("$SNAP/"):
+            path = path.removeprefix("$SNAP/")
+
+        # Beginning with "/" is equivalent to beginning with "$SNAP". So likewise, make these relative too
+        while path.startswith("/"):
+            path = path.removeprefix("/")
+
+        # At this point, if the string is empty, it was just a reference to the snap root. This should
+        # always exist, so we can return early
+        if not path:
+            return None
+
+        # If any $s remain, this is a special path that shouldn't be handled
+        if "$" in path:
+            return None
+
+        return pathlib.Path(path)
 
     def _pack_components(self, dest: pathlib.Path) -> dict[str, pathlib.Path]:
         component_map: dict[str, pathlib.Path] = {}
