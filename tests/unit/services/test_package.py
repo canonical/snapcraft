@@ -345,8 +345,8 @@ def test_update_project_parse_info(
 
 
 def test_extra_project_updates_makes_targets_core26(
-    snapcraft_yaml: Callable[..., None],
-    setup_project: Callable[..., None],
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
     fake_services: ServiceFactory,
     mocker: MockerFixture,
 ) -> None:
@@ -373,8 +373,8 @@ def test_extra_project_updates_makes_targets_core26(
     ],
 )
 def test_extra_project_updates_no_make_targets_legacy(
-    snapcraft_yaml: Callable[..., None],
-    setup_project: Callable[..., None],
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
     fake_services: ServiceFactory,
     mocker: MockerFixture,
     base: str,
@@ -455,8 +455,8 @@ def test_extra_project_updates_no_make_targets_legacy(
     ],
 )
 def test_precreate_layout_targets(
-    snapcraft_yaml: Callable[..., None],
-    setup_project: Callable[..., None],
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
     fake_services: ServiceFactory,
     layouts: dict[str, Any],
     expected_files: dict[str, list[Path]],
@@ -490,8 +490,8 @@ def test_precreate_layout_targets(
 
 
 def test_precreate_layout_targets_messages(
-    snapcraft_yaml: Callable[..., None],
-    setup_project: Callable[..., None],
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
     fake_services: ServiceFactory,
     emitter: RecordingEmitter,
 ) -> None:
@@ -589,8 +589,8 @@ def test_precreate_layout_targets_messages(
     ],
 )
 def test_precreate_plug_targets(
-    snapcraft_yaml: Callable[..., None],
-    setup_project: Callable[..., None],
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
     fake_services: ServiceFactory,
     plugs: dict[str, Any],
     expected_files: list[Path],
@@ -618,8 +618,8 @@ def test_precreate_plug_targets(
 
 
 def test_precreate_plug_targets_messages(
-    snapcraft_yaml: Callable[..., None],
-    setup_project: Callable[..., None],
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
     fake_services: ServiceFactory,
     emitter: RecordingEmitter,
 ) -> None:
