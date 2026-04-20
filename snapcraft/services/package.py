@@ -146,7 +146,11 @@ class Package(PackageService):
 
         emit.debug("Pre-creating plug targets inside of snap")
 
-        plug_targets = [plug.target for plug in self._project.plugs.values()]
+        plug_targets = [
+            plug.target
+            for plug in self._project.plugs.values()
+            if plug.interface == "content"
+        ]
         for target in plug_targets:
             file = self._maybe_get_target_in_snap(target)
             if file is None:
