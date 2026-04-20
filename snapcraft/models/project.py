@@ -1543,7 +1543,7 @@ class Project(models.Project):
     and directories outside of locations referenced by ``$SNAP`` or ``$SNAP_DATA``.
 
     For layouts that bind a file or directory in ``$SNAP``, the target path will be
-    created when packing the snap with core26 or higher.
+    created when packing the snap with core26 or higher, or bare bases.
 
     See :ref:`reference-layouts` for details.
 
@@ -1713,7 +1713,7 @@ class Project(models.Project):
     """Declares the snap's plugs.
 
     For content plugs that reference ``$SNAP``, the target path will be created when
-    packing the snap with core26 or higher.
+    packing the snap with core26 or higher, or bare bases.
 
     See :ref:`explanation-interfaces` for more information.
     """
