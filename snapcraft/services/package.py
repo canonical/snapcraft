@@ -29,6 +29,7 @@ from craft_cli import emit
 from typing_extensions import override
 
 from snapcraft import errors, linters, models, pack
+from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import component_yaml, snap_yaml
 from snapcraft.parts import extract_metadata as extract
@@ -97,7 +98,6 @@ class Package(PackageService):
 
         emit.debug("Pre-creating layout targets inside of snap")
 
-        prime_dir = self._services.lifecycle.prime_dir
         for target in self._project.layout:
             # Layouts can either look like:
             # real_path:
@@ -120,21 +120,22 @@ class Package(PackageService):
             if file is None:
                 continue
 
+            to_create = self._concat_with_prime_dir(file)
+
             match ltype:
                 case "bind" | "tmpfs":
                     emit.debug(
                         f"Layout target directory {path!r} maps to {str(file)!r} inside of the snap"
                     )
                     emit.debug(f"Creating {str(file)!r} in the prime directory")
-                    (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
+                    to_create.mkdir(0o0755, parents=True, exist_ok=True)
                 case "bind-file":
                     emit.debug(
                         f"Layout target file {path!r} maps to {str(file)!r} inside of the snap"
                     )
                     emit.debug(f"Creating {str(file)!r} in the prime directory")
-                    snap_file = prime_dir / file
-                    snap_file.parent.mkdir(0o0755, parents=True, exist_ok=True)
-                    snap_file.touch(0o0644)
+                    to_create.parent.mkdir(0o0755, parents=True, exist_ok=True)
+                    to_create.touch(0o0644)
                 case _:  # "symlink" requires no action and other values are raised elsewhere as a project file error
                     pass
 
@@ -145,18 +146,19 @@ class Package(PackageService):
 
         emit.debug("Pre-creating plug targets inside of snap")
 
-        prime_dir = self._services.lifecycle.prime_dir
         plug_targets = [plug.target for plug in self._project.plugs.values()]
         for target in plug_targets:
             file = self._maybe_get_target_in_snap(target)
             if file is None:
                 continue
 
+            to_create = self._concat_with_prime_dir(file)
+
             emit.debug(
                 f"Plug target directory {target!r} maps to {str(file)!r} inside of the snap"
             )
             emit.debug(f"Creating {str(file)!r} in the prime directory")
-            (prime_dir / file).mkdir(0o0755, parents=True, exist_ok=True)
+            to_create.mkdir(0o0755, parents=True, exist_ok=True)
 
     @staticmethod
     def _maybe_get_target_in_snap(path: str) -> pathlib.Path | None:
@@ -188,6 +190,21 @@ class Package(PackageService):
             return None
 
         return pathlib.Path(path)
+
+    def _concat_with_prime_dir(self, path: pathlib.Path) -> pathlib.Path:
+        """Concatenate a path onto the prime directory.
+
+        :returns: Concatenated path
+        :raises SnapcraftPrecreationEscapesPrimeError: When the resulting path is no longer relative
+            to the prime directory."""
+
+        prime_dir = self._services.lifecycle.prime_dir
+
+        result = prime_dir / path
+        if not result.resolve().is_relative_to(prime_dir):
+            raise SnapcraftPrecreationEscapesPrimeError(path)
+
+        return result
 
     def _pack_components(self, dest: pathlib.Path) -> dict[str, pathlib.Path]:
         component_map: dict[str, pathlib.Path] = {}

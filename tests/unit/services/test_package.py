@@ -18,6 +18,7 @@
 
 import datetime
 from collections.abc import Callable
+from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, cast
@@ -29,6 +30,7 @@ from craft_cli.pytest_plugin import RecordingEmitter
 from pytest_mock import MockerFixture
 
 from snapcraft import __version__, linters, meta, models, pack
+from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
 from snapcraft.services import Package
@@ -660,3 +662,34 @@ def test_maybe_get_target_in_snap(
 ) -> None:
     package_service = cast("Package", fake_services.get("package"))
     assert package_service._maybe_get_target_in_snap(in_path) == expected
+
+
+@pytest.mark.parametrize(
+    ("path", "expectation"),
+    [
+        pytest.param(Path("foo"), nullcontext(), id="simple"),
+        pytest.param(Path("foo", "bar"), nullcontext(), id="parts"),
+        pytest.param(
+            Path("..", "..", ".."),
+            pytest.raises(SnapcraftPrecreationEscapesPrimeError),
+            id="far-back",
+        ),
+        pytest.param(
+            Path("..", "stage"),
+            pytest.raises(SnapcraftPrecreationEscapesPrimeError),
+            id="to-stage",
+        ),
+    ],
+)
+def test_concat_with_prime_dir(
+    fake_services: ServiceFactory,
+    default_project: models.Project,
+    setup_project: Callable[..., Any],
+    path: Path,
+    expectation: AbstractContextManager,
+) -> None:
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast("Package", fake_services.get("package"))
+
+    with expectation:
+        package_service._concat_with_prime_dir(path)
