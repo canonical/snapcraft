@@ -480,12 +480,12 @@ def test_precreate_layout_targets(
 
     for path in expected_files["dirs"]:
         file = tmp_path / "prime" / path
-        assert file.stat().st_mode & 0o0755
+        assert file.stat().st_mode & 0o0755 == 0o0755
         assert file.is_dir()
 
     for path in expected_files["files"]:
         file = tmp_path / "prime" / path
-        assert file.stat().st_mode & 0o0644
+        assert file.stat().st_mode & 0o0644 == 0o0644
         assert file.is_file()
 
 
@@ -613,7 +613,7 @@ def test_precreate_plug_targets(
 
     for path in expected_files:
         file = tmp_path / "prime" / path
-        assert file.stat().st_mode & 0o0755
+        assert file.stat().st_mode & 0o0755 == 0o0755
         assert file.is_dir()
 
 
