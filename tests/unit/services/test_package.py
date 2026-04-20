@@ -27,7 +27,7 @@ import yaml
 from craft_application import ServiceFactory
 from pytest_mock import MockerFixture
 
-from snapcraft import __version__, const, linters, meta, models, pack
+from snapcraft import __version__, linters, meta, models, pack
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
 from snapcraft.services import Package
@@ -363,7 +363,11 @@ def test_extra_project_updates_makes_targets_core26(
 
 
 @pytest.mark.parametrize(
-    "base", [base for base in const.CURRENT_BASES if base != "core26"]
+    "base",
+    [
+        "core22",
+        "core24",
+    ],
 )
 def test_extra_project_updates_no_make_targets_legacy(
     snapcraft_yaml: Callable[..., None],

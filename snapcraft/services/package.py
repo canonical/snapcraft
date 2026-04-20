@@ -83,7 +83,15 @@ class Package(PackageService):
             prime_dir=project_info.prime_dir,
         )
 
-        if self._project.get_effective_base() == "core26":
+        # precreate content targets and layout sources when using core26+
+        # and bare base snaps
+        if self._project.get_effective_base() not in [
+            "core",
+            "core18",
+            "core20",
+            "core22",
+            "core24",
+        ]:
             self._precreate_layout_targets()
             self._precreate_plug_targets()
 
