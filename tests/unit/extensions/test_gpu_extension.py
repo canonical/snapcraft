@@ -231,10 +231,7 @@ def test_get_parts_snippet_core26(gpu_extension_core26):
             "source": "https://github.com/canonical/gpu-snap.git",
             "plugin": "nil",
             "override-prime": (
-                "craftctl default\n"
-                "${CRAFT_PART_SRC}/bin/gpu-2604-cleanup mesa-2604\n"
-                "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
-                'mkdir -p "${CRAFT_PRIME}/gpu-2604"'
+                "craftctl default\n${CRAFT_PART_SRC}/bin/gpu-2604-cleanup mesa-2604\n"
             ),
         },
     }
