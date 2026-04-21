@@ -693,3 +693,33 @@ def test_concat_with_prime_dir(
 
     with expectation:
         package_service._concat_with_prime_dir(path)
+
+
+@pytest.mark.parametrize(
+    ("src", "layout", "expected"),
+    [
+        pytest.param(
+            "/opt/foo", {"bind": "$SNAP/foo"}, ("$SNAP/foo", "bind"), id="bind"
+        ),
+        pytest.param(
+            "/opt/foo/conf",
+            {"bind-file": "$SNAP/foo/conf"},
+            ("$SNAP/foo/conf", "bind-file"),
+            id="bind-file",
+        ),
+        pytest.param(
+            "/opt/foo/elsewhere",
+            {"symlink": "$SNAP/foo/elsewhere"},
+            None,
+            id="skip-symlink",
+        ),
+        pytest.param(
+            "$SNAP/scratch", {"type": "tmpfs"}, ("$SNAP/scratch", "tmpfs"), id="tmpfs"
+        ),
+        pytest.param("/opt/foo", {"type": "secret-other-thing"}, None, id="bad"),
+    ],
+)
+def test_parse_layout_target(
+    src: str, layout: dict[Any, str], expected: tuple[str, Any]
+) -> None:
+    assert Package._parse_layout_target(src, layout) == expected

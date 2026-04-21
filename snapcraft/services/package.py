@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import pathlib
 import shutil
-from typing import cast
+from typing import Literal, cast
 
 from craft_application import PackageService
 from craft_application.util import strtobool
@@ -98,23 +98,11 @@ class Package(PackageService):
 
         emit.debug("Pre-creating layout targets inside of snap")
 
-        for target in self._project.layout:
-            # Layouts can either look like:
-            # real_path:
-            #   layout_type: snap_path
-            #
-            # or
-            #
-            # snap_path:
-            #   "type": layout_type
-            #
-            # Either way, we only care about the snap_path and layout_type.
-            prefix, _, _ = target.partition("/")
-            if prefix == "$SNAP":
-                path = target
-                _, ltype = next(iter(self._project.layout[target].items()))
-            else:
-                ltype, path = next(iter(self._project.layout[target].items()))
+        for src, layout in self._project.layout.items():
+            result = self._parse_layout_target(src, layout)
+            if result is None:
+                continue
+            path, ltype = result
 
             file = self._maybe_get_target_in_snap(path)
             if file is None:
@@ -136,8 +124,6 @@ class Package(PackageService):
                     emit.debug(f"Creating {str(file)!r} in the prime directory")
                     to_create.parent.mkdir(0o0755, parents=True, exist_ok=True)
                     to_create.touch(0o0644)
-                case _:  # "symlink" requires no action and other values are raised elsewhere as a project file error
-                    pass
 
     def _precreate_plug_targets(self) -> None:
         """Create plug targets ahead of time for snapd to avoid ENOENT errors."""
@@ -163,6 +149,50 @@ class Package(PackageService):
             )
             emit.debug(f"Creating {str(file)!r} in the prime directory")
             to_create.mkdir(0o0755, parents=True, exist_ok=True)
+
+    @staticmethod
+    def _parse_layout_target(
+        src: str, layout: dict[Literal["symlink", "bind", "bind-file", "type"], str]
+    ) -> tuple[str, Literal["bind", "bind-file", "tmpfs"]] | None:
+        """Extracts the layout type and its str-path.
+
+        Below is an example of possible layout formats and what this method will
+        do with each.
+
+        layouts:
+            # Returns (<bind-mount sourcedir>, "bind")
+            <path>:
+                bind: <bind-mount sourcedir>
+
+            # Returns (<bind-mount sourcefile>, "bind-file")
+            <path>:
+                bind-file: <bind-mount sourcefile>
+
+            # Returns (<path>, "tmpfs")
+            <path>:
+                type: tmpfs
+
+            # Returns None
+            <path>:
+                symlink: <link-target>
+
+        This method will also return None for malformed layouts, though these should
+        always be caught by the project model validation before getting here.
+
+        :returns: A tuple of (str-path, layout-type). The returned path is neither sanitized
+            nor validated.
+        """
+        key, value = next(iter(layout.items()))
+
+        match key:
+            case "type":
+                if value == "tmpfs":
+                    return (src, "tmpfs")
+                return None
+            case "bind" | "bind-file":
+                return (value, key)
+            case _:
+                return None
 
     @staticmethod
     def _maybe_get_target_in_snap(path: str) -> pathlib.Path | None:
