@@ -1,0 +1,26 @@
+# This file is intentionally named '.snapcraft.yaml' rather than 'snapcraft.yaml'.
+# It tests that snapcraft correctly picks up '.snapcraft.yaml' as a project file.
+# Regression test for https://github.com/canonical/snapcraft/issues/5083
+name: simple-snap
+version: "1.0"
+summary: Build a simple confined snap
+description: |
+  Build a simple confined snap to test the build process.
+
+base: core24
+
+confinement: strict
+
+apps:
+  hello:
+    command: bin/hello
+
+parts:
+  hello:
+    source: .
+    plugin: make
+    build-packages:
+      - gcc
+      - libc-dev
+      - libcurl4-openssl-dev
+    stage-packages: [libcurl4]
