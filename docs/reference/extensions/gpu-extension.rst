@@ -393,10 +393,6 @@ This is the output before build, showing the expanded configuration:
                 +    target: $SNAP/gpu-2604
                 +    default-provider: mesa-2604
                 +
-                +layout:
-                +  /usr/share/X11/XErrorDB:
-                +    bind-file: $SNAP/gpu-2604/X11/XErrorDB
-                +
                 apps:
                   my-gpu-app:
                     command: usr/bin/my-gpu-app

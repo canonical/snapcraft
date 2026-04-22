@@ -79,10 +79,6 @@ class GPUExtension(Extension):
         },
     }
 
-    _GPU_2604_LAYOUTS: dict[str, Any] = {
-        "/usr/share/X11/XErrorDB": {"bind-file": "$SNAP/gpu-2604/X11/XErrorDB"},
-    }
-
     @staticmethod
     @override
     def get_supported_bases() -> tuple[str, ...]:
@@ -130,7 +126,6 @@ class GPUExtension(Extension):
         if base == "core26":
             return {
                 "plugs": dict(self._GPU_2604_PLUG),
-                "layout": dict(self._GPU_2604_LAYOUTS),
             }
         raise AssertionError(f"Unsupported base: {base}")
 
