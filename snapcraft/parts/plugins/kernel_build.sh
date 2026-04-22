@@ -214,16 +214,13 @@ repack_deb() {
   done
 
   # Move the relevant files to the expected location
-  # Rename vmlinuz to kernel.img, the others can keep their name
-  mv -f "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}-${_flavour}" \
-        "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}"
-
   mv -f "${CRAFT_PART_INSTALL}/boot/System.map-${_kver}-${_flavour}" \
         "${CRAFT_PART_INSTALL}/boot/config-${_kver}-${_flavour}"     \
+        "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}-${_flavour}"    \
         "${CRAFT_PART_INSTALL}"
 
-  ln -f "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}" \
-    "${CRAFT_PART_INSTALL}/kernel.img"
+  ln -f "${CRAFT_PART_INSTALL}/vmlinuz-${_kver}-${_flavour}" \
+    "${CRAFT_PART_INSTALL}/vmlinuz"
 
   # A little deb cleanup
   rmdir "${CRAFT_PART_INSTALL}/boot"
@@ -334,7 +331,7 @@ pack_kernel() {
   # Install kernel artifacts
   echo "Copying kernel image..."
   cp -f "${CRAFT_PART_BUILD}/arch/${ARCH}/boot/${KERNEL_IMAGE}" \
-        "${CRAFT_PART_INSTALL}/kernel.img-${_kver}"
+        "${CRAFT_PART_INSTALL}/vmlinuz-${_kver}"
 
   echo "Copying System map..."
   cp -f "${CRAFT_PART_BUILD}/System.map" \
@@ -344,8 +341,8 @@ pack_kernel() {
   cp -f "${CRAFT_PART_BUILD}/.config" \
         "${CRAFT_PART_INSTALL}/config-${_kver}"
 
-  ln -f "${CRAFT_PART_INSTALL}/kernel.img-${_kver}" \
-    "${CRAFT_PART_INSTALL}/kernel.img"
+  ln -f "${CRAFT_PART_INSTALL}/vmlinuz-${_kver}" \
+    "${CRAFT_PART_INSTALL}/vmlinuz"
 
   # Remove symlinks lib/modules/${_kver}/{build,source}
   # It's possible that these are not even installed, however

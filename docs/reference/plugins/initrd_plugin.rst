@@ -84,7 +84,7 @@ initrd-build-efi-image
 If true, a Unified Kernel Image (UKI) will be created using the initrd
 compressed CPIO archive created by this plugin and a kernel image file. The
 kernel image must be present in ``${CRAFT_STAGE}`` and must be named
-``kernel.img``.
+``vmlinuz``.
 
 
 initrd-efi-image-key

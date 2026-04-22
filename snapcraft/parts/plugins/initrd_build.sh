@@ -419,7 +419,7 @@ create_initrd() {
     "${CRAFT_PART_INSTALL}/initrd.img"
 }
 
-# create_efi creates an EFI UKI object from a kernel.img and initrd.img
+# create_efi creates an EFI UKI object from a vmlinuz and initrd.img
 # $1 is the signing key to sign the UKI
 # $2 is the corresponding certificate
 create_efi() {
@@ -437,7 +437,7 @@ create_efi() {
                 --key       \"/root/${key##*/}\"  \
                 --cert      \"/root/${cert##*/}\" \
                 --initrd    /boot/initrd.img      \
-                --kernel    /boot/kernel.img      \
+                --kernel    /boot/vmlinuz         \
                 --output    /boot/kernel.efi"
 
   # Install the UKI to the snap
@@ -531,7 +531,7 @@ main() {
   # KERNEL_FIRMWARE provides a path to the kernel firmware files
   KERNEL_FIRMWARE="${CRAFT_STAGE}/firmware"
   # KERNEL_IMAGE provides a path to the kernel image file
-  KERNEL_IMAGE="${CRAFT_STAGE}/kernel.img-${KERNEL_VERSION}"
+  KERNEL_IMAGE="${CRAFT_STAGE}/vmlinuz-${KERNEL_VERSION}"
 
   # BASE_CREATED tracks whether or not the chroot has been created
   BASE_CREATED="${CRAFT_PART_SRC}/.base_created"
