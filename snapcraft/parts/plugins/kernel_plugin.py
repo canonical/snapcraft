@@ -145,7 +145,7 @@ class KernelPlugin(plugins.Plugin):
         release = self.options.kernel_ubuntu_release_name
         deb = self.options.kernel_ubuntu_binary_package
 
-        if self.options.kernel_ubuntu_binary_package:
+        if deb:
             return super().get_pull_commands()
 
         if flavour != "generic":
