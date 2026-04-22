@@ -188,7 +188,7 @@ def test_get_parts_snippet(gpu_extension_core24):
             "plugin": "nil",
             "override-prime": (
                 "craftctl default\n"
-                "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-core24\n"
+                "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404\n"
                 "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
                 'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
             ),
