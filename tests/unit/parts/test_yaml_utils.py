@@ -259,6 +259,28 @@ def test_get_snap_project(project, project_dir, new_dir):
     assert actual_project == project
 
 
+@pytest.mark.parametrize(
+    "project_file",
+    [
+        pathlib.Path("snapcraft.yaml"),
+        pathlib.Path("snap/snapcraft.yaml"),
+        pathlib.Path("build-aux/snap/snapcraft.yaml"),
+        pathlib.Path(".snapcraft.yaml"),
+    ],
+)
+def test_get_snap_project_all_locations(project_file, new_dir):
+    """Regression test for https://github.com/canonical/snapcraft/issues/5083.
+
+    All supported project file locations should be found by get_snap_project().
+    """
+    (new_dir / project_file).parent.mkdir(parents=True, exist_ok=True)
+    (new_dir / project_file).touch()
+
+    actual_project = yaml_utils.get_snap_project(new_dir)
+
+    assert actual_project.project_file == project_file
+
+
 @pytest.mark.parametrize("project_dir", [None, "test-project-dir"])
 def test_get_snap_project_snap_not_a_directory(project_dir, new_dir):
     project_dir = pathlib.Path(project_dir) if project_dir else new_dir

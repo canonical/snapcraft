@@ -1,0 +1,11 @@
+summary: Pack a snap using .snapcraft.yaml as the project file
+
+restore: |
+  snap remove simple-snap
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft pack
+  snap install --dangerous ./*.snap
+  /snap/bin/simple-snap.hello
