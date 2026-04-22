@@ -160,7 +160,8 @@ class KernelPlugin(plugins.Plugin):
                 [
                     "for name in canonical-kernel ubuntu-kernel; do",
                     f'team_url="https://git.launchpad.net/~$name/ubuntu/+source/{pkg}/+git/{release}"',
-                    'if [ "$(curl -fsSL "$team_url")" != "Invalid OpenID transaction" ]; then',
+                    'test_url="$(curl -fsSL "$team_url")"',
+                    'if [ -n "$test_url" ] && [ "$test_url" != "Invalid OpenID transaction" ]; then',
                     'actual_url="$team_url"',
                     "fi",
                     "done",
