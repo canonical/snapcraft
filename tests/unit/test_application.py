@@ -379,6 +379,38 @@ def test_default_command_integrated(monkeypatch, mocker, new_dir):
     assert mocked_pack_run.called
 
 
+@pytest.mark.parametrize(
+    "project_file",
+    [
+        "snapcraft.yaml",
+        "snap/snapcraft.yaml",
+        "build-aux/snap/snapcraft.yaml",
+        ".snapcraft.yaml",
+    ],
+)
+def test_project_file_locations(monkeypatch, mocker, new_dir, project_file):
+    """All supported project file locations should be picked up by the application.
+
+    Regression test for https://github.com/canonical/snapcraft/issues/5083.
+    """
+    # Pretend this is an Ubuntu 24.04 system, to match the project's build-base
+    mocker.patch.object(
+        util, "get_host_base", return_value=bases.BaseName("ubuntu", "24.04")
+    )
+
+    project_path = new_dir / project_file
+    project_path.parent.mkdir(parents=True, exist_ok=True)
+    project_path.write_text(PARSE_INFO_PROJECT)
+
+    mocked_pack_run = mocker.patch.object(PackCommand, "run", return_value=0)
+
+    monkeypatch.setattr("sys.argv", ["snapcraft", "--destructive-mode"])
+    app = application.create_app()
+    app.run()
+
+    assert mocked_pack_run.called
+
+
 @pytest.mark.parametrize("base", const.ESM_BASES)
 def test_esm_error(snapcraft_yaml, base, monkeypatch, capsys):
     """Test that an error is raised when using an ESM base."""
