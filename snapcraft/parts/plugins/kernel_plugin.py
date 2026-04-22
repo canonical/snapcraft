@@ -175,8 +175,9 @@ class KernelPlugin(plugins.Plugin):
                 ]
             )
 
+            if not commands:
+                raise errors.PartsError(f"failed to find kernel source url: {repo}")
             return commands
-        raise errors.PartsError(f"failed to find kernel source url: {repo}")
 
         return super().get_pull_commands()
 
