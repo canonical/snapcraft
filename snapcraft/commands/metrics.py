@@ -106,7 +106,6 @@ class StoreMetricsCommand(AppCommand):
                     "end": parsed_args.end,
                 }
             ],
-            snap_name=parsed_args.snap_name,
         )
 
         metrics = results.metrics
