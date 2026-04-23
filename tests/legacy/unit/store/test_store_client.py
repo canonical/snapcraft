@@ -33,7 +33,7 @@ from testtools.matchers import (
 )
 
 from snapcraft_legacy import storeapi
-from snapcraft_legacy.storeapi import errors, metrics
+from snapcraft_legacy.storeapi import errors
 from snapcraft_legacy.storeapi.v2 import whoami
 from tests.legacy import fixture_setup, unit
 
