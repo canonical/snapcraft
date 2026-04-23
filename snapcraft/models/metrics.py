@@ -18,6 +18,7 @@ from enum import Enum
 from typing import Literal
 
 from craft_application import models
+from pydantic import Field
 
 
 class MetricName(str, Enum):
@@ -83,10 +84,10 @@ class Metric(models.CraftBaseModel):
     status: Literal["OK", "FAIL", "NO_DATA"]
     """Status of metadata retrieval."""
 
-    snap_id: str
+    snap_id: str = Field(serialization_alias="snap_id")
     """ID of checked snap."""
 
-    metric_name: MetricName
+    metric_name: MetricName = Field(serialization_alias="metric_name")
     """Type of metric data being represented."""
 
     buckets: list[str]
