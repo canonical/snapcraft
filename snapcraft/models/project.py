@@ -2462,17 +2462,11 @@ class BareCore24Project(Core24Project):
 
 class Core26Project(Core24Project):
     base: Literal["core26", "devel"]  # type: ignore[assignment]
-    build_base: Literal["devel"]  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
-
-    grade: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
-        Literal["devel"],
-        _custom_error("grade must be 'devel' when build-base is 'devel'"),
-    ]
 
 
 class BareCore26Project(Core26Project):
     base: Literal["bare"]  # type: ignore[assignment]
-    build_base: Literal["devel"]  # type: ignore[assignment]
+    build_base: Literal["core26"]  # type: ignore[assignment]
 
     @override
     @pydantic.field_validator("build_base", mode="after")

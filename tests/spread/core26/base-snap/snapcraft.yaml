@@ -1,10 +1,11 @@
-name: build-base-devel
+name: test-base-snap
 version: '1.0'
-summary: build-base-devel
-description: Build a snap with a devel build-base
+summary: core26
+description: Build a base snap on core26
 confinement: strict
 
-base: core26
+type: base
+build-base: core26
 
 grade: stable
 

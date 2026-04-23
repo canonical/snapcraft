@@ -368,7 +368,7 @@ def test_esm_error(snapcraft_yaml, base, monkeypatch, capsys):
     _, err = capsys.readouterr()
 
     assert re.match(
-        rf"^Base {base!r} is not supported by this version of Snapcraft.\n"
+        rf".*\nBase {base!r} is not supported by this version of Snapcraft.\n"
         rf"Recommended resolution: Use Snapcraft .* from the '.*' channel of snapcraft where {base!r} was last supported.\n"
         r"For more information, check out: .*/reference/bases\n",
         err,
@@ -404,7 +404,7 @@ def test_yaml_syntax_error(in_project_path, monkeypatch, capsys):
 
     _, err = capsys.readouterr()
     assert re.match(
-        "^error parsing 'snapcraft\\.yaml': .*\nDetailed information:",
+        ".*\nerror parsing 'snapcraft\\.yaml': .*\nDetailed information:",
         err,
     )
 
@@ -553,19 +553,20 @@ def test_store_key_error(mocker, capsys):
 
     assert return_code == 1
     _, err = capsys.readouterr()
-    assert err.startswith(
-        # There is merit in showing the line as it would be printed out.
-        # If it is too long here it needs fixing at the source.
-        # pylint: disable=[line-too-long]
+    # There is merit in showing the line as it would be printed out.
+    # If it is too long here it needs fixing at the source.
+    # pylint: disable=[line-too-long]
+    assert (
         dedent(
             """\
             No keyring found to store or retrieve credentials from.
             Recommended resolution: Ensure the keyring is working or SNAPCRAFT_STORE_CREDENTIALS is correctly exported into the environment
             For more information, check out: https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate
         """
-            # pylint: enable=[line-too-long]
         )
+        in err
     )
+    # pylint: enable=[line-too-long]
 
 
 @pytest.mark.parametrize(
@@ -588,7 +589,7 @@ def test_remote_build_error(mocker, capsys, error_class):
     _, err = capsys.readouterr()
 
     assert re.match(
-        r"^test-error\n"
+        r".*\ntest-error\n"
         r"For more information, check out: .*/explanation/remote-build\n",
         err,
     )

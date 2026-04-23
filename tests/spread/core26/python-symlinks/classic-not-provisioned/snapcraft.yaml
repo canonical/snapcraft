@@ -7,9 +7,8 @@ description: |
   provide a compatible version. If a staged interpreter is not
   found, we must fail.
 
-grade: devel
+grade: stable
 base: core26
-build-base: devel
 confinement: classic
 
 apps:
