@@ -1422,43 +1422,49 @@ def test_list_revisions(fake_client, list_revisions_payload):
 class TestListValidations:
     """Tests for the 'list_validations' function."""
 
-    def test_list_validations(self, fake_client):
-        validations = [
-            {
-                "approved-snap-id": "test-id-1",
-                "approved-snap-revision": "1",
-                "authority-id": "test-authority-1",
-                "revoked": "false",
-                "series": "16",
-                "sign-key-sha3-384": "deadbeef",
-                "snap-id": "test-gated-id",
-                "timestamp": "2026-04-02T12:06:42.646917Z",
-                "type": "validation",
-                "approved-snap-name": "test-snap-1",
-                "required": False,
-            },
-            {
-                "approved-snap-id": "test-id-2",
-                "approved-snap-revision": "1",
-                "authority-id": "test-authority-2",
-                "revoked": "false",
-                "series": "16",
-                "sign-key-sha3-384": "abc123",
-                "snap-id": "test-gated-id",
-                "timestamp": "2026-04-02T12:03:31.211621Z",
-                "type": "validation",
-                "approved-snap-name": "test-snap-2",
-                "required": False,
-            },
-        ]
+    @pytest.fixture
+    def validation_headers_1(self):
+        return {
+            "type": "validation",
+            "authority-id": "test-authority-1",
+            "series": "16",
+            "snap-id": "test-gated-id",
+            "approved-snap-id": "test-id-1",
+            "approved-snap-revision": "1",
+            "timestamp": "2026-04-02T12:06:42.646917Z",
+            "revoked": "false",
+        }
 
+    @pytest.fixture
+    def validation_headers_2(self):
+        return {
+            "type": "validation",
+            "authority-id": "test-authority-2",
+            "series": "16",
+            "snap-id": "test-gated-id",
+            "approved-snap-id": "test-id-2",
+            "approved-snap-revision": "2",
+            "timestamp": "2026-04-02T12:03:31.211621Z",
+            "revoked": "true",
+        }
+
+    @pytest.mark.parametrize("validation_params", [None, {"key": "value"}])
+    def test_list_validations(
+        self, fake_client, validation_headers_1, validation_headers_2, validation_params
+    ):
+        response_body = [validation_headers_1, validation_headers_2]
         fake_client.request.return_value = FakeResponse(
-            status_code=200, content=json.dumps(validations).encode()
+            status_code=200, content=json.dumps(response_body).encode()
         )
 
-        actual = client.StoreClientCLI().list_validations(snap_id="snap-id-gating")
+        actual = client.StoreClientCLI().list_validations(
+            snap_id="snap-id-gating", params=validation_params
+        )
 
-        assert actual == validations
+        assert actual == [
+            models.ValidationAssertion.unmarshal(validation_headers_1),
+            models.ValidationAssertion.unmarshal(validation_headers_2),
+        ]
         assert fake_client.request.mock_calls == [
             call(
                 "GET",
@@ -1467,6 +1473,7 @@ class TestListValidations:
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                 },
+                params=validation_params,
             )
         ]
 
@@ -1478,6 +1485,130 @@ class TestListValidations:
         validations = client.StoreClientCLI().list_validations(snap_id="test-gated-id")
 
         assert validations == []
+
+    def test_list_validations_unmarshal_error(self, fake_client):
+        response_body = [{"type": "validation", "invalid-field": "bad-data"}]
+        fake_client.request.return_value = FakeResponse(
+            status_code=200, content=json.dumps(response_body).encode()
+        )
+        expected = "Received invalid validation from the store"
+
+        with pytest.raises(errors.SnapcraftAssertionError, match=expected):
+            client.StoreClientCLI().list_validations(snap_id="test-gated-id")
+
+
+####################
+# Post Validation  #
+####################
+
+
+class TestPostValidation:
+    """Tests for the 'post_validation' function."""
+
+    def test_post_validation(self, fake_client):
+        fake_client.request.return_value = FakeResponse(status_code=200, content=b"")
+
+        client.StoreClientCLI().post_validation(
+            snap_id="test-snap-id",
+            validation=b"signed-assertion-bytes",
+        )
+
+        assert fake_client.request.mock_calls == [
+            call(
+                "PUT",
+                "https://dashboard.snapcraft.io/dev/api/snaps/test-snap-id/validations",
+                json={"assertion": "signed-assertion-bytes"},
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
+        ]
+
+
+#################
+# Get Snap Info #
+#################
+
+
+class TestGetSnapInfo:
+    """Tests for the 'get_snap_info' function."""
+
+    def test_get_snap_info(self, fake_client):
+        snap_info = {"snap-id": "test-id", "name": "test-snap"}
+        fake_client.request.return_value = FakeResponse(
+            status_code=200, content=json.dumps(snap_info).encode()
+        )
+
+        result = client.StoreClientCLI().get_snap_info(snap_name="test-snap")
+
+        assert result == snap_info
+        assert fake_client.request.mock_calls == [
+            call(
+                "GET",
+                "https://dashboard.snapcraft.io/v2/snaps/info/test-snap",
+                headers={
+                    "Accept": "application/json",
+                    "Snap-Device-Series": "16",
+                },
+                params=None,
+            )
+        ]
+
+    def test_get_snap_info_with_params(self, fake_client):
+        fake_client.request.return_value = FakeResponse(
+            status_code=200, content=json.dumps({}).encode()
+        )
+
+        client.StoreClientCLI().get_snap_info(
+            snap_name="test-snap", params={"fields": "snap-id"}
+        )
+
+        assert fake_client.request.mock_calls == [
+            call(
+                "GET",
+                "https://dashboard.snapcraft.io/v2/snaps/info/test-snap",
+                headers={
+                    "Accept": "application/json",
+                    "Snap-Device-Series": "16",
+                },
+                params={"fields": "snap-id"},
+            )
+        ]
+
+    def test_get_snap_info_not_found(self, fake_client):
+        fake_client.request.side_effect = craft_store.errors.StoreServerError(
+            FakeResponse(
+                status_code=404,
+                content=json.dumps(
+                    {
+                        "error_list": [
+                            {"message": "snap not found", "code": "resource-not-found"}
+                        ]
+                    }
+                ).encode(),
+            )
+        )
+
+        with pytest.raises(SnapNotFoundError):
+            client.StoreClientCLI().get_snap_info(snap_name="missing-snap")
+
+    def test_get_snap_info_server_error(self, fake_client):
+        fake_client.request.side_effect = craft_store.errors.StoreServerError(
+            FakeResponse(
+                status_code=500,
+                content=json.dumps(
+                    {
+                        "error_list": [
+                            {"message": "internal error", "code": "server-error"}
+                        ]
+                    }
+                ).encode(),
+            )
+        )
+
+        with pytest.raises(craft_store.errors.StoreServerError):
+            client.StoreClientCLI().get_snap_info(snap_name="test-snap")
 
 
 #######################

@@ -580,10 +580,37 @@ class LegacyStoreClientCLI:
 
         return Revisions.unmarshal(response.json())
 
-    def list_validations(self, snap_id: str) -> list[dict[str, Any]]:
+    @staticmethod
+    def _unmarshal_validation(
+        validation_data: dict[str, Any],
+    ) -> models.ValidationAssertion:
+        """Unmarshal a validation.
+
+        :raises StoreAssertionError: If the validation cannot be unmarshalled.
+        """
+        try:
+            return models.ValidationAssertion.unmarshal(validation_data)
+        except pydantic.ValidationError as err:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid validation from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"{format_pydantic_errors(err.errors(), file_name='validation')}",
+            ) from err
+
+    def list_validations(
+        self,
+        snap_id: str,
+        params: dict[str, Any] | None = None,
+    ) -> list[models.ValidationAssertion]:
         """Return a list of validations for snap_id.
 
+        Not to be confused with the 'list_validation_sets' call.
+
         :param snap_id: the id of the snap to query.
+        :param params: Optional query parameters.
+
+        :returns: A list of validations.
         """
         response = self.request(
             "GET",
@@ -592,8 +619,67 @@ class LegacyStoreClientCLI:
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
+            params=params,
         )
 
+        validations = []
+        if assertions := response.json():
+            for assertion_data in assertions:
+                emit.debug(f"Parsing validation {assertion_data}")
+                assertion = self._unmarshal_validation(assertion_data)
+                validations.append(assertion)
+                emit.debug(f"Parsed validation: {assertion.model_dump_json()}")
+
+        return validations
+
+    def post_validation(self, snap_id: str, validation: bytes) -> None:
+        """Post a signed validation for snap_id.
+
+        Not to be confused with the 'post_validation_set' call.
+
+        :param snap_id: The ID of the snap.
+        :param validation: The signed validations bytes.
+        """
+        self.request(
+            "PUT",
+            f"{self._base_url}/dev/api/snaps/{snap_id}/validations",
+            json={"assertion": validation.decode("utf-8")},
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+    def get_snap_info(
+        self,
+        snap_name: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Return the snap ID for the given snap name.
+
+        Uses the public snap info endpoint, which can't see private snaps.
+
+        :param snap_name: The name of the snap.
+        :param params: Optional query parameters.
+
+        :returns: A dict of snap information.
+
+        :raises SnapNotFoundError: If the snap is not found.
+        """
+        try:
+            response = self.request(
+                "GET",
+                f"{self._base_url}/v2/snaps/info/{snap_name}",
+                headers={
+                    "Accept": "application/json",
+                    "Snap-Device-Series": constants.DEFAULT_SERIES,
+                },
+                params=params,
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            if store_error.response.status_code == 404:
+                raise SnapNotFoundError(snap_name=snap_name) from store_error
+            raise
         return response.json()
 
     @staticmethod

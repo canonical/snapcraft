@@ -32,6 +32,17 @@ if TYPE_CHECKING:
     import argparse
 
 
+import datetime
+import re
+from typing import TYPE_CHECKING
+
+from snapcraft import models
+from snapcraft.services import Assertion as AssertionService
+
+if TYPE_CHECKING:
+    import argparse
+
+
 class StoreGatedCommand(AppCommand):
     """Get snaps and revisions gating a snap."""
 
@@ -67,13 +78,16 @@ class StoreGatedCommand(AppCommand):
         if validations:
             table_data = []
             for v in validations:
-                name = v["approved-snap-name"]
-                revision = v["approved-snap-revision"]
+                name = v.approved_snap_name
+                revision: str | None = v.approved_snap_revision
                 if revision == "-":
                     revision = None
-                required = str(v.get("required", True))
+                if v.required is None:
+                    required = "True"
+                else:
+                    required = str(v.required)
                 # Currently timestamps have microseconds, which look bad
-                timestamp = v["timestamp"]
+                timestamp = v.timestamp
                 if "." in timestamp:
                     timestamp = timestamp.split(".")[0] + "Z"
                 table_data.append([name, revision, required, timestamp])
@@ -86,3 +100,123 @@ class StoreGatedCommand(AppCommand):
             emit.message(tabulated)
         else:
             emit.message(f"There are no validations for snap {parsed_args.snap_name!r}")
+
+
+class StoreValidateCommand(AppCommand):
+    """Validate a gated snap."""
+
+    name = "validate"
+    help_msg = "Validate a gated snap"
+    overview = textwrap.dedent(
+        """
+        Each validation can be specified with either syntax:
+
+        -  <snap-name>=<revision>
+        -  <snap-id>=<revision>"""
+    )
+
+    @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--key-name",
+            metavar="key-name",
+            help="key used to sign the assertion",
+        )
+        parser.add_argument(
+            "--revoke",
+            action="store_true",
+            help="revoke validations",
+        )
+        parser.add_argument(
+            "snap_name",
+            metavar="snap-name",
+        )
+        parser.add_argument(
+            "validations",
+            nargs="+",
+        )
+
+    @override
+    def run(self, parsed_args: argparse.Namespace):
+        """Generate, sign and upload validation assertions."""
+
+        # check validations format
+        self._check_validations(parsed_args.validations)
+
+        store_client = store.StoreClientCLI()
+        account_info = store_client.get_account_info()
+        authority_id = account_info["account_id"]
+
+        # get data for the gating snap
+        try:
+            snap_id = account_info["snaps"][store.constants.DEFAULT_SERIES][
+                parsed_args.snap_name
+            ]["snap-id"]
+        except KeyError:
+            raise store.errors.SnapNotFoundError(snap_name=parsed_args.snap_name)
+
+        existing_validations = {
+            (i.approved_snap_id, i.approved_snap_revision): i
+            for i in store_client.list_validations(
+                snap_id=snap_id,
+                params={"include_revoked": "1"},
+            )
+        }
+
+        # Then, for each requested validation, generate assertion
+        for validation in parsed_args.validations:
+            gated_snap, rev = validation.split("=", 1)
+            emit.progress(f"Getting details for {gated_snap}")
+            # The Info API is not authed, so it cannot see private snaps.
+            try:
+                approved_snap = store_client.get_snap_info(
+                    gated_snap, params={"fields": "snap-id"}
+                )
+                approved_snap_id = approved_snap["snap-id"]
+            except store.errors.SnapNotFoundError:
+                approved_snap_id = gated_snap
+
+            existing = existing_validations.get((approved_snap_id, rev))
+            previous_revision = existing.revision or 0 if existing else 0
+
+            # This uses the same formatting that `datetime.utcnow()` produced before it was deprecated.
+            # We've had trouble changing time formats in the past (#5413), so we'll keep
+            # using this exact format because we know it's compatible with the store.
+            timestamp = datetime.datetime.now(datetime.timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
+
+            assertion = models.ValidationAssertion(
+                type="validation",
+                authority_id=authority_id,
+                series=store.constants.DEFAULT_SERIES,
+                snap_id=snap_id,
+                approved_snap_id=approved_snap_id,
+                approved_snap_revision=rev,
+                timestamp=timestamp,
+                revoked=parsed_args.revoke,
+                revision=previous_revision + 1 if existing else None,
+            )
+
+            signed_validation = AssertionService.sign_assertion(
+                assertion, parsed_args.key_name
+            )
+
+            # Save assertion to a properly named file
+            fname = f"{parsed_args.snap_name}-{gated_snap}-r{rev}.assertion"
+            with open(fname, "wb") as f:
+                f.write(signed_validation)
+
+            store_client.post_validation(snap_id, signed_validation)
+
+    def _check_validations(self, validations: list[str]):
+        """Check validation strings.
+
+        Matches simple 'key=value' pairs where:
+        - key is one or more characters, not containing '='
+        - value is a non-negative integer
+        """
+        validation_re = re.compile("^[^=]+=[0-9]+$")
+        invalids = [v for v in validations if not validation_re.match(v)]
+        if invalids:
+            raise store.errors.InvalidValidationRequestsError(invalids)
