@@ -88,10 +88,10 @@ class Package(PackageService):
         # precreate content targets and layout sources when using core26+
         # and bare base snaps
         if self._project.get_effective_base() not in ("core22", "core24"):
-            self._precreate_layout_targets()
-            self._precreate_plug_targets()
+            self._precreate_layout_snap_paths()
+            self._precreate_content_plug_target_paths()
 
-    def _precreate_layout_targets(self) -> None:
+    def _precreate_layout_snap_paths(self) -> None:
         """Create layout targets ahead of time for snapd to avoid ENOENT errors."""
         if self._project.layout is None:
             return
@@ -125,7 +125,7 @@ class Package(PackageService):
                     to_create.parent.mkdir(0o0755, parents=True, exist_ok=True)
                     to_create.touch(0o0644)
 
-    def _precreate_plug_targets(self) -> None:
+    def _precreate_content_plug_target_paths(self) -> None:
         """Create plug targets ahead of time for snapd to avoid ENOENT errors."""
         if self._project.plugs is None:
             return

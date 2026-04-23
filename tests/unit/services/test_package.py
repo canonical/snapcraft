@@ -454,7 +454,7 @@ def test_extra_project_updates_no_make_targets_legacy(
         ),
     ],
 )
-def test_precreate_layout_targets(
+def test_precreate_layout_snap_paths(
     snapcraft_yaml: Callable[..., Any],
     setup_project: Callable[..., Any],
     fake_services: ServiceFactory,
@@ -466,7 +466,7 @@ def test_precreate_layout_targets(
     setup_project(fake_services, project)
     package_service = cast(Package, fake_services.get("package"))
 
-    package_service._precreate_layout_targets()
+    package_service._precreate_layout_snap_paths()
 
     prime_dir = fake_services.lifecycle.prime_dir
     prime_dir.mkdir(0o755, exist_ok=True)
@@ -503,7 +503,7 @@ def test_precreate_layout_targets_messages(
     setup_project(fake_services, project)
     package_service = cast("Package", fake_services.get("package"))
 
-    package_service._precreate_layout_targets()
+    package_service._precreate_layout_snap_paths()
 
     emitter.assert_debug("Pre-creating layout targets inside of snap")
     emitter.assert_debug(
@@ -588,7 +588,7 @@ def test_precreate_layout_targets_messages(
         ),
     ],
 )
-def test_precreate_plug_targets(
+def test_precreate_content_plug_target_paths(
     snapcraft_yaml: Callable[..., Any],
     setup_project: Callable[..., Any],
     fake_services: ServiceFactory,
@@ -600,7 +600,7 @@ def test_precreate_plug_targets(
     setup_project(fake_services, project)
     package_service = cast(Package, fake_services.get("package"))
 
-    package_service._precreate_plug_targets()
+    package_service._precreate_content_plug_target_paths()
 
     prime_dir = fake_services.lifecycle.prime_dir
     prime_dir.mkdir(0o755, exist_ok=True)
@@ -633,7 +633,7 @@ def test_precreate_plug_targets_messages(
     setup_project(fake_services, project)
     package_service = cast("Package", fake_services.get("package"))
 
-    package_service._precreate_plug_targets()
+    package_service._precreate_content_plug_target_paths()
 
     emitter.assert_debug("Pre-creating plug targets inside of snap")
     emitter.assert_debug(
