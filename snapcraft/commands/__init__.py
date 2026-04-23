@@ -74,9 +74,11 @@ from .upload import (
 )
 from .validation_sets import (
     StoreEditValidationSetsCommand,
-    StoreGatedCommand,
     StoreListValidationSetsCommand,
     StoreValidationSetsCommand,
+)
+from .validations import (
+    StoreGatedCommand,
 )
 
 __all__ = [
