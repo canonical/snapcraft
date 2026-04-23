@@ -263,12 +263,10 @@ class KernelPlugin(plugins.Plugin):
         kernel_image = "bzImage"
         # Choose a different kernel_image name based on the target architecture
         match kernel_arch:
-            case "arm":
+            case "arm" | "powerpc":
                 kernel_image = "zImage"
-            case "powerpc":
-                kernel_image = "zImage.xz"
             case "arm64" | "riscv":
-                kernel_image = "Image.gz"
+                kernel_image = "Image"
 
         return {
             "CROSS": "${CRAFT_ARCH_TRIPLET_BUILD_FOR}-",
