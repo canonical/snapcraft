@@ -80,10 +80,16 @@ from craft_application.util import humanize_list
 from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
-INITRD_RELEASE_FROM_SNAP_BASE = {
+RELEASE_CODENAME_FROM_SNAP_BASE = {
     "core22": "jammy",
     "core24": "noble",
     "core26": "resolute",
+}
+
+RELEASE_NUMBER_FROM_SNAP_BASE = {
+    "core22": "22.04",
+    "core24": "24.04",
+    "core26": "26.04",
 }
 
 
@@ -134,17 +140,25 @@ class InitrdPlugin(plugins.Plugin):
         commands = []
         base = self._part_info.base
         target_arch = self._part_info.target_arch
-        if (release := INITRD_RELEASE_FROM_SNAP_BASE.get(base)) is None:
+        release_number = RELEASE_NUMBER_FROM_SNAP_BASE.get(base)
+        if (release_codename := RELEASE_CODENAME_FROM_SNAP_BASE.get(base)) is None:
             raise errors.PartsError(
-                f"base {base!r} is not supported for the initrd plugin. Supported bases are {humanize_list(INITRD_RELEASE_FROM_SNAP_BASE.keys(), 'and')}"
+                f"base {base!r} is not supported for the initrd plugin. Supported bases are {humanize_list(RELEASE_CODENAME_FROM_SNAP_BASE.keys(), 'and')}"
             )
 
-        # URL pieces for Ubuntu base
-        tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
-        tar_release = f"{release}/daily/current"
+        # URL pieces for Ubuntu base, tarball name
+        # URL changed as of 26.04 release, set as default value
+        # This change is temporary; once cdimage paths return the old way the
+        # conditional checking can be removed and we can revert to the core22,
+        # core24 cases.
+        tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base/releases"
+        tar_release = f"{release_codename}/release"
+        tar_name = f"ubuntu-base-{release_number}-base-{target_arch}.tar.gz"
 
-        # Tarball name
-        tar_name = f"{release}-base-{target_arch}.tar.gz"
+        if base in {"core22", "core24"}:
+            tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
+            tar_release = f"{release_codename}/daily/current"
+            tar_name = f"{release_codename}-base-{target_arch}.tar.gz"
 
         # Compose the URL
         tar_url = f"{tar_base_url}/{tar_release}/{tar_name}"
