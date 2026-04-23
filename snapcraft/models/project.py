@@ -1542,6 +1542,9 @@ class Project(models.Project):
     This helps when using pre-compiled binaries and libraries that expect to find files
     and directories outside of locations referenced by ``$SNAP`` or ``$SNAP_DATA``.
 
+    For layouts that bind a file or directory in ``$SNAP``, the target path will be
+    created when packing the snap with core26 or higher, or bare bases.
+
     See :ref:`reference-layouts` for details.
 
     **Values**
@@ -1708,6 +1711,9 @@ class Project(models.Project):
         ],
     )
     """Declares the snap's plugs.
+
+    For content plugs that reference ``$SNAP``, the target path will be created when
+    packing the snap with core26 or higher, or bare bases.
 
     See :ref:`explanation-interfaces` for more information.
     """

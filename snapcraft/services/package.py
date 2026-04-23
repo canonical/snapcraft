@@ -21,13 +21,15 @@ from __future__ import annotations
 import os
 import pathlib
 import shutil
-from typing import cast
+from typing import Literal, cast
 
 from craft_application import PackageService
 from craft_application.util import strtobool
+from craft_cli import emit
 from typing_extensions import override
 
 from snapcraft import errors, linters, models, pack
+from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import component_yaml, snap_yaml
 from snapcraft.parts import extract_metadata as extract
@@ -82,6 +84,161 @@ class Package(PackageService):
             assets_dir=self._get_assets_dir(),
             prime_dir=project_info.prime_dir,
         )
+
+        # precreate content targets and layout sources when using core26+
+        # and bare base snaps
+        if self._project.get_effective_base() not in ("core22", "core24"):
+            self._precreate_layout_targets()
+            self._precreate_plug_targets()
+
+    def _precreate_layout_targets(self) -> None:
+        """Create layout targets ahead of time for snapd to avoid ENOENT errors."""
+        if self._project.layout is None:
+            return
+
+        emit.debug("Pre-creating layout targets inside of snap")
+
+        for src, layout in self._project.layout.items():
+            result = self._parse_layout_target(src, layout)
+            if result is None:
+                continue
+            path, ltype = result
+
+            file = self._maybe_get_target_in_snap(path)
+            if file is None:
+                continue
+
+            to_create = self._concat_with_prime_dir(file)
+
+            match ltype:
+                case "bind" | "tmpfs":
+                    emit.debug(
+                        f"Layout target directory {path!r} maps to {str(file)!r} inside of the snap"
+                    )
+                    emit.debug(f"Creating {str(file)!r} in the prime directory")
+                    to_create.mkdir(0o0755, parents=True, exist_ok=True)
+                case "bind-file":
+                    emit.debug(
+                        f"Layout target file {path!r} maps to {str(file)!r} inside of the snap"
+                    )
+                    emit.debug(f"Creating {str(file)!r} in the prime directory")
+                    to_create.parent.mkdir(0o0755, parents=True, exist_ok=True)
+                    to_create.touch(0o0644)
+
+    def _precreate_plug_targets(self) -> None:
+        """Create plug targets ahead of time for snapd to avoid ENOENT errors."""
+        if self._project.plugs is None:
+            return
+
+        emit.debug("Pre-creating plug targets inside of snap")
+
+        plug_targets = [
+            plug.target
+            for plug in self._project.plugs.values()
+            if plug.interface == "content"
+        ]
+        for target in plug_targets:
+            file = self._maybe_get_target_in_snap(target)
+            if file is None:
+                continue
+
+            to_create = self._concat_with_prime_dir(file)
+
+            emit.debug(
+                f"Plug target directory {target!r} maps to {str(file)!r} inside of the snap"
+            )
+            emit.debug(f"Creating {str(file)!r} in the prime directory")
+            to_create.mkdir(0o0755, parents=True, exist_ok=True)
+
+    @staticmethod
+    def _parse_layout_target(
+        src: str, layout: dict[Literal["symlink", "bind", "bind-file", "type"], str]
+    ) -> tuple[str, Literal["bind", "bind-file", "tmpfs"]] | None:
+        """Extracts the layout type and its str-path.
+
+        Below is an example of possible layout formats and what this method will
+        do with each.
+
+        layouts:
+            # Returns (<bind-mount sourcedir>, "bind")
+            <path>:
+                bind: <bind-mount sourcedir>
+
+            # Returns (<bind-mount sourcefile>, "bind-file")
+            <path>:
+                bind-file: <bind-mount sourcefile>
+
+            # Returns (<path>, "tmpfs")
+            <path>:
+                type: tmpfs
+
+            # Returns None
+            <path>:
+                symlink: <link-target>
+
+        This method will also return None for malformed layouts, though these should
+        always be caught by the project model validation before getting here.
+
+        :returns: A tuple of (str-path, layout-type). The returned path is neither sanitized
+            nor validated.
+        """
+        key, value = next(iter(layout.items()))
+
+        match key:
+            case "type":
+                if value == "tmpfs":
+                    return (src, "tmpfs")
+                return None
+            case "bind" | "bind-file":
+                return (value, key)
+            case _:
+                return None
+
+    @staticmethod
+    def _maybe_get_target_in_snap(path: str) -> pathlib.Path | None:
+        """Determine the path to create inside of a snap, if any, based on a layout or plug target.
+
+        Paths beginning with "/" or "$SNAP" will end up in the final artifact, as will relative
+        paths that do not begin with a variable (e.g. "foo", but not "$SNAP_DATA/foo").
+
+        If the path is only "/" or "$SNAP", this is just the snap root and should always
+        exist (no-op).
+
+        :param path: String path to investigate
+        :returns: A Path object that needs to be created, or None if nothing needs to be done."""
+        # Make explicit references to the snap root ($SNAP) relative
+        if path.startswith("$SNAP/"):
+            path = path.removeprefix("$SNAP/")
+
+        # Beginning with "/" is equivalent to beginning with "$SNAP". So likewise, make these relative too
+        while path.startswith("/"):
+            path = path.removeprefix("/")
+
+        # At this point, if the string is empty, it was just a reference to the snap root. This should
+        # always exist, so we can return early
+        if not path:
+            return None
+
+        # If any $s remain, this is a special path that shouldn't be handled
+        if "$" in path:
+            return None
+
+        return pathlib.Path(path)
+
+    def _concat_with_prime_dir(self, path: pathlib.Path) -> pathlib.Path:
+        """Concatenate a path onto the prime directory.
+
+        :returns: Concatenated path
+        :raises SnapcraftPrecreationEscapesPrimeError: When the resulting path is no longer relative
+            to the prime directory."""
+
+        prime_dir = self._services.lifecycle.prime_dir
+
+        result = prime_dir / path
+        if not result.resolve().is_relative_to(prime_dir):
+            raise SnapcraftPrecreationEscapesPrimeError(path)
+
+        return result
 
     def _pack_components(self, dest: pathlib.Path) -> dict[str, pathlib.Path]:
         component_map: dict[str, pathlib.Path] = {}
