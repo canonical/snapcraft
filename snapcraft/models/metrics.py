@@ -69,7 +69,7 @@ class Series(models.CraftBaseModel):
     name: str
     """Category of data being represented for a given metric."""
 
-    values: list[int]
+    values: list[int | str]
     """Data points for this series."""
 
     currently_released: bool | None = None
