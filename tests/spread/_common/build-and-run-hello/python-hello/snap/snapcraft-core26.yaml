@@ -1,0 +1,26 @@
+name: python-hello
+version: "1.0"
+summary: simple python application
+description: build a python application using core24
+base: core24
+confinement: strict
+
+apps:
+  python-hello:
+    command: bin/hello
+    extensions: [gnome]
+
+parts:
+  python-runtime:
+    plugin: nil
+    stage-packages:
+      - libpython3.14-minimal
+      - libpython3.14-stdlib
+      - python3-minimal # for the "python3" symlink
+      - python3.14-minimal
+      - python3.14-venv
+
+  hello:
+    after: [python-runtime]
+    plugin: python
+    source: src

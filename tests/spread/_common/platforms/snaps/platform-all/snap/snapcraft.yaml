@@ -1,0 +1,14 @@
+name: platform-all
+version: "1.0"
+summary: test
+description: Match the `all` target via the platform.
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: amd64
+    build-for: [all]
+
+parts:
+  nil:
+    plugin: nil

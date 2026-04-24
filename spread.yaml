@@ -268,6 +268,21 @@ suites:
       - ubuntu-24.04*
     environment:
       SNAPCRAFT_BUILD_ENVIRONMENT: ""
+    # This allows running core26 tests in their own CI job, separate from the core24
+    # suite, since they both run on ubuntu-24.04. Remove once 26.04 is available (#6088).
+    manual: true
+    # remove once core26 is stable (#6088)
+    prepare: |
+      # core26 requires snapd 2.75
+      snap refresh snapd --beta
+      if ! snap list core26 >/dev/null 2>&1; then
+        snap install core26 --beta
+      else
+        snap refresh core26 --beta
+      fi
+    restore: |
+      snap remove core26 --purge
+      snap refresh snapd --stable
 
   # General, core suite
   tests/spread/general/:

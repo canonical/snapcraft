@@ -1,0 +1,17 @@
+summary: Test 'snapcraft test'
+
+environment:
+  CI: "1"
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
+execute: |
+  snapcraft test --verbose 2>&1 | MATCH "Successful tasks: 1"
+
+restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"
