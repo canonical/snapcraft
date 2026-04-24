@@ -241,9 +241,9 @@ def get_metrics_payload():
         "metrics": [
             {
                 "status": "OK",
-                "snap-id": "vMTKRaLjnOJQetI78HjntT37VuoyssFE",
+                "snap_id": "vMTKRaLjnOJQetI78HjntT37VuoyssFE",
                 "buckets": ["2026-04-22"],
-                "metric-name": "installed_base_by_architecture",
+                "metric_name": "installed_base_by_architecture",
                 "series": [
                     {"name": "amd64", "values": [7]},
                     {"name": "arm64", "values": [6]},
