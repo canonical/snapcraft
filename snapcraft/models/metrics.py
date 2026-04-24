@@ -98,6 +98,7 @@ class Metric(models.CraftBaseModel):
 
     @override
     def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
+        """Avoid converting underscores to hyphens when marshalling"""
         return self.model_dump(mode="json", by_alias=False, exclude_unset=True)
 
 
