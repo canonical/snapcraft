@@ -73,6 +73,8 @@ clean() {
   umnt "${INITRD_ROOT}/proc"
   umnt "${INITRD_ROOT}/run"
   umnt "${INITRD_ROOT}/sys"
+
+  rm -f "${BASE_CREATED}"
 }
 
 # chroot_setup creates the chroot base and mounts certain filesystems from host
@@ -190,8 +192,6 @@ chroot_configure() {
   sed -i -e 's/"cp", "-ar", args./"cp", "-lR", args./g' \
          -e 's/"cp", "-aR", args./"cp", "-lR", args./g' \
     "${INITRD_ROOT}/usr/bin/ubuntu-core-initramfs"
-
-  touch "${BASE_CONFIGURED}"
 }
 
 # add_modules adds modules and their dependencies to a list of modules to include in
@@ -451,38 +451,45 @@ create_efi() {
 
 # run executes the meat of this script
 run() {
-  # The build occurs within ${CRAFT_PART_SRC} to avoid issues related to iterative
-  # builds with the Ubuntu base fetched by the plugin during the pull step.
-  printf 'Preparing to build initrd for arch %s using series %s in %s\n' \
-    "${CRAFT_ARCH_BUILD_FOR}" "${UBUNTU_SERIES}" "${CRAFT_PART_SRC}"
-  chroot_setup
-
-  echo "Installing kernel, firmware, and modules into chroot"
-  # Remove any existing firmware and modules first
-  rm -rf "${INITRD_ROOT}/usr/lib/firmware/"* \
-         "${INITRD_ROOT}/usr/lib/modules"/*
-  # Install kernel, firmware, modules into chroot
-  cp --archive --link --force "${KERNEL_FIRMWARE}" \
-                              "${KERNEL_MODULES}"  \
-                              "${INITRD_ROOT}/usr/lib"
-
-  cp --force "${KERNEL_IMAGE}" "${INITRD_ROOT}/boot"
-
-  # Cleanup dangling links if they exist
-  # The kernel plugin should have removed these, however
-  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build"  || true
-  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/source" || true
-
-  # Add modules to initrd
-  # This should run even if none are supplied
-  add_modules "${initrd_modules}"
-
-  # Add any extra files from plugin options to initrd
-  [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
-  [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
+    # The build occurs within ${CRAFT_PART_SRC} to avoid issues related to iterative
+    # builds with the Ubuntu base fetched by the plugin during the pull step.
+    # Track setup/creation/tear-down ourselves.
+  [ -e "${BASE_CREATED}" ] || {
+    printf 'Preparing to build initrd for arch %s using series %s in %s\n' \
+      "${CRAFT_ARCH_BUILD_FOR}" "${UBUNTU_SERIES}" "${CRAFT_PART_SRC}"
+    chroot_setup
+  }
 
   # Configure chroot
-  chroot_configure
+  [ -e "${BASE_CONFIGURED}" ] || {
+    chroot_configure
+
+    echo "Installing kernel, firmware, and modules into chroot"
+    # Remove any existing firmware and modules first
+    rm -rf "${INITRD_ROOT}/usr/lib/firmware/"* \
+           "${INITRD_ROOT}/usr/lib/modules"/*
+    # Install kernel, firmware, modules into chroot
+    cp --archive --link --force "${KERNEL_FIRMWARE}" \
+                                "${KERNEL_MODULES}"  \
+                                "${INITRD_ROOT}/usr/lib"
+
+    cp --force "${KERNEL_IMAGE}" "${INITRD_ROOT}/boot"
+
+    # Cleanup dangling links if they exist
+    # The kernel plugin should have removed these, however
+    unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build"  || true
+    unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/source" || true
+
+    # Add modules to initrd
+    # This should run even if none are supplied
+    add_modules "${initrd_modules}"
+
+    # Add any extra files from plugin options to initrd
+    [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
+    [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
+
+    touch "${BASE_CONFIGURED}"
+  }
 
   # Build the initrd image file
   create_initrd
