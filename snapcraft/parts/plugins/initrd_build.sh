@@ -42,7 +42,7 @@ mnt() {
 # umnt wraps the umount command
 umnt() {
   dir="$1"; shift
-  mountpoint "${dir}" || umount "$@" "${dir}"
+  { mountpoint "${dir}" && umount "$@" "${dir}" ; } || true
 }
 
 # clean kills processes and unmounts certain paths from the chroot
