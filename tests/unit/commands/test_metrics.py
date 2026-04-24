@@ -126,7 +126,7 @@ def metrics_command(fake_app_config: dict[str, Any]) -> StoreMetricsCommand:
         ),
     ],
 )
-def test_metrics_json(
+def test_metrics_format(
     metrics_command: StoreMetricsCommand,
     emitter: RecordingEmitter,
     mode: str,
