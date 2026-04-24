@@ -82,7 +82,7 @@ class Metric(models.CraftBaseModel):
     """Single point of metrics for a snap."""
 
     status: Literal["OK", "FAIL", "NO_DATA"]
-    """Status of metadata retrieval."""
+    """Status of metrics retrieval."""
 
     snap_id: str = Field(serialization_alias="snap_id")
     """ID of checked snap."""
