@@ -52,6 +52,9 @@ clean() {
     return
   fi
 
+  chroot_run "gpgconf --kill dirmngr"
+  chroot_run "gpgconf --kill gpg-agent"
+
   # ensure no chroot processes are left running
   # Some processes are unkillable; don't fail because of it as it's why we are
   # lazy mounting in the first place
