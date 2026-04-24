@@ -41,7 +41,6 @@ from snapcraft_legacy.internal.errors import (
     SnapDataExtractionError,
 )
 from snapcraft_legacy.storeapi.constants import DEFAULT_SERIES
-from snapcraft_legacy.storeapi.metrics import MetricsFilter, MetricsResults
 
 if TYPE_CHECKING:
     from snapcraft_legacy.storeapi.v2.releases import Releases
@@ -328,12 +327,6 @@ class StoreClientCLI(storeapi.StoreClient):
     # TODO Move progressbar implementation out of snapcraft_legacy.storeapi used
     #      during upload into this class using click.
     # TODO use an instance of this class directly from snapcraft_legacy.cli.store
-
-    @_login_wrapper
-    def get_metrics(
-        self, *, filters: List[MetricsFilter], snap_name: str
-    ) -> MetricsResults:
-        return super().get_metrics(filters=filters, snap_name=snap_name)
 
     @_login_wrapper
     def get_snap_releases(self, *, snap_name: str) -> "Releases":

@@ -28,7 +28,6 @@ from click.testing import CliRunner
 
 from snapcraft_legacy import storeapi
 from snapcraft_legacy.cli._runner import run
-from snapcraft_legacy.storeapi import metrics
 from snapcraft_legacy.storeapi.v2.releases import Releases
 from tests.legacy import fixture_setup, unit
 
@@ -232,34 +231,6 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
             storeapi.StoreClient, "release"
         )
         self.useFixture(self.fake_store_release)
-
-        self.metrics = metrics.MetricsResults(
-            metrics=[
-                metrics.MetricResults(
-                    status=metrics.MetricsStatus["OK"],
-                    snap_id="test-snap-id",
-                    metric_name="daily_device_change",
-                    buckets=["2021-01-01", "2021-01-02", "2021-01-03"],
-                    series=[
-                        metrics.Series(
-                            name="continued",
-                            values=[10, 11, 12],
-                            currently_released=None,
-                        ),
-                        metrics.Series(
-                            name="lost", values=[1, 2, 3], currently_released=None
-                        ),
-                        metrics.Series(
-                            name="new", values=[2, 3, 4], currently_released=None
-                        ),
-                    ],
-                )
-            ]
-        )
-        self.fake_store_get_metrics = fixtures.MockPatchObject(
-            storeapi.StoreClient, "get_metrics", return_value=self.metrics
-        )
-        self.useFixture(self.fake_store_get_metrics)
 
         self.releases = Releases.unmarshal(
             {

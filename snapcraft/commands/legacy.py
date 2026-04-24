@@ -96,39 +96,6 @@ class StoreLegacyPromoteCommand(LegacyAppCommand):
         )
 
 
-class StoreLegacyMetricsCommand(LegacyAppCommand):
-    """Command passthrough for the metrics command."""
-
-    name = "metrics"
-    help_msg = "Get metrics for a snap"
-    overview = textwrap.dedent(
-        """
-        Get different metrics from the Snap Store for a given snap."""
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("snap_name", metavar="snap-name")
-        parser.add_argument("--name", metavar="name", required=True, help="metric name")
-        parser.add_argument(
-            "--start",
-            metavar="start-date",
-            help="date in format YYYY-MM-DD",
-        )
-        parser.add_argument(
-            "--end",
-            metavar="end-date",
-            help="date in format YYYY-MM-DD",
-        )
-        parser.add_argument(
-            "--format",
-            metavar="format",
-            help="format for output",
-            choices=["table", "json"],
-            required=True,
-        )
-
-
 ##############
 # Assertions #
 ##############
