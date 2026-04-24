@@ -106,6 +106,20 @@ In your project file's scriptlets, find and replace all instances of ``snapcraft
     - snapcraftctl set-grade stable
     + craftctl set grade=stable
 
+Rename parts
+------------
+
+Core26 snaps don't allow forward slashes (/) in part names. In your project file,
+rename any parts with forward slashes.
+
+.. code-block:: diff
+    :caption: snapcraft.yaml
+
+    parts:
+    -  gnome/sdk:
+    +  gnome-sdk:
+
+
 Update Spread test systems
 --------------------------
 
