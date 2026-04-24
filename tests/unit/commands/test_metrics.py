@@ -143,3 +143,36 @@ def test_metrics_format(
     metrics_command.run(namespace)
 
     emitter.assert_message(expected)
+
+
+def test_metrics_no_data(
+    metrics_command: StoreMetricsCommand,
+    emitter: RecordingEmitter,
+    mocker: MockerFixture,
+) -> None:
+    fake_response = MetricsResponse(
+        metrics=[
+            Metric(
+                status="NO_DATA",
+                snap_id="test-snap-id",
+                metric_name=MetricName.DAILY_DEVICE_CHANGE,
+                buckets=[],
+                series=[],
+            )
+        ]
+    )
+    mocker.patch(
+        "snapcraft.store.StoreClientCLI.get_metrics",
+        return_value=fake_response,
+    )
+    namespace = argparse.Namespace(
+        snap_name="fakesnap",
+        metric="daily_device_change",
+        format="table",
+        start="2026-01-01",
+        end="2026-01-03",
+    )
+
+    metrics_command.run(namespace)
+
+    emitter.assert_interactions([])

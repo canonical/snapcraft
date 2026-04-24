@@ -121,7 +121,8 @@ class StoreMetricsCommand(AppCommand):
         elif parsed_args.format == "table":
             rows = self.convert_metrics_to_table(metric_results, transpose=True)
             output = tabulate(rows, tablefmt="plain")
-            emit.message(output)
+            if output:
+                emit.message(output)
 
     @staticmethod
     def convert_metrics_to_table(
