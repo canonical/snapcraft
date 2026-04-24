@@ -51,13 +51,13 @@ class StoreMetricsCommand(AppCommand):
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_name",
-            metavar="<snap-name>",
+            metavar="snap-name",
             type=str,
             help="The snap name to check",
         )
         parser.add_argument(
             "--name",
-            metavar="<metric>",
+            metavar="metric",
             dest="metric",
             help="Metric to view",
             type=str,
@@ -66,19 +66,19 @@ class StoreMetricsCommand(AppCommand):
         )
         parser.add_argument(
             "--start",
-            metavar="<date>",
+            metavar="date",
             help="Date in the format of YYYY-MM-DD. Defaults to yesterday.",
             default=_YESTERDAY,
         )
         parser.add_argument(
             "--end",
-            metavar="<date>",
+            metavar="date",
             help="Date in the format of YYYY-MM-DD. Defaults to yesterday.",
             default=_YESTERDAY,
         )
         parser.add_argument(
             "--format",
-            metavar="<format>",
+            metavar="format",
             help="Format for output",
             type=str,
             choices=["table", "json"],
