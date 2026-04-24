@@ -135,6 +135,11 @@ class InitrdPlugin(plugins.Plugin):
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(InitrdPluginProperties, self._options)
 
+    @property
+    def out_of_source_build(self):
+        """Return whether the plugin performs out-of-source-tree builds."""
+        return True
+
     @override
     def get_pull_commands(self) -> list[str]:
         commands = []
