@@ -106,6 +106,24 @@ In your project file's scriptlets, find and replace all instances of ``snapcraft
     - snapcraftctl set-grade stable
     + craftctl set grade=stable
 
+Update part names
+-----------------
+
+If you update a snap to use core26, then you must also verify its
+part names. Part names on core26 and later bases can't contain any forward slashes (/).
+We recommend replacing them with a hyphen (-):
+
+.. code-block:: diff
+    :caption: snapcraft.yaml
+
+     base: core26
+
+     # ...
+
+     parts:
+    -  my/part:
+    +  my-part:
+
 Update Spread test systems
 --------------------------
 
