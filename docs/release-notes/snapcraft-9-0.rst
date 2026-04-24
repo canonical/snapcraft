@@ -47,6 +47,13 @@ when releasing a snap progressively. For example::
 
     Released 'my-snap' revision 42 to channels: 'stable' for 30% of users
 
+No linting of donation links
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`metadata linter <how-to-use-the-metadata-linter>` no longer checks for the
+:ref:`Project.donation` key, as this key was generally rarely set and was silenced more
+often than not.
+
 
 Backwards-incompatible changes
 ------------------------------

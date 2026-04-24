@@ -14,6 +14,9 @@ lint:
     - metadata:
         - title
         - issues
+        # Deprecated field, which should neither warn of its absence or complain
+        # about being ignored
+        - donation
 
 
 parts:
