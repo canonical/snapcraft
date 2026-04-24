@@ -18,11 +18,14 @@
 
 from __future__ import annotations
 
+import operator
 import textwrap
 from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
+from craft_cli.errors import ArgumentParsingError
+from tabulate import tabulate
 from typing_extensions import override
 
 from snapcraft import store, utils
@@ -114,6 +117,98 @@ class StoreReleaseCommand(AppCommand):
             f"to channels: {humanized_channels}"
             f"{progressive_suffix}"
         )
+
+
+class StorePromoteCommand(AppCommand):
+    """Command passthrough for the promote command."""
+
+    name = "promote"
+    help_msg = "Promote a build set from a channel"
+    overview = textwrap.dedent(
+        """
+        A build set is a set of commonly-tagged revisions; the simplest
+        form of a build set is a set of revisions released to a channel.
+
+        Currently, only channels are supported to release from (<from-channel>)
+
+        Prior to releasing, visual confirmation shall be required.
+
+        The format for channels is ``[<track>/]<risk>[/<branch>]`` where
+
+        - <track> is used to support long-term release channels. It is
+          implicitly set to the default.
+        - <risk> is mandatory and must be one of ``stable``, ``candidate``,
+          ``beta`` or ``edge``.
+        - <branch> is optional and dynamically creates a channel with a
+          specific expiration date. Branches are specifically designed
+          to support short-term hot fixes.
+        """
+    )
+
+    @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "snap_name",
+            metavar="snap-name",
+        )
+        parser.add_argument(
+            "--from-channel",
+            metavar="from-channel",
+            help="the channel to promote from",
+            required=True,
+        )
+        parser.add_argument(
+            "--to-channel",
+            metavar="to-channel",
+            help="the channel to promote to",
+            required=True,
+        )
+        parser.add_argument(
+            "--yes", action="store_true", help="do not prompt for confirmation"
+        )
+
+    @override
+    def run(self, parsed_args: argparse.Namespace):
+        emit.warning(
+            "snapcraft promote does not have a stable CLI interface. Use with caution in scripts."
+        )
+        from_channel = store.Channel(parsed_args.from_channel)
+        to_channel = store.Channel(parsed_args.to_channel)
+
+        if from_channel == to_channel:
+            raise ArgumentParsingError(
+                "--from-channel and --to-channel cannot be the same."
+            )
+
+        client = store.StoreClientCLI()
+        status_payload = client.get_snap_status(parsed_args.snap_name)
+
+        snap_status = store.SnapStatus(
+            snap_name=parsed_args.snap_name, payload=status_payload
+        )
+        from_channel_set = snap_status.get_channel_set(from_channel)
+
+        emit.message(f"Build set information for {from_channel!r}")
+        emit.message(
+            tabulate(
+                sorted(from_channel_set, key=operator.attrgetter("arch")),
+                headers=["Arch", "Revision", "Version"],
+                tablefmt="plain",
+            )
+        )
+
+        if parsed_args.yes or emit.confirm(
+            f"Do you want to promote the current set to the {to_channel!r} channel?"
+        ):
+            for c in from_channel_set:
+                client.release(
+                    snap_name=parsed_args.snap_name,
+                    revision=c.revision,  # type: ignore[arg-type]  # get_channel_set ensures this will not be none
+                    channels=[str(to_channel)],
+                )
+            emit.message(f"Promotion from {from_channel} to {to_channel} complete")
+        else:
+            emit.message("Channel promotion cancelled")
 
 
 class StoreCloseCommand(AppCommand):

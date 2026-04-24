@@ -42,60 +42,6 @@ class LegacyAppCommand(AppCommand):
         run_legacy()
 
 
-#########
-# Store #
-#########
-
-
-class StoreLegacyPromoteCommand(LegacyAppCommand):
-    """Command passthrough for the promote command."""
-
-    name = "promote"
-    help_msg = "Promote a build set from a channel"
-    overview = textwrap.dedent(
-        """
-        A build set is a set of commonly-tagged revisions; the simplest
-        form of a build set is a set of revisions released to a channel.
-
-        Currently, only channels are supported to release from (<from-channel>)
-
-        Prior to releasing, visual confirmation shall be required.
-
-        The format for channels is ``[<track>/]<risk>[/<branch>]`` where
-
-        - <track> is used to support long-term release channels. It is
-          implicitly set to the default.
-        - <risk> is mandatory and must be one of ``stable``, ``candidate``,
-          ``beta`` or ``edge``.
-        - <branch> is optional and dynamically creates a channel with a
-          specific expiration date. Branches are specifically designed
-          to support short-term hot fixes.
-        """
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "snap_name",
-            metavar="snap-name",
-        )
-        parser.add_argument(
-            "--from-channel",
-            metavar="from-channel",
-            help="the channel to promote from",
-            required=True,
-        )
-        parser.add_argument(
-            "--to-channel",
-            metavar="to-channel",
-            help="the channel to promote to",
-            required=True,
-        )
-        parser.add_argument(
-            "--yes", action="store_true", help="do not prompt for confirmation"
-        )
-
-
 ##############
 # Assertions #
 ##############

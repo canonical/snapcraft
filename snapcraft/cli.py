@@ -109,7 +109,7 @@ COMMAND_GROUPS = [
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
             commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
-            commands.StoreLegacyPromoteCommand,
+            commands.StorePromoteCommand,
             commands.StoreListRevisionsCommand,  # hidden (alias to revisions)
             commands.StoreRevisionsCommand,
         ],

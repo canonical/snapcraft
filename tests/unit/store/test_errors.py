@@ -19,7 +19,10 @@ import re
 
 import pytest
 
+from snapcraft.store.channels import Channel
 from snapcraft.store.errors import (
+    ChannelNotAvailableOnArchError,
+    InvalidChannelSet,
     InvalidValidationRequestsError,
     KeyAlreadyExistsError,
     KeyAlreadyRegisteredError,
@@ -27,6 +30,7 @@ from snapcraft.store.errors import (
     SnapNotFoundError,
     StoreMetadataError,
 )
+from snapcraft.store.status import SnapStatusChannelDetails
 
 from .utils import FakeResponse
 
@@ -267,4 +271,59 @@ class TestInvalidValidationRequestsError:
         assert str(err) == (
             "Invalid validation requests (format must be name=revision): "
             "bad-entry-1 bad-entry-2"
+        )
+
+
+class TestChannelNotAvailableOnArchError:
+    """Tests for ChannelNotAvailableOnArchError."""
+
+    def test_error(self):
+        err = ChannelNotAvailableOnArchError("test-snap", Channel("beta"), "riscv64")
+
+        assert str(err) == (
+            "No releases available for 'test-snap' on channel 'beta' for architecture 'riscv64'.\n"
+            "Ensure the selected channel contains released revisions for this architecture."
+        )
+
+
+class TestInvalidChannelSet:
+    """Tests for InvalidChannelSet."""
+
+    def test_single_arch(self):
+        outlier = SnapStatusChannelDetails(
+            snap_name="test-snap",
+            arch="riscv64",
+            payload={"channel": "stable"},
+        )
+        err = InvalidChannelSet(
+            snap_name="test-snap",
+            channel=Channel("stable"),
+            channel_outliers=[outlier],
+        )
+
+        assert str(err) == (
+            "The 'stable' channel for 'test-snap' does not form a complete set.\n"
+            "There is no revision released for the following architectures: riscv64.\n"
+            "Ensure the selected channel contains released revisions for all architectures."
+        )
+
+    def test_multiple_arches(self):
+        outliers = [
+            SnapStatusChannelDetails(
+                snap_name="test-snap",
+                arch=arch,
+                payload={"channel": "stable"},
+            )
+            for arch in ["arm64", "riscv64"]
+        ]
+        err = InvalidChannelSet(
+            snap_name="test-snap",
+            channel=Channel("stable"),
+            channel_outliers=outliers,
+        )
+
+        assert str(err) == (
+            "The 'stable' channel for 'test-snap' does not form a complete set.\n"
+            "There is no revision released for the following architectures: arm64 and riscv64.\n"
+            "Ensure the selected channel contains released revisions for all architectures."
         )

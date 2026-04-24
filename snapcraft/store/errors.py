@@ -22,12 +22,15 @@ import json
 from typing import TYPE_CHECKING, Any
 
 import craft_cli
+from craft_application.util import humanize_list
 
 from snapcraft.errors import SnapcraftError
 
 if TYPE_CHECKING:
     import httpx
     import requests
+
+    from . import channels, status
 
 _FORUM_URL = "https://forum.snapcraft.io/c/store"
 
@@ -165,4 +168,28 @@ class InvalidValidationRequestsError(SnapcraftError):
         super().__init__(
             "Invalid validation requests (format must be name=revision): "
             f"{' '.join(requests)}"
+        )
+
+
+class ChannelNotAvailableOnArchError(SnapcraftError):
+    def __init__(self, snap_name: str, channel: channels.Channel, arch: str):
+        super().__init__(
+            f"No releases available for {snap_name!r} on channel {channel!r} "
+            f"for architecture {arch!r}.\n"
+            "Ensure the selected channel contains released revisions for this architecture."
+        )
+
+
+class InvalidChannelSet(SnapcraftError):
+    def __init__(
+        self,
+        snap_name: str,
+        channel: channels.Channel,
+        channel_outliers: list[status.SnapStatusChannelDetails],
+    ):
+        arches = humanize_list([c.arch for c in channel_outliers], "and", "{}")
+        super().__init__(
+            f"The {channel!r} channel for {snap_name!r} does not form a complete set.\n"
+            f"There is no revision released for the following architectures: {arches}.\n"
+            "Ensure the selected channel contains released revisions for all architectures."
         )
