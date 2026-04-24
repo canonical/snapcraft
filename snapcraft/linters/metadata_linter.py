@@ -94,6 +94,13 @@ _FIELDS: list[MetadataField] = [
         lambda meta: _get_links_attr(meta, "website"),
         f"{_HELP_URL}#website",
     ),
+    # Deprecated field lints
+    MetadataField(
+        "donation",
+        LinterResult.IGNORED,
+        lambda meta: _get_links_attr(meta, "donation"),
+        f"{_HELP_URL}#donation",
+    ),
 ]
 
 
