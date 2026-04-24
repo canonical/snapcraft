@@ -98,7 +98,7 @@ COMMAND_GROUPS = [
             commands.StoreLegacyListRegisteredCommand,
             commands.StoreLegacyListCommand,
             commands.StoreLegacyMetricsCommand,
-            commands.StoreLegacyUploadMetadataCommand,
+            commands.StoreUploadMetadataCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -119,17 +119,17 @@ COMMAND_GROUPS = [
         [
             commands.StoreListTracksCommand,  # hidden (alias to tracks)
             commands.StoreTracksCommand,
-            commands.StoreLegacySetDefaultTrackCommand,
+            commands.StoreSetDefaultTrackCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Key Management",
         [
-            commands.StoreLegacyCreateKeyCommand,
-            commands.StoreLegacyRegisterKeyCommand,
+            commands.StoreCreateKeyCommand,
+            commands.StoreRegisterKeyCommand,
             commands.StoreLegacySignBuildCommand,
-            commands.StoreLegacyListKeysCommand,
-            commands.StoreLegacyKeysCommand,
+            commands.StoreListKeysCommand,
+            commands.StoreKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -139,7 +139,7 @@ COMMAND_GROUPS = [
             commands.StoreListValidationSetsCommand,  # hidden (alias to validation-sets)
             commands.StoreValidationSetsCommand,
             commands.StoreLegacyValidateCommand,
-            commands.StoreLegacyGatedCommand,
+            commands.StoreGatedCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -212,7 +212,6 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         summary="Package, distribute, and update snaps for Linux and IoT",
         extra_global_args=GLOBAL_ARGS,
         default_command=commands.core22.PackCommand,
-        allow_default_command=False,
     )
 
 

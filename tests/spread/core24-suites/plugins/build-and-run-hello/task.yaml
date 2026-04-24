@@ -13,6 +13,7 @@ environment:
   SNAP/ruby: ruby-hello
   SNAP/uv: uv-hello
   SNAP/dotnet: dotnet-hello
+  SNAP/bazel: bazel-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/package-utils.sh

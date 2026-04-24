@@ -401,86 +401,6 @@ def _select_key(keys):
         return keys[0]
 
 
-def _export_key(name, account_id):
-    return subprocess.check_output(
-        ["snap", "export-key", "--account={}".format(account_id), name],
-        universal_newlines=True,
-    )
-
-
-def list_keys():
-    """Lists keys available to sign assertions."""
-    keys = list(_get_usable_keys())
-    account_info = StoreClientCLI().get_account_information()
-    enabled_keys = [
-        account_key["public-key-sha3-384"]
-        for account_key in account_info["account_keys"]
-    ]
-    if keys:
-        tabulated_keys = tabulate(
-            [
-                (
-                    "*" if key["sha3-384"] in enabled_keys else "-",
-                    key["name"],
-                    key["sha3-384"],
-                    "" if key["sha3-384"] in enabled_keys else "(not registered)",
-                )
-                for key in keys
-            ],
-            headers=["", "Name", "SHA3-384 fingerprint", ""],
-            tablefmt="plain",
-        )
-        print("The following keys are available on this system:")
-        print(tabulated_keys)
-    else:
-        print(
-            "No keys have been created on this system. "
-            "See 'snapcraft create-key --help' to create a key."
-        )
-    if enabled_keys:
-        local_hashes = {key["sha3-384"] for key in keys}
-        registered_keys = "\n".join(
-            (f"- {key}" for key in enabled_keys if key not in local_hashes)
-        )
-        if registered_keys:
-            print(
-                "The following SHA3-384 key fingerprints have been registered "
-                f"but are not available on this system:\n{registered_keys}"
-            )
-    else:
-        print(
-            "No keys have been registered with this account. "
-            "See 'snapcraft register-key --help' to register a key."
-        )
-
-
-def create_key(name):
-    if not name:
-        name = "default"
-    keys = list(_get_usable_keys(name=name))
-    if keys:
-        # `snap create-key` would eventually fail, but we can save the user
-        # some time in this obvious error case by not bothering to talk to
-        # the store first.
-        raise storeapi.errors.KeyAlreadyExistsError(name)
-    try:
-        account_info = StoreClientCLI().get_account_information()
-        enabled_names = {
-            account_key["name"] for account_key in account_info["account_keys"]
-        }
-    except craft_store.errors.StoreServerError as store_error:
-        if store_error.response.status_code == 401:
-            # Don't require a login here; if they don't have valid credentials,
-            # then they probably also don't have a key registered with the store
-            # yet.
-            enabled_names = set()
-        else:
-            raise
-    if name in enabled_names:
-        raise storeapi.errors.KeyAlreadyRegisteredError(name)
-    subprocess.check_call(["snap", "create-key", name])
-
-
 def _maybe_prompt_for_key(name):
     keys = list(_get_usable_keys(name=name))
     if not keys:
@@ -489,44 +409,6 @@ def _maybe_prompt_for_key(name):
         else:
             raise storeapi.errors.NoKeysError
     return _select_key(keys)
-
-
-def save_key(func):
-    def wrapped_env(*args, **kwargs):
-        credentials = os.getenv(storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS)
-        if credentials:
-            del os.environ[storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS]
-        try:
-            return func(*args, **kwargs)
-        finally:
-            if credentials:
-                os.environ[storeapi.constants.ENVIRONMENT_STORE_CREDENTIALS] = (
-                    credentials
-                )
-
-    return wrapped_env
-
-
-@save_key
-def register_key(name) -> None:
-    key = _maybe_prompt_for_key(name)
-
-    store_client = StoreClientCLI(ephemeral=True)
-    login(
-        store_client=store_client,
-        acls=["modify_account_key"],
-        ttl=int(timedelta(days=1).total_seconds()),
-    )
-
-    logger.info("Registering key ...")
-    account_info = store_client.get_account_information()
-    account_key_request = _export_key(key["name"], account_info["account_id"])
-    store_client.register_key(account_key_request)
-    logger.info(
-        'Done. The key "{}" ({}) may be used to sign your assertions.'.format(
-            key["name"], key["sha3-384"]
-        )
-    )
 
 
 def register(snap_name: str, is_private: bool = False, store_id: str = None) -> None:
@@ -757,45 +639,6 @@ def status(snap_name, arch):
     # This does not look good in green so we print instead
     tabulated_status = _tabulated_channel_map_tree(channel_map_tree)
     print(tabulated_status)
-
-
-def gated(snap_name):
-    """Print list of snaps gated by snap_name."""
-    store_client = StoreClientCLI()
-    account_info = store_client.get_account_information()
-    # Get data for the gating snap
-    snaps = account_info.get("snaps", {})
-
-    # Resolve name to snap-id
-    try:
-        snap_id = snaps[DEFAULT_SERIES][snap_name]["snap-id"]
-    except KeyError:
-        raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
-
-    validations = store_client.get_assertion(snap_id, endpoint="validations")
-
-    if validations:
-        table_data = []
-        for v in validations:
-            name = v["approved-snap-name"]
-            revision = v["approved-snap-revision"]
-            if revision == "-":
-                revision = None
-            required = str(v.get("required", True))
-            # Currently timestamps have microseconds, which look bad
-            timestamp = v["timestamp"]
-            if "." in timestamp:
-                timestamp = timestamp.split(".")[0] + "Z"
-            table_data.append([name, revision, required, timestamp])
-        tabulated = tabulate(
-            table_data,
-            headers=["Name", "Revision", "Required", "Approved"],
-            tablefmt="plain",
-            missingval="-",
-        )
-        print(tabulated)
-    else:
-        print("There are no validations for snap {!r}".format(snap_name))
 
 
 def validate(

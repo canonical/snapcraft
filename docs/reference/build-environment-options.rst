@@ -52,7 +52,7 @@ Snapcraft can optionally use the following arguments to modify the build environ
        This option can also be used by setting the environment variable
        ``SNAPCRAFT_BUILD_INFO=1``.
      - Snaps built on Launchpad will have this set
-       automatically. For snaps newer than core22, the command-line flag is deprecated
+       automatically. For core24 and higher snaps, the command-line flag is deprecated
        and removed. The environment variable will still work.
 
 
@@ -67,10 +67,10 @@ cannot control the build environment. It is especially not recommended to use a 
 machine or in a shared environment, where operations like adding package repositories
 may be disruptive.
 
-The build environment should match the snap base. For example, a core24 snap should be
-built inside of an Ubuntu 24.04 environment.
+The build environment should match the snap base. For example, a core26 snap should be
+built inside of an Ubuntu 26.04 LTS environment.
 
-For core22 and newer snaps, the user must have root-level permissions so that they can
+For core22 and higher snaps, the user must have root-level permissions so that they can
 do operations such as installing snaps and apt packages and adding package repositories
 without needing to use sudo.
 

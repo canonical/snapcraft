@@ -33,6 +33,20 @@ channel non-interactively with the ``--yes`` flag.
 The :ref:`ref_commands_validation-sets` command now supports a ``--format`` option to
 output validation sets as either a table or JSON.
 
+Interactive key selection for ``register-key``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`ref_commands_register-key` command now prompts you to select a key
+when no key name is given.
+
+Progressive percentage shown after ``release``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`ref_commands_release` command now reports the progressive percentage
+when releasing a snap progressively. For example::
+
+    Released 'my-snap' revision 42 to channels: 'stable' for 30% of users
+
 
 Backwards-incompatible changes
 ------------------------------
@@ -106,13 +120,6 @@ by their equivalent environment variables:
     * - ``login``
       - ``-with``
       - Export the credentials to the environment variable ``SNAPCRAFT_STORE_CREDENTIALS``.
-
-
-Removed default command
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Previously, running ``snapcraft`` alone implicitly ran ``snapcraft pack``. This default
-behavior has been removed. You must now run ``snapcraft pack`` to build a snap.
 
 
 Removed legacy remote builder
@@ -211,7 +218,9 @@ The following issues have been resolved in Snapcraft 9.0.
 Snapcraft 9.0.0
 ~~~~~~~~~~~~~~~~
 
-- `snapcraft#6054`_ In the GNOME extension, fix a missing link to libproxy
+- `#6054`_ In the GNOME extension, fix a missing link to libproxy
+- `#6122`_ Content interface mount targets are not created during build for snaps using
+  base core26+ or bare
 
 
 Contributors
@@ -220,11 +229,8 @@ Contributors
 We would like to express a big thank you to all the people who contributed to
 this release.
 
-.. update contributors before releasing
+.. add contributors before releasing
 
-:literalref:`@alex<https://example.com/alex>`,
-:literalref:`@blair<https://example.com/blair>`,
-:literalref:`@cam<https://example.com/cam>`,
-and :literalref:`@devin<https://example.com/devin>`
 
-.. _snapcraft#6054: https://github.com/canonical/snapcraft/issues/6054
+.. _#6054: https://github.com/canonical/snapcraft/issues/6054
+.. _#6122: https://github.com/canonical/snapcraft/issues/6122

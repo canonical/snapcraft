@@ -246,34 +246,6 @@ class GetAccountInformationTestCase(StoreTestCase):
 
 
 @pytest.mark.slow
-class RegisterKeyTestCase(StoreTestCase):
-    def test_register_key_successfully(self):
-        # No exception will be raised if this is successful.
-        self.client.register_key(
-            dedent(
-                """\
-            name: default
-            public-key-sha3-384: abcd
-            """
-            )
-        )
-
-    def test_invalid_data(self):
-        raised = self.assertRaises(
-            errors.StoreKeyRegistrationError,
-            self.client.register_key,
-            "test-invalid-data",
-        )
-        self.assertThat(
-            str(raised),
-            Equals(
-                "Key registration failed: "
-                "The account-key-request assertion is not valid."
-            ),
-        )
-
-
-@pytest.mark.slow
 class RegisterTestCase(StoreTestCase):
     def test_register_name_successfully(self):
         # No exception will be raised if this is successful

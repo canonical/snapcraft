@@ -24,7 +24,6 @@ from typing import TYPE_CHECKING
 from craft_application.commands import AppCommand
 from typing_extensions import override
 
-from snapcraft import errors
 from snapcraft.legacy_cli import run_legacy
 from snapcraft.store._legacy_account import set_legacy_env
 
@@ -46,46 +45,6 @@ class LegacyAppCommand(AppCommand):
 #########
 # Store #
 #########
-
-
-class StoreLegacyUploadMetadataCommand(LegacyAppCommand):
-    """Command passthrough for the upload-metadata command."""
-
-    name = "upload-metadata"
-    help_msg = "Upload metadata from <snap-file> to the store"
-    overview = textwrap.dedent(
-        """
-        The following information will be retrieved from <snap-file> and used to
-        update the store:
-
-        - summary
-        - description
-        - icon
-
-        If --force is used, it will force the local metadata into the Store,
-        ignoring any possible conflict.
-
-        Examples::
-
-            snapcraft upload-metadata my-snap_0.1_amd64.snap
-            snapcraft upload-metadata my-snap_0.1_amd64.snap --force
-        """
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "snap_file",
-            metavar="snap-file",
-            type=str,
-            help="Snap to upload metadata from",
-        )
-        parser.add_argument(
-            "--force",
-            action="store_true",
-            default=False,
-            help="Force metadata update to override any possible conflict",
-        )
 
 
 class StoreLegacyPromoteCommand(LegacyAppCommand):
@@ -137,29 +96,6 @@ class StoreLegacyPromoteCommand(LegacyAppCommand):
         )
 
 
-class StoreLegacySetDefaultTrackCommand(LegacyAppCommand):
-    """Command passthrough for the set-default-track command."""
-
-    name = "set-default-track"
-    help_msg = "Set the default track for a snap"
-    overview = textwrap.dedent(
-        """
-        Set the default track for <snap-name> to <track>;
-        the <track> must already exist.
-        """
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "snap_name",
-            metavar="snap-name",
-        )
-        parser.add_argument(
-            "track",
-        )
-
-
 class StoreLegacyMetricsCommand(LegacyAppCommand):
     """Command passthrough for the metrics command."""
 
@@ -196,64 +132,6 @@ class StoreLegacyMetricsCommand(LegacyAppCommand):
 ##############
 # Assertions #
 ##############
-
-
-class StoreLegacyKeysCommand(LegacyAppCommand):
-    """Command passthrough for the keys command."""
-
-    name = "keys"
-    help_msg = "List the keys available to sign assertions"
-    overview = textwrap.dedent(
-        """
-        List the available keys to sign assertions together with their
-        local availability."""
-    )
-
-
-class StoreLegacyListKeysCommand(StoreLegacyKeysCommand):
-    """Removed command alias for the keys command."""
-
-    name = "list-keys"
-    hidden = True
-
-    @override
-    def run(self, parsed_args: argparse.Namespace) -> None:
-        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
-
-
-class StoreLegacyCreateKeyCommand(LegacyAppCommand):
-    """Command passthrough for the create-key command."""
-
-    name = "create-key"
-    help_msg = "Create a key to sign assertions."
-    overview = textwrap.dedent(
-        """
-        Create a key and store it locally. Use the register-key command to register
-        it in the store."""
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "key_name", metavar="key-name", help="Key used to sign the assertion"
-        )
-
-
-class StoreLegacyRegisterKeyCommand(LegacyAppCommand):
-    """Command passthrough for the register-key command."""
-
-    name = "register-key"
-    help_msg = "Register a key to sign assertions with the Snap Store."
-    overview = textwrap.dedent(
-        """
-        Register a locally-created key with the Snap Store."""
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "key_name", metavar="key-name", help="Key used to sign the assertion"
-        )
 
 
 class StoreLegacySignBuildCommand(LegacyAppCommand):
@@ -306,18 +184,3 @@ class StoreLegacyValidateCommand(LegacyAppCommand):
         parser.add_argument("--revoke", action="store_true", help="revoke validations")
         parser.add_argument("snap_name", metavar="snap-name")
         parser.add_argument("validations", nargs="+")
-
-
-class StoreLegacyGatedCommand(LegacyAppCommand):
-    """Command passthrough for the gated command."""
-
-    name = "gated"
-    help_msg = "List all gated snaps for <snap-name>"
-    overview = textwrap.dedent(
-        """
-        Get the list of snaps and revisions gating a snap"""
-    )
-
-    @override
-    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("snap_name", metavar="snap-name")

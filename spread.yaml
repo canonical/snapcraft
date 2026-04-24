@@ -44,6 +44,9 @@ backends:
   lxd:
     systems:
       - ubuntu-22.04
+      - ubuntu-24.04
+      - ubuntu-26.04:
+          image: ubuntu-daily:26.04
   google:
     key: '$(HOST: echo "$SPREAD_GOOGLE_KEY")'
     location: snapd-spread/us-east1-b

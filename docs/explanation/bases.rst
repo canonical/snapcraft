@@ -15,9 +15,9 @@ environment where the snap is built.
 If ``build-base`` is not defined, the ``base`` will determine the
 environment where the snap is built.
 
-For example, ``base: core24`` will build a snap in a Ubuntu 24.04 LTS environment
-with the ``core24`` snap installed. Stage packages will be installed from the
-24.04 repository.
+For example, ``base: core26`` will build a snap in an Ubuntu 26.04 LTS environment
+with the core26 snap installed. Stage packages will be installed from the
+26.04 repository.
 
 ``build-base: devel`` will build a snap using the upcoming Ubuntu release in
 development. This is defined as the Ubuntu image with the ``devel`` alias in
@@ -53,11 +53,11 @@ the snap can still load libraries from the base snap.
 Choosing a base
 ---------------
 
-``core24`` is the recommended base for most snaps. Much like choosing a
+Core26 is the recommended base for most snaps. Much like choosing a
 distribution base for a project or server, the best base for an application is
 dependent on an application's requirements and which plugins or extensions a
 base supports. If there are specific dependencies that cannot be easily met
-then the next newest base ``core22`` is a valid and supported alternative.
+then the next highest base, core24, is a valid and supported alternative.
 
 Snapcraft :ref:`explanation-extensions` enable bundling a set of common requirements
 into a snap, such as for running KDE Plasma or GNOME applications. Extensions support

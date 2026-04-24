@@ -34,6 +34,7 @@ The returned data, if available, consists of the daily value for the metric acro
 versions:
 
 .. terminal::
+    :output-only:
 
     Version  2025-03-03  2025-03-04  2025-03-05  2025-03-06  2025-03-07  2025-03-08
     V0.27.0  21          20          22          16          0           0
@@ -120,7 +121,7 @@ Troubleshoot access to metric data
 ----------------------------------
 
 The `Snap Store metrics API
-<https://dashboard.snapcraft.io/docs/reference/v1/snap.html#fetch-metrics-for-snaps>`_,
+<https://dashboard.snapcraft.io/docs/reference/v1/snap.html#fetch-metrics-for-snaps>`__,
 called by the ``snapcraft metrics`` command, requires your account to have the
 package_metrics permission.
 
@@ -129,6 +130,7 @@ account, start by logging in and out of Snapcraft to refresh your session permis
 Otherwise, you might get this error:
 
 .. terminal::
+    :output-only:
 
     Errors:
     - Code: macaroon-permission-required

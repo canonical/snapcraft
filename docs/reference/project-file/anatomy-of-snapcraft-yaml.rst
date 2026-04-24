@@ -81,20 +81,19 @@ provides a minimal set of libraries common to most snaps. It's mounted and used
 as the root filesystem for the apps inside the snap. In essence, this means the
 snaps behave as though they were running on a system that matches the base.
 
-The core24, core22, and core20 bases are available. Bases correspond to Ubuntu LTS
-releases. For example, the library set in core24 is equivalent to a subset found in the
-Ubuntu 24.04 LTS general release. For most practical purposes, the use of either core24
-and core22 is recommended, depending on the :ref:`plugins <reference-plugins>` the snap
+The core26, core24, and core22 bases are available. Bases correspond to Ubuntu LTS
+releases. For example, the library set in core26 is equivalent to a subset found in the
+Ubuntu 26.04 LTS general release. For most practical purposes, the use of either core26
+and core24 is recommended, depending on the :ref:`plugins <reference-plugins>` the snap
 uses.
 
 Confinement
 ^^^^^^^^^^^
 
-Security confinement distinguishes snaps from software distributed using the
-traditional repository methods. `Confinement
-<https://snapcraft.io/docs/snap-confinement>`_ allows for a high level of
-isolation and security, and prevents snaps from being affected by underlying
-system changes, snaps affecting each other, or snaps affecting the host.
+Security confinement distinguishes snaps from software distributed using the traditional
+repository methods. :external+snap:ref:`explanation-security-snap-confinement` provides
+a high level of isolation and security, and prevents snaps from being affected by
+underlying system changes, snaps affecting each other, or snaps affecting the host.
 
 The ``confinement`` key describes what type of access the snap's apps will have
 once installed on the host. Confinement levels can be treated as filters that
@@ -121,12 +120,12 @@ There are three confinement levels:
   as a stop-gap measure to enable developers to publish apps that need more
   access than the current set of permissions allow.
 
-  This confinement should be used only when required for functionality, as its
-  lack of restrictions is a security risk. Before a snap can be published with
-  classic confinement, it must be approved by the Snap Store team according to
-  a `candidate review process
-  <https://forum.snapcraft.io/t/process-for-reviewing-classic-confinement-snaps/1460>`_.
-  Snaps may be rejected if they don't meet the necessary requirements.
+  This confinement should be used only when required for functionality, as its lack of
+  restrictions is a security risk. Before a snap can be published with classic
+  confinement, it must be approved by the Snap Store team according to a
+  :external+snap:ref:`candidate review process
+  <interfaces-reviewing-classic-confinement-snaps>`. Snaps may be rejected if they
+  don't meet the necessary requirements.
 
 Parts
 ~~~~~
@@ -262,7 +261,7 @@ The ``build-packages`` key defines the list of tools and libraries required to
 successfully build or compile the part. The build packages are obtained from
 the repository archives that match the base, and need to be written in the
 syntax that can be correctly interpreted by the apt package manager. For
-instance, a foo build package from core22 would be installed (``apt install
+instance, a foo build package from core26 would be installed (``apt install
 foo``) in the snap build environment during build. In the case of wethr, the
 snap needs Git to retrieve the sources from a remote Git repository and sed
 to search and replace the string and yield a Git tag.

@@ -49,6 +49,17 @@ key.
 The platform name can also describe a specific application or use. For example, a
 platform named ``amd64-debug`` could include binaries built with debug flags enabled.
 
+.. _reference-platform-naming-rules:
+
+.. |star| replace:: snap
+.. |Starcraft| replace:: Snapcraft
+
+Naming rules
+............
+
+.. include:: ../common/craft-application/reference/strict-platform-names.rst
+    :start-after: ------------
+
 
 ``build-on``
 ^^^^^^^^^^^^

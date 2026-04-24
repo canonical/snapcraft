@@ -13,11 +13,11 @@ depends on the base snap.
 
 .. _explanation_cryptography_core24:
 
-core24 and newer
-----------------
+core24 and higher
+-----------------
 
 Snapcraft is built upon Craft Application and derives much of its functionality from
-it. In particular, snaps using core24 or newer as their base use Craft Application to
+it. In particular, snaps using core24 or higher as their base use Craft Application to
 build, so much of Snapcraft's cryptographic functionality is described in the `Craft
 Application cryptography`_ documentation.
 
@@ -99,16 +99,16 @@ Creating virtual build environments
 
 Snapcraft instantiates and builds snaps on self-allocated virtual instances. It uses
 the `Requests`_ library to install Multipass on Windows. Build environments for other
-operating systems are handled by the local `snap daemon (snapd)`_.
+operating systems are handled by the local :external+snap:doc:`snap daemon <index>`.
 
 Communication with snapd
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Snapcraft uses the Requests library to communicate over Unix sockets with snapd. These
 requests fetch information about required software. If the software is missing,
-Snapcraft will install it through snapd. This is done by querying the `snapd API
-<https://snapcraft.io/docs/reference/development/snapd-rest-api/>`__ with URLs built
-dynamically and sanitized by `urllib`_.
+Snapcraft will install it through snapd. This is done by querying the
+:external+snap:doc:`reference/development/snapd-rest-api` with URLs built dynamically
+and sanitized by `urllib`_.
 
 Sources
 ~~~~~~~
@@ -300,6 +300,5 @@ is invoked by the consuming application.
 .. _macaroons: https://research.google/pubs/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/
 .. _Mercurial: https://www.mercurial-scm.org/
 .. _Requests: https://requests.readthedocs.io/
-.. _snap daemon (snapd): https://snapcraft.io/docs/installing-snapd
 .. _Subversion: https://subversion.apache.org/
 .. _urllib: https://docs.python.org/3/library/urllib.html

@@ -25,6 +25,7 @@ from .dotnet9 import Dotnet9Extension
 from .dotnet10 import Dotnet10Extension
 from .env_injector import EnvInjector
 from .gnome import GNOME
+from .gpu_extension import GPUExtension
 from .kde_neon import KDENeon
 from .kde_neon_6 import KDENeon6
 from .kde_neon_qt6 import KDENeonQt6
@@ -48,6 +49,7 @@ _EXTENSIONS: dict[str, "ExtensionType"] = {
     "dotnet10": Dotnet10Extension,
     "env-injector": EnvInjector,
     "gnome": GNOME,
+    "gpu": GPUExtension,
     "ros2-humble": ROS2HumbleExtension,
     "ros2-humble-ros-core": ROS2HumbleRosCoreExtension,
     "ros2-humble-ros-base": ROS2HumbleRosBaseExtension,

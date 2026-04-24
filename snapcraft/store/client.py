@@ -35,8 +35,9 @@ from typing_extensions import override
 from snapcraft import __version__, errors, models, utils
 from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
 
-from . import channel_map, constants
+from . import _metadata, channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
+from .errors import NoSnapIdError, SnapNotFoundError
 from .onprem_client import ON_PREM_ENDPOINTS, OnPremClient
 
 _POLL_DELAY = 1
@@ -186,8 +187,8 @@ class LegacyStoreClientCLI:
         """Log in to the Snap Store and prompt if required."""
         if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
             raise errors.SnapcraftError(
-                f"Cannot login with {constants.ENVIRONMENT_STORE_CREDENTIALS!r} set.",
-                resolution=f"Unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
+                f"Login is not required if {constants.ENVIRONMENT_STORE_CREDENTIALS!r} is set.",
+                resolution=f"Continue without running 'login', or unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
             )
 
         if not is_onprem() and use_candid() is False:
@@ -299,6 +300,17 @@ class LegacyStoreClientCLI:
             "POST",
             self._base_url + "/dev/api/register-name/",
             json=data,
+        )
+
+    def register_key(self, account_key_request: str) -> None:
+        """Register a key with the Snap Store.
+
+        :param account_key_request: The serialized key assertion.
+        """
+        self.request(
+            "POST",
+            self._base_url + "/dev/api/account/account-key",
+            json={"account_key_request": account_key_request},
         )
 
     def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
@@ -417,6 +429,76 @@ class LegacyStoreClientCLI:
             },
         )
 
+    def upload_metadata(
+        self,
+        *,
+        snap_name: str,
+        metadata: dict[str, Any],
+        force: bool,
+    ) -> None:
+        """Upload snap metadata to the Store.
+
+        :param snap_name: the name of the snap to upload metadata for
+        :param metadata: the metadata to upload
+        :param force: if True, overwrite conflicting metadata in the store
+
+        :raises SnapNotFoundError: if the snap can't be found on the store
+        :raises NoSnapIdError: if the snap doesn't have an ID
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        metadata_handler = _metadata.StoreMetadataHandler(
+            base_url=self._base_url,
+            request_method=self.request,
+            snap_id=snap_id,
+            snap_name=snap_name,
+        )
+        metadata_handler.upload(metadata, force)
+
+    def upload_binary_metadata(
+        self,
+        *,
+        snap_name: str,
+        metadata: dict[str, Any],
+        force: bool,
+    ) -> None:
+        """Upload snap binary metadata (e.g. icon) to the Store.
+
+        :param snap_name: the name of the snap to upload binary metadata for
+        :param metadata: the binary metadata to upload
+        :param force: if True, overwrite conflicting metadata in the Store
+
+        :raises SnapNotFoundError: if the snap can't be found on the store
+        :raises NoSnapIdError: if the snap doesn't have an ID
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        metadata_handler = _metadata.StoreMetadataHandler(
+            base_url=self._base_url,
+            request_method=self.request,
+            snap_id=snap_id,
+            snap_name=snap_name,
+        )
+        metadata_handler.upload_binary(metadata, force)
+
     def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
@@ -497,6 +579,22 @@ class LegacyStoreClientCLI:
         )
 
         return Revisions.unmarshal(response.json())
+
+    def list_validations(self, snap_id: str) -> list[dict[str, Any]]:
+        """Return a list of validations for snap_id.
+
+        :param snap_id: the id of the snap to query.
+        """
+        response = self.request(
+            "GET",
+            f"{self._base_url}/dev/api/snaps/{snap_id}/validations",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        return response.json()
 
     @staticmethod
     def _unmarshal_confdb_schema(

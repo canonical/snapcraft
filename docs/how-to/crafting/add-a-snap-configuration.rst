@@ -205,14 +205,18 @@ Build and install the snap.
 
 Then, test getting and setting the port with:
 
+.. code-block:: bash
+
+    snap set example-server ports.http=8090
+
 .. terminal::
-    :user: crafter
-    :host: home
-    :input: snap set example-server ports.http=8090
+    :user:
+    :host:
+    :dir:
 
-    :input: snap get domoticz-gm ports.http
+    snap get domoticz-gm ports.http
+
     8090
-
 
 Example live snap
 -----------------

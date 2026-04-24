@@ -28,22 +28,25 @@ from .extensions import (
     ExtensionsCommand,
     ListExtensionsCommand,
 )
+from .keys import (
+    StoreCreateKeyCommand,
+    StoreListKeysCommand,
+    StoreKeysCommand,
+    StoreRegisterKeyCommand,
+)
 from .legacy import (
-    StoreLegacyCreateKeyCommand,
-    StoreLegacyGatedCommand,
-    StoreLegacyListKeysCommand,
-    StoreLegacyKeysCommand,
     StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
-    StoreLegacyRegisterKeyCommand,
-    StoreLegacySetDefaultTrackCommand,
     StoreLegacySignBuildCommand,
-    StoreLegacyUploadMetadataCommand,
     StoreLegacyValidateCommand,
 )
 from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
-from .manage import StoreCloseCommand, StoreReleaseCommand
+from .manage import (
+    StoreCloseCommand,
+    StoreReleaseCommand,
+    StoreSetDefaultTrackCommand,
+)
 from .names import (
     StoreLegacyListCommand,
     StoreLegacyListRegisteredCommand,
@@ -64,9 +67,14 @@ from .status import (
     StoreStatusCommand,
     StoreTracksCommand,
 )
-from .upload import StoreLegacyPushCommand, StoreUploadCommand
+from .upload import (
+    StoreLegacyPushCommand,
+    StoreUploadCommand,
+    StoreUploadMetadataCommand,
+)
 from .validation_sets import (
     StoreEditValidationSetsCommand,
+    StoreGatedCommand,
     StoreListValidationSetsCommand,
     StoreValidationSetsCommand,
 )
@@ -83,36 +91,36 @@ __all__ = [
     "SnapCommand",
     "StoreCloseCommand",
     "StoreConfdbSchemasCommand",
+    "StoreCreateKeyCommand",
     "StoreEditValidationSetsCommand",
     "StoreEditConfdbSchemaCommand",
     "StoreExportLoginCommand",
-    "StoreLegacyCreateKeyCommand",
-    "StoreLegacyGatedCommand",
-    "StoreLegacyKeysCommand",
+    "StoreKeysCommand",
+    "StoreGatedCommand",
     "StoreLegacyListCommand",
-    "StoreLegacyListKeysCommand",
     "StoreLegacyListRegisteredCommand",
     "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
-    "StoreLegacyRegisterKeyCommand",
-    "StoreLegacySetDefaultTrackCommand",
     "StoreLegacySignBuildCommand",
-    "StoreLegacyUploadMetadataCommand",
     "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
+    "StoreListKeysCommand",
     "StoreListTracksCommand",
     "StoreListValidationSetsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
     "StoreNamesCommand",
     "StoreRegisterCommand",
+    "StoreRegisterKeyCommand",
     "StoreReleaseCommand",
     "StoreRevisionsCommand",
+    "StoreSetDefaultTrackCommand",
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",
+    "StoreUploadMetadataCommand",
     "StoreValidationSetsCommand",
     "StoreWhoAmICommand",
     "TryCommand",

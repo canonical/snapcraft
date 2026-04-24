@@ -16,7 +16,6 @@
 
 import json
 import operator
-import os
 from datetime import date, timedelta
 from textwrap import dedent
 from typing import Dict, List, Union
@@ -24,9 +23,7 @@ from typing import Dict, List, Union
 import click
 from tabulate import tabulate
 
-import snapcraft_legacy
 from snapcraft_legacy import storeapi
-from snapcraft_legacy._store import StoreClientCLI
 from snapcraft_legacy.storeapi import metrics as metrics_module
 
 from . import echo
@@ -71,41 +68,6 @@ def _human_readable_acls(store_client: storeapi.StoreClient) -> str:
         expires:     {expires}
     """.format(**human_readable_acl)
     )
-
-
-@storecli.command("upload-metadata")
-@click.option(
-    "--force",
-    is_flag=True,
-    help="Force metadata update to override any possible conflict",
-)
-@click.argument(
-    "snap-file",
-    metavar="<snap-file>",
-    type=click.Path(exists=True, readable=True, resolve_path=True, dir_okay=False),
-)
-@add_verbosity_options()
-def upload_metadata(snap_file, force, **kwargs):
-    """Upload metadata from <snap-file> to the store.
-
-    The following information will be retrieved from <snap-file> and used
-    to update the store:
-
-    \b
-    - summary
-    - description
-    - icon
-
-    If --force is given, it will force the local metadata into the Store,
-    ignoring any possible conflict.
-
-    \b
-    Examples:
-        snapcraft upload-metadata my-snap_0.1_amd64.snap
-        snapcraft upload-metadata my-snap_0.1_amd64.snap --force
-    """
-    click.echo("Uploading metadata from {!r}".format(os.path.basename(snap_file)))
-    snapcraft_legacy.upload_metadata(snap_file, force)
 
 
 @storecli.command()
@@ -193,23 +155,6 @@ def promote(snap_name, from_channel, to_channel, yes, **kwargs):
         )
     else:
         echo.wrapped("Channel promotion cancelled")
-
-
-@storecli.command()
-@click.argument("snap-name", metavar="<snap-name>")
-@click.argument("track_name", metavar="<track>")
-@add_verbosity_options()
-def set_default_track(snap_name: str, track_name: str, **kwargs):
-    """Set the default track for <snap-name> to <track>.
-
-    The track must be a valid active track for this operation to be successful.
-    """
-    store_client_cli = StoreClientCLI()
-
-    metadata = dict(default_track=track_name)
-    store_client_cli.upload_metadata(snap_name=snap_name, metadata=metadata, force=True)
-
-    echo.info(f"Default track for {snap_name!r} set to {track_name!r}.")
 
 
 _YESTERDAY = str(date.today() - timedelta(days=1))

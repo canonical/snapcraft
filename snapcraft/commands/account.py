@@ -68,7 +68,8 @@ class StoreLoginCommand(AppCommand):
 
         The login command requires a working keyring on the system it is used on.
         As an alternative, export {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r}
-        with the exported credentials.
+        with the exported credentials. The login command cannot be used while this
+        environment variable is set.
         """
     )
 
@@ -123,7 +124,9 @@ class StoreExportLoginCommand(AppCommand):
         environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
 
         This command exports credentials to use on systems where login is not
-        possible or desired.
+        possible or desired. The '--acls' option limits the scope of operations
+        for exported credentials. The complete list of ACLs is available at
+        https://dashboard.snapcraft.io/docs/reference/v1/macaroon.html#reference
         """
     )
 

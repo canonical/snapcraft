@@ -12,6 +12,7 @@ This section contains an in-depth description of the plugins available in Snapcr
     /common/craft-parts/reference/plugins/dotnet_v2_plugin
     /common/craft-parts/reference/plugins/ant_plugin
     /common/craft-parts/reference/plugins/autotools_plugin
+    /common/craft-parts/reference/plugins/bazel_plugin
     /common/craft-parts/reference/plugins/cargo_use_plugin
     plugins/crystal_plugin
     plugins/catkin_plugin
@@ -31,6 +32,7 @@ This section contains an in-depth description of the plugins available in Snapcr
     /common/craft-parts/reference/plugins/meson_plugin
     /common/craft-parts/reference/plugins/nil_plugin
     /common/craft-parts/reference/plugins/npm_plugin
+    /common/craft-parts/reference/plugins/npm_use_plugin
     plugins/poetry_plugin
     plugins/python_plugin
     /common/craft-parts/reference/plugins/qmake_plugin

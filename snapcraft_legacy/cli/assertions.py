@@ -17,7 +17,6 @@
 import click
 
 import snapcraft_legacy
-from snapcraft_legacy import storeapi
 
 from ._options import add_verbosity_options
 
@@ -25,42 +24,6 @@ from ._options import add_verbosity_options
 @click.group()
 def assertionscli():
     """Store assertion commands"""
-
-
-@assertionscli.command("list-keys")
-@add_verbosity_options()
-def list_keys(**kwargs):
-    """List the keys available to sign assertions.
-
-    This command has an alias of `keys`.
-    """
-    snapcraft_legacy.list_keys()
-
-
-@assertionscli.command("create-key")
-@click.argument("key-name", metavar="<key-name>", required=False)
-@add_verbosity_options()
-def create_key(key_name: str, **kwargs) -> None:
-    """Create a key to sign assertions."""
-    snapcraft_legacy.create_key(key_name)
-
-
-@assertionscli.command("register-key")
-@click.argument("key-name", metavar="<key-name>", required=False)
-@click.option(
-    "--experimental-login",
-    is_flag=True,
-    help="*EXPERIMENTAL* Enables login through candid.",
-    envvar="SNAPCRAFT_LOGIN",
-)
-@add_verbosity_options()
-def register_key(key_name: str, experimental_login: bool, **kwargs) -> None:
-    """Register a key with the store to sign assertions."""
-    if experimental_login:
-        raise click.BadArgumentUsage(
-            f"Set {storeapi.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
-        )
-    snapcraft_legacy.register_key(key_name)
 
 
 @assertionscli.command("sign-build")
@@ -96,11 +59,3 @@ def validate(
     -  <snap-id>=<revision>
     """
     snapcraft_legacy.validate(snap_name, validations, revoke=revoke, key=key_name)
-
-
-@assertionscli.command()
-@click.argument("snap-name", metavar="<snap-name>")
-@add_verbosity_options()
-def gated(snap_name: str, **kwargs) -> None:
-    """Get the list of snaps and revisions gating a snap."""
-    snapcraft_legacy.gated(snap_name)
