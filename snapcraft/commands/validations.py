@@ -18,6 +18,8 @@
 
 from __future__ import annotations
 
+import datetime
+import re
 import textwrap
 from typing import TYPE_CHECKING
 
@@ -26,31 +28,20 @@ from craft_cli import emit
 from tabulate import tabulate
 from typing_extensions import override
 
-from snapcraft import store
-
-if TYPE_CHECKING:
-    import argparse
-
-
-import datetime
-import re
-from typing import TYPE_CHECKING
-
-from snapcraft import models
-from snapcraft.services import Assertion as AssertionService
+from snapcraft import models, services, store
 
 if TYPE_CHECKING:
     import argparse
 
 
 class StoreGatedCommand(AppCommand):
-    """Get snaps and revisions gating a snap."""
+    """Get snaps and revisions gated for a snap."""
 
     name = "gated"
     help_msg = "List all gated snaps for <snap-name>"
     overview = textwrap.dedent(
         """
-        Get the list of snaps and revisions gating a snap"""
+        Get the list of snaps and revisions gated for a snap"""
     )
 
     @override
@@ -198,7 +189,7 @@ class StoreValidateCommand(AppCommand):
                 revision=previous_revision + 1 if existing else None,
             )
 
-            signed_validation = AssertionService.sign_assertion(
+            signed_validation = services.Assertion.sign_assertion(
                 assertion, parsed_args.key_name
             )
 

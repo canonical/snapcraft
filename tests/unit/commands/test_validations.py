@@ -317,7 +317,7 @@ class TestValidateCommand:
         mock_sign_assertion,
         fake_app_config,
     ):
-        """Use the snap name when if the snap can't be found."""
+        """Use the snap name when the snap can't be found."""
         fake_store_client.get_snap_info.side_effect = store.errors.SnapNotFoundError(
             snap_name="unknown-snap-id"
         )
