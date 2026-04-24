@@ -15,10 +15,10 @@
 """Models for snap metrics."""
 
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
 from craft_application import models
-from pydantic import Field
+from typing_extensions import override
 
 
 class MetricName(str, Enum):
@@ -84,10 +84,10 @@ class Metric(models.CraftBaseModel):
     status: Literal["OK", "FAIL", "NO_DATA"]
     """Status of metrics retrieval."""
 
-    snap_id: str = Field(serialization_alias="snap_id")
+    snap_id: str
     """ID of checked snap."""
 
-    metric_name: MetricName = Field(serialization_alias="metric_name")
+    metric_name: MetricName
     """Type of metric data being represented."""
 
     buckets: list[str]
@@ -95,6 +95,10 @@ class Metric(models.CraftBaseModel):
 
     series: list[Series]
     """List of available timeseries in the context of the requested metric."""
+
+    @override
+    def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
+        return self.model_dump(mode="json", by_alias=False, exclude_unset=True)
 
 
 class MetricsResponse(models.CraftBaseModel):
