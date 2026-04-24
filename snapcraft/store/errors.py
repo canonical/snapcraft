@@ -158,3 +158,11 @@ class NoSuchKeyError(SnapcraftError):
             f"You have no usable key named {key_name!r}.\nSee the keys available "
             "in your system with `snapcraft keys`."
         )
+
+
+class InvalidValidationRequestsError(SnapcraftError):
+    def __init__(self, requests: list[str]):
+        super().__init__(
+            "Invalid validation requests (format must be name=revision): "
+            f"{' '.join(requests)}"
+        )

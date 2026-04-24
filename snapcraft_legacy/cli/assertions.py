@@ -40,22 +40,3 @@ def assertionscli():
 def sign_build(snap_file: str, key_name: str, local: bool, **kwargs) -> None:
     """Sign a built snap file and assert it using the developer's key."""
     snapcraft_legacy.sign_build(snap_file, key_name=key_name, local=local)
-
-
-@assertionscli.command()
-@click.argument("snap-name", metavar="<snap-name>")
-@click.argument("validations", metavar="<validation>...", nargs=-1, required=True)
-@click.option("--key-name", metavar="<key-name>")
-@click.option("--revoke/--no-revoke", default=False)
-@add_verbosity_options()
-def validate(
-    snap_name: str, validations: list, key_name: str, revoke: bool, **kwargs
-) -> None:
-    """Validate a gated snap.
-
-    Each validation can be presented with either syntax:
-
-    -  <snap-name>=<revision>
-    -  <snap-id>=<revision>
-    """
-    snapcraft_legacy.validate(snap_name, validations, revoke=revoke, key=key_name)
