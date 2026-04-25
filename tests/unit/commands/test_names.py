@@ -57,6 +57,11 @@ def fake_store_get_names(mocker):
 # Register Command #
 ####################
 
+_REGISTER_DOCUMENTATION_MESSAGE = (
+    "Go to https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/"
+    "register-a-snap/ for more information on registering a snap."
+)
+
 
 @pytest.mark.usefixtures("memory_keyring")
 def test_register_default(
@@ -75,7 +80,12 @@ def test_register_default(
     assert fake_store_register.mock_calls == [
         call(ANY, "test-snap", is_private=False, store_id=None)
     ]
-    emitter.assert_message("Registered 'test-snap'")
+    emitter.assert_messages(
+        [
+            "Registered 'test-snap'",
+            _REGISTER_DOCUMENTATION_MESSAGE,
+        ]
+    )
     assert fake_confirmation_prompt.mock_calls == [
         call(
             dedent(
@@ -110,7 +120,12 @@ def test_register_yes(emitter, fake_store_register, fake_app_config):
     assert fake_store_register.mock_calls == [
         call(ANY, "test-snap", is_private=False, store_id=None)
     ]
-    emitter.assert_message("Registered 'test-snap'")
+    emitter.assert_messages(
+        [
+            "Registered 'test-snap'",
+            _REGISTER_DOCUMENTATION_MESSAGE,
+        ]
+    )
 
 
 @pytest.mark.usefixtures("memory_keyring")
@@ -126,7 +141,12 @@ def test_register_no(
     )
 
     assert fake_store_register.mock_calls == []
-    emitter.assert_messages(["Snap name 'test-snap' not registered"])
+    emitter.assert_messages(
+        [
+            "Snap name 'test-snap' not registered",
+            _REGISTER_DOCUMENTATION_MESSAGE,
+        ]
+    )
     assert fake_confirmation_prompt.mock_calls == [
         call(
             dedent(
@@ -170,8 +190,11 @@ def test_register_private(emitter, fake_store_register, fake_app_config):
         ),
         permanent=True,
     )
-    emitter.assert_message(
-        "Snap name 'test-snap' not registered",
+    emitter.assert_messages(
+        [
+            "Snap name 'test-snap' not registered",
+            _REGISTER_DOCUMENTATION_MESSAGE,
+        ]
     )
 
 
@@ -188,7 +211,12 @@ def test_register_store_id(emitter, fake_store_register, fake_app_config):
     assert fake_store_register.mock_calls == [
         call(ANY, "test-snap", is_private=False, store_id="1234")
     ]
-    emitter.assert_message("Registered 'test-snap'")
+    emitter.assert_messages(
+        [
+            "Registered 'test-snap'",
+            _REGISTER_DOCUMENTATION_MESSAGE,
+        ]
+    )
 
 
 #################
