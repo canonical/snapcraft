@@ -153,7 +153,7 @@ def test_metrics_no_data(
     fake_response = MetricsResponse(
         metrics=[
             Metric(
-                status="NO_DATA",
+                status="NO DATA",
                 snap_id="test-snap-id",
                 metric_name=MetricName.DAILY_DEVICE_CHANGE,
                 buckets=[],

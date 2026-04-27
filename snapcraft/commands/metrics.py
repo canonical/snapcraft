@@ -131,7 +131,7 @@ class StoreMetricsCommand(AppCommand):
         rows: list[list[str | int]] = []
 
         status = results.status
-        if status == "NO_DATA":
+        if status == "NO DATA":
             # No data available, return empty list.
             return rows
         if status == "FAIL":
