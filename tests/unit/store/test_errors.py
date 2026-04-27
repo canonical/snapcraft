@@ -20,6 +20,7 @@ import re
 import pytest
 
 from snapcraft.store.errors import (
+    InvalidValidationRequestsError,
     KeyAlreadyExistsError,
     KeyAlreadyRegisteredError,
     NoSnapIdError,
@@ -248,3 +249,22 @@ class TestKeyAlreadyRegisteredError:
         err = KeyAlreadyRegisteredError("test-key")
 
         assert str(err) == "You have already registered a key named 'test-key'."
+
+
+class TestInvalidValidationRequestsError:
+    """Tests for InvalidValidationRequestsError."""
+
+    def test_single_request(self):
+        err = InvalidValidationRequestsError(["bad-entry"])
+
+        assert str(err) == (
+            "Invalid validation requests (format must be name=revision): bad-entry"
+        )
+
+    def test_multiple_requests(self):
+        err = InvalidValidationRequestsError(["bad-entry-1", "bad-entry-2"])
+
+        assert str(err) == (
+            "Invalid validation requests (format must be name=revision): "
+            "bad-entry-1 bad-entry-2"
+        )

@@ -138,7 +138,7 @@ COMMAND_GROUPS = [
             commands.StoreEditValidationSetsCommand,
             commands.StoreListValidationSetsCommand,  # hidden (alias to validation-sets)
             commands.StoreValidationSetsCommand,
-            commands.StoreLegacyValidateCommand,
+            commands.StoreValidateCommand,
             commands.StoreGatedCommand,
         ],
     ),

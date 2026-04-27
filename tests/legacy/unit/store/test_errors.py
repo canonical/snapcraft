@@ -239,16 +239,6 @@ class TestErrorFormatting:
             ),
         ),
         (
-            "InvalidValidationRequestsError",
-            dict(
-                exception_class=errors.InvalidValidationRequestsError,
-                kwargs=dict(requests=["test-1"]),
-                expected_message=(
-                    "Invalid validation requests (format must be name=revision): test-1"
-                ),
-            ),
-        ),
-        (
             "SignBuildAssertionError",
             dict(
                 exception_class=errors.SignBuildAssertionError,

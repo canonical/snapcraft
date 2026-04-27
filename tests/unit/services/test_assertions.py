@@ -387,7 +387,7 @@ def test_edit_assertions_sign_assertion_error(
     mock_post_assertion = mocker.spy(fake_assertion_service, "_post_assertion")
     mocker.patch.object(
         fake_assertion_service,
-        "_sign_assertion",
+        "sign_assertion",
         side_effect=[
             errors.SnapcraftAssertionError("bad assertion"),
             expected_assertion,

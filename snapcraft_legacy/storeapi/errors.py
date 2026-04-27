@@ -730,14 +730,6 @@ class KeyNotRegisteredError(StoreError):
         super().__init__(key_name=key_name)
 
 
-class InvalidValidationRequestsError(StoreError):
-    fmt = "Invalid validation requests (format must be name=revision): {requests}"
-
-    def __init__(self, requests):
-        requests_str = " ".join(requests)
-        super().__init__(requests=requests_str)
-
-
 class SignBuildAssertionError(StoreError):
     fmt = "Failed to sign build assertion for {snap_name!r}"
 

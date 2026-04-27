@@ -356,7 +356,6 @@ from snapcraft_legacy._store import (  # noqa
     sign_build,
     status,
     upload_metadata,
-    validate,
 )
 
 from snapcraft_legacy.project._project_options import ProjectOptions  # noqa

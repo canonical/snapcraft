@@ -22,6 +22,7 @@ from .assertions import (
     EditableValidationSetAssertion,
     ConfdbSchema,
     ConfdbSchemaAssertion,
+    ValidationAssertion,
     ValidationSetAssertion,
 )
 from .manifest import Manifest
@@ -80,5 +81,6 @@ __all__ = [
     "ConfdbSchemaAssertion",
     "Series",
     "Socket",
+    "ValidationAssertion",
     "ValidationSetAssertion",
 ]
