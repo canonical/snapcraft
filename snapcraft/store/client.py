@@ -16,6 +16,7 @@
 
 """Snapcraft Store Client with CLI hooks."""
 
+import http
 import os
 import platform
 import time
@@ -677,7 +678,7 @@ class LegacyStoreClientCLI:
                 params=params,
             )
         except craft_store.errors.StoreServerError as store_error:
-            if store_error.response.status_code == 404:
+            if store_error.response.status_code == http.HTTPStatus.NOT_FOUND:
                 raise SnapNotFoundError(snap_name=snap_name) from store_error
             raise
         return response.json()

@@ -364,8 +364,8 @@ class TestValidation:
 
     @pytest.fixture()
     def fake_validation_assertion(self):
-        return ValidationAssertion(
-            type="validation",
+        return ValidationAssertion(  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
+            assertion_type="validation",  # pyright: ignore[reportCallIssue]  # ty: ignore[unknown-argument]
             authority_id="test-authority-id",
             series="16",
             snap_id="test-snap-id",
@@ -396,8 +396,8 @@ class TestValidation:
 
     def test_validation_marshal_as_str_exclude_revision(self):
         """Exclude revision when it's None."""
-        assertion = ValidationAssertion(
-            type="validation",
+        assertion = ValidationAssertion(  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
+            assertion_type="validation",  # pyright: ignore[reportCallIssue]  # ty: ignore[unknown-argument]
             authority_id="test-authority-id",
             series="16",
             snap_id="test-snap-id",

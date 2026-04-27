@@ -181,7 +181,7 @@ class TestValidateCommand:
 
         assertion, actual_key_name = mock_sign_assertion.call_args[0]
         assert isinstance(assertion, models.ValidationAssertion)
-        assert assertion.type == "validation"
+        assert assertion.assertion_type == "validation"
         assert assertion.authority_id == "test-account-id"
         assert assertion.series == store.constants.DEFAULT_SERIES
         assert assertion.snap_id == "test-snap-id"

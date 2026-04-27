@@ -225,7 +225,7 @@ class ValidationAssertion(models.CraftBaseModel):
     https://documentation.ubuntu.com/core/reference/assertions/validation
     """
 
-    type: Literal["validation"]
+    assertion_type: Literal["validation"] = pydantic.Field(alias="type")
 
     authority_id: str
     """Issuer of the validation."""
