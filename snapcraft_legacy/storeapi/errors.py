@@ -24,10 +24,9 @@ from snapcraft_legacy import formatting_utils
 from snapcraft_legacy.internal.errors import (
     SnapcraftError,
     SnapcraftException,
-    SnapcraftReportableException,
 )
 
-from . import channels, metrics, status
+from . import channels, status
 
 logger = logging.getLogger(__name__)
 
@@ -643,65 +642,6 @@ def _format_error_list_details(error_list: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _format_query_list_details(filters: List[metrics.MetricsFilter]) -> str:
-    details = ["Queries:"]
-
-    details.extend(
-        [
-            f"- {f.metric_name} with range {f.start}..{f.end}"
-            for i, f in enumerate(filters)
-        ]
-    )
-
-    return "\n".join(details)
-
-
-class StoreMetricsError(SnapcraftException):
-    def __init__(
-        self, *, response, filters: List[metrics.MetricsFilter], snap_name: str
-    ) -> None:
-        self.filters = filters
-        self.response = response
-        self.snap_name = snap_name
-        self.error_list = response.json().get("error_list")
-        self.error_list_details = _format_error_list_details(self.error_list)
-        self.query_list_details = _format_query_list_details(self.filters)
-
-    def get_brief(self) -> str:
-        return f"Failed to query requested metrics for snap {self.snap_name!r}."
-
-    def get_details(self) -> str:
-        return "\n".join([self.query_list_details, self.error_list_details])
-
-    def get_resolution(self) -> str:
-        return "Ensure the snap name, metric, start and end dates are correct."
-
-
-class StoreMetricsUnmarshalError(SnapcraftReportableException):
-    def __init__(
-        self,
-        *,
-        response,
-        filters: List[metrics.MetricsFilter],
-        snap_name: str,
-    ) -> None:
-        self.snap_name = snap_name
-        self.filters = filters
-        self.query_list_details = _format_query_list_details(self.filters)
-        self.response = response
-
-    def get_brief(self) -> str:
-        return f"Failed to unmarshal requested metrics for snap {self.snap_name!r}."
-
-    def get_details(self) -> str:
-        return "\n".join(
-            [self.query_list_details, f"Store response: {self.response.json()!r}"]
-        )
-
-    def get_resolution(self) -> str:
-        return "Please report this issue to https://bugs.launchpad.net/snapcraft"
-
-
 class StoreSnapStatusError(StoreSnapRevisionsError):
     fmt = (
         "Error fetching status of snap id {snap_id!r} for {arch!r} "
@@ -788,14 +728,6 @@ class KeyNotRegisteredError(StoreError):
 
     def __init__(self, key_name):
         super().__init__(key_name=key_name)
-
-
-class InvalidValidationRequestsError(StoreError):
-    fmt = "Invalid validation requests (format must be name=revision): {requests}"
-
-    def __init__(self, requests):
-        requests_str = " ".join(requests)
-        super().__init__(requests=requests_str)
 
 
 class SignBuildAssertionError(StoreError):

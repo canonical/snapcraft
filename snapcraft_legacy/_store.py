@@ -18,13 +18,11 @@ import contextlib
 import json
 import logging
 import os
-import re
 import subprocess
 import tempfile
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
-from subprocess import Popen
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple
 from urllib.parse import urljoin
 
 import craft_store
@@ -41,7 +39,6 @@ from snapcraft_legacy.internal.errors import (
     SnapDataExtractionError,
 )
 from snapcraft_legacy.storeapi.constants import DEFAULT_SERIES
-from snapcraft_legacy.storeapi.metrics import MetricsFilter, MetricsResults
 
 if TYPE_CHECKING:
     from snapcraft_legacy.storeapi.v2.releases import Releases
@@ -328,12 +325,6 @@ class StoreClientCLI(storeapi.StoreClient):
     # TODO Move progressbar implementation out of snapcraft_legacy.storeapi used
     #      during upload into this class using click.
     # TODO use an instance of this class directly from snapcraft_legacy.cli.store
-
-    @_login_wrapper
-    def get_metrics(
-        self, *, filters: List[MetricsFilter], snap_name: str
-    ) -> MetricsResults:
-        return super().get_metrics(filters=filters, snap_name=snap_name)
 
     @_login_wrapper
     def get_snap_releases(self, *, snap_name: str) -> "Releases":
@@ -639,97 +630,3 @@ def status(snap_name, arch):
     # This does not look good in green so we print instead
     tabulated_status = _tabulated_channel_map_tree(channel_map_tree)
     print(tabulated_status)
-
-
-def validate(
-    snap_name: str,
-    validations: List[str],
-    revoke: bool = False,
-    key: Optional[str] = None,
-):
-    """Generate, sign and upload validation assertions."""
-    # Check validations format
-    _check_validations(validations)
-
-    # Need the ID of the logged in user.
-    store_client = StoreClientCLI()
-    account_info = store_client.get_account_information()
-    authority_id = account_info["account_id"]
-
-    # Get data for the gating snap
-    try:
-        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
-    except KeyError:
-        raise storeapi.errors.SnapNotFoundError(snap_name=snap_name)
-
-    existing_validations = {
-        (i["approved-snap-id"], i["approved-snap-revision"]): i
-        for i in store_client.get_assertion(
-            snap_id, endpoint="validations", params={"include_revoked": "1"}
-        )
-    }
-
-    # Then, for each requested validation, generate assertion
-    for validation in validations:
-        gated_snap, rev = validation.split("=", 1)
-        echo.info(f"Getting details for {gated_snap}")
-        # The Info API is not authed, so it cannot see private snaps.
-        try:
-            approved_data = store_client.snap.get_info(gated_snap)
-            approved_snap_id = approved_data.snap_id
-        except storeapi.errors.SnapNotFoundError:
-            approved_snap_id = gated_snap
-
-        assertion_payload = {
-            "type": "validation",
-            "authority-id": authority_id,
-            "series": DEFAULT_SERIES,
-            "snap-id": snap_id,
-            "approved-snap-id": approved_snap_id,
-            "approved-snap-revision": rev,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "revoked": "true" if revoke else "false",
-        }
-
-        # check for existing validation assertions
-        existing = existing_validations.get((approved_snap_id, rev))
-        if existing:
-            previous_revision = int(existing.get("revision", "0"))
-            assertion_payload["revision"] = str(previous_revision + 1)
-
-        assertion = _sign_assertion(validation, assertion_payload, key, "validations")
-
-        # Save assertion to a properly named file
-        fname = f"{snap_name}-{gated_snap}-r{rev}.assertion"
-        with open(fname, "wb") as f:
-            f.write(assertion)
-
-        store_client.push_assertion(snap_id, assertion, endpoint="validations")
-
-
-validation_re = re.compile("^[^=]+=[0-9]+$")
-
-
-def _check_validations(validations):
-    invalids = [v for v in validations if not validation_re.match(v)]
-    if invalids:
-        raise storeapi.errors.InvalidValidationRequestsError(invalids)
-
-
-def _sign_assertion(snap_name, assertion, key, endpoint):
-    cmdline = ["snap", "sign"]
-    if key:
-        cmdline += ["-k", key]
-    snap_sign = Popen(
-        cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    data = json.dumps(assertion).encode("utf8")
-    echo.info("Signing {} assertion for {}".format(endpoint, snap_name))
-    assertion, err = snap_sign.communicate(input=data)
-    if snap_sign.returncode != 0:
-        err = err.decode()
-        raise storeapi.errors.StoreAssertionError(
-            endpoint=endpoint, snap_name=snap_name, error=err
-        )
-
-    return assertion

@@ -16,14 +16,14 @@
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from urllib.parse import urlencode, urljoin
 
 import craft_store
 import requests
 from simplejson.scanner import JSONDecodeError
 
-from . import _metadata, errors, metrics
+from . import _metadata, errors
 from ._requests import Requests
 from .v2 import whoami
 
@@ -290,29 +290,6 @@ class DashboardAPI(Requests):
             ) from store_error
 
         return response.json()
-
-    def get_metrics(
-        self, filters: List[metrics.MetricsFilter], snap_name: str
-    ) -> metrics.MetricsResults:
-        url = "/dev/api/snaps/metrics"
-        data = {"filters": [f.marshal() for f in filters]}
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
-
-        try:
-            response = self.post(url, json=data, headers=headers)
-
-        except craft_store.errors.StoreServerError as store_error:
-            raise errors.StoreMetricsError(
-                filters=filters, response=store_error.response, snap_name=snap_name
-            ) from store_error
-
-        try:
-            results = response.json()
-            return metrics.MetricsResults.unmarshal(results)
-        except ValueError as error:
-            raise errors.StoreMetricsUnmarshalError(
-                filters=filters, snap_name=snap_name, response=response
-            ) from error
 
     def whoami(self) -> whoami.WhoAmI:
         try:
