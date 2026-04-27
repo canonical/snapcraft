@@ -60,7 +60,7 @@ restore: |
   cd "${SNAP}"
   # remove once the gnome extension supports core26 (#6185)
   if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "strict_gnome_extension" ]]; then
-    snapcraft pack 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
+    snapcraft clean 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
   else
     snapcraft clean
   fi

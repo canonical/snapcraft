@@ -1,7 +1,7 @@
 name: poetry-hello
 version: "1.0"
 summary: simple python application
-description: build a python application using core24
+description: build a python application
 base: core24
 confinement: strict
 
