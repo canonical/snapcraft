@@ -236,6 +236,29 @@ def build_validation_set_payload():
 
 
 @pytest.fixture
+def get_metrics_payload():
+    return {
+        "metrics": [
+            {
+                "status": "OK",
+                "snap_id": "vMTKRaLjnOJQetI78HjntT37VuoyssFE",
+                "buckets": ["2026-04-22"],
+                "metric_name": "installed_base_by_architecture",
+                "series": [
+                    {"name": "amd64", "values": [7]},
+                    {"name": "arm64", "values": [6]},
+                    {"name": "armhf", "values": [5]},
+                    {"name": "i386", "values": [4]},
+                    {"name": "ppc64el", "values": [3]},
+                    {"name": "riscv64", "values": [2]},
+                    {"name": "s390x", "values": [1]},
+                ],
+            }
+        ]
+    }
+
+
+@pytest.fixture
 def post_validation_set_payload():
     return {
         "assertions": [
@@ -2000,6 +2023,27 @@ def test_post_validation_set_unmarshal_error(fake_client, post_validation_set_pa
     assert raised.value.details == (
         "Bad validation set content:\n- field 'name' required in top-level configuration"
     )
+
+
+###############
+# Get Metrics #
+###############
+def test_get_metrics(fake_client, get_metrics_payload):
+    fake_client.request.return_value = FakeResponse(
+        status_code=200, content=json.dumps(get_metrics_payload).encode()
+    )
+    filter_ = {
+        "snap_id": "vMTKRaLjnOJQetI78HjntT37VuoyssFE",
+        "metric_name": "installed_base_by_architecture",
+        "start": "2026-04-23",
+        "end": "2026-04-23",
+    }
+
+    resp = client.StoreClientCLI().get_metrics(filters=[filter_])
+
+    assert len(resp.metrics) == 1
+    assert resp.metrics[0].status == "OK"
+    assert resp.metrics[0].snap_id == "vMTKRaLjnOJQetI78HjntT37VuoyssFE"
 
 
 ########################

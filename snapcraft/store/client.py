@@ -34,6 +34,7 @@ from craft_platforms import DebianArchitecture
 from typing_extensions import override
 
 from snapcraft import __version__, errors, models, utils
+from snapcraft.models import MetricsResponse
 from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
 
 from . import _metadata, channel_map, constants
@@ -906,6 +907,19 @@ class LegacyStoreClientCLI:
         assertion = self._unmarshal_validation_set(assertions[0]["headers"])
         emit.debug(f"Published validation set: {assertion.model_dump_json()}")
         return assertion
+
+    def get_metrics(
+        self,
+        *,
+        filters: list[dict[str, str]],
+    ) -> MetricsResponse:
+        return MetricsResponse.unmarshal(
+            self.request(
+                "POST",
+                self._base_url + "/dev/api/snaps/metrics",
+                json={"filters": filters},
+            ).json()
+        )
 
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):

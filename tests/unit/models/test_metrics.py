@@ -14,70 +14,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-
 import pytest
+from pydantic import ValidationError
 
-from snapcraft_legacy.storeapi.metrics import (
-    MetricResults,
-    MetricsFilter,
-    MetricsNames,
-    MetricsResults,
-    MetricsStatus,
+from snapcraft.models import (
+    Metric,
+    MetricName,
+    MetricsResponse,
     Series,
 )
-
-
-def test_metrics_filter():
-    metrics_filter = MetricsFilter(
-        snap_id="test-snap-id",
-        metric_name="test-metric-name",
-        start="test-start",
-        end="test-end",
-    )
-
-    assert metrics_filter.marshal() == {
-        "snap_id": "test-snap-id",
-        "metric_name": "test-metric-name",
-        "start": "test-start",
-        "end": "test-end",
-    }
 
 
 @pytest.mark.parametrize("values", [[""], ["x"], [1], ["x", 1]])
 @pytest.mark.parametrize("currently_released", [False, True, None])
 def test_series(values, currently_released):
-    series = Series(
+    expected_series = Series(
         name="test-name", values=values, currently_released=currently_released
     )
 
-    expected_data = {
+    data = {
         "name": "test-name",
         "values": values,
         "currently_released": currently_released,
     }
+
     if currently_released is None:
-        expected_data.pop("currently_released")
+        data.pop("currently_released")
 
-    assert series.marshal() == expected_data
-    assert Series.unmarshal(expected_data) == series
-
-
-@pytest.mark.parametrize("name", [False, {1}, 1])
-def test_series_invalid_name(name):
-    series = {"name": name, "values": []}
-
-    with pytest.raises(ValueError, match=f"Invalid metric name: {name!r}"):
-        Series.unmarshal(series)
+    assert Series.unmarshal(data) == expected_series
 
 
 @pytest.mark.parametrize("values", [False, 1, "x", {}, [{}]])
 def test_series_invalid_values(values):
     series = {"name": "test-name", "values": values}
 
-    with pytest.raises(
-        ValueError, match=re.escape(f"Invalid metric values: {values!r}")
-    ):
+    with pytest.raises(ValidationError):
         Series.unmarshal(series)
 
 
@@ -89,10 +60,7 @@ def test_series_invalid_currently_released(currently_released):
         "currently_released": currently_released,
     }
 
-    with pytest.raises(
-        ValueError,
-        match=re.escape(f"Invalid metric currently_released: {currently_released!r}"),
-    ):
+    with pytest.raises(ValidationError):
         Series.unmarshal(series)
 
 
@@ -100,26 +68,25 @@ def test_series_invalid_currently_released(currently_released):
 @pytest.mark.parametrize(
     "series", [[], [{"name": "s1", "values": []}], [{"name": "s2", "values": ["v1"]}]]
 )
-@pytest.mark.parametrize("status", ["OK", "FAIL", "NO DATA"])
+@pytest.mark.parametrize("status", ["OK", "FAIL", "NO_DATA"])
 def test_metric_results(buckets, series, status):
-    results = MetricResults(
-        status=MetricsStatus[status],
+    results = Metric(
+        status=status,
         snap_id="test-id",
-        metric_name="test-metric",
+        metric_name=MetricName.DAILY_DEVICE_CHANGE,
         buckets=buckets,
         series=[Series.unmarshal(s) for s in series],
     )
 
-    expected_data = {
+    data = {
         "status": status,
         "snap_id": "test-id",
-        "metric_name": "test-metric",
+        "metric_name": str(MetricName.DAILY_DEVICE_CHANGE),
         "buckets": buckets,
         "series": series,
     }
 
-    assert results.marshal() == expected_data
-    assert MetricResults.unmarshal(expected_data) == results
+    assert Metric.unmarshal(data) == results
 
 
 @pytest.mark.parametrize("status", [False, {1}, 1, "INVALID"])
@@ -132,8 +99,8 @@ def test_metric_results_invalid_status(status):
         "series": [],
     }
 
-    with pytest.raises(ValueError, match=f"Invalid metric status: {status!r}"):
-        MetricResults.unmarshal(metric_results)
+    with pytest.raises(ValidationError):
+        Metric.unmarshal(metric_results)
 
 
 @pytest.mark.parametrize("snap_id", [False, {1}, 1])
@@ -146,8 +113,8 @@ def test_metric_results_invalid_snap_id(snap_id):
         "series": [],
     }
 
-    with pytest.raises(ValueError, match=f"Invalid metric snap id: {snap_id!r}"):
-        MetricResults.unmarshal(metric_results)
+    with pytest.raises(ValidationError):
+        Metric.unmarshal(metric_results)
 
 
 @pytest.mark.parametrize("metric_name", [None, False, {1}, 1])
@@ -160,8 +127,8 @@ def test_metric_results_invalid_metric_name(metric_name):
         "series": [],
     }
 
-    with pytest.raises(ValueError, match=f"Invalid metric name: {metric_name!r}"):
-        MetricResults.unmarshal(metric_results)
+    with pytest.raises(ValidationError):
+        Metric.unmarshal(metric_results)
 
 
 @pytest.mark.parametrize("buckets", [None, False, {1}, 1])
@@ -174,8 +141,8 @@ def test_metric_results_invalid_buckets(buckets):
         "series": [],
     }
 
-    with pytest.raises(ValueError, match=f"Invalid metric buckets: {buckets!r}"):
-        MetricResults.unmarshal(metric_results)
+    with pytest.raises(ValidationError):
+        Metric.unmarshal(metric_results)
 
 
 @pytest.mark.parametrize("series", [None, False, {1}, 1])
@@ -188,8 +155,8 @@ def test_metric_results_invalid_series(series):
         "series": series,
     }
 
-    with pytest.raises(ValueError, match=f"Invalid metric series: {series!r}"):
-        MetricResults.unmarshal(metric_results)
+    with pytest.raises(ValidationError):
+        Metric.unmarshal(metric_results)
 
 
 def test_metrics_results_unmarshal_no_data():
@@ -200,28 +167,27 @@ def test_metrics_results_unmarshal_no_data():
                 "metric_name": "weekly_installed_base_by_channel",
                 "series": [],
                 "snap_id": "test-snap-id",
-                "status": "NO DATA",
+                "status": "NO_DATA",
             }
         ]
     }
 
-    metrics_results = MetricsResults.unmarshal(data)
+    metrics_results = MetricsResponse.unmarshal(data)
 
-    assert metrics_results == MetricsResults(
+    assert metrics_results == MetricsResponse(
         metrics=[
-            MetricResults(
-                status=MetricsStatus["NO DATA"],
+            Metric(
+                status="NO_DATA",
                 snap_id="test-snap-id",
-                metric_name="weekly_installed_base_by_channel",
+                metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_CHANNEL,
                 buckets=[],
                 series=[],
             )
         ]
     )
-    assert metrics_results.marshal() == data
 
 
-@pytest.mark.parametrize("metric_name", [n.value for n in MetricsNames])
+@pytest.mark.parametrize("metric_name", MetricName)
 def test_metrics_results_unmarshal_one_bucket(metric_name):
     data = {
         "metrics": [
@@ -239,12 +205,12 @@ def test_metrics_results_unmarshal_one_bucket(metric_name):
         ]
     }
 
-    metrics_results = MetricsResults.unmarshal(data)
+    metrics_results = MetricsResponse.unmarshal(data)
 
-    assert metrics_results == MetricsResults(
+    assert metrics_results == MetricsResponse(
         metrics=[
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
                 metric_name=metric_name,
                 buckets=["2021-01-01"],
@@ -256,7 +222,6 @@ def test_metrics_results_unmarshal_one_bucket(metric_name):
             )
         ]
     )
-    assert metrics_results.marshal() == data
 
 
 def test_metrics_results_unmarshal_two_buckets():
@@ -276,14 +241,14 @@ def test_metrics_results_unmarshal_two_buckets():
         ]
     }
 
-    metrics_results = MetricsResults.unmarshal(data)
+    metrics_results = MetricsResponse.unmarshal(data)
 
-    assert metrics_results == MetricsResults(
+    assert metrics_results == MetricsResponse(
         metrics=[
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="daily_device_change",
+                metric_name=MetricName.DAILY_DEVICE_CHANGE,
                 buckets=["2021-01-01", "2021-01-02"],
                 series=[
                     Series(name="continued", values=[11, 15], currently_released=None),
@@ -293,7 +258,6 @@ def test_metrics_results_unmarshal_two_buckets():
             )
         ]
     )
-    assert metrics_results.marshal() == data
 
 
 def test_metrics_results_unmarshal_with_currently_released():
@@ -312,14 +276,14 @@ def test_metrics_results_unmarshal_with_currently_released():
         ]
     }
 
-    metrics_results = MetricsResults.unmarshal(data)
+    metrics_results = MetricsResponse.unmarshal(data)
 
-    assert metrics_results == MetricsResults(
+    assert metrics_results == MetricsResponse(
         metrics=[
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="weekly_installed_base_by_channel",
+                metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_CHANNEL,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="beta", values=[62], currently_released=False),
@@ -328,14 +292,13 @@ def test_metrics_results_unmarshal_with_currently_released():
             )
         ]
     )
-    assert metrics_results.marshal() == data
 
 
 def test_metrics_results_unmarshal_multiple_metrics():
     metrics = [
         {
             "buckets": ["2021-01-01"],
-            "metric_name": n.value,
+            "metric_name": str(n),
             "series": [
                 {"name": "blah", "values": [1]},
                 {"name": "blahh", "values": [1, 2]},
@@ -344,18 +307,18 @@ def test_metrics_results_unmarshal_multiple_metrics():
             "snap_id": "test-snap-id",
             "status": "OK",
         }
-        for n in MetricsNames
+        for n in MetricName
     ]
     data = {"metrics": metrics}
 
-    metrics_results = MetricsResults.unmarshal(data)
+    metrics_results = MetricsResponse.unmarshal(data)
 
-    assert metrics_results == MetricsResults(
+    assert metrics_results == MetricsResponse(
         metrics=[
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="daily_device_change",
+                metric_name=MetricName.DAILY_DEVICE_CHANGE,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -363,10 +326,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="installed_base_by_architecture",
+                metric_name=MetricName.INSTALLED_BASE_BY_ARCHITECTURE,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -374,10 +337,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="installed_base_by_channel",
+                metric_name=MetricName.INSTALLED_BASE_BY_CHANNEL,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -385,10 +348,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="installed_base_by_country",
+                metric_name=MetricName.INSTALLED_BASE_BY_COUNTRY,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -396,10 +359,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="installed_base_by_operating_system",
+                metric_name=MetricName.INSTALLED_BASE_BY_OPERATING_SYSTEM,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -407,10 +370,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="installed_base_by_version",
+                metric_name=MetricName.INSTALLED_BASE_BY_VERSION,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -418,10 +381,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="weekly_device_change",
+                metric_name=MetricName.WEEKLY_DEVICE_CHANGE,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -429,10 +392,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="weekly_installed_base_by_architecture",
+                metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_ARCHITECTURE,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -440,10 +403,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="weekly_installed_base_by_channel",
+                metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_CHANNEL,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -451,10 +414,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="weekly_installed_base_by_country",
+                metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_COUNTRY,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -462,10 +425,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="weekly_installed_base_by_operating_system",
+                metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_OPERATING_SYSTEM,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -473,10 +436,10 @@ def test_metrics_results_unmarshal_multiple_metrics():
                     Series(name="blahhh", values=[1, 2, 3], currently_released=None),
                 ],
             ),
-            MetricResults(
-                status=MetricsStatus["OK"],
+            Metric(
+                status="OK",
                 snap_id="test-snap-id",
-                metric_name="weekly_installed_base_by_version",
+                metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_VERSION,
                 buckets=["2021-01-01"],
                 series=[
                     Series(name="blah", values=[1], currently_released=None),
@@ -486,19 +449,68 @@ def test_metrics_results_unmarshal_multiple_metrics():
             ),
         ]
     )
-    assert metrics_results.marshal() == data
 
 
 @pytest.mark.parametrize("results", [False, {1}, 1, "INVALID", []])
 def test_metrics_results_invalid_payload(results):
-    with pytest.raises(
-        ValueError, match=re.escape(f"Invalid metrics results: {results!r}")
-    ):
-        MetricsResults.unmarshal(results)
+    with pytest.raises(TypeError):
+        MetricsResponse.unmarshal(results)
 
 
 @pytest.mark.parametrize("metrics", [False, {1}, 1, "INVALID", {}])
 def test_metrics_metrics_invalid_metrics(metrics):
     data = {"metrics": metrics}
-    with pytest.raises(ValueError, match=re.escape(f"Invalid metrics: {metrics!r}")):
-        MetricsResults.unmarshal(data)
+    with pytest.raises(ValidationError):
+        MetricsResponse.unmarshal(data)
+
+
+@pytest.mark.parametrize(
+    ("metric_name", "expected_label"),
+    [
+        (MetricName.DAILY_DEVICE_CHANGE, "Devices"),
+        (MetricName.WEEKLY_DEVICE_CHANGE, "Devices"),
+        (MetricName.INSTALLED_BASE_BY_CHANNEL, "Channel"),
+        (MetricName.WEEKLY_INSTALLED_BASE_BY_CHANNEL, "Channel"),
+        (MetricName.INSTALLED_BASE_BY_COUNTRY, "Country"),
+        (MetricName.WEEKLY_INSTALLED_BASE_BY_COUNTRY, "Country"),
+        (MetricName.INSTALLED_BASE_BY_OPERATING_SYSTEM, "OS"),
+        (MetricName.WEEKLY_INSTALLED_BASE_BY_OPERATING_SYSTEM, "OS"),
+        (MetricName.INSTALLED_BASE_BY_VERSION, "Version"),
+        (MetricName.WEEKLY_INSTALLED_BASE_BY_VERSION, "Version"),
+        (MetricName.INSTALLED_BASE_BY_ARCHITECTURE, "Architecture"),
+        (MetricName.WEEKLY_INSTALLED_BASE_BY_ARCHITECTURE, "Architecture"),
+    ],
+)
+def test_to_label(metric_name: MetricName, expected_label: str) -> None:
+    assert metric_name.to_label() == expected_label
+
+
+@pytest.mark.parametrize(
+    ("daily", "weekly"),
+    [
+        (MetricName.DAILY_DEVICE_CHANGE, MetricName.WEEKLY_DEVICE_CHANGE),
+        (
+            MetricName.INSTALLED_BASE_BY_CHANNEL,
+            MetricName.WEEKLY_INSTALLED_BASE_BY_CHANNEL,
+        ),
+        (
+            MetricName.INSTALLED_BASE_BY_COUNTRY,
+            MetricName.WEEKLY_INSTALLED_BASE_BY_COUNTRY,
+        ),
+        (
+            MetricName.INSTALLED_BASE_BY_OPERATING_SYSTEM,
+            MetricName.WEEKLY_INSTALLED_BASE_BY_OPERATING_SYSTEM,
+        ),
+        (
+            MetricName.INSTALLED_BASE_BY_VERSION,
+            MetricName.WEEKLY_INSTALLED_BASE_BY_VERSION,
+        ),
+        (
+            MetricName.INSTALLED_BASE_BY_ARCHITECTURE,
+            MetricName.WEEKLY_INSTALLED_BASE_BY_ARCHITECTURE,
+        ),
+    ],
+)
+def test_to_label_daily_weekly_parity(daily: MetricName, weekly: MetricName) -> None:
+    """Daily and weekly variants of the same metric share the same label."""
+    assert daily.to_label() == weekly.to_label()

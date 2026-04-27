@@ -14,9 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import operator
-from datetime import date, timedelta
 from textwrap import dedent
 from typing import Dict, List, Union
 
@@ -24,10 +22,8 @@ import click
 from tabulate import tabulate
 
 from snapcraft_legacy import storeapi
-from snapcraft_legacy.storeapi import metrics as metrics_module
 
 from . import echo
-from ._metrics import convert_metrics_to_table
 from ._options import add_verbosity_options
 
 
@@ -155,74 +151,3 @@ def promote(snap_name, from_channel, to_channel, yes, **kwargs):
         )
     else:
         echo.wrapped("Channel promotion cancelled")
-
-
-_YESTERDAY = str(date.today() - timedelta(days=1))
-
-
-@storecli.command()
-@click.argument("snap-name", metavar="<snap-name>", required=True)
-@click.option(
-    "--name",
-    metavar="<metric name>",
-    help="Metric name",
-    type=click.Choice([x.value for x in metrics_module.MetricsNames]),
-    required=True,
-)
-@click.option(
-    "--start",
-    metavar="<start date>",
-    help="Date in format YYYY-MM-DD",
-    required=True,
-    default=_YESTERDAY,
-)
-@click.option(
-    "--end",
-    metavar="<end date>",
-    help="Date in format YYYY-MM-DD",
-    required=True,
-    default=_YESTERDAY,
-)
-@click.option(
-    "--format",
-    metavar="<format>",
-    help="Format for output",
-    type=click.Choice(["table", "json"]),
-    required=True,
-)
-@add_verbosity_options()
-def metrics(snap_name: str, name: str, start: str, end: str, format: str, **kwargs):
-    """Get metrics for <snap-name>."""
-    store = storeapi.StoreClient()
-    account_info = store.get_account_information()
-
-    try:
-        snap_id = account_info["snaps"][storeapi.constants.DEFAULT_SERIES][snap_name][
-            "snap-id"
-        ]
-    except KeyError:
-        echo.exit_error(
-            brief="No permissions for snap.",
-            resolution="Ensure the snap name and credentials are correct.is correct and that the correct credentials are used.",
-        )
-
-    mf = metrics_module.MetricsFilter(
-        snap_id=snap_id, metric_name=name, start=start, end=end
-    )
-
-    results = store.get_metrics(filters=[mf], snap_name=snap_name)
-
-    # Sanity check to ensure that only one result is found (as we currently only
-    # support one query at a time).
-    if len(results.metrics) != 1:
-        raise RuntimeError(f"Unexpected metric results from store: {results!r}")
-
-    metric_results = results.metrics[0]
-
-    if format == "json":
-        output = json.dumps(metric_results.marshal(), indent=2, sort_keys=True)
-        click.echo(output)
-    elif format == "table":
-        rows = convert_metrics_to_table(metric_results, transpose=True)
-        output = tabulate(rows, tablefmt="plain")
-        echo.echo_with_pager_if_needed(output)
