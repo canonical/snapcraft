@@ -22,6 +22,7 @@ from .assertions import (
     EditableValidationSetAssertion,
     ConfdbSchema,
     ConfdbSchemaAssertion,
+    ValidationAssertion,
     ValidationSetAssertion,
 )
 from .manifest import Manifest
@@ -44,6 +45,12 @@ from .project import (
     Project,
     Socket,
 )
+from .metrics import (
+    Metric,
+    MetricsResponse,
+    MetricName,
+    Series,
+)
 
 __all__ = [
     "MANDATORY_ADOPTABLE_FIELDS",
@@ -65,10 +72,15 @@ __all__ = [
     "Hook",
     "Lint",
     "Manifest",
+    "Metric",
+    "MetricName",
+    "MetricsResponse",
     "Platform",
     "Project",
     "ConfdbSchema",
     "ConfdbSchemaAssertion",
+    "Series",
     "Socket",
+    "ValidationAssertion",
     "ValidationSetAssertion",
 ]

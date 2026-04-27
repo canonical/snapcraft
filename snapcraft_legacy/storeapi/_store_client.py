@@ -25,7 +25,7 @@ import requests
 
 from snapcraft_legacy.internal.indicators import download_requests_stream
 
-from . import agent, constants, errors, metrics
+from . import agent, constants, errors
 from ._dashboard_api import DashboardAPI
 from ._snap_api import SnapAPI
 from .constants import DEFAULT_SERIES
@@ -189,14 +189,6 @@ class StoreClient:
             raise errors.SnapNotFoundError(snap_name=snap_name, arch=arch)
 
         return response
-
-    def get_metrics(
-        self,
-        *,
-        filters: List[metrics.MetricsFilter],
-        snap_name: str,
-    ) -> metrics.MetricsResults:
-        return self.dashboard.get_metrics(filters=filters, snap_name=snap_name)
 
     @classmethod
     def download(

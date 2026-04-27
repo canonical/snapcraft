@@ -26,7 +26,11 @@ from snapcraft.models import (
     EditableValidationSetAssertion,
     ValidationSetAssertion,
 )
-from snapcraft.models.assertions import Snap, cast_dict_scalars_to_strings
+from snapcraft.models.assertions import (
+    Snap,
+    ValidationAssertion,
+    cast_dict_scalars_to_strings,
+)
 
 
 @pytest.fixture()
@@ -353,3 +357,57 @@ def test_validation_set_marshal_as_str(fake_validation_set):
         "timestamp": "2026-01-01T10:20:30Z",
         "type": "validation-set",
     }
+
+
+class TestValidation:
+    """Tests for the ValidationAssertion"""
+
+    @pytest.fixture()
+    def fake_validation_assertion(self):
+        return ValidationAssertion(  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
+            assertion_type="validation",  # pyright: ignore[reportCallIssue]  # ty: ignore[unknown-argument]
+            authority_id="test-authority-id",
+            series="16",
+            snap_id="test-snap-id",
+            approved_snap_id="test-approved-snap-id",
+            approved_snap_revision="42",
+            timestamp="2026-01-01T10:20:30Z",
+            revoked=False,
+            revision=3,
+        )
+
+    @pytest.mark.parametrize("revoked", [True, False])
+    def test_validation_marshal_as_str(self, fake_validation_assertion, revoked):
+        """Cast all scalars to string when marshalling."""
+        fake_validation_assertion.revoked = revoked
+        data = fake_validation_assertion.marshal_scalars_as_strings()
+
+        assert data == {
+            "type": "validation",
+            "authority-id": "test-authority-id",
+            "series": "16",
+            "snap-id": "test-snap-id",
+            "approved-snap-id": "test-approved-snap-id",
+            "approved-snap-revision": "42",
+            "timestamp": "2026-01-01T10:20:30Z",
+            "revoked": str(revoked).lower(),
+            "revision": "3",
+        }
+
+    def test_validation_marshal_as_str_exclude_revision(self):
+        """Exclude revision when it's None."""
+        assertion = ValidationAssertion(  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
+            assertion_type="validation",  # pyright: ignore[reportCallIssue]  # ty: ignore[unknown-argument]
+            authority_id="test-authority-id",
+            series="16",
+            snap_id="test-snap-id",
+            approved_snap_id="test-approved-snap-id",
+            approved_snap_revision="42",
+            timestamp="2026-01-01T10:20:30Z",
+            revoked=False,
+            revision=None,
+        )
+
+        data = assertion.marshal_scalars_as_strings()
+
+        assert "revision" not in data

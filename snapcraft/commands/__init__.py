@@ -35,10 +35,8 @@ from .keys import (
     StoreRegisterKeyCommand,
 )
 from .legacy import (
-    StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacySignBuildCommand,
-    StoreLegacyValidateCommand,
 )
 from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
@@ -74,10 +72,14 @@ from .upload import (
 )
 from .validation_sets import (
     StoreEditValidationSetsCommand,
-    StoreGatedCommand,
     StoreListValidationSetsCommand,
     StoreValidationSetsCommand,
 )
+from .validations import (
+    StoreGatedCommand,
+    StoreValidateCommand,
+)
+from .metrics import StoreMetricsCommand
 
 __all__ = [
     "ExpandExtensionsCommand",
@@ -99,11 +101,9 @@ __all__ = [
     "StoreGatedCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",
-    "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
     "StoreLegacySignBuildCommand",
-    "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
     "StoreListKeysCommand",
@@ -111,6 +111,7 @@ __all__ = [
     "StoreListValidationSetsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
+    "StoreMetricsCommand",
     "StoreNamesCommand",
     "StoreRegisterCommand",
     "StoreRegisterKeyCommand",
@@ -121,6 +122,7 @@ __all__ = [
     "StoreTracksCommand",
     "StoreUploadCommand",
     "StoreUploadMetadataCommand",
+    "StoreValidateCommand",
     "StoreValidationSetsCommand",
     "StoreWhoAmICommand",
     "TryCommand",
