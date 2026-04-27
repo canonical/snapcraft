@@ -35,7 +35,6 @@ from .keys import (
     StoreRegisterKeyCommand,
 )
 from .legacy import (
-    StoreLegacyMetricsCommand,
     StoreLegacyPromoteCommand,
     StoreLegacySignBuildCommand,
     StoreLegacyValidateCommand,
@@ -78,6 +77,7 @@ from .validation_sets import (
     StoreListValidationSetsCommand,
     StoreValidationSetsCommand,
 )
+from .metrics import StoreMetricsCommand
 
 __all__ = [
     "ExpandExtensionsCommand",
@@ -99,7 +99,6 @@ __all__ = [
     "StoreGatedCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",
-    "StoreLegacyMetricsCommand",
     "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
     "StoreLegacySignBuildCommand",
@@ -111,6 +110,7 @@ __all__ = [
     "StoreListValidationSetsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
+    "StoreMetricsCommand",
     "StoreNamesCommand",
     "StoreRegisterCommand",
     "StoreRegisterKeyCommand",

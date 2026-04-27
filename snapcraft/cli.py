@@ -97,7 +97,7 @@ COMMAND_GROUPS = [
             commands.StoreNamesCommand,
             commands.StoreLegacyListRegisteredCommand,
             commands.StoreLegacyListCommand,
-            commands.StoreLegacyMetricsCommand,
+            commands.StoreMetricsCommand,
             commands.StoreUploadMetadataCommand,
         ],
     ),
