@@ -30,15 +30,20 @@ Core26 snaps can now be built without ``build-base: devel`` or ``grade: devel``.
 result, they are eligible for publication to candidate and stable channels in the Snap
 Store.
 
-The :ref:`Change from core24 to core26 <how-to-change-from-core24-to-core26>` guide
-describes the steps for migrating an existing Snapcraft project to core26.
+The :ref:`how-to-change-from-core24-to-core26` guide describes the steps for migrating
+an existing Snapcraft project to core26.
 
 GPU extension
 ~~~~~~~~~~~~~
 
+Previously, snaps had to use a desktop extension, such as the GNOME extension, to
+get GPU support even when they didn't need full desktop support. This increased the
+complexity and build time of snaps.
+
 The new :ref:`reference-gpu-extension` has been added for core22 and higher snaps,
 which provides hardware-accelerated graphics support for applications that need OpenGL,
-Vulkan, and other GPU capabilities.
+Vulkan, and other GPU capabilities. Snaps that only need GPU support can use this
+extension instead of a desktop extension.
 
 GPU linter
 ~~~~~~~~~~
@@ -46,8 +51,8 @@ GPU linter
 A new linter has been added for snaps that need GPU support.
 If a snap includes GPU libraries, the linter suggests using a GPU content snap.
 
-:ref:`Use the GPU linter <how-to-use-the-gpu-linter>` describes how to address issues
-flagged by the linter.
+The :ref:`how-to-use-the-gpu-linter` guide describes how to address issues flagged by
+the linter.
 
 Stable .NET extensions
 ~~~~~~~~~~~~~~~~~~~~~~
