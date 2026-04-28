@@ -188,13 +188,14 @@ class StorePromoteCommand(AppCommand):
         )
         from_channel_set = snap_status.get_channel_set(from_channel)
 
-        emit.message(f"Build set information for {from_channel!r}")
-        emit.message(
+        emit.progress(f"Build set information for {from_channel!r}", permanent=True)
+        emit.progress(
             tabulate(
                 sorted(from_channel_set, key=operator.attrgetter("arch")),
                 headers=["Arch", "Revision", "Version"],
                 tablefmt="plain",
-            )
+            ),
+            permanent=True,
         )
 
         if parsed_args.yes or emit.confirm(

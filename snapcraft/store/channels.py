@@ -85,7 +85,7 @@ class Channel:
     @property
     def track(self) -> str:
         """The track name, defaulting to 'latest' if not specified."""
-        return self._track if self._track is not None else "latest"
+        return self._track or "latest"
 
     @property
     def risk(self) -> str:
