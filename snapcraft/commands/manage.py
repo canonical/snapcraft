@@ -120,7 +120,7 @@ class StoreReleaseCommand(AppCommand):
 
 
 class StorePromoteCommand(AppCommand):
-    """Command passthrough for the promote command."""
+    """Promote a build set from a channel in the Snap Store."""
 
     name = "promote"
     help_msg = "Promote a build set from a channel"

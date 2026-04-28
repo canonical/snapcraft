@@ -20,6 +20,8 @@ from __future__ import annotations
 
 from typing_extensions import Self
 
+from snapcraft import errors
+
 _VALID_RISKS = ["stable", "candidate", "beta", "edge"]
 
 
@@ -57,7 +59,9 @@ class Channel:
         elif risk:
             channel = risk
         else:
-            raise RuntimeError(f"Incorrect channel tuple {track}/{risk}/{branch}.")
+            raise errors.SnapcraftError(
+                f"Incorrect channel tuple {track}/{risk}/{branch}."
+            )
         return cls(channel)
 
     def __init__(self, channel: str) -> None:
@@ -79,7 +83,7 @@ class Channel:
             self._risk = parts[1]
             self._branch = None
         else:
-            raise RuntimeError(f"Channel logic failed for: {channel!r}")
+            raise errors.SnapcraftError(f"Channel logic failed for: {channel!r}")
         self._channel = channel
 
     @property
