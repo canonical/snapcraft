@@ -41,7 +41,7 @@ from snapcraft.utils import (
 SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
     "core22": bases.BuilddBaseAlias.JAMMY,
     "core24": bases.BuilddBaseAlias.NOBLE,
-    "core26": bases.BuilddBaseAlias.DEVEL,
+    "core26": bases.BuilddBaseAlias.RESOLUTE,
     "devel": bases.BuilddBaseAlias.DEVEL,
 }
 

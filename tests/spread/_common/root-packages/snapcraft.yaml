@@ -12,3 +12,9 @@ parts:
   nil:
     plugin: nil
     override-pull: echo pulling nothing
+    override-build: |
+      # these should fail if the build-packages and build-snaps weren't installed
+      dpkg -V hello
+      ls /snap/hello/current
+
+      craftctl default

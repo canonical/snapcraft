@@ -23,12 +23,6 @@ execute: |
     exit 0
   fi
 
-  # drop this conditional when core26 is stable (#6088)
-  if [[ "$base" == "core26" && "$SNAP" == "test-craftctl-get-set" ]]; then
-    snapcraft pack 2>&1 | MATCH "grade must be 'devel'"
-    exit 0
-  fi
-
   snapcraft pack
 
   snap install craftctl-*.snap --dangerous

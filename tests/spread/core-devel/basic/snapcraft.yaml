@@ -4,7 +4,7 @@ summary: build-base-devel
 description: Build a snap with a devel build-base
 confinement: strict
 
-base: core24
+base: core26
 build-base: devel
 
 # grade must be devel when build-base is devel
