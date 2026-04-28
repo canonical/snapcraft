@@ -2470,7 +2470,7 @@ class Core26Project(Core24Project):
     base: Literal["core26"]  # type: ignore[assignment]
 
 
-class DevelBaseProject(Core24Project):
+class DevelBaseProject(Core26Project):
     base: Literal["devel"]  # type: ignore[assignment]
     build_base: Literal["devel"]  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
 
