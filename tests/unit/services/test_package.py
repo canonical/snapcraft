@@ -564,6 +564,7 @@ def test_precreate_layout_targets_messages(
             [],
             id="no-op",
         ),
+        pytest.param({"bluetooth": {"private": True}}, [], id="non-content"),
         pytest.param(
             {
                 "usb": {
@@ -582,6 +583,7 @@ def test_precreate_layout_targets_messages(
                     "interface": "content",
                     "target": "$SNAP_DATA/flash-drive",
                 },
+                "bluetooth": {"private": True},
             },
             [Path("usb"), Path("serial"), Path("hdmi"), Path("hdmi", "2.1")],
             id="all",
