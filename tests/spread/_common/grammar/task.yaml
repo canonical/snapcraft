@@ -1,0 +1,29 @@
+summary: Build snaps that test the grammar keywords.
+
+environment:
+  BUILD_FOR/arm64: arm64
+  BUILD_FOR/amd64: amd64
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
+execute: |
+  # This test is only intended to run on amd64
+  [ "$(dpkg --print-architecture)" = "amd64" ] || exit 0
+
+  snapcraft prime --destructive-mode --build-for "${BUILD_FOR}"
+
+  # verify `on amd64 to $BUILD_FOR` grammar was processed
+  if ! grep "I was built on amd64 and built for ${BUILD_FOR}." "prime/hello-world-${BUILD_FOR}.sh"; then
+    echo "Grammar was not processed as expected!"
+    exit 1
+  fi
+
+restore: |
+  snapcraft clean --destructive-mode
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

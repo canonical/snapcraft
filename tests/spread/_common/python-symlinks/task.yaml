@@ -1,0 +1,71 @@
+summary: >-
+  Verify python symlinks with different base and confinement configurations
+
+environment:
+  # base core26, strict confinement: requires provisioning
+  SNAP/strict_not_provisioned: strict-not-provisioned
+  SNAP/strict_provisioned: strict-provisioned
+
+  # base core26, classic confinement: requires provisioning
+  SNAP/classic_not_provisioned: classic-not-provisioned
+  SNAP/classic_provisioned: classic-provisioned
+
+  # base core26, devmode: same as strict
+  SNAP/devmode_not_provisioned: devmode-not-provisioned
+  SNAP/devmode_provisioned: devmode-provisioned
+
+  # base bare: requires provisioning
+  SNAP/bare_not_provisioned: bare-not-provisioned
+  SNAP/bare_provisioned: bare-provisioned
+
+  # provisioned from a different part
+  SNAP/provisioned_from_another_part: provisioned-from-another-part
+
+  # using the gnome extension
+  SNAP/strict_gnome_extension: strict-gnome-extension
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP}/snapcraft.yaml"
+
+execute: |
+  cd "${SNAP}"
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the gnome extension supports core26 (#6185)
+  if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "strict_gnome_extension" ]]; then
+    snapcraft pack 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
+    exit 0
+  fi
+
+  if [ -f expected-symlink ]; then
+    snapcraft pack
+    unsquashfs ./*.snap
+    ls -l squashfs-root/bin
+    [ -x squashfs-root/bin/hello ]
+    [ "$(readlink squashfs-root/bin/python3)" == "$(cat expected-symlink)" ]
+  else
+    snapcraft pack 2>&1 | MATCH "No suitable Python interpreter found, giving up."
+  fi
+
+restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  cd "${SNAP}"
+  # remove once the gnome extension supports core26 (#6185)
+  if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "strict_gnome_extension" ]]; then
+    snapcraft clean 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
+  else
+    snapcraft clean
+  fi
+
+  rm -f ./*.snap
+  rm -rf squashfs-root
+
+  restore_yaml "snapcraft.yaml"

@@ -1,0 +1,71 @@
+summary: Test linter output
+
+environment:
+  SNAP/classic: classic
+  SNAP/classic_libc: classic-libc
+  SNAP/library_gnome: library-gnome
+  SNAP/library_ignore_missing: library-ignore-missing
+  SNAP/library_ignore_unused: library-ignore-unused
+  SNAP/library_ignored_mixed: library-ignored-mixed
+  SNAP/library_missing: library-missing
+  SNAP/library_unused: library-unused
+  SNAP/metadata: metadata
+  SNAP/metadata_ignore_devel: metadata-ignore-devel
+  SNAP/metadata_ignore_fields: metadata-ignore-fields
+  # We're checking the output text, so override the normal trace output.
+  CRAFT_VERBOSITY_LEVEL: brief
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP}/snap/snapcraft.yaml"
+
+execute: |
+  cd "${SNAP}"
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # drop this conditional once the gnome extension supports core26 (#6185)
+  if [[ "$base" == "core26" && "$SNAP" == "library-gnome" ]]; then
+    snapcraft pack 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
+    exit 0
+  fi
+
+  # drop this conditional once core26 is stable (#6088)
+  if [[ "$base" == "core26" && ( "$SNAP" == "metadata" || "$SNAP" == "metadata-ignore-fields" ) ]]; then
+    snapcraft pack --verbosity=debug 2>&1 | MATCH "Skipping metadata linter because grade is 'devel'."
+    exit 0
+  else
+    snapcraft pack 2> output.txt
+  fi
+
+  test -f linter-test_*.snap
+
+  # linter for gnome snap is not working as-expected (#4751)
+  if [ "${SNAP}" != "library-gnome" ]; then
+    sed -n '/^Running linters/,/^Creating snap/p' < output.txt > linter_output.txt
+
+    #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+    . "$TOOLS_DIR/snapcraft-yaml.sh"
+    base="$(get_base)"
+    diff -u linter_output.txt "expected-${base}-linter-output.txt"
+  fi
+
+restore: |
+  cd "${SNAP}"
+  rm -f ./*.snap ./linter_output.txt
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # drop this conditional once the gnome extension supports core26 (#6185)
+  if [[ "$base" == "core26" && "$SNAP" == "library-gnome" ]]; then
+    snapcraft clean 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
+  else
+    snapcraft clean
+  fi
+
+  restore_yaml "snap/snapcraft.yaml"

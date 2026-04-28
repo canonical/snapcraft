@@ -1,0 +1,18 @@
+name: craft-test
+base: core24
+version: '0.1'
+confinement: strict
+summary: A project used to test 'snapcraft test'
+description: |
+  A project used to test 'snapcraft test'.
+platforms:
+  amd64:
+
+parts:
+  hello:
+    plugin: nil
+    stage-packages: [hello]
+
+apps:
+  hello:
+    command: usr/bin/hello

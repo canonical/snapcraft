@@ -50,6 +50,8 @@ jobs:
         spread-jobs:
           - google:ubuntu-22.04-64
           - google:ubuntu-24.04-64
+          # switch to 26.04 once available (#6088)
+          - google:ubuntu-24.04-64:tests/spread/core26/
 
     steps:
       - name: Checkout snapcraft

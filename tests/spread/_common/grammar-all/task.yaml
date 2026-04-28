@@ -1,0 +1,25 @@
+summary: Build snaps that test the 'all' target in advanced grammar
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
+execute: |
+  # This test is only intended to run on amd64
+  [ "$(dpkg --print-architecture)" = "amd64" ] || exit 0
+
+  snapcraft prime --destructive-mode --build-for all
+
+  # verify `on amd64 to all` grammar was processed
+  if ! grep "I was built on amd64 and built for all." "prime/hello-world-all.sh"; then
+    echo "Grammar was not processed as expected!"
+    exit 1
+  fi
+
+restore: |
+  snapcraft clean --destructive-mode
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
