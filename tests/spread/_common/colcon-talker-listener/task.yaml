@@ -38,6 +38,7 @@ execute: |
   # an `exit_after_receive` parameter that, if true, will cause the system to
   # shutdown after the listener has successfully received a message.
   "$SNAP" exit_after_receive:=true | MATCH "I heard: 'Hello, world! 0'"
+
 restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

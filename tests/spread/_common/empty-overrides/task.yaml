@@ -12,6 +12,7 @@ execute: |
       echo "prime directory should be empty"
       false
   fi
+
 restore: |
   snapcraft clean --destructive-mode
 

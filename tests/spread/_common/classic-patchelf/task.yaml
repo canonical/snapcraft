@@ -41,6 +41,7 @@ execute: |
 
   # verify `patchelf --no-default-lib` was applied
   readelf --dynamic snap-contents/bin/hello-classic | MATCH "FLAGS_1.*NODEFLIB"
+
 restore: |
   # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
   unset SNAPCRAFT_BUILD_ENVIRONMENT
