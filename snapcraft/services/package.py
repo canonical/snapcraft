@@ -32,6 +32,7 @@ from snapcraft import errors, linters, models, pack
 from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import component_yaml, snap_yaml
+from snapcraft.models import ContentPlug
 from snapcraft.parts import extract_metadata as extract
 from snapcraft.parts import update_metadata as update
 from snapcraft.parts.setup_assets import setup_assets
@@ -132,11 +133,13 @@ class Package(PackageService):
 
         emit.debug("Pre-creating plug targets inside of snap")
 
-        plug_targets = [
-            plug.target
-            for plug in self._project.plugs.values()
-            if plug.interface == "content"
-        ]
+        plug_targets = []
+        for name, plug in self._project.plugs.items():
+            if isinstance(plug, ContentPlug) and plug.interface == "content":
+                plug_targets.append(plug.target)
+            elif name == "content":
+                plug_targets.append(cast("dict[str, str]", plug)["target"])
+
         for target in plug_targets:
             file = self._maybe_get_target_in_snap(target)
             if file is None:
