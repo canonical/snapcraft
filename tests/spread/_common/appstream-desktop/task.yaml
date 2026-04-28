@@ -4,22 +4,15 @@ environment:
   SNAP/desktop: desktop
   SNAP/icon_desktop: icon-desktop
 
-# This test snap is limited to amd64 arch due to architectures specified
-# in expected_snap.yaml.
-systems:
-  - ubuntu-22.04-64
-  - ubuntu-22.04-amd64
-  - ubuntu-24.04-64
-  - ubuntu-24.04-amd64
-  - ubuntu-26.04-64
-  - ubuntu-26.04-amd64
-
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "${SNAP}/snap/snapcraft.yaml"
 
 execute: |
+  # This test is only intended to run on amd64
+  [ "$(dpkg --print-architecture)" = "amd64" ] || exit 0
+
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"

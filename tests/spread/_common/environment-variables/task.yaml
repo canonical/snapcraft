@@ -1,17 +1,5 @@
 summary: Test scriptlets variables
 
-# limit to amd64 for BUILD_ON variables
-systems:
-  - ubuntu-22.04
-  - ubuntu-22.04-64
-  - ubuntu-22.04-amd64
-  - ubuntu-24.04
-  - ubuntu-24.04-64
-  - ubuntu-24.04-amd64
-  - ubuntu-26.04
-  - ubuntu-26.04-64
-  - ubuntu-26.04-amd64
-
 environment:
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 5
 
@@ -21,6 +9,9 @@ prepare: |
   set_base "snapcraft.yaml"
 
 execute: |
+  # This test is only intended to run on amd64
+  [ "$(dpkg --print-architecture)" = "amd64" ] || exit 0
+
   check_vars() {
     file="$1"
     root="$(readlink -f "$PWD")"
