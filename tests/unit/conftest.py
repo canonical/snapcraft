@@ -18,7 +18,7 @@ import base64
 import contextlib
 import io
 import textwrap
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
@@ -378,8 +378,19 @@ def fake_provider(mock_instance):
             shutdown_delay_mins: int | None = None,
             use_base_instance: bool = True,
             prepare_instance: Callable[[Executor], None] | None = None,
+            instance_architecture: str | None = None,
         ):
             yield mock_instance
+
+        @override
+        def list_instances(
+            self,
+            *,
+            project_name: str | None = None,
+            instance_name_prefix: str | None = None,
+            include_base_instances: bool = False,
+        ) -> Collection[Executor]:
+            return []
 
     return FakeProvider()
 

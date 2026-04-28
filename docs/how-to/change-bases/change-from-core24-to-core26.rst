@@ -41,6 +41,24 @@ Not all extensions are compatible with core26 at its launch. If your snap uses a
 extension, run ``snapcraft extensions`` to see if it's available for core26. If your
 snap uses an extension that does not yet support core26, it's best to wait to upgrade.
 
+Update part names
+-----------------
+
+If you update a snap to use core26, then you must also verify its
+part names. Part names on core26 and later bases can't contain any forward slashes (/).
+We recommend replacing them with a hyphen (-):
+
+.. code-block:: diff
+    :caption: snapcraft.yaml
+
+     base: core26
+
+     # ...
+
+     parts:
+    -  my/part:
+    +  my-part:
+
 Update the packages
 -------------------
 
