@@ -178,6 +178,10 @@ class Snapcraft(Application):
 
     @override
     def _run_inner(self) -> int:
+        emit.warning(
+            "Early core26 support is subject to change until core26 is stable."
+        )
+
         try:
             return_code = super()._run_inner()
         except craft_store.errors.NoKeyringError as err:

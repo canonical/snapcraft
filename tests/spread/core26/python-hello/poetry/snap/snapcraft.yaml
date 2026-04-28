@@ -3,8 +3,7 @@ version: "1.0"
 summary: simple python application
 description: build a python application using core26
 base: core26
-build-base: devel
-grade: devel
+grade: stable
 confinement: strict
 
 apps:

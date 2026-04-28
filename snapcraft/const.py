@@ -59,12 +59,12 @@ class StableBase(StrEnum):
 
     CORE22 = "core22"
     CORE24 = "core24"
+    CORE26 = "core26"
 
 
 class UnstableBase(StrEnum):
     """Bases that require "devel" as their build-base."""
 
-    CORE26 = "core26"
     DEVEL = "devel"
 
 
@@ -76,6 +76,7 @@ class BuildBase(StrEnum):
 
     CORE22 = "core22"
     CORE24 = "core24"
+    CORE26 = "core26"
     DEVEL = "devel"
 
 
