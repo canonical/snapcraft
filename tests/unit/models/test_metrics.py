@@ -68,7 +68,7 @@ def test_series_invalid_currently_released(currently_released):
 @pytest.mark.parametrize(
     "series", [[], [{"name": "s1", "values": []}], [{"name": "s2", "values": ["v1"]}]]
 )
-@pytest.mark.parametrize("status", ["OK", "FAIL", "NO_DATA"])
+@pytest.mark.parametrize("status", ["OK", "FAIL", "NO DATA"])
 def test_metric_results(buckets, series, status):
     results = Metric(
         status=status,
@@ -167,7 +167,7 @@ def test_metrics_results_unmarshal_no_data():
                 "metric_name": "weekly_installed_base_by_channel",
                 "series": [],
                 "snap_id": "test-snap-id",
-                "status": "NO_DATA",
+                "status": "NO DATA",
             }
         ]
     }
@@ -177,7 +177,7 @@ def test_metrics_results_unmarshal_no_data():
     assert metrics_results == MetricsResponse(
         metrics=[
             Metric(
-                status="NO_DATA",
+                status="NO DATA",
                 snap_id="test-snap-id",
                 metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_CHANNEL,
                 buckets=[],

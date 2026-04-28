@@ -81,7 +81,7 @@ class Series(models.CraftBaseModel):
 class Metric(models.CraftBaseModel):
     """Single point of metrics for a snap."""
 
-    status: Literal["OK", "FAIL", "NO_DATA"]
+    status: Literal["OK", "FAIL", "NO DATA"]
     """Status of metrics retrieval."""
 
     snap_id: str
