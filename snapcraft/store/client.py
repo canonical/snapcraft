@@ -412,6 +412,38 @@ class LegacyStoreClientCLI:
             json={"channels": [channel]},
         )
 
+    def get_snap_status(self, snap_name: str) -> dict[str, Any]:
+        """Return the v1 channel map for snap_name.
+
+        Makes two calls: one to /dev/api/account for the snap-id, then
+        GET /dev/api/snaps/<snap_id>/state?series=16 which returns the full
+        channel map tree including arches with no release (info: "none").
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError as key_error:
+            emit.debug(f"{key_error!r} not found in {account_info!r}")
+            raise errors.SnapcraftError(
+                f"{snap_name!r} not found or not owned by this account"
+            ) from key_error
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        response = self.request(
+            "GET",
+            self._base_url + f"/dev/api/snaps/{snap_id}/state",
+            params={"series": constants.DEFAULT_SERIES},
+        )
+
+        if not response:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        return response.json()
+
     def verify_upload(
         self,
         *,

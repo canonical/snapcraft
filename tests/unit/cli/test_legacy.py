@@ -28,59 +28,6 @@ def legacy_run(mocker):
     return mocker.patch("snapcraft.commands.legacy.LegacyAppCommand.run")
 
 
-def test_promote_command(mocker, legacy_run):
-    mocker.patch.object(
-        sys,
-        "argv",
-        [
-            "cmd",
-            "promote",
-            "name",
-            "--from-channel",
-            "edge",
-            "--to-channel",
-            "edge/foo",
-        ],
-    )
-
-    cli.run()
-
-    assert legacy_run.mock_calls == [
-        call(
-            argparse.Namespace(
-                snap_name="name", from_channel="edge", to_channel="edge/foo", yes=False
-            )
-        )
-    ]
-
-
-def test_promote_command_yes(mocker, legacy_run):
-    mocker.patch.object(
-        sys,
-        "argv",
-        [
-            "cmd",
-            "promote",
-            "name",
-            "--from-channel",
-            "edge",
-            "--to-channel",
-            "edge/foo",
-            "--yes",
-        ],
-    )
-
-    cli.run()
-
-    assert legacy_run.mock_calls == [
-        call(
-            argparse.Namespace(
-                snap_name="name", from_channel="edge", to_channel="edge/foo", yes=True
-            )
-        )
-    ]
-
-
 def test_sign_build(mocker, legacy_run):
     mocker.patch.object(sys, "argv", ["cmd", "sign-build", "--local", "foo.snap"])
 

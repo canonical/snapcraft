@@ -18,8 +18,57 @@ import argparse
 from unittest.mock import ANY, call
 
 import pytest
+from craft_cli.errors import ArgumentParsingError
 
-from snapcraft import commands, errors
+from snapcraft import commands, errors, store
+
+SNAP_STATUS_PAYLOAD = {
+    "channel_map_tree": {
+        "latest": {
+            "16": {
+                "amd64": [
+                    {
+                        "channel": "candidate",
+                        "info": "specific",
+                        "revision": 10,
+                        "version": "1.0",
+                    },
+                    {"channel": "stable", "info": "none"},
+                ],
+                "arm64": [
+                    {
+                        "channel": "candidate",
+                        "info": "specific",
+                        "revision": 11,
+                        "version": "1.0",
+                    },
+                    {"channel": "stable", "info": "none"},
+                ],
+            }
+        }
+    }
+}
+
+SNAP_STATUS_PAYLOAD_PARTIAL = {
+    "channel_map_tree": {
+        "latest": {
+            "16": {
+                "amd64": [
+                    {
+                        "channel": "candidate",
+                        "info": "specific",
+                        "revision": 10,
+                        "version": "1.0",
+                    },
+                ],
+                "arm64": [
+                    {"channel": "candidate", "info": "none"},
+                ],
+            }
+        }
+    }
+}
+
 
 ############
 # Fixtures #
@@ -69,6 +118,24 @@ def fake_store_upload_metadata(mocker):
     return mocker.patch(
         "snapcraft.store.StoreClientCLI.upload_metadata",
         autospec=True,
+    )
+
+
+@pytest.fixture
+def fake_store_get_snap_status(mocker):
+    return mocker.patch(
+        "snapcraft.store.StoreClientCLI.get_snap_status",
+        autospec=True,
+        return_value=SNAP_STATUS_PAYLOAD,
+    )
+
+
+@pytest.fixture
+def fake_store_get_snap_status_partial(mocker):
+    return mocker.patch(
+        "snapcraft.store.StoreClientCLI.get_snap_status",
+        autospec=True,
+        return_value=SNAP_STATUS_PAYLOAD_PARTIAL,
     )
 
 
@@ -207,3 +274,116 @@ def test_set_default_track(emitter, fake_store_upload_metadata, fake_app_config)
         )
     ]
     emitter.assert_message("Default track for 'test-snap' set to 'test-track'.")
+
+
+####################
+# Promote Command  #
+####################
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_promote_with_yes(
+    emitter, fake_store_get_snap_status, fake_store_release, fake_app_config
+):
+    cmd = commands.StorePromoteCommand(fake_app_config)
+    cmd.run(
+        argparse.Namespace(
+            snap_name="test-snap",
+            from_channel="candidate",
+            to_channel="stable",
+            yes=True,
+        )
+    )
+
+    fake_store_release.assert_any_call(
+        ANY, snap_name="test-snap", revision=10, channels=["stable"]
+    )
+    fake_store_release.assert_any_call(
+        ANY, snap_name="test-snap", revision=11, channels=["stable"]
+    )
+    emitter.assert_message("Promotion from candidate to stable complete")
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_promote_user_confirms(
+    emitter, fake_store_get_snap_status, fake_store_release, fake_app_config, mocker
+):
+    mocker.patch("craft_cli.emit.confirm", return_value=True)
+    cmd = commands.StorePromoteCommand(fake_app_config)
+    cmd.run(
+        argparse.Namespace(
+            snap_name="test-snap",
+            from_channel="candidate",
+            to_channel="stable",
+            yes=False,
+        )
+    )
+
+    assert fake_store_release.called
+    emitter.assert_message("Promotion from candidate to stable complete")
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_promote_user_cancels(
+    emitter, fake_store_get_snap_status, fake_store_release, fake_app_config, mocker
+):
+    mocker.patch("craft_cli.emit.confirm", return_value=False)
+    cmd = commands.StorePromoteCommand(fake_app_config)
+    cmd.run(
+        argparse.Namespace(
+            snap_name="test-snap",
+            from_channel="candidate",
+            to_channel="stable",
+            yes=False,
+        )
+    )
+
+    fake_store_release.assert_not_called()
+    emitter.assert_message("Channel promotion cancelled")
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_promote_same_channel_error(fake_app_config):
+    cmd = commands.StorePromoteCommand(fake_app_config)
+
+    with pytest.raises(ArgumentParsingError):
+        cmd.run(
+            argparse.Namespace(
+                snap_name="test-snap",
+                from_channel="stable",
+                to_channel="stable",
+                yes=True,
+            )
+        )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_promote_partial_build_set_error(
+    fake_store_get_snap_status_partial, fake_app_config
+):
+    cmd = commands.StorePromoteCommand(fake_app_config)
+
+    with pytest.raises(store.errors.InvalidChannelSet):
+        cmd.run(
+            argparse.Namespace(
+                snap_name="test-snap",
+                from_channel="candidate",
+                to_channel="stable",
+                yes=True,
+            )
+        )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_promote_no_releases_error(fake_store_get_snap_status, fake_app_config):
+    cmd = commands.StorePromoteCommand(fake_app_config)
+
+    with pytest.raises(store.errors.ChannelNotAvailableOnArchError):
+        cmd.run(
+            argparse.Namespace(
+                snap_name="test-snap",
+                from_channel="edge",
+                to_channel="stable",
+                yes=True,
+            )
+        )
