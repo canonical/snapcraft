@@ -137,8 +137,6 @@ class Snapcraft(Application):
         """Register per application plugins when initializing."""
         super()._register_default_plugins()
 
-        craft_parts.plugins.unregister("maven-use")
-
         if self._use_craftapp_lib:
             # core22 uses dotnet v1
             # core24 and newer uses dotnet v2
