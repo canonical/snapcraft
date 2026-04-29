@@ -53,14 +53,16 @@
 
 
 # reference
-"reference/anatomy-of-a-recipe.rst" "reference/project-file/anatomy-of-snapcraft-yaml.rst"
-"reference/snapcraft-yaml.rst" "reference/project-file/snapcraft-yaml.rst"
-"reference/part-properties.rst" "reference/project-file/snapcraft-yaml.rst"
+"reference/anatomy-of-a-recipe.rst" "explanation/snapcraft-yaml.rst"
+"reference/part-properties.rst" "reference/snapcraft-yaml.rst"
 "reference/changelog.rst" "release-notes/changelog.rst"
 "reference/parts_steps.rst" "reference/parts/parts-and-steps.rst"
 "reference/snap-build-process.rst" "reference/processes/snap-build-process.rst"
 "reference/snap-publishing-process.rst" "reference/processes/snap-publishing-process.rst"
 "reference/architectures.rst" "reference/platforms.rst"
+"reference/project-file/index.rst" "explanation/snapcraft-yaml.rst"
+"reference/project-file/anatomy-of-snapcraft-yaml.rst" "explanation/snapcraft-yaml.rst"
+"reference/project-file/snapcraft-yaml.rst" "reference/snapcraft-yaml.rst"
 
 # explanation
 "explanation/architectures.rst" "explanation/platforms.rst"

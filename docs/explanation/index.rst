@@ -7,6 +7,15 @@ Explanations provide a wider perspective of Snapcraft. They aid in understanding
 concepts and relationships of Snapcraft as a complete system.
 
 
+The project file
+----------------
+
+Snaps are blueprinted in the ``snapcraft.yaml`` file. Your understanding of Snapcraft
+should begin with an exploration of this file.
+
+- :ref:`explanation-snapcraft-yaml`
+
+
 Bases and architectures
 -----------------------
 
@@ -59,10 +68,9 @@ communicating with local processes, and storing user credentials.
 
 .. toctree::
     :titlesonly:
-    :maxdepth: 1
     :hidden:
 
-    Cryptographic technology <cryptography>
+    snapcraft.yaml <snapcraft-yaml>
     platforms
     bases
     parts
@@ -75,4 +83,5 @@ communicating with local processes, and storing user credentials.
     remote-build
     /common/craft-parts/explanation/filesets
     classic-confinement
+    Cryptographic technology <cryptography>
     Documentation <documentation>

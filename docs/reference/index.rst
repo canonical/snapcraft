@@ -20,7 +20,7 @@ Project file
 The main object inside a snap project is a configurable project file. Read on for a
 complete reference of the structure and contents of this file.
 
-- :ref:`Project file references <reference-project-file>`
+- :ref:`snapcraft.yaml reference <reference-snapcraft-yaml>`
 
 
 Bases and architectures
@@ -67,9 +67,9 @@ support (LTS) for it.
 .. toctree::
     :hidden:
 
+    snapcraft-yaml
     commands
     build-environment-options
-    project-file/index
     bases
     platforms
     parts/index
