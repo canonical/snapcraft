@@ -3,7 +3,9 @@
 Components
 **********
 
-.. include:: /reuse/components-intro.rst
+Components are parts of a snap that can be built and uploaded in conjunction with a snap
+and later optionally installed beside it. Components are defined with a top-level
+``components`` key in the project file.
 
 Components are useful for distributing optional resources alongside a snap. For
 example, debug symbols are useful for the developer of an application and are

@@ -3,8 +3,6 @@
 Components
 ==========
 
-.. include:: /reuse/components-intro.rst
-
 Like snaps, components are packaged a squashfs file. When installed, the
 component is mounted at the path ``$SNAP/../components/$SNAP_REVISION/`` so
 the host snap can access it.
