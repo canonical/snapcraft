@@ -33,9 +33,8 @@ from craft_cli import emit
 from tabulate import tabulate
 from typing_extensions import override
 
-from snapcraft import errors, store
+from snapcraft import errors, store, utils
 from snapcraft.store.errors import StoreBuildAssertionPermissionError
-from snapcraft.utils import get_data_from_snap_file
 
 if TYPE_CHECKING:
     import argparse
@@ -277,9 +276,9 @@ class StoreSignBuildCommand(AppCommand):
     def run(self, parsed_args: argparse.Namespace) -> int | None:
         snap_file = cast("Path", parsed_args.snap_file)
         if not snap_file.exists():
-            raise FileNotFoundError(f"The file {str(snap_file)!r}")
+            raise FileNotFoundError(f"The file {str(snap_file)!r} does not exist.")
 
-        snap_yaml, _ = get_data_from_snap_file(snap_file)
+        snap_yaml, _ = utils.get_data_from_snap_file(snap_file)
         snap_name = snap_yaml["name"]
         grade = snap_yaml.get("grade", "stable")
 
@@ -287,7 +286,7 @@ class StoreSignBuildCommand(AppCommand):
         account_info = store_client.get_account_info()
 
         try:
-            authority_id = account_info["account_id"]
+            authority_id = account_info["id"]
             snap_id = account_info["snaps"][store.constants.DEFAULT_SERIES][snap_name][
                 "snap-id"
             ]
@@ -296,9 +295,7 @@ class StoreSignBuildCommand(AppCommand):
                 snap_name, store.constants.DEFAULT_SERIES
             )
 
-        snap_build_path = snap_file.with_name(snap_file.name + "-build").relative_to(
-            Path()
-        )
+        snap_build_path = snap_file.with_name(snap_file.name + "-build")
         if snap_build_path.is_file():
             emit.progress(
                 "A signed build assertion for this snap already exists.", permanent=True
@@ -309,7 +306,7 @@ class StoreSignBuildCommand(AppCommand):
             if not parsed_args.local:
                 is_registered = [
                     a
-                    for a in account_info["account_keys"]
+                    for a in account_info["account-keys"]
                     if a["public-key-sha3-384"] == key["sha3-384"]
                 ]
                 if not is_registered:
