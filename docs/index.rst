@@ -121,3 +121,4 @@ Governance and policies
 
     release-notes/index
     contribute/index
+    about-documentation

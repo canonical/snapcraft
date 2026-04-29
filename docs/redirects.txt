@@ -87,3 +87,4 @@
 
 # Other
 "contribute-to-this-documentation.rst" "contribute/documentation.rst"
+"explanation/documentation.rst" "about-documentation.rst"

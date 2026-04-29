@@ -95,4 +95,3 @@ communicating with local processes, and storing user credentials.
     snap-build-process
     snap-publishing-process
     Cryptographic technology <cryptography>
-    Documentation <documentation>
