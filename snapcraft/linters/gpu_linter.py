@@ -26,9 +26,9 @@ from snapcraft.elf import elf_utils
 from .base import Linter, LinterIssue, LinterResult
 
 _HELP_URLS = {
-    "core22": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics-on-base-core22/",
-    "core24": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics-on-base-core24/",
-    "core26": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics/",
+    "core22": "https://ubuntu.com/frame/docs/22/how-to/use-snap-graphics/",
+    "core24": "https://ubuntu.com/frame/docs/24/how-to/use-snap-graphics/",
+    "core26": "https://ubuntu.com/frame/docs/26/how-to/use-snap-graphics/",
 }
 
 _CORE22_PATTERNS = {
