@@ -71,13 +71,13 @@ communicating with local processes, and storing user credentials.
     :hidden:
 
     snapcraft.yaml <snapcraft-yaml>
-    platforms
-    bases
-    parts
+    Platforms <platforms>
+    Bases <bases>
+    Parts <parts>
     parts-lifecycle
-    interfaces
-    extensions
-    components
+    Interfaces <interfaces>
+    Extensions <extensions>
+    Components <components>
     snap-configurations
     build-overrides
     remote-build

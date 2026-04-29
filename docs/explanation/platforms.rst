@@ -5,8 +5,8 @@
 .. _explanation-architectures:
 .. _explanation-platforms:
 
-Platforms
-=========
+About platforms
+===============
 
 All software is constrained to a compatible CPU architecture. It may be built natively
 on the same architecture as the host it runs on, or cross-compiled to be built on a host
