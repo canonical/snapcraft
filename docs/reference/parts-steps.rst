@@ -1,4 +1,5 @@
 .. _reference-parts-and-steps:
+.. _reference-parts-steps:
 
 .. include:: /common/craft-parts/reference/parts_steps.rst
 

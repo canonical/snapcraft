@@ -1,7 +1,7 @@
 .. _explanation-parts:
 
-About parts
-===========
+Parts
+=====
 
 .. include:: /common/craft-parts/explanation/parts.rst
    :start-line: 6

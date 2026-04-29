@@ -22,5 +22,3 @@ Extensions help:
 - Work around the need for in-depth knowledge of the target software stack
 - Create a standard template for common application requirements
 - Reduce the testing and security burden, as they're tested and updated independently
-
-For a full list of supported extensions, see the :ref:`reference-extensions` reference.

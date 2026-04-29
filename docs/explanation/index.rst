@@ -57,6 +57,15 @@ a traditional app.
 - :ref:`explanation-classic-confinement`
 
 
+Processes
+---------
+
+During operation, Snapcraft follows underlying processes.
+
+- :ref:`explanation-snap-build-process`
+- :ref:`explanation-snap-publishing-process`
+
+
 Cryptography
 ------------
 
@@ -73,7 +82,7 @@ communicating with local processes, and storing user credentials.
     snapcraft.yaml <snapcraft-yaml>
     Platforms <platforms>
     Bases <bases>
-    Parts <parts>
+    parts
     parts-lifecycle
     Interfaces <interfaces>
     Extensions <extensions>
@@ -83,5 +92,7 @@ communicating with local processes, and storing user credentials.
     remote-build
     /common/craft-parts/explanation/filesets
     classic-confinement
+    snap-build-process
+    snap-publishing-process
     Cryptographic technology <cryptography>
     Documentation <documentation>
