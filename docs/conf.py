@@ -268,7 +268,7 @@ intersphinx_mapping = {
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
     "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
-    "ubuntu-frame": ("https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/24", None),
+    "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
 }
 
 # Block Intersphinx from looking up external sources with internal references. In other

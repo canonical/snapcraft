@@ -118,10 +118,7 @@ def test_gpu_linter_core22(mocker, new_dir, mock_elf_files, files, expected_coun
             issue.text
             == "GPU support library should be provided by a content interface."
         )
-        assert (
-            issue.url
-            == "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics-on-base-core22/"
-        )
+        assert issue.url == "https://ubuntu.com/frame/docs/22/how-to/use-snap-graphics/"
 
 
 @pytest.mark.parametrize(
@@ -263,10 +260,7 @@ def test_gpu_linter_core24(mocker, new_dir, mock_elf_files, files, expected_coun
             issue.text
             == "GPU support library should be provided by a content interface."
         )
-        assert (
-            issue.url
-            == "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics-on-base-core24/"
-        )
+        assert issue.url == "https://ubuntu.com/frame/docs/24/how-to/use-snap-graphics/"
 
 
 @pytest.mark.parametrize(
