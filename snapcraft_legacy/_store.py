@@ -38,7 +38,6 @@ from snapcraft_legacy.internal.errors import (
     SnapcraftEnvironmentError,
     SnapDataExtractionError,
 )
-from snapcraft_legacy.storeapi.constants import DEFAULT_SERIES
 
 if TYPE_CHECKING:
     from snapcraft_legacy.storeapi.v2.releases import Releases
@@ -407,71 +406,6 @@ def register(snap_name: str, is_private: bool = False, store_id: str = None) -> 
     StoreClientCLI().register(
         snap_name=snap_name, is_private=is_private, store_id=store_id
     )
-
-
-def _generate_snap_build(authority_id, snap_id, grade, key_name, snap_filename):
-    """Return the signed snap-build declaration for a snap on disk."""
-    snap_path = get_host_tool_path(command_name="snap", package_name="snapd")
-    cmd = [
-        snap_path,
-        "sign-build",
-        "--developer-id=" + authority_id,
-        "--snap-id=" + snap_id,
-        "--grade=" + grade,
-    ]
-    if key_name:
-        cmd.extend(["-k", key_name])
-    cmd.append(snap_filename)
-    try:
-        return subprocess.check_output(cmd)
-    except subprocess.CalledProcessError as e:
-        raise storeapi.errors.SignBuildAssertionError(snap_filename) from e
-
-
-def sign_build(snap_filename, key_name=None, local=False):
-    if not os.path.exists(snap_filename):
-        raise FileNotFoundError("The file {!r} does not exist.".format(snap_filename))
-
-    snap_yaml, _ = get_data_from_snap_file(snap_filename)
-    snap_name = snap_yaml["name"]
-    grade = snap_yaml.get("grade", "stable")
-
-    store_client = StoreClientCLI()
-    account_info = store_client.get_account_information()
-
-    try:
-        authority_id = account_info["account_id"]
-        snap_id = account_info["snaps"][DEFAULT_SERIES][snap_name]["snap-id"]
-    except KeyError as e:
-        raise storeapi.errors.StoreBuildAssertionPermissionError(
-            snap_name, DEFAULT_SERIES
-        ) from e
-
-    snap_build_path = snap_filename + "-build"
-    if os.path.isfile(snap_build_path):
-        logger.info("A signed build assertion for this snap already exists.")
-        with open(snap_build_path, "rb") as fd:
-            snap_build_content = fd.read()
-    else:
-        key = _maybe_prompt_for_key(key_name)
-        if not local:
-            is_registered = [
-                a
-                for a in account_info["account_keys"]
-                if a["public-key-sha3-384"] == key["sha3-384"]
-            ]
-            if not is_registered:
-                raise storeapi.errors.KeyNotRegisteredError(key["name"])
-        snap_build_content = _generate_snap_build(
-            authority_id, snap_id, grade, key["name"], snap_filename
-        )
-        with open(snap_build_path, "w+") as fd:
-            fd.write(snap_build_content.decode())
-        logger.info("Build assertion {} saved to disk.".format(snap_build_path))
-
-    if not local:
-        store_client.push_snap_build(snap_id, snap_build_content.decode())
-        logger.info("Build assertion {} uploaded to the Store.".format(snap_build_path))
 
 
 def upload_metadata(snap_filename, force):

@@ -147,6 +147,17 @@ class KeyAlreadyRegisteredError(SnapcraftError):
         super().__init__(f"You have already registered a key named {key_name!r}.")
 
 
+class KeyNotRegisteredError(SnapcraftError):
+    def __init__(self, key_name: str):
+        super().__init__(
+            f"The key {key_name!r} is not registered in the Store.",
+            resolution=(
+                f"Register it with 'snapcraft register-key {key_name!r} before "
+                "signing and uploading signatures to the store."
+            ),
+        )
+
+
 class NoKeysError(SnapcraftError):
     def __init__(self):
         super().__init__(
@@ -193,3 +204,17 @@ class InvalidChannelSet(SnapcraftError):
             f"There is no revision released for the following architectures: {arches}.\n"
             "Ensure the selected channel contains released revisions for all architectures."
         )
+
+
+class StoreBuildAssertionPermissionError(SnapcraftError):
+    def __init__(self, snap_name: str, snap_series: str):
+        super().__init__(
+            "Your account lacks permission to assert builds for this snap. Make "
+            f"sure you are logged in as the publisher of {snap_name!r} "
+            f"for series {snap_series!r}."
+        )
+
+
+class SignBuildAssertionError(SnapcraftError):
+    def __init__(self, snap_name: str):
+        super().__init__(f"Failed to sign build assertion for {snap_name!r}")

@@ -24,7 +24,8 @@ import json
 import os
 import subprocess
 import textwrap
-from typing import TYPE_CHECKING, Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, cast
 
 import craft_store
 from craft_application.commands import AppCommand
@@ -33,6 +34,8 @@ from tabulate import tabulate
 from typing_extensions import override
 
 from snapcraft import errors, store
+from snapcraft.store.errors import StoreBuildAssertionPermissionError
+from snapcraft.utils import get_data_from_snap_file
 
 if TYPE_CHECKING:
     import argparse
@@ -212,7 +215,7 @@ class StoreRegisterKeyCommand(AppCommand):
         short-lived token scoped to ``modify_account_key``, exports the key assertion,
         and registers it with the store.
         """
-        key = self._maybe_prompt_for_key(parsed_args.key_name)
+        key = _maybe_prompt_for_key(parsed_args.key_name)
 
         client = store.StoreClientCLI(ephemeral=True)
         client.login(
@@ -227,24 +230,6 @@ class StoreRegisterKeyCommand(AppCommand):
         emit.message(
             f"Done. The key {key['name']!r} ({key['sha3-384']!r}) may be used to sign your assertions."
         )
-
-    def _maybe_prompt_for_key(self, name: str | None) -> dict[str, Any]:
-        """Return a key, prompting if more than one key exists.
-
-        :param name: The key name supplied by the user.
-
-        :returns: The selected key dict from snapd.
-
-        :raises NoSuchKeyError: If no key with 'name' exists locally.
-        :raises NoKeysError: If no keys are present and name is None.
-        """
-        keys = list(_get_usable_keys(name=name))
-        if not keys:
-            if name is not None:
-                raise store.errors.NoSuchKeyError(name)
-            else:
-                raise store.errors.NoKeysError()
-        return self._select_key(keys)
 
     @staticmethod
     def _export_key(name: str, account_id: str) -> str:
@@ -262,31 +247,153 @@ class StoreRegisterKeyCommand(AppCommand):
             universal_newlines=True,
         )
 
-    @staticmethod
-    def _select_key(keys: list[dict[str, Any]]) -> dict[str, Any]:
-        """Interactively select a key when multiple are available.
 
-        :param keys: A list of key dicts.
+class StoreSignBuildCommand(AppCommand):
+    """Command to sign a snap build with a developer key."""
 
-        :returns: The selected key.
+    name = "sign-build"
+    help_msg = "Sign a built snap file and assert it using the developer's key"
+    overview = textwrap.dedent(
         """
-        if len(keys) > 1:
-            emit.progress("Select a key:\n", permanent=True)
-            tabulated_keys = tabulate(
-                [(i + 1, key["name"], key["sha3-384"]) for i, key in enumerate(keys)],
-                headers=["Number", "Name", "SHA3-384 fingerprint"],
-                tablefmt="plain",
+        Sign a specific build of a snap with a given key and upload the assertion
+        to the Snap Store (unless --local)."""
+    )
+
+    @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--key-name", metavar="key-name", help="key used to sign the assertion"
+        )
+        parser.add_argument(
+            "--local",
+            action="store_true",
+            help="sign assertion, but do not upload to the Snap Store",
+        )
+        parser.add_argument(
+            "snap_file", metavar="snap-file", type=Path, help="Snap file to sign"
+        )
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> int | None:
+        snap_file = cast("Path", parsed_args.snap_file)
+        if not snap_file.exists():
+            raise FileNotFoundError(f"The file {str(snap_file)!r}")
+
+        snap_yaml, _ = get_data_from_snap_file(snap_file)
+        snap_name = snap_yaml["name"]
+        grade = snap_yaml.get("grade", "stable")
+
+        store_client = store.StoreClientCLI()
+        account_info = store_client.get_account_info()
+
+        try:
+            authority_id = account_info["account_id"]
+            snap_id = account_info["snaps"][store.constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError:
+            raise StoreBuildAssertionPermissionError(
+                snap_name, store.constants.DEFAULT_SERIES
             )
-            emit.progress(f"{tabulated_keys}\n", permanent=True)
-            while True:
-                try:
-                    keynum = int(emit.prompt("Key number: ")) - 1
-                except ValueError:
-                    continue
-                if keynum >= 0 and keynum < len(keys):
-                    return keys[keynum]
+
+        snap_build_path = snap_file.with_name(snap_file.name + "-build").relative_to(
+            Path()
+        )
+        if snap_build_path.is_file():
+            emit.progress(
+                "A signed build assertion for this snap already exists.", permanent=True
+            )
+            snap_build_content = snap_build_path.read_bytes()
         else:
-            return keys[0]
+            key = _maybe_prompt_for_key(parsed_args.key_name)
+            if not parsed_args.local:
+                is_registered = [
+                    a
+                    for a in account_info["account_keys"]
+                    if a["public-key-sha3-384"] == key["sha3-384"]
+                ]
+                if not is_registered:
+                    raise store.errors.KeyNotRegisteredError(key["name"])
+
+            snap_build_content = self._generate_snap_build(
+                authority_id, snap_id, grade, key["name"], snap_file
+            )
+            snap_build_path.write_bytes(snap_build_content)
+
+            emit.message(f"Build assertion {snap_build_path} saved to disk.")
+
+        if not parsed_args.local:
+            store_client.push_snap_build(snap_id, snap_build_content.decode())
+            emit.message(f"Build assertion {snap_build_path} uploaded to the store.")
+
+    @staticmethod
+    def _generate_snap_build(
+        authority_id: str,
+        snap_id: str,
+        grade: str,
+        key_name: str | None,
+        snap_file: Path,
+    ) -> bytes:
+        cmd = [
+            "snap",
+            "sign-build",
+            f"--developer-id={authority_id}",
+            f"--snap-id={snap_id}",
+            f"--grade={grade}",
+        ]
+        if key_name is not None:
+            cmd.extend(["-k", key_name])
+        cmd.append(str(snap_file))
+
+        try:
+            return subprocess.check_output(cmd)
+        except subprocess.CalledProcessError:
+            raise store.errors.SignBuildAssertionError(str(snap_file))
+
+
+def _maybe_prompt_for_key(name: str | None) -> dict[str, Any]:
+    """Return a key, prompting if more than one key exists.
+
+    :param name: The key name supplied by the user.
+
+    :returns: The selected key dict from snapd.
+
+    :raises NoSuchKeyError: If no key with 'name' exists locally.
+    :raises NoKeysError: If no keys are present and name is None.
+    """
+    keys = list(_get_usable_keys(name=name))
+    if not keys:
+        if name is not None:
+            raise store.errors.NoSuchKeyError(name)
+        else:
+            raise store.errors.NoKeysError()
+    return _select_key(keys)
+
+
+def _select_key(keys: list[dict[str, Any]]) -> dict[str, Any]:
+    """Interactively select a key when multiple are available.
+
+    :param keys: A list of key dicts.
+
+    :returns: The selected key.
+    """
+    if len(keys) > 1:
+        emit.progress("Select a key:\n", permanent=True)
+        tabulated_keys = tabulate(
+            [(i + 1, key["name"], key["sha3-384"]) for i, key in enumerate(keys)],
+            headers=["Number", "Name", "SHA3-384 fingerprint"],
+            tablefmt="plain",
+        )
+        emit.progress(f"{tabulated_keys}\n", permanent=True)
+        while True:
+            try:
+                keynum = int(emit.prompt("Key number: ")) - 1
+            except ValueError:
+                continue
+            if keynum >= 0 and keynum < len(keys):
+                return keys[keynum]
+    else:
+        return keys[0]
 
 
 def _get_usable_keys(name: str | None = None) -> Iterator[dict[str, Any]]:
