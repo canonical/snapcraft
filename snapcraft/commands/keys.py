@@ -273,7 +273,7 @@ class StoreSignBuildCommand(AppCommand):
         )
 
     @override
-    def run(self, parsed_args: argparse.Namespace) -> int | None:
+    def run(self, parsed_args: argparse.Namespace) -> None:
         snap_file = cast("Path", parsed_args.snap_file)
         if not snap_file.exists():
             raise FileNotFoundError(f"The file {str(snap_file)!r} does not exist.")
