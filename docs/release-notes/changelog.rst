@@ -1547,7 +1547,7 @@ For a complete list of commits, check out the `8.0.0`_ release on GitHub.
 
 .. _canonical-sphinx: https://github.com/canonical/canonical-sphinx
 .. _Craft Application: https://github.com/canonical/craft-application
-.. _gpu 2404 interface docs: https://mir-server.io/docs/the-gpu-2404-snap-interface#heading--consuming-the-interface
+.. _gpu 2404 interface docs: https://ubuntu.com/frame/docs/24/how-to/use-snap-graphics/#consuming-the-interface
 .. _Matter: https://csa-iot.org/all-solutions/matter/
 .. _Matter on Ubuntu: https://canonical-matter.readthedocs-hosted.com/en/latest/
 .. _Releases page: https://github.com/canonical/snapcraft/releases
