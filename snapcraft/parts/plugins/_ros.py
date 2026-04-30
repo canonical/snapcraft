@@ -85,7 +85,7 @@ def _parse_rosdep_resolve_dependencies(
 class RosPlugin(plugins.Plugin):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
-    _MAP_CORE_ROSDISTRO = {"core22": "humble", "core24": "jazzy"}
+    _MAP_CORE_ROSDISTRO = {"core22": "humble", "core24": "jazzy", "core26": "lyrical"}
 
     @override
     def get_build_snaps(self) -> set[str]:
