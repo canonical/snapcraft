@@ -61,7 +61,7 @@ run:
 
 .. admonition:: If you have Docker installed
 
-    Local Docker installations may conflict with LXD. As a workaround, let Snapcraft
+    Local Docker installations may conflict with LXD. As a workaround, have Snapcraft
     build with Multipass instead:
 
     .. code-block:: bash
