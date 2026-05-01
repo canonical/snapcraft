@@ -151,7 +151,8 @@ Replace the first block of keys with:
     :language: yaml
     :caption: snapcraft.yaml
     :start-at: name: ukuzama-pyfiglet
-    :end-at: This snap is not endorsed by the pyfiglet project.
+    :end-at: amd64:
+    :emphasize-lines: 1-10
 
 As this is a personal snap, we prepended the project name with a user name. Replace
 ``ukuzama`` with your own user name. You might encounter other snaps in the Snap Store
