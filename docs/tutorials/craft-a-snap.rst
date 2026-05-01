@@ -444,7 +444,7 @@ snap, reinstall it, and then try it with one of the new fonts:
     :host:
     :dir:
 
-    ukuzama-pyfiglet -f thin bonjour le monde
+    ukuzama-pyfiglet -f thin hello, world!
 
     |         |    |                                |        ||
     |---.,---.|    |    ,---.        . . .,---.,---.|    ,---||
