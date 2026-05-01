@@ -31,13 +31,10 @@ The file is usually organized into four sections:
 - App keys
 - Part keys, which describe how to import and build the apps inside the snap.
 
-This structure isn't mandated, thought. As long as the file is valid YAML and each
+This structure isn't mandated, though. As long as the file is valid YAML and each
 key-value pair follows its expected signature, the snap will build.
 
-We'll examine the anatomy of the ``snapcraft.yaml`` for the `wethr
-<https://github.com/twobucks/wethr>`__ app, written in Node.
-
-
+For covering the anatomy of ``snapcraft``, we'll examine the snap for `wethr <https://github.com/twobucks/wethr>`__, which is written in Node.
 
 
 Top-level keys
@@ -60,9 +57,11 @@ Project information
 
 For convenience, the first set of keys comprise information about the snap, such as its
 name, version, summary, and description. These identifying keys allow users to find the
-snap through the Snap Store. It also provides some crucial When the snap is published,
-this information will be made available to users. It can also be used to pre-populate
-certain keys in the snap's Snap Store page during upload.
+snap through the Snap Store. When the snap is published, this information will be made
+available to users.
+
+This block also describes the essential characteristics of the snap, such as its
+architecture and underlying software set.
 
 The wethr snap keeps the most basic information about the project, but doesn't provide
 contact information or a link to a donation page, because the original software didn't.
@@ -82,7 +81,7 @@ snap that is common to any snap that uses the base. It's mounted and used as the
 filesystem for the apps inside the snap. In essence, this means the snaps behave as
 though they were running on a system that matches the base.
 
-Bases correspond to Ubuntu LTS releases, and are named ``core-<version>``. For example,
+Bases correspond to Ubuntu LTS releases, and are named ``core<version>``. For example,
 the library set in core26 is equivalent to a subset found in Ubuntu 26.04 LTS.
 
 The wethr snap uses core26 as its base.
@@ -107,31 +106,26 @@ Security confinement distinguishes snaps from most traditional Linux software.
 isolation and security, and prevents snaps from being affected by underlying system
 changes, snaps affecting each other, or snaps affecting the host.
 
-The snaps' confinement defines its default access to the host. Confinement is set to one
-of three levels, higher levels acting as progressively stricter filters:
+The snap's confinement defines its default access to the host. Confinement is set to one
+of three levels, higher levels acting as progressively stricter filters.
 
-- ``strict``. This confinement level uses Linux kernel security features to lock down
-  the apps inside the snap. By default, a strictly-confined snaps can't access the
-  network, the users' home directory, any audio subsystems or webcams, and it can't
-  display any graphical output through X or Wayland. With strict confinement, if an app
-  needs access to a system resource, it must be granted exhaustively.
+``strict`` confinement uses Linux kernel security features to lock down the
+apps inside the snap. By default, a strictly-confined snaps can't access the network,
+the user's home directory, any audio subsystems or webcams, and it can't display any
+graphical output through X or Wayland. With strict confinement, if an app needs access
+to a system resource, it must be granted exhaustively. This is the default and recommended level for snaps.
 
-  This is the default and recommended confinement for snaps.
-- ``devmode``. This is a debug mode level used by developers as they iterate on the
-  creation of their snap. This allows developers to troubleshoot apps, because they may
-  behave differently when confined.
+``devmode`` confinement is a debug mode for development and debugging, since the
+original software may behave differently when confined. This level is a temporary measure while a snap is being crafted.
 
-  This confinement is a temporary measure while a snap is being crafted.
-- ``classic``. This is the maximally-permissive level, equivalent to the full system
-  access that traditional software has. Classic confinement is often used as a stop-gap
-  measure to let developers publish apps the same level of access as traditional
-  software.
-
-  This confinement is a security risk, and should be used only when no other confinement
-  is possible. Before a snap can be published with classic confinement, it must be
-  approved by the Snap Store team according to a :external+snap:ref:`candidate review
-  process <interfaces-reviewing-classic-confinement-snaps>`. Snaps may be rejected if
-  they don't meet safety and security requirements.
+``classic`` confinement is the maximally-permissive level, equivalent to the full system
+access that traditional software has. It's often used as a stop-gap measure to let
+developers publish apps the same level of access as traditional software. This
+confinement is a security risk, and should only be used when no other confinement is
+possible. Before a snap can be published with classic confinement, it must be approved
+by the Snap Store team according to a :external+snap:ref:`candidate review process
+<interfaces-reviewing-classic-confinement-snaps>`. Snaps may be rejected if they don't
+meet safety and security requirements.
 
 The wethr snap is small and simple, so it's strictly confined. It contains a small app
 that only needs internet access to query local weather services, so the app is connected

@@ -82,7 +82,7 @@ communicating with local processes, and storing user credentials.
     snapcraft.yaml <snapcraft-yaml>
     Platforms <platforms>
     Bases <bases>
-    parts
+    Parts <parts>
     parts-lifecycle
     Interfaces <interfaces>
     Extensions <extensions>
