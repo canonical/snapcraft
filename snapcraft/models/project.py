@@ -2467,7 +2467,11 @@ class BareCore24Project(Core24Project):
 
 
 class Core26Project(Core24Project):
-    base: Literal["core26", "devel"]  # type: ignore[assignment]
+    base: Literal["core26"]  # type: ignore[assignment]
+
+
+class DevelBaseProject(Core26Project):
+    base: Literal["devel"]  # type: ignore[assignment]
     build_base: Literal["devel"]  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
 
     grade: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
@@ -2477,6 +2481,24 @@ class Core26Project(Core24Project):
 
 
 class BareCore26Project(Core26Project):
+    base: Literal["bare"]  # type: ignore[assignment]
+    build_base: Literal["core26"]  # type: ignore[assignment]
+
+    @override
+    @pydantic.field_validator("build_base", mode="after")
+    @classmethod
+    def _validate_devel_base(
+        cls, build_base: str, info: pydantic.ValidationInfo
+    ) -> str:
+        """Override _validate_devel_base from craft-application to be a no-op.
+
+        We're overriding this because pydantic does not allow before validators on
+        discriminator fields.
+        """
+        return build_base
+
+
+class BareDevelProject(DevelBaseProject):
     base: Literal["bare"]  # type: ignore[assignment]
     build_base: Literal["devel"]  # type: ignore[assignment]
 
@@ -2495,12 +2517,12 @@ class BareCore26Project(Core26Project):
 
 
 _BareProject = Annotated[
-    BareCore22Project | BareCore24Project | BareCore26Project,
+    BareCore22Project | BareCore24Project | BareCore26Project | BareDevelProject,
     pydantic.Discriminator("build_base"),
 ]
 
 _StandardProject = Annotated[
-    Core22Project | Core24Project | Core26Project | _BareProject,
+    Core22Project | Core24Project | Core26Project | DevelBaseProject | _BareProject,
     pydantic.Discriminator("base"),
 ]
 
