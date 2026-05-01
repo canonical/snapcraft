@@ -168,8 +168,6 @@ in the pyfiglet README. Instead, we sourced one from the upstream project at `fi
 <http://www.figlet.org>`_. The fuller ``description`` key, which has no length limit, is
 taken from pyfiglet. We added a disclaimer about endorsement at the end.
 
-.. _tutorial-craft-a-snap-define-the-target-platforms:
-
 As we're building on an AMD64 host, and we're only running basic tests for this
 tutorial, we should constrain our snap to only build on the current CPU architecture. At
 a later point, when you're able to test on other platforms, you could widen the coverage
