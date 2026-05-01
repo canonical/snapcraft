@@ -5,7 +5,7 @@ execute: |
   snap install snapcraft --classic
   snap install lxd
   sudo usermod -a -G lxd $USER
-  groups $USER
+  groups
   sudo lxd init --auto
   mkdir ukuzama-pyfiglet
   cd ukuzama-pyfiglet

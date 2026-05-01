@@ -4,9 +4,7 @@ Craft a snap
 ============
 
 In this tutorial, we'll build a snap package for a Python app called pyfiglet. The
-concepts we'll cover transfer to both simple and complex snaps. We'll cover everything
-from creating the build environment and the configuration file, to troubleshooting
-missing libraries and finding which interfaces to open.
+concepts we'll cover transfer to more complex snaps.
 
 It should take 20 minutes to complete.
 
@@ -19,52 +17,38 @@ Once you complete this tutorial, you'll have experience hand-crafting snaps that
 Lesson plan
 -----------
 
-Put simply, this tutorial is a run-through of the process of constructing a snap. We
-show you how to:
+This tutorial is a run-through of the process of constructing a snap. We show you how
+to:
 
-- Start a snap project from scratch
-- State the project's essential information
-- Define the project source files and main program
-- Package the snap
-- Modify the build process to enhance the snap's contents
+- Start a snap project
+- Assemble the initial project file
+- Pack the snap
+- Modify the build process
 - Share root files with the snap
+- Test the snap
 
 
 What we'll work with
 --------------------
 
 The object of this tutorial is to package `pyfiglet
-<https://github.com/pwaller/pyfiglet>`_ as a personal test snap. It's a lightweight app
-for displaying text as ASCII art, and is simple to build and test.
+<https://github.com/pwaller/pyfiglet>`__ as a personal test snap. It's a lightweight app
+for displaying text as ASCII art, and is quick to build and test.
 
 The snap will be named *ukuzama-pyfiglet*, after a fictional user. Throughout this
-course, replace *ukuzama* with your own username.
+tutorial, replace *ukuzama* with your own username.
 
 
 What you'll need
 ----------------
 
-For this tutorial, you'll need:
-
-- An x64 system running Ubuntu 22.04 or Ubuntu 24.04
+- An AMD64 system running Ubuntu 22.04 or Ubuntu 24.04
 - A local user with super user privileges
 - 20GB of free storage
 
 
 Install Snapcraft and LXD
 -------------------------
-
-.. admonition:: Before you install
-
-    If you have a Docker installation, you might run into conflicts with LXD over the
-    course of this tutorial. As a remedy, you can let Snapcraft build with Multipass
-    instead. To do so, start a fresh terminal session and run:
-
-    .. code-block:: bash
-
-        SNAPCRAFT_BUILD_ENVIRONMENT=multipass
-
-    Then, proceed to :ref:`tutorial-craft-a-snap-begin-project`.
 
 Snapcraft is itself available as a snap. Let's begin by installing it. In a terminal,
 run:
@@ -74,6 +58,17 @@ run:
     :start-at: snap install snapcraft --classic
     :end-at: snap install snapcraft --classic
     :dedent: 2
+
+.. admonition:: If you have Docker installed
+
+    Local Docker installations may conflict with LXD. As a workaround, let Snapcraft
+    build with Multipass instead:
+
+    .. code-block:: bash
+
+        SNAPCRAFT_BUILD_ENVIRONMENT=multipass
+
+    Then, proceed to :ref:`tutorial-craft-a-snap-begin-project`.
 
 Next, let's add LXD to your system. It functions as the build provider and containerizes
 the build environment.
@@ -98,8 +93,8 @@ you're a member of the group by running:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
     :language: bash
-    :start-at: groups $USER
-    :end-at: groups $USER
+    :start-at: groups
+    :end-at: groups
     :dedent: 2
 
 Look for ``lxd`` in the output.
@@ -140,25 +135,23 @@ has an ``init`` command that spawns a template project file. Let's start with th
 From here onward, we'll be working primarily in the project file. Open
 ``snap/snapcraft.yaml`` in a text editor.
 
-.. _tutorial-craft-a-snap-define-package-information:
+.. _tutorial-craft-a-snap-define-project-basics:
 
-Define the package information
-------------------------------
+Define the project basics
+-------------------------
 
 The first section inside a snap project file is typically its package information,
 sometimes informally referred to as its metadata. This information tells both humans and
 machines about the snap, such as its purpose, authors, license, and so on. The comments
 in the template describe how to use these keys.
 
-Replace the first four keys with:
+Replace the first block of keys with:
 
 .. literalinclude:: code/craft-a-snap/snapcraft.yaml
     :language: yaml
     :caption: snapcraft.yaml
     :start-at: name: ukuzama-pyfiglet
     :end-at: This snap is not endorsed by the pyfiglet project.
-
-Take care *not* to erase the ``grade`` and ``confinement`` keys.
 
 As this is a personal snap, we prepended the project name with a user name. Replace
 ``ukuzama`` with your own user name. You might encounter other snaps in the Snap Store
@@ -177,13 +170,10 @@ taken from pyfiglet. We added a disclaimer about endorsement at the end.
 
 .. _tutorial-craft-a-snap-define-the-target-platforms:
 
-Define the target platforms
----------------------------
-
-As we're building on an x64 system, and we're only running basic tests for this
-tutorial, we should constrain our snap to only build on the current CPU architecture,
-AMD64. At a later point, when you're able to test on other platforms, you could widen
-the coverage in this configuration.
+As we're building on an AMD64 host, and we're only running basic tests for this
+tutorial, we should constrain our snap to only build on the current CPU architecture. At
+a later point, when you're able to test on other platforms, you could widen the coverage
+to other architectures.
 
 Add the ``platform`` key after the project information:
 
@@ -458,11 +448,10 @@ snap, reinstall it, and then try it with one of the new fonts:
 
     ukuzama-pyfiglet -f thin bonjour le monde
 
-    |                  o                   |                                |
-    |---.,---.,---.    .,---..   .,---.    |    ,---.    ,-.-.,---.,---.,---|,---.
-    |   ||   ||   |    ||   ||   ||        |    |---'    | | ||   ||   ||   ||---'
-    `---'`---'`   '    |`---'`---'`        `---'`---'    ` ' '`---'`   '`---'`---'
-                   `---'
+    |         |    |                                |        ||
+    |---.,---.|    |    ,---.        . . .,---.,---.|    ,---||
+    |   ||---'|    |    |   |        | | ||   ||    |    |   |
+    `   '`---'`---'`---'`---' |      `-'-'`---'`    `---'`---'o
 
 
 .. _tutorial-craft-a-snap-connect-the-interfaces:
@@ -559,10 +548,8 @@ Build and reinstall the snap, but this time, install it like a production-ready 
     :end-at: snap install ukuzama-pyfiglet_0.1_amd64.snap --dangerous
     :dedent: 2
 
-.. note::
-
-    We must continue passing the ``--dangerous`` argument during installation because
-    it's not live in the Snap Store, and therefore not attestable.
+We must continue passing the ``--dangerous`` argument during installation because it's
+not live in the Snap Store, and therefore not attestable.
 
 Next, let's gather a font that wasn't included with pyfiglet and install it.
 
@@ -583,10 +570,10 @@ And give it a try:
     :host:
     :dir:
 
-    ukuzama-pyfiglet -f smbraille hamba kahle
+    ukuzama-pyfiglet -f smbraille hello, world!
 
-    ⣇⡀ ⢀⣀ ⣀⣀  ⣇⡀ ⢀⣀   ⡇⡠ ⢀⣀ ⣇⡀ ⡇ ⢀⡀
-    ⠇⠸ ⠣⠼ ⠇⠇⠇ ⠧⠜ ⠣⠼   ⠏⠢ ⠣⠼ ⠇⠸ ⠣ ⠣⠭
+    ⣇⡀ ⢀⡀ ⡇ ⡇ ⢀⡀    ⡀ ⢀ ⢀⡀ ⡀⣀ ⡇ ⢀⣸ ⡇
+    ⠇⠸ ⠣⠭ ⠣ ⠣ ⠣⠜,   ⠱⠱⠃ ⠣⠜ ⠏  ⠣ ⠣⠼ ⠅
 
 
 Review the project file
@@ -606,13 +593,8 @@ Conclusion and next steps
 
 And you're done! You have a snap of pyfiglet that works on your system.
 
-It would be a good time to start planning for your first public snap. Ask yourself, what
-software would be interesting to package? What apps would benefit the most from the
-security and ease of a snap? Any reason or justification is valid. Snaps can be tools,
-productivity software, games, or any traditional Linux package.
-
-Take a look on the public `Snap Store <https://snapcraft.io>`_ to see if the apps you
-use the most have public snaps. If a result comes up empty, that would be good candidate
-for your first public snap.
-
-When you're ready to begin crafting in earnest, you should :ref:`create an account and then register your snap <how-to-register-a-snap>`.
+You're ready to begin packaging and publishing your own software as snaps. Take a look
+in the `Snap Store <https://snapcraft.io>`__ to see if the apps you use the most have
+public snaps. If a result comes up empty, that would be good candidate for your first
+public snap. Once it's packing correctly, :ref:`publish your snap
+<how-to-publish-a-snap>`.
