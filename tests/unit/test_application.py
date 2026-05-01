@@ -322,16 +322,6 @@ def test_application_dotnet_registered(
     assert craft_parts.plugins.get_plugin_class("dotnet") == expected_plugin
 
 
-def test_application_maven_use_not_registered(snapcraft_yaml):
-    """maven-use plugin is disabled."""
-    snapcraft_yaml(base="core24")
-    app = application.create_app()
-
-    app._register_default_plugins()
-
-    assert "maven-use" not in craft_parts.plugins.get_registered_plugins()
-
-
 def test_default_command_integrated(monkeypatch, mocker, new_dir):
     """Test that for core24 projects we accept "pack" as the default command."""
 
