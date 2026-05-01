@@ -16,7 +16,7 @@
 
 """Snapcraft commands."""
 
-from . import core22, legacy
+from . import core22
 from .account import (
     StoreExportLoginCommand,
     StoreLoginCommand,
@@ -33,9 +33,7 @@ from .keys import (
     StoreListKeysCommand,
     StoreKeysCommand,
     StoreRegisterKeyCommand,
-)
-from .legacy import (
-    StoreLegacySignBuildCommand,
+    StoreSignBuildCommand,
 )
 from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
@@ -102,7 +100,6 @@ __all__ = [
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",
     "StoreLegacyPushCommand",
-    "StoreLegacySignBuildCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
     "StoreListKeysCommand",
@@ -118,6 +115,7 @@ __all__ = [
     "StoreReleaseCommand",
     "StoreRevisionsCommand",
     "StoreSetDefaultTrackCommand",
+    "StoreSignBuildCommand",
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",
@@ -127,5 +125,4 @@ __all__ = [
     "StoreWhoAmICommand",
     "TryCommand",
     "core22",
-    "legacy",
 ]

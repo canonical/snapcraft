@@ -227,26 +227,6 @@ class TestErrorFormatting:
             ),
         ),
         (
-            "KeyNotRegisteredError",
-            dict(
-                exception_class=errors.KeyNotRegisteredError,
-                kwargs=dict(key_name="test-1"),
-                expected_message=(
-                    "The key 'test-1' is not registered in the Store.\nPlease "
-                    "register it with `snapcraft register-key 'test-1'` before "
-                    "signing and uploading signatures to the Store."
-                ),
-            ),
-        ),
-        (
-            "SignBuildAssertionError",
-            dict(
-                exception_class=errors.SignBuildAssertionError,
-                kwargs=dict(snap_name="test-1"),
-                expected_message="Failed to sign build assertion for 'test-1'",
-            ),
-        ),
-        (
             "ChannelNotAvailableOnArchError",
             dict(
                 exception_class=errors.ChannelNotAvailableOnArchError,

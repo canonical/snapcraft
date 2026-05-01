@@ -2046,6 +2046,23 @@ def test_get_metrics(fake_client, get_metrics_payload):
     assert resp.metrics[0].snap_id == "vMTKRaLjnOJQetI78HjntT37VuoyssFE"
 
 
+###################
+# Push Snap Build #
+###################
+
+
+def test_push_snap_build(fake_client) -> None:
+    client.StoreClientCLI().push_snap_build("1234", "I work!")
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snaps/1234/builds",
+            json={"assertion": "I work!"},
+        )
+    ]
+
+
 ########################
 # OnPremStoreClientCLI #
 ########################

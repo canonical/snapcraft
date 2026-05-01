@@ -953,6 +953,13 @@ class LegacyStoreClientCLI:
             ).json()
         )
 
+    def push_snap_build(self, snap_id: str, snap_build: str) -> None:
+        self.request(
+            "POST",
+            self._base_url + f"/dev/api/snaps/{snap_id}/builds",
+            json={"assertion": snap_build},
+        )
+
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
     """On Premises Store Client command line interface."""

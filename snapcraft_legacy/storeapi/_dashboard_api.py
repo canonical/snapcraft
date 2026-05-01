@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import logging
 from typing import Any, Dict, Optional
 from urllib.parse import urlencode, urljoin
@@ -235,17 +234,6 @@ class DashboardAPI(Requests):
             )
 
         return response_json
-
-    def push_snap_build(self, snap_id, snap_build):
-        url = f"/dev/api/snaps/{snap_id}/builds"
-        data = json.dumps({"assertion": snap_build})
-        headers = {
-            "Content-Type": "application/json",
-        }
-        try:
-            self.post(url, data=data, headers=headers)
-        except craft_store.errors.StoreServerError as craft_error:
-            raise errors.StoreSnapBuildError(craft_error.response) from craft_error
 
     def snap_status(self, snap_id, series, arch):
         qs = {}
