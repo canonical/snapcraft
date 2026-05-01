@@ -1,7 +1,7 @@
 .. meta::
     :description: Explanation of snapcraft.yaml, the project file used by Snapcraft that defines the contents and structure of a snap.
 
-:relatedlinks: [YAML&#32;specification](https://yaml.org)
+:relatedlinks: [YAML&#32;specification](https://yaml.org), [wethr](https://github.com/twobucks/wethr)
 
 
 .. _explanation-snapcraft-yaml:
@@ -9,39 +9,37 @@
 About snapcraft.yaml
 ====================
 
-Every snap project depends on a file called ``snapcraft.yaml``, which tells Snapcraft
-how to build the snap.
+Every snap project depends on a file called ``snapcraft.yaml``, which dictates what goes
+into the snap and how it's built.
 
-This project file is written in YAML, and declares key-value pairs for all the
-configuration and contents. The :ref:`snapcraft.yaml reference
-<reference-snapcraft-yaml>` provides a complete index of the keys and accepted values in
-a project file.
-
-The file can be stored in any of the locations in a project:
+The file can be stored in any of the following locations in a project:
 
 - ``<project>/snapcraft.yaml``
 - ``<project>/.snapcraft.yaml``
 - ``<project>/snap/snapcraft.yaml``
 - ``<project>/build-aux/snap/snapcraft.yaml``
 
-The file is usually organized into four sections:
+For ease of comprehension, the file's keys are usually organized into four sections:
 
 - Top-level keys
 - Platform keys
 - App keys
-- Part keys, which describe how to import and build the apps inside the snap.
+- Part keys
 
-This structure isn't mandated, though. As long as the file is valid YAML and each
-key-value pair follows its expected signature, the snap will build.
+This structure isn't mandated, though. As long as the file is valid YAML and each key
+follows its expected signature, the snap will build. The :ref:`snapcraft.yaml reference
+<reference-snapcraft-yaml>` provides a complete index of the available keys and expected
+values.
 
-For covering the anatomy of ``snapcraft``, we'll examine the snap for `wethr <https://github.com/twobucks/wethr>`__, which is written in Node.
+To describe these sections, we'll dissect the ``snapcraft.yaml`` file for the wethr
+tool, which is written in Node.
 
 
 Top-level keys
 --------------
 
-The top-level keys provide information about the snap and describe its basic properties
-and information about the software.
+The top-level keys describe the basic properties of the snap and the software being
+packaged.
 
 .. literalinclude:: code/wethr-snapcraft.yaml
     :caption: wethr project file

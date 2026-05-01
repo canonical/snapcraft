@@ -21,11 +21,11 @@ The project file is a plaintext file encoded in UTF-8, can be composed manually 
 generated from a template. The template contains enough boilerplate keys to build the
 snap with little effort.
 
-Designing a snap is an open-ended craft. However, most project files have some common
-elements with special names in the Snapcraft world.
+Designing a snap is open-ended. However, most project files have some common elements
+with special names.
 
-- The snap's *metadata* provides identifiers and descriptions by which the snap can
-  account for itself and be discovered in the Snap Store.
+- The snap's *project information* identifies and describes the snap to users and
+  machines.
 - *Confinement* describes how confined and secure the snap is.
 - The *base* describes which set of libraries the snap will use for its functionality.
   The base also defines the operating system version for the snap build instance in the
