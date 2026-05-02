@@ -239,9 +239,9 @@ Documentation
 
 * Add the following reference documentation:
 
-  * :ref:`reference-anatomy-of-snapcraft-yaml`
-  * :ref:`reference-snap-build-process`
-  * :ref:`reference-snap-publishing-process`
+  * :ref:`reference-snapcraft-yaml`
+  * :ref:`explanation-snap-build-process`
+  * :ref:`explanation-snap-publishing-process`
   * :ref:`reference-channels`
   * :ref:`reference-system-requirements`
   * :ref:`uv plugin <craft_parts_uv_plugin>`

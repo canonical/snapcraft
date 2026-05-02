@@ -1,7 +1,7 @@
 .. _explanation-extensions:
 
-Extensions
-==========
+About extensions
+================
 
 Snapcraft extensions enable snap developers to easily incorporate a set of common
 requirements into a snap.
