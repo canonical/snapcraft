@@ -1,22 +1,43 @@
-summary: Use build-aux for snapcraft assets
-
-# We currently only have core18 on a stable channel
-systems: [ubuntu-20.04]
+summary: Find snapcraft assets from all supported snapcraft.yaml locations
 
 environment:
   SNAPCRAFT_BUILD_INFO: on
+
+  # Test all four supported snapcraft.yaml locations.
+  YAML_LOCATION/root: "snapcraft.yaml"
+  YAML_LOCATION/snap_dir: "snap/snapcraft.yaml"
+  YAML_LOCATION/build_aux: "build-aux/snap/snapcraft.yaml"
+  YAML_LOCATION/hidden: ".snapcraft.yaml"
 
 prepare: |
   mkdir test-snap
   cd test-snap
   snapcraft init
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base snap/snapcraft.yaml
+
   mkdir snap/hooks
   touch snap/hooks/install
   mkdir snap/gui
   touch snap/gui/icon.png
 
-  mkdir build-aux
-  mv snap build-aux
+  case "$SPREAD_VARIANT" in
+    root)
+      mv snap/snapcraft.yaml snapcraft.yaml
+      ;;
+    snap_dir)
+      # snap/snapcraft.yaml is already in place after snapcraft init
+      ;;
+    build_aux)
+      mkdir build-aux
+      mv snap build-aux
+      ;;
+    hidden)
+      mv snap/snapcraft.yaml .snapcraft.yaml
+      ;;
+  esac
 
 restore: |
   rm -rf test-snap
