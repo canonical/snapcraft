@@ -179,7 +179,7 @@ Example project file for ROS 2 Talker/Listener
 
                 apps:
                   ros2-talker-listener:
-                    command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+                    command: ros2 launch demo_nodes_cpp talker_listener_launch.py
                     extensions: [ros2-lyrical]
 
 Add a ROS 2 app
