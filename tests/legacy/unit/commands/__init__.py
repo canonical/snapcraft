@@ -28,7 +28,6 @@ from click.testing import CliRunner
 
 from snapcraft_legacy import storeapi
 from snapcraft_legacy.cli._runner import run
-from snapcraft_legacy.storeapi.v2.releases import Releases
 from tests.legacy import fixture_setup, unit
 
 _sample_keys = [
@@ -232,70 +231,6 @@ class FakeStoreCommandsBaseTestCase(CommandBaseTestCase):
         )
         self.useFixture(self.fake_store_release)
 
-        self.releases = Releases.unmarshal(
-            {
-                "revisions": [
-                    {
-                        "architectures": ["i386"],
-                        "base": "core20",
-                        "build_url": None,
-                        "confinement": "strict",
-                        "created_at": " 2016-09-27T19:23:40Z",
-                        "grade": "stable",
-                        "revision": 2,
-                        "sha3-384": "a9060ef4872ccacbfa440617a76fcd84967896b28d0d1eb7571f00a1098d766e7e93353b084ba6ad841d7b14b95ede48",
-                        "size": 20,
-                        "status": "Published",
-                        "version": "2.0.1",
-                    },
-                    {
-                        "architectures": ["amd64"],
-                        "base": "core20",
-                        "build_url": None,
-                        "confinement": "strict",
-                        "created_at": "2016-09-27T18:38:43Z",
-                        "grade": "stable",
-                        "revision": 1,
-                        "sha3-384": "a9060ef4872ccacbfa440617a76fcd84967896b28d0d1eb7571f00a1098d766e7e93353b084ba6ad841d7b14b95ede48",
-                        "size": 20,
-                        "status": "Published",
-                        "version": "2.0.2",
-                    },
-                ],
-                "releases": [
-                    {
-                        "architecture": "amd64",
-                        "branch": None,
-                        "channel": "latest/stable",
-                        "expiration-date": None,
-                        "revision": 1,
-                        "risk": "stable",
-                        "track": "latest",
-                        "when": "2020-02-12T17:51:40.891996Z",
-                    },
-                    {
-                        "architecture": "i386",
-                        "branch": None,
-                        "channel": "latest/stable",
-                        "expiration-date": None,
-                        "revision": None,
-                        "risk": "stable",
-                        "track": "latest",
-                        "when": "2020-02-11T17:51:40.891996Z",
-                    },
-                    {
-                        "architecture": "amd64",
-                        "branch": None,
-                        "channel": "latest/edge",
-                        "expiration-date": None,
-                        "revision": 1,
-                        "risk": "stable",
-                        "track": "latest",
-                        "when": "2020-01-12T17:51:40.891996Z",
-                    },
-                ],
-            }
-        )
         # Mock the snap command, pass through a select few.
         self.fake_check_output = fixtures.MockPatch(
             "subprocess.check_output", side_effect=mock_check_output

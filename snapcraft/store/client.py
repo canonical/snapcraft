@@ -34,8 +34,7 @@ from craft_platforms import DebianArchitecture
 from typing_extensions import override
 
 from snapcraft import __version__, errors, models, utils
-from snapcraft.models import MetricsResponse
-from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
+from snapcraft.models import MetricsResponse, Releases
 
 from . import _metadata, channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
@@ -598,7 +597,7 @@ class LegacyStoreClientCLI:
 
         return status["revision"]
 
-    def list_revisions(self, snap_name: str) -> Revisions:
+    def list_revisions(self, snap_name: str) -> Releases:
         """Return a list of available revisions for snap_name.
 
         :param snap_name: the name of the snap to query.
@@ -612,7 +611,7 @@ class LegacyStoreClientCLI:
             },
         )
 
-        return Revisions.unmarshal(response.json())
+        return Releases.unmarshal(response.json())
 
     @staticmethod
     def _unmarshal_validation(
@@ -1061,7 +1060,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
     @override
-    def list_revisions(self, snap_name: str) -> Revisions:
+    def list_revisions(self, snap_name: str) -> Releases:
         response = self.request(
             "GET",
             f"{self._base_url}/v1/snap/{snap_name}/revisions",
@@ -1071,7 +1070,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             },
         )
 
-        return Revisions.unmarshal(response.json())
+        return Releases.unmarshal(response.json())
 
 
 # We have two stores with a rather different implementation.

@@ -5,8 +5,8 @@ from textwrap import dedent
 import pytest
 
 from snapcraft import commands, errors
+from snapcraft.models import Releases
 from snapcraft.store import channel_map
-from snapcraft_legacy.storeapi.v2.releases import Releases
 
 ############
 # Fixtures #

@@ -22,7 +22,7 @@ import subprocess
 import tempfile
 from datetime import timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 from urllib.parse import urljoin
 
 import craft_store
@@ -38,9 +38,6 @@ from snapcraft_legacy.internal.errors import (
     SnapcraftEnvironmentError,
     SnapDataExtractionError,
 )
-
-if TYPE_CHECKING:
-    from snapcraft_legacy.storeapi.v2.releases import Releases
 
 
 logger = logging.getLogger(__name__)
@@ -324,10 +321,6 @@ class StoreClientCLI(storeapi.StoreClient):
     # TODO Move progressbar implementation out of snapcraft_legacy.storeapi used
     #      during upload into this class using click.
     # TODO use an instance of this class directly from snapcraft_legacy.cli.store
-
-    @_login_wrapper
-    def get_snap_releases(self, *, snap_name: str) -> "Releases":
-        return super().get_snap_releases(snap_name=snap_name)
 
     @_login_wrapper
     def get_account_information(self) -> Dict[str, Any]:

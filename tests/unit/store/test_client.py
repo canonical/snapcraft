@@ -26,10 +26,10 @@ from craft_store import endpoints
 from craft_store.models import RevisionsResponseModel
 
 from snapcraft import errors, models
+from snapcraft.models.releases import Releases
 from snapcraft.store import LegacyUbuntuOne, client, constants
 from snapcraft.store.channel_map import ChannelMap
 from snapcraft.store.errors import NoSnapIdError, SnapNotFoundError
-from snapcraft_legacy.storeapi.v2.releases import Releases
 
 from .utils import FakeResponse
 
