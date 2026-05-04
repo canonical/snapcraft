@@ -30,7 +30,7 @@ from craft_platforms import DebianArchitecture
 from pydantic import ValidationError
 
 from snapcraft.parts.plugins import KernelPlugin
-from snapcraft_legacy.plugins.v2._kernel_build import check_new_config
+from snapcraft.parts.plugins._kernel_build import check_new_config
 
 
 @pytest.fixture
@@ -784,7 +784,7 @@ class TestPluginKernel:
                 filter(
                     None,
                     caplog.text.split(
-                        "WARNING  snapcraft_legacy.plugins.v2._kernel_build:_kernel_build.py"
+                        "WARNING  snapcraft.parts.plugins._kernel_build:_kernel_build.py"
                     ),  # XXX: use a better way to check log messages
                 )
             )
