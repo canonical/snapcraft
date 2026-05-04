@@ -22,7 +22,6 @@ import os
 import subprocess
 import sys
 import textwrap
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -90,8 +89,8 @@ _required_boot = ["squashfs"]
 
 
 def _get_initrd_kernel_modules(
-    initrd_modules: Optional[List[str]], configured_modules: Optional[List[str]]
-) -> List[str]:
+    initrd_modules: list[str] | None, configured_modules: list[str] | None
+) -> list[str]:
     """Collect a list of kernel modules to add to the initrd."""
     initrd_installed_kernel_modules = ""
     initrd_configured_kernel_modules = ""
@@ -109,7 +108,7 @@ def _get_initrd_kernel_modules(
     ]
 
 
-def _link_files_fnc_cmd() -> List[str]:
+def _link_files_fnc_cmd() -> list[str]:
     """Add function to link files."""
     cmd = textwrap.dedent(
         """
@@ -156,7 +155,7 @@ def _link_files_fnc_cmd() -> List[str]:
     return [cmd]
 
 
-def _download_core_initrd_fnc_cmd() -> List[str]:
+def _download_core_initrd_fnc_cmd() -> list[str]:
     """Define helper to download code initrd deb package."""
     cmd = textwrap.dedent(
         """
@@ -172,21 +171,21 @@ def _download_core_initrd_fnc_cmd() -> List[str]:
     return [cmd]
 
 
-def _download_generic_initrd_cmd(target_arch: str) -> List[str]:
+def _download_generic_initrd_cmd(target_arch: str) -> list[str]:
     """Download Ubuntu Core initrd deb."""
     cmd = textwrap.dedent(
-        """
+        f"""
         echo "Getting ubuntu-core-initrd...."
         # only download u-c-initrd deb if needed
         if [ ! -e ${{UC_INITRD_DEB}} ]; then
-        	download_core_initrd {arch} ${{UC_INITRD_DEB}}
+        	download_core_initrd {target_arch} ${{UC_INITRD_DEB}}
         fi
-        """.format(arch=target_arch)
+        """
     )
     return [cmd]
 
 
-def _download_snap_bootstrap_fnc_cmd() -> List[str]:
+def _download_snap_bootstrap_fnc_cmd() -> list[str]:
     """Define helper to download snap-bootstrap from snapd deb package."""
     cmd = textwrap.dedent(
         """
@@ -202,32 +201,32 @@ def _download_snap_bootstrap_fnc_cmd() -> List[str]:
     return [cmd]
 
 
-def _download_snap_bootstrap_cmd(target_arch: str) -> List[str]:
+def _download_snap_bootstrap_cmd(target_arch: str) -> list[str]:
     """Download snap-bootstrap deb."""
     cmd = textwrap.dedent(
-        """
+        f"""
         echo "Getting snapd deb for snap bootstrap..."
         # only download again if files does not exist, otherwise
         # assume we are re-running build
         if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
-        	download_snap_bootstrap {arch} ${{UC_INITRD_DEB}}
+        	download_snap_bootstrap {target_arch} ${{UC_INITRD_DEB}}
         fi
-        """.format(arch=target_arch)
+        """
     )
     return [cmd]
 
 
-def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
+def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> list[str]:
     """Clone zfs git repository if needed."""
     if enable_zfs:
         return [
             textwrap.dedent(
-                """
+                f"""
                 if [ ! -d {dest_dir}/zfs ]; then
                 	echo "cloning zfs..."
-                	git clone --depth=1 {zfs_url} {dest_dir}/zfs -b master
+                	git clone --depth=1 {_ZFS_URL} {dest_dir}/zfs -b master
                 fi
-                """.format(dest_dir=dest_dir, zfs_url=_ZFS_URL)
+                """
             )
         ]
     return [
@@ -235,26 +234,26 @@ def _clone_zfs_cmd(enable_zfs: bool, dest_dir: str) -> List[str]:
     ]
 
 
-def _clean_old_build_cmd(dest_dir: str) -> List[str]:
+def _clean_old_build_cmd(dest_dir: str) -> list[str]:
     """Clean previous build."""
     return [
         textwrap.dedent(
-            """
+            f"""
             echo "Cleaning previous build first..."
             [ -e {dest_dir}/modules ] && rm -rf {dest_dir}/modules
             [ -L {dest_dir}/lib/modules ] && rm -rf {dest_dir}/lib/modules
-            """.format(dest_dir=dest_dir)
+            """
         )
     ]
 
 
 def _do_base_config_cmd(
-    make_cmd: List[str],
-    config_file: Optional[str],
-    config_flavour: Optional[str],
-    defconfig: List[str],
+    make_cmd: list[str],
+    config_file: str | None,
+    config_flavour: str | None,
+    defconfig: list[str],
     dest_dir: str,
-) -> List[str]:
+) -> list[str]:
     # if the parts build dir already contains a .config file, use it
     cmd = [
         'echo "Preparing config..."',
@@ -269,7 +268,7 @@ def _do_base_config_cmd(
     elif config_flavour:
         logger.info("Using ubuntu config flavour %s", config_flavour)
         conf_cmd = textwrap.dedent(
-            """	echo "Assembling Ubuntu config..."
+            f"""	echo "Assembling Ubuntu config..."
 	if [ -f ${{KERNEL_SRC}}/debian/rules ] && [ -x ${{KERNEL_SRC}}/debian/rules ]; then
 		# Generate Ubuntu kernel configs
 		pushd ${{KERNEL_SRC}}
@@ -285,7 +284,7 @@ def _do_base_config_cmd(
 		fakeroot debian/rules clean
 		rm -rf CONFIGS/
 		popd
-	fi""".format(config_flavour=config_flavour, dest_dir=dest_dir)
+	fi"""
         )
         cmd.extend([conf_cmd])
     else:
@@ -298,7 +297,7 @@ def _do_base_config_cmd(
     return cmd
 
 
-def _do_patch_config_cmd(configs: Optional[List[str]], dest_dir: str) -> List[str]:
+def _do_patch_config_cmd(configs: list[str] | None, dest_dir: str) -> list[str]:
     # prepend the generated file with provided kconfigs
     #  - concat kconfigs to buffer
     #  - read current .config and append
@@ -320,7 +319,7 @@ def _do_patch_config_cmd(configs: Optional[List[str]], dest_dir: str) -> List[st
     ]
 
 
-def _do_remake_config_cmd(make_cmd: List[str]) -> List[str]:
+def _do_remake_config_cmd(make_cmd: list[str]) -> list[str]:
     # update config to include kconfig amendments using oldconfig
     make_cmd = make_cmd.copy()
     make_cmd[1] = "-j1"  # FIXME: make this more robust
@@ -331,13 +330,13 @@ def _do_remake_config_cmd(make_cmd: List[str]) -> List[str]:
 
 
 def _get_configure_command(
-    make_cmd: List[str],
-    config_file: Optional[str],
-    config_flavour: Optional[str],
-    defconfig: List[str],
-    configs: Optional[List[str]],
+    make_cmd: list[str],
+    config_file: str | None,
+    config_flavour: str | None,
+    defconfig: list[str],
+    configs: list[str] | None,
     dest_dir: str,
-) -> List[str]:
+) -> list[str]:
     """Configure the kernel."""
     return [
         *_do_base_config_cmd(
@@ -370,7 +369,7 @@ def _do_parse_config(config_path: str):
     return builtin, modules
 
 
-def _do_check_config(builtin: List[str], modules: List[str]):
+def _do_check_config(builtin: list[str], modules: list[str]):
     # check the resulting .config has all the necessary options
     msg = (
         "**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
@@ -400,7 +399,7 @@ def _do_check_config(builtin: List[str], modules: List[str]):
         logger.warning(warn)
 
 
-def _do_check_initrd(builtin: List[str], modules: List[str], initrd_modules: List[str]):
+def _do_check_initrd(builtin: list[str], modules: list[str], initrd_modules: list[str]):
     # check all config items are either builtin or part of initrd as modules
     msg = (
         "**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
@@ -425,7 +424,7 @@ def _do_check_initrd(builtin: List[str], modules: List[str], initrd_modules: Lis
         logger.warning(warn)
 
 
-def check_new_config(config_path: str, initrd_modules: List[str]):
+def check_new_config(config_path: str, initrd_modules: list[str]):
     """Check passed kernel config and initrd modules for required dependencies."""
     print("Checking created config...")
     builtin, modules = _do_parse_config(config_path)
@@ -433,7 +432,7 @@ def check_new_config(config_path: str, initrd_modules: List[str]):
     _do_check_initrd(builtin, modules, initrd_modules)
 
 
-def _call_check_config_cmd(dest_dir: str) -> List[str]:
+def _call_check_config_cmd(dest_dir: str) -> list[str]:
     """Invoke the python interpreter and execute check_new_config()."""
     return [
         'echo "Checking config for expected options..."',
@@ -451,7 +450,7 @@ def _call_check_config_cmd(dest_dir: str) -> List[str]:
     ]
 
 
-def _get_build_command(make_cmd: List[str], targets: List[str]) -> List[str]:
+def _get_build_command(make_cmd: list[str], targets: list[str]) -> list[str]:
     """Build the kernel."""
     return [
         'echo "Building kernel..."',
@@ -461,14 +460,14 @@ def _get_build_command(make_cmd: List[str], targets: List[str]) -> List[str]:
 
 def _get_zfs_build_commands(
     enable_zfs: bool, arch_triplet: str, build_dir: str, install_dir: str
-) -> List[str]:
+) -> list[str]:
     """Include zfs build steps if required."""
     if not enable_zfs:
         return ['echo "Not building zfs modules"']
 
     return [
         textwrap.dedent(
-            """
+            f"""
             echo "Building zfs modules..."
             cd {build_dir}/zfs
             ./autogen.sh
@@ -482,20 +481,18 @@ def _get_zfs_build_commands(
             rm -rf {install_dir}/zfs
             echo "Rebuilding module dependencies"
             depmod -b {install_dir} ${{release_version}}
-            """.format(
-                build_dir=build_dir, install_dir=install_dir, arch_triplet=arch_triplet
-            )
+            """
         )
     ]
 
 
 def _get_perf_build_commands(
-    make_cmd: List[str],
+    make_cmd: list[str],
     enable_perf: bool,
     src_dir: str,
     build_dir: str,
     install_dir: str,
-) -> List[str]:
+) -> list[str]:
     """Build perf binary if enabled."""
     if not enable_perf:
         return ['echo "Not building perf binary"']
@@ -515,11 +512,11 @@ def _get_perf_build_commands(
 
 
 def _make_initrd_cmd(
-    initrd_compression: Optional[str],
-    initrd_compression_options: Optional[List[str]],
-    initrd_firmware: Optional[List[str]],
-    initrd_addons: Optional[List[str]],
-    initrd_overlay: Optional[str],
+    initrd_compression: str | None,
+    initrd_compression_options: list[str] | None,
+    initrd_firmware: list[str] | None,
+    initrd_addons: list[str] | None,
+    initrd_overlay: str | None,
     initrd_stage_firmware: bool,
     build_efi_image: bool,
     initrd_ko_use_workaround: bool,
@@ -528,7 +525,7 @@ def _make_initrd_cmd(
     initrd_tool_pass_root: bool,
     install_dir: str,
     stage_dir: str,
-) -> List[str]:
+) -> list[str]:
     cmd_echo = [
         'echo "Generating initrd with ko modules for kernel release: ${KERNEL_RELEASE}"',
     ]
@@ -907,23 +904,23 @@ def _make_initrd_cmd(
 
 
 def get_build_commands(
-    make_cmd: List[str],
-    make_targets: List[str],
-    make_install_targets: List[str],
+    make_cmd: list[str],
+    make_targets: list[str],
+    make_install_targets: list[str],
     target_arch: str,
     target_arch_triplet: str,
-    config_file: Optional[str],
-    config_flavour: Optional[str],
-    defconfig: List[str],
-    configs: Optional[List[str]],
-    device_trees: Optional[List[str]],
-    initrd_modules: Optional[List[str]],
-    configured_modules: Optional[List[str]],
-    initrd_compression: Optional[str],
-    initrd_compression_options: Optional[List[str]],
-    initrd_firmware: Optional[List[str]],
-    initrd_addons: Optional[List[str]],
-    initrd_overlay: Optional[str],
+    config_file: str | None,
+    config_flavour: str | None,
+    defconfig: list[str],
+    configs: list[str] | None,
+    device_trees: list[str] | None,
+    initrd_modules: list[str] | None,
+    configured_modules: list[str] | None,
+    initrd_compression: str | None,
+    initrd_compression_options: list[str] | None,
+    initrd_firmware: list[str] | None,
+    initrd_addons: list[str] | None,
+    initrd_overlay: str | None,
     initrd_stage_firmware: bool,
     build_efi_image: bool,
     initrd_ko_use_workaround: bool,
@@ -937,7 +934,7 @@ def get_build_commands(
     build_dir: str,
     install_dir: str,
     stage_dir: str,
-) -> List[str]:
+) -> list[str]:
     # kernel source can be either CRAFT_PART_SRC or CRAFT_PROJECT_DIR
     return [
         f"[ -d {source_dir}/kernel ] && KERNEL_SRC={source_dir} || KERNEL_SRC={project_dir}",
@@ -1019,7 +1016,7 @@ def get_build_commands(
 ### Install
 
 
-def _parse_kernel_release_cmd(build_dir: str) -> List[str]:
+def _parse_kernel_release_cmd(build_dir: str) -> list[str]:
     """Set release from kernel.release file."""
     return [
         'echo "Parsing created kernel release..."',
@@ -1027,7 +1024,7 @@ def _parse_kernel_release_cmd(build_dir: str) -> List[str]:
     ]
 
 
-def _copy_vmlinuz_cmd(install_dir: str) -> List[str]:
+def _copy_vmlinuz_cmd(install_dir: str) -> list[str]:
     """Install kernel image."""
     cmd = [
         'echo "Copying kernel image..."',
@@ -1043,7 +1040,7 @@ def _copy_vmlinuz_cmd(install_dir: str) -> List[str]:
     return cmd
 
 
-def _copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
+def _copy_system_map_cmd(build_dir: str, install_dir: str) -> list[str]:
     """Install the system map."""
     cmd = [
         'echo "Copying System map..."',
@@ -1053,7 +1050,7 @@ def _copy_system_map_cmd(build_dir: str, install_dir: str) -> List[str]:
     return cmd
 
 
-def _copy_dtbs_cmd(device_trees: Optional[List[str]], install_dir: str) -> List[str]:
+def _copy_dtbs_cmd(device_trees: list[str] | None, install_dir: str) -> list[str]:
     """Install custom device trees."""
     if not device_trees:
         return [""]
@@ -1078,7 +1075,7 @@ def _copy_dtbs_cmd(device_trees: Optional[List[str]], install_dir: str) -> List[
     return cmd
 
 
-def _install_config_cmd(build_dir: str, install_dir: str) -> List[str]:
+def _install_config_cmd(build_dir: str, install_dir: str) -> list[str]:
     """Install the kernel configuration file."""
     # install .config as config-$version
     return [
@@ -1088,11 +1085,11 @@ def _install_config_cmd(build_dir: str, install_dir: str) -> List[str]:
     ]
 
 
-def _arrange_install_dir_cmd(install_dir: str) -> List[str]:
+def _arrange_install_dir_cmd(install_dir: str) -> list[str]:
     """Final adjustments to installation directory."""
     return [
         textwrap.dedent(
-            """
+            f"""
 
             echo "Finalizing install directory..."
             # upstream kernel installs under $INSTALL_MOD_PATH/lib/modules/
@@ -1106,13 +1103,13 @@ def _arrange_install_dir_cmd(install_dir: str) -> List[str]:
             # create symlinks for modules and firmware for convenience
             ln -sf ../modules {install_dir}/lib/modules
             ln -sf ../firmware {install_dir}/lib/firmware
-            """.format(install_dir=install_dir)
+            """
         )
     ]
 
 
 def _compression_cmd(
-    initrd_compression: Optional[str], initrd_compression_options: Optional[List[str]]
+    initrd_compression: str | None, initrd_compression_options: list[str] | None
 ) -> str:
     if not initrd_compression:
         return ""
@@ -1129,12 +1126,12 @@ def _compression_cmd(
 
 
 def _get_post_install_cmd(
-    device_trees: Optional[List[str]],
-    initrd_compression: Optional[str],
-    initrd_compression_options: Optional[List[str]],
-    initrd_firmware: Optional[List[str]],
-    initrd_addons: Optional[List[str]],
-    initrd_overlay: Optional[str],
+    device_trees: list[str] | None,
+    initrd_compression: str | None,
+    initrd_compression_options: list[str] | None,
+    initrd_firmware: list[str] | None,
+    initrd_addons: list[str] | None,
+    initrd_overlay: str | None,
     initrd_stage_firmware: bool,
     build_efi_image: bool,
     initrd_ko_use_workaround: bool,
@@ -1144,7 +1141,7 @@ def _get_post_install_cmd(
     build_dir: str,
     install_dir: str,
     stage_dir: str,
-) -> List[str]:
+) -> list[str]:
     return [
         "",
         *_parse_kernel_release_cmd(build_dir=build_dir),
@@ -1178,14 +1175,14 @@ def _get_post_install_cmd(
 
 
 def _get_install_command(
-    device_trees: Optional[List[str]],
-    make_cmd: List[str],
-    make_install_targets: List[str],
-    initrd_compression: Optional[str],
-    initrd_compression_options: Optional[List[str]],
-    initrd_firmware: Optional[List[str]],
-    initrd_addons: Optional[List[str]],
-    initrd_overlay: Optional[str],
+    device_trees: list[str] | None,
+    make_cmd: list[str],
+    make_install_targets: list[str],
+    initrd_compression: str | None,
+    initrd_compression_options: list[str] | None,
+    initrd_firmware: list[str] | None,
+    initrd_addons: list[str] | None,
+    initrd_overlay: str | None,
     initrd_stage_firmware: bool,
     build_efi_image: bool,
     initrd_ko_use_workaround: bool,
@@ -1195,7 +1192,7 @@ def _get_install_command(
     build_dir: str,
     install_dir: str,
     stage_dir: str,
-) -> List[str]:
+) -> list[str]:
     # install to installdir
     # make_cmd = self._make_cmd.copy()
     make_cmd += [
