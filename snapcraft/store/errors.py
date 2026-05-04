@@ -152,7 +152,7 @@ class KeyNotRegisteredError(SnapcraftError):
         super().__init__(
             f"The key {key_name!r} is not registered in the Store.",
             resolution=(
-                f"Register it with 'snapcraft register-key {key_name!r} before "
+                f"Register it with 'snapcraft register-key {key_name}' before "
                 "signing and uploading signatures to the store."
             ),
         )
