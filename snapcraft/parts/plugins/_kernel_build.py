@@ -1,3 +1,4 @@
+# ruff: noqa: E101 (mixed-spaces-and-tabs)
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 
 #
@@ -511,7 +512,7 @@ def _get_perf_build_commands(
     ]
 
 
-def _make_initrd_cmd(
+def _make_initrd_cmd(  # noqa: PLR0913 (too-many-args)
     initrd_compression: str | None,
     initrd_compression_options: list[str] | None,
     initrd_firmware: list[str] | None,
@@ -903,7 +904,7 @@ def _make_initrd_cmd(
     ]
 
 
-def get_build_commands(
+def get_build_commands(  # noqa: PLR0913 (too-many-args)
     make_cmd: list[str],
     make_targets: list[str],
     make_install_targets: list[str],
@@ -1125,7 +1126,7 @@ def _compression_cmd(
     return cmd
 
 
-def _get_post_install_cmd(
+def _get_post_install_cmd(  # noqa: PLR0913 (too-many-args)
     device_trees: list[str] | None,
     initrd_compression: str | None,
     initrd_compression_options: list[str] | None,
@@ -1174,7 +1175,7 @@ def _get_post_install_cmd(
     ]
 
 
-def _get_install_command(
+def _get_install_command(  # noqa: PLR0913 (too-many-args)
     device_trees: list[str] | None,
     make_cmd: list[str],
     make_install_targets: list[str],
@@ -1236,7 +1237,7 @@ def _get_install_command(
 ### build dependencies
 
 
-def add_snappy_ppa(with_sudo=False) -> None:  # noqa: C901
+def add_snappy_ppa(with_sudo: bool = False) -> None:  # noqa: C901
     # Add ppa necessary to build initrd.
     # TODO: reimplement once snapcraft allows to the plugins
     # to add custom ppa.
