@@ -23,32 +23,36 @@ What's new
 Snapcraft 9.0 brings the following features, integrations, and improvements.
 
 
-Stable support for core26
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Support for core26
+~~~~~~~~~~~~~~~~~~
 
-Core26 snaps can now be built without ``build-base: devel`` or ``grade: devel``. As a
-result, they are eligible for publication to candidate and stable channels in the Snap
+Snapcraft now supports building snaps with the core26 base. Core26 is stable and
+recommended for all new snaps.
+
+If you're currently using core24, you can migrate by following the
+:ref:`how-to-change-from-core24-to-core26` guide.
+
+If you were already building experimental core26 snaps, you can drop
+``build-base: devel`` or ``grade: devel`` from your project file. As a result, your
+snaps will be eligible for publication to candidate and stable channels in the Snap
 Store.
-
-The :ref:`how-to-change-from-core24-to-core26` guide describes the steps for migrating
-an existing Snapcraft project to core26.
 
 GPU extension
 ~~~~~~~~~~~~~
 
-Previously, snaps had to use a desktop extension, such as the GNOME extension, to
-get GPU support even when they didn't need full desktop support. This increased the
-complexity and build time of snaps.
+Snaps support hardware-accelerated graphics like OpenGL and Vulkan, but accessing GPU
+libraries usually requires a full desktop extension, increasing complexity and build
+time.
 
-The new :ref:`reference-gpu-extension` has been added for core22 and higher snaps,
-which provides hardware-accelerated graphics support for applications that need OpenGL,
-Vulkan, and other GPU capabilities. Snaps that only need GPU support can use this
-extension instead of a desktop extension.
+A :ref:`reference-gpu-extension` has been added for core22 and higher snaps, which
+provides hardware-accelerated graphics support for apps. If your snap used a desktop
+extension like GNOME as a workaround for accessing GPU capabilities, replace it with
+this new extension.
 
 GPU linter
 ~~~~~~~~~~
 
-A new linter has been added for snaps that need GPU support.
+A new linter has been added for snaps that need GPU libraries.
 If a snap includes GPU libraries, the linter suggests using a GPU content snap.
 
 The :ref:`how-to-use-the-gpu-linter` guide describes how to address issues flagged by
@@ -58,29 +62,30 @@ Stable .NET extensions
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The :ref:`reference-dotnet-extensions` are now stable and no longer require
-using the ``SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS`` environment variable.
+the ``SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS`` environment variable.
 
 
 Bazel plugin
 ~~~~~~~~~~~~
 
-The new :ref:`craft_parts_bazel_plugin` has been added for building Bazel applications.
+The :ref:`craft_parts_bazel_plugin` is now available for parts that need the Bazel
+build system.
 
-``npm-use`` plugin
-~~~~~~~~~~~~~~~~~~
+npm Use plugin
+~~~~~~~~~~~~~~
 
-The new :ref:`craft_parts_npm_use_plugin` has been added. This plugin exports NPM
+A :ref:`craft_parts_npm_use_plugin` has been added. This plugin exports npm
 tarballs to a local directory.
 
 Additionally, the :ref:`craft_parts_npm_plugin` plugin gained support for the
 ``self-contained`` build attribute.
 
-Together, these changes enable NPM parts to build from local sources.
+Together, these changes enable npm parts to build from local sources.
 
-``maven-use`` plugin
-~~~~~~~~~~~~~~~~~~~~
+Maven Use plugin
+~~~~~~~~~~~~~~~~
 
-The new :ref:`craft_parts_maven_use_plugin` has been added. This plugin deploys Maven
+A :ref:`craft_parts_maven_use_plugin` has been added. This plugin deploys Maven
 artifacts to a local repository, enabling other Maven parts to build from local
 sources.
 
@@ -88,7 +93,7 @@ sources.
 Build on a compatible architecture
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Snapcraft can now build a snap inside a provider running a different but compatible
+Snapcraft can now build a snap inside a build provider running a different but compatible
 architecture. Set the ``CRAFT_BUILD_ON`` environment variable to the desired
 architecture when invoking the build.
 
@@ -139,9 +144,8 @@ The Gradle daemon is now disabled by default when using the
 :ref:`craft_parts_gradle_plugin`. You can control this behavior with the new
 ``gradle-use-daemon`` key.
 
-The Gradle plugin also gained support for the ``self-contained`` build attribute,
-which enables parts using the :ref:`craft_parts_maven_use_plugin` to use local
-dependencies.
+The plugin also supports the ``self-contained`` build attribute, so that parts using the
+:ref:`craft_parts_maven_use_plugin` can use local dependencies.
 
 7zip support
 ~~~~~~~~~~~~
