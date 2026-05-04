@@ -156,9 +156,6 @@ class StoreClient:
     def upload_precheck(self, snap_name):
         return self.dashboard.snap_upload_precheck(snap_name)
 
-    def push_snap_build(self, snap_id, snap_build):
-        return self.dashboard.push_snap_build(snap_id, snap_build)
-
     def release(
         self,
         snap_name,
