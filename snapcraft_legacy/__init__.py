@@ -353,7 +353,6 @@ from snapcraft_legacy._store import (  # noqa
     download,
     login,
     register,
-    sign_build,
     status,
     upload_metadata,
 )
