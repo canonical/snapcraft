@@ -69,18 +69,20 @@ The new :ref:`craft_parts_bazel_plugin` has been added for building Bazel applic
 ``npm-use`` plugin
 ~~~~~~~~~~~~~~~~~~
 
-The new :ref:`craft_parts_npm_use_plugin` has been added. This plugin builds npm
-applications from local dependencies.
+The new :ref:`craft_parts_npm_use_plugin` has been added. This plugin exports NPM
+tarballs to a local directory.
 
 Additionally, the :ref:`craft_parts_npm_plugin` plugin gained support for the
-``self-contained`` build attribute, which enables parts using the ``npm-use`` plugin to
-use local dependencies.
+``self-contained`` build attribute.
+
+Together, these changes enable NPM parts to build from local sources.
 
 ``maven-use`` plugin
 ~~~~~~~~~~~~~~~~~~~~
 
-The new :ref:`craft_parts_maven_use_plugin` has been added. This plugin builds Maven
-applications from local dependencies.
+The new :ref:`craft_parts_maven_use_plugin` has been added. This plugin deploys Maven
+artifacts to a local repository, enabling other Maven parts to build from local
+sources.
 
 
 Build on a compatible architecture
