@@ -331,7 +331,7 @@ difference in the project file when content sharing is enabled:
 
             apps:
               ros2-talker-listener:
-                command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+                command: ros2 launch demo_nodes_cpp talker_listener_launch.py
             -   extensions: [ros2-lyrical]
             +   extensions: [ros2-lyrical-ros-base]
 
