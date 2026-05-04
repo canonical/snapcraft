@@ -1,25 +1,21 @@
 .. meta::
-
-    :description: Snapcraft is the command-line build tool for packaging and distributing software and apps in the snap container format.
+    :description: Documentation for Snapcraft, the tool for packaging software into the snap container format.
 
 
 Snapcraft
 =========
 
-**Snapcraft** is the command-line build tool for packaging and distributing software and
-apps in the snap container format.
+**Snapcraft** is the tool for packaging software into the snap container format.
 
-The tool packages apps across many supported languages, build tools, and frameworks,
-such as Python, C and C++, Rust, Node, and GNOME. Snaps can be tested, debugged, and
-locally shared before being published to the global Snap Store and private stores. It
-uses simple commands to manage and monitor releases at a granular level.
+It builds and bundles Linux software of all kinds and sources, and is operated through a
+command-line interface.
 
-It solves the problems of dependency management and architecture support by bundling all
-of a software's libraries into the container itself, and provides a way to package any
-app, program, toolkit, or library for all major Linux distributions and IoT devices.
+Snapcraft is compatible with many languages and frameworks, including Python, Rust, Go,
+and GNOME. It provides debugging and testing capabilities to ready a snap for
+publication to the Snap Store or a private store.
 
 Snapcraft is for developers, package maintainers, fleet administrators, and hobbyists
-who are interested in publishing snaps for Linux and IoT devices.
+who publish software for desktop and IoT devices.
 
 
 In this documentation
@@ -89,24 +85,25 @@ feedback.
 Get involved
 ~~~~~~~~~~~~
 
-* `Snapcraft Matrix channel <https://matrix.to/#/#snapcraft:ubuntu.com>`__
-* `Snapcraft forum <https://forum.snapcraft.io/>`__
-* `Contribute to Snapcraft development <https://github.com/canonical/snapcraft/blob/main/CONTRIBUTING.md>`__
-* :ref:`contribute-to-this-documentation`
+- `Snapcraft Matrix channel <https://matrix.to/#/#snapcraft:ubuntu.com>`__
+- `Snapcraft forum <https://forum.snapcraft.io/>`__
+- `Contribute to Snapcraft development
+  <https://github.com/canonical/snapcraft/blob/main/CONTRIBUTING.md>`__
+- :ref:`contribute-to-this-documentation`
 
 
 Releases and support
 ~~~~~~~~~~~~~~~~~~~~
 
-* :ref:`release-notes`
-* :ref:`reference-support-schedule`
+- :ref:`release-notes`
+- :ref:`reference-support-schedule`
 
 
 Governance and policies
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-* `Ubuntu Code of Conduct <https://ubuntu.com/community/docs/ethos/code-of-conduct>`__
-* `Canonical Contributor License Agreement
+- `Ubuntu Code of Conduct <https://ubuntu.com/community/docs/ethos/code-of-conduct>`__
+- `Canonical Contributor License Agreement
   <https://ubuntu.com/legal/contributors>`__
 
 
@@ -123,3 +120,4 @@ Governance and policies
 
     release-notes/index
     contribute/index
+    about-documentation

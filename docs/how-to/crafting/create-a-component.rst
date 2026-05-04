@@ -3,8 +3,6 @@
 Create a component
 ==================
 
-.. include:: ../../reuse/components-intro.rst
-
 Start with a simple project file:
 
 .. literalinclude:: ../code/crafting/basic/snapcraft.yaml

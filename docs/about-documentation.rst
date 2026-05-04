@@ -1,8 +1,9 @@
 .. meta::
-  :description: An explanation of the documentation system, process, and writing style and conventions in Snapcraft.
+    :description: An explanation of the documentation system, process, and writing style and conventions in Snapcraft.
 
 
 .. _explanation-documentation:
+.. _about-documentation:
 
 About this documentation
 ========================
