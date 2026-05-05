@@ -82,7 +82,9 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
 
         # These are colcon-plugin specific entries
         if plugin_name == "colcon":
-            part_snippet["colcon-ros-build-snaps"] = [self.ros2_lyrical_snaps.sdk]
+            part_snippet["colcon-ros-build-snaps"] = [
+                f"{self.ros2_lyrical_snaps.sdk}/edge"
+            ]
             part_snippet["colcon-cmake-args"] = [
                 f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros2_lyrical_snaps.sdk}/current/usr"'
             ]
@@ -100,6 +102,12 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
             f"ros-{self.ROS_DISTRO}-ros-workspace",
             f"ros-{self.ROS_DISTRO}-ament-index-cpp",
             f"ros-{self.ROS_DISTRO}-ament-index-python",
+            "libpython3.14-minimal",
+            "libpython3.14-stdlib",
+            "python3-minimal",  # for the "python3" symlink
+            "python3.14-minimal",
+            "python3.14-venv",
+            "python3-yaml",
         ]
 
         # Something in the ROS 2 build chain requires to find this lib during cmake call,
