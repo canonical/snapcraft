@@ -476,9 +476,7 @@ class StoreRevisionsCommand(AppCommand):
 
     @override
     def run(self, parsed_args: argparse.Namespace):
-        releases = store.StoreClientCLI().list_revisions(
-            snap_name=parsed_args.snap_name
-        )
+        releases = store.StoreClientCLI().list_releases(snap_name=parsed_args.snap_name)
 
         parsed_revisions: list[tuple[str, ...]] = []
         for rev in releases.revisions:

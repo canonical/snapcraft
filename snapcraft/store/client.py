@@ -597,8 +597,8 @@ class LegacyStoreClientCLI:
 
         return status["revision"]
 
-    def list_revisions(self, snap_name: str) -> Releases:
-        """Return a list of available revisions for snap_name.
+    def list_releases(self, snap_name: str) -> Releases:
+        """Return a list of releases for snap_name.
 
         :param snap_name: the name of the snap to query.
         """
@@ -1060,7 +1060,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
     @override
-    def list_revisions(self, snap_name: str) -> Releases:
+    def list_releases(self, snap_name: str) -> Releases:
         response = self.request(
             "GET",
             f"{self._base_url}/v1/snap/{snap_name}/revisions",

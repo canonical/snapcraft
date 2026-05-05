@@ -204,9 +204,9 @@ def list_revisions_result():
 
 
 @pytest.fixture
-def fake_store_list_revisions(mocker, list_revisions_result):
+def fake_store_list_releases(mocker, list_revisions_result):
     fake_client = mocker.patch(
-        "snapcraft.store.StoreClientCLI.list_revisions",
+        "snapcraft.store.StoreClientCLI.list_releases",
         autospec=True,
         return_value=list_revisions_result,
     )
@@ -744,7 +744,7 @@ def test_list_tracks_error(fake_app_config):
 ##########################
 
 
-@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_releases")
 def test_revisions(emitter, fake_app_config):
     cmd = commands.StoreRevisionsCommand(fake_app_config)
 
@@ -770,8 +770,8 @@ def test_list_revisions_error(fake_app_config):
         cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
 
 
-@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
-def test_list_revisions_arch(emitter, fake_app_config):
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_releases")
+def test_list_releases_arch(emitter, fake_app_config):
     cmd = commands.StoreRevisionsCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(snap_name="test-snap", arch="amd64"))
@@ -785,8 +785,8 @@ def test_list_revisions_arch(emitter, fake_app_config):
     )
 
 
-@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
-def test_list_revisions_no_release_information(
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_releases")
+def test_list_releases_no_release_information(
     emitter, list_revisions_result, fake_app_config
 ):
     list_revisions_result.releases = []

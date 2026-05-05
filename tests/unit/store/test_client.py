@@ -126,7 +126,7 @@ def channel_map_payload():
 
 
 @pytest.fixture
-def list_revisions_payload():
+def list_releases_payload():
     return {
         "revisions": [
             {
@@ -1419,11 +1419,11 @@ def test_notify_upload_error(fake_client):
 ##################
 
 
-def test_list_revisions(fake_client, list_revisions_payload):
+def test_list_releases(fake_client, list_releases_payload):
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_revisions_payload).encode()
+        status_code=200, content=json.dumps(list_releases_payload).encode()
     )
-    channel_map = client.StoreClientCLI().list_revisions(
+    channel_map = client.StoreClientCLI().list_releases(
         snap_name="test-snap",
     )
     assert isinstance(channel_map, Releases)
@@ -2275,13 +2275,13 @@ def test_on_prem_get_channel_map(
     ]
 
 
-def test_on_prem_list_revisions(
-    on_prem_client, fake_client_request, list_revisions_payload
+def test_on_prem_list_releases(
+    on_prem_client, fake_client_request, list_releases_payload
 ):
     fake_client_request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_revisions_payload).encode()
+        status_code=200, content=json.dumps(list_releases_payload).encode()
     )
-    channel_map = client.StoreClientCLI().list_revisions(
+    channel_map = client.StoreClientCLI().list_releases(
         snap_name="test-snap",
     )
     assert isinstance(channel_map, Releases)
