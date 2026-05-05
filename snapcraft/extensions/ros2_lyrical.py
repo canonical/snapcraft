@@ -50,7 +50,7 @@ class ROS2LyricalExtension(Extension):
             "package-repositories": [
                 {
                     "type": "apt",
-                    "url": "http://packages.ros.org/ros2-testing/ubuntu",
+                    "url": "http://packages.ros.org/ros2/ubuntu",
                     "components": ["main"],
                     "formats": ["deb"],
                     "key-id": "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",

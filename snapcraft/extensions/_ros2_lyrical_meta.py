@@ -83,7 +83,7 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
         # These are colcon-plugin specific entries
         if plugin_name == "colcon":
             part_snippet["colcon-ros-build-snaps"] = [
-                f"{self.ros2_lyrical_snaps.sdk}/edge"
+                self.ros2_lyrical_snaps.sdk
             ]
             part_snippet["colcon-cmake-args"] = [
                 f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{self.ros2_lyrical_snaps.sdk}/current/usr"'
