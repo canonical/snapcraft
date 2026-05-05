@@ -53,7 +53,8 @@ GPU linter
 ~~~~~~~~~~
 
 A new linter has been added for snaps that need GPU libraries.
-If a snap includes GPU libraries, the linter suggests using a GPU content snap.
+If a snap stages GPU libraries via the :ref:`stage-packages <PartSpec.stage_packages>`
+key, the linter suggests using a GPU content snap instead.
 
 The :ref:`how-to-use-the-gpu-linter` guide describes how to address issues flagged by
 the linter.
@@ -95,7 +96,7 @@ Build on a compatible architecture
 
 Snapcraft can now build a snap inside a build provider running a different but compatible
 architecture. Set the ``CRAFT_BUILD_ON`` environment variable to the desired
-architecture when invoking the build.
+Debian architecture when invoking the build.
 
 For example, this can be used to build an ARMHF snap on an ARM64 host.
 
