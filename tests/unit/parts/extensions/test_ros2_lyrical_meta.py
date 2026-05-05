@@ -174,6 +174,7 @@ class TestExtensionROS2LyricalMetaExtensions:
             f"{extension_name}/ros2-launch": {
                 "source": f"{get_extensions_data_dir()}/ros2",
                 "plugin": "make",
+                "make-parameters": ["DESTDIR=${CRAFT_PART_INSTALL}"],
                 "build-packages": [
                     "ros-lyrical-ros-environment",
                     "ros-lyrical-ros-workspace",
