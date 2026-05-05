@@ -53,7 +53,7 @@ GPU linter
 ~~~~~~~~~~
 
 A new linter has been added for snaps that need GPU libraries.
-If a snap stages GPU libraries via the :ref:`stage-packages <PartSpec.stage_packages>`
+If a snap stages GPU libraries with the :ref:`stage-packages <PartSpec.stage_packages>`
 key, the linter suggests using a GPU content snap instead.
 
 The :ref:`how-to-use-the-gpu-linter` guide describes how to address issues flagged by
