@@ -50,7 +50,7 @@ class ROS2LyricalExtension(Extension):
             "package-repositories": [
                 {
                     "type": "apt",
-                    "url": "http://packages.ros.org/ros2/ubuntu",
+                    "url": "http://packages.ros.org/ros2-testing/ubuntu",
                     "components": ["main"],
                     "formats": ["deb"],
                     "key-id": "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
@@ -90,12 +90,22 @@ class ROS2LyricalExtension(Extension):
             "$SNAP/usr/lib/python3/dist-packages",
             "${PYTHONPATH}",
         ]
+        ld_library_paths = [
+            "$SNAP/usr/lib/x86_64-linux-gnu/blas",
+            "$SNAP/usr/lib/x86_64-linux-gnu/lapack",
+            "$SNAP/usr/lib/aarch64-linux-gnu/blas",
+            "$SNAP/usr/lib/aarch64-linux-gnu/lapack",
+            "$SNAP/usr/lib/arm-linux-gnueabihf/blas",
+            "$SNAP/usr/lib/arm-linux-gnueabihf/lapack",
+            "${LD_LIBRARY_PATH}",
+        ]
         return {
             "command-chain": ["snap/command-chain/ros2-launch"],
             "environment": {
                 "ROS_VERSION": self.ROS_VERSION,
                 "ROS_DISTRO": self.ROS_DISTRO,
                 "PYTHONPATH": ":".join(python_paths),
+                "LD_LIBRARY_PATH": ":".join(ld_library_paths),
                 # Various ROS 2 tools (e.g. spdlog logger) keep a cache or a log,
                 # and use $ROS_HOME to determine where to put them.
                 "ROS_HOME": "$SNAP_USER_DATA/ros",
@@ -117,11 +127,20 @@ class ROS2LyricalExtension(Extension):
             f"ros2-{self.ROS_DISTRO}/ros2-launch": {
                 "source": f"{get_extensions_data_dir()}/ros2",
                 "plugin": "make",
+                "make-parameters": ["DESTDIR=${CRAFT_PART_INSTALL}"],
                 "build-packages": [
                     f"ros-{self.ROS_DISTRO}-ros-environment",
                     f"ros-{self.ROS_DISTRO}-ros-workspace",
                     f"ros-{self.ROS_DISTRO}-ament-index-cpp",
                     f"ros-{self.ROS_DISTRO}-ament-index-python",
+                ],
+                "stage-packages": [
+                    "libpython3.14-minimal",
+                    "libpython3.14-stdlib",
+                    "python3-minimal",  # for the "python3" symlink
+                    "python3.14-minimal",
+                    "python3.14-venv",
+                    "python3-yaml",
                 ],
             }
         }

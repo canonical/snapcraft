@@ -74,7 +74,7 @@ class TestExtensionROS2LyricalExtension:
             "package-repositories": [
                 {
                     "type": "apt",
-                    "url": "http://packages.ros.org/ros2/ubuntu",
+                    "url": "http://packages.ros.org/ros2-testing/ubuntu",
                     "components": ["main"],
                     "formats": ["deb"],
                     "key-id": "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654",
@@ -113,6 +113,15 @@ class TestExtensionROS2LyricalExtension:
             "$SNAP/usr/lib/python3/dist-packages",
             "${PYTHONPATH}",
         ]
+        ld_library_paths = [
+            "$SNAP/usr/lib/x86_64-linux-gnu/blas",
+            "$SNAP/usr/lib/x86_64-linux-gnu/lapack",
+            "$SNAP/usr/lib/aarch64-linux-gnu/blas",
+            "$SNAP/usr/lib/aarch64-linux-gnu/lapack",
+            "$SNAP/usr/lib/arm-linux-gnueabihf/blas",
+            "$SNAP/usr/lib/arm-linux-gnueabihf/lapack",
+            "${LD_LIBRARY_PATH}",
+        ]
         extension = setup_method_fixture()
         assert extension.get_app_snippet(app_name="test-app") == {
             "command-chain": ["snap/command-chain/ros2-launch"],
@@ -120,6 +129,7 @@ class TestExtensionROS2LyricalExtension:
                 "ROS_VERSION": "2",
                 "ROS_DISTRO": "lyrical",
                 "PYTHONPATH": ":".join(python_paths),
+                "LD_LIBRARY_PATH": ":".join(ld_library_paths),
                 "ROS_HOME": "$SNAP_USER_DATA/ros",
             },
         }
@@ -136,11 +146,20 @@ class TestExtensionROS2LyricalExtension:
             "ros2-lyrical/ros2-launch": {
                 "source": f"{get_extensions_data_dir()}/ros2",
                 "plugin": "make",
+                "make-parameters": ["DESTDIR=${CRAFT_PART_INSTALL}"],
                 "build-packages": [
                     "ros-lyrical-ros-environment",
                     "ros-lyrical-ros-workspace",
                     "ros-lyrical-ament-index-cpp",
                     "ros-lyrical-ament-index-python",
+                ],
+                "stage-packages": [
+                    "libpython3.14-minimal",
+                    "libpython3.14-stdlib",
+                    "python3-minimal",
+                    "python3.14-minimal",
+                    "python3.14-venv",
+                    "python3-yaml",
                 ],
             }
         }
