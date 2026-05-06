@@ -10,7 +10,6 @@ import pytest
 
 from snapcraft import cli, commands, errors
 from snapcraft.commands.upload import ComponentOption
-from tests import unit
 
 _BASIC_SNAP_YAML = {
     "name": "basic",

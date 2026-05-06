@@ -244,7 +244,7 @@ class TestAppstreamContent:
     """Check variations of the Appstream file content."""
 
     def test_appstream_with_ul(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="utf-8"?>
@@ -292,7 +292,7 @@ class TestAppstreamContent:
         )
 
     def test_appstream_with_ol(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="utf-8"?>
@@ -340,7 +340,7 @@ class TestAppstreamContent:
         )
 
     def test_appstream_with_ul_in_p(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
 
         content = textwrap.dedent(
             """\
@@ -802,7 +802,7 @@ class TestAppstreamContent:
         assert metadata.issues == ["https://github.com/alainm23/planify/issues"]
 
     def test_appstream_parse_error(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="utf-8"?>
@@ -827,16 +827,16 @@ class TestAppstreamContent:
             appstream.extract(file_name, workdir=".")
 
         assert str(raised.value) == (
-            "Error extracting metadata from './snapcraft_legacy.appdata.xml': "
+            "Error extracting metadata from './test-snap.appdata.xml': "
             "Opening and ending tag mismatch: provides line 11 and component, "
-            "line 13, column 13 (snapcraft_legacy.appdata.xml, line 13)"
+            "line 13, column 13 (test-snap.appdata.xml, line 13)"
         )
 
     def test_appstream_parse_os_error(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
         assert not Path(file_name).is_file()
 
-        error = "Error reading file './snapcraft_legacy.appdata.xml': failed to load"
+        error = "Error reading file './test-snap.appdata.xml': failed to load"
         with pytest.raises(errors.SnapcraftError, match=error):
             appstream.extract(file_name, workdir=".")
 

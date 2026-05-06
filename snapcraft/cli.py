@@ -227,7 +227,7 @@ def _run_dispatcher(
     # Load the command with a dummy app config to silence deprecation warnings.
     # This config should not actually get used down the line, so its content
     # shouldn't matter
-    dispatcher.load_command({"app": "snapcraft_legacy", "services": {}})
+    dispatcher.load_command({"app": "snapcraft", "services": {}})
     dispatcher.run()
     emit.ended_ok()
 

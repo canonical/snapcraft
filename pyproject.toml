@@ -183,7 +183,7 @@ requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-script-files = ["bin/snapcraftctl", "bin/snapcraftctl-compat"]
+script-files = ["bin/snapcraftctl-compat"]
 
 [tool.setuptools_scm]
 write_to = "snapcraft/_version.py"
@@ -215,7 +215,7 @@ git_describe_command = [
 local_scheme = "dirty-tag"
 
 [tool.setuptools.packages.find]
-include = ["snapcraft", "extensions", "keyrings", "schema", "snapcraft_legacy"]
+include = ["snapcraft", "extensions", "keyrings", "schema"]
 namespaces = true
 
 [tool.setuptools.package-data]
@@ -227,9 +227,7 @@ ignore_missing_imports = true
 follow_imports = "silent"
 exclude = [
     "build",
-    "snapcraft_legacy",
     "tests/spread",
-    "tests/legacy",
     "tools",
     "venv",
 ]
@@ -237,7 +235,7 @@ plugins = ["pydantic.mypy"]
 
 [tool.pyright]
 include = ["snapcraft", "tests"]
-exclude = ["build", "tests/legacy", "tests/spread"]
+exclude = ["build", "tests/spread"]
 pythonVersion = "3.10"
 
 # Most of this ruff configuration comes from craft-parts
@@ -247,8 +245,6 @@ line-length = 88
 extend-exclude = [
     "docs",
     "__pycache__",
-    "snapcraft_legacy",
-    "tests/legacy",
     "snapcraft/_version.py", # setuptools_scm generates old-style type annotations and single quotes
 ]
 lint.select = [
@@ -360,9 +356,7 @@ strict-checking = true
 [tool.ruff.lint.pydocstyle]
 ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
     "typing.overload", # Default configuration
-    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
-    "overrides.override",  # Used in snapcraft_legacy
-    "overrides.overrides",  # Used in snapcraft_legacy
+    # The following are variations on override, so child classes don't have to repeat parent classes' docstrings.
     "typing.override",
     "typing_extensions.override",
 ]
@@ -378,9 +372,7 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 [tool.ty.src]
 exclude = [
     "build",
-    "snapcraft_legacy",
     "tests/spread",
-    "tests/legacy",
     "tools",
     "venv",
 ]
