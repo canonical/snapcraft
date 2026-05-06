@@ -545,6 +545,10 @@ class TestGetDataFromSnapFile:
 
         snap_yaml, manifest_yaml = utils.get_data_from_snap_file(fake_snap_file)
 
+        mock_unsquash.assert_called_once_with(
+            fake_snap_file,
+            extra_args=["meta/snap.yaml", "snap/manifest.yaml"],
+        )
         assert snap_yaml == self.SNAP_YAML_CONTENT
         assert manifest_yaml is None
 
@@ -559,8 +563,17 @@ class TestGetDataFromSnapFile:
 
         snap_yaml, manifest_yaml = utils.get_data_from_snap_file(fake_snap_file)
 
+        mock_unsquash.assert_called_once_with(
+            fake_snap_file,
+            extra_args=["meta/snap.yaml", "snap/manifest.yaml"],
+        )
         assert snap_yaml == self.SNAP_YAML_CONTENT
         assert manifest_yaml == self.MANIFEST_YAML_CONTENT
+
+    def test_snap_yaml_missing(self, mock_unsquash, snap_dir, fake_snap_file):
+        """Error if the snap is missing a snap.yaml file."""
+        with pytest.raises(FileNotFoundError):
+            utils.get_data_from_snap_file(fake_snap_file)
 
     def test_error_on_unsquash_failure(self, mocker, fake_snap_file):
         """Error when unsquashfs fails."""
