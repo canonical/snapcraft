@@ -65,7 +65,6 @@ Stable .NET extensions
 The :ref:`reference-dotnet-extensions` are now stable and no longer require
 the ``SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS`` environment variable.
 
-
 Bazel plugin
 ~~~~~~~~~~~~
 
@@ -90,15 +89,6 @@ A :ref:`craft_parts_maven_use_plugin` has been added. This plugin deploys Maven
 artifacts to a local repository, enabling other Maven parts to build from local
 sources.
 
-
-Build on a compatible architecture
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Snapcraft can now build a snap inside a build provider running a different but compatible
-architecture. Set the ``CRAFT_BUILD_ON`` environment variable to the desired
-Debian architecture when invoking the build.
-
-For example, this can be used to build an ARMHF snap on an ARM64 host.
 
 Minor features
 --------------
