@@ -19,7 +19,7 @@
 https://dashboard.snapcraft.io/docs/reference/v2/en/snaps.html#snap-releases
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from craft_application import models
 
@@ -84,25 +84,28 @@ class Revision(models.CraftBaseModel):
     architectures: list[str]
     """List of architectures supported by this revision."""
 
+    # The Store API says this is required, but Snapcraft let it be optional.
     attributes: dict[str, Any] = {}
     """Additional attributes for this revision."""
 
+    # The Store API says this can't be None but seems to be wrong (https://bugs.launchpad.net/snapcraft/+bug/1904197)
     base: str | None = None
-    """The base snap this revision was built against or null for base snaps."""
+    """The base snap this revision was built against."""
 
     build_url: str | None = None
     """URL to the build log for this revision or null if unavailable."""
 
-    confinement: str
+    confinement: Literal["classic", "strict", "devmode"]
     """Confinement of the snap."""
 
     created_at: str
     """Timestamp of when this revision was uploaded, in ISO 8601 format."""
 
+    # The store API says this is required, but Snapcraft let it be optional.
     epoch: Epoch | None = None
     """Epoch information for this revision."""
 
-    grade: str
+    grade: Literal["stable", "devel"]
     """Grade of the snap."""
 
     revision: int
@@ -114,7 +117,22 @@ class Revision(models.CraftBaseModel):
     size: int
     """Size of the snap file in bytes."""
 
-    status: str
+    status: Literal[
+        "Published",
+        "Unpublished",
+        "ManualReviewPending",
+        "NeedsInformation",
+        "AutomaticallyRejected",
+        "Rejected",
+        # missing from the Store API (#3533)
+        "ReviewInProgress",
+        # missing from the Store API (#3556)
+        "ReviewQueued",
+        # the following values are used in the on-prem store
+        "released",
+        "approved",
+        "rejected",
+    ]
     """Review and publication status of this revision."""
 
     version: str
@@ -122,8 +140,14 @@ class Revision(models.CraftBaseModel):
 
 
 class Releases(models.CraftBaseModel, extra="ignore"):
-    """Represent the data returned from the releases Snap Store endpoint."""
+    """The data returned from the releases Snap Store endpoint.
 
+    This is the data shown on the 'Releases' page of the Snap Store for a snap, where
+    you are shown a table of releases for each channel and a list of recent revisions
+    available to release.
+    """
+
+    # The Store API says this is required, but Snapcraft let it be optional when adding on-prem support.
     releases: list[Release] = []
     """Channel map entries showing which revision is released to each channel."""
 

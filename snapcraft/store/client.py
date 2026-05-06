@@ -598,7 +598,11 @@ class LegacyStoreClientCLI:
         return status["revision"]
 
     def list_releases(self, snap_name: str) -> Releases:
-        """Return a list of releases for snap_name.
+        """Returns a list of releases and related revisions.
+
+        This is the data shown on the 'Releases' page of the Snap Store for a snap, where
+        you are shown a table of releases for each channel and a list of recent revisions
+        available to release.
 
         :param snap_name: the name of the snap to query.
         """
