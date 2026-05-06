@@ -74,6 +74,19 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
             f"{python_paths}:{':'.join(new_python_paths)}"
         )
 
+        ld_library_path = app_snippet["environment"]["LD_LIBRARY_PATH"]
+        underlay_ld_paths = [
+            "$SNAP/opt/ros/underlay_ws/usr/lib/x86_64-linux-gnu/blas",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/x86_64-linux-gnu/lapack",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/aarch64-linux-gnu/blas",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/aarch64-linux-gnu/lapack",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/arm-linux-gnueabihf/blas",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/arm-linux-gnueabihf/lapack",
+        ]
+        app_snippet["environment"]["LD_LIBRARY_PATH"] = (
+            f"{ld_library_path}:{':'.join(underlay_ld_paths)}"
+        )
+
         return app_snippet
 
     @overrides
