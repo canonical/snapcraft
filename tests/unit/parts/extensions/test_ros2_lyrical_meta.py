@@ -141,6 +141,21 @@ class TestExtensionROS2LyricalMetaExtensions:
             "$SNAP/opt/ros/underlay_ws/opt/ros/lyrical/lib/python3.14/site-packages",
             "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
+        ld_library_paths = [
+            "$SNAP/usr/lib/x86_64-linux-gnu/blas",
+            "$SNAP/usr/lib/x86_64-linux-gnu/lapack",
+            "$SNAP/usr/lib/aarch64-linux-gnu/blas",
+            "$SNAP/usr/lib/aarch64-linux-gnu/lapack",
+            "$SNAP/usr/lib/arm-linux-gnueabihf/blas",
+            "$SNAP/usr/lib/arm-linux-gnueabihf/lapack",
+            "${LD_LIBRARY_PATH}",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/x86_64-linux-gnu/blas",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/x86_64-linux-gnu/lapack",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/aarch64-linux-gnu/blas",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/aarch64-linux-gnu/lapack",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/arm-linux-gnueabihf/blas",
+            "$SNAP/opt/ros/underlay_ws/usr/lib/arm-linux-gnueabihf/lapack",
+        ]
         extension = setup_method_fixture(extension_class)
         assert extension.get_app_snippet(app_name="test-app") == {
             "command-chain": ["snap/command-chain/ros2-launch"],
@@ -148,6 +163,7 @@ class TestExtensionROS2LyricalMetaExtensions:
                 "ROS_VERSION": "2",
                 "ROS_DISTRO": "lyrical",
                 "PYTHONPATH": ":".join(python_paths),
+                "LD_LIBRARY_PATH": ":".join(ld_library_paths),
                 "ROS_HOME": "$SNAP_USER_DATA/ros",
             },
         }
@@ -157,7 +173,7 @@ class TestExtensionROS2LyricalMetaExtensions:
         extension = setup_method_fixture(extension_class)
         assert extension.get_part_snippet(plugin_name="colcon") == {
             "build-environment": [{"ROS_VERSION": "2"}, {"ROS_DISTRO": "lyrical"}],
-            "colcon-ros-build-snaps": [meta_dev],
+            "colcon-ros-build-snaps": [f"{meta_dev}/edge"],
             "colcon-cmake-args": [
                 f'-DCMAKE_SYSTEM_PREFIX_PATH="/snap/{meta_dev}/current/usr"'
             ],
