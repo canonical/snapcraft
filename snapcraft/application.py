@@ -88,7 +88,7 @@ def _get_base_warning_for_base(base: str) -> None:
     """Emit a warning to use Snapcraft 9.x for core22, core24, and core26 bases."""
     match base:
         case "core22" | "core24" | "core26":
-            emit.message(
+            emit.warning(
                 f"Base {base!r} is supported in Snapcraft 9.x. "
                 "It is recommended to upgrade to Snapcraft 9.x via the 'latest/stable' channel "
                 "to benefit from the latest bug fixes and performance improvements."

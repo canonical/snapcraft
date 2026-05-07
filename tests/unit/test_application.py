@@ -423,7 +423,7 @@ def test_get_base_warning_for_base_emits_message(emitter, base):
     """Test that _get_base_warning_for_base emits the correct message for core22, core24, and core26."""
     application._get_base_warning_for_base(base)
 
-    emitter.assert_message(
+    emitter.assert_warning(
         f"Base {base!r} is supported in Snapcraft 9.x. "
         "It is recommended to upgrade to Snapcraft 9.x via the 'latest/stable' channel "
         "to benefit from the latest bug fixes and performance improvements."
