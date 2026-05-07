@@ -418,6 +418,18 @@ def test_esm_pass(mocker, snapcraft_yaml, base):
         mock_dispatch.assert_called_once()
 
 
+@pytest.mark.parametrize("base", ["core22", "core24", "core26"])
+def test_get_base_warning_for_base_emits_message(emitter, base):
+    """Test that _get_base_warning_for_base emits the correct message for core22, core24, and core26."""
+    application._get_base_warning_for_base(base)
+
+    emitter.assert_warning(
+        f"Base {base!r} is supported in Snapcraft 9.x. "
+        "It is recommended to upgrade to Snapcraft 9.x via the 'latest/stable' channel "
+        "to benefit from the latest bug fixes and performance improvements."
+    )
+
+
 def test_yaml_syntax_error(in_project_path, monkeypatch, capsys):
     """Provide a user friendly error on yaml syntax errors."""
     (in_project_path / "snapcraft.yaml").write_text("bad:\nyaml")
