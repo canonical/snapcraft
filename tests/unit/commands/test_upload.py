@@ -107,7 +107,7 @@ def fake_unsquash_with_icon(mocker, tmp_path):
 
 @pytest.fixture
 def data_path() -> pathlib.Path:
-    return pathlib.Path(unit.__file__).parents[1] / "legacy" / "data"
+    return pathlib.Path(__file__).parent / "data"
 
 
 @pytest.fixture
