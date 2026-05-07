@@ -1345,7 +1345,7 @@ _get_snapd_cmd = [
     textwrap.dedent(
         f"""
         echo "Getting snapd deb for snap bootstrap..."
-        # only download again if files does not exist, otherwise
+        # only download again if file does not exist, otherwise
         # assume we are re-running build
         if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
         	download_snap_bootstrap {_machine_arch} ${{UC_INITRD_DEB}}
@@ -1358,7 +1358,7 @@ _get_snapd_armhf_cmd = [
     textwrap.dedent(
         """
         echo "Getting snapd deb for snap bootstrap..."
-        # only download again if files does not exist, otherwise
+        # only download again if file does not exist, otherwise
         # assume we are re-running build
         if [ ! -e ${UC_INITRD_DEB}/usr/lib/snapd ]; then
         	download_snap_bootstrap armhf ${UC_INITRD_DEB}
@@ -1776,18 +1776,18 @@ _intatll_initrd_overlay_cmd = [
 
 _prepare_ininird_features_cmd = [
     'echo "Preparing snap-boostrap initrd feature..."',
-    "uc_initrd_feature_snap_bootstratp="
+    "uc_initrd_feature_snap_bootstrap="
     "${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snap-bootstrap",
-    "mkdir -p ${uc_initrd_feature_snap_bootstratp}",
+    "mkdir -p ${uc_initrd_feature_snap_bootstrap}",
     " ".join(
         [
             "link_files",
             '"${UC_INITRD_DEB}" "usr/lib/snapd/snap-bootstrap"',
-            '"${uc_initrd_feature_snap_bootstratp}"',
+            '"${uc_initrd_feature_snap_bootstrap}"',
         ],
     ),
     'link_files "${UC_INITRD_DEB}" "usr/lib/snapd/info"'
-    ' "${uc_initrd_feature_snap_bootstratp}"',
+    ' "${uc_initrd_feature_snap_bootstrap}"',
     "cp ${UC_INITRD_DEB}/usr/lib/snapd/info ${CRAFT_PART_INSTALL}/snapd-info",
 ]
 

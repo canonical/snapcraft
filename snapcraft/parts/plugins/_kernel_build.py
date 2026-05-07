@@ -157,7 +157,7 @@ def _link_files_fnc_cmd() -> list[str]:
 
 
 def _download_core_initrd_fnc_cmd() -> list[str]:
-    """Define helper to download code initrd deb package."""
+    """Define helper to download core initrd deb package."""
     cmd = textwrap.dedent(
         """
         # Helper to download code initrd deb package
@@ -207,7 +207,7 @@ def _download_snap_bootstrap_cmd(target_arch: str) -> list[str]:
     cmd = textwrap.dedent(
         f"""
         echo "Getting snapd deb for snap bootstrap..."
-        # only download again if files does not exist, otherwise
+        # only download again if file does not exist, otherwise
         # assume we are re-running build
         if [ ! -e ${{UC_INITRD_DEB}}/usr/lib/snapd ]; then
         	download_snap_bootstrap {target_arch} ${{UC_INITRD_DEB}}
@@ -694,14 +694,14 @@ def _make_initrd_cmd(  # noqa: PLR0913 (too-many-args)
     cmd_prepare_snap_bootstrap_feature = [
         # install selected snap bootstrap
         'echo "Preparing snap-boostrap initrd feature..."',
-        "uc_initrd_feature_snap_bootstratp=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snap-bootstrap",
-        "mkdir -p ${uc_initrd_feature_snap_bootstratp}",
+        "uc_initrd_feature_snap_bootstrap=${UC_INITRD_DEB}/usr/lib/ubuntu-core-initramfs/snap-bootstrap",
+        "mkdir -p ${uc_initrd_feature_snap_bootstrap}",
         " ".join(
             [
                 "link_files",
                 '"${UC_INITRD_DEB}"',
                 '"usr/lib/snapd/snap-bootstrap"',
-                '"${uc_initrd_feature_snap_bootstratp}"',
+                '"${uc_initrd_feature_snap_bootstrap}"',
             ]
         ),
         " ".join(
@@ -709,7 +709,7 @@ def _make_initrd_cmd(  # noqa: PLR0913 (too-many-args)
                 "link_files",
                 '"${UC_INITRD_DEB}"',
                 '"usr/lib/snapd/info"',
-                '"${uc_initrd_feature_snap_bootstratp}"',
+                '"${uc_initrd_feature_snap_bootstrap}"',
             ]
         ),
         " ".join(
