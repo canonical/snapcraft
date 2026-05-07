@@ -17,6 +17,8 @@ UV_LINT_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 UV_TICS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 endif
 
+SLOW_CUTOFF_TIME := 0.5
+
 include common.mk
 
 # instructions and skills are imported from canonical/copilot-collections

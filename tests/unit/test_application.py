@@ -159,6 +159,7 @@ def test_application_expand_extensions(emitter, monkeypatch, extension_source, n
     )
 
 
+@pytest.mark.slow
 @pytest.mark.usefixtures("fake_extension")
 def test_application_extra_yaml_transforms(
     monkeypatch, extension_source, new_dir, emitter
@@ -256,6 +257,7 @@ APPSTREAM_CONTENTS = dedent(
 )
 
 
+@pytest.mark.slow
 def test_parse_info_integrated(monkeypatch, mocker, new_dir):
     # Pretend this is an Ubuntu 24.04 system, to match the project's build-base
     mocker.patch.object(
