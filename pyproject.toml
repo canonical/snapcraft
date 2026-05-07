@@ -3,7 +3,6 @@ name = "snapcraft"
 description = "Create snaps"
 dynamic = ["version"]
 dependencies = [
-    "attrs",
     "catkin-pkg==1.1.0; sys_platform == 'linux'",
     "click>=8.2",
     "craft-application[remote]>=6.4.0",
@@ -14,42 +13,25 @@ dependencies = [
     "craft-platforms>=0.11.0",
     "craft-providers>=3.6.0",
     "craft-store>=3.3.0",
-    "cryptography",
-    "gnupg",
     "jsonschema==2.6.0",
-    "launchpadlib",
     "lazr.restfulclient",
     "lxml",
-    "macaroonbakery",
-    "mypy-extensions",
     "overrides",
     "packaging",
-    "progressbar",
     "pydantic~=2.8",
     "pyelftools",
     # Pygit2 and libgit2 need to match versions.
     # Further info: https://www.pygit2.org/install.html#version-numbers
     # 1.18 is the last minor version that supports Python 3.10
     "pygit2~=1.18.2",
-    # Snapcraft directly only cares about pylxd on Linux. However, as a note for
-    # packagers: As of 3.1.0, craft-providers depends on pylxd on all platforms.
-    # If we drop the direct dependency we will remove the following line, but pylxd
-    # will still be in the dependency tree.
-    "pylxd",
-    "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
-    "raven",
     "requests-toolbelt",
-    "requests-unixsocket2",
     "requests>=2.32.4",
     # setuptools >= 80.9 has a noisy warning about pkg_resources
     "setuptools>=69.0,<80.9.0",
-    "simplejson",
     "snap-helpers",
     "tabulate",
-    "toml",
-    "tinydb",
     "typing-extensions",
     "validators>=0.28.3",
 ]
@@ -72,17 +54,9 @@ readme = { file = "README.md", content-type = "text/markdown" }
 [dependency-groups]
 dev = [
     "coverage[toml]",
-    "pyflakes",
-    "fixtures",
-    "mccabe",
-    "testscenarios",
-    "pexpect",
     "pip",
-    "pycodestyle",
-    "pyftpdlib",
     "pyinstaller ; sys_platform == 'win32'",
     "pymacaroons",
-    "pyramid",
     "pytest",
     "pytest-cov",
     "pytest-check",
