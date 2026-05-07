@@ -27,7 +27,6 @@ from snapcraft_legacy.internal import log
 from ._command_group import SnapcraftGroup
 from ._errors import exception_handler
 from ._options import add_provider_options, get_log_level
-from .assertions import assertionscli
 from .containers import containerscli
 from .discovery import discoverycli
 from .extensions import extensioncli
@@ -38,7 +37,6 @@ from .version import SNAPCRAFT_VERSION_TEMPLATE, versioncli
 logger = logging.getLogger(__name__)
 
 command_groups = [
-    assertionscli,
     containerscli,
     discoverycli,
     helpcli,

@@ -155,25 +155,6 @@ class DownloadTestCase(StoreTestCase):
 
 
 @pytest.mark.slow
-class PushSnapBuildTestCase(StoreTestCase):
-    def test_push_snap_build_invalid_data(self):
-        raised = self.assertRaises(
-            errors.StoreSnapBuildError,
-            self.client.push_snap_build,
-            "snap-id",
-            "test-invalid-data",
-        )
-        self.assertThat(
-            str(raised),
-            Equals("Could not assert build: The snap-build assertion is not " "valid."),
-        )
-
-    def test_push_snap_build_successfully(self):
-        # No exception will be raised if this is successful.
-        self.client.push_snap_build("snap-id", "dummy")
-
-
-@pytest.mark.slow
 class GetAccountInformationTestCase(StoreTestCase):
     def test_get_account_information_successfully(self):
         self.assertThat(

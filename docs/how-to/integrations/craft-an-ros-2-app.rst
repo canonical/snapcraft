@@ -146,7 +146,7 @@ Example project file for ROS 2 Talker/Listener
 
                 apps:
                   ros2-talker-listener:
-                    command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+                    command: ros2 launch demo_nodes_cpp talker_listener_launch.py
                     extensions: [ros2-jazzy]
 
     .. tab-item:: core26
@@ -316,7 +316,7 @@ difference in the project file when content sharing is enabled:
 
             apps:
               ros2-talker-listener:
-                command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+                command: ros2 launch demo_nodes_cpp talker_listener_launch.py
             -   extensions: [ros2-jazzy]
             +   extensions: [ros2-jazzy-ros-base]
 

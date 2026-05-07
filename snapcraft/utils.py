@@ -426,7 +426,9 @@ def get_data_from_snap_file(snap_path: Path) -> tuple[dict, dict | None]:
     :raises SnapcraftError: If the snap file cannot be read.
     :raises FileNotFoundError: If snap.yaml doesn't exist.
     """
-    with unsquash_snap(snap_path) as snap_dir:
+    with unsquash_snap(
+        snap_path, extra_args=["meta/snap.yaml", "snap/manifest.yaml"]
+    ) as snap_dir:
         snap_yaml_path = snap_dir / "meta" / "snap.yaml"
         with snap_yaml_path.open() as yaml_file:
             snap_yaml = yaml.safe_load(yaml_file)

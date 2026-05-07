@@ -719,24 +719,6 @@ class NoSuchKeyError(StoreError):
         super().__init__(key_name=key_name)
 
 
-class KeyNotRegisteredError(StoreError):
-    fmt = (
-        "The key {key_name!r} is not registered in the Store.\nPlease "
-        "register it with `snapcraft register-key {key_name!r}` before "
-        "signing and uploading signatures to the Store."
-    )
-
-    def __init__(self, key_name):
-        super().__init__(key_name=key_name)
-
-
-class SignBuildAssertionError(StoreError):
-    fmt = "Failed to sign build assertion for {snap_name!r}"
-
-    def __init__(self, snap_name):
-        super().__init__(snap_name=snap_name)
-
-
 def _error_list_to_message(response_json):
     """Handle error list.
 
