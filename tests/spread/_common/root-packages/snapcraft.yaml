@@ -15,6 +15,6 @@ parts:
     override-build: |
       # these should fail if the build-packages and build-snaps weren't installed
       dpkg -V hello
-      ls /snap/hello/current
+      ls -d /snap/hello/current
 
       craftctl default
