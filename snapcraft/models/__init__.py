@@ -51,8 +51,20 @@ from .metrics import (
     MetricName,
     Series,
 )
+from .releases import (
+    Epoch,
+    Progressive,
+    Release,
+    Releases,
+    Revision,
+)
 
 __all__ = [
+    "Epoch",
+    "Progressive",
+    "Release",
+    "Releases",
+    "Revision",
     "MANDATORY_ADOPTABLE_FIELDS",
     "Assertion",
     "App",
