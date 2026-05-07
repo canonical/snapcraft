@@ -76,7 +76,7 @@ def test_init_default(profile, name, project_dir, emitter, valid_new_dir, mocker
     assert project == Project.unmarshal(
         {
             "name": expected_name,
-            "base": "core24",
+            "base": "core26",
             "version": "0.1",
             "summary": "Single-line elevator pitch for your amazing snap",
             "description": dedent(

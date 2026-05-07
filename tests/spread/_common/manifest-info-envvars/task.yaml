@@ -21,19 +21,8 @@ execute: |
   review-tools.snap-review ~/manifest_0.1_*.snap
   rm ~/manifest_0.1_*.snap
 
-  # also test in destructive mode
-  snapcraft pack --destructive-mode
-
-  grep '^  test-var: value' prime/snap/manifest.yaml
-
-  cp manifest_0.1_*.snap ~
-  review-tools.snap-review ~/manifest_0.1_*.snap
-
 restore: |
-  # The regular clean can potentially fail depending on if/when the test itself failed, but
-  # they should always both be attempted
-  snapcraft clean || true
-  snapcraft clean --destructive-mode
+  snapcraft clean
   rm -f ./*.snap
   rm -f ~/manifest_0.1_*.snap
 

@@ -9,7 +9,7 @@ apps:
   hello:
     command: bin/hello
 confinement: strict
-grade: devel
+grade: stable
 environment:
   LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
   PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH

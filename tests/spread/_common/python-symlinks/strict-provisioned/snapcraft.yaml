@@ -8,7 +8,6 @@ description: |
 
 grade: devel
 base: core26
-build-base: devel
 confinement: strict
 
 apps:

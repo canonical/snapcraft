@@ -15,6 +15,11 @@ execute: |
   cd test-snap
   snapcraft init
   snapcraft init --profile=test
+
+  # craft-application will run a spread matching the host system when CI=1
+  ubuntu_version=$(lsb_release -rs)
+  sed -i "s/- ubuntu-[0-9.]*/- ubuntu-${ubuntu_version}/" spread.yaml
+
   systemctl unmask unattended-upgrades.service
   snapcraft test
   systemctl is-enabled unattended-upgrades.service | MATCH masked

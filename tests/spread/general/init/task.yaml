@@ -58,7 +58,7 @@ execute: |
   fi
 
   grep "^name: ${expected_name}" snap/snapcraft.yaml
-  grep "^base: core24" snap/snapcraft.yaml
+  grep "^base: core26" snap/snapcraft.yaml
 
   # 'snapcraft init' should create a usable snapcraft.yaml file
   snapcraft pack

@@ -13,6 +13,11 @@ apps:
 parts:
   hello:
     plugin: nil
+    override-build: |
+      mkdir -p $CRAFT_PART_INSTALL/usr/bin
+      echo "#! /bin/sh\n" > $CRAFT_PART_INSTALL/usr/bin/hello
+      chmod +x $CRAFT_PART_INSTALL/usr/bin/hello
+      craftctl default
 
 environment:
   LD_LIBRARY_PATH: test-1

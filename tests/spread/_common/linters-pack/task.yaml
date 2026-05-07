@@ -33,13 +33,7 @@ execute: |
     exit 0
   fi
 
-  # drop this conditional once core26 is stable (#6088)
-  if [[ "$base" == "core26" && ( "$SNAP" == "metadata" || "$SNAP" == "metadata-ignore-fields" ) ]]; then
-    snapcraft pack --verbosity=debug 2>&1 | MATCH "Skipping metadata linter because grade is 'devel'."
-    exit 0
-  else
-    snapcraft pack 2> output.txt
-  fi
+  snapcraft pack 2> output.txt
 
   test -f linter-test_*.snap
 
