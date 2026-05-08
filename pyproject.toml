@@ -83,6 +83,7 @@ dev = [
     "pytest-check",
     "pytest-mock",
     "pytest-subprocess",
+    "mypy>=1.18.2",
 ]
 docs = [
     "canonical-sphinx[full]~=0.5.1",
