@@ -1,0 +1,74 @@
+name: Spread tests for docs
+on:
+  pull_request:
+    paths:
+      - .github/workflows/spread-docs.yaml
+      - spread.yaml
+      - docs/**/code/**
+  push:
+    branches:
+      - main
+    paths:
+      - spread.yaml
+      - docs/**/code/**
+  schedule:
+    - cron: "0 2 * * 0" # Run every Sunday at 02:00
+
+jobs:
+  docs-snap-build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # speed up build times by using wheels, when available
+      - name: Use wheels
+        run: |
+          yq eval 'del(.parts.snapcraft.build-environment[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
+
+      - name: Build snap
+        uses: canonical/action-build@v1
+        id: snapcraft
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: snap
+          path: ${{ steps.snapcraft.outputs.snap }}
+
+  docs-spread-tests:
+    runs-on: [self-hosted, spread-installed]
+    needs: [docs-snap-build]
+    timeout-minutes: 90
+
+    steps:
+      - name: Cleanup job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout rockcraft
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Download snap artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: snap
+          path: tests
+
+      - name: Run docs spread tests
+        run: |
+          spread google:...docs...
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
