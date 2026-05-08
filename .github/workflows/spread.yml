@@ -1,4 +1,4 @@
-name: Spread Tests
+name: Spread tests for source
 
 on:
   pull_request:
@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      source-files: ${{ steps.filter.outputs.source-files }}
 
     steps:
       - name: Checkout snapcraft
@@ -17,8 +19,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check which files changed
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
+          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          filters: |
+            source-files:
+              - '!({docs/**,*.md,**/*.md})'
+
       # speed up build times by using wheels, when available
       - name: Use wheels
+        if: steps.filter.outputs.source-files == 'true'
         run: |
           yq eval 'del(.parts.snapcraft.build-environment[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
 
@@ -39,6 +52,7 @@ jobs:
   integration-spread-tests:
     runs-on: [spread-installed]
     needs: build
+    if: ${{ needs.build.outputs.source-files == 'true' }}
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
@@ -83,6 +97,7 @@ jobs:
   integration-spread-tests-store:
     runs-on: [spread-installed]
     needs: build
+    if: ${{ needs.build.outputs.source-files == 'true' }}
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
