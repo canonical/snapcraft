@@ -82,16 +82,19 @@ def test_init_valid_name(name, init_service, new_dir, emitter):
         ),
     ],
 )
-def test_init_invalid_name(name, error, init_service, new_dir):
-    """Error on invalid names."""
+def test_validate_project_name_invalid_name(name, error, init_service):
+    """Error on invalid snap names."""
     expected_error = f"Invalid snap name {name!r}: {error}."
 
     with pytest.raises(errors.SnapcraftError, match=expected_error):
-        init_service.initialise_project(
-            project_dir=new_dir,
-            project_name=name,
-            template_dir=template_dir(),
-        )
+        init_service.validate_project_name(name)
+
+
+def test_validate_project_name_uses_default_for_long_directory_name(init_service):
+    """Use the default name when the project directory name is too long."""
+    name = "a2345678901234567890123456789012345678901"
+
+    assert init_service.validate_project_name(name, use_default=True) == "my-project"
 
 
 def test_init_snap_dir_exists(init_service, new_dir, emitter):
