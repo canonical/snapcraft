@@ -4,12 +4,14 @@ on:
     paths:
       - .github/workflows/spread-docs.yaml
       - spread.yaml
+      - .readthedocs.yaml
       - docs/**/code/**
   push:
     branches:
       - main
     paths:
       - spread.yaml
+      - .readthedocs.yaml
       - docs/**/code/**
   schedule:
     - cron: "0 2 * * 0" # Run every Sunday at 02:00

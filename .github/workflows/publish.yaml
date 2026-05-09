@@ -6,6 +6,7 @@ on:
       - "docs/**"
       - "**/*.md"
       - "*.md"
+      - ".readthedocs.yaml"
   push:
     branches:
       - "feature/**"
