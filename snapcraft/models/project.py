@@ -177,8 +177,8 @@ def _expand_architectures(
 
         result.append(
             Architecture(
-                build_on=cast(UniqueList[str], build_on),
-                build_for=cast(UniqueList[str], build_for),
+                build_on=build_on,
+                build_for=build_for,
             )
         )
 
@@ -1239,7 +1239,7 @@ class Platform(models.Platform):
         platforms: dict[str, Self] = {}
         for architecture in architectures:
             if isinstance(architecture, str):
-                build_on = build_for = cast(UniqueList[str], [architecture])
+                build_on = build_for = [architecture]
             else:
                 build_on_val = architecture.get("build-on")
                 build_for_val = architecture.get("build-for")
@@ -2069,7 +2069,7 @@ class Project(models.Project):
     @classmethod
     def _validate_urls(cls, field_value: list[str] | str) -> list[str]:
         if isinstance(field_value, str):
-            field_value = cast(UniqueList[str], [field_value])
+            field_value = [field_value]
         return field_value
 
     @pydantic.field_validator("parts")

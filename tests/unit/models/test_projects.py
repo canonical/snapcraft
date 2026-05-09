@@ -23,7 +23,7 @@ from typing import Any, cast
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
-from craft_application.models import UniqueStrList, VersionStr
+from craft_application.models import VersionStr
 from craft_platforms import DebianArchitecture
 
 import snapcraft.models
@@ -165,8 +165,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
-                build_for=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
+                build_on=[str(DebianArchitecture.from_host())],
+                build_for=[str(DebianArchitecture.from_host())],
             )
         ]
         assert project.ua_services is None
@@ -1071,7 +1071,7 @@ class TestPlatforms:
         """Raise an error if build-for is provided by build-on is not."""
         error = r"build-on\n  Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
-            Platform(**{"build-for": [const.SnapArch.amd64]})  # type: ignore[reportArgumentType]
+            Platform(**{"build-for": [str(const.SnapArch.amd64)]})  # type: ignore[reportArgumentType]
 
     @pytest.mark.parametrize(
         ("architectures", "expected"),

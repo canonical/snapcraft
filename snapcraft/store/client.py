@@ -552,7 +552,7 @@ class LegacyStoreClientCLI:
         :param components: A dictionary of component names to component upload-ids.
         :returns: the snap's processed revision
         """
-        data = {
+        data: dict[str, Any] = {
             "name": snap_name,
             "series": constants.DEFAULT_SERIES,
             "updown_id": upload_id,

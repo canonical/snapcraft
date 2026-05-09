@@ -53,8 +53,8 @@ class SnapcraftServiceFactory(ServiceFactory):
         )
 
         # Allow static type check to report correct types for Snapcraft services
-        confdb_schemas: ConfdbSchemas = None  # type: ignore[assignment]
-        validation_sets: ValidationSets = None  # type: ignore[assignment]
+        confdb_schemas: ConfdbSchemas = None  # type: ignore[assignment] # ty: ignore[invalid-assignment]
+        validation_sets: ValidationSets = None  # type: ignore[assignment] # ty: ignore[invalid-assignment]
 
 
 def register_snapcraft_services() -> None:

@@ -310,7 +310,7 @@ def _get_debian_package_names(
     parsed = _parse_rosdep_resolve_dependencies(
         ros_package_name, proc.stdout.decode().strip()
     )
-    return cast(set[DebianPackageName], parsed.get("apt", set()))
+    return parsed.get("apt", set())
 
 
 def _find_installed_debian_dependencies(
