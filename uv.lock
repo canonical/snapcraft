@@ -559,8 +559,8 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.33.0.post14+g0b3f0c11"
-source = { git = "https://github.com/canonical/craft-parts?rev=feature%2Fbincraft#0b3f0c1198543f300ad2f1b5f07db8c8154a83de" }
+version = "2.33.0.post15+gcfc0b257"
+source = { git = "https://github.com/canonical/craft-parts?rev=feature%2Fbincraft#cfc0b257552472e9f82afee352ba5a647b7a1e34" }
 dependencies = [
     { name = "lxml" },
     { name = "pydantic" },
