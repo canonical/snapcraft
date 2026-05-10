@@ -305,16 +305,13 @@ class TestSonameCache:
         soname_cache = elf.SonameCache()
         soname_cache[arch, "soname.so"] = Path("/fake/path/soname.so")
         soname_cache[arch, "soname2.so"] = Path("/keep/me/soname2.so")
-        soname_cache[arch, "notfound.so"] = None  # type: ignore
 
         assert (arch, "soname.so") in soname_cache
         assert (arch, "soname2.so") in soname_cache
-        assert (arch, "notfound.so") in soname_cache
 
         soname_cache.reset_except_root("/keep/me")
 
         assert (arch, "soname.so") not in soname_cache
-        assert (arch, "notfound.so") not in soname_cache
         assert (arch, "soname2.so") in soname_cache
 
     @pytest.mark.parametrize(

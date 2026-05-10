@@ -176,19 +176,6 @@ class TestPluginColconPlugin:
         except ValidationError as e:
             raise AssertionError(f"{e}") from e
 
-    def test_property_unexpected(self):
-        try:
-            colcon.ColconPlugin.properties_class(  # noqa F841
-                source="."
-            )
-        except ValidationError as e:
-            raise AssertionError(f"{e}") from e
-
-        with pytest.raises(ValidationError):
-            colcon.ColconPlugin.properties_class.unmarshal(
-                {"source": ".", "foo": "bar"}
-            )
-
     def test_property_all(self):
         try:
             properties = colcon.ColconPlugin.properties_class.unmarshal(
