@@ -185,9 +185,8 @@ class TestPluginColconPlugin:
             raise AssertionError(f"{e}") from e
 
         with pytest.raises(ValidationError):
-            colcon.ColconPlugin.properties_class(  # noqa F841
-                source=".",
-                foo="bar",  # type: ignore
+            colcon.ColconPlugin.properties_class.unmarshal(
+                {"source": ".", "foo": "bar"}
             )
 
     def test_property_all(self):
@@ -207,12 +206,12 @@ class TestPluginColconPlugin:
             raise AssertionError(f"{e}") from e
 
         assert properties.source == "."
-        assert properties.colcon_ament_cmake_args == ["ament", "args..."]  # type: ignore
-        assert properties.colcon_catkin_cmake_args == ["catkin", "args..."]  # type: ignore
-        assert properties.colcon_cmake_args == ["cmake", "args..."]  # type: ignore
-        assert properties.colcon_packages == ["package1", "package2..."]  # type: ignore
-        assert properties.colcon_packages_ignore == ["ipackage1", "ipackage2..."]  # type: ignore
-        assert properties.colcon_ros_build_snaps == ["ros-core"]  # type: ignore
+        assert properties.colcon_ament_cmake_args == ["ament", "args..."]
+        assert properties.colcon_catkin_cmake_args == ["catkin", "args..."]
+        assert properties.colcon_cmake_args == ["cmake", "args..."]
+        assert properties.colcon_packages == ["package1", "package2..."]
+        assert properties.colcon_packages_ignore == ["ipackage1", "ipackage2..."]
+        assert properties.colcon_ros_build_snaps == ["ros-core"]
 
     def test_get_build_packages_core22(self, setup_method_fixture, new_dir):
         plugin = setup_method_fixture("core22", new_dir)

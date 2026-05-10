@@ -46,7 +46,7 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
         Use the 'edit-confdb-schema' command modify confdb schemas.
         """
     )
-    _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
+    _services: services.SnapcraftServiceFactory
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -106,7 +106,7 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
         Use the 'confdb-schemas' command to view existing confdb schemas.
         """
     )
-    _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
+    _services: services.SnapcraftServiceFactory
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:

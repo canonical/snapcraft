@@ -43,7 +43,7 @@ _SERVICES: dict[str, str] = {
 class SnapcraftServiceFactory(ServiceFactory):
     """Snapcraft-specific Service Factory."""
 
-    project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
+    project: models.Project | None = None
 
     # Allow static type check to report correct types for Snapcraft services
     if TYPE_CHECKING:
@@ -53,8 +53,8 @@ class SnapcraftServiceFactory(ServiceFactory):
         )
 
         # Allow static type check to report correct types for Snapcraft services
-        confdb_schemas: ConfdbSchemas = None  # type: ignore[assignment] # ty: ignore[invalid-assignment]
-        validation_sets: ValidationSets = None  # type: ignore[assignment] # ty: ignore[invalid-assignment]
+        confdb_schemas: ConfdbSchemas = None  # ty: ignore[invalid-assignment]
+        validation_sets: ValidationSets = None  # ty: ignore[invalid-assignment]
 
 
 def register_snapcraft_services() -> None:

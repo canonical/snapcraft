@@ -204,7 +204,9 @@ class StorePromoteCommand(AppCommand):
             for c in from_channel_set:
                 client.release(
                     snap_name=parsed_args.snap_name,
-                    revision=cast(int, c.revision),  # type: ignore[arg-type]  # get_channel_set ensures this will not be none
+                    revision=cast(
+                        int, c.revision
+                    ),  # get_channel_set ensures this will not be none
                     channels=[str(to_channel)],
                 )
             emit.message(f"Promotion from {from_channel} to {to_channel} complete")

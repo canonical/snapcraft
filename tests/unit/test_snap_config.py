@@ -50,7 +50,7 @@ def test_unmarshal_not_a_dictionary():
     """Verify unmarshalling with data that is not a dictionary raises an error."""
     error = "Project data is not a dictionary"
     with pytest.raises(TypeError, match=error):
-        SnapConfig.unmarshal("provider=lxd")  # type: ignore
+        SnapConfig.unmarshal("provider=lxd")  # ty: ignore[invalid-argument-type]
 
 
 def test_unmarshal_invalid_provider_error():

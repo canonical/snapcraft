@@ -192,7 +192,7 @@ def prompt(prompt_text: str, *, hide: bool = False) -> str:
     if hide:
         method = getpass
     else:
-        method = input  # type: ignore
+        method = input
 
     with emit.pause():
         return str(method(prompt_text))

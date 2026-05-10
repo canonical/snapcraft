@@ -20,10 +20,14 @@ import configparser
 import os
 import shlex
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from craft_cli import emit
 
 from snapcraft import errors
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class DesktopFile:
@@ -52,8 +56,7 @@ class DesktopFile:
             )
 
         self._parser = configparser.ConfigParser(interpolation=None)
-        # mypy type checking ignored, see https://github.com/python/mypy/issues/506
-        self._parser.optionxform = str  # type: ignore
+        self._parser.optionxform: Callable[[Any], str] = str
         self._parser.read(file_path, encoding="utf-8")
 
     def _parse_and_reformat_section_exec(self, section: str):

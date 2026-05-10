@@ -360,10 +360,9 @@ def fake_provider(mock_instance):
         def is_provider_installed(cls) -> bool:
             return True
 
-        def create_environment(  # type: ignore[reportIncompatibleMethodOverride]
-            self, *, instance_name: str
-        ):
-            yield mock_instance
+        @override
+        def create_environment(self, *, instance_name: str):
+            return mock_instance
 
         @contextlib.contextmanager
         def launched_environment(
@@ -589,7 +588,7 @@ def fake_project_service_class(fake_project) -> type[services.Project]:
     class FakeProjectService(services.Project):
         # This is a final method, but we're overriding it here for convenience when
         # doing internal testing.
-        def _load_raw_project(self):  # type: ignore[reportIncompatibleMethodOverride] # ty: ignore[override-of-final-method]
+        def _load_raw_project(self):  # ty: ignore[override-of-final-method]
             return fake_project.marshal()
 
         # Don't care if the project file exists during this testing.
@@ -603,10 +602,10 @@ def fake_project_service_class(fake_project) -> type[services.Project]:
             self._project_model = value
             assert value.platforms is not None
             # assume base > core22 for these tests by assuming no "architectures" key
-            self._platform = next(iter(value.platforms))  # type: ignore[reportCallIssue, reportArgumentType]
+            self._platform = next(iter(value.platforms))
             self._build_for = cast(
                 "list[str]", value.platforms[self._platform].build_for
-            )[0]  # type: ignore[reportOptionalSubscript]
+            )[0]
 
     return FakeProjectService
 

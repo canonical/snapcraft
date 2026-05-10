@@ -94,10 +94,11 @@ class BuildPlan(BuildPlanService):
         else:
             build_on_archs = None
 
+        build_for_archs: (
+            list[craft_platforms.DebianArchitecture | Literal["all"]] | None
+        )
         if build_for:
-            build_for_archs: list[
-                craft_platforms.DebianArchitecture | Literal["all"]
-            ] = [
+            build_for_archs = [
                 "all" if fr == "all" else craft_platforms.DebianArchitecture(fr)
                 for fr in build_for
             ]
@@ -108,7 +109,7 @@ class BuildPlan(BuildPlanService):
             self._filter_launchpad_plan(
                 self._gen_exhaustive_build_plan(project_data=raw_project),
                 platforms=platforms,
-                build_for=build_for_archs,  # type: ignore[arg-type]  # Literal "all"
+                build_for=build_for_archs,
                 build_on=build_on_archs,
             )
         )

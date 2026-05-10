@@ -17,6 +17,7 @@
 """Backwards compatibility for login --with."""
 
 import base64
+import binascii
 import configparser
 import json
 import os
@@ -42,7 +43,7 @@ def _load_potentially_base64_config(config_content: str) -> configparser.ConfigP
         # The config may be base64-encoded, try decoding it
         try:
             decoded_config_content = base64.b64decode(config_content).decode()
-        except (base64.binascii.Error, UnicodeDecodeError) as err:  # type: ignore
+        except (binascii.Error, UnicodeDecodeError) as err:
             # It wasn't base64, so use the original error
             raise errors.LegacyCredentialsParseError(
                 f"Cannot parse config: {parser_error}"
@@ -96,7 +97,7 @@ def set_legacy_env() -> None:
             f"Found legacy credentials exported on {constants.ENVIRONMENT_STORE_CREDENTIALS!r}"
         )
         auth = get_auth(
-            config_content=os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS)  # type: ignore
+            config_content=os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS]
         )
         os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
     elif LegacyUbuntuOne.has_legacy_credentials():
@@ -163,7 +164,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         # Adapt to the JSON format if the environment has configparser based credentials.
         if self.env_has_legacy_credentials():
             auth = get_auth(
-                config_content=os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS)  # type: ignore
+                config_content=os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS]
             )
             os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
 

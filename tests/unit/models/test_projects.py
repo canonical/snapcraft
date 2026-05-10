@@ -433,7 +433,7 @@ class TestProjectValidation:
         else:
             error = "Input should be 'stable' or 'devel'"
             with pytest.raises(pydantic.ValidationError, match=error):
-                project.grade = grade  # type: ignore
+                project.grade = grade
 
     def test_project_summary_valid(self, project_yaml_data):
         summary = "x" * 78
@@ -1071,7 +1071,7 @@ class TestPlatforms:
         """Raise an error if build-for is provided by build-on is not."""
         error = r"build-on\n  Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
-            Platform(**{"build-for": [str(const.SnapArch.amd64)]})  # type: ignore[reportArgumentType]
+            Platform.unmarshal({"build-for": [str(const.SnapArch.amd64)]})
 
     @pytest.mark.parametrize(
         ("architectures", "expected"),

@@ -90,8 +90,8 @@ class RosPlugin(plugins.Plugin):
     @override
     def get_build_snaps(self) -> set[str]:
         return (
-            set(self._options.colcon_ros_build_snaps)  # type: ignore
-            if self._options.colcon_ros_build_snaps  # type: ignore
+            set(self._options.colcon_ros_build_snaps)  # ty:ignore[unresolved-attribute]
+            if self._options.colcon_ros_build_snaps  # ty:ignore[unresolved-attribute]
             else set()
         )
 
@@ -150,8 +150,8 @@ class RosPlugin(plugins.Plugin):
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"')
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"')
 
-        if self._options.colcon_ros_build_snaps:  # type: ignore
-            for ros_build_snap in self._options.colcon_ros_build_snaps:  # type: ignore
+        if self._options.colcon_ros_build_snaps:  # ty:ignore[unresolved-attribute]
+            for ros_build_snap in self._options.colcon_ros_build_snaps:  # ty:ignore[unresolved-attribute]
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
                 base_path = f"/snap/{snap_name}/current/opt/ros"
                 path_ros_sys = f"{base_path}/${{ROS_DISTRO}}/"
@@ -447,7 +447,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
             arch=target_arch,
             base=base,
             stage_packages_path=stage_packages_path,
-            packages_filters=build_snap_packages,  # type: ignore
+            packages_filters=build_snap_packages,  # ty:ignore[unknown-argument]
         )
 
         click.echo(f"Unpacking stage packages: {fetched_stage_packages!r}")

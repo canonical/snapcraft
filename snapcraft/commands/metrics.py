@@ -32,6 +32,7 @@ from snapcraft.models import Metric, MetricName, Series
 
 if TYPE_CHECKING:
     import argparse
+    from collections.abc import Sequence
 
 _YESTERDAY = str(date.today() - timedelta(days=1))
 
@@ -127,8 +128,8 @@ class StoreMetricsCommand(AppCommand):
     @staticmethod
     def convert_metrics_to_table(
         results: Metric, *, transpose: bool = True
-    ) -> list[list[str | int]]:
-        rows: list[list[str | int]] = []
+    ) -> Sequence[Sequence[str | int]]:
+        rows: Sequence[Sequence[str | int]] = []
 
         status = results.status
         if status == "NO DATA":
@@ -161,14 +162,14 @@ class StoreMetricsCommand(AppCommand):
         ]
 
         # First add header row.
-        rows.append(header_row)  # type: ignore
+        rows.append(header_row)
 
         # Add data rows.
         for i, bucket in enumerate(results.buckets):
-            rows.append([bucket] + [s.values[i] or 0 for s in series])  # type: ignore
+            rows.append([bucket] + [s.values[i] or 0 for s in series])
 
         # Optionally transpose.
         if transpose:
-            rows = list(zip(*rows))  # type: ignore
+            rows = list(zip(*rows))
 
         return rows
