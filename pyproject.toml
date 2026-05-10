@@ -100,7 +100,6 @@ docs-starter-pack = [
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
 types = [
-    "mypy~=1.20.0",
     "types-PyYAML",
     "types-requests>=2.32",
     "types-setuptools",
@@ -194,23 +193,6 @@ namespaces = true
 
 [tool.setuptools.package-data]
 snapcraft = ["templates/*"]
-
-[tool.mypy]
-python_version = "3.10"
-ignore_missing_imports = true
-follow_imports = "silent"
-exclude = [
-    "build",
-    "tests/spread",
-    "tools",
-    "venv",
-]
-plugins = ["pydantic.mypy"]
-
-[tool.pyright]
-include = ["snapcraft", "tests"]
-exclude = ["build", "tests/spread"]
-pythonVersion = "3.10"
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
