@@ -219,7 +219,7 @@ parts:
       - "SODIUM_INSTALL": "system"
       - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
       - "UV_FROZEN": "1" # Never update the uv lockfile - fail build if we can't succeed.
-      - UV_NO_BINARY: "true"
+      #- UV_NO_BINARY: "true"
       # Parallel make jobs for things like python-apt
       - MAKEOPTS: -j$(nproc --all)
       - UV_COMPILE_BYTECODE: "true"
@@ -244,7 +244,7 @@ parts:
   chisel:
     plugin: nil
     stage-snaps:
-      - chisel/latest/candidate
+      - chisel/latest/stable
     organize:
       bin/chisel: libexec/snapcraft/chisel
     stage:
