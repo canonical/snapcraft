@@ -488,8 +488,8 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "6.4.0.post7+gb9f0806"
-source = { git = "https://github.com/canonical/craft-application?rev=feature%2Fbincraft#b9f080613d206d38553a1ac419ad484413eb1bbe" }
+version = "6.4.0.post9+g2c1922e"
+source = { git = "https://github.com/canonical/craft-application?rev=feature%2Fbincraft#2c1922ee4af14923f3f4e2f2fe8607b109c50781" }
 dependencies = [
     { name = "annotated-types" },
     { name = "craft-archives" },
@@ -559,8 +559,8 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.33.0.post9+g4fc412bf"
-source = { git = "https://github.com/canonical/craft-parts?rev=feature%2Fbincraft#4fc412bf773b9dabdc6bd57821ea6e998a195aaf" }
+version = "2.33.0.post14+g0b3f0c11"
+source = { git = "https://github.com/canonical/craft-parts?rev=feature%2Fbincraft#0b3f0c1198543f300ad2f1b5f07db8c8154a83de" }
 dependencies = [
     { name = "lxml" },
     { name = "pydantic" },
