@@ -16,10 +16,11 @@
 
 """Desktop file parser."""
 
+from __future__ import annotations
+
 import configparser
 import os
 import shlex
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from craft_cli import emit
@@ -28,6 +29,7 @@ from snapcraft import errors
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
 
 
 class DesktopFile:

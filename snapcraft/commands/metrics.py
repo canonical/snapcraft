@@ -128,8 +128,8 @@ class StoreMetricsCommand(AppCommand):
     @staticmethod
     def convert_metrics_to_table(
         results: Metric, *, transpose: bool = True
-    ) -> Sequence[Sequence[str | int]]:
-        rows: Sequence[Sequence[str | int]] = []
+    ) -> list[Sequence[str | int]]:
+        rows: list[Sequence[str | int]] = []
 
         status = results.status
         if status == "NO DATA":
