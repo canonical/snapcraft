@@ -100,7 +100,7 @@ docs-starter-pack = [
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
 types = [
-    "mypy~=1.20.0",
+    "mypy~=2.1.0",
     "types-PyYAML",
     "types-requests>=2.32",
     "types-setuptools",
