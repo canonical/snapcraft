@@ -40,7 +40,7 @@ def test_get_pull_commands(part_info):
     )
     plugin = MatterSdkPlugin(properties=properties, part_info=part_info)
 
-    sdk_version = properties.matter_sdk_version  # type: ignore
+    sdk_version = properties.matter_sdk_version
 
     expected_commands = [
         "    git init",

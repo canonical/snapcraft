@@ -771,7 +771,7 @@ def get_build_plan(
     host_arch = str(DebianArchitecture.from_host())
     build_plan: list[tuple[str, str]] = []
 
-    # `isinstance()` calls are for mypy type checking and should not change logic
+    # `isinstance()` calls are for type checking and should not change logic
     for arch in [arch for arch in archs if isinstance(arch, models.Architecture)]:
         for build_on in arch.build_on:
             if build_on in host_arch and isinstance(arch.build_for, list):

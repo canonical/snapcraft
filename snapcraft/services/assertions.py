@@ -203,7 +203,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
                     filepath=pathlib.Path(self._assertion_name),
                 )
                 craft_cli.emit.progress(f"Edited {self._assertion_name}.")
-                return edited_assertion  # type: ignore[return-value]
+                return edited_assertion
             except (yaml.YAMLError, CraftValidationError) as err:
                 craft_cli.emit.message(f"{err!s}")
                 if not utils.confirm_with_user(

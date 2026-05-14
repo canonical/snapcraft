@@ -190,7 +190,7 @@ class Links(SnapcraftMetadata):
     ) -> constraints.UniqueStrList | None:
         result: constraints.UniqueStrList | None
         if isinstance(value, str):
-            result = cast(constraints.UniqueStrList, [value])
+            result = [value]
         else:
             result = value
         return result

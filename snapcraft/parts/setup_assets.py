@@ -146,9 +146,8 @@ def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
 
     # Ensure all hooks are executable
     if hooks_dir.is_dir():
-        for hook in hooks_dir.iterdir():  # type: ignore
-            # mypy says we are passing a Hook, but this is indeed a Path
-            _ensure_hook_executable(hook)  # type: ignore
+        for hook in hooks_dir.iterdir():
+            _ensure_hook_executable(hook)
 
 
 def _finalize_icon(

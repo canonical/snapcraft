@@ -177,8 +177,8 @@ def _expand_architectures(
 
         result.append(
             Architecture(
-                build_on=cast(UniqueList[str], build_on),
-                build_for=cast(UniqueList[str], build_for),
+                build_on=build_on,
+                build_for=build_for,
             )
         )
 
@@ -1186,7 +1186,7 @@ class ContentPlug(models.CraftBaseModel):
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
-    build_on: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[assignment]
+    build_on: UniqueList[str] | str | None = pydantic.Field(
         description="The architectures to build the snap on.",
         examples=["arm64", "[amd64, riscv64]"],
         min_length=1,
@@ -1197,7 +1197,7 @@ class Platform(models.Platform):
     into a single-entry list at runtime.
     """
 
-    build_for: SingleEntryList | str | None = pydantic.Field(  # type: ignore[assignment]
+    build_for: SingleEntryList | str | None = pydantic.Field(
         default=None,
         description="The target architecture for the build.",
         examples=["amd64", "[riscv64]"],
@@ -1239,7 +1239,7 @@ class Platform(models.Platform):
         platforms: dict[str, Self] = {}
         for architecture in architectures:
             if isinstance(architecture, str):
-                build_on = build_for = cast(UniqueList[str], [architecture])
+                build_on = build_for = [architecture]
             else:
                 build_on_val = architecture.get("build-on")
                 build_for_val = architecture.get("build-for")
@@ -1423,7 +1423,7 @@ class Project(models.Project):
     """
 
     # snapcraft's `source_code` is more general than craft-application
-    source_code: UniqueList[str] | str | None = pydantic.Field(  # type: ignore[assignment]
+    source_code: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The links to the source code of the snap or the original project.",
         examples=["[https://example.com/source-code]"],
@@ -1616,7 +1616,7 @@ class Project(models.Project):
 
     _architectures_in_yaml: bool | None = None
 
-    platforms: dict[str, Platform] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    platforms: dict[str, Platform] | None = pydantic.Field(
         default=None,
         description="The architectures that the snap builds and runs on.",
         examples=[
@@ -2069,7 +2069,7 @@ class Project(models.Project):
     @classmethod
     def _validate_urls(cls, field_value: list[str] | str) -> list[str]:
         if isinstance(field_value, str):
-            field_value = cast(UniqueList[str], [field_value])
+            field_value = [field_value]
         return field_value
 
     @pydantic.field_validator("parts")
@@ -2247,11 +2247,9 @@ def _custom_error(error_msg: str):
 class _BaselessProject(Project):
     """Project types that do not require a base."""
 
-    type: Literal[  # type: ignore[reportIncompatibleVariableOverride]
-        ProjectType.BASE, ProjectType.KERNEL, ProjectType.SNAPD
-    ]
+    type: Literal[ProjectType.BASE, ProjectType.KERNEL, ProjectType.SNAPD]
     base: SkipJsonSchema[str | None] = None
-    build_base: Literal["core24", "core26", "devel"] = pydantic.Field(  # type: ignore[reportIncompatibleVariableOverride]
+    build_base: Literal["core24", "core26", "devel"] = pydantic.Field(
         description="The baseline system that the snap is built in.",
     )
 
@@ -2279,7 +2277,7 @@ class _BaselessProject(Project):
 
 
 class _BaselessCore22Project(_BaselessProject):
-    build_base: Literal["core22"] = pydantic.Field(  # type: ignore[assignment]
+    build_base: Literal["core22"] = pydantic.Field(
         description="The baseline system that the snap is built in.",
     )
 
@@ -2327,10 +2325,8 @@ BaselessProject = Annotated[
 class StableBaseProject(Project):
     """Project types that require a base."""
 
-    type: Literal[  # type: ignore[reportIncompatibleVariableOverride]
-        ProjectType.APP, ProjectType.GADGET, None
-    ] = None
-    base: StableBase  # type: ignore[reportIncompatibleVariableOverride]
+    type: Literal[ProjectType.APP, ProjectType.GADGET, None] = None
+    base: StableBase
     build_base: str | None = pydantic.Field(
         validate_default=True,
         default=None,
@@ -2363,7 +2359,7 @@ class StableBaseProject(Project):
 
 
 class Core22Project(StableBaseProject):
-    base: Literal["core22"]  # type: ignore[assignment]
+    base: Literal["core22"]
 
     platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(
         default=None,
@@ -2407,8 +2403,8 @@ class Core22Project(StableBaseProject):
 
 
 class BareCore22Project(Core22Project):
-    base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    build_base: Literal["core22"]  # type: ignore[reportIncompatibleVariableOverride]
+    base: Literal["bare"]
+    build_base: Literal["core22"]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
@@ -2425,9 +2421,9 @@ class BareCore22Project(Core22Project):
 
 
 class Core24Project(StableBaseProject):
-    base: Literal["core24"]  # type: ignore[assignment]
+    base: Literal["core24"]
 
-    architectures: SkipJsonSchema[  # type: ignore[reportIncompatibleVariableOverride]
+    architectures: SkipJsonSchema[
         Annotated[
             None,
             _custom_error(
@@ -2439,7 +2435,7 @@ class Core24Project(StableBaseProject):
         description="The architectures key is only used in core22 snaps and below. For core24 and newer snaps, use the ``platforms`` key.",
     )
 
-    platforms: dict[str, Platform | None] | None = pydantic.Field(  # type: ignore[assignment,reportIncompatibleVariableOverride]
+    platforms: dict[str, Platform | None] | None = pydantic.Field(
         default=None,
         description="The platforms where the snap can be built and where the resulting snap can run.",
         examples=[
@@ -2449,8 +2445,8 @@ class Core24Project(StableBaseProject):
 
 
 class BareCore24Project(Core24Project):
-    base: Literal["bare"]  # type: ignore[assignment,reportIncompatibleVariableOverride]
-    build_base: Literal["core24"]  # type: ignore[reportIncompatibleVariableOverride]
+    base: Literal["bare"]
+    build_base: Literal["core24"]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
@@ -2467,7 +2463,7 @@ class BareCore24Project(Core24Project):
 
 
 class Core26Project(Core24Project):
-    base: Literal["core26"]  # type: ignore[assignment]
+    base: Literal["core26"]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
@@ -2484,18 +2480,18 @@ class Core26Project(Core24Project):
 
 
 class DevelBaseProject(Core26Project):
-    base: Literal["devel"]  # type: ignore[assignment]
-    build_base: Literal["devel"]  # pyright: ignore[reportGeneralTypeIssues,reportIncompatibleVariableOverride]
+    base: Literal["devel"]
+    build_base: Literal["devel"]
 
-    grade: Annotated[  # type: ignore[reportIncompatibleVariableOverride]
+    grade: Annotated[
         Literal["devel"],
         _custom_error("grade must be 'devel' when build-base is 'devel'"),
     ]
 
 
 class BareCore26Project(Core26Project):
-    base: Literal["bare"]  # type: ignore[assignment]
-    build_base: Literal["core26"]  # type: ignore[assignment]
+    base: Literal["bare"]
+    build_base: Literal["core26"]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
@@ -2512,8 +2508,8 @@ class BareCore26Project(Core26Project):
 
 
 class BareDevelProject(DevelBaseProject):
-    base: Literal["bare"]  # type: ignore[assignment]
-    build_base: Literal["devel"]  # type: ignore[assignment]
+    base: Literal["bare"]
+    build_base: Literal["devel"]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
