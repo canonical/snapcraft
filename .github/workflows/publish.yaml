@@ -2,6 +2,11 @@ name: CI
 
 on:
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "*.md"
+      - ".readthedocs.yaml"
   push:
     branches:
       - "feature/**"
