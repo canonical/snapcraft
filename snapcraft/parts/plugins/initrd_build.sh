@@ -273,6 +273,10 @@ install_extra() {
 
   # Iterate over objects list in ${CRAFT_STAGE} and install them to $extra_path
   for obj in $objects; do
+    # Strip any erroneous trailing slashes; this can happen if a user feels like being
+    # extra precise when specifying the target is a directory. More than a single trailing
+    # slash is not handled.
+    obj="${obj%/}"
     find "${CRAFT_STAGE}/${type}" -name "${obj##*/}" | while read -r oobj; do
       loc="${extra_path}/${obj%/*}"
       # If the location includes the name, strip it out
