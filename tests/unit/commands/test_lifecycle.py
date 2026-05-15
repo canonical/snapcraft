@@ -16,9 +16,11 @@
 
 import argparse
 import re
+from pathlib import Path
 from unittest.mock import call
 
 import pytest
+from craft_application.errors import PartsLifecycleError
 
 import snapcraft.commands.core22.lifecycle as core22_lifecycle
 import snapcraft.errors
@@ -136,3 +138,94 @@ def test_core24_snap_error(fake_services, tmp_path):
 
     with pytest.raises(snapcraft.errors.RemovedCommand, match=expected):
         cmd.run(parsed_args)
+
+
+# Reproducer for https://github.com/canonical/snapcraft/issues/6219
+# --shell and --debug fail cryptically with late pack failures
+
+
+def _make_pack_args(**overrides):
+    """Build a minimal parsed_args namespace for the pack command."""
+    defaults = argparse.Namespace(
+        shell=False,
+        shell_after=False,
+        debug=False,
+        destructive_mode=True,
+        directory=None,
+        output=Path("."),
+    )
+    for key, value in overrides.items():
+        setattr(defaults, key, value)
+    return defaults
+
+
+@pytest.mark.usefixtures("emitter")
+def test_pack_late_failure_shell_launches_debug_shell(
+    mocker, fake_services, setup_project, default_project
+):
+    """--shell should launch a debug shell when update_project() fails (issue #6219).
+
+    A "late pack failure" occurs when the lifecycle steps complete successfully but
+    the post-prime step (update_project) raises because mandatory project fields like
+    'version', 'summary', or 'description' were not set via adopt-info.
+
+    When the user passes --shell, a debug shell should be launched so they can inspect
+    the build environment, but currently the exception from _run_post_prime_steps()
+    propagates before the shell check in _run_real() is reached.
+    """
+    setup_project(fake_services, default_project.marshal())
+    mocker.patch.object(fake_services.get("lifecycle"), "run")
+    mocker.patch.object(
+        fake_services.get("package"),
+        "update_project",
+        side_effect=PartsLifecycleError(
+            "Project fields 'version', 'summary', and 'description' were not set."
+        ),
+    )
+    mock_launch_shell = mocker.patch(
+        "craft_application.commands.lifecycle._launch_shell"
+    )
+
+    cmd = lifecycle.PackCommand({"app": APP_METADATA, "services": fake_services})
+    with pytest.raises(PartsLifecycleError):
+        cmd.run(_make_pack_args(shell=True))
+
+    # Bug: _launch_shell() should be called when --shell is passed, but the exception
+    # from _run_post_prime_steps() propagates before the shell check in _run_real().
+    mock_launch_shell.assert_called_once()
+
+
+@pytest.mark.usefixtures("emitter")
+def test_pack_late_failure_debug_launches_debug_shell(
+    mocker, fake_services, setup_project, default_project
+):
+    """--debug should launch a debug shell when update_project() fails (issue #6219).
+
+    A "late pack failure" occurs when the lifecycle steps complete successfully but
+    the post-prime step (update_project) raises because mandatory project fields like
+    'version', 'summary', or 'description' were not set via adopt-info.
+
+    When the user passes --debug, a debug shell should be launched on failure, but
+    currently the exception from _run_post_prime_steps() propagates without ever
+    entering the try/except that handles --debug in _run_real().
+    """
+    setup_project(fake_services, default_project.marshal())
+    mocker.patch.object(fake_services.get("lifecycle"), "run")
+    mocker.patch.object(
+        fake_services.get("package"),
+        "update_project",
+        side_effect=PartsLifecycleError(
+            "Project fields 'version', 'summary', and 'description' were not set."
+        ),
+    )
+    mock_launch_shell = mocker.patch(
+        "craft_application.commands.lifecycle._launch_shell"
+    )
+
+    cmd = lifecycle.PackCommand({"app": APP_METADATA, "services": fake_services})
+    with pytest.raises(PartsLifecycleError):
+        cmd.run(_make_pack_args(debug=True))
+
+    # Bug: _launch_shell() should be called when --debug is passed and a failure
+    # occurs, but _run_post_prime_steps() raises outside the try/except in _run_real().
+    mock_launch_shell.assert_called_once()
