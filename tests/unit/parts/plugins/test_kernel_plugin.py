@@ -46,7 +46,8 @@ def test_get_pull_commands_release(part_info):
     expected_commands = [
         "for name in canonical-kernel ubuntu-kernel; do",
         'team_url="https://git.launchpad.net/~$name/ubuntu/+source/linux/+git/jammy"',
-        'if [ "$(curl -fsSL "$team_url")" != "Invalid OpenID transaction" ]; then',
+        'test_url="$(curl -fsSL "$team_url")"',
+        'if [ -n "$test_url" ] && [ "$test_url" != "Invalid OpenID transaction" ]; then',
         'actual_url="$team_url"',
         "fi",
         "done",
@@ -171,6 +172,7 @@ def test_get_build_commands(part_info):
                 "perf",
             ],
             "kernel-ubuntu-release-name": "noble",
+            "kernel-ubuntu-debian-package": "false",
         }
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
@@ -182,6 +184,7 @@ def test_get_build_commands(part_info):
         "kernel-tools=bpf,cpupower,perf "
         "kernel-ubuntu-kconfigflavour= "
         "kernel-ubuntu-release-name=noble "
+        "kernel-ubuntu-abinumber= "
         "kernel-ubuntu-binary-package=False "
-        "kernel-ubuntu-abinumber="
+        "kernel-ubuntu-debian-package=False"
     ]

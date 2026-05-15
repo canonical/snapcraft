@@ -89,6 +89,19 @@ kernels available on Launchpad.
 Valid values are Ubuntu release code names like ``jammy``, ``lunar``, or ``noble``.
 
 
+kernel-ubuntu-abinumber
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Type**: string
+
+A string which specifies a particular kernel version and, more importantly,
+ABI number of the kernel package to build. This value is meaningful when
+``kernel-ubuntu-release-name`` or ``kernel-ubuntu-binary-package`` are used. For the
+former, this value will be used when cloning the git repository for the chosen release.
+For the latter, this value will be used to specify the kernel version of the debian
+package.
+
+
 kernel-ubuntu-binary-package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -109,17 +122,20 @@ repackaged into a snap. A particular ABI may be specified with ``kernel-ubuntu-a
    for a viable workaround.
 
 
-kernel-ubuntu-abinumber
-~~~~~~~~~~~~~~~~~~~~~~~
+kernel-ubuntu-debian-package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Type**: string
+**Type**: bool
 
-A string which specifies a particular kernel version and, more importantly,
-ABI number of the kernel package to build. This value is meaningful when
-``kernel-ubuntu-release-name`` or ``kernel-ubuntu-binary-package`` are used. For the
-former, this value will be used when cloning the git repository for the chosen release.
-For the latter, this value will be used to specify the kernel version of the debian
-package.
+**Default**: ``false``
+
+If enabled, the kernel will be built following how debian packages traditionally are.
+This means that the build steps are handled by the :file:`debian/rules` makefile, rather
+than any direct ``make`` invocations as is done in most other cases.
+
+This option is primarily intended to be used by the Canonical Kernel team, although it
+is a valid option for anyone so long as the kernel source (as specified by the other
+various options) provides a valid :file:`debian/` directory.
 
 
 Environment variables

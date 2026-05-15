@@ -24,14 +24,17 @@ parse_args() {
       # kernel_ubuntu_release_name specifies the specific release to build from
       # Default value is "".
       kernel_ubuntu_release_name=${arg#*=}    ;;
-      kernel-ubuntu-binary-package=*)
-      # kernel_ubuntu_binary_package specifies if prebuilt debs should be used
-      # Default value is "False".
-      kernel_ubuntu_binary_package=${arg#*=}  ;;
       # kernel_ubuntu_abinumber specifies a particular linux-image package version to fetch
       # Default value is "".
       kernel-ubuntu-abinumber=*)
       kernel_ubuntu_abinumber=${arg#*=}       ;;
+      kernel-ubuntu-binary-package=*)
+      # kernel_ubuntu_binary_package specifies if prebuilt debs should be used
+      # Default value is "False".
+      kernel_ubuntu_binary_package=${arg#*=}  ;;
+      kernel-ubuntu-debian-package=*)
+      # kernel_ubuntu_debian_package specifies if the kernel should build from debian/rules.
+      kernel_ubuntu_debian_package=${arg#*=}  ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac
   done
@@ -186,12 +189,14 @@ redepmod() {
   depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
 }
 
-# repack_deb unpacks the primary linux-image deb package for some version and flavour as
-# well as the corresponding modules and modules-extras packages and then repacks them
+# fetch_deb downloads the linux-image deb package for some version or flavour (if
+# specified, otherwise fetches whatever is currently available on the build host from
+# the archive), along with its corresponding modules and modules-extra packages (if
+# they exist).
 # $1 is the kernel version string as it appears in the kernel deb package
 # $2 is the flavour as it appears in the kernel deb package
 # So for linux-image-x.y.z-a-generic, $1 is "x.y.z-a" and $2 is "generic"
-repack_deb() {
+fetch_deb() {
   _kver="${1}"
   _flavour="${2}"
 
@@ -208,9 +213,19 @@ repack_deb() {
     apt download "linux-${pkg}-${_kver}-${_flavour}:${CRAFT_ARCH_BUILD_FOR}" ||
     echo "No candidate for linux-${pkg}-${_kver}-${_flavour} found"
   done
+}
+
+# repack_deb unpacks some linux-image deb package for some version and flavour as well
+# as the corresponding modules and modules-extras packages and then repacks them
+# $1 is the kernel version string as it appears in the kernel deb package
+# $2 is the flavour as it appears in the kernel deb package
+# So for linux-image-x.y.z-a-generic, $1 is "x.y.z-a" and $2 is "generic"
+repack_deb() {
+  _kver="${1}"
+  _flavour="${2}"
 
   # Unpack the debs into the expected locations
-  for deb in "${CRAFT_PART_BUILD}/"*.deb; do
+  for deb in "${CRAFT_PART_BUILD}/linux-"*.deb; do
     dpkg -x "${deb}" "${CRAFT_PART_INSTALL}"
   done
 
@@ -405,13 +420,38 @@ run() {
     else kver="${kernel_ubuntu_abinumber}"
     fi
 
+    fetch_deb  "${kver}" "${kconfigflavour}"
     repack_deb "${kver}" "${kconfigflavour}"
 
     # Update kver to be whatever the kernel debian package says kver should be
     # This is primarily for redepmod as it needs to know this path
     kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
 
-  elif [ "$kernel_ubuntu_binary_package" = "False" ]; then
+  elif [ "$kernel_ubuntu_debian_package" = "True" ]; then
+    # To build a deb we must be present in the source directory, which is ${KERNEL_SRC}
+    OLDPWD="${PWD}"
+    cd "${KERNEL_SRC}"
+
+    # Update configs for any new kconfig options without a default
+    fakeroot debian/rules updateconfigs || true
+    # Print the environment for debug purposes
+    fakeroot debian/rules printenv
+    # Build the kernel
+    fakeroot debian/rules "build-${kconfigflavour}"
+    # Build the deb packages
+    fakeroot debian/rules "binary-${kconfigflavour}"
+
+    # Move the packages to the correct location
+    mv -f "${KERNEL_SRC}/"*.deb "${CRAFT_PART_BUILD}"
+
+    cd "${OLDPWD}"
+
+    # Generate release information from debian/changelog and repack the debs
+    release_info
+    repack_deb "${abi_release}" "${kconfigflavour}"
+
+    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+  else
     # Ensure the config is setup properly
     setup_kernel
 
@@ -535,8 +575,7 @@ main() {
     # KERNEL_SRC is the true location of the kernel source tree
     # We don't actually have a true KERNEL_SRC, just set it
     KERNEL_SRC="${CRAFT_PART_INSTALL}"
-  elif [ -n "$kernel_ubuntu_release_name" ]        &&
-       [ "$kernel_ubuntu_release_name" != "None" ] ||
+  elif [ "$kernel_ubuntu_release_name" != "None" ] ||
        [ -d "${CRAFT_PART_SRC}/kernel" ]; then
     # We have fetched a source tree and it is in the usual location
     KERNEL_SRC="${CRAFT_PART_SRC}"

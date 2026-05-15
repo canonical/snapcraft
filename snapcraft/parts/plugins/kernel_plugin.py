@@ -44,14 +44,19 @@ The following kernel-specific options are provided by this plugin:
       (string; default: none)
       A specific Ubuntu release to fetch the source of and to build a kernel of.
 
-    - kernel-ubuntu-binary-package
-      (boolean; default: False)
-      Specifies whether or not a prebuilt debian kernel package should be used.
-
     - kernel-ubuntu-abinumber
       (string; default: master-next)
       A string to specify either a particular kernel version and ABI, or a
       particular tag when cloning an Ubuntu kernel tree.
+
+    - kernel-ubuntu-binary-package
+      (boolean; default: False)
+      Specifies whether or not a prebuilt debian kernel package from the archive should
+      be used.
+
+    - kernel-ubuntu-debian-package
+      (boolean; default: False)
+      Specifies whether to use the debian/rules file to build the kernel.
 
 This plugin supports cross compilation, for which the plugin expects the
 build-environment is configured accordingly.
@@ -89,6 +94,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     kernel_ubuntu_release_name: str = ""
     kernel_ubuntu_abinumber: str = "master-next"
     kernel_ubuntu_binary_package: bool = False
+    kernel_ubuntu_debian_package: bool = False
 
     @pydantic.model_validator(mode="after")
     def validate_release_name_and_source_exclusive(self) -> Self:
@@ -104,7 +110,11 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
         self,
     ) -> Self:
         """Enforce binary package and source-only options are exclusive."""
-        if self.kernel_ubuntu_binary_package:
+        kdefconfig = self.kernel_kdefconfig
+        debian = self.kernel_ubuntu_debian_package
+        binary = self.kernel_ubuntu_binary_package
+
+        if binary or debian:
             conflicting_options = [
                 "kernel_kconfigs",
                 "kernel_kdefconfig",
@@ -113,14 +123,24 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
             for option in conflicting_options:
                 if getattr(self, option):
-                    if option == "kernel_kdefconfig" and self.kernel_kdefconfig == [
-                        "defconfig"
-                    ]:
+                    if option == "kernel_kdefconfig" and kdefconfig == ["defconfig"]:
                         continue
                     emit.progress(
-                        f"'kernel-ubuntu-binary-package' and '{option.replace('_', '-')}' keys are mutually exclusive and '{option.replace('_', '-')}' will be ignored",
+                        f"'{option}' will be ignored when 'kernel-ubuntu-binary-package' or 'kernel-ubuntu-debian-package' is set",
                         permanent=True,
                     )
+        return self
+
+    @pydantic.model_validator(mode="after")
+    def validate_debian_and_binary_exclusive(self) -> Self:
+        """Enforce debian_package and binary_package options are mutually exclusive."""
+        debian = self.kernel_ubuntu_debian_package
+        binary = self.kernel_ubuntu_binary_package
+
+        if binary and debian:
+            raise errors.PartsError(
+                "cannot use 'kernel-ubuntu-binary-package' and 'kernel-ubuntu-debian-package' keys at same time"
+            )
         return self
 
 
@@ -147,9 +167,10 @@ class KernelPlugin(plugins.Plugin):
         branch = self.options.kernel_ubuntu_abinumber
         flavour = self.options.kernel_ubuntu_kconfigflavour
         release = self.options.kernel_ubuntu_release_name
-        deb = self.options.kernel_ubuntu_binary_package
+        binary = self.options.kernel_ubuntu_binary_package
+        debian = self.options.kernel_ubuntu_debian_package
 
-        if deb:
+        if binary or debian:
             return super().get_pull_commands()
 
         if flavour != "generic":
@@ -281,7 +302,8 @@ class KernelPlugin(plugins.Plugin):
     @override
     def get_build_commands(self) -> list[str]:
         kdefconfig = self.options.kernel_kdefconfig
-        deb = self.options.kernel_ubuntu_binary_package
+        binary = self.options.kernel_ubuntu_binary_package
+        debian = self.options.kernel_ubuntu_debian_package
         abinumber = self.options.kernel_ubuntu_abinumber
         release_name = self.options.kernel_ubuntu_release_name
         kconfigflavour = self.options.kernel_ubuntu_kconfigflavour
@@ -289,7 +311,7 @@ class KernelPlugin(plugins.Plugin):
         if kdefconfig != ["defconfig"]:
             kconfigflavour = ""
 
-        if deb and kconfigflavour == "":
+        if (binary or debian) and kconfigflavour == "":
             kconfigflavour = "generic"
 
         if abinumber == "master-next":
@@ -306,8 +328,9 @@ class KernelPlugin(plugins.Plugin):
                     f"kernel-tools={','.join(sorted(self.options.kernel_tools))}",
                     f"kernel-ubuntu-kconfigflavour={kconfigflavour}",
                     f"kernel-ubuntu-release-name={release_name}",
-                    f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package}",
                     f"kernel-ubuntu-abinumber={abinumber}",
+                    f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package}",
+                    f"kernel-ubuntu-debian-package={self.options.kernel_ubuntu_debian_package}",
                 ]
             )
         ]
