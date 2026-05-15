@@ -31,10 +31,10 @@
 - initrd-firmware:
   (list of strings; default: none)
   A list of firmware to include in the initrd, provided as relative paths to
-  $CRAFT_STAGE/firmware. For example,
+  $CRAFT_STAGE. For example,
 
       initrd-firmware:
-          - foo/bar.bin
+          - firmware/foo/bar.bin
 
   will result in "${CRAFT_STAGE}/firmware/foo/bar.bin" being placed in the
   initrd as /usr/lib/firmware/foo/bar.bin.
