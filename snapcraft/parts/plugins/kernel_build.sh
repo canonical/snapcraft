@@ -155,6 +155,7 @@ build_tool() {
 
   if [ "$_tool" = "bpf/bpftool" ]; then
     # bpf is weird and won't build correctly if we aren't in the tools directory
+    OLDPWD="${PWD}"
     cd "${KERNEL_SRC}/tools/bpf"
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}"      \
           O="${CRAFT_PART_BUILD}/tools/${_tool}" \
@@ -162,7 +163,7 @@ build_tool() {
 
     make DESTDIR="${CRAFT_PART_INSTALL}" \
       -C bpftool install
-    cd "$OLDPWD"
+    cd "${OLDPWD}"
   else
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
          -C "${KERNEL_SRC}/tools/${_tool}"  \
