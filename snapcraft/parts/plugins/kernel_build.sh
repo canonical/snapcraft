@@ -403,6 +403,33 @@ run() {
     kconfigflavour="${kernel_ubuntu_kconfigflavour}"
   fi
 
+  # If any kconfig fragments are provided, they should be in one of
+  #  - ${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs,
+  #  - ${CRAFT_PART_SRC}/kernel/configs, or, in the case of an annotations fragment,
+  #  - ${CRAFT_PROJECT_DIR}/annotations
+  if [ "${kernel_kdefconfig}" != "defconfig" ]; then
+    _kdefconfigs="$(echo "${kernel_kdefconfig}" | sed -e 's/,/\n/g')"
+    if [ "${kernel_ubuntu_debian_package}" = "True" ]; then
+      for fragment in ${_kdefconfigs}; do
+        [ -e "${CRAFT_PROJECT_DIR}/annotations/${fragment}" ] || {
+          echo "Please ensure your kdefconfig annotations fragment is in:"
+          echo " \${CRAFT_PROJECT_DIR}/annotations"
+          exit 1
+        }
+      done
+    else
+      for fragment in ${_kdefconfigs}; do
+        [ -e "${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/${fragment}" ] ||
+        [ -e "${CRAFT_PART_SRC}/kernel/configs/${fragment}" ] || {
+          echo "Please ensure your specified kdefconfig files are in either:"
+          echo "  - \${CRAFT_PART_SRC}/arch/\${CRAFT_ARCH_BUILD_FOR}/configs, or"
+          echo "  - \${CRAFT_PART_SRC}/kernel/configs"
+          exit 1
+        }
+      done
+    fi
+  fi
+
   if [ "$kernel_ubuntu_binary_package" = "True" ]; then
     if [ -z "$kernel_ubuntu_abinumber" ]; then
       # kver is the total version string but cuts the upload number
@@ -434,6 +461,21 @@ run() {
 
     # Update configs for any new kconfig options without a default
     fakeroot debian/rules updateconfigs || true
+
+    # If any kconfig fragments are provided, they should be used
+    [ -z "${_kdefconfigs:-}" ] || {
+      for fragment in ${_kdefconfigs}; do
+        cat "${CRAFT_PROJECT_DIR}/annotations/${fragment}" >> \
+          "${CRAFT_PART_BUILD}/custom_fragment"
+      done
+
+      # Update the annotations file with the new config values
+      "${KERNEL_SRC}/debian/scripts/misc/annotations" \
+        --arch "${CRAFT_ARCH_BUILD_FOR}"              \
+        --flavor "${kconfigflavour}"                  \
+        --update "${CRAFT_PART_BUILD}/custom_fragment"
+    }
+
     # Print the environment for debug purposes
     fakeroot debian/rules printenv
     # Build the kernel

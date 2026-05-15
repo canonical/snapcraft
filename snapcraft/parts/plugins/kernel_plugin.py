@@ -20,7 +20,16 @@ The following kernel-specific options are provided by this plugin:
 
     - kernel-kdefconfig:
       (list of strings, default: defconfig))
-      defconfig target to use as the base configuration.
+      defconfig target to use as the base configuration. Multiple kdefconfigs
+      may be specified. Their order matters (ones later in the list will take
+      precedent over those earlier). These files should be in one of three places,
+      depending on other options:
+      If kernel-ubuntu-debian-package is true, they should be in
+      ${CRAFT_PROJECT_DIR}/annotations and they should be in the annotations YAML
+      format.
+      If kernel-ubuntu-debian-package is false, they should be in
+      either ${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs or
+      ${CRAFT_PART_SRC}/kernel/configs.
 
     - kernel-kconfigs:
       (list of strings; default: none)
@@ -111,24 +120,33 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     ) -> Self:
         """Enforce binary package and source-only options are exclusive."""
         kdefconfig = self.kernel_kdefconfig
-        debian = self.kernel_ubuntu_debian_package
         binary = self.kernel_ubuntu_binary_package
 
-        if binary or debian:
+        if binary:
             conflicting_options = [
                 "kernel_kconfigs",
                 "kernel_kdefconfig",
                 "kernel_ubuntu_release_name",
             ]
-
             for option in conflicting_options:
                 if getattr(self, option):
                     if option == "kernel_kdefconfig" and kdefconfig == ["defconfig"]:
                         continue
                     emit.progress(
-                        f"'{option}' will be ignored when 'kernel-ubuntu-binary-package' or 'kernel-ubuntu-debian-package' is set",
+                        f"'{option}' will be ignored when 'kernel-ubuntu-binary-package' is set",
                         permanent=True,
                     )
+
+    @pydantic.model_validator(mode="after")
+    def validate_debian_package_and_kconfigs_options_exclusive(self) -> Self:
+        """Enforce debian_package and kconfigs options are exclusive"""
+        debian = self.kernel_ubuntu_debian_package
+
+        if debian and self.kernel_kconfigs:
+            emit.progress(
+                "'kernel-kconfigs' will be ignored when 'kernel-ubuntu-debian-package' is set",
+                permanent=True,
+            )
         return self
 
     @pydantic.model_validator(mode="after")

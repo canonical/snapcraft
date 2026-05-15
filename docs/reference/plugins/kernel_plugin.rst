@@ -29,8 +29,18 @@ kernel-kdefconfig
 
 **Default**: ``["defconfig"]``
 
-The kernel configurations to use when generating a ``.config``, such as those
-found in ``arch/${arch}/configs`` or ``kernel/configs``.
+The kernel configurations to use when generating a ``.config``. Multiple items
+in the list may be specified, but their order matters. Items later in the list
+take precedent over earlier items.
+
+If kernel-ubuntu-debian-package is ``true``, then the specified kdefconfig files
+must be in the annotations format and located in
+``${CRAFT_PROJECT_DIR}/annotations``.
+
+If kernel-ubuntu-debian-package is ``false``, then the specified  kdefconfig
+files must be in the regular kconfig fragment style and located in either
+``${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs`` or
+``${CRAFT_PART_SRC}/kernel/configs``.
 
 
 kernel-kconfigs
