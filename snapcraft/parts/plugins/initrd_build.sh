@@ -60,8 +60,8 @@ clean() {
   # lazy mounting in the first place
   for pid in /proc/*; do
     if [ -e "${pid}/root" ] && [ "$(readlink -f "${pid}/root")" = "${INITRD_ROOT}" ]; then
-      echo "Killing PID ${pid} inside ${INITRD_ROOT} chroot"
-      kill -9 "${pid}" || continue
+      echo "Killing PID ${pid##*/} inside ${INITRD_ROOT} chroot"
+      kill -9 "${pid##*/}" || continue
     fi
   done
 
