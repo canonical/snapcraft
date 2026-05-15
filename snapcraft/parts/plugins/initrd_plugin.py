@@ -92,6 +92,9 @@ RELEASE_NUMBER_FROM_SNAP_BASE = {
     "core26": "26.04",
 }
 
+SNAKEOIL_KEY = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+SNAKEOIL_CERT = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
+
 
 class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     """The part properties used by the Initrd plugin."""
@@ -99,12 +102,8 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     plugin: Literal["initrd"] = "initrd"
 
     initrd_build_efi_image: bool = False
-    initrd_efi_image_key: str = (
-        "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
-    )
-    initrd_efi_image_cert: str = (
-        "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
-    )
+    initrd_efi_image_key: str = SNAKEOIL_KEY
+    initrd_efi_image_cert: str = SNAKEOIL_CERT
     initrd_modules: list[str] = []
     initrd_firmware: list[str] = []
     initrd_addons: list[str] = []
@@ -116,8 +115,11 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
         signing_cert = self.initrd_efi_image_cert
 
         # Validate that either both key and cert are specified or neither is
-        if bool(signing_key) ^ bool(signing_cert):
-            raise ValueError(
+        custom_key = signing_key != SNAKEOIL_KEY
+        custom_cert = signing_cert != SNAKEOIL_CERT
+
+        if custom_key ^ custom_cert:
+            raise errors.PartsError(
                 "If one of initrd-efi-image-key or initrd-efi-image-cert is set, both must be set"
             )
 
