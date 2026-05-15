@@ -1258,6 +1258,29 @@ class Platform(models.Platform):
         return platforms
 
 
+class SystemUsernames(models.CraftBaseModel, extra="allow"):
+    """System usernames the snap can use to run daemons.
+
+    See :external+snap:ref:`interfaces-system-usernames` in the snap documentation for
+    more information.
+    """
+
+    snap_daemon: Annotated[
+        str | dict[str, Any] | None,
+        pydantic.Field(
+            default=None,
+            deprecated=(
+                "The 'snap_daemon' system username is deprecated. "
+                "See https://snapcraft.io/docs/system-usernames."
+            ),
+        ),
+    ] = None
+    """Deprecated system username.
+
+    Use ``snap_microk8s``, ``snap_aziotedge``, or ``snap_aziotdu`` instead.
+    """
+
+
 class Component(models.CraftBaseModel):
     """Snapcraft component definition."""
 
@@ -1791,15 +1814,12 @@ class Project(models.Project):
       adopting part.
     """
 
-    system_usernames: dict[str, Any] | None = pydantic.Field(
+    system_usernames: SystemUsernames | None = pydantic.Field(
         default=None,
         description="The system usernames the snap can use to run daemons and services.",
         examples=["{snap-daemon: shared}"],
     )
     """The system usernames the snap can use to run daemons and services.
-
-    This is used to run daemons with the ``snap_daemon`` user defined by snapd.
-    Otherwise, this is an uncommon key.
 
     See :external+snap:ref:`interfaces-system-usernames` in the snap documentation for
     more information.
@@ -1953,6 +1973,18 @@ class Project(models.Project):
             emit.message(message)
 
         return slots
+
+    @pydantic.field_validator("system_usernames")
+    @classmethod
+    def _validate_system_usernames(
+        cls, system_usernames: SystemUsernames
+    ) -> SystemUsernames:
+        if system_usernames and system_usernames.snap_daemon is not None:
+            emit.warning(
+                "The 'snap_daemon' system username is deprecated. "
+                "See https://snapcraft.io/docs/system-usernames."
+            )
+        return system_usernames
 
     @pydantic.model_validator(mode="after")
     def _validate_adoptable_fields(self) -> Self:
