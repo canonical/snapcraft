@@ -143,7 +143,6 @@ class KernelPlugin(plugins.Plugin):
     @override
     def get_pull_commands(self) -> list[str]:
         commands = []
-        repo = ""
         pkg = "linux"
         branch = self.options.kernel_ubuntu_abinumber
         flavour = self.options.kernel_ubuntu_kconfigflavour
@@ -156,7 +155,7 @@ class KernelPlugin(plugins.Plugin):
         if flavour != "generic":
             pkg = f"linux-{flavour}"
 
-        if release and not deb:
+        if release:
             # Check for a valid URL
             # Launchpad will return "Invalid OpenID transaction" if a repository
             # doesn't exist, rather than curl failing. This string check is beholden to
@@ -181,8 +180,6 @@ class KernelPlugin(plugins.Plugin):
                 ]
             )
 
-            if not commands:
-                raise errors.PartsError(f"failed to find kernel source url: {repo}")
             return commands
 
         return super().get_pull_commands()
