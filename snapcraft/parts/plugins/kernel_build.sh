@@ -110,11 +110,11 @@ remake_config() {
 
 # check_config checks if Ubuntu Core and snap specific options are set
 check_config() {
-  echo "${required_boot}"     \
-       "${required_generic}"  \
-       "${required_security}" \
-       "${required_snappy}"   \
-       "${required_systemd}"  | while read -r config; do
+  for config in ${required_boot}     \
+                ${required_generic}  \
+                ${required_security} \
+                ${required_snappy}   \
+                ${required_systemd}; do
     if ! grep "^CONFIG_${config}=" "${CRAFT_PART_BUILD}/.config"; then
       printf '*** WARNING ***\n'
       printf 'Your kernel config is missing:\n'
