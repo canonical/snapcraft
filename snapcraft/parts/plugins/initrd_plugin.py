@@ -225,11 +225,15 @@ class InitrdPlugin(plugins.Plugin):
         if build_efi_image:
             # There are no EFI stubs for s390x or ppc64el
             if arch in {"s390x", "ppc64el"}:
-                raise ValueError("initrd-build-efi-image not allowed for " + arch)
+                raise errors.PartsError(
+                    "initrd-build-efi-image not allowed for " + arch
+                )
 
             # There are no EFI stubs for riscv until 24.04
             if arch == "riscv64" and base == "core22":
-                raise ValueError("initrd-build-efi-image not allowed for riscv64")
+                raise errors.PartsError(
+                    "initrd-build-efi-image not allowed for riscv64"
+                )
 
         return [
             " ".join(
