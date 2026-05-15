@@ -95,16 +95,23 @@ def get_elf_files_from_list(root: Path, file_list: Iterable[str]) -> list[ElfFil
 class _ArchConfig:
     arch_triplet: str
     dynamic_linker: str
+    elf_machine: str
 
 
 _ARCH_CONFIG = {
-    "aarch64": _ArchConfig("aarch64-linux-gnu", "lib/ld-linux-aarch64.so.1"),
-    "armv7l": _ArchConfig("arm-linux-gnueabihf", "lib/ld-linux-armhf.so.3"),
-    "ppc64le": _ArchConfig("powerpc64le-linux-gnu", "lib64/ld64.so.2"),
-    "riscv64": _ArchConfig("riscv64-linux-gnu", "lib/ld-linux-riscv64-lp64d.so.1"),
-    "s390x": _ArchConfig("s390x-linux-gnu", "lib/ld64.so.1"),
-    "x86_64": _ArchConfig("x86_64-linux-gnu", "lib64/ld-linux-x86-64.so.2"),
-    "i686": _ArchConfig("i386-linux-gnu", "lib/ld-linux.so.2"),
+    "aarch64": _ArchConfig(
+        "aarch64-linux-gnu", "lib/ld-linux-aarch64.so.1", "EM_AARCH64"
+    ),
+    "armv7l": _ArchConfig("arm-linux-gnueabihf", "lib/ld-linux-armhf.so.3", "EM_ARM"),
+    "ppc64le": _ArchConfig("powerpc64le-linux-gnu", "lib64/ld64.so.2", "EM_PPC64"),
+    "riscv64": _ArchConfig(
+        "riscv64-linux-gnu", "lib/ld-linux-riscv64-lp64d.so.1", "EM_RISCV"
+    ),
+    "s390x": _ArchConfig("s390x-linux-gnu", "lib/ld64.so.1", "EM_S390"),
+    "x86_64": _ArchConfig(
+        "x86_64-linux-gnu", "lib64/ld-linux-x86-64.so.2", "EM_X86_64"
+    ),
+    "i686": _ArchConfig("i386-linux-gnu", "lib/ld-linux.so.2", "EM_386"),
 }
 
 
@@ -152,3 +159,13 @@ def get_arch_triplet(arch: str | None = None) -> str:
 def get_all_arch_triplets() -> list[str]:
     """Get a list of all architecture triplets."""
     return [architecture.arch_triplet for architecture in _ARCH_CONFIG.values()]
+
+
+def get_host_elf_machine() -> str | None:
+    """Get the ELF machine type string for the host architecture.
+
+    :returns: The ELF e_machine string (e.g. ``'EM_X86_64'``), or None if the
+        host architecture is not in the known configuration.
+    """
+    arch_config = _ARCH_CONFIG.get(platform.machine())
+    return arch_config.elf_machine if arch_config else None

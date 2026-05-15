@@ -415,6 +415,18 @@ def fake_provider(mock_instance):
         ):
             yield mock_instance
 
+        def list_instances(
+            self,
+            *,
+            project_name: str | None = None,
+            instance_name_prefix: str | None = None,
+            include_base_instances: bool = False,
+        ):
+            return []
+
+        def prune(self, *, project_name: str, prune_templates: bool = False) -> None:
+            pass
+
     return FakeProvider()
 
 
