@@ -128,6 +128,48 @@ check_config() {
   done
 }
 
+# validate_kdefconfigs verifies that if a user specified a kdefconfig, that file
+# is in the expected location. The expected location depends on the *kind* of
+# kdefconfig it may be, and there are two cases. The cases hinge on whether
+# we're building a debian package, which uses an annotations file to generate
+# the config, or if we're building a source package, which uses the standard
+# kconfig generation method via various make targets.
+# If any kconfig fragments are provided, they should be in one of
+#  - ${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs,
+#  - ${CRAFT_PART_SRC}/kernel/configs, or, in the case of an annotations fragment,
+#  - ${CRAFT_PROJECT_DIR}/annotations
+validate_kdefconfigs() {
+  # Check if we are dealing with multiple configs and, if so, split on ,
+  if [ "${kernel_kdefconfig}" != "defconfig" ]; then
+    # _kdefconfigs is a new-line separated kernel_kdefconfig
+    _kdefconfigs="$(echo "${kernel_kdefconfig}" | sed -e 's/,/\n/g')"
+    # Annotations belong in the project directory. This is an opinionated choice
+    # and can always be made different. If there is a standard location for
+    # these, it is non-obvous.
+    if [ "${kernel_ubuntu_debian_package}" = "True" ]; then
+      for fragment in ${_kdefconfigs}; do
+        [ -e "${CRAFT_PROJECT_DIR}/annotations/${fragment}" ] || {
+          echo "Please ensure your kdefconfig annotations fragment is in:"
+          echo " \${CRAFT_PROJECT_DIR}/annotations"
+          exit 1
+        }
+      done
+    # The only alternative case is when we're building a source package, in
+    # which case there are some more canonical locations for kconfig fragments
+    # to be located in.
+    else for fragment in ${_kdefconfigs}; do
+        [ -e "${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/${fragment}" ] ||
+        [ -e "${CRAFT_PART_SRC}/kernel/configs/${fragment}" ] || {
+          echo "Please ensure your specified kdefconfig files are in either:"
+          echo "  - \${CRAFT_PART_SRC}/arch/\${CRAFT_ARCH_BUILD_FOR}/configs, or"
+          echo "  - \${CRAFT_PART_SRC}/kernel/configs"
+          exit 1
+        }
+      done
+    fi
+  fi
+}
+
 # release_info gathers kernel release info to encode in kernel artifacts
 release_info() {
   echo "Gathering release information"
@@ -178,15 +220,6 @@ build_tool() {
 
   # Install at least the final built binary - some tools' install targets don't do this
   install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}/${_tool#*/}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
-}
-
-# redepmod reruns depmod for the entire built kernel's module tree
-# $1 should be the kernel version directory in ${CRAFT_PART_INSTALL}/lib/modules
-redepmod() {
-  _kver="${1}"
-
-  echo "Rebuilding module dependencies"
-  depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
 }
 
 # fetch_deb downloads the linux-image deb package for some version or flavour (if
@@ -366,6 +399,119 @@ pack_kernel() {
   unlink "${CRAFT_PART_INSTALL}/lib/modules/${_kver}/source" || true
 }
 
+# build_bin_pkg is the most strict case of building a kernel snap. It allows you
+# to choose any kernel in the archives available to you at build-time by ABI
+# number and flavour. Not much in the way of customization can occur in this
+# case, but as such it is the fastest way of producing a kernel snap. It takes
+# no arguments, but is responsible for specifying its own kver to be consumed by
+# functions after it in run().
+build_bin_pkg() {
+  if [ -z "$kernel_ubuntu_abinumber" ]; then
+    # kver is the total version string but cuts the upload number
+    kver="$(apt info "linux-image-${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
+    # Trim ~<LTS> as kernels like partner, HWE, or riscv64 append ~<LTS>
+    kver="${kver%~*}"
+    # Trim the kernel release from the string
+    kver="${kver%.*}"
+    # linux-image-${kconfigflavour} has version of the form x.y.z.a-b, but ver
+    # in linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy
+    # so swap .a for -a
+    [ "${UBUNTU_SERIES}" != "jammy" ] || kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
+  else kver="${kernel_ubuntu_abinumber}"
+  fi
+
+  fetch_deb  "${kver}" "${kconfigflavour}"
+  repack_deb "${kver}" "${kconfigflavour}"
+
+  # Update kver to be whatever the kernel debian package says kver should be
+  # This is primarily for redepmod as it needs to know this path
+  kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+}
+
+# build_deb_pkg is the utility case when building a kernel snap: it will build
+# precisely a collection of debian packages containing a kernel and its modules.
+# It offers some flexibility in terms of how that kernel is configured. The
+# source will generally be Canonical. It takes no arguments, but is responsible
+# for specifying its own kver to be consumed by functions after it in run().
+build_deb_pkg() {
+  # Remove any debian packages if they exist
+  [ ! -e "${CRAFT_PART_BUILD}/*.deb" ] || rm -f "${CRAFT_PART_BUILD}/"*.deb
+
+  # To build a deb we must be present in the source directory, which is ${KERNEL_SRC}
+  OLDPWD="${PWD}"
+  cd "${KERNEL_SRC}"
+
+  # Update configs for any new kconfig options without a default
+  fakeroot debian/rules updateconfigs || true
+
+  # If any kconfig fragments are provided, they should be used
+  [ -z "${_kdefconfigs:-}" ] || {
+    for fragment in ${_kdefconfigs}; do
+      cat "${CRAFT_PROJECT_DIR}/annotations/${fragment}" >> \
+        "${CRAFT_PART_BUILD}/custom_fragment"
+    done
+
+    # Update the annotations file with the new config values
+    "${KERNEL_SRC}/debian/scripts/misc/annotations" \
+      --arch "${CRAFT_ARCH_BUILD_FOR}"              \
+      --flavor "${kconfigflavour}"                  \
+      --update "${CRAFT_PART_BUILD}/custom_fragment"
+  }
+
+  # Print the environment for debug purposes
+  fakeroot debian/rules printenv
+  # Build the kernel
+  fakeroot debian/rules "build-${kconfigflavour}"
+  # Build the deb packages
+  fakeroot debian/rules "binary-${kconfigflavour}"
+
+  # Move the packages to the correct location
+  mv -f "${KERNEL_SRC}/"*.deb "${CRAFT_PART_BUILD}"
+
+  # Generate release information from debian/changelog
+  release_info
+
+  cd "${OLDPWD}"
+
+  # Repack the recently built debs
+  repack_deb "${abi_release}" "${kconfigflavour}"
+
+  # Update kver to be whatever the debian package says kver should be
+  # This is primarily for redepmod as it needs to know this path
+  kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+}
+
+# build_src_pkg is the most general case: it handles building a kernel snap from
+# a provided kernel source tree, regardless of provenance. This way offers the
+# most flexibility in terms of what can be changed, what additional things can
+# be built, and what the source is. It takes no arguments, but is responsible
+# for specifying its own kver to be consumed by functions after it in run().
+build_src_pkg() {
+  # Ensure the config is setup properly
+  setup_kernel
+
+  # Perform the build
+  build_kernel
+
+  # Install kernel image, modules, dtbs
+  install_kernel
+
+  # kver depends on if release information is known or not, so
+  # the version varies by if we specified a flavour or not.
+  kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+
+  # Tidy final snap packaging
+  pack_kernel "${kver}"
+
+  if [ -n "${kernel_tools}" ]; then
+    # kernel_tools should be space separated
+    kernel_tools="$(echo "$kernel_tools" | sed -e 's/,/ /g')"
+    for _tool in $kernel_tools; do
+      build_tool "$_tool"
+    done
+  fi
+}
+
 # create_snap_structure migrates the modules and firmware from their canonical
 # paths to the one expected by snapd
 create_snap_structure() {
@@ -386,6 +532,15 @@ create_snap_structure() {
   fi
 }
 
+# redepmod reruns depmod for the entire built kernel's module tree
+# $1 should be the kernel version directory in ${CRAFT_PART_INSTALL}/lib/modules
+redepmod() {
+  _kver="${1}"
+
+  echo "Rebuilding module dependencies"
+  depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
+}
+
 # run executes the meat of this script
 run() {
   # Cleanup previous builds
@@ -403,123 +558,22 @@ run() {
     kconfigflavour="${kernel_ubuntu_kconfigflavour}"
   fi
 
-  # If any kconfig fragments are provided, they should be in one of
-  #  - ${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs,
-  #  - ${CRAFT_PART_SRC}/kernel/configs, or, in the case of an annotations fragment,
-  #  - ${CRAFT_PROJECT_DIR}/annotations
-  if [ "${kernel_kdefconfig}" != "defconfig" ]; then
-    _kdefconfigs="$(echo "${kernel_kdefconfig}" | sed -e 's/,/\n/g')"
-    if [ "${kernel_ubuntu_debian_package}" = "True" ]; then
-      for fragment in ${_kdefconfigs}; do
-        [ -e "${CRAFT_PROJECT_DIR}/annotations/${fragment}" ] || {
-          echo "Please ensure your kdefconfig annotations fragment is in:"
-          echo " \${CRAFT_PROJECT_DIR}/annotations"
-          exit 1
-        }
-      done
-    else
-      for fragment in ${_kdefconfigs}; do
-        [ -e "${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/${fragment}" ] ||
-        [ -e "${CRAFT_PART_SRC}/kernel/configs/${fragment}" ] || {
-          echo "Please ensure your specified kdefconfig files are in either:"
-          echo "  - \${CRAFT_PART_SRC}/arch/\${CRAFT_ARCH_BUILD_FOR}/configs, or"
-          echo "  - \${CRAFT_PART_SRC}/kernel/configs"
-          exit 1
-        }
-      done
-    fi
+  # Ensure any potentially user-provided files are in the expected locations
+  validate_kdefconfigs
+
+  # Handle the three major cases of kernel build types. We are building the
+  # kernel snap one of three ways:
+  # 1) from a prebuilt debian package in the archive,
+  # 2) from a debian package built from source, or
+  # 3) from a kernel source tree
+  # Each function is responsible for handling their own kernel versions (kver)
+  # and flavours (kconfigflavour).
+  if   [ "$kernel_ubuntu_binary_package" = "True" ]; then build_bin_pkg
+  elif [ "$kernel_ubuntu_debian_package" = "True" ]; then build_deb_pkg
+  else                                               build_src_pkg
   fi
 
-  if [ "$kernel_ubuntu_binary_package" = "True" ]; then
-    if [ -z "$kernel_ubuntu_abinumber" ]; then
-      # kver is the total version string but cuts the upload number
-      kver="$(apt info "linux-image-${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
-      # Trim ~<LTS> as kernels like partner, HWE, or riscv64 append ~<LTS>
-      kver="${kver%~*}"
-      # Trim the kernel release from the string
-      kver="${kver%.*}"
-      # linux-image-${kconfigflavour} has version of the form x.y.z.a-b, but ver in
-      # linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy so
-      # swap .a for -a
-      if [ "${UBUNTU_SERIES}" = "jammy" ]; then
-        kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
-      fi
-    else kver="${kernel_ubuntu_abinumber}"
-    fi
-
-    fetch_deb  "${kver}" "${kconfigflavour}"
-    repack_deb "${kver}" "${kconfigflavour}"
-
-    # Update kver to be whatever the kernel debian package says kver should be
-    # This is primarily for redepmod as it needs to know this path
-    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
-
-  elif [ "$kernel_ubuntu_debian_package" = "True" ]; then
-    # To build a deb we must be present in the source directory, which is ${KERNEL_SRC}
-    OLDPWD="${PWD}"
-    cd "${KERNEL_SRC}"
-
-    # Update configs for any new kconfig options without a default
-    fakeroot debian/rules updateconfigs || true
-
-    # If any kconfig fragments are provided, they should be used
-    [ -z "${_kdefconfigs:-}" ] || {
-      for fragment in ${_kdefconfigs}; do
-        cat "${CRAFT_PROJECT_DIR}/annotations/${fragment}" >> \
-          "${CRAFT_PART_BUILD}/custom_fragment"
-      done
-
-      # Update the annotations file with the new config values
-      "${KERNEL_SRC}/debian/scripts/misc/annotations" \
-        --arch "${CRAFT_ARCH_BUILD_FOR}"              \
-        --flavor "${kconfigflavour}"                  \
-        --update "${CRAFT_PART_BUILD}/custom_fragment"
-    }
-
-    # Print the environment for debug purposes
-    fakeroot debian/rules printenv
-    # Build the kernel
-    fakeroot debian/rules "build-${kconfigflavour}"
-    # Build the deb packages
-    fakeroot debian/rules "binary-${kconfigflavour}"
-
-    # Move the packages to the correct location
-    mv -f "${KERNEL_SRC}/"*.deb "${CRAFT_PART_BUILD}"
-
-    cd "${OLDPWD}"
-
-    # Generate release information from debian/changelog and repack the debs
-    release_info
-    repack_deb "${abi_release}" "${kconfigflavour}"
-
-    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
-  else
-    # Ensure the config is setup properly
-    setup_kernel
-
-    # Perform the build
-    build_kernel
-
-    # Install kernel image, modules, dtbs
-    install_kernel
-
-    # kver depends on if release information is known or not, so
-    # the version varies by if we specified a flavour or not.
-    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
-
-    # Tidy final snap packaging
-    pack_kernel "${kver}"
-
-    if [ -n "${kernel_tools}" ]; then
-      # kernel_tools should be space separated
-      kernel_tools="$(echo "$kernel_tools" | sed -e 's/,/ /g')"
-      for _tool in $kernel_tools; do
-        build_tool "$_tool"
-      done
-    fi
-  fi
-
-  # Regardless of kernel source, the final structure looks the same in a snap
+  # The final structure looks the same regardless of how the kernel was built
   create_snap_structure
 
   # Run depmod to ensure all modules are accounted for
