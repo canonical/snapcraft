@@ -120,7 +120,8 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
 
         if custom_key ^ custom_cert:
             raise errors.PartsError(
-                "If one of initrd-efi-image-key or initrd-efi-image-cert is set, both must be set"
+                brief="initrd-efi-image-key and initrd-efi-image-cert must both be set or neither set",
+                resolution="Specify both 'initrd-efi-image-key' and 'initrd-efi-image-cert', or remove both to use the snakeoil defaults",
             )
 
         return self
@@ -150,7 +151,8 @@ class InitrdPlugin(plugins.Plugin):
         release_number = RELEASE_NUMBER_FROM_SNAP_BASE.get(base)
         if (release_codename := RELEASE_CODENAME_FROM_SNAP_BASE.get(base)) is None:
             raise errors.PartsError(
-                f"base {base!r} is not supported for the initrd plugin. Supported bases are {humanize_list(RELEASE_CODENAME_FROM_SNAP_BASE.keys(), 'and')}"
+                brief=f"base {base!r} is not supported for the initrd plugin",
+                resolution=f"Use one of the supported bases: {humanize_list(RELEASE_CODENAME_FROM_SNAP_BASE.keys(), 'and')}",
             )
 
         # URL pieces for Ubuntu base, tarball name
@@ -226,13 +228,15 @@ class InitrdPlugin(plugins.Plugin):
             # There are no EFI stubs for s390x or ppc64el
             if arch in {"s390x", "ppc64el"}:
                 raise errors.PartsError(
-                    "initrd-build-efi-image not allowed for " + arch
+                    brief=f"'initrd-build-efi-image' is not supported on {arch}",
+                    resolution="Remove 'initrd-build-efi-image'",
                 )
 
             # There are no EFI stubs for riscv until 24.04
             if arch == "riscv64" and base == "core22":
                 raise errors.PartsError(
-                    "initrd-build-efi-image not allowed for riscv64"
+                    brief="'initrd-build-efi-image' is not supported for riscv64 on core22",
+                    resolution="riscv64 EFI images are only supported on core24 or later",
                 )
 
         return [

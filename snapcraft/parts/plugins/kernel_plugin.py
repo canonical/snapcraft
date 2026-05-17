@@ -117,7 +117,8 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
         """Enforce release_name and source options are mutually exclusive."""
         if self.kernel_ubuntu_release_name and self.source:
             raise errors.PartsError(
-                "cannot use 'kernel-ubuntu-release-name' and 'source' keys at same time"
+                brief="cannot use 'kernel-ubuntu-release-name' and 'source' at the same time",
+                resolution="Remove either 'kernel-ubuntu-release-name' or 'source' from the part definition",
             )
         return self
 
@@ -143,6 +144,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                         f"'{option}' will be ignored when 'kernel-ubuntu-binary-package' is set",
                         permanent=True,
                     )
+        return self
 
     @pydantic.model_validator(mode="after")
     def validate_debian_package_and_kconfigs_options_exclusive(self) -> Self:
@@ -164,7 +166,29 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
         if binary and debian:
             raise errors.PartsError(
-                "cannot use 'kernel-ubuntu-binary-package' and 'kernel-ubuntu-debian-package' keys at same time"
+                brief="cannot use 'kernel-ubuntu-binary-package' and 'kernel-ubuntu-debian-package' at the same time",
+                resolution="Choose one build method: set either 'kernel-ubuntu-binary-package' or 'kernel-ubuntu-debian-package', not both",
+            )
+        return self
+
+    @pydantic.model_validator(mode="after")
+    def validate_binary_and_tools_exclusive(self) -> Self:
+        """Enforrce binary_package and tools options are mutually exclusive"""
+        binary = self.kernel_ubuntu_binary_package
+        if binary and self.kernel_tools:
+            raise errors.PartsError(
+                brief="'kernel-tools' cannot be used with 'kernel-ubuntu-binary-package'",
+                resolution="Add the required tools to 'stage-packages' instead",
+            )
+        return self
+
+    @pydantic.model_validator(mode="after")
+    def validate_debian_dkms_requires_debian_package(self) -> Self:
+        """Enforce kernel_ubuntu_debian_dkms requires kernel_ubuntu_debian_package."""
+        if self.kernel_ubuntu_debian_dkms and not self.kernel_ubuntu_debian_package:
+            raise errors.PartsError(
+                brief="'kernel-ubuntu-debian-dkms' requires 'kernel-ubuntu-debian-package' to be enabled",
+                resolution="Set 'kernel-ubuntu-debian-package: true' or build the module as out-of-tree in the usual way",
             )
         return self
 
