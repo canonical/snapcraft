@@ -62,6 +62,9 @@ kernel-tools
 A list of kernel tools to build. If set, the specified tools will be built and added to
 the final snap package.
 
+This option is incompatible with ``kernel-ubuntu-binary-package`` and instead,
+the tools to include should be specified in ``stage-packages``.
+
 Valid values are ``bpf``, ``cpupower``, and ``perf``.
 
 .. admonition:: Warning
@@ -146,6 +149,16 @@ than any direct ``make`` invocations as is done in most other cases.
 This option is primarily intended to be used by the Canonical Kernel team, although it
 is a valid option for anyone so long as the kernel source (as specified by the other
 various options) provides a valid :file:`debian/` directory.
+
+
+kernel-ubuntu-debian-dkms
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Type**: list of strings
+
+A list of DKMS packages to include in the debian package build of the kernel.
+
+This option is only meaningful when used with ``kernel-ubuntu-debian-package``.
 
 
 Environment variables
