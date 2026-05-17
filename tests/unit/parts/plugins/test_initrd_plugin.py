@@ -16,7 +16,7 @@
 
 
 import pytest
-from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts import Part, PartInfo, ProjectInfo, errors
 
 from snapcraft.parts.plugins import InitrdPlugin
 
@@ -33,6 +33,15 @@ def part_info(new_dir):
         ),
         part=Part("my-part", {}),
     )
+
+
+def test_validate_plugin_options():
+    with pytest.raises(errors.PartsError):
+        InitrdPlugin.properties_class.unmarshal(
+            {
+                "initrd-efi-image-key": "foo.key",
+            }
+        )
 
 
 def test_get_pull_commands_release(part_info):

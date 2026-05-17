@@ -16,7 +16,7 @@
 
 
 import pytest
-from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts import Part, PartInfo, ProjectInfo, errors
 
 from snapcraft.parts.plugins import KernelPlugin
 
@@ -32,6 +32,45 @@ def part_info(new_dir):
         ),
         part=Part("my-part", {}),
     )
+
+
+def test_validate_release_name_and_source_exclusive():
+    with pytest.raises(errors.PartsError):
+        KernelPlugin.properties_class.unmarshal(
+            {
+                "kernel-ubuntu-release-name": "noble",
+                "source": "https://github.com/example/kernel",
+            }
+        )
+
+
+def test_validate_debian_and_binary_exclusive():
+    with pytest.raises(errors.PartsError):
+        KernelPlugin.properties_class.unmarshal(
+            {
+                "kernel-ubuntu-binary-package": True,
+                "kernel-ubuntu-debian-package": True,
+            }
+        )
+
+
+def test_validate_binary_and_tools_exclusive():
+    with pytest.raises(errors.PartsError):
+        KernelPlugin.properties_class.unmarshal(
+            {
+                "kernel-ubuntu-binary-package": True,
+                "kernel-tools": ["bpftool"],
+            }
+        )
+
+
+def test_validate_debian_dkms_requires_debian_package():
+    with pytest.raises(errors.PartsError):
+        KernelPlugin.properties_class.unmarshal(
+            {
+                "kernel-ubuntu-debian-dkms": ["nvidia-dkms-535"],
+            }
+        )
 
 
 def test_get_pull_commands_release(part_info):
@@ -167,7 +206,7 @@ def test_get_build_commands(part_info):
                 "CONFIG_BAR=m",
             ],
             "kernel-tools": [
-                "bpf",
+                "bpftool",
                 "cpupower",
                 "perf",
             ],
@@ -179,12 +218,13 @@ def test_get_build_commands(part_info):
 
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
-        "kernel-kdefconfig=snappy_defconfig,foo_config "
+        "kernel-kdefconfig='snappy_defconfig foo_config' "
         "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
-        "kernel-tools=bpf,cpupower,perf "
+        "kernel-tools='bpftool cpupower perf' "
         "kernel-ubuntu-kconfigflavour= "
         "kernel-ubuntu-release-name=noble "
         "kernel-ubuntu-abinumber= "
         "kernel-ubuntu-binary-package=False "
-        "kernel-ubuntu-debian-package=False"
+        "kernel-ubuntu-debian-package=False "
+        "kernel-ubuntu-debian-dkms=''"
     ]
