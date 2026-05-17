@@ -67,6 +67,12 @@ The following kernel-specific options are provided by this plugin:
       (boolean; default: False)
       Specifies whether to use the debian/rules file to build the kernel.
 
+    - kernel-ubuntu-debian-dkms
+      (list of strings; default: none)
+      A list of DKMS package names to include in the kernel build. Only valid
+      when kernel-ubuntu-debian-package is true. Each package must be available
+      in the archive at build time.
+
 This plugin supports cross compilation, for which the plugin expects the
 build-environment is configured accordingly.
 """
@@ -104,6 +110,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
     kernel_ubuntu_abinumber: str = "master-next"
     kernel_ubuntu_binary_package: bool = False
     kernel_ubuntu_debian_package: bool = False
+    kernel_ubuntu_debian_dkms: list[str] = []
 
     @pydantic.model_validator(mode="after")
     def validate_release_name_and_source_exclusive(self) -> Self:
@@ -349,6 +356,7 @@ class KernelPlugin(plugins.Plugin):
                     f"kernel-ubuntu-abinumber={abinumber}",
                     f"kernel-ubuntu-binary-package={self.options.kernel_ubuntu_binary_package}",
                     f"kernel-ubuntu-debian-package={self.options.kernel_ubuntu_debian_package}",
+                    f"kernel-ubuntu-debian-dkms='{' '.join(self.options.kernel_ubuntu_debian_dkms)}'",
                 ]
             )
         ]

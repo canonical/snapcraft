@@ -35,6 +35,9 @@ parse_args() {
       kernel-ubuntu-debian-package=*)
       # kernel_ubuntu_debian_package specifies if the kernel should build from debian/rules.
       kernel_ubuntu_debian_package=${arg#*=}  ;;
+      kernel-ubuntu-debian-dkms=*)
+      # kernel_ubuntu_debian_dkms specifies a list of DKMS packages to include in the build.
+      kernel_ubuntu_debian_dkms=${arg#*=}     ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac
   done
@@ -434,22 +437,73 @@ build_deb_pkg() {
   OLDPWD="${PWD}"
   cd "${KERNEL_SRC}"
 
+  # Unconditionally replace the image target with whatever the plugin has
+  # specified; sed is cheap enough that doing this in every case (even when
+  # they're equivalent) does not matter
+  sed -i "s/^\s*build_image.*/build_image = ${KERNEL_IMAGE}/g" \
+      "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+  sed -i "s|^\s*kernel_file.*|kernel_file = arch/${ARCH}/boot/${KERNEL_IMAGE}|g" \
+      "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+
+  # If the user specified any tools to be built, include them
+  [ -z "${kernel_tools}" ] || {
+      # Unconditionally comment all tools, and then uncomment the relevant tools
+      sed -i 's/^\s*do_tools_\(.*\)\s*=.*/do_tools_\1 = false/g' \
+          "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+      for _tool in ${kernel_tools}; do
+          sed -i "s/^\s*do_tools_${_tool}\s*=.*/do_tools_${_tool} = true/g" \
+              "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+      done
+  }
+
+  # Setup the environment -- dpkg rules will probably care about these
+  export "$(dpkg-architecture -a"${CRAFT_ARCH_BUILD_FOR}")"
+  . debian/debian.env
+
+  # Add any requested DKMS packages to the kernel's dkms-versions file
+  [ -z "${kernel_ubuntu_debian_dkms}" ] || {
+    for pkg in ${kernel_ubuntu_debian_dkms}; do
+      apt show "${pkg}" > "${CRAFT_PART_BUILD}/pkginfo"
+      _source=$(grep "^Source:"  "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Source: //')
+      _version=$(grep "^Version:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Version: //')
+      _repo=$(grep   "^Section:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Section: \(.*\)\/.*/\1/')
+      _initial=$(printf '%.1s' "${pkg}")
+      printf '%s %s modulename=%s debpath=pool/%s/%s/%%package%%/%s_%%version%%_all.deb arch=%s rprovides=%s-modules rprovides=%s\n' \
+        "${_source}" "${_version}" "${_source}"        \
+        "${_repo}" "${_initial}" "${pkg}"              \
+        "${CRAFT_ARCH_BUILD_FOR}" "${pkg%%-*}" "${pkg}" \
+        >> "debian.master/dkms-versions"
+    done
+  }
+
   # Update configs for any new kconfig options without a default
+  fakeroot debian/rules clean
   fakeroot debian/rules updateconfigs || true
 
-  # If any kconfig fragments are provided, they should be used
-  [ -z "${_kdefconfigs:-}" ] || {
-    for fragment in ${_kdefconfigs}; do
-      cat "${CRAFT_PROJECT_DIR}/annotations/${fragment}" >> \
-        "${CRAFT_PART_BUILD}/custom_fragment"
-    done
-
-    # Update the annotations file with the new config values
+  # The user may sneakily add an annotations.yaml in a similar fashion as they
+  # would a .config in $CRAFT_PART_BUILD. In that specific case, we should
+  # wholesale import the provided annotations into the current one and build
+  # based on that (updates not-withstanding). Providing annotations in this
+  # fashion is likewise no an explicitly supported avenue and is intended for
+  # iteration and testing.
+  if [ -e "${CRAFT_PART_BUILD}/annotations.yaml" ]; then
     "${KERNEL_SRC}/debian/scripts/misc/annotations" \
       --arch "${CRAFT_ARCH_BUILD_FOR}"              \
       --flavor "${kconfigflavour}"                  \
-      --update "${CRAFT_PART_BUILD}/custom_fragment"
-  }
+      --import "${CRAFT_PART_BUILD}/annotations.yaml"
+  else
+    [ "${kernel_kdefconfig}" = "defconfig" ] || {
+      for fragment in ${kernel_kdefconfig}; do
+        cat "${CRAFT_PROJECT_DIR}/annotations/${fragment}" >> \
+          "${CRAFT_PART_BUILD}/custom_fragment"
+      done
+
+      "${KERNEL_SRC}/debian/scripts/misc/annotations" \
+        --arch "${CRAFT_ARCH_BUILD_FOR}"              \
+        --flavor "${kconfigflavour}"                  \
+        --update "${CRAFT_PART_BUILD}/custom_fragment"
+    }
+  fi
 
   # Print the environment for debug purposes
   fakeroot debian/rules printenv
