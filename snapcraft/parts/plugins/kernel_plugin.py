@@ -41,7 +41,7 @@ The following kernel-specific options are provided by this plugin:
 
     - kernel-tools
       (list of strings; default: none)
-      a list of tools to build alongside the kernel. Accepted values are bpf,
+      a list of tools to build alongside the kernel. Accepted values are bpftool,
       cpupower, and perf
 
     - kernel-ubuntu-kconfigflavour:
@@ -88,7 +88,7 @@ KERNEL_ARCH_FROM_SNAP_ARCH = {
     "s390x": "s390",
 }
 
-KernelTools = Literal["bpf", "cpupower", "perf"]
+KernelTools = Literal["bpftool", "cpupower", "perf"]
 
 
 class KernelPluginProperties(plugins.PluginProperties, frozen=True):
@@ -272,7 +272,7 @@ class KernelPlugin(plugins.Plugin):
             }
 
         # bpftool requires libelf, zlib to build
-        if "bpf" in self.options.kernel_tools:
+        if "bpftool" in self.options.kernel_tools:
             build_packages |= {
                 f"libelf-dev:{target_arch}",
                 f"zlib1g-dev:{target_arch}",

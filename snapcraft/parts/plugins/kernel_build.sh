@@ -178,27 +178,27 @@ release_info() {
 }
 
 # build_tool builds a specified tool
-# $1 is the tool name as preferred by the plugin; some cleanup may be required
+# $1 is the tool name
 build_tool() {
-  _tool="${1}"
+  _name="${1}"
 
-  # Some tools are in odd paths. perf is an exception
-  case $_tool in
-    bpf)      _tool=bpf/bpftool    ;;
-    cpupower) _tool=power/cpupower ;;
-    perf)                          ;;
+  # Map each tool name to its subdirectory path within tools/
+  case $_name in
+    bpftool)  _dir="bpf/bpftool"    ;;
+    cpupower) _dir="power/cpupower" ;;
+    perf)     _dir="perf"           ;;
   esac
 
-  echo "Building tool" "${_tool#*/}"
+  echo "Building tool ${_name}"
 
-  mkdir -p "${CRAFT_PART_BUILD}/tools/${_tool}"
+  mkdir -p "${CRAFT_PART_BUILD}/tools/${_dir}"
 
-  if [ "$_tool" = "bpf/bpftool" ]; then
-    # bpf is weird and won't build correctly if we aren't in the tools directory
+  if [ "$_name" = "bpftool" ]; then
+    # bpftool requires building from within its source directory
     OLDPWD="${PWD}"
     cd "${KERNEL_SRC}/tools/bpf"
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}"      \
-          O="${CRAFT_PART_BUILD}/tools/${_tool}" \
+          O="${CRAFT_PART_BUILD}/tools/${_dir}"  \
          -C bpftool all
 
     make DESTDIR="${CRAFT_PART_INSTALL}" \
@@ -206,15 +206,15 @@ build_tool() {
     cd "${OLDPWD}"
   else
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-         -C "${KERNEL_SRC}/tools/${_tool}"  \
-          O="${CRAFT_PART_BUILD}/tools/${_tool}"
+         -C "${KERNEL_SRC}/tools/${_dir}"   \
+          O="${CRAFT_PART_BUILD}/tools/${_dir}"
 
     make DESTDIR="${CRAFT_PART_INSTALL}" \
-      -C "${KERNEL_SRC}/tools/${_tool}" install
+      -C "${KERNEL_SRC}/tools/${_dir}" install
   fi
 
   # Install at least the final built binary - some tools' install targets don't do this
-  install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}/${_tool#*/}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
+  install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_dir}/${_name}" "${CRAFT_PART_INSTALL}/bin/${_name}"
 }
 
 # fetch_deb downloads the linux-image deb package for some version or flavour (if
@@ -268,8 +268,6 @@ repack_deb() {
 
   # A little deb cleanup
   rmdir "${CRAFT_PART_INSTALL}/boot"
-  # In theory this is never unset. But to be extra safe...
-  rm -rf "${CRAFT_PART_INSTALL:?}/usr"
 }
 
 # setup_kernel will create a kernel config if one does not exist as specified by the
