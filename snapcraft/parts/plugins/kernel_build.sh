@@ -587,7 +587,32 @@ redepmod() {
   depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
 }
 
-# run executes the meat of this script
+# run() dispatches to one of three build paths based on the options provided:
+#
+# kernel-ubuntu-binary-package=true -> build_bin_pkg()
+#   Downloads prebuilt debs from the Ubuntu archive and repacks them.
+#   kernel-ubuntu-abinumber set: fetch the specified kernel package by ABI
+#   kernel-ubuntu-abinumber unset: fetch the currently available kernel package
+#   Fetches: linux-image, linux-modules, linux-modules-extra
+#
+# kernel-ubuntu-debian-package=true -> build_deb_pkg()
+#   Builds kernel debs from source using debian/rules and repacks them.
+#   Updates rules.d/<arch>.mk with KERNEL_IMAGE
+#   kernel-tools set: builds the specified collection of tools
+#   kernel-ubuntu-debian-dkms set: populates debian.master/dkms-versions
+#   ${CRAFT_PART_BUILD}/annotations.yaml exists: replace annotations
+#   kernel-kdefconfig != defconfig : update annotations
+#
+# neither -> build_src_pkg()
+#   Builds directly from a kernel source tree of any provenance.
+#     ${CRAFT_PART_BUILD}/.confg eixsts: skip config generation
+#     kernel-ubuntu-kconfigflavour != generic: gen_flavour_config
+#     kernel-kdefconfig != defconfig: gen_defconfig
+#     default: gen_flavour_config generic
+#   kernel-kconfigs set: additional config options applied via add_kconfigs
+#   kernel-tools set: specified tools built in build_tool
+#
+# All paths converge at create_snap_structure and redepmod.
 run() {
   # Cleanup previous builds
   echo "Checking if previous build should be cleaned..."

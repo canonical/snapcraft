@@ -456,7 +456,27 @@ create_efi() {
     "${CRAFT_PART_INSTALL}/kernel.efi"
 }
 
-# run executes the meat of this script
+# run() always executes the following sequence:
+#
+# Chroot setup (skipped on iterative builds if already prepared):
+#   Creates the Ubuntu base chroot and mounts required filesystems into it.
+#
+# Chroot configuration (skipped on iterative builds if already configured):
+#   ${CRAFT_STAGE}/ubuntu-core-initramfs.deb exists : install it directly
+#   else: add snappy-dev PPA and install ubuntu-core-initramfs
+#   Installs kernel image, modules, and firmware into chroot.
+#   Adds requested modules via add_modules
+#   initrd-addons set: install_extra addons
+#   initrd-firmware set: install_extra firmware
+#
+# create_initrd: Builds initrd.img inside the chroot and installs it to the snap.
+#
+# initrd-build-efi-image=true:
+#   snakeoil key/cert: copied directly from chroot defaults
+#   custom key/cert: staged via install_extra signing
+#   create_efi builds and installs a signed UKI instead of a bare initrd.
+#
+# clean always runs on exit.
 run() {
     # The build occurs within ${CRAFT_PART_SRC} to avoid issues related to iterative
     # builds with the Ubuntu base fetched by the plugin during the pull step.
