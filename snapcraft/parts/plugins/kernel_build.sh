@@ -42,15 +42,12 @@ parse_args() {
 
 # gen_defconfig creates a config from one or more defconfigs
 gen_defconfig() {
-  # _kernel_kdefconfig splits the defconfig list from kernel_kdefconfig as it is
-  # passed comma-separated
-  _kernel_kdefconfig="$(echo "${kernel_kdefconfig}" | sed -e 's/,/ /g')"
   # We want _kernel_kdefconfig to split as it isn't supposed to be a single arg
   # shellcheck disable=SC2086
   make -j1                      \
        -C "${KERNEL_SRC}"       \
         O="${CRAFT_PART_BUILD}" \
-        ${_kernel_kdefconfig}
+        ${kernel_kdefconfig}
 }
 
 # gen_flavour_config generates a kernel config based on the chosen flavour
@@ -90,7 +87,7 @@ add_kconfigs() {
   kconfigs="${1}"
   # _kconfigs splits the kconfig list from kernel_kconfigs as it is
   # passed comma-separated
-  _kconfigs="$(echo "${kconfigs}" | sed -e 's/,/\n/g')"
+  _kconfigs="$(echo "${kconfigs}" | tr ',' '\n')"
 
   echo "Applying extra config...."
 
@@ -139,15 +136,13 @@ check_config() {
 #  - ${CRAFT_PART_SRC}/kernel/configs, or, in the case of an annotations fragment,
 #  - ${CRAFT_PROJECT_DIR}/annotations
 validate_kdefconfigs() {
-  # Check if we are dealing with multiple configs and, if so, split on ,
+  # Check if we are dealing with defconfigs which aren't just the default
   if [ "${kernel_kdefconfig}" != "defconfig" ]; then
-    # _kdefconfigs is a new-line separated kernel_kdefconfig
-    _kdefconfigs="$(echo "${kernel_kdefconfig}" | sed -e 's/,/\n/g')"
     # Annotations belong in the project directory. This is an opinionated choice
     # and can always be made different. If there is a standard location for
     # these, it is non-obvous.
     if [ "${kernel_ubuntu_debian_package}" = "True" ]; then
-      for fragment in ${_kdefconfigs}; do
+      for fragment in ${kernel_kdefconfig}; do
         [ -e "${CRAFT_PROJECT_DIR}/annotations/${fragment}" ] || {
           echo "Please ensure your kdefconfig annotations fragment is in:"
           echo " \${CRAFT_PROJECT_DIR}/annotations"
@@ -157,7 +152,7 @@ validate_kdefconfigs() {
     # The only alternative case is when we're building a source package, in
     # which case there are some more canonical locations for kconfig fragments
     # to be located in.
-    else for fragment in ${_kdefconfigs}; do
+    else for fragment in ${kernel_kdefconfig}; do
         [ -e "${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/${fragment}" ] ||
         [ -e "${CRAFT_PART_SRC}/kernel/configs/${fragment}" ] || {
           echo "Please ensure your specified kdefconfig files are in either:"
@@ -505,7 +500,6 @@ build_src_pkg() {
 
   if [ -n "${kernel_tools}" ]; then
     # kernel_tools should be space separated
-    kernel_tools="$(echo "$kernel_tools" | sed -e 's/,/ /g')"
     for _tool in $kernel_tools; do
       build_tool "$_tool"
     done

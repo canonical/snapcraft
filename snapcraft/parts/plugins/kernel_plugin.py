@@ -341,9 +341,9 @@ class KernelPlugin(plugins.Plugin):
             " ".join(
                 [
                     "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh",
-                    f"kernel-kdefconfig={','.join(self.options.kernel_kdefconfig)}",
+                    f"kernel-kdefconfig='{' '.join(self.options.kernel_kdefconfig)}'",
                     f"kernel-kconfigs={','.join(self.options.kernel_kconfigs)}",
-                    f"kernel-tools={','.join(sorted(self.options.kernel_tools))}",
+                    f"kernel-tools='{' '.join(sorted(self.options.kernel_tools))}'",
                     f"kernel-ubuntu-kconfigflavour={kconfigflavour}",
                     f"kernel-ubuntu-release-name={release_name}",
                     f"kernel-ubuntu-abinumber={abinumber}",
