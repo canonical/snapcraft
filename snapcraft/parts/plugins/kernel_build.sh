@@ -431,7 +431,7 @@ build_bin_pkg() {
 # for specifying its own kver to be consumed by functions after it in run().
 build_deb_pkg() {
   # Remove any debian packages if they exist
-  [ ! -e "${CRAFT_PART_BUILD}/*.deb" ] || rm -f "${CRAFT_PART_BUILD}/"*.deb
+  rm -f "${CRAFT_PART_BUILD}/"*.deb
 
   # To build a deb we must be present in the source directory, which is ${KERNEL_SRC}
   OLDPWD="${PWD}"
