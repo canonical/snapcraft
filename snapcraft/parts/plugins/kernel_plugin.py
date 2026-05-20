@@ -217,9 +217,8 @@ class KernelPlugin(plugins.Plugin):
         flavour = self.options.kernel_ubuntu_kconfigflavour
         release = self.options.kernel_ubuntu_release_name
         binary = self.options.kernel_ubuntu_binary_package
-        debian = self.options.kernel_ubuntu_debian_package
 
-        if binary or debian:
+        if binary:
             return super().get_pull_commands()
 
         if flavour != "generic":

@@ -437,6 +437,10 @@ build_deb_pkg() {
   OLDPWD="${PWD}"
   cd "${KERNEL_SRC}"
 
+  # Setup the environment -- dpkg rules will probably care about these
+  . debian/debian.env
+  export "$(dpkg-architecture -a"${CRAFT_ARCH_BUILD_FOR}")"
+
   # Unconditionally replace the image target with whatever the plugin has
   # specified; sed is cheap enough that doing this in every case (even when
   # they're equivalent) does not matter
@@ -456,10 +460,6 @@ build_deb_pkg() {
       done
   }
 
-  # Setup the environment -- dpkg rules will probably care about these
-  export "$(dpkg-architecture -a"${CRAFT_ARCH_BUILD_FOR}")"
-  . debian/debian.env
-
   # Add any requested DKMS packages to the kernel's dkms-versions file
   [ -z "${kernel_ubuntu_debian_dkms}" ] || {
     for pkg in ${kernel_ubuntu_debian_dkms}; do
@@ -476,10 +476,6 @@ build_deb_pkg() {
     done
   }
 
-  # Update configs for any new kconfig options without a default
-  fakeroot debian/rules clean
-  fakeroot debian/rules updateconfigs || true
-
   # The user may sneakily add an annotations.yaml in a similar fashion as they
   # would a .config in $CRAFT_PART_BUILD. In that specific case, we should
   # wholesale import the provided annotations into the current one and build
@@ -489,7 +485,7 @@ build_deb_pkg() {
   if [ -e "${CRAFT_PART_BUILD}/annotations.yaml" ]; then
     "${KERNEL_SRC}/debian/scripts/misc/annotations" \
       --arch "${CRAFT_ARCH_BUILD_FOR}"              \
-      --flavor "${kconfigflavour}"                  \
+      --flavour "${kconfigflavour}"                 \
       --import "${CRAFT_PART_BUILD}/annotations.yaml"
   else
     [ "${kernel_kdefconfig}" = "defconfig" ] || {
@@ -500,10 +496,14 @@ build_deb_pkg() {
 
       "${KERNEL_SRC}/debian/scripts/misc/annotations" \
         --arch "${CRAFT_ARCH_BUILD_FOR}"              \
-        --flavor "${kconfigflavour}"                  \
+        --flavour "${kconfigflavour}"                 \
         --update "${CRAFT_PART_BUILD}/custom_fragment"
     }
   fi
+
+  # Update configs to reflect new defaults
+  fakeroot debian/rules clean
+  fakeroot debian/rules updateconfigs || true
 
   # Print the environment for debug purposes
   fakeroot debian/rules printenv
