@@ -51,14 +51,14 @@ jobs:
         run: |
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
-      - name: Checkout rockcraft
-        uses: actions/checkout@v5
+      - name: Checkout Snapcraft
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: true
 
       - name: Download snap artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: snap
           path: tests
