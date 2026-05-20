@@ -1,3 +1,8 @@
+# TESTING: This workflow has been modified to test with starflow PR #101
+# Reference: https://github.com/canonical/starflow/pull/101
+# The workflow references below have been changed from @main to
+# @copilot/use-pristine-ubuntu-action to test against the changes in the
+# starflow PR. This change is temporary for cross-repo testing purposes.
 name: QA
 on:
   push:
@@ -11,9 +16,9 @@ on:
 
 jobs:
   lint:
-    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@copilot/use-pristine-ubuntu-action
   test:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    uses: canonical/starflow/.github/workflows/test-python.yaml@copilot/use-pristine-ubuntu-action
     with:
       # Snapcraft currently only tests on Python 3.12 on Ubuntu 24.04
       fast-test-platforms: '["ubuntu-24.04"]'
