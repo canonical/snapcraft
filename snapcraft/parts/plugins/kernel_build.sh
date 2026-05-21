@@ -451,39 +451,41 @@ build_deb_pkg() {
 $(dpkg-architecture -a"${CRAFT_ARCH_BUILD_FOR}")
 EOF
 
-  # Unconditionally replace the image target with whatever the plugin has
-  # specified; sed is cheap enough that doing this in every case (even when
-  # they're equivalent) does not matter
-  sed -i "s/^\s*build_image.*/build_image = ${KERNEL_IMAGE}/g" \
-      "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
-  sed -i "s|^\s*kernel_file.*|kernel_file = arch/${ARCH}/boot/${KERNEL_IMAGE}|g" \
-      "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
-
-  # If the user specified any tools to be built, include them
-  [ -z "${kernel_tools}" ] || {
-      # Unconditionally comment all tools, and then uncomment the relevant tools
-      sed -i 's/^\s*do_tools_\(.*\)\s*=.*/do_tools_\1 = false/g' \
-          "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
-      for _tool in ${kernel_tools}; do
-          sed -i "s/^\s*do_tools_${_tool}\s*=.*/do_tools_${_tool} = true/g" \
-              "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
-      done
-  }
-
-  # Add any requested DKMS packages to the kernel's dkms-versions file
+  # Add any requested DKMS packages to the kernel's dkms-versions file.
+  # Packages sharing the same source (e.g. nvidia-dkms-535 and
+  # nvidia-kernel-source-535 both from nvidia-graphics-drivers-535) are
+  # combined onto one line with multiple debpath= entries, which is what
+  # dkms-build expects. Each source gets exactly one dkms-build invocation.
   [ -z "${kernel_ubuntu_debian_dkms}" ] || {
+    _dkms_tmp="${CRAFT_PART_BUILD}/dkms_pending"
+    : > "${_dkms_tmp}"
     for pkg in ${kernel_ubuntu_debian_dkms}; do
       apt show "${pkg}" > "${CRAFT_PART_BUILD}/pkginfo"
       _source=$(grep "^Source:"  "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Source: //')
       _version=$(grep "^Version:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Version: //')
       _repo=$(grep   "^Section:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Section: \(.*\)\/.*/\1/')
       _initial=$(printf '%.1s' "${pkg}")
-      printf '%s %s modulename=%s debpath=pool/%s/%s/%%package%%/%s_%%version%%_all.deb arch=%s rprovides=%s-modules rprovides=%s\n' \
-        "${_source}" "${_version}" "${_source}"        \
-        "${_repo}" "${_initial}" "${pkg}"              \
-        "${CRAFT_ARCH_BUILD_FOR}" "${pkg%%-*}" "${pkg}" \
-        >> "debian.master/dkms-versions"
+      # apt metadata (Architecture:) is unreliable for the actual deb filename
+      # suffix - some packages are _all.deb, others are _${arch}.deb, and apt
+      # reports the wrong value for several. Parse the ground-truth filename
+      # from apt-get download --print-uris instead (zero bandwidth, one line).
+      _debfile=$(apt-get download --print-uris "${pkg}" 2>/dev/null \
+                 | grep -o "${pkg}_[^' ]*\.deb" | head -1)
+      _debarch="${_debfile%.deb}"
+      _debarch="${_debarch##*_}"
+      [ -z "${_debarch}" ] && _debarch="${CRAFT_ARCH_BUILD_FOR}"
+      _debpath="debpath=pool/${_repo}/${_initial}/%package%/${pkg}_%version%_${_debarch}.deb"
+      if grep -qF "${_source} " "${_dkms_tmp}"; then
+        # Source already has an entry - append this debpath to that line
+        sed -i "s|^\\(${_source} .*\\)|\\1 ${_debpath}|" "${_dkms_tmp}"
+      else
+        printf '%s %s modulename=%s %s arch=%s rprovides=%s-modules rprovides=%s\n' \
+          "${_source}" "${_version}" "${_source}" "${_debpath}"  \
+          "${CRAFT_ARCH_BUILD_FOR}" "${pkg%%-*}" "${pkg}"        \
+          >> "${_dkms_tmp}"
+      fi
     done
+    cat "${_dkms_tmp}" >> "debian.master/dkms-versions"
   }
 
   # The user may sneakily add an annotations.yaml in a similar fashion as they
@@ -514,6 +516,31 @@ EOF
   # Update configs to reflect new defaults
   fakeroot debian/rules clean
   fakeroot debian/rules updateconfigs || true
+
+  # Apply rules.d changes AFTER updateconfigs, which may regenerate or reset
+  # files in the rules.d directory. Doing this here ensures the settings are
+  # visible to the subsequent build-* and binary-* targets.
+  #
+  # Unconditionally replace the image target with whatever the plugin has
+  # specified; sed is cheap enough that doing this in every case (even when
+  # they're equivalent) does not matter
+  sed -i "s/^\s*build_image.*/build_image = ${KERNEL_IMAGE}/g" \
+      "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+  sed -i "s|^\s*kernel_file.*|kernel_file = arch/${ARCH}/boot/${KERNEL_IMAGE}|g" \
+      "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+
+  # If the user specified any tools to be built, include them
+  [ -z "${kernel_tools}" ] || {
+      # Disable all per-tool flags in the arch-specific file, then re-enable
+      # only the ones the user asked for. do_tools (master flag) defaults to
+      # true when tools/ exists, so we leave it alone.
+      sed -i 's/^\s*do_tools_\(.*\)\s*=.*/do_tools_\1 = false/g' \
+          "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+      for _tool in ${kernel_tools}; do
+          sed -i "s/^\s*do_tools_${_tool}\s*=.*/do_tools_${_tool} = true/g" \
+              "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+      done
+  }
 
   # Print the environment for debug purposes
   fakeroot debian/rules printenv
