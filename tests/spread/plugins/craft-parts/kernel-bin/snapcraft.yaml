@@ -13,19 +13,9 @@ adopt-info: kernel
 parts:
   kernel:
     plugin: kernel
-    source: https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy
-    source-depth: 1
-    source-type: git
-    source-tag: Ubuntu-5.15.0-180.190
-    kernel-ubuntu-debian-package: true
-    kernel-ubuntu-kconfigflavour: generic
-    kernel-kdefconfig: [test_defconfig]
-    kernel-tools: [bpftool, cpupower, perf]
-    kernel-ubuntu-debian-dkms:
-      - nvidia-dkms-535
-      - nvidia-kernel-source-535
-    build-packages:
-      - dwarves
+    kernel-ubuntu-binary-package: true
+    kernel-ubuntu-abinumber: 6.8.0-106
+    kernel-ubuntu-flavour: lowlatency
     stage-packages:
       - linux-firmware
       - wireless-regdb
