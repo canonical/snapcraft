@@ -445,7 +445,11 @@ build_deb_pkg() {
 
   # Setup the environment -- dpkg rules will probably care about these
   . debian/debian.env
-  export "$(dpkg-architecture -a"${CRAFT_ARCH_BUILD_FOR}")"
+  while IFS='=' read -r _key _val; do
+    [ -n "${_key}" ] && export "${_key}=${_val}"
+  done <<EOF
+$(dpkg-architecture -a"${CRAFT_ARCH_BUILD_FOR}")
+EOF
 
   # Unconditionally replace the image target with whatever the plugin has
   # specified; sed is cheap enough that doing this in every case (even when
