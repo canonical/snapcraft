@@ -431,7 +431,13 @@ build_bin_pkg() {
 # for specifying its own kver to be consumed by functions after it in run().
 build_deb_pkg() {
   # Remove any debian packages if they exist
-  rm -f "${CRAFT_PART_BUILD}/"*.deb
+  rm -f "${CRAFT_PART_SRC}/../"*.deb
+
+  # Clean any leftover DKMS staging trees from previous builds to prevent
+  # 'tree already contains' errors from dkms-build on incremental runs
+  for _dkms_dir in "${KERNEL_SRC}/debian/build/build-${kconfigflavour}/"*dkms; do
+    [ -d "${_dkms_dir}" ] && rm -rf "${_dkms_dir}/build" "${_dkms_dir}/source" || true
+  done
 
   # To build a deb we must be present in the source directory, which is ${KERNEL_SRC}
   OLDPWD="${PWD}"
@@ -512,8 +518,15 @@ build_deb_pkg() {
   # Build the deb packages
   fakeroot debian/rules "binary-${kconfigflavour}"
 
-  # Move the packages to the correct location
-  mv -f "${KERNEL_SRC}/"*.deb "${CRAFT_PART_BUILD}"
+  # Move the packages we care about to the build directory. debian/rules places
+  # built .deb files in the parent of the source tree, not inside it. Exclude
+  # linux-buildinfo and linux-headers which are not part of the kernel snap.
+  for _deb in "${KERNEL_SRC}/../linux-"*.deb; do
+    case "$(basename "${_deb}")" in
+      linux-buildinfo-*|linux-headers-*) rm -f "${_deb}" ;;
+      *) mv -f "${_deb}" "${CRAFT_PART_BUILD}"           ;;
+    esac
+  done
 
   # Generate release information from debian/changelog
   release_info
