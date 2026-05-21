@@ -546,6 +546,8 @@ EOF
   fakeroot debian/rules printenv
   # Build the kernel
   fakeroot debian/rules "build-${kconfigflavour}"
+  # Build per-arch tool packages (bpftool, cpupower, perf, etc.)
+  [ -z "${kernel_tools}" ] || fakeroot debian/rules binary-perarch
   # Build the deb packages
   fakeroot debian/rules "binary-${kconfigflavour}"
 

@@ -317,7 +317,25 @@ class KernelPlugin(plugins.Plugin):
         if "perf" in self.options.kernel_tools:
             build_packages |= {
                 f"libtraceevent-dev:{target_arch}",
+                f"libiberty-dev:{target_arch}",
             }
+
+        if {"bpftool", "perf"} & set(self.options.kernel_tools):
+            build_packages |= {
+                "libcap-dev",
+            }
+
+        # binary-perarch uses rsync to copy the source tree to a tools build dir
+        if self.options.kernel_ubuntu_debian_package and self.options.kernel_tools:
+            build_packages |= {
+                "rsync",
+            }
+
+        if self.options.kernel_ubuntu_debian_dkms:
+            build_packages |= {
+                "dkms",
+            }
+
         return build_packages
 
     @override
