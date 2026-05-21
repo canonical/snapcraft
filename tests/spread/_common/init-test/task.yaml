@@ -21,12 +21,6 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  # 'snapcraft test' fails because there isn't a stable core26 snap to install in the test env
-  # drop this conditional when core26 is stable (#6088)
-  if [[ "$base" == "core26" ]]; then
-    exit 0
-  fi
-
   systemctl unmask unattended-upgrades.service
   snapcraft test
   systemctl is-enabled unattended-upgrades.service | MATCH masked

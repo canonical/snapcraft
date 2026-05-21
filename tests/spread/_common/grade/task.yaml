@@ -15,13 +15,7 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  # drop this conditional when core26 is stable (#6088)
-  if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "stable" ]]; then
-    snapcraft prime --destructive-mode 2>&1 | MATCH "Setting grade to 'devel' because build_base is 'devel'"
-    exit 0
-  else
-    snapcraft prime --destructive-mode
-  fi
+  snapcraft prime --destructive-mode
 
   grep -q "grade: ${SNAP_GRADE}" prime/meta/snap.yaml
 

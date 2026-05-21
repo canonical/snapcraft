@@ -128,13 +128,13 @@ def fake_assertion_service(fake_services):
 
         @property
         @override
-        def _editable_assertion_class(  # type: ignore[override]
+        def _editable_assertion_class(
             self,
         ) -> type[FakeAssertion]:
             return FakeAssertion
 
         @override
-        def _get_assertions(  # type: ignore[override]
+        def _get_assertions(
             self, name: str | None = None, **kwargs: dict[str, Any]
         ) -> list[FakeAssertion]:
             return [
@@ -143,22 +143,18 @@ def fake_assertion_service(fake_services):
             ]
 
         @override
-        def _build_assertion(  # type: ignore[override]
-            self, assertion: FakeAssertion
-        ) -> FakeAssertion:
+        def _build_assertion(self, assertion: FakeAssertion) -> FakeAssertion:
             assertion.test_field_1 = assertion.test_field_1 + "-built"
             return assertion
 
         @override
-        def _post_assertion(  # type: ignore[override]
-            self, assertion_data: bytes
-        ) -> FakeAssertion:
+        def _post_assertion(self, assertion_data: bytes) -> FakeAssertion:
             return FakeAssertion(
                 test_field_1="test-published-assertion", test_field_2=0
             )
 
         @override
-        def _normalize_assertions(  # type: ignore[override]
+        def _normalize_assertions(
             self, assertions: list[FakeAssertion]
         ) -> tuple[list[str], list[list[Any]]]:
             headers = ["test-field-1", "test-field-2"]
@@ -172,9 +168,7 @@ def fake_assertion_service(fake_services):
             return headers, assertion_data
 
         @override
-        def _generate_yaml_from_model(  # type: ignore[override]
-            self, assertion: FakeAssertion
-        ) -> str:
+        def _generate_yaml_from_model(self, assertion: FakeAssertion) -> str:
             return textwrap.dedent(
                 """\
                 test-field-1: test-value-1
@@ -194,13 +188,11 @@ def fake_assertion_service(fake_services):
             )
 
         @override
-        def _get_success_message(  # type: ignore[override]
-            self, assertion: FakeAssertion
-        ) -> str:
+        def _get_success_message(self, assertion: FakeAssertion) -> str:
             return "Success."
 
         @override
-        def _validate_assertion(  # type: ignore[override]
+        def _validate_assertion(
             self,
             assertion: FakeAssertion,
             **kwargs: dict[str, Any],

@@ -27,7 +27,14 @@ environment:
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
-  set_base "${SNAP}/snapcraft.yaml"
+  base="$(get_base)"
+
+  # only update the build-base for bare snaps
+  if [[ "$SNAP" == bare-* ]]; then
+    sed -i "s/^build-base: .*/build-base: $base/" "${SNAP}/snapcraft.yaml"
+  else
+    set_base "${SNAP}/snapcraft.yaml"
+  fi
 
 execute: |
   cd "${SNAP}"

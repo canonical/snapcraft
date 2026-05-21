@@ -4,6 +4,7 @@ backends:
   craft:
     systems:
       - ubuntu-24.04
+      - ubuntu-26.04
 
 suites:
   spread/craft-test/:

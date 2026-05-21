@@ -17,12 +17,13 @@
 import itertools
 import re
 from collections.abc import Callable
+from contextlib import nullcontext
 from typing import Any, cast
 
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
-from craft_application.models import UniqueStrList, VersionStr
+from craft_application.models import VersionStr
 from craft_platforms import DebianArchitecture
 
 import snapcraft.models
@@ -33,10 +34,14 @@ from snapcraft.models import (
     Architecture,
     BareCore22Project,
     BareCore24Project,
+    BareCore26Project,
+    BareDevelProject,
     ComponentProject,
     ContentPlug,
     Core22Project,
     Core24Project,
+    Core26Project,
+    DevelBaseProject,
     GrammarAwareProject,
     Hook,
     Lint,
@@ -160,8 +165,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
-                build_for=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
+                build_on=[str(DebianArchitecture.from_host())],
+                build_for=[str(DebianArchitecture.from_host())],
             )
         ]
         assert project.ua_services is None
@@ -428,7 +433,7 @@ class TestProjectValidation:
         else:
             error = "Input should be 'stable' or 'devel'"
             with pytest.raises(pydantic.ValidationError, match=error):
-                project.grade = grade  # type: ignore
+                project.grade = grade
 
     def test_project_summary_valid(self, project_yaml_data):
         summary = "x" * 78
@@ -656,7 +661,7 @@ class TestProjectValidation:
 
         assert project.grade == "devel"
 
-    @pytest.mark.parametrize("build_base", ["core22", "devel"])
+    @pytest.mark.parametrize("build_base", const.CURRENT_BASES)
     def test_project_grade_not_defined(self, build_base, project_yaml_data):
         """Do not validate the grade if it is not defined, regardless of build_base."""
         data = project_yaml_data(build_base=build_base)
@@ -667,12 +672,60 @@ class TestProjectValidation:
         assert project.build_base == build_base
         assert not project.grade
 
-    def test_project_build_base_devel_grade_stable_error(self, project_yaml_data):
-        """Raise an error if build_base is `devel` and grade is `stable`."""
-        error = "grade must be 'devel' when build-base is 'devel'"
+    @pytest.mark.parametrize("base", StableBase)
+    @pytest.mark.parametrize("grade", ["stable", "devel"])
+    def test_grade_stable_base(self, base, grade, project_yaml_data):
+        """Stable bases can have any grade."""
+        project = Project.unmarshal(project_yaml_data(base=base, grade=grade))
 
-        with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
+        assert project.grade == grade
+
+    @pytest.mark.parametrize("build_base", StableBase)
+    @pytest.mark.parametrize("grade", ["stable", "devel"])
+    def test_grade_stable_bare_bases(self, build_base, grade, project_yaml_data):
+        """Stable bare bases can have any grade."""
+        project = Project.unmarshal(
+            project_yaml_data(base="bare", build_base=build_base, grade=grade)
+        )
+
+        assert project.grade == grade
+
+    @pytest.mark.parametrize("base", const.CURRENT_BASES)
+    @pytest.mark.parametrize(
+        ("grade", "expectation"),
+        [
+            (
+                "stable",
+                pytest.raises(pydantic.ValidationError, match="grade must be 'devel'"),
+            ),
+            ("devel", nullcontext("devel")),
+        ],
+    )
+    def test_grade_devel_build_base(self, base, grade, expectation, project_yaml_data):
+        """'build-base: devel' requires 'grade: devel'."""
+        with expectation as e:
+            project = Project.unmarshal(
+                project_yaml_data(base=base, build_base="devel", grade=grade)
+            )
+            assert project.grade == e
+
+    @pytest.mark.parametrize(
+        ("grade", "expectation"),
+        [
+            (
+                "stable",
+                pytest.raises(pydantic.ValidationError, match="grade must be 'devel'"),
+            ),
+            ("devel", nullcontext("devel")),
+        ],
+    )
+    def test_grade_bare_devel(self, grade, expectation, project_yaml_data):
+        """'base: bare' and 'build-base: devel' requires grade: devel."""
+        with expectation as e:
+            project = Project.unmarshal(
+                project_yaml_data(base="bare", build_base="devel", grade=grade)
+            )
+            assert project.grade == e
 
     @pytest.mark.parametrize(
         ("base", "expected_base"),
@@ -800,18 +853,27 @@ class TestProjectValidation:
     @pytest.mark.parametrize(
         ("base", "build_base", "project_class"),
         [
+            # standard
             ("core22", None, Core22Project),
             ("core24", None, Core24Project),
-            ("core26", "devel", Core24Project),
+            ("core26", None, Core26Project),
+            # devel build-base
+            ("core22", "devel", Core22Project),
+            ("core24", "devel", Core24Project),
+            ("core26", "devel", Core26Project),
+            ("devel", "devel", DevelBaseProject),
+            # bare base
             ("bare", "core22", BareCore22Project),
             ("bare", "core24", BareCore24Project),
+            ("bare", "core26", BareCore26Project),
+            ("bare", "devel", BareDevelProject),
         ],
     )
     @pytest.mark.parametrize("type_", [None, "app", "gadget"])
     def test_unmarshal_project_with_base(
         self, base, build_base, type_, project_class, project_yaml_data
     ):
-        """Project.unmarshall should return the right sub model."""
+        """Project.unmarshal should return the right sub model."""
         data = project_yaml_data(
             base=base, build_base=build_base, type=type_, grade="devel"
         )
@@ -825,6 +887,7 @@ class TestProjectValidation:
         [
             ("core22", _BaselessCore22Project),
             ("core24", _BaselessProject),
+            ("core26", _BaselessProject),
             ("devel", _BaselessProject),
         ],
     )
@@ -1008,7 +1071,7 @@ class TestPlatforms:
         """Raise an error if build-for is provided by build-on is not."""
         error = r"build-on\n  Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
-            Platform(**{"build-for": [const.SnapArch.amd64]})  # type: ignore[reportArgumentType]
+            Platform.unmarshal({"build-for": [str(const.SnapArch.amd64)]})
 
     @pytest.mark.parametrize(
         ("architectures", "expected"),

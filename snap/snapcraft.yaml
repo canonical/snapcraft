@@ -206,8 +206,7 @@ parts:
       # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
       # without including other binaries.
       bin/craftctl: libexec/snapcraft/craftctl
-      bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
-      # Also install the compatibility wrapper for core22+.
+      # Install the compatibility wrapper
       bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
       # Include general data in the share directory
       "**/site-packages/extensions": share/snapcraft/extensions

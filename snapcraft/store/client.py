@@ -34,8 +34,7 @@ from craft_platforms import DebianArchitecture
 from typing_extensions import override
 
 from snapcraft import __version__, errors, models, utils
-from snapcraft.models import MetricsResponse
-from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
+from snapcraft.models import MetricsResponse, Releases
 
 from . import _metadata, channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
@@ -553,7 +552,7 @@ class LegacyStoreClientCLI:
         :param components: A dictionary of component names to component upload-ids.
         :returns: the snap's processed revision
         """
-        data = {
+        data: dict[str, Any] = {
             "name": snap_name,
             "series": constants.DEFAULT_SERIES,
             "updown_id": upload_id,
@@ -598,8 +597,12 @@ class LegacyStoreClientCLI:
 
         return status["revision"]
 
-    def list_revisions(self, snap_name: str) -> Revisions:
-        """Return a list of available revisions for snap_name.
+    def list_releases(self, snap_name: str) -> Releases:
+        """Returns a list of releases and related revisions.
+
+        This is the data shown on the 'Releases' page of the Snap Store for a snap, where
+        you are shown a table of releases for each channel and a list of recent revisions
+        available to release.
 
         :param snap_name: the name of the snap to query.
         """
@@ -612,7 +615,7 @@ class LegacyStoreClientCLI:
             },
         )
 
-        return Revisions.unmarshal(response.json())
+        return Releases.unmarshal(response.json())
 
     @staticmethod
     def _unmarshal_validation(
@@ -953,6 +956,13 @@ class LegacyStoreClientCLI:
             ).json()
         )
 
+    def push_snap_build(self, snap_id: str, snap_build: str) -> None:
+        self.request(
+            "POST",
+            self._base_url + f"/dev/api/snaps/{snap_id}/builds",
+            json={"assertion": snap_build},
+        )
+
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
     """On Premises Store Client command line interface."""
@@ -1054,7 +1064,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
     @override
-    def list_revisions(self, snap_name: str) -> Revisions:
+    def list_releases(self, snap_name: str) -> Releases:
         response = self.request(
             "GET",
             f"{self._base_url}/v1/snap/{snap_name}/revisions",
@@ -1064,7 +1074,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             },
         )
 
-        return Revisions.unmarshal(response.json())
+        return Releases.unmarshal(response.json())
 
 
 # We have two stores with a rather different implementation.

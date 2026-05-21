@@ -9,16 +9,20 @@ execute: |
   # This test is only intended to run on amd64
   [ "$(dpkg --print-architecture)" = "amd64" ] || exit 0
 
-  snapcraft prime --destructive-mode --build-for all
+  snapcraft pack --build-for all
+
+  unsquashfs grammar-build-for-all_1.0_*.snap
 
   # verify `on amd64 to all` grammar was processed
-  if ! grep "I was built on amd64 and built for all." "prime/hello-world-all.sh"; then
+  if ! grep "I was built on amd64 and built for all." "squashfs-root/hello-world-all.sh"; then
     echo "Grammar was not processed as expected!"
     exit 1
   fi
 
 restore: |
-  snapcraft clean --destructive-mode
+  snapcraft clean
+  rm -rf squashfs-root
+  rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

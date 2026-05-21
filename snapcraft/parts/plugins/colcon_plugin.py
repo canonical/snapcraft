@@ -77,7 +77,7 @@ class ColconPluginProperties(plugins.PluginProperties, frozen=True):
     colcon_ros_build_snaps: list[str] = []
 
     # part properties required by the plugin
-    source: str  # type: ignore[reportGeneralTypeIssues]
+    source: str
 
 
 class ColconPlugin(_ros.RosPlugin):

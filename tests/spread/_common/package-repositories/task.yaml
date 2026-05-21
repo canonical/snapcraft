@@ -54,13 +54,13 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  # drop this section when the deadsnakes ppa has a resolute suite (#6088)
+  # deadsnakes has a resolute release but libpython3.11 for armhf is not yet available (#6239)
   if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "test_foreign_armhf" ]]; then
-    snapcraft pack 2>&1 | MATCH "The repository 'https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu resolute Release' does not have a Release file."
+    snapcraft pack 2>&1 | MATCH "Package not found: libpython3.11-minimal:armhf"
     exit 0
   fi
 
-  # drop this section when the snappy-dev ppa has a resolute suite (#6088)
+  # drop this section when the snappy-dev ppa has a resolute suite (#6239)
   if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "test_apt_ppa" ]]; then
     snapcraft pack 2>&1 | MATCH "The repository 'http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu resolute Release' does not have a Release file."
     exit 0
@@ -78,24 +78,12 @@ execute: |
   snap remove "${SNAP}"
   rm -f ./*.snap
 
-  # Also build in destructive mode.
-  snapcraft pack --destructive-mode
-
-  # And verify the snap runs as expected.
-  snap install "${SNAP}"_1.0_*.snap --dangerous
-  # Exclamation mark is not allowed in command, so do a
-  # more relaxed match
-  "${SNAP}" | MATCH hello
-
 restore: |
   sudo apt install -y gpg dirmngr
 
   cd "$SNAP"
   rm -f ./*.snap
-  # The regular clean can potentially fail depending on if/when the test itself failed, but
-  # they should always both be attempted
-  snapcraft clean || true
-  snapcraft clean --destructive-mode
+  snapcraft clean
   snap remove "${SNAP}"
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

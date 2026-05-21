@@ -1,7 +1,6 @@
 #!/bin/bash -e
 
-get_base()
-{
+get_base() {
     # SPREAD_SUITE contains the path to the task.yaml (like tests/spread/core26/package-cutoff)
     # so matching on this first allows testing new bases before their corresponding Ubuntu release is available
     if [[ "$SPREAD_SUITE" =~ core26 ]] || [[ "$SPREAD_SYSTEM" =~ ubuntu-26.04 ]]; then
@@ -15,8 +14,7 @@ get_base()
     fi
 }
 
-set_base()
-{
+set_base() {
     snapcraft_yaml_path="$1"
 
     base="$(get_base)"
@@ -29,66 +27,45 @@ set_base()
         sed -i "s/^base:.*/base: $base/g" "$snapcraft_yaml_path"
     else
         # Insert at the very top to be safe
-        sed -i "1ibase: $base"  "$snapcraft_yaml_path"
-    fi
-
-    # remove once core26 is stable (#6088)
-    if [ "$base" == "core26" ]; then
-        if grep -q "^build-base:" "$snapcraft_yaml_path"; then
-            sed -i "s/^build-base:.*/build-base: devel/g" "$snapcraft_yaml_path"
-        else
-            # Insert at the very top to be safe
-            sed -i "/^base:.*/a\build-base: devel"  "$snapcraft_yaml_path"
-        fi
-
-        if grep -q "^grade:" "$snapcraft_yaml_path"; then
-            sed -i "s/^grade:.*/grade: devel/g" "$snapcraft_yaml_path"
-        else
-            sed -i "/^build-base:.*/a\grade: devel"  "$snapcraft_yaml_path"
-        fi
+        sed -i "1ibase: $base" "$snapcraft_yaml_path"
     fi
 }
 
-clear_base()
-{
+clear_base() {
     snapcraft_yaml_path="$1"
     sed -i '/^base:/d' "$snapcraft_yaml_path"
 }
 
-set_name()
-{
+set_name() {
     snapcraft_yaml_path="$1"
     name="$2"
 
     sed -i -e "s/name: .*$/name: $name/" "$snapcraft_yaml_path"
 }
 
-set_confinement()
-{
+set_confinement() {
     snapcraft_yaml_path="$1"
     confinement="$2"
 
     if grep -q "^confinement: " "$snapcraft_yaml_path"; then
         sed -i -e "s/confinement: \w*$/confinement: $confinement/" "$snapcraft_yaml_path"
     else
-        sed -i "1iconfinement: $confinement"  "$snapcraft_yaml_path"
+        sed -i "1iconfinement: $confinement" "$snapcraft_yaml_path"
     fi
 }
 
-set_grade()
-{
+set_grade() {
     snapcraft_yaml_path="$1"
     grade="$2"
 
     if grep -q "^grade: " "$snapcraft_yaml_path"; then
         sed -i -e "s/grade: \w*$/grade: $grade/" "$snapcraft_yaml_path"
     else
-        sed -i "1igrade: $grade"  "$snapcraft_yaml_path"
+        sed -i "1igrade: $grade" "$snapcraft_yaml_path"
     fi
 }
 
-restore_yaml()
-{
+restore_yaml() {
     apt-get install --yes git
     apt-mark auto git
 

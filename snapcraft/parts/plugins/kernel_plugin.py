@@ -173,7 +173,7 @@ import pydantic
 from craft_parts import infos, plugins
 from typing_extensions import Self, override
 
-from snapcraft_legacy.plugins.v2 import _kernel_build
+from snapcraft.parts.plugins import _kernel_build
 
 logger = logging.getLogger(__name__)
 

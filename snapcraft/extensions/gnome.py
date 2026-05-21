@@ -136,8 +136,9 @@ class GNOME(GPUExtension):
         platform_snap = self.gnome_snaps.content
         base = self.yaml_data["base"]
 
+        snippet: dict[str, Any]
         if base == "core24":
-            snippet: dict[str, Any] = super().get_root_snippet()
+            snippet = super().get_root_snippet()
         else:
             snippet = {
                 "layout": {

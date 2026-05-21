@@ -10,7 +10,6 @@ import pytest
 
 from snapcraft import cli, commands, errors
 from snapcraft.commands.upload import ComponentOption
-from tests import unit
 
 _BASIC_SNAP_YAML = {
     "name": "basic",
@@ -107,7 +106,7 @@ def fake_unsquash_with_icon(mocker, tmp_path):
 
 @pytest.fixture
 def data_path() -> pathlib.Path:
-    return pathlib.Path(unit.__file__).parents[1] / "legacy" / "data"
+    return pathlib.Path(__file__).parent / "data"
 
 
 @pytest.fixture

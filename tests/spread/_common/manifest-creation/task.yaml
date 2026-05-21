@@ -13,12 +13,14 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  env SNAPCRAFT_BUILD_INFO=y snapcraft pack --destructive-mode
+  env SNAPCRAFT_BUILD_INFO=y snapcraft pack
 
   test -f manifest_0.1_*.snap
-  test -f prime/snap/manifest.yaml
+  unsquashfs manifest_0.1_*.snap
 
-  cmp snap/snapcraft.yaml prime/snap/snapcraft.yaml
+  test -f squashfs-root/snap/manifest.yaml
+
+  cmp snap/snapcraft.yaml squashfs-root/snap/snapcraft.yaml
 
   declare -A expected=(
     ["snapcraft_version"]=$(snapcraft --version|cut -d' ' -f2)
@@ -34,7 +36,7 @@ execute: |
     ["architectures_0"]=amd64
   )
 
-  cp prime/snap/manifest.yaml ~/
+  cp squashfs-root/snap/manifest.yaml ~/
   eval "$(yq -o=shell ~/manifest.yaml)"
 
   # compare expected fields
@@ -53,8 +55,8 @@ execute: |
   review-tools.snap-review ~/manifest_0.1_*.snap
 
 restore: |
-  snapcraft clean --destructive-mode
-  rm -f ./*.snap
+  snapcraft clean
+  rm -rf squashfs-root
   rm -f ~/manifest_0.1_*.snap
   rm -f ~/manifest.yaml
 

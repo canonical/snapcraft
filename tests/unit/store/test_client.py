@@ -26,10 +26,10 @@ from craft_store import endpoints
 from craft_store.models import RevisionsResponseModel
 
 from snapcraft import errors, models
+from snapcraft.models.releases import Releases
 from snapcraft.store import LegacyUbuntuOne, client, constants
 from snapcraft.store.channel_map import ChannelMap
 from snapcraft.store.errors import NoSnapIdError, SnapNotFoundError
-from snapcraft_legacy.storeapi.v2.releases import Releases
 
 from .utils import FakeResponse
 
@@ -126,7 +126,7 @@ def channel_map_payload():
 
 
 @pytest.fixture
-def list_revisions_payload():
+def list_releases_payload():
     return {
         "revisions": [
             {
@@ -1419,11 +1419,11 @@ def test_notify_upload_error(fake_client):
 ##################
 
 
-def test_list_revisions(fake_client, list_revisions_payload):
+def test_list_releases(fake_client, list_releases_payload):
     fake_client.request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_revisions_payload).encode()
+        status_code=200, content=json.dumps(list_releases_payload).encode()
     )
-    channel_map = client.StoreClientCLI().list_revisions(
+    channel_map = client.StoreClientCLI().list_releases(
         snap_name="test-snap",
     )
     assert isinstance(channel_map, Releases)
@@ -2046,6 +2046,23 @@ def test_get_metrics(fake_client, get_metrics_payload):
     assert resp.metrics[0].snap_id == "vMTKRaLjnOJQetI78HjntT37VuoyssFE"
 
 
+###################
+# Push Snap Build #
+###################
+
+
+def test_push_snap_build(fake_client) -> None:
+    client.StoreClientCLI().push_snap_build("1234", "I work!")
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snaps/1234/builds",
+            json={"assertion": "I work!"},
+        )
+    ]
+
+
 ########################
 # OnPremStoreClientCLI #
 ########################
@@ -2258,13 +2275,13 @@ def test_on_prem_get_channel_map(
     ]
 
 
-def test_on_prem_list_revisions(
-    on_prem_client, fake_client_request, list_revisions_payload
+def test_on_prem_list_releases(
+    on_prem_client, fake_client_request, list_releases_payload
 ):
     fake_client_request.return_value = FakeResponse(
-        status_code=200, content=json.dumps(list_revisions_payload).encode()
+        status_code=200, content=json.dumps(list_releases_payload).encode()
     )
-    channel_map = client.StoreClientCLI().list_revisions(
+    channel_map = client.StoreClientCLI().list_releases(
         snap_name="test-snap",
     )
     assert isinstance(channel_map, Releases)

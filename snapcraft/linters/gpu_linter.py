@@ -82,7 +82,10 @@ class GpuLinter(Linter):
 
         current_path = Path()
         issues: list[LinterIssue] = []
+
         base = self._snap_metadata.base or "core24"
+        if base == "bare":
+            base = "core24"
 
         elf_files = elf_utils.get_elf_files(current_path)
 

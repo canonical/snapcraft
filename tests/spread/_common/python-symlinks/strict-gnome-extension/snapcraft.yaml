@@ -7,7 +7,6 @@ description: |
   symlink for base core24 is python3 -> /usr/bin/python3.12.
 
 grade: devel
-# update once core26 is stable and there's a core26 gnome extension (#6088)
 base: core24
 confinement: strict
 

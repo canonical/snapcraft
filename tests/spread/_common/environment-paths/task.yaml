@@ -18,16 +18,19 @@ execute: |
 
   cd "./snaps/$SNAP"
 
-  snapcraft prime --destructive-mode
+  snapcraft pack
 
-  if ! diff -U10 prime/meta/snap.yaml expected-$base-snap.yaml; then
+  unsquashfs "${SNAP}"_1_*.snap
+
+  if ! diff -U10 squashfs-root/meta/snap.yaml expected-$base-snap.yaml; then
       echo "The formatting for snap.yaml is incorrect"
       exit 1
   fi
 
 restore: |
   cd "./snaps/$SNAP"
-  snapcraft clean --destructive-mode
+  snapcraft clean
+  rm -rf squashfs-root
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

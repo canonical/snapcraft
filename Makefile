@@ -1,7 +1,7 @@
 PROJECT=snapcraft
 # Define when more than the main package tree requires coverage
-# like is the case for snapcraft (snapcraft and snapcraft_legacy):
-COVERAGE_SOURCE="snapcraft,snapcraft_legacy"
+# like is the case for snapcraft:
+COVERAGE_SOURCE="snapcraft"
 UV_TEST_GROUPS := "--group=dev"
 UV_DOCS_GROUPS := "--group=docs"
 UV_LINT_GROUPS := "--group=lint" "--group=types" $(UV_DOCS_GROUPS)
@@ -17,6 +17,8 @@ UV_LINT_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 UV_TICS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 endif
 
+SLOW_CUTOFF_TIME := 0.5
+
 include common.mk
 
 # instructions and skills are imported from canonical/copilot-collections
@@ -29,7 +31,7 @@ PRETTIER_FILES += $(foreach dir,$(PRETTIER_IGNORE_DIRS),"!$(dir)/**")
 format: format-ruff format-codespell format-prettier format-pre-commit  ## Run all automatic formatters
 
 .PHONY: lint
-lint: lint-ruff lint-codespell lint-mypy lint-prettier lint-pyright lint-shellcheck lint-docs lint-twine lint-uv-lockfile  ## Run all linters
+lint: lint-ruff lint-codespell lint-ty lint-prettier lint-shellcheck lint-docs lint-twine lint-uv-lockfile  ## Run all linters
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages

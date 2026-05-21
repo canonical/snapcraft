@@ -3,53 +3,35 @@ name = "snapcraft"
 description = "Create snaps"
 dynamic = ["version"]
 dependencies = [
-    "attrs",
     "catkin-pkg==1.1.0; sys_platform == 'linux'",
     "click>=8.2",
     "craft-application[remote]>=6.4.0",
     "craft-archives>=2.2.0",
-    "craft-cli>=3.3.0",
+    "craft-cli>=3.4.0",
     "craft-grammar>=2.3.0",
-    "craft-parts>=2.32.0",
-    "craft-platforms>=0.10.0",
-    "craft-providers>=3.3.0",
+    "craft-parts>=2.33.0",
+    "craft-platforms>=0.11.0",
+    "craft-providers>=3.6.0",
     "craft-store>=3.3.0",
-    "cryptography",
-    "gnupg",
     "jsonschema==2.6.0",
-    "launchpadlib",
     "lazr.restfulclient",
     "lxml",
-    "macaroonbakery",
-    "mypy-extensions",
     "overrides",
     "packaging",
-    "progressbar",
     "pydantic~=2.8",
     "pyelftools",
     # Pygit2 and libgit2 need to match versions.
     # Further info: https://www.pygit2.org/install.html#version-numbers
     # 1.18 is the last minor version that supports Python 3.10
     "pygit2~=1.18.2",
-    # Snapcraft directly only cares about pylxd on Linux. However, as a note for
-    # packagers: As of 3.1.0, craft-providers depends on pylxd on all platforms.
-    # If we drop the direct dependency we will remove the following line, but pylxd
-    # will still be in the dependency tree.
-    "pylxd",
-    "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
-    "raven",
     "requests-toolbelt",
-    "requests-unixsocket2",
     "requests>=2.32.4",
     # setuptools >= 80.9 has a noisy warning about pkg_resources
     "setuptools>=69.0,<80.9.0",
-    "simplejson",
     "snap-helpers",
     "tabulate",
-    "toml",
-    "tinydb",
     "typing-extensions",
     "validators>=0.28.3",
 ]
@@ -72,17 +54,9 @@ readme = { file = "README.md", content-type = "text/markdown" }
 [dependency-groups]
 dev = [
     "coverage[toml]",
-    "pyflakes",
-    "fixtures",
-    "mccabe",
-    "testscenarios",
-    "pexpect",
     "pip",
-    "pycodestyle",
-    "pyftpdlib",
     "pyinstaller ; sys_platform == 'win32'",
     "pymacaroons",
-    "pyramid",
     "pytest",
     "pytest-cov",
     "pytest-check",
@@ -126,7 +100,6 @@ docs-starter-pack = [
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
 types = [
-    "mypy~=1.20.0",
     "types-PyYAML",
     "types-requests>=2.32",
     "types-setuptools",
@@ -183,7 +156,7 @@ requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-script-files = ["bin/snapcraftctl", "bin/snapcraftctl-compat"]
+script-files = ["bin/snapcraftctl-compat"]
 
 [tool.setuptools_scm]
 write_to = "snapcraft/_version.py"
@@ -215,30 +188,11 @@ git_describe_command = [
 local_scheme = "dirty-tag"
 
 [tool.setuptools.packages.find]
-include = ["snapcraft", "extensions", "keyrings", "schema", "snapcraft_legacy"]
+include = ["snapcraft", "extensions", "keyrings", "schema"]
 namespaces = true
 
 [tool.setuptools.package-data]
 snapcraft = ["templates/*"]
-
-[tool.mypy]
-python_version = "3.10"
-ignore_missing_imports = true
-follow_imports = "silent"
-exclude = [
-    "build",
-    "snapcraft_legacy",
-    "tests/spread",
-    "tests/legacy",
-    "tools",
-    "venv",
-]
-plugins = ["pydantic.mypy"]
-
-[tool.pyright]
-include = ["snapcraft", "tests"]
-exclude = ["build", "tests/legacy", "tests/spread"]
-pythonVersion = "3.10"
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
@@ -247,8 +201,6 @@ line-length = 88
 extend-exclude = [
     "docs",
     "__pycache__",
-    "snapcraft_legacy",
-    "tests/legacy",
     "snapcraft/_version.py", # setuptools_scm generates old-style type annotations and single quotes
 ]
 lint.select = [
@@ -360,9 +312,7 @@ strict-checking = true
 [tool.ruff.lint.pydocstyle]
 ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
     "typing.overload", # Default configuration
-    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
-    "overrides.override",  # Used in snapcraft_legacy
-    "overrides.overrides",  # Used in snapcraft_legacy
+    # The following are variations on override, so child classes don't have to repeat parent classes' docstrings.
     "typing.override",
     "typing_extensions.override",
 ]
@@ -378,18 +328,10 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 [tool.ty.src]
 exclude = [
     "build",
-    "snapcraft_legacy",
     "tests/spread",
-    "tests/legacy",
     "tools",
     "venv",
 ]
-
-[tool.ty.rules]
-
-# Temporarily disabled while mypy and pyright are still in use.
-# See: https://github.com/canonical/snapcraft/issues/6007
-unused-type-ignore-comment = "ignore"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
