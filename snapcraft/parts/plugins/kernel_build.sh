@@ -509,7 +509,7 @@ EOF
       "${KERNEL_SRC}/debian/scripts/misc/annotations" \
         --arch "${CRAFT_ARCH_BUILD_FOR}"              \
         --flavour "${kconfigflavour}"                 \
-        --update "${CRAFT_PART_BUILD}/custom_fragment"
+        --import "${CRAFT_PART_BUILD}/custom_fragment"
     }
   fi
 
