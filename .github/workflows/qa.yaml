@@ -14,6 +14,8 @@ jobs:
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main
   test:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    needs: lint
+    if: ${{ needs.lint.outputs.source-files == 'true' }}
     with:
       # Snapcraft currently only tests on Python 3.12 on Ubuntu 24.04
       fast-test-platforms: '["ubuntu-24.04"]'
