@@ -5,7 +5,6 @@ description: |
   A ROS 2 rclcpp-based workspace.
 
 base: core26
-build-base: devel
 grade: devel
 confinement: strict
 
