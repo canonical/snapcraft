@@ -217,9 +217,6 @@ build_tool() {
     make DESTDIR="${CRAFT_PART_INSTALL}" \
       -C "${KERNEL_SRC}/tools/${_dir}" install
   fi
-
-  # Install at least the final built binary - some tools' install targets don't do this
-  install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_dir}/${_name}" "${CRAFT_PART_INSTALL}/bin/${_name}"
 }
 
 # fetch_deb downloads the linux-image deb package for some version or flavour (if
