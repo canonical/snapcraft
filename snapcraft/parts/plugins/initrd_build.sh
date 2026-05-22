@@ -263,9 +263,9 @@ install_extra() {
   # extra_path is the relevant path for any particular type to ensure use by
   # ubuntu-core-initramfs
   case $type in
-    addons)   extra_path="${ramdisk_feature_path}"          ;;
-    firmware) extra_path="${ramdisk_feature_path}/usr/lib/" ;;
-    signing)  extra_path="${INITRD_ROOT}/root"              ;;
+    addons)   extra_path="${ramdisk_feature_path}"                   ;;
+    firmware) extra_path="${ramdisk_feature_path}/usr/lib/firmware/" ;;
+    signing)  extra_path="${INITRD_ROOT}/root"                       ;;
   esac
 
   echo "Installing specified extra files..."
