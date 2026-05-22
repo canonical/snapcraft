@@ -409,7 +409,7 @@ def test_get_build_commands_binary_package(part_info):
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
         "kernel-kdefconfig='defconfig' "
-        "kernel-kconfigs= "
+        "kernel-kconfigs='' "
         "kernel-tools='' "
         "kernel-ubuntu-kconfigflavour=generic "
         "kernel-ubuntu-release-name=None "
@@ -435,7 +435,7 @@ def test_get_build_commands_debian_package(part_info):
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
         "kernel-kdefconfig='defconfig' "
-        "kernel-kconfigs= "
+        "kernel-kconfigs='' "
         "kernel-tools='' "
         "kernel-ubuntu-kconfigflavour=generic "
         "kernel-ubuntu-release-name=None "
@@ -471,7 +471,7 @@ def test_get_build_commands(part_info):
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
         "kernel-kdefconfig='snappy_defconfig foo_config' "
-        "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
+        "kernel-kconfigs='CONFIG_FOO=y,CONFIG_BAR=m' "
         "kernel-tools='bpftool cpupower perf' "
         "kernel-ubuntu-kconfigflavour= "
         "kernel-ubuntu-release-name=noble "
