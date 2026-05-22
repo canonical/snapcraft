@@ -33,14 +33,12 @@ The kernel configurations to use when generating a ``.config``. Multiple items
 in the list may be specified, but their order matters. Items later in the list
 take precedent over earlier items.
 
-If kernel-ubuntu-debian-package is ``true``, then the specified kdefconfig files
-must be in the annotations format and located in
-``${CRAFT_PROJECT_DIR}/annotations``.
+If ``kernel-ubuntu-debian-package`` is ``true``, then the specified kdefconfig
+files must be in the annotations format and located in ``${CRAFT_PROJECT_DIR}/annotations``.
 
-If kernel-ubuntu-debian-package is ``false``, then the specified  kdefconfig
+If ``kernel-ubuntu-debian-package`` is ``false``, then the specified  kdefconfig
 files must be in the regular kconfig fragment style and located in either
-``${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs`` or
-``${CRAFT_PART_SRC}/kernel/configs``.
+``${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs`` or ``${CRAFT_PART_SRC}/kernel/configs``.
 
 
 kernel-kconfigs
@@ -52,6 +50,10 @@ A list of kernel config values to enforce. If set, this list overrides the
 values in the base configurations established by the ``kernel-kdefconfig`` and
 ``kernel-ubuntu-kconfigflavour`` keys. The kernel build system is used to resolve any
 configuration dependencies or invalid combinations.
+
+If ``kernel-ubuntu-debian-package`` is ``true``, this option is unavailable.
+Instead, a config fragment should be put into ``${CRAFT_PROJECT_DIR}/annotations/``
+and specified in the ``kernel-kdefconfig`` key.
 
 
 kernel-tools
@@ -144,7 +146,7 @@ kernel-ubuntu-debian-package
 
 If enabled, the kernel will be built following how debian packages traditionally are.
 This means that the build steps are handled by the :file:`debian/rules` makefile, rather
-than any direct ``make`` invocations as is done in most other cases.
+than any direct ``make`` invocations as is done in other cases with this plugin.
 
 This option is primarily intended to be used by the Canonical Kernel team, although it
 is a valid option for anyone so long as the kernel source (as specified by the other
@@ -247,6 +249,51 @@ specified.
 How it works
 ------------
 
+There are three primary patterns for this plugin depending on the selected keys.
+
+1. ``kernel-ubuntu-binary-package: true``
+#. ``kernel-ubuntu-debian-package: true``
+#. Neither
+
+
+Binary package
+~~~~~~~~~~~~~~
+
+In the case where building from a binary package, most of the process used by
+this plugin is skipped. Instead, a prebuilt kernel image and its associated
+modules are fetched from the archive and staged to the expected locations for a
+kernel snap.
+
+This option is the fastest route to producing a kernel snap when a kernel debian
+package already exists, and no real changes need to be made to it.
+
+
+Debian package
+~~~~~~~~~~~~~~
+
+This case performs a source-based build, following the standard Ubuntu kernel
+build method as closely as possible. Ultimately, ``dpkg`` and its associated
+tools are responsible for configuring and building a kernel and its modules,
+with options to include DKMS packages from the archive or to build the supported
+kernel tools.
+
+By the end, several deb packages will be produced and then extracted and staged.
+This option is the most direct route of producing a kernel snap when substantive
+changes to the kernel do not need to be made (no real kernel code changes, just
+config changes), and instead something "similar enough" to a Canonical kernel
+deb is sufficient.
+
+
+Neither
+~~~~~~~
+
+This case performs a complete build of an arbitrary kernel source, whether it be
+for a debian package or from some other maintainer.
+
+This option is the most feature-rich path enabling end-to-end control over the
+entire kernel, and is most useful for doing board development work when you have
+a known-working kernel for the hardware and need to package it into a snap.
+
 During the build step the plugin performs the following actions:
 
 #. Pass a collection of flags built from the selected keys to a kernel build
@@ -284,7 +331,9 @@ key, and so a generic ``kernel-ubuntu-kconfigflavour`` is used (as this is the
 default behavior, no key is specified). A specific tag (Ubuntu-5.15.0-176.186)
 is named with the ``kernel-ubuntu-abinumber`` key, which means that tag of the
 Jammy tree will be cloned. A kernel config value is specified to remove debug
-information.
+information. The kernel is then built following the standard ``make defconfig;
+make; make install`` pattern rather than using tools like ``dpkg`` to produce
+and unpack a deb.
 
 The linux-firmware and wireless-regdb packages are staged with this part for
 convenience but are not necessarily required.
