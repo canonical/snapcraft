@@ -444,6 +444,8 @@ build_deb_pkg() {
   cd "${KERNEL_SRC}"
 
   # Setup the environment -- dpkg rules will probably care about these
+  # debian/debian.env will exist in $KERNEL_SRC when this function runs
+  # shellcheck disable=SC1091
   . debian/debian.env
   while IFS='=' read -r _key _val; do
     [ -n "${_key}" ] && export "${_key}=${_val}"
@@ -651,7 +653,7 @@ redepmod() {
 #
 # neither -> build_src_pkg()
 #   Builds directly from a kernel source tree of any provenance.
-#     ${CRAFT_PART_BUILD}/.confg eixsts: skip config generation
+#     ${CRAFT_PART_BUILD}/.config eixsts: skip config generation
 #     kernel-ubuntu-kconfigflavour != generic: gen_flavour_config
 #     kernel-kdefconfig != defconfig: gen_defconfig
 #     default: gen_flavour_config generic

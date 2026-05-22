@@ -80,6 +80,8 @@ jemalloc
 JLink
 json
 KCalc
+kconfig
+kdefconfig
 keyrings
 landscape
 lang

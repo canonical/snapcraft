@@ -173,7 +173,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
 
     @pydantic.model_validator(mode="after")
     def validate_binary_and_tools_exclusive(self) -> Self:
-        """Enforrce binary_package and tools options are mutually exclusive"""
+        """Enforce binary_package and tools options are mutually exclusive"""
         binary = self.kernel_ubuntu_binary_package
         if binary and self.kernel_tools:
             raise errors.PartsError(
