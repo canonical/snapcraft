@@ -135,8 +135,8 @@ check_config() {
 # the config, or if we're building a source package, which uses the standard
 # kconfig generation method via various make targets.
 # If any kconfig fragments are provided, they should be in one of
-#  - ${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs,
-#  - ${CRAFT_PART_SRC}/kernel/configs, or, in the case of an annotations fragment,
+#  - ${KERNEL_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs,
+#  - ${KERNEL_SRC}/kernel/configs, or, in the case of an annotations fragment,
 #  - ${CRAFT_PROJECT_DIR}/annotations
 validate_kdefconfigs() {
   # Check if we are dealing with defconfigs which aren't just the default
@@ -156,11 +156,13 @@ validate_kdefconfigs() {
     # which case there are some more canonical locations for kconfig fragments
     # to be located in.
     else for fragment in ${kernel_kdefconfig}; do
-        [ -e "${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/${fragment}" ] ||
-        [ -e "${CRAFT_PART_SRC}/kernel/configs/${fragment}" ] || {
+        # "defconfig" is a kernel make target, not a file fragment
+        [ "${fragment}" = "defconfig" ] ||
+        [ -e "${KERNEL_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs/${fragment}" ] ||
+        [ -e "${KERNEL_SRC}/kernel/configs/${fragment}" ] || {
           echo "Please ensure your specified kdefconfig files are in either:"
-          echo "  - \${CRAFT_PART_SRC}/arch/\${CRAFT_ARCH_BUILD_FOR}/configs, or"
-          echo "  - \${CRAFT_PART_SRC}/kernel/configs"
+          echo "  - \${KERNEL_SRC}/arch/\${CRAFT_ARCH_BUILD_FOR}/configs, or"
+          echo "  - \${KERNEL_SRC}/kernel/configs"
           exit 1
         }
       done
