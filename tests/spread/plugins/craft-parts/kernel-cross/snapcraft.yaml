@@ -15,10 +15,19 @@ architectures:
 parts:
   kernel:
     plugin: kernel
-    kernel-ubuntu-release-name: jammy
-    kernel-tools: [bpf, cpupower, perf]
+    source: https://git.launchpad.net/~canonical-kernel/ubuntu/+source/linux-riscv/+git/jammy
+    source-depth: 1
+    source-type: git
+    source-tag: Ubuntu-riscv-6.8-6.8.0-117.117_22.04.1
+    # kernel-ubuntu-release-name: jammy
+    kernel-ubuntu-kconfigflavour: riscv
+    kernel-ubuntu-abinumber: Ubuntu-riscv-6.8-6.8.0-117.117_22.04.1
+    kernel-tools: [bpftool, cpupower]
     kernel-kdefconfig: [defconfig, test.config]
     kernel-kconfigs:
+      - CONFIG_WLAN=y
+      - CONFIG_MAC80211=y
+      - CONFIG_RTW88=y
       - CONFIG_RTW88_SDIO=m
       - CONFIG_RTW88_8723D=m
       - CONFIG_RTW88_8723DS=m
@@ -30,6 +39,9 @@ parts:
       craftctl default
 
       cp -f "${CRAFT_PROJECT_DIR}/test_defconfig" "${CRAFT_PART_SRC}/kernel/configs/test.config"
+
+      # cpupower won't cross-compile without some massaging - this is fixed in later kernel releases
+      sed -i 's/^CROSS\s*=\s*#.*/CROSS ?=/' "${CRAFT_PART_SRC}/tools/power/cpupower/Makefile"
     override-build: |
       craftctl default
 

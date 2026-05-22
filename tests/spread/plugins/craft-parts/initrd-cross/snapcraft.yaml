@@ -12,14 +12,6 @@ architectures:
   - build-on: [amd64]
     build-for: [riscv64]
 
-package-repositories:
-  - type: apt
-    components: [main]
-    architectures: [$CRAFT_ARCH_BUILD_FOR]
-    suites: [jammy]
-    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
-    url: http://ports.ubuntu.com/ubuntu-ports
-
 parts:
   kernel:
     plugin: kernel

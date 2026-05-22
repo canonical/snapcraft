@@ -15,11 +15,11 @@ parts:
     plugin: kernel
     kernel-ubuntu-binary-package: true
     kernel-ubuntu-abinumber: 6.8.0-106
-    kernel-ubuntu-flavour: lowlatency
+    kernel-ubuntu-kconfigflavour: lowlatency
     stage-packages:
       - linux-firmware
       - wireless-regdb
-    override-build: |-
+    override-build: |
       craftctl default
 
       kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
