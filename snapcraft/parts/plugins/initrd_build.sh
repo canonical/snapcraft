@@ -167,7 +167,7 @@ chroot_configure() {
         chroot_run "apt-get install --no-install-recommends -y snapd"
     };  chroot_run "apt-get install --no-install-recommends -y systemd"
   else
-    chroot_run "apt-get install --no-install-recommends -y libsystemd-shared"
+    chroot_run "apt-get install --no-install-recommends -y libbpf1 libsystemd-shared"
 
     # Install the microcode packages for x86_64
     if [ "${CRAFT_ARCH_BUILD_FOR}" = "amd64" ]; then
