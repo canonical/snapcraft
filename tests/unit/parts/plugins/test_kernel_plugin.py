@@ -248,7 +248,7 @@ def test_get_build_packages_cpupower(part_info):
         "systemd",
         "xz-utils",
         "zstd",
-        "libpci-dev",
+        "libpci-dev:amd64",
     }
 
 

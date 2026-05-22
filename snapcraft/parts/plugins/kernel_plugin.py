@@ -311,7 +311,7 @@ class KernelPlugin(plugins.Plugin):
         # cpupower requires libpci to build
         if "cpupower" in self.options.kernel_tools:
             build_packages |= {
-                "libpci-dev",
+                f"libpci-dev:{target_arch}",
             }
 
         if "perf" in self.options.kernel_tools:
