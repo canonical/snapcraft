@@ -10,13 +10,29 @@ on:
   pull_request:
 
 jobs:
+  filter:
+    runs-on: ubuntu-slim
+    outputs:
+      source-files: ${{ steps.filter.outputs.source-files }}
+    steps:
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
+          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          filters: |
+            source-files:
+              - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
   lint:
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main
+    needs: filter
+    with:
+      source-files: ${{ needs.filter.output.source-files }}
   test:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    needs: lint
-    if: ${{ needs.lint.outputs.source-files == 'true' }}
+    needs: filter
     with:
+      source-files: ${{ needs.filter.output.source-files }}
       # Snapcraft currently only tests on Python 3.12 on Ubuntu 24.04
       fast-test-platforms: '["ubuntu-24.04"]'
       slow-test-platforms: '["ubuntu-24.04"]'
