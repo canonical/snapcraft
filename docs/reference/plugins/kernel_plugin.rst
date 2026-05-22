@@ -1,3 +1,5 @@
+.. meta::
+    :description: Understand the usage and meaning of the varies keys and environment variables used by the kernel plugin. See an example, test cases, and real world usage.
 .. _reference-kernel-plugin:
 
 Kernel plugin

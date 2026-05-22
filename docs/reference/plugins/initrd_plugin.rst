@@ -1,3 +1,6 @@
+.. meta::
+    :description: Understand the usage and meaning of the varies keys and environment variables used by the initrd plugin. See an example, test cases, and real world usage.
+
 .. _reference-initrd-plugin:
 
 Initrd plugin
