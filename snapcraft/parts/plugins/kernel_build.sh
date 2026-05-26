@@ -349,9 +349,10 @@ install_kernel() {
         modules_install
 
   # Install device trees, if required
+  # Install using -j1 to avoid potential race-conditions
   if [ "${CRAFT_ARCH_BUILD_FOR}" != "amd64" ]; then
     echo "Installing device trees..."
-    make -j "${CRAFT_PARALLEL_BUILD_COUNT}"              \
+    make -j1                                             \
          -C "${KERNEL_SRC}"                              \
           O="${CRAFT_PART_BUILD}"                        \
           INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs" \
