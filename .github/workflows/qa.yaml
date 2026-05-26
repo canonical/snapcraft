@@ -27,12 +27,12 @@ jobs:
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main
     needs: filter
     with:
-      source-files: ${{ needs.filter.output.source-files }}
+      source-files: ${{ needs.filter.outputs.source-files }}
   test:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
     needs: filter
     with:
-      source-files: ${{ needs.filter.output.source-files }}
+      source-files: ${{ needs.filter.outputs.source-files }}
       # Snapcraft currently only tests on Python 3.12 on Ubuntu 24.04
       fast-test-platforms: '["ubuntu-24.04"]'
       slow-test-platforms: '["ubuntu-24.04"]'
