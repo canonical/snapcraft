@@ -38,7 +38,7 @@ take precedent over earlier items.
 If ``kernel-ubuntu-debian-package`` is ``true``, then the specified kdefconfig
 files must be in the annotations format and located in ``${CRAFT_PROJECT_DIR}/annotations``.
 
-If ``kernel-ubuntu-debian-package`` is ``false``, then the specified  kdefconfig
+If ``kernel-ubuntu-debian-package`` is ``false``, then the specified kdefconfig
 files must be in the regular kconfig fragment style and located in either
 ``${CRAFT_PART_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs`` or ``${CRAFT_PART_SRC}/kernel/configs``.
 
@@ -150,9 +150,8 @@ If enabled, the kernel will be built following how debian packages traditionally
 This means that the build steps are handled by the :file:`debian/rules` makefile, rather
 than any direct ``make`` invocations as is done in other cases with this plugin.
 
-This option is primarily intended to be used by the Canonical Kernel team, although it
-is a valid option for anyone so long as the kernel source (as specified by the other
-various options) provides a valid :file:`debian/` directory.
+This option is primarily intended to be used by the Canonical Kernel team. Its
+usage requires the kernel source provides a valid ``debian/`` directory.
 
 
 kernel-ubuntu-debian-dkms
@@ -261,8 +260,8 @@ There are three primary patterns for this plugin depending on the selected keys.
 Binary package
 ~~~~~~~~~~~~~~
 
-In the case where building from a binary package, most of the process used by
-this plugin is skipped. Instead, a prebuilt kernel image and its associated
+In the case where building from a binary package, most of the processes used by
+this plugin are skipped. Instead, a prebuilt kernel image and its associated
 modules are fetched from the archive and staged to the expected locations for a
 kernel snap.
 
@@ -280,10 +279,9 @@ with options to include DKMS packages from the archive or to build the supported
 kernel tools.
 
 By the end, several deb packages will be produced and then extracted and staged.
-This option is the most direct route of producing a kernel snap when substantive
-changes to the kernel do not need to be made (no real kernel code changes, just
-config changes), and instead something "similar enough" to a Canonical kernel
-deb is sufficient.
+This option supplants the binary package option in cases where the kernel must
+be customized in some way, but the standard debian tooling still needs to be
+used to build the kernel.
 
 
 Neither

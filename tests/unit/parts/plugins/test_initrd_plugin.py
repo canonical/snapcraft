@@ -36,7 +36,7 @@ def part_info(new_dir):
 
 
 def test_validate_plugin_options():
-    with pytest.raises(errors.PartsError):
+    with pytest.raises(errors.PartsError, match="..."):
         InitrdPlugin.properties_class.unmarshal(
             {
                 "initrd-efi-image-key": "foo.key",

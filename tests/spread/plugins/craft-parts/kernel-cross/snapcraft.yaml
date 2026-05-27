@@ -19,7 +19,6 @@ parts:
     source-depth: 1
     source-type: git
     source-tag: Ubuntu-riscv-6.8-6.8.0-117.117_22.04.1
-    # kernel-ubuntu-release-name: jammy
     kernel-ubuntu-kconfigflavour: riscv
     kernel-ubuntu-abinumber: Ubuntu-riscv-6.8-6.8.0-117.117_22.04.1
     kernel-tools: [bpftool, cpupower]

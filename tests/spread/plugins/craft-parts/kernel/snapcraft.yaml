@@ -17,7 +17,6 @@ parts:
     source-depth: 1
     source-type: git
     source-tag: Ubuntu-5.15.0-180.190
-    # kernel-ubuntu-release-name: jammy
     kernel-ubuntu-kconfigflavour: generic
     kernel-ubuntu-abinumber: Ubuntu-5.15.0-180.190
     kernel-tools: [bpftool, cpupower, perf]

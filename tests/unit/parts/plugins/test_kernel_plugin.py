@@ -35,7 +35,7 @@ def part_info(new_dir):
 
 
 def test_validate_release_name_and_source_exclusive():
-    with pytest.raises(errors.PartsError):
+    with pytest.raises(errors.PartsError, match="..."):
         KernelPlugin.properties_class.unmarshal(
             {
                 "kernel-ubuntu-release-name": "noble",
@@ -45,7 +45,7 @@ def test_validate_release_name_and_source_exclusive():
 
 
 def test_validate_debian_and_binary_exclusive():
-    with pytest.raises(errors.PartsError):
+    with pytest.raises(errors.PartsError, match="..."):
         KernelPlugin.properties_class.unmarshal(
             {
                 "kernel-ubuntu-binary-package": True,
@@ -55,7 +55,7 @@ def test_validate_debian_and_binary_exclusive():
 
 
 def test_validate_binary_and_tools_exclusive():
-    with pytest.raises(errors.PartsError):
+    with pytest.raises(errors.PartsError, match="..."):
         KernelPlugin.properties_class.unmarshal(
             {
                 "kernel-ubuntu-binary-package": True,
@@ -65,7 +65,7 @@ def test_validate_binary_and_tools_exclusive():
 
 
 def test_validate_debian_dkms_requires_debian_package():
-    with pytest.raises(errors.PartsError):
+    with pytest.raises(errors.PartsError, match="..."):
         KernelPlugin.properties_class.unmarshal(
             {
                 "kernel-ubuntu-debian-dkms": ["nvidia-dkms-535"],
@@ -80,9 +80,8 @@ def test_validate_debian_package_and_kconfigs_options_exclusive(emitter):
             "kernel-kconfigs": ["CONFIG_FOO=y"],
         }
     )
-    emitter.assert_progress(
+    emitter.assert_warning(
         "'kernel-kconfigs' will be ignored when 'kernel-ubuntu-debian-package' is set",
-        permanent=True,
     )
 
 

@@ -478,9 +478,9 @@ create_efi() {
 #
 # clean always runs on exit.
 run() {
-    # The build occurs within ${CRAFT_PART_SRC} to avoid issues related to iterative
-    # builds with the Ubuntu base fetched by the plugin during the pull step.
-    # Track setup/creation/tear-down ourselves.
+  # The build occurs within ${CRAFT_PART_SRC} to avoid issues related to iterative
+  # builds with the Ubuntu base fetched by the plugin during the pull step.
+  # Track setup/creation/tear-down ourselves.
   [ -e "${BASE_CREATED}" ] || {
     printf 'Preparing to build initrd for arch %s using series %s in %s\n' \
       "${CRAFT_ARCH_BUILD_FOR}" "${UBUNTU_SERIES}" "${CRAFT_PART_SRC}"

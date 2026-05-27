@@ -152,7 +152,7 @@ class InitrdPlugin(plugins.Plugin):
         if (release_codename := RELEASE_CODENAME_FROM_SNAP_BASE.get(base)) is None:
             raise errors.PartsError(
                 brief=f"base {base!r} is not supported for the initrd plugin",
-                resolution=f"Use one of the supported bases: {humanize_list(RELEASE_CODENAME_FROM_SNAP_BASE.keys(), 'and')}",
+                resolution=f"Use one of the supported bases: {humanize_list(RELEASE_CODENAME_FROM_SNAP_BASE.keys(), 'or')}",
             )
 
         # URL pieces for Ubuntu base, tarball name

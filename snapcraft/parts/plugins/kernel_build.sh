@@ -143,7 +143,7 @@ validate_kdefconfigs() {
   if [ "${kernel_kdefconfig}" != "defconfig" ]; then
     # Annotations belong in the project directory. This is an opinionated choice
     # and can always be made different. If there is a standard location for
-    # these, it is non-obvous.
+    # these, it is non-obvious.
     if [ "${kernel_ubuntu_debian_package}" = "True" ]; then
       for fragment in ${kernel_kdefconfig}; do
         [ -e "${CRAFT_PROJECT_DIR}/annotations/${fragment}" ] || {
@@ -412,7 +412,9 @@ build_bin_pkg() {
     # linux-image-${kconfigflavour} has version of the form x.y.z.a-b, but ver
     # in linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy
     # so swap .a for -a
-    [ "${UBUNTU_SERIES}" != "jammy" ] || kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
+    if [ "${UBUNTU_SERIES}" = "jammy" ];
+      then kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
+    fi
   else kver="${kernel_ubuntu_abinumber}"
   fi
 
@@ -463,9 +465,9 @@ EOF
     : > "${_dkms_tmp}"
     for pkg in ${kernel_ubuntu_debian_dkms}; do
       apt show "${pkg}" > "${CRAFT_PART_BUILD}/pkginfo"
-      _source=$(grep "^Source:"  "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Source: //')
+      _source=$( grep "^Source:"  "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Source: //')
       _version=$(grep "^Version:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Version: //')
-      _repo=$(grep   "^Section:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Section: \(.*\)\/.*/\1/')
+      _repo=$(   grep "^Section:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Section: \(.*\)\/.*/\1/')
       _initial=$(printf '%.1s' "${pkg}")
       # apt metadata (Architecture:) is unreliable for the actual deb filename
       # suffix - some packages are _all.deb, others are _${arch}.deb, and apt

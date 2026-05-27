@@ -140,9 +140,8 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                 if getattr(self, option):
                     if option == "kernel_kdefconfig" and kdefconfig == ["defconfig"]:
                         continue
-                    emit.progress(
+                    emit.warning(
                         f"'{option}' will be ignored when 'kernel-ubuntu-binary-package' is set",
-                        permanent=True,
                     )
         return self
 
@@ -152,9 +151,8 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
         debian = self.kernel_ubuntu_debian_package
 
         if debian and self.kernel_kconfigs:
-            emit.progress(
+            emit.warning(
                 "'kernel-kconfigs' will be ignored when 'kernel-ubuntu-debian-package' is set",
-                permanent=True,
             )
         return self
 
