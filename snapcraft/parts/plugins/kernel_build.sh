@@ -496,7 +496,7 @@ EOF
   # would a .config in $CRAFT_PART_BUILD. In that specific case, we should
   # wholesale import the provided annotations into the current one and build
   # based on that (updates not-withstanding). Providing annotations in this
-  # fashion is likewise no an explicitly supported avenue and is intended for
+  # fashion is likewise not an explicitly supported avenue and is intended for
   # iteration and testing.
   if [ -e "${CRAFT_PART_BUILD}/annotations.yaml" ]; then
     "${KERNEL_SRC}/debian/scripts/misc/annotations" \

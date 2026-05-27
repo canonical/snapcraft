@@ -23,6 +23,6 @@ execute: |
   snapcraft pack
   ls -l pc-kernel_*.snap
 
-  for file in bpftool cpupower perf trace; do
-    [ -x "squashfs-root/bin/${file}" ] || exit 1
+  for file in usr/local/sbin/bpftool usr/bin/cpupower bin/perf; do
+    [ -x "squashfs-root/${file}" ] || exit 1
   done
