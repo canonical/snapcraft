@@ -12,7 +12,7 @@ environment:
 
 restore: |
   snapcraft clean
-  rm -f ./*.snap
+  rm -rf ./*.snap squashfs-root/
 
 execute: |
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
@@ -38,3 +38,8 @@ execute: |
   rm -f ./*.snap
   snapcraft pack
   ls -l nezha-kernel_*_riscv64.snap
+
+  unsquashfs nezha-kernel_*.snap
+
+  # snapd-info is a "required" file; we should make sure it's present.
+  [ -e squashfs-root/snapd-info ] || exit 1

@@ -13,7 +13,7 @@ environment:
 
 restore: |
   snapcraft clean
-  rm -f ./*.snap
+  rm -rf ./*.snap squashfs-root/
 
 execute: |
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
@@ -22,6 +22,8 @@ execute: |
   rm -f ./*.snap
   snapcraft pack
   ls -l pc-kernel_*.snap
+
+  unsquashfs pc-kernel_*.snap
 
   for file in usr/local/sbin/bpftool usr/bin/cpupower bin/perf; do
     [ -x "squashfs-root/${file}" ] || exit 1
