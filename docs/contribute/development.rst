@@ -69,6 +69,55 @@ Inside the project directory, set up the development environment:
 If these commands complete without error, your environment is ready.
 
 
+Develop with Workshop
+---------------------
+
+.. admonition:: Work in progress
+    :class: caution
+
+    Workshop integration for Snapcraft is under active development. Some
+    features may be incomplete or subject to change.
+
+`Workshop <https://canonical-workshop.readthedocs-hosted.com/>`__ is Canonical's
+container-based development environment. The Snapcraft repository includes a
+Workshop configuration that provisions an isolated Ubuntu 24.04 container with
+all tools and dependencies pre-installed. It's an alternative to the local
+environment described in the previous section.
+
+When the workshop starts, it automatically runs ``make setup`` inside the
+container. From there, use the pre-configured actions to carry out common
+development tasks:
+
+.. code-block:: bash
+
+    workshop run -- setup          # re-run the virtual environment setup
+    workshop run -- lint           # run all linters
+    workshop run -- format         # run the autoformatters
+    workshop run -- test           # run the full test suite
+    workshop run -- test-fast      # run the fast test suite
+    workshop run -- test-coverage  # run tests with a coverage report
+    workshop run -- schema         # regenerate the JSON schema
+    workshop run -- clean          # remove temporary build artifacts
+
+Two additional helpers support dependency work.
+
+``lock`` runs ``uv lock`` with any arguments you pass, then re-runs
+``make setup``:
+
+.. code-block:: bash
+
+    workshop run -- lock --upgrade-package craft-parts
+
+``install-branch`` installs a dependency directly from a Git branch. Pass a
+short package name (resolves to the canonical GitHub organization by default)
+or a full repository URL:
+
+.. code-block:: bash
+
+    workshop run -- install-branch craft-parts main
+    workshop run -- install-branch https://github.com/user/craft-parts.git feat/my-fix
+
+
 Choose a task
 -------------
 
