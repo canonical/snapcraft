@@ -35,7 +35,10 @@ def part_info(new_dir):
 
 
 def test_validate_release_name_and_source_exclusive():
-    with pytest.raises(errors.PartsError, match="..."):
+    with pytest.raises(
+        errors.PartsError,
+        match="Remove either 'kernel-ubuntu-release-name' or 'source' from the part definition",
+    ):
         KernelPlugin.properties_class.unmarshal(
             {
                 "kernel-ubuntu-release-name": "noble",
@@ -45,7 +48,10 @@ def test_validate_release_name_and_source_exclusive():
 
 
 def test_validate_debian_and_binary_exclusive():
-    with pytest.raises(errors.PartsError, match="..."):
+    with pytest.raises(
+        errors.PartsError,
+        match="Choose one build method: set either 'kernel-ubuntu-binary-package' or 'kernel-ubuntu-debian-package', not both",
+    ):
         KernelPlugin.properties_class.unmarshal(
             {
                 "kernel-ubuntu-binary-package": True,
@@ -55,7 +61,9 @@ def test_validate_debian_and_binary_exclusive():
 
 
 def test_validate_binary_and_tools_exclusive():
-    with pytest.raises(errors.PartsError, match="..."):
+    with pytest.raises(
+        errors.PartsError, match="Add the required tools to 'stage-packages' instead"
+    ):
         KernelPlugin.properties_class.unmarshal(
             {
                 "kernel-ubuntu-binary-package": True,
@@ -65,7 +73,10 @@ def test_validate_binary_and_tools_exclusive():
 
 
 def test_validate_debian_dkms_requires_debian_package():
-    with pytest.raises(errors.PartsError, match="..."):
+    with pytest.raises(
+        errors.PartsError,
+        match="Set 'kernel-ubuntu-debian-package: true' or build the module as out-of-tree in the usual way",
+    ):
         KernelPlugin.properties_class.unmarshal(
             {
                 "kernel-ubuntu-debian-dkms": ["nvidia-dkms-535"],

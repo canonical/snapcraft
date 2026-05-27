@@ -36,7 +36,10 @@ def part_info(new_dir):
 
 
 def test_validate_plugin_options():
-    with pytest.raises(errors.PartsError, match="..."):
+    with pytest.raises(
+        errors.PartsError,
+        match="Specify both 'initrd-efi-image-key' and 'initrd-efi-image-cert', or remove both to use the snakeoil defaults",
+    ):
         InitrdPlugin.properties_class.unmarshal(
             {
                 "initrd-efi-image-key": "foo.key",
