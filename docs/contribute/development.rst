@@ -78,7 +78,7 @@ Develop with Workshop
     Workshop integration for Snapcraft is under active development. Some
     features may be incomplete or subject to change.
 
-`Workshop <https://canonical-workshop.readthedocs-hosted.com/>`__ is Canonical's
+`Workshop <https://documentation.ubuntu.com/canonical-workshop/>`__ is Canonical's
 container-based development environment. The Snapcraft repository includes a
 Workshop configuration that provisions an isolated Ubuntu 24.04 container with
 all tools and dependencies pre-installed. It's an alternative to the local
