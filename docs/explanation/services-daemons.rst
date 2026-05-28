@@ -88,4 +88,4 @@ General use
 
 A daemon that needs to provide services to applications can be configured to use a bus name by setting its ``bus-name`` keyword. This enables the system bus to be used for communication, as with regular system daemons.
 
-As noted above, the ``daemon`` keyword does not need to specify the ``dbus`` type for this use case, unless it is convenient to notify *systemd* about start-up by claiming a D-Bus name.
+The ``daemon`` keyword does not need to specify the ``dbus`` type for this use case, unless it is convenient to notify *systemd* about start-up by claiming a D-Bus name.
