@@ -333,16 +333,10 @@ class GNOME(GPUExtension):
         else:
             parts = {}
 
-        parts.update(
-            {
-                "gnome/sdk": {
-                    "source": str(source),
-                    "plugin": "make",
-                },
-            }
-        )
-
-        if self.gnome_snaps.builtin:
-            parts["gnome/sdk"]["build-snaps"] = [_SDK_SNAP[base]]
+        parts["gnome/sdk"] = {
+            "source": str(source),
+            "plugin": "make",
+            **({"build-snaps": [_SDK_SNAP[base]]} if self.gnome_snaps.builtin else {}),
+        }
 
         return parts
