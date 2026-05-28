@@ -31,30 +31,30 @@ To define an executable as a daemon or service, add ``daemon: simple`` to its *a
 
 The value for ``daemon:`` can be one of the following:
 
--  **simple** Run for as long as the service is active - this is typically the default option.
--  **oneshot** Run once and exit after completion, notifying systemd. After completion, the daemon is still considered active and *running*.
--  **forking** The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This isn’t the recommended behaviour on a modern Linux system.
--  **notify** Assumes the command will send a signal to *systemd* to indicate its running state. Note this requires usage of the `daemon-notify interface </t/the-daemon-notify-interface/7809>`__.
+-  ``simple``: Run for as long as the service is active - this is typically the default option.
+-  ``oneshot``: Run once and exit after completion, notifying systemd. After completion, the daemon is still considered active and *running*.
+-  ``forking``: The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This isn’t the recommended behaviour on a modern Linux system.
+-  ``notify`` Assumes the command will send a signal to *systemd* to indicate its running state. Note this requires usage of the `daemon-notify interface </t/the-daemon-notify-interface/7809>`__.
 
 In addition to the above types of daemon or service, the following can be set to help manage how a service is run, how it can be stopped, and what should happen after it stops:
- 
--  **after** An ordered list of applications the daemon is to be started *after*. Applications must be part of the same snap.
--  **before** An ordered list of applications the daemon is to be started *before*. Applications must be part of the same snap.
--  **install-mode** Defines whether a freshly installed daemon is started automatically, or whether startup control is deferred to the snap. The snap could then use `snapctl </t/using-the-snapctl-tool/15002>`__ with a `hook </t/supported-snap-hooks/3795>`__, for instance, or another management agent. Can be ``enable`` (default) or ``disable``.
--  **post-stop-command** Sets the command to run from inside the snap *after* a service stops.
--  **refresh-mode** Controls whether a daemon should be restarted during a snap refresh. Can be either ``restart`` , ``endure``, (do not restart) or ``ignore-running`` (does not refresh running services to facilitate the refresh app awareness feature). Defaults to *restart* .
--  **reload-command** Defines the command within the snap to be executed when a service needs to be restarted or reloaded after a configuration change, as initiated with the ``snap restart --reload`` command.
+
+-  ``after``: An ordered list of applications the daemon is to be started *after*. Applications must be part of the same snap.
+-  ``before``: An ordered list of applications the daemon is to be started *before*. Applications must be part of the same snap.
+-  ``install-mode``: Defines whether a freshly installed daemon is started automatically, or whether startup control is deferred to the snap. The snap could then use `snapctl </t/using-the-snapctl-tool/15002>`__ with a `hook </t/supported-snap-hooks/3795>`__, for instance, or another management agent. Can be ``enable`` (default) or ``disable``.
+-  ``post-stop-command``: Sets the command to run from inside the snap *after* a service stops.
+-  ``refresh-mode``: Controls whether a daemon should be restarted during a snap refresh. Can be either ``restart`` , ``endure``, (do not restart) or ``ignore-running`` (does not refresh running services to facilitate the refresh app awareness feature). Defaults to *restart* .
+-  ``reload-command``: Defines the command within the snap to be executed when a service needs to be restarted or reloaded after a configuration change, as initiated with the ``snap restart --reload`` command.
    Example: ``reload-command: sbin/nginx -s reload``
--  **restart-condition** Defines when a service should be restarted, using values returned from `systemd service exit status <https://www.freedesktop.org/software/systemd/man/systemd.service.html#Restart=>`__. Can be one of ``[on-failure|on-success|on-abnormal|on-abort|on-watchdog|always|never]``.
--  **restart-delay** The delay between service restarts. Defaults to unset. See the systemd.service manual on RestartSec for details. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
--  **sockets** Requires an activated daemon socket, and works with the `network-bind interface </t/the-network-bind-interface/7881>`__ to map a daemon’s socket to a service and activate it.
--  **socket-mode** The mode of a socket in octal.
--  **start-timeout** Optional time to wait for daemon to start. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
--  **stop-command** An optional executable command to run before the daemon is stopped, and the daemon is not stopped until the specified *stop-command* terminates. This can be used to gracefully handle a daemon stop or restart, such as when a *refresh* happens, by allowing the daemon to reach a stoppable state first.
--  **stop-mode** Defines which `termination signal <https://www.gnu.org/software/libc/manual/html_node/Termination-Signals.html>`__ to use when stopping the daemon. Can be one of either ``sigterm``, ``sigterm-all``, ``sighup``, ``sighup-all``, ``sigusr1``, ``sigusr1-all``, ``sigusr2``, ``sigusr2-all``, ``sigint`` and ``sigint-all`` .
--  **stop-timeout** The length of time to wait before terminating a service. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``. Termination is via ``SIGTERM`` (and ``SIGKILL`` if that doesn’t work).
--  **timer** Declares that the service is activated by a timer and that the app must be a daemon. See `Timer string format </t/timer-string-format/6562>`__ for syntax examples.
--  **watchdog-timeout** This value declares the service watchdog timeout. For watchdog to work, the application requires access to the *systemd* notification socket, which can be declared by listing a daemon-notify plug in the plugs section. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
+-  ``restart-condition``: Defines when a service should be restarted, using values returned from `systemd service exit status <https://www.freedesktop.org/software/systemd/man/systemd.service.html#Restart=>`__. Can be one of ``[on-failure|on-success|on-abnormal|on-abort|on-watchdog|always|never]``.
+-  ``restart-delay``: The delay between service restarts. Defaults to unset. See the systemd.service manual on RestartSec for details. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
+-  ``sockets``: Requires an activated daemon socket, and works with the `network-bind interface </t/the-network-bind-interface/7881>`__ to map a daemon’s socket to a service and activate it.
+-  ``socket-mode``: The mode of a socket in octal.
+-  ``start-timeout``: Optional time to wait for daemon to start. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
+-  ``stop-command``: An optional executable command to run before the daemon is stopped, and the daemon is not stopped until the specified *stop-command* terminates. This can be used to gracefully handle a daemon stop or restart, such as when a *refresh* happens, by allowing the daemon to reach a stoppable state first.
+-  ``stop-mode``: Defines which `termination signal <https://www.gnu.org/software/libc/manual/html_node/Termination-Signals.html>`__ to use when stopping the daemon. Can be one of either ``sigterm``, ``sigterm-all``, ``sighup``, ``sighup-all``, ``sigusr1``, ``sigusr1-all``, ``sigusr2``, ``sigusr2-all``, ``sigint`` and ``sigint-all`` .
+-  ``stop-timeout``: The length of time to wait before terminating a service. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``. Termination is via ``SIGTERM`` (and ``SIGKILL`` if that doesn’t work).
+-  ``timer``: Declares that the service is activated by a timer and that the app must be a daemon. See `Timer string format </t/timer-string-format/6562>`__ for syntax examples.
+-  ``watchdog-timeout``: This value declares the service watchdog timeout. For watchdog to work, the application requires access to the *systemd* notification socket, which can be declared by listing a daemon-notify plug in the plugs section. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
 
 For further details, see `Snapcraft app and service metadata </t/snapcraft-app-and-service-metadata/8335>`__.
 
