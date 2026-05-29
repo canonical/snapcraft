@@ -245,13 +245,24 @@ class Package(PackageService):
 
     def _pack_components(self, dest: pathlib.Path) -> dict[str, pathlib.Path]:
         component_map: dict[str, pathlib.Path] = {}
-        for component in self._project.get_component_names():
+        if not self._project.components:
+            return component_map
+
+        for component_name, component in self._project.components.items():
+            if compression := component.compression:
+                emit.debug(f"Using {compression} compression for {component_name}.")
+            else:
+                compression = self._project.compression
+                emit.debug(
+                    f"Using the snap's {compression} compression for {component_name}."
+                )
+
             filename = pack.pack_component(
-                cast(Lifecycle, self._services.lifecycle).get_prime_dir(component),
-                compression=self._project.compression,
+                cast(Lifecycle, self._services.lifecycle).get_prime_dir(component_name),
+                compression=compression,
                 output_dir=dest,
             )
-            component_map[component] = pathlib.Path(filename)
+            component_map[component_name] = pathlib.Path(filename)
 
         return component_map
 
