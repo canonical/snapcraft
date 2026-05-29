@@ -15,7 +15,7 @@ See :external+snap:ref:`Service management <how-to-guides-manage-snaps-control-s
 
 To set memory and CPU resource limits for a service or daemon, see :external+snap:ref:`Quota groups <how-to-guides-manage-snaps-use-resource-quotas>`.
 
-If you need to add user configurable options to your service or daemon, such as which port it should use, see `Adding snap configuration <https://forum.snapcraft.io/t/adding-snap-configuration/15246>`__.
+If you need to add user configurable options to your service or daemon, such as which port it should use, see :ref:`Adding snap configuration <how-to-add-a-snap-configuration>`.
 
 Defining a daemon
 ------------------
@@ -34,7 +34,8 @@ The value for ``daemon:`` can be one of the following:
 -  ``simple``: Run for as long as the service is active - this is typically the default option.
 -  ``oneshot``: Run once and exit after completion, notifying systemd. After completion, the daemon is still considered active and *running*.
 -  ``forking``: The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This isn’t the recommended behaviour on a modern Linux system.
--  ``notify`` Assumes the command will send a signal to *systemd* to indicate its running state. Note this requires usage of the :external+snap:ref:`daemon-notify interface <interfaces-daemon-notify-interface>`.
+-  ``notify``: Assumes the command will send a signal to *systemd* to indicate its running state. Note this requires usage of the :external+snap:ref:`daemon-notify interface <interfaces-daemon-notify-interface>`.
+-  ``dbus``: Registers a D-Bus name to notify systemd. Requires bus-name or activates-on to be specified.
 
 In addition to the above types of daemon or service, the following can be set to help manage how a service is run, how it can be stopped, and what should happen after it stops:
 
@@ -77,6 +78,8 @@ In addition to the above types of daemon or service, the following can be set to
      - Declares that the service is activated by a timer and that the app must be a daemon. See :external+snap:ref:`Timer string format <interfaces-timer-string-format>` for syntax examples.
    * - ``watchdog-timeout``
      - This value declares the service watchdog timeout. For watchdog to work, the application requires access to the *systemd* notification socket, which can be declared by listing a daemon-notify plug in the plugs section. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
+   * - ``daemon-scope``
+     - Scope of the daemon. Accepts ``system`` (default) or ``user`` as values. ``system`` runs regardless of user login. Use when the service needs elevated privileges or must run without an active session. ``user`` starts on login, stops on logout. Use for unprivileged services that only need to run within a user session.
 
 Daemons and D-Bus
 -------------------
