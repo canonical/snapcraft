@@ -3,20 +3,30 @@ summary: Initrd plugin cross-building test
 description: A RISC-V kernel to test the initrd plugin.
 
 grade: stable
-build-base: core22
+build-base: core24
 confinement: strict
 type: kernel
 adopt-info: kernel
 
-architectures:
-  - build-on: [amd64]
+platforms:
+  cross:
+    build-on: [amd64]
     build-for: [riscv64]
+
+package-repositories:
+  - type: apt
+    architectures: [$CRAFT_ARCH_BUILD_FOR]
+    formats: [deb]
+    components: [main]
+    suites: [noble, noble-updates, noble-backports]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    url: http://ports.ubuntu.com/ubuntu-ports
 
 parts:
   kernel:
     plugin: kernel
     kernel-ubuntu-binary-package: true
-    kernel-ubuntu-abinumber: 6.8.0-63
+    kernel-ubuntu-abinumber: 6.14.0-23
     kernel-ubuntu-kconfigflavour: generic
     stage-packages:
       - wireless-regdb
