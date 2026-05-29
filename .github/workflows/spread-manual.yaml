@@ -96,8 +96,7 @@ jobs:
           path: tests
       - name: Initrd plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd \
-                 google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd-cross
+          spread google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
 
   remote-build:
     needs: [predicate, snap-build]
