@@ -186,6 +186,8 @@ git_describe_command = [
 # Appends "+dirty" to the version when working dir is dirty
 # Necessary to avoid version numbers being too long
 local_scheme = "dirty-tag"
+# Used when the git version can't be determined, like when building from a worktree.
+fallback_version = "0.0.0"
 
 [tool.setuptools.packages.find]
 include = ["snapcraft", "extensions", "keyrings", "schema"]
