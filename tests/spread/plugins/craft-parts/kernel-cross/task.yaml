@@ -17,4 +17,4 @@ execute: |
 
   rm -f ./*.snap
   snapcraft pack
-  ls -l nezha-kernel_*_riscv64.snap
+  ls -l nezha-kernel_*_cross.snap
