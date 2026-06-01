@@ -86,12 +86,6 @@ RELEASE_CODENAME_FROM_SNAP_BASE = {
     "core26": "resolute",
 }
 
-RELEASE_NUMBER_FROM_SNAP_BASE = {
-    "core22": "22.04",
-    "core24": "24.04",
-    "core26": "26.04",
-}
-
 SNAKEOIL_KEY = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
 SNAKEOIL_CERT = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
 
@@ -148,7 +142,6 @@ class InitrdPlugin(plugins.Plugin):
         commands = []
         base = self._part_info.base
         target_arch = self._part_info.target_arch
-        release_number = RELEASE_NUMBER_FROM_SNAP_BASE.get(base)
         if (release_codename := RELEASE_CODENAME_FROM_SNAP_BASE.get(base)) is None:
             raise errors.PartsError(
                 brief=f"base {base!r} is not supported for the initrd plugin",
@@ -156,18 +149,9 @@ class InitrdPlugin(plugins.Plugin):
             )
 
         # URL pieces for Ubuntu base, tarball name
-        # URL changed as of 26.04 release, set as default value
-        # This change is temporary; once cdimage paths return the old way the
-        # conditional checking can be removed and we can revert to the core22,
-        # core24 cases.
-        tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base/releases"
-        tar_release = f"{release_codename}/release"
-        tar_name = f"ubuntu-base-{release_number}-base-{target_arch}.tar.gz"
-
-        if base in {"core22", "core24"}:
-            tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
-            tar_release = f"{release_codename}/daily/current"
-            tar_name = f"{release_codename}-base-{target_arch}.tar.gz"
+        tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
+        tar_release = f"{release_codename}/daily/current"
+        tar_name = f"{release_codename}-base-{target_arch}.tar.gz"
 
         # Compose the URL
         tar_url = f"{tar_base_url}/{tar_release}/{tar_name}"
