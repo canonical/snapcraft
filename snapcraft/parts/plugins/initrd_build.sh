@@ -489,15 +489,14 @@ run() {
 
   # Configure chroot
   [ -e "${BASE_CONFIGURED}" ] || {
+    # Remove any existing modules first
+    rm -rf "${INITRD_ROOT}/usr/lib/modules"
+
     chroot_configure
 
-    echo "Installing kernel, firmware, and modules into chroot"
-    # Remove any existing firmware and modules first
-    rm -rf "${INITRD_ROOT}/usr/lib/firmware/"* \
-           "${INITRD_ROOT}/usr/lib/modules"/*
     # Install kernel, firmware, modules into chroot
-    cp --archive --link --force "${KERNEL_FIRMWARE}" \
-                                "${KERNEL_MODULES}"  \
+    echo "Installing kernel and modules into chroot"
+    cp --archive --link --force "${KERNEL_MODULES}"  \
                                 "${INITRD_ROOT}/usr/lib"
 
     cp --force "${KERNEL_IMAGE}" "${INITRD_ROOT}/boot"
@@ -562,8 +561,6 @@ main() {
   KERNEL_VERSION="$(basename "${CRAFT_STAGE}/modules/"*)"
   # KERNEL_MODULES provides a path to the kernel file's corresponding modules
   KERNEL_MODULES="${CRAFT_STAGE}/modules"
-  # KERNEL_FIRMWARE provides a path to the kernel firmware files
-  KERNEL_FIRMWARE="${CRAFT_STAGE}/firmware"
   # KERNEL_IMAGE provides a path to the kernel image file
   KERNEL_IMAGE="${CRAFT_STAGE}/vmlinuz-${KERNEL_VERSION}"
 
@@ -581,7 +578,6 @@ main() {
            PPA_FINGERPRINT \
            KERNEL_VERSION  \
            KERNEL_MODULES  \
-           KERNEL_FIRMWARE \
            BASE_CREATED    \
            BASE_CONFIGURED \
            SRC_LIST
