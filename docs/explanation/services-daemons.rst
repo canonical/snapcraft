@@ -1,7 +1,7 @@
 .. _explanation-services-daemons:
 
 Services and daemons
-======================
+====================
 
 When :ref:`creating the project file <explanation-snapcraft-yaml>` to build a new snap, a snap's executable component can be either exposed as a command or run as a background service or daemon.
 
