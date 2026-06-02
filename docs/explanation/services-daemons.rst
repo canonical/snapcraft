@@ -108,6 +108,6 @@ This provides a way for a daemon to be started on a D-Bus method call. When a me
 General use
 ~~~~~~~~~~~~
 
-A daemon that needs to provide services to applications can be configured to use a bus name by setting its ``bus-name`` keyword. This enables the system bus to be used for communication, as with regular system daemons.
+A daemon that needs to provide services to applications can be configured to use a bus name by setting its ``bus-name`` key. This enables the system bus to be used for communication, as with regular system daemons.
 
 The ``daemon`` keyword does not need to specify the ``dbus`` type for this use case, unless it is convenient to notify *systemd* about start-up by claiming a D-Bus name.
