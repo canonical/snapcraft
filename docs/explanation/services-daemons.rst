@@ -35,7 +35,7 @@ The value for ``daemon:`` can be one of the following:
 -  ``oneshot``: Run once and exit after completion, notifying systemd. After completion, the daemon is still considered active and running.
 -  ``forking``: The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This isn't the recommended behaviour on a modern Linux system.
 -  ``notify``: Assumes the command will send a signal to systemd to indicate its running state. Note this requires usage of the :external+snap:ref:`daemon-notify interface <interfaces-daemon-notify-interface>`.
--  ``dbus``: Registers a D-Bus name to notify systemd. Requires the ``bus-name` or ``activates-on`` keys to be specified.
+-  ``dbus``: Registers a D-Bus name to notify systemd. Requires the ``bus-name`` or ``activates-on`` keys to be specified.
 
 In addition to the above types of daemon or service, the following can be set to help manage how a service is run, how it can be stopped, and what should happen after it stops:
 
