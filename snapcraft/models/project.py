@@ -1373,7 +1373,7 @@ class Component(models.CraftBaseModel):
     def _validate_compression(self) -> Component:
         # Compression is optional because it will default to the snap's compression.
         # However, we don't want users to specify `compression: null` in their
-        # project  file, because that is reserved for uncompressed components.
+        # project file, because that is reserved for uncompressed components.
         if "compression" in self.model_fields_set and self.compression is None:
             raise ValueError(
                 "Setting compression to null is not supported. "
