@@ -3,7 +3,7 @@
 Services and daemons
 ======================
 
-When :ref:`creating the project file (snapcraft.yaml)<explanation-snapcraft-yaml>` to build a new snap, a snap's executable component can be either exposed as a command or run as a background service or daemon.
+When :ref:`creating the project file <explanation-snapcraft-yaml>` to build a new snap, a snap's executable component can be either exposed as a command or run as a background service or daemon.
 
 For details on how to expose an executable from its constituent parts, see :ref:`Defining a command with the project file app keys <reference-snapcraft-yaml-app-keys>`.
 
