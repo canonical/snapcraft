@@ -23,10 +23,11 @@ Defining a daemon
 To define an executable as a daemon or service, add ``daemon: simple`` to its *apps* stanza:
 
 .. code-block:: yaml
-  apps:
-    part-os-release:
-      command: bin/os-release.sh
-      daemon: simple
+
+   apps:
+     part-os-release:
+       command: bin/os-release.sh
+       daemon: simple
 
 The value for ``daemon:`` can be one of the following:
 
@@ -90,7 +91,7 @@ D-Bus activation can only be used for services on the system bus.
 Daemon type
 ~~~~~~~~~~~
 
-The ``daemon`` keyword is used to specify the type of a daemon and the mechanism it uses to inform systemd that it is running.
+The ``daemon`` key is used to specify the type of a daemon and the mechanism it uses to inform systemd that it is running.
 
 A daemon can be configured to use D-Bus to notify systemd that it is running by claiming a D-Bus name. This behavior is enabled by setting the ``daemon`` key to ``dbus`` in the app entry.
 
