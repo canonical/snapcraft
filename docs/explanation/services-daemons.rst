@@ -34,7 +34,7 @@ The value for ``daemon:`` can be one of the following:
 -  ``oneshot``: Run once and exit after completion, notifying systemd. After completion, the daemon is still considered active and running.
 -  ``forking``: The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This isn't the recommended behaviour on a modern Linux system.
 -  ``notify``: Assumes the command will send a signal to systemd to indicate its running state. Note this requires usage of the :external+snap:ref:`daemon-notify interface <interfaces-daemon-notify-interface>`.
--  ``dbus``: Registers a D-Bus name to notify systemd. Requires bus-name or activates-on to be specified.
+-  ``dbus``: Registers a D-Bus name to notify systemd. Requires the ``bus-name` or ``activates-on`` keys to be specified.
 
 In addition to the above types of daemon or service, the following can be set to help manage how a service is run, how it can be stopped, and what should happen after it stops:
 
@@ -46,15 +46,15 @@ In addition to the above types of daemon or service, the following can be set to
    * - Option
      - Description
    * - ``after``
-     - An ordered list of applications the daemon is to be started *after*. Applications must be part of the same snap.
+     - An ordered list of applications the daemon is to be started after. Applications must be part of the same snap.
    * - ``before``
-     - An ordered list of applications the daemon is to be started *before*. Applications must be part of the same snap.
+     - An ordered list of applications the daemon is to be started before. Applications must be part of the same snap.
    * - ``install-mode``
      - Defines whether a freshly installed daemon is started automatically, or whether startup control is deferred to the snap. The snap could then use :external+snap:ref:`snapctl <how-to-guides-manage-snaps-use-snapctl>` with a :external+snap:ref:`hook <reference-development-supported-snap-hooks>`, for instance, or another management agent. Can be ``enable`` (default) or ``disable``.
    * - ``post-stop-command``
-     - Sets the command to run from inside the snap *after* a service stops.
+     - Sets the command to run from inside the snap after a service stops.
    * - ``refresh-mode``
-     - Controls whether a daemon should be restarted during a snap refresh. Can be either ``restart`` , ``endure``, (do not restart) or ``ignore-running`` (does not refresh running services to facilitate the refresh app awareness feature). Defaults to *restart* .
+     - Controls whether a daemon should be restarted during a snap refresh. Can be either ``restart`` , ``endure``, (do not restart) or ``ignore-running`` (does not refresh running services to facilitate the refresh app awareness feature). Defaults to ``restart``.
    * - ``reload-command``
      - Defines the command within the snap to be executed when a service needs to be restarted or reloaded after a configuration change, as initiated with the ``snap restart --reload`` command. Example: ``reload-command: sbin/nginx -s reload``
    * - ``restart-condition``
@@ -68,7 +68,7 @@ In addition to the above types of daemon or service, the following can be set to
    * - ``start-timeout``
      - Optional time to wait for daemon to start. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
    * - ``stop-command``
-     - An optional executable command to run before the daemon is stopped, and the daemon is not stopped until the specified *stop-command* terminates. This can be used to gracefully handle a daemon stop or restart, such as when a *refresh* happens, by allowing the daemon to reach a stoppable state first.
+     - An optional executable command to run before the daemon is stopped. The daemon is not considered stopped until the specified command terminates. This can be used to gracefully handle a daemon stop or restart, such as when a refresh happens, by allowing the daemon to reach a stoppable state first.
    * - ``stop-mode``
      - Defines which `termination signal <https://www.gnu.org/software/libc/manual/html_node/Termination-Signals.html>`__ to use when stopping the daemon. Can be one of either ``sigterm``, ``sigterm-all``, ``sighup``, ``sighup-all``, ``sigusr1``, ``sigusr1-all``, ``sigusr2``, ``sigusr2-all``, ``sigint`` and ``sigint-all`` .
    * - ``stop-timeout``
@@ -76,27 +76,27 @@ In addition to the above types of daemon or service, the following can be set to
    * - ``timer``
      - Declares that the service is activated by a timer and that the app must be a daemon. See :external+snap:ref:`Timer string format <interfaces-timer-string-format>` for syntax examples.
    * - ``watchdog-timeout``
-     - This value declares the service watchdog timeout. For watchdog to work, the application requires access to the *systemd* notification socket, which can be declared by listing a daemon-notify plug in the plugs section. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
+     - This value declares the service watchdog timeout. For watchdog to work, the application requires access to the systemd notification socket, which can be declared by specifying the ``daemon-notify`` plug in the ``plugs`` key. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``.
    * - ``daemon-scope``
-     - Scope of the daemon. Accepts ``system`` (default) or ``user`` as values. ``system`` runs regardless of user login. Use when the service needs elevated privileges or must run without an active session. ``user`` starts on login, stops on logout. Use for unprivileged services that only need to run within a user session.
+     - Scope of the daemon. Accepts ``system`` (default) or ``user`` as values. ``system`` runs regardless of user login, best for when the service needs elevated privileges or must run without an active session. ``user`` starts on login, stops on logout, best for unprivileged services that only need to run within a user session.
 
 Daemons and D-Bus
--------------------
+-----------------
 
-Daemons can be configured to interact with D-Bus in a number of ways. D-Bus can be used to indicate to *systemd* that a daemon is running, it can be used as the mechanism to activate a daemon, and it can be used generally to expose services to applications.
+Daemons can be configured to interact with D-Bus in a number of ways. D-Bus can be used to indicate to systemd that a daemon is running, as the mechanism to activate a daemon, or to expose services to applications.
 
 D-Bus activation can only be used for services on the system bus.
 
 Daemon type
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
-The ``daemon`` keyword is used to specify the type of a daemon and the mechanism it uses to inform *systemd* that it is running.
+The ``daemon`` keyword is used to specify the type of a daemon and the mechanism it uses to inform systemd that it is running.
 
-A daemon can be configured to use D-Bus to notify *systemd* that it is running by claiming a D-Bus name. This behaviour is enabled by setting the ``daemon`` keyword to a value of ``dbus`` in the app metadata.
+A daemon can be configured to use D-Bus to notify systemd that it is running by claiming a D-Bus name. This behavior is enabled by setting the ``daemon`` key to ``dbus`` in the app entry.
 
-Daemons that use D-Bus in other ways that do not need this feature can set the ``daemon`` type to a value other than ``dbus``. This enables other methods to be used to indicate to *systemd* that they are running.
+Daemons that use D-Bus in other ways that do not need this feature can set the ``daemon`` type to a value other than ``dbus``. This enables other methods to be used to indicate to systemd that they are running.
 
-If the ``dbus`` type is used, either the ``bus-name`` keyword or ``activates-on`` keyword must be used to define a bus name for the daemon. If both keywords are defined, the bus name takes precedence. If only the ``activates-on`` keyword is defined, the last name in its list of slots is used as the bus name.
+If the ``dbus`` type is used, either the ``bus-name`` or ``activates-on`` keys must be used to define a bus name for the daemon. If both keys are defined, the bus name takes precedence. If only the ``activates-on`` key is defined, the last name in its list of slots is used as the bus name.
 
 Activation
 ~~~~~~~~~~
