@@ -250,11 +250,11 @@ class Package(PackageService):
 
         for component_name, component in self._project.components.items():
             if compression := component.compression:
-                emit.debug(f"Using {compression} compression for {component_name}.")
+                emit.debug(f"Using {compression!r} compression for {component_name!r}.")
             else:
                 compression = self._project.compression
                 emit.debug(
-                    f"Using the snap's {compression} compression for {component_name}."
+                    f"Using the snap's {compression!r} compression for {component_name!r}."
                 )
 
             filename = pack.pack_component(

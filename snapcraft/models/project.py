@@ -1345,11 +1345,9 @@ class Component(models.CraftBaseModel):
     )
     """Specifies the algorithm that compresses this component.
 
-    If not set, the component inherits the snap's ``compression`` setting.
-
-    Components are compressed using the snap's ``compression`` setting. By default, this
-    is the ``xz`` algorighm. This offers the optimal performance to compression ratio
-    for the majority of components.
+    If not set, the component inherits the snap's ``compression`` setting. By default,
+    this is the ``xz`` algorithm. This offers the optimal performance to compression
+    ratio for the majority of components.
 
     However, certain components, such as large pre-compressed data files, can
     benefit from using LZO compression. Components compressed with LZO are
