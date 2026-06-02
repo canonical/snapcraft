@@ -9,18 +9,18 @@ For details on how to expose an executable from its constituent parts, see :ref:
 
 A snap daemon or service behaves the same as a native daemon or service, and will either start automatically at boot time and end when the machine is shutdown, or start and stop on demand through socket activation.
 
-Snap confinement prohibits a system's users and groups from running as traditional services might, such as under a user's ownership. But a *daemon* user and group can alternatively be created within a snap to provide similar user and group level control outside of a snap's confinement. See :external+snap:ref:`System usernames <interfaces-system-usernames>` for more details.
+Snap confinement prohibits a system's users and groups from running as traditional services might, such as under a user's ownership. But a user and group named daemon can alternatively be created within a snap to provide similar user and group level control outside of a snap's confinement. See :external+snap:ref:`System usernames <interfaces-system-usernames>` for more details.
 
-See :external+snap:ref:`Service management <how-to-guides-manage-snaps-control-services>` for details on starting and stopping services from the *snap* command. Services and daemons can also be managed from within a snap, such as via a hook, with the :external+snap:ref:`snapctl <how-to-guides-manage-snaps-use-snapctl>`.
+See :external+snap:ref:`Service management <how-to-guides-manage-snaps-control-services>` for details on starting and stopping services from the ``snap`` command. Services and daemons can also be managed from within a snap, such as via a hook, with the :external+snap:ref:`snapctl <how-to-guides-manage-snaps-use-snapctl>`.
 
 To set memory and CPU resource limits for a service or daemon, see :external+snap:ref:`Quota groups <how-to-guides-manage-snaps-use-resource-quotas>`.
 
 If you need to add user configurable options to your service or daemon, such as which port it should use, see :ref:`Adding snap configuration <how-to-add-a-snap-configuration>`.
 
 Defining a daemon
-------------------
+-----------------
 
-To define an executable as a daemon or service, add ``daemon: simple`` to its *apps* stanza:
+To define an executable as a daemon or service, add ``daemon: simple`` to its ``apps`` key:
 
 .. code-block:: yaml
 
