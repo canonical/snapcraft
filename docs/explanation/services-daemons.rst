@@ -3,13 +3,13 @@
 Services and daemons
 ======================
 
-When :ref:`creating snapcraft.yaml <explanation-snapcraft-yaml>` to build a new snap, a snap’s executable component can be either exposed as a command or run as a background service or daemon.
+When :ref:`creating snapcraft.yaml <explanation-snapcraft-yaml>` to build a new snap, a snap's executable component can be either exposed as a command or run as a background service or daemon.
 
 For details on how to expose an executable from its constituent parts, see :ref:`Defining a command with snapcraft.yaml app keys <reference-snapcraft-yaml-app-keys>`.
 
 A snap daemon or service behaves the same as a native daemon or service, and will either start automatically at boot time and end when the machine is shutdown, or start and stop on demand through socket activation.
 
-Snap confinement prohibits a system’s users and groups from running as traditional services might, such as under a user’s ownership. But a *daemon* user and group can alternatively be created within a snap to provide similar user and group level control outside of a snap’s confinement. See :external+snap:ref:`System usernames <interfaces-system-usernames>` for more details.
+Snap confinement prohibits a system's users and groups from running as traditional services might, such as under a user's ownership. But a *daemon* user and group can alternatively be created within a snap to provide similar user and group level control outside of a snap's confinement. See :external+snap:ref:`System usernames <interfaces-system-usernames>` for more details.
 
 See :external+snap:ref:`Service management <how-to-guides-manage-snaps-control-services>` for details on starting and stopping services from the *snap* command. Services and daemons can also be managed from within a snap, such as via a hook, with the :external+snap:ref:`snapctl <how-to-guides-manage-snaps-use-snapctl>`.
 
@@ -33,7 +33,7 @@ The value for ``daemon:`` can be one of the following:
 
 -  ``simple``: Run for as long as the service is active - this is typically the default option.
 -  ``oneshot``: Run once and exit after completion, notifying systemd. After completion, the daemon is still considered active and *running*.
--  ``forking``: The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This isn’t the recommended behaviour on a modern Linux system.
+-  ``forking``: The configured command calls ``fork()`` as part of its start-up and the parent process is then expected to exit when start-up is complete. This isn't the recommended behaviour on a modern Linux system.
 -  ``notify``: Assumes the command will send a signal to *systemd* to indicate its running state. Note this requires usage of the :external+snap:ref:`daemon-notify interface <interfaces-daemon-notify-interface>`.
 -  ``dbus``: Registers a D-Bus name to notify systemd. Requires bus-name or activates-on to be specified.
 
@@ -73,7 +73,7 @@ In addition to the above types of daemon or service, the following can be set to
    * - ``stop-mode``
      - Defines which `termination signal <https://www.gnu.org/software/libc/manual/html_node/Termination-Signals.html>`__ to use when stopping the daemon. Can be one of either ``sigterm``, ``sigterm-all``, ``sighup``, ``sighup-all``, ``sigusr1``, ``sigusr1-all``, ``sigusr2``, ``sigusr2-all``, ``sigint`` and ``sigint-all`` .
    * - ``stop-timeout``
-     - The length of time to wait before terminating a service. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``. Termination is via ``SIGTERM`` (and ``SIGKILL`` if that doesn’t work).
+     - The length of time to wait before terminating a service. Time duration units can be ``10ns``, ``10us``, ``10ms``, ``10s``, ``10m``. Termination is via ``SIGTERM`` (and ``SIGKILL`` if that doesn't work).
    * - ``timer``
      - Declares that the service is activated by a timer and that the app must be a daemon. See :external+snap:ref:`Timer string format <interfaces-timer-string-format>` for syntax examples.
    * - ``watchdog-timeout``
@@ -104,7 +104,7 @@ Activation
 
 The ``activates-on`` keyword is used to define a list of names that will be exposed via D-Bus. These names are automatically added to the slots for the snap.
 
-This provides a way for a daemon to be started on a D-Bus method call. When a method on any of the names is invoked, the daemon’s ``command`` is run to start the daemon.
+This provides a way for a daemon to be started on a D-Bus method call. When a method on any of the names is invoked, the daemon's ``command`` is run to start the daemon.
 
 General use
 ~~~~~~~~~~~~
