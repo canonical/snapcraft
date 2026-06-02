@@ -22,12 +22,11 @@ Defining a daemon
 
 To define an executable as a daemon or service, add ``daemon: simple`` to its *apps* stanza:
 
-::
-
-   apps:
-     part-os-release:
-       command: bin/os-release.sh
-       daemon: simple
+.. code-block:: yaml
+  apps:
+    part-os-release:
+      command: bin/os-release.sh
+      daemon: simple
 
 The value for ``daemon:`` can be one of the following:
 
