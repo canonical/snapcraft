@@ -106,7 +106,7 @@ The ``activates-on`` key is used to define a list of names that will be exposed 
 This provides a way for a daemon to be started on a D-Bus method call. When a method on any of the names is invoked, the daemon's ``command`` is run to start the daemon.
 
 General use
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 A daemon that needs to provide services to applications can be configured to use a bus name by setting its ``bus-name`` key. This enables the system bus to be used for communication, as with regular system daemons.
 
