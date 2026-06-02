@@ -99,7 +99,7 @@ Daemons that use D-Bus in other ways that do not need this feature can set the `
 If the ``dbus`` type is used, either the ``bus-name`` keyword or ``activates-on`` keyword must be used to define a bus name for the daemon. If both keywords are defined, the bus name takes precedence. If only the ``activates-on`` keyword is defined, the last name in its list of slots is used as the bus name.
 
 Activation
-~~~~~~~~~~~
+~~~~~~~~~~
 
 The ``activates-on`` keyword is used to define a list of names that will be exposed via D-Bus. These names are automatically added to the slots for the snap.
 
