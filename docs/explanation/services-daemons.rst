@@ -101,7 +101,7 @@ If the ``dbus`` type is used, either the ``bus-name`` keyword or ``activates-on`
 Activation
 ~~~~~~~~~~
 
-The ``activates-on`` keyword is used to define a list of names that will be exposed via D-Bus. These names are automatically added to the slots for the snap.
+The ``activates-on`` key is used to define a list of names that will be exposed via D-Bus. These names are automatically added to the slots for the snap.
 
 This provides a way for a daemon to be started on a D-Bus method call. When a method on any of the names is invoked, the daemon's ``command`` is run to start the daemon.
 
