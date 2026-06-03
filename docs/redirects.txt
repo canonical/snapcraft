@@ -58,6 +58,7 @@
 "reference/changelog.rst" "release-notes/changelog.rst"
 "reference/parts_steps.rst" "reference/parts-steps.rst"
 "reference/parts/part-environment-variables.rst" "reference/part-environment-variables.rst"
+"reference/parts/parts-and-steps.rst" "reference/parts-steps.rst"
 "reference/parts/index.rst" "reference/parts-steps.rst"
 "reference/snap-build-process.rst" "reference/processes/snap-build-process.rst"
 "reference/snap-publishing-process.rst" "reference/processes/snap-publishing-process.rst"
