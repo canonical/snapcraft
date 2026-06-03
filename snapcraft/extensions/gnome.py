@@ -26,7 +26,11 @@ from typing_extensions import override
 from .extension import get_extensions_data_dir, prepend_to_env
 from .gpu_extension import GPUExtension
 
-_SDK_SNAP = {"core22": "gnome-42-2204-sdk", "core24": "gnome-46-2404-sdk"}
+_SDK_SNAP = {
+    "core22": "gnome-42-2204-sdk",
+    "core24": "gnome-46-2404-sdk",
+    "core26": "gnome-core26-sdk",
+}
 _PLATFORM_TRANSLATION = {"core22": "2204", "core24": "2404"}
 
 
@@ -74,7 +78,7 @@ class GNOME(GPUExtension):
     @staticmethod
     @override
     def get_supported_bases() -> tuple[str, ...]:
-        return ("core22", "core24")
+        return ("core22", "core24", "core26")
 
     @staticmethod
     @override
@@ -88,7 +92,10 @@ class GNOME(GPUExtension):
 
     @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
-        if self.yaml_data["base"] == "core24":
+        base_str = self.yaml_data["base"]
+        base = int(re.matchall(r'core(\d+)', base_str)[0])
+
+        if base >= 24:
             snippet = super().get_app_snippet(app_name=app_name)
         else:
             snippet = {}
@@ -119,7 +126,9 @@ class GNOME(GPUExtension):
 
         # use the sdk snap if it is defined in any part's build-snaps
         # otherwise, assume it is built into the content snap
-        matcher = re.compile(r"gnome-\d+-" + _PLATFORM_TRANSLATION[base] + r"-sdk.*")
+        matcher = re.compile(
+            r"gnome-(?:\d+-)?" + _PLATFORM_TRANSLATION.get(base, base) + r"-sdk.*"
+        )
         sdk_snap_candidates = [s for s in build_snaps if matcher.match(s)]
         if sdk_snap_candidates:
             sdk_snap = sdk_snap_candidates[0].split("/")[0]
@@ -134,10 +143,11 @@ class GNOME(GPUExtension):
     @override
     def get_root_snippet(self) -> dict[str, Any]:
         platform_snap = self.gnome_snaps.content
-        base = self.yaml_data["base"]
+        base_str = self.yaml_data["base"]
+        base = int(re.matchall(r'core(\d+)', base_str)[0])
 
         snippet: dict[str, Any]
-        if base == "core24":
+        if base >= 24:
             snippet = super().get_root_snippet()
         else:
             snippet = {
