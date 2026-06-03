@@ -134,6 +134,9 @@ linkcheck_ignore = [
     r"^https://www.npmjs.com/",
     "https://matrix.to/#",
     "https://gitlab.gnome.org",
+    # 2026-06-03: Ignore Canonical sites until filtering is resolved
+    "https://snapcraft.io",
+    "https://juju.is",
 ]
 
 # give linkcheck multiple tries on failure
@@ -266,7 +269,7 @@ intersphinx_mapping = {
     "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
-    "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
+    "starflow": ("https://documentation.ubuntu.com/starflow", None),
     "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
 }
 
