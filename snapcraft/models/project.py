@@ -1361,9 +1361,9 @@ class Component(models.CraftBaseModel):
         * - Value
           - Description
         * - ``xz``
-          - Use `XZ <https://en.wikipedia.org/wiki/XZ_Utils>`_ compression.
+          - Use `XZ <https://en.wikipedia.org/wiki/XZ_Utils>`__ compression.
         * - ``lzo``
-          - Use `LZO <https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Oberhumer>`_ compression.
+          - Use `LZO <https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Oberhumer>`__ compression.
 
     """
 
@@ -1432,9 +1432,9 @@ class Project(models.Project):
         * - Value
           - Description
         * - ``xz``
-          - Default. Use `XZ <https://en.wikipedia.org/wiki/XZ_Utils>`_ compression.
+          - Default. Use `XZ <https://en.wikipedia.org/wiki/XZ_Utils>`__ compression.
         * - ``lzo``
-          - Use `LZO <https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Oberhumer>`_ compression.
+          - Use `LZO <https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Oberhumer>`__ compression.
 
     """
 

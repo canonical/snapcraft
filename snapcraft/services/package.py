@@ -245,10 +245,7 @@ class Package(PackageService):
 
     def _pack_components(self, dest: pathlib.Path) -> dict[str, pathlib.Path]:
         component_map: dict[str, pathlib.Path] = {}
-        if not self._project.components:
-            return component_map
-
-        for component_name, component in self._project.components.items():
+        for component_name, component in (self._project.components or {}).items():
             if compression := component.compression:
                 emit.debug(f"Using {compression!r} compression for {component_name!r}.")
             else:
