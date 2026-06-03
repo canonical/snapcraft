@@ -23,6 +23,7 @@ Defining a daemon
 To define an executable as a daemon or service, add ``daemon: simple`` to its ``apps`` key:
 
 .. code-block:: yaml
+    :caption: snapcraft.yaml
 
    apps:
      part-os-release:
