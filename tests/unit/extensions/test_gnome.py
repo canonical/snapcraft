@@ -190,6 +190,14 @@ def test_get_root_snippet_with_gpu(gnome_extension_core24):
     }
 
 
+def test_get_root_snippet_with_glycin(gnome_extension_core26):
+    snippet = gnome_extension_core26.get_root_snippet()
+
+    assert snippet["layout"]["/usr/libexec/glycin-loaders"] == {
+        "bind": "$SNAP/gnome-platform/usr/libexec/glycin-loaders",
+    }
+
+
 def test_get_root_snippet_with_external_sdk(gnome_extension_with_build_snap):
     assert gnome_extension_with_build_snap.get_root_snippet() == {
         "assumes": ["snapd2.43"],
