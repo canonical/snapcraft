@@ -21,14 +21,13 @@ from __future__ import annotations
 import configparser
 import os
 import shlex
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from craft_cli import emit
 
 from snapcraft import errors
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
 
@@ -58,7 +57,9 @@ class DesktopFile:
             )
 
         self._parser = configparser.ConfigParser(interpolation=None)
-        self._parser.optionxform: Callable[[Any], str] = str
+        # The configparser docs recommend overriding this function to preserve the case.
+        # However, ty doesn't like attribute assignment that shadows a class method.
+        self._parser.optionxform = str  # ty: ignore[invalid-assignment]
         self._parser.read(file_path, encoding="utf-8")
 
     def _parse_and_reformat_section_exec(self, section: str):
