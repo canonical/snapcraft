@@ -93,7 +93,7 @@ class GNOME(GPUExtension):
     @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         base_str = self.yaml_data["base"]
-        base = int(re.matchall(r'core(\d+)', base_str)[0])
+        base = int(re.findall(r"core(\d+)", base_str)[0])
 
         if base >= 24:
             snippet = super().get_app_snippet(app_name=app_name)
@@ -144,7 +144,7 @@ class GNOME(GPUExtension):
     def get_root_snippet(self) -> dict[str, Any]:
         platform_snap = self.gnome_snaps.content
         base_str = self.yaml_data["base"]
-        base = int(re.matchall(r'core(\d+)', base_str)[0])
+        base = int(re.findall(r"core(\d+)", base_str)[0])
 
         snippet: dict[str, Any]
         if base >= 24:
@@ -217,6 +217,14 @@ class GNOME(GPUExtension):
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
             },
         }
+
+        if base >= 26:
+            snippet["layout"] = {
+                **snippet.get("layout", {}),
+                "/usr/libexec/glycin-loaders": {
+                    "bind": "$SNAP/gnome-platform/usr/libexec/glycin-loaders"
+                },
+            }
         return snippet
 
     @override
