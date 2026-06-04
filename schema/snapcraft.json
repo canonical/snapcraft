@@ -2927,6 +2927,21 @@
           "description": "Selects a part to inherit metadata from and reuse for the component's\nmetadata.\n\nOnly the component's version can be set.\n",
           "examples": ["foo-part"],
           "title": "Adopt-Info"
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": ["lzo", "xz"],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Specifies the algorithm that compresses this component.",
+          "examples": ["xz", "lzo"],
+          "title": "Compression"
         }
       },
       "required": ["summary", "description", "type"],

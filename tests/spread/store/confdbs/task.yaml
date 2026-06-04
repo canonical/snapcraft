@@ -20,7 +20,6 @@ prepare: |
   # import a registered key
   gpg --homedir "$HOME/.snap/gnupg" --import <(echo "$SNAPCRAFT_ASSERTION_KEY" | base64 --decode)
 
-  snap install yq
   # confdb schemas only available in edge
   snap refresh snapd --edge
 
@@ -38,5 +37,4 @@ execute: |
 restore: |
   rm -rf "$HOME/.snap/gnupg"
 
-  snap remove --purge yq
   snap refresh snapd --stable
