@@ -266,7 +266,7 @@ intersphinx_mapping = {
     "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
-    "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
+    "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
     "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
 }
 
