@@ -247,7 +247,7 @@ class LegacyStoreClientCLI:
         try:
             return self.store_client.request(*args, **kwargs)
         except craft_store.errors.StoreServerError as store_error:
-            if store_error.response.status_code == requests.codes.unauthorized:
+            if store_error.response.status_code == http.HTTPStatus.UNAUTHORIZED:
                 if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
                     raise errors.StoreCredentialsUnauthorizedError(
                         "Exported credentials are no longer valid for the Snap Store.",
