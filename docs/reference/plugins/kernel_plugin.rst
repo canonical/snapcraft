@@ -70,7 +70,7 @@ the final snap package.
 This key is incompatible with the ``kernel-ubuntu-binary-package`` key. Instead,
 the tools to include should be specified in ``stage-packages``.
 
-Valid values are ``bpf``, ``cpupower``, and ``perf``.
+Valid values are ``bpftool``, ``cpupower``, and ``perf``.
 
 .. admonition:: Warning
     :class: warning
