@@ -202,8 +202,8 @@ class KernelPlugin(plugins.Plugin):
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(KernelPluginProperties, self._options)
 
-    @property
-    def out_of_source_build(self):
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
         """Return whether the plugin performs out-of-source-tree builds."""
         return True
 
