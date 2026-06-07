@@ -1338,6 +1338,47 @@ class Component(models.CraftBaseModel):
     For example, ``craftctl set components.my-component.version=$(git describe)``.
     """
 
+    compression: Literal["lzo", "xz"] | None = pydantic.Field(
+        default=None,
+        description="Specifies the algorithm that compresses this component.",
+        examples=["xz", "lzo"],
+    )
+    """Specifies the algorithm that compresses this component.
+
+    If not set, the component inherits the snap's ``compression`` setting. By default,
+    this is the ``xz`` algorithm. This offers the optimal performance to compression
+    ratio for the majority of components.
+
+    However, certain components, such as large pre-compressed data files, can
+    benefit from using LZO compression. Components compressed with LZO are
+    slightly larger but decompress quicker, reducing load time.
+
+    **Values**
+
+    .. list-table::
+        :header-rows: 1
+
+        * - Value
+          - Description
+        * - ``xz``
+          - Use `XZ <https://en.wikipedia.org/wiki/XZ_Utils>`__ compression.
+        * - ``lzo``
+          - Use `LZO <https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Oberhumer>`__ compression.
+
+    """
+
+    @pydantic.model_validator(mode="after")
+    def _validate_compression(self) -> Component:
+        # Compression is optional because it will default to the snap's compression.
+        # However, we don't want users to specify `compression: null` in their
+        # project file, because that is reserved for uncompressed components.
+        if "compression" in self.model_fields_set and self.compression is None:
+            raise ValueError(
+                "Setting compression to null is not supported. "
+                "Remove the 'compression' key to inherit the snap's compression."
+            )
+        return self
+
 
 MANDATORY_ADOPTABLE_FIELDS = ("version", "summary", "description")
 
@@ -1391,9 +1432,9 @@ class Project(models.Project):
         * - Value
           - Description
         * - ``xz``
-          - Default. Use `XZ <https://en.wikipedia.org/wiki/XZ_Utils>`_ compression.
+          - Default. Use `XZ <https://en.wikipedia.org/wiki/XZ_Utils>`__ compression.
         * - ``lzo``
-          - Use `LZO <https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Oberhumer>`_ compression.
+          - Use `LZO <https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Oberhumer>`__ compression.
 
     """
 

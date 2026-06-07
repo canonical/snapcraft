@@ -1,0 +1,54 @@
+summary: Test per-component compression algorithms
+
+environment:
+  SNAP_COMPRESSION: xz
+  # snap and component use the same compression
+  COMPONENT_COMPRESSION/xz: xz
+  # snap and component use different compressions
+  COMPONENT_COMPRESSION/lzo: lzo
+  COMPONENT_COMPRESSION/null_failure: "null"
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snapcraft.yaml"
+
+  # the yq snap can't access most directories (https://github.com/mikefarah/yq#snap-notes)
+  cat snapcraft.yaml | yq '.compression = env(SNAP_COMPRESSION) | .components["test-comp"].compression = env(COMPONENT_COMPRESSION)' > snapcraft.yaml.tmp
+  mv snapcraft.yaml.tmp snapcraft.yaml
+
+execute: |
+  if [[ "$SPREAD_VARIANT" == "null_failure" ]]; then
+    snapcraft pack 2>&1 | MATCH "Setting compression to null is not supported"
+    exit 0
+  fi
+
+  snapcraft pack
+
+  snap_file="hello-compression_1.0_amd64.snap"
+  comp_file="hello-compression+test-comp_1.0.comp"
+
+  # assert snap compression
+  unsquashfs -s "${snap_file}" | grep Compression | MATCH "${SNAP_COMPRESSION}"
+
+  # assert component compression
+  unsquashfs -s "${comp_file}" | grep Compression | MATCH "${COMPONENT_COMPRESSION}"
+
+  # install snap, then component
+  snap install --dangerous "${snap_file}"
+  snap install --dangerous "${comp_file}"
+
+  # verify snap app prints snap output and component output
+  hello-compression.hello-app | MATCH "hello app"
+  hello-compression.hello-comp | MATCH "hello component"
+
+restore: |
+  snap remove hello-compression --purge
+  if [[ "$SPREAD_VARIANT" != "null_failure" ]]; then
+    snapcraft clean
+  fi
+  rm -f ./*.snap ./*.comp
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

@@ -109,6 +109,55 @@ def test_pack(default_project, fake_services, setup_project, mocker):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
+def test_pack_component_compression(
+    default_project, fake_services, setup_project, mocker
+):
+    """Component-level compression overrides the snap-level compression."""
+    project_data = default_project.marshal()
+    project_data["compression"] = "xz"
+    # 'firstcomponent' defines a compression, 'secondcomponent' defaults to the snaps compression
+    project_data["components"]["firstcomponent"]["compression"] = "lzo"
+    setup_project(fake_services, project_data)
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    mock_pack_snap = mocker.patch.object(pack, "pack_snap")
+    mock_pack_component = mocker.patch.object(pack, "pack_component")
+
+    mocker.patch.object(linters, "run_linters")
+    mocker.patch.object(linters, "report")
+
+    package_service.pack(prime_dir=Path("prime"), dest=Path())
+
+    mock_pack_snap.assert_called_once_with(
+        Path("prime"),
+        name="default",
+        version="1.0",
+        compression="xz",
+        output=".",
+        target="amd64",
+    )
+
+    mock_pack_component.assert_has_calls(
+        [
+            call(
+                lifecycle_service._work_dir
+                / "partitions/component/firstcomponent/prime",
+                compression="lzo",
+                output_dir=Path("."),
+            ),
+            call().__fspath__(),
+            call(
+                lifecycle_service._work_dir
+                / "partitions/component/secondcomponent/prime",
+                compression="xz",
+                output_dir=Path("."),
+            ),
+            call().__fspath__(),
+        ]
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
 def test_write_metadata(
     default_project,
     fake_services,
