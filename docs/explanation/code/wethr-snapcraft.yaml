@@ -1,0 +1,31 @@
+# Example recipe for anatomical breakdown
+
+# Top-level keys
+name: wethr
+version: 1.5.2
+summary: CLI weather tool
+description: |
+  Get the current weather in your area.
+base: core26
+grade: stable
+confinement: strict
+
+# Platform keys
+platforms:
+  amd64:
+  arm64:
+
+# App keys
+apps:
+  wethr:
+    command: bin/wethr
+    plugs:
+      - network
+
+# Part keys
+parts:
+  wethr:
+    plugin: npm
+    source: https://github.com/twobucks/wethr.git
+    npm-include-node: true
+    npm-node-version: "10.14.1"

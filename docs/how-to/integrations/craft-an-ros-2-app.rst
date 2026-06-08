@@ -146,7 +146,7 @@ Example project file for ROS 2 Talker/Listener
 
                 apps:
                   ros2-talker-listener:
-                    command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+                    command: ros2 launch demo_nodes_cpp talker_listener_launch.py
                     extensions: [ros2-jazzy]
 
 
@@ -226,9 +226,9 @@ Share content between ROS 2 snaps
 ---------------------------------
 
 The core20, core22 and core24 bases also offer the option to build your ROS snap using
-the `content-sharing interface <https://snapcraft.io/docs/content-interface>`_. It
-shares the ROS 2 content packages across multiple snaps, saving space and ensuring
-package consistency throughout your snap build environment.
+the :external+snap:ref:`interfaces-content-interface`. It shares the ROS 2 content
+packages across multiple snaps, saving space and ensuring package consistency throughout
+your snap build environment.
 
 You can find more information in `ROS architectures with snaps
 <https://ubuntu.com/robotics/docs/ros-architectures-with-snaps>`_ in the Canonical ROS
@@ -280,7 +280,7 @@ difference in the project file when content sharing is enabled:
 
             apps:
               ros2-talker-listener:
-                command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+                command: ros2 launch demo_nodes_cpp talker_listener_launch.py
             -   extensions: [ros2-jazzy]
             +   extensions: [ros2-jazzy-ros-base]
 

@@ -454,6 +454,29 @@ The following environment variable names should be migrated as follows:
       - ``PARTS_PYTHON_VENV_ARGS``
 
 
+Remove ``passthrough`` keys
+---------------------------
+
+If your snap is meant for public consumption, remove any instances of the
+``passthrough`` key in all structures. These keys are for experimental data to be
+forwarded to SnapD in test environments, and as of core22 the Snap Store flags it during
+automatic review.
+
+For example, if a hook sets an experimental environment variable, you'd remove the key
+like this:
+
+.. code-block:: diff
+    :caption: snapcraft.yaml
+
+     hooks:
+       configure:
+    -    passthrough:
+    -      environment:
+    -        FOO: BAR
+    +    environment:
+    +      FOO: BAR
+
+
 Destructive mode
 ----------------
 

@@ -12,6 +12,7 @@ Commands
 Snapcraft is operated from the command line, with a command for each function.
 
 - :ref:`reference-commands`
+- :ref:`reference-build-environment-options`
 
 
 Project file
@@ -20,7 +21,8 @@ Project file
 The main object inside a snap project is a configurable project file. Read on for a
 complete reference of the structure and contents of this file.
 
-- :ref:`Project file references <reference-project-file>`
+- :ref:`snapcraft.yaml reference <reference-snapcraft-yaml>`
+- :ref:`reference-extensions`
 
 
 Bases and architectures
@@ -42,16 +44,6 @@ the software's language and build systems.
 - :ref:`reference-parts-and-steps`
 - :ref:`reference-part-environment-variables`
 - :ref:`reference-plugins`
-- :ref:`reference-extensions`
-
-
-Processes
----------
-
-Snapcraft has defined processes underlying its basic operation.
-
-- :ref:`reference-snap-build-process`
-- :ref:`reference-snap-publishing-process`
 
 
 Requirements and support
@@ -67,12 +59,13 @@ support (LTS) for it.
 .. toctree::
     :hidden:
 
+    snapcraft-yaml
     commands
     build-environment-options
-    project-file/index
     bases
     platforms
-    parts/index
+    parts-steps
+    part-environment-variables
     plugins
     package-repositories
     extensions/index
@@ -85,6 +78,5 @@ support (LTS) for it.
     channels
     snapshots
     metrics
-    processes/index
     system-requirements
     support-schedule

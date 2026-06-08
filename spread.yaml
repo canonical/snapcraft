@@ -44,6 +44,8 @@ backends:
   lxd:
     systems:
       - ubuntu-22.04
+      - ubuntu-24.04
+      - ubuntu-26.04
   google:
     key: '$(HOST: echo "$SPREAD_GOOGLE_KEY")'
     location: snapd-spread/us-east1-b
@@ -55,6 +57,10 @@ backends:
           image: ubuntu-2204-64
       - ubuntu-24.04-64:
           image: ubuntu-2404-64
+          storage: 20G
+          workers: 6
+      - ubuntu-26.04-64:
+          image: ubuntu-2604-64
           storage: 20G
           workers: 6
 
@@ -140,6 +146,7 @@ prepare: |
 
   tests.pkgs remove lxd
   snap install lxd --channel=5.21/stable
+  snap install yq
 
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
@@ -262,7 +269,7 @@ suites:
   tests/spread/core26/:
     summary: core26 specific tests
     systems:
-      - ubuntu-24.04*
+      - ubuntu-26.04*
     environment:
       SNAPCRAFT_BUILD_ENVIRONMENT: ""
 

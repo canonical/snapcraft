@@ -1,0 +1,10 @@
+#!/bin/bash
+
+COMP_BIN="$SNAP/../components/$SNAP_REVISION/test-comp/hello-comp"
+
+if [ ! -f "$COMP_BIN" ]; then
+    echo "Error: 'test-comp' component is not installed" >&2
+    exit 1
+fi
+
+"$COMP_BIN"

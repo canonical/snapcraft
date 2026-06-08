@@ -22,7 +22,7 @@ from typing import Annotated, Any, Literal
 
 import pydantic
 from craft_application import models
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 SnapName = Annotated[str, pydantic.StringConstraints(max_length=40)]
 SnapId = Annotated[str, pydantic.StringConstraints(max_length=40)]
@@ -219,5 +219,70 @@ class ValidationSetHeaders(models.CraftBaseModel):
     """Assertion headers"""
 
 
-Assertion = ConfdbSchemaAssertion | ValidationSetAssertion
+class ValidationAssertion(models.CraftBaseModel):
+    """A validation assertion used to gate a snap at a specific revision.
+
+    https://documentation.ubuntu.com/core/reference/assertions/validation
+    """
+
+    assertion_type: Literal["validation"] = pydantic.Field(alias="type")
+
+    authority_id: str
+    """Issuer of the validation."""
+
+    revision: int | None = None
+    """The revision of the validation itself."""
+
+    series: str
+    """Series for which this validation applies (typically "16")."""
+
+    snap_id: str
+    """ID of the snap that constrains (gates) the approved snap."""
+
+    approved_snap_id: str
+    """ID of the snap whose updates are gated."""
+
+    approved_snap_revision: str
+    """Revision of the snap whose updates are gated."""
+
+    # Returned by the store but not in the docs
+    approved_snap_name: str | None = None
+    """Name of the snap whose updates are gated."""
+
+    # Returned by the store but not in the docs
+    sign_key_sha3_384: str | None = None
+    """Signing key ID."""
+
+    timestamp: str
+    """When the validation was issued."""
+
+    # Returned by the store but not in the docs
+    required: bool | None = None
+    """Whether this validation is required."""
+
+    revoked: bool
+    """Whether this validation has been revoked."""
+
+    @pydantic.field_serializer("revoked")
+    def _serialize_revoked(self, value: bool) -> str:
+        """The revoked field must be 'true' or 'false' (lowercase) for `snap sign`."""
+        return "true" if value else "false"
+
+    @override
+    def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
+        """Convert to a dictionary.
+
+        Overrides the CraftBaseModel to set `exclude_none=True` since `snap sign`
+        won't accept empty values.
+        """
+        return self.model_dump(
+            mode="json", by_alias=True, exclude_unset=True, exclude_none=True
+        )
+
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
+        """Marshal the model where all scalars are represented as strings."""
+        return cast_dict_scalars_to_strings(self.marshal())
+
+
+Assertion = ConfdbSchemaAssertion | ValidationSetAssertion | ValidationAssertion
 EditableAssertion = EditableConfdbSchemaAssertion | EditableValidationSetAssertion

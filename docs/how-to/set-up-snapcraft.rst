@@ -170,10 +170,9 @@ note of the value in the channel column.
 
     snap info snapcraft
 
-Install a new instance of Snapcraft with the `instance key naming
-<https://snapcraft.io/docs/explanation/how-snaps-work/parallel-installs/>`__ syntax,
-replacing ``<instance>`` with whichever name is appropriate for the instance, and
-``<channel>`` with the target channel and track:
+Install a new instance of Snapcraft with the :external+snap:ref:`instance key naming
+<interfaces-parallel-installs>` syntax, replacing ``<instance>`` with whichever name is
+appropriate for the instance, and ``<channel>`` with the target channel and track:
 
 .. code:: bash
 

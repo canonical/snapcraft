@@ -16,6 +16,7 @@
 
 """Snapcraft Store Client with CLI hooks."""
 
+import http
 import os
 import platform
 import time
@@ -33,10 +34,11 @@ from craft_platforms import DebianArchitecture
 from typing_extensions import override
 
 from snapcraft import __version__, errors, models, utils
-from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
+from snapcraft.models import MetricsResponse, Releases
 
-from . import channel_map, constants
+from . import _metadata, channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
+from .errors import NoSnapIdError, SnapNotFoundError
 from .onprem_client import ON_PREM_ENDPOINTS, OnPremClient
 
 _POLL_DELAY = 1
@@ -301,6 +303,17 @@ class LegacyStoreClientCLI:
             json=data,
         )
 
+    def register_key(self, account_key_request: str) -> None:
+        """Register a key with the Snap Store.
+
+        :param account_key_request: The serialized key assertion.
+        """
+        self.request(
+            "POST",
+            self._base_url + "/dev/api/account/account-key",
+            json={"account_key_request": account_key_request},
+        )
+
     def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
         """Return the channel map for snap_name."""
         response = self.request(
@@ -398,6 +411,38 @@ class LegacyStoreClientCLI:
             json={"channels": [channel]},
         )
 
+    def get_snap_status(self, snap_name: str) -> dict[str, Any]:
+        """Return the v1 channel map for snap_name.
+
+        Makes two calls: one to /dev/api/account for the snap-id, then
+        GET /dev/api/snaps/<snap_id>/state?series=16 which returns the full
+        channel map tree including arches with no release (info: "none").
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError as key_error:
+            emit.debug(f"{key_error!r} not found in {account_info!r}")
+            raise errors.SnapcraftError(
+                f"{snap_name!r} not found or not owned by this account"
+            ) from key_error
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        response = self.request(
+            "GET",
+            self._base_url + f"/dev/api/snaps/{snap_id}/state",
+            params={"series": constants.DEFAULT_SERIES},
+        )
+
+        if not response:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        return response.json()
+
     def verify_upload(
         self,
         *,
@@ -416,6 +461,76 @@ class LegacyStoreClientCLI:
                 "Accept": "application/json",
             },
         )
+
+    def upload_metadata(
+        self,
+        *,
+        snap_name: str,
+        metadata: dict[str, Any],
+        force: bool,
+    ) -> None:
+        """Upload snap metadata to the Store.
+
+        :param snap_name: the name of the snap to upload metadata for
+        :param metadata: the metadata to upload
+        :param force: if True, overwrite conflicting metadata in the store
+
+        :raises SnapNotFoundError: if the snap can't be found on the store
+        :raises NoSnapIdError: if the snap doesn't have an ID
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        metadata_handler = _metadata.StoreMetadataHandler(
+            base_url=self._base_url,
+            request_method=self.request,
+            snap_id=snap_id,
+            snap_name=snap_name,
+        )
+        metadata_handler.upload(metadata, force)
+
+    def upload_binary_metadata(
+        self,
+        *,
+        snap_name: str,
+        metadata: dict[str, Any],
+        force: bool,
+    ) -> None:
+        """Upload snap binary metadata (e.g. icon) to the Store.
+
+        :param snap_name: the name of the snap to upload binary metadata for
+        :param metadata: the binary metadata to upload
+        :param force: if True, overwrite conflicting metadata in the Store
+
+        :raises SnapNotFoundError: if the snap can't be found on the store
+        :raises NoSnapIdError: if the snap doesn't have an ID
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        metadata_handler = _metadata.StoreMetadataHandler(
+            base_url=self._base_url,
+            request_method=self.request,
+            snap_id=snap_id,
+            snap_name=snap_name,
+        )
+        metadata_handler.upload_binary(metadata, force)
 
     def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
@@ -437,7 +552,7 @@ class LegacyStoreClientCLI:
         :param components: A dictionary of component names to component upload-ids.
         :returns: the snap's processed revision
         """
-        data = {
+        data: dict[str, Any] = {
             "name": snap_name,
             "series": constants.DEFAULT_SERIES,
             "updown_id": upload_id,
@@ -482,8 +597,12 @@ class LegacyStoreClientCLI:
 
         return status["revision"]
 
-    def list_revisions(self, snap_name: str) -> Revisions:
-        """Return a list of available revisions for snap_name.
+    def list_releases(self, snap_name: str) -> Releases:
+        """Returns a list of releases and related revisions.
+
+        This is the data shown on the 'Releases' page of the Snap Store for a snap, where
+        you are shown a table of releases for each channel and a list of recent revisions
+        available to release.
 
         :param snap_name: the name of the snap to query.
         """
@@ -496,7 +615,109 @@ class LegacyStoreClientCLI:
             },
         )
 
-        return Revisions.unmarshal(response.json())
+        return Releases.unmarshal(response.json())
+
+    @staticmethod
+    def _unmarshal_validation(
+        validation_data: dict[str, Any],
+    ) -> models.ValidationAssertion:
+        """Unmarshal a validation.
+
+        :raises StoreAssertionError: If the validation cannot be unmarshalled.
+        """
+        try:
+            return models.ValidationAssertion.unmarshal(validation_data)
+        except pydantic.ValidationError as err:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid validation from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"{format_pydantic_errors(err.errors(), file_name='validation')}",
+            ) from err
+
+    def list_validations(
+        self,
+        snap_id: str,
+        params: dict[str, Any] | None = None,
+    ) -> list[models.ValidationAssertion]:
+        """Return a list of validations for snap_id.
+
+        Not to be confused with the 'list_validation_sets' call.
+
+        :param snap_id: the id of the snap to query.
+        :param params: Optional query parameters.
+
+        :returns: A list of validations.
+        """
+        response = self.request(
+            "GET",
+            f"{self._base_url}/dev/api/snaps/{snap_id}/validations",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            params=params,
+        )
+
+        validations = []
+        if assertions := response.json():
+            for assertion_data in assertions:
+                emit.debug(f"Parsing validation {assertion_data}")
+                assertion = self._unmarshal_validation(assertion_data)
+                validations.append(assertion)
+                emit.debug(f"Parsed validation: {assertion.model_dump_json()}")
+
+        return validations
+
+    def post_validation(self, snap_id: str, validation: bytes) -> None:
+        """Post a signed validation for snap_id.
+
+        Not to be confused with the 'post_validation_set' call.
+
+        :param snap_id: The ID of the snap.
+        :param validation: The signed validations bytes.
+        """
+        self.request(
+            "PUT",
+            f"{self._base_url}/dev/api/snaps/{snap_id}/validations",
+            json={"assertion": validation.decode("utf-8")},
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+    def get_snap_info(
+        self,
+        snap_name: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Return the snap ID for the given snap name.
+
+        Uses the public snap info endpoint, which can't see private snaps.
+
+        :param snap_name: The name of the snap.
+        :param params: Optional query parameters.
+
+        :returns: A dict of snap information.
+
+        :raises SnapNotFoundError: If the snap is not found.
+        """
+        try:
+            response = self.request(
+                "GET",
+                f"{self._base_url}/v2/snaps/info/{snap_name}",
+                headers={
+                    "Accept": "application/json",
+                    "Snap-Device-Series": constants.DEFAULT_SERIES,
+                },
+                params=params,
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            if store_error.response.status_code == http.HTTPStatus.NOT_FOUND:
+                raise SnapNotFoundError(snap_name=snap_name) from store_error
+            raise
+        return response.json()
 
     @staticmethod
     def _unmarshal_confdb_schema(
@@ -722,6 +943,26 @@ class LegacyStoreClientCLI:
         emit.debug(f"Published validation set: {assertion.model_dump_json()}")
         return assertion
 
+    def get_metrics(
+        self,
+        *,
+        filters: list[dict[str, str]],
+    ) -> MetricsResponse:
+        return MetricsResponse.unmarshal(
+            self.request(
+                "POST",
+                self._base_url + "/dev/api/snaps/metrics",
+                json={"filters": filters},
+            ).json()
+        )
+
+    def push_snap_build(self, snap_id: str, snap_build: str) -> None:
+        self.request(
+            "POST",
+            self._base_url + f"/dev/api/snaps/{snap_id}/builds",
+            json={"assertion": snap_build},
+        )
+
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
     """On Premises Store Client command line interface."""
@@ -823,7 +1064,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
     @override
-    def list_revisions(self, snap_name: str) -> Revisions:
+    def list_releases(self, snap_name: str) -> Releases:
         response = self.request(
             "GET",
             f"{self._base_url}/v1/snap/{snap_name}/revisions",
@@ -833,7 +1074,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             },
         )
 
-        return Revisions.unmarshal(response.json())
+        return Releases.unmarshal(response.json())
 
 
 # We have two stores with a rather different implementation.

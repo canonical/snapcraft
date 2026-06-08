@@ -1,0 +1,18 @@
+summary: Check warnings for top-level enabling of slots and plugs
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "snap/snapcraft.yaml"
+
+execute: |
+  expected_output=$(< expected_output.txt)
+  snapcraft pull -v --destructive-mode | MATCH "$expected_output"
+
+restore: |
+  snapcraft clean --destructive-mode
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

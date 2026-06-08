@@ -11,7 +11,7 @@ prepare: |
   set_base "snap/snapcraft.yaml"
 
   # enabling parallel installs requires a reboot
-  # see https://snapcraft.io/docs/parallel-installs
+  # see https://snapcraft.io/docs/explanation/how-snaps-work/parallel-installs/
   if [[ $SPREAD_REBOOT = 0 ]]; then
     snap set system experimental.parallel-instances=true
     REBOOT

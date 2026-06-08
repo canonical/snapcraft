@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2022,2024 Canonical Ltd.
+# Copyright 2022,2024,2026 Canonical Ltd.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,20 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Tests for validation sets commands."""
+
 import argparse
-import re
+import os
 import sys
 
 import pytest
 
-from snapcraft import application, commands, const, errors
-
-
-@pytest.fixture
-def mock_edit_assertion(mocker):
-    return mocker.patch(
-        "snapcraft.services.validationsets.ValidationSets.edit_assertion"
-    )
+from snapcraft import application, commands, const
 
 
 @pytest.fixture
@@ -37,67 +32,77 @@ def mock_list_assertions(mocker):
     )
 
 
-@pytest.mark.parametrize("key_name", [None, "test-key"])
-@pytest.mark.usefixtures("memory_keyring")
-def test_edit_validation_sets(key_name, mocker, mock_edit_assertion):
-    """Test `snapcraft edit-validation-sets`."""
-    cmd = ["snapcraft", "edit-validation-sets", "test-account-id", "test-name", "10"]
-    if key_name:
-        cmd.extend(["--key-name", key_name])
-    mocker.patch.object(sys, "argv", cmd)
-
-    app = application.create_app()
-    app.run()
-
-    mock_edit_assertion.assert_called_once_with(
-        name="test-name",
-        account_id="test-account-id",
-        key_name=key_name,
-        sequence=10,
+@pytest.fixture
+def mock_edit_assertion(mocker):
+    return mocker.patch(
+        "snapcraft.services.validationsets.ValidationSets.edit_assertion"
     )
 
 
-@pytest.mark.usefixtures("memory_keyring")
-@pytest.mark.parametrize("name", [None, "test"])
-@pytest.mark.parametrize("sequence", [None, "latest", "all"])
-@pytest.mark.parametrize("output_format", [None, *const.OUTPUT_FORMATS])
-def test_list_validation_sets(
-    capsys, mocker, name, sequence, output_format, mock_list_assertions
-):
-    """Test `snapcraft validation-sets`."""
-    cmd = ["snapcraft", "validation-sets"]
-    if name:
-        cmd.extend(["--name", name])
-    if sequence:
-        cmd.extend(["--sequence", sequence])
-    if output_format:
-        cmd.extend(["--format", output_format])
-    mocker.patch.object(sys, "argv", cmd)
-    kwargs = {"sequence": sequence} if sequence else {}
+class TestValidationSetsCommand:
+    """Tests for the 'validation-sets' command."""
 
-    app = application.create_app()
-    app.run()
+    @pytest.mark.parametrize("sequence", [None, "latest", "all"])
+    @pytest.mark.parametrize("name", [None, "test-vs"])
+    def test_validation_sets(
+        self, mock_list_assertions, fake_app_config, name, sequence
+    ):
+        kwargs = {"sequence": sequence} if sequence else {}
+        cmd = commands.StoreValidationSetsCommand(fake_app_config)
 
-    mock_list_assertions.assert_called_once_with(
-        name=name,
-        output_format=output_format or "table",
-        **kwargs,
-    )
+        cmd.run(argparse.Namespace(name=name, sequence=sequence, format="table"))
+
+        mock_list_assertions.assert_called_once_with(
+            name=name, output_format="table", **kwargs
+        )
+
+    @pytest.mark.parametrize("output_format", const.OUTPUT_FORMATS)
+    def test_validation_sets_output_format(
+        self, mock_list_assertions, fake_app_config, output_format
+    ):
+        cmd = commands.StoreValidationSetsCommand(fake_app_config)
+
+        cmd.run(argparse.Namespace(name=None, sequence=None, format=output_format))
+
+        mock_list_assertions.assert_called_once_with(
+            name=None, output_format=output_format
+        )
+
+    def test_list_validation_sets_error(self, mocker, capsys):
+        """Error on removed 'list-validation-sets' command."""
+        mocker.patch.object(sys, "argv", ["cmd", "list-validation-sets"])
+
+        app = application.create_app()
+        return_code = app.run()
+
+        out, err = capsys.readouterr()
+        assert not out
+        assert (
+            "The 'list-validation-sets' command was renamed to 'validation-sets'.\n"
+            "Recommended resolution: Use 'validation-sets' instead."
+        ) in err
+        assert return_code == os.EX_USAGE
 
 
-def test_list_validation_sets_error(fake_app_config):
-    """Error on removed 'list-validation-sets' command."""
-    cmd = commands.StoreListValidationSetsCommand(fake_app_config)
-    expected = re.escape(
-        "The 'list-validation-sets' command was renamed to 'validation-sets'."
-    )
+class TestEditValidationSetsCommand:
+    """Tests for the 'edit-validation-sets' command."""
 
-    with pytest.raises(errors.RemovedCommand, match=expected):
+    @pytest.mark.parametrize("key_name", [None, "test-key"])
+    def test_edit_validation_sets(self, mock_edit_assertion, fake_app_config, key_name):
+        cmd = commands.StoreEditValidationSetsCommand(fake_app_config)
+
         cmd.run(
             argparse.Namespace(
-                account_id="test",
-                set_name="cert1",
-                sequence="9",
-                key_name=None,
+                account_id="test-account-id",
+                name="test-name",
+                sequence=10,
+                key_name=key_name,
             )
+        )
+
+        mock_edit_assertion.assert_called_once_with(
+            name="test-name",
+            account_id="test-account-id",
+            key_name=key_name,
+            sequence=10,
         )

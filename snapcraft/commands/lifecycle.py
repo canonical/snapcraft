@@ -18,7 +18,7 @@
 
 import argparse
 import textwrap
-from typing import Any
+from typing import Any, cast
 
 import craft_application.commands
 from craft_cli import emit
@@ -27,6 +27,7 @@ from typing_extensions import override
 import snapcraft.errors
 import snapcraft.pack
 from snapcraft import errors
+from snapcraft.models.project import Project
 
 
 class PackCommand(craft_application.commands.lifecycle.PackCommand):
@@ -120,8 +121,11 @@ class TryCommand(PackCommand):
         step_name: str | None = None,
         **kwargs: Any,
     ) -> None:
+        project = cast(Project, self.services.get("project").get())
+        effective_base = project.get_effective_base()
+
         raise snapcraft.errors.FeatureNotImplemented(
-            '"snapcraft try" is not implemented for core24'
+            f"'snapcraft try' is not implemented for {effective_base!r}"
         )
 
 

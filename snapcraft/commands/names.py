@@ -59,6 +59,10 @@ _MESSAGE_REGISTER_CONFIRM = textwrap.dedent(
 )
 _MESSAGE_REGISTER_SUCCESS = "Registered {!r}"
 _MESSAGE_REGISTER_NO = "Snap name {!r} not registered"
+_MESSAGE_REGISTER_DOCUMENTATION = (
+    "Go to https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/"
+    "register-a-snap/ for more information on registering a snap."
+)
 
 
 def _set_nil(value: str):
@@ -115,6 +119,8 @@ class StoreRegisterCommand(AppCommand):
                 _MESSAGE_REGISTER_PRIVATE.format(snap_name),
                 permanent=True,
             )
+        emit.progress(_MESSAGE_REGISTER_DOCUMENTATION, permanent=True)
+
         if parsed_args.yes or utils.confirm_with_user(
             _MESSAGE_REGISTER_CONFIRM.format(snap_name)
         ):

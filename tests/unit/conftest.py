@@ -18,9 +18,9 @@ import base64
 import contextlib
 import io
 import textwrap
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import Mock
 
 import craft_application.application
@@ -360,10 +360,9 @@ def fake_provider(mock_instance):
         def is_provider_installed(cls) -> bool:
             return True
 
-        def create_environment(  # type: ignore[reportIncompatibleMethodOverride]
-            self, *, instance_name: str
-        ):
-            yield mock_instance
+        @override
+        def create_environment(self, *, instance_name: str):
+            return mock_instance
 
         @contextlib.contextmanager
         def launched_environment(
@@ -378,8 +377,23 @@ def fake_provider(mock_instance):
             shutdown_delay_mins: int | None = None,
             use_base_instance: bool = True,
             prepare_instance: Callable[[Executor], None] | None = None,
+            instance_architecture: str | None = None,
         ):
             yield mock_instance
+
+        @override
+        def list_instances(
+            self,
+            *,
+            project_name: str | None = None,
+            instance_name_prefix: str | None = None,
+            include_base_instances: bool = False,
+        ) -> Collection[Executor]:
+            return []
+
+        @override
+        def prune(self, *, project_name: str, prune_templates: bool = False) -> None:
+            pass
 
     return FakeProvider()
 
@@ -574,7 +588,7 @@ def fake_project_service_class(fake_project) -> type[services.Project]:
     class FakeProjectService(services.Project):
         # This is a final method, but we're overriding it here for convenience when
         # doing internal testing.
-        def _load_raw_project(self):  # type: ignore[reportIncompatibleMethodOverride]
+        def _load_raw_project(self):  # ty: ignore[override-of-final-method]
             return fake_project.marshal()
 
         # Don't care if the project file exists during this testing.
@@ -586,9 +600,12 @@ def fake_project_service_class(fake_project) -> type[services.Project]:
         def set(self, value: models.Project) -> None:
             """Set the project model. Only for use during testing!"""
             self._project_model = value
-            # this is from craft-application, why does pyright only flag this in snapcraft?
-            self._platform = next(iter(value.platforms))  # type: ignore[reportCallIssue, reportArgumentType]
-            self._build_for = value.platforms[self._platform].build_for[0]  # type: ignore[reportOptionalSubscript]
+            assert value.platforms is not None
+            # assume base > core22 for these tests by assuming no "architectures" key
+            self._platform = next(iter(value.platforms))
+            self._build_for = cast(
+                "list[str]", value.platforms[self._platform].build_for
+            )[0]
 
     return FakeProjectService
 

@@ -18,6 +18,7 @@
 
 import os
 import subprocess
+from pathlib import Path
 
 from craft_cli import CraftError
 
@@ -229,4 +230,18 @@ class RemovedCommand(SnapcraftError):
             ),
             resolution=const.REMOVED_COMMAND_RESOLUTION.format(new=new_command),
             retcode=os.EX_USAGE,
+        )
+
+
+class SnapcraftPrecreationEscapesPrimeError(SnapcraftError):
+    """Error when a plug/layout precreation would've escaped the prime directory."""
+
+    def __init__(self, offending_path: str | Path) -> None:
+        super().__init__(
+            message=f"Could not package {str(offending_path)!r}",
+            details=(
+                "Path is not relative to snap contents, causing files to be created "
+                "outside of expected bounds."
+            ),
+            resolution="Ensure that the offending path is not referenced in any layout or plug definitions.",
         )

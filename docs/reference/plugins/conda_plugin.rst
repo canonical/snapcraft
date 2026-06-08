@@ -11,7 +11,7 @@ plugin is most commonly used to incorporate Python packages into snaps.
 Keys
 ----
 
-The plugin provides the following unique keys for core20 and newer snaps.
+The plugin provides the following unique keys for core20 and higher snaps.
 
 
 conda-packages

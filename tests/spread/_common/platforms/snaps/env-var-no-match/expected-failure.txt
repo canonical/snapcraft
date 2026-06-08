@@ -1,0 +1,1 @@
+Cannot generate a project that builds on amd64 and builds for armhf

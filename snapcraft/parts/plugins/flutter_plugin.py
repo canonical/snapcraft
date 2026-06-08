@@ -30,7 +30,7 @@ class FlutterPluginProperties(plugins.PluginProperties, frozen=True):
 
     plugin: Literal["flutter"] = "flutter"
 
-    source: str  # type: ignore[reportGeneralTypeIssues]
+    source: str
     flutter_channel: Literal["stable", "master", "beta"] = "stable"
     flutter_target: str = "lib/main.dart"
 

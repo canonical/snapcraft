@@ -75,17 +75,17 @@ it should be done with the ``build-environment`` key instead of ``cmake-paramete
 Summaries for confdb schemas
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``edit-confdb-schema`` command now supports a top-level
-``summary`` key and a ``summary`` key in each view of a `confdb schema
-<https://snapcraft.io/docs/configure-with-confdb>`_.
+The ``edit-confdb-schema`` command now supports a top-level ``summary`` key and a
+``summary`` key in each view of a :external+snap:ref:`confdb schema
+<how-to-guides-manage-snaps-configure-snaps-with-confdb>`.
 
 
 Validation set sequence warning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If a user forgets to increment the sequence when editing a `validation set
-<https://snapcraft.io/docs/validation-sets>`_, it can prevent snaps from being able to
-revert to a valid state.
+If a user forgets to increment the sequence when editing a
+:external+snap:ref:`validation set <explanation-how-snaps-work-validation-sets>`, it can
+prevent snaps from being able to revert to a valid state.
 
 The :ref:`ref_commands_edit-validation-sets` command will now warn the user if the
 sequence hasn't been incremented and prompt them to re-edit the set before submitting

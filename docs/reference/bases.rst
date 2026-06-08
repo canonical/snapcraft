@@ -1,11 +1,17 @@
+.. meta::
+    :description: Reference for the available bases for snaps and the requirements for using them across the different snap types.
+
 .. _reference-bases:
 
 Bases
 =====
 
-.. include:: /reuse/bases-intro.rst
+This reference details the available bases for snaps and the requirements for using them
+across the different snap types.
+
 
 .. _base-snap-reference:
+.. _reference-bases-snaps:
 
 Base snaps
 ----------
@@ -18,6 +24,9 @@ There are six supported base snaps:
    * - Name
      - Description
      - Latest snapcraft track with support
+   * - `core26`_
+     - built from `Ubuntu 26.04 LTS`_
+     - 9.x
    * - `core24`_
      - built from `Ubuntu 24.04 LTS`_
      - 8.x
@@ -49,19 +58,21 @@ and ``core16`` are two distinct packages.
 
 The :ref:`reference-support-schedule` details the support timeline for ESM releases.
 
+
 ``base``
 --------
 
-The ``base`` key in a project file:
+The ``base`` key in a project file defines:
 
-* defines the feature set used by Snapcraft
-* the ``snapcraft.yaml`` schema
-* the environment where the snap is built if ``build-base`` is not defined
-* and which base snap is used at runtime
+- the feature set used by Snapcraft
+- the ``snapcraft.yaml`` schema
+- the environment where the snap is built if ``build-base`` isn't defined
+- which base snap is used at runtime
 
-``base`` must be defined except for base, snapd, and kernel snaps.
+The base must be defined in all snaps except for base, snapd, and kernel snaps.
 
-``base`` must be a :ref:`supported base<base-snap-reference>`.
+The base must be a :ref:`supported base <base-snap-reference>`.
+
 
 ``build-base``
 --------------
@@ -74,7 +85,7 @@ built.
 Bare base snaps
 ^^^^^^^^^^^^^^^
 
-``build-base`` must be a :ref:`supported base<base-snap-reference>` when
+``build-base`` must be a :ref:`supported base <base-snap-reference>` when
 ``base: bare`` is defined.
 
 Devel builds
@@ -99,16 +110,17 @@ Kernel snaps
 See :ref:`How to build a kernel snap<kernel-snap-how-to>` for details on how to
 use ``build-base`` for kernel snaps.
 
-.. _`Snapcraft and ESM`: https://snapcraft.io/docs/snapcraft-esm
 .. _`Ubuntu 16.04 ESM`: https://releases.ubuntu.com/16.04/
 .. _`Ubuntu 18.04 ESM`: https://releases.ubuntu.com/18.04/
 .. _`Ubuntu 20.04 LTS`: https://releases.ubuntu.com/20.04/
 .. _`Ubuntu 22.04 LTS`: https://releases.ubuntu.com/22.04/
 .. _`Ubuntu 24.04 LTS`: https://releases.ubuntu.com/24.04/
+.. _`Ubuntu 26.04 LTS`: https://releases.ubuntu.com/26.04/
 .. _`bare`: https://snapcraft.io/bare
 .. _`core18`: https://snapcraft.io/core18
 .. _`core20`: https://snapcraft.io/core20
 .. _`core22`: https://snapcraft.io/core22
 .. _`core24`: https://snapcraft.io/core24
+.. _`core26`: https://snapcraft.io/core26
 .. _`core`: https://snapcraft.io/core
 .. _`supported LTS or interim release`: https://ubuntu.com/about/release-cycle

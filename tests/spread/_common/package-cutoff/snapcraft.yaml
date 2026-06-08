@@ -1,0 +1,14 @@
+name: package-cutoff
+base: core24
+version: "1.0"
+summary: "test"
+description: test
+
+grade: devel
+confinement: devmode
+
+parts:
+  package-cutoff:
+    plugin: nil
+    stage-packages:
+      - liblzma5

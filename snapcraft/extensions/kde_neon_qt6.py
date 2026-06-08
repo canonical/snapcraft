@@ -65,15 +65,15 @@ class KDENeonQt6(GPUExtension):
     entry with these additional plugs:
 
     \b
-    - desktop (https://snapcraft.io/docs/desktop-interface)
-    - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
-    - opengl (https://snapcraft.io/docs/opengl-interface)
-    - wayland (https://snapcraft.io/docs/wayland-interface)
-    - x11 (https://snapcraft.io/docs/x11-interface)
-    - audio-playback (https://snapcraft.io/docs/audio-playback-interface)
-    - unity7 (https://snapcraft.io/docs/unity7-interface)
-    - network https://snapcraft.io/docs/network-interface)
-    - network-bind (https://snapcraft.io/docs/network-bind-interface)
+    - desktop (https://snapcraft.io/docs/reference/interfaces/desktop-interface)
+    - desktop-legacy (https://snapcraft.io/docs/reference/interfaces/desktop-legacy-interface)
+    - opengl (https://snapcraft.io/docs/reference/interfaces/opengl-interface)
+    - wayland (https://snapcraft.io/docs/reference/interfaces/wayland-interface)
+    - x11 (https://snapcraft.io/docs/reference/interfaces/x11-interface)
+    - audio-playback (https://snapcraft.io/docs/reference/interfaces/audio-playback-interface)
+    - unity7 (https://snapcraft.io/docs/reference/interfaces/unity7-interface)
+    - network (https://snapcraft.io/docs/reference/interfaces/network-interface)
+    - network-bind (https://snapcraft.io/docs/reference/interfaces/network-bind-interface)
     """
 
     @staticmethod

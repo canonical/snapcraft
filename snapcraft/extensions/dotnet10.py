@@ -34,3 +34,8 @@ class Dotnet10Extension(DotnetExtensionBase):
     @override
     def versioned_plugin_name(self) -> str:
         return "dotnet10"
+
+    @staticmethod
+    @override
+    def is_experimental(base: str | None) -> bool:
+        return False

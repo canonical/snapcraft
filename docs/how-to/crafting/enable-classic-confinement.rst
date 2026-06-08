@@ -4,7 +4,7 @@ Enable classic confinement
 ==========================
 
 When a snap needs system resources beyond what strict confinement and the available
-`interfaces <https://snapcraft.io/docs/supported-interfaces>`_ can provide, it needs
+:external+snap:ref:`interfaces <ref-index_interfaces>` can provide, it needs
 :ref:`classic confinement <explanation-classic-confinement>`.
 
 This page provides guidance on how to enable classic confinement, as well as example
@@ -41,9 +41,9 @@ A classically-confined snap requires approval from the Store team before you can
 distribute it on the Snap Store. Obtaining approval takes on average three to five
 business days.
 
-`Submit your snap for review
-<https://snapcraft.io/docs/reviewing-classic-confinement-snaps>`_ to get approval for
-classic confinement.
+:external+snap:ref:`Submit your snap for review
+<interfaces-reviewing-classic-confinement-snaps>` to get approval for classic
+confinement.
 
 
 .. _how-to-enable-classic-confinement-identify-problems-linters:

@@ -113,12 +113,13 @@ class Project(ProjectService):
             )
         )
 
+        platforms: dict[str, craft_platforms.PlatformDict]
         # For backwards compatibility with core22, convert the platforms.
         if (
             effective_base == craft_providers.bases.BuilddBaseAlias.JAMMY
             and project.get("architectures")
         ):
-            platforms: dict[str, craft_platforms.PlatformDict] = {
+            platforms = {
                 key: cast(craft_platforms.PlatformDict, value.marshal())
                 for key, value in Platform.from_architectures(
                     project["architectures"]

@@ -29,11 +29,11 @@ author = "Canonical Ltd."
 # Sidebar documentation title; best kept reasonably short
 # The full version, including alpha/beta/rc tags
 release = snapcraft.__version__
-# The commit hash in the dev release version confuses the spellchecker
 if ".post" in release:
     release = "dev"
-
-html_title = project + " documentation"
+else:
+    major, minor, *_ = release.split(".")
+    release = f"{major}.{minor}"
 
 # Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
@@ -118,21 +118,23 @@ rediraffe_redirects = "redirects.txt"
 linkcheck_anchors_ignore = [
     "#",
     ":",
-    r"https://github\.com/.*",
 ]
 linkcheck_ignore = [
-    # GitHub aggressively rate limits us
-    r"^https://github.com/",
     # Entire domains to ignore due to flakiness or issues
+    "https://github.com",
     r"^https://www.gnu.org/",
     r"^https://crates.io/",
     r"^https://([\w-]*\.)?npmjs.org",
     r"^https://rsync.samba.org",
     r"^https://ubuntu.com",
+    r"^https://packages.ubuntu.com",
     r"^https://www.freedesktop.org/",
     r"^https://www.npmjs.com/",
     "https://matrix.to/#",
     "https://gitlab.gnome.org",
+    # 2026-06-03: Ignore Canonical sites until filtering is resolved
+    "https://snapcraft.io",
+    "https://juju.is",
 ]
 
 # give linkcheck multiple tries on failure
@@ -201,17 +203,17 @@ exclude_patterns = [
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",
     "common/craft-parts/reference/plugins/maven_plugin.rst",
-    "common/craft-parts/reference/plugins/maven_use_plugin.rst",
     "common/craft-parts/reference/plugins/poetry_plugin.rst",
     "common/craft-parts/reference/plugins/python_plugin.rst",
     "common/craft-parts/reference/plugins/python_v2_plugin.rst",
     "common/craft-parts/reference/plugins/uv_plugin.rst",
+    # Excluded because Snapcraft has its own version
+    "common/craft-parts/reference/plugins/colcon_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
     "how-to/publishing/build-snaps-remotely.rst",
     "README.md",
-    "release-notes/snapcraft-9-0.rst",
 ]
 
 # Adds custom CSS files, located under 'html_static_path'
@@ -262,12 +264,16 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 # Add configuration for intersphinx mapping
 intersphinx_mapping = {
     # https://github.com/canonical/snapcraft/issues/6036
-    # "snap": ("https://snapcraft.io/docs/", None),
+    "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
-    "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
-    "ubuntu-frame": ("https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/24", None),
+    "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
+    "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
 }
+
+# Block Intersphinx from looking up external sources with internal references. In other
+# words, only :external+<project>... will search in other projects.
+intersphinx_disabled_reftypes = ["std:*"]
 
 
 ##############################

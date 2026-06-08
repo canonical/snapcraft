@@ -56,7 +56,7 @@ def test_get_supported_confinement(dotnet_extension):
 
 
 def test_is_experimental():
-    assert Dotnet8Extension.is_experimental(base="core24") is True
+    assert Dotnet8Extension.is_experimental(base="core24") is False
 
 
 def test_get_root_snippet(dotnet_extension):

@@ -11,7 +11,7 @@ Matter SDK plugin
 
 .. note::
 
-    This plugin is only available on snaps with base core22 or later. See
+    This plugin is only available on snaps with base core22 or higher. See
     :ref:`base-snaps` for more details. It is supported on Snapcraft 8.1.0 and later.
 
 The Matter SDK plugin simplifies the building of parts that use the `connectedhomeip

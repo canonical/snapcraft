@@ -10,6 +10,8 @@ autoformatte(d|rs?)
 Autogen
 Automake
 Autotools
+bonjour
+Bazel
 backend
 backends
 backoff
@@ -24,6 +26,7 @@ Bundler
 Canonical('s)?
 Charmcraft
 chroot
+cameractrls
 cjk
 classpath
 CMake
@@ -44,6 +47,8 @@ Dockerfiles?
 docstrings?
 dotnet
 dvipng
+drwxr-xr-x
+drwxrwxrwx
 emacs
 FIGlet
 Filesets?
@@ -58,14 +63,17 @@ github
 GitHub
 glibc
 GPG
+gsettings
 gpu
 Gradle
 gyre
 gzip(ped)?
+hamba
 hashlib
 Hawksbill
 html
 https
+igor
 Inadyn
 Initrd
 ing
@@ -82,10 +90,12 @@ json
 KCalc
 kconfig
 kdefconfig
+kahle
 keyrings
 landscape
 lang
 lastmod
+le
 LaTeX
 latexmk
 lcm
@@ -100,11 +110,14 @@ Makefiles?
 Miniconda
 mitigations?
 mkdir
+mondo
 MSBuild
 Multipass
 mvn
+mypart
 MyST
 namespaced
+ncursesw
 nano
 Nextcloud
 Ninjemys
@@ -131,6 +144,7 @@ pymarkdown
 pytest
 QEMU
 qmake
+rackup
 Read the Docs
 ramdisks
 readthedocs
@@ -142,6 +156,7 @@ Rockcraft
 rosdep
 rst
 runtimes?
+rustc
 rustup
 SCons
 scriptlets?
@@ -151,6 +166,9 @@ sequenceDiagram
 sitecustomize
 sitemapindex
 snakeoil
+smbraille
+smscript
+snapcraftctl
 snapctl
 Sphinx
 Spread
@@ -165,6 +183,7 @@ subprojects
 sudo
 SVG
 systemd
+tcp
 teardown
 tex
 texinfo
@@ -189,7 +208,9 @@ vendored
 venv
 virtualized?
 VMs
+Vulkan
 WCAG
+wayland
 wethr
 whatime
 whitespace

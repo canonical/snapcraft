@@ -48,7 +48,7 @@ class StoreValidationSetsCommand(AppCommand):
         Use the 'edit-validation-sets' command to modify validation sets.
         """
     )
-    _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
+    _services: services.SnapcraftServiceFactory
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -116,7 +116,7 @@ class StoreEditValidationSetsCommand(AppCommand):
         Use the 'validation-sets' command to view existing validation sets.
         """
     )
-    _services: services.SnapcraftServiceFactory  # type: ignore[reportIncompatibleVariableOverride]
+    _services: services.SnapcraftServiceFactory
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:

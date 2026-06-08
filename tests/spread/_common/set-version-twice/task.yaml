@@ -1,0 +1,33 @@
+summary: Test fix for version setting corner case
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "original-snapcraft.yaml"
+  set_base "modified-snapcraft.yaml"
+
+execute: |
+  mkdir -p snap
+  cp original-snapcraft.yaml snap/snapcraft.yaml
+
+  snapcraft prime
+
+  cp modified-snapcraft.yaml snap/snapcraft.yaml
+
+  snapcraft build part2
+  snapcraft prime
+
+  cp original-snapcraft.yaml snap/snapcraft.yaml
+
+  snapcraft build part2
+  snapcraft prime
+
+restore: |
+  snapcraft clean
+  rm -Rf subdir ./*.snap
+  rm -f snap/*.yaml
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "original-snapcraft.yaml"
+  restore_yaml "modified-snapcraft.yaml"

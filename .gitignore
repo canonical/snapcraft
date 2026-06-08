@@ -40,6 +40,8 @@ MANIFEST
 /snapcraft/_version.py
 snap/.snapcraft/
 *.snap
+!tests/unit/commands/data/*.snap
+!tests/unit/commands/data/*.comp
 
 # Installer logs
 pip-log.txt

@@ -370,9 +370,11 @@ these flags.
 At long last, let's try running our snap.
 
 .. terminal::
-    :input: ukuzama-pyfiglet hello, world!
-    :user: crafter
-    :host: home
+    :user:
+    :host:
+    :dir:
+
+    ukuzama-pyfiglet hello, world!
 
      _          _ _                             _     _ _
     | |__   ___| | | ___    __      _____  _ __| | __| | |
@@ -384,9 +386,11 @@ At long last, let's try running our snap.
 Pyfiglet can draw with different typeface styles, too. It's a fun little command.
 
 .. terminal::
-    :input: ukuzama-pyfiglet -f smscript ciao, mondo!
-    :user: crafter
-    :host: home
+    :user:
+    :host:
+    :dir:
+
+    ukuzama-pyfiglet -f smscript ciao, mondo!
 
      _  o  _,   _              _         _|   _  |
     /   | / |  / \_   /|/|/|  / \_/|/|  / |  / \_|
@@ -448,9 +452,11 @@ As a result, all the fonts are now copied into the snap. Let's give it a try. Re
 snap, reinstall it, and then try it with one of the new fonts:
 
 .. terminal::
-    :input: ukuzama-pyfiglet -f thin bonjour le monde
-    :user: crafter
-    :host: home
+    :user:
+    :host:
+    :dir:
+
+    ukuzama-pyfiglet -f thin bonjour le monde
 
     |                  o                   |                                |
     |---.,---.,---.    .,---..   .,---.    |    ,---.    ,-.-.,---.,---.,---|,---.
@@ -573,9 +579,11 @@ project and install it with:
 And give it a try:
 
 .. terminal::
-    :input: ukuzama-pyfiglet -f smbraille hamba kahle
-    :user: crafter
-    :host: home
+    :user:
+    :host:
+    :dir:
+
+    ukuzama-pyfiglet -f smbraille hamba kahle
 
     ⣇⡀ ⢀⣀ ⣀⣀  ⣇⡀ ⢀⣀   ⡇⡠ ⢀⣀ ⣇⡀ ⡇ ⢀⡀
     ⠇⠸ ⠣⠼ ⠇⠇⠇ ⠧⠜ ⠣⠼   ⠏⠢ ⠣⠼ ⠇⠸ ⠣ ⠣⠭
