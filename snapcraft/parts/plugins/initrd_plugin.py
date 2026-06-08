@@ -80,11 +80,14 @@ from craft_application.util import humanize_list
 from craft_parts import errors, infos, plugins
 from typing_extensions import Self, override
 
-INITRD_RELEASE_FROM_SNAP_BASE = {
+RELEASE_CODENAME_FROM_SNAP_BASE = {
     "core22": "jammy",
     "core24": "noble",
     "core26": "resolute",
 }
+
+SNAKEOIL_KEY = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+SNAKEOIL_CERT = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
 
 
 class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
@@ -93,12 +96,8 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
     plugin: Literal["initrd"] = "initrd"
 
     initrd_build_efi_image: bool = False
-    initrd_efi_image_key: str = (
-        "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
-    )
-    initrd_efi_image_cert: str = (
-        "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
-    )
+    initrd_efi_image_key: str = SNAKEOIL_KEY
+    initrd_efi_image_cert: str = SNAKEOIL_CERT
     initrd_modules: list[str] = []
     initrd_firmware: list[str] = []
     initrd_addons: list[str] = []
@@ -110,9 +109,13 @@ class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
         signing_cert = self.initrd_efi_image_cert
 
         # Validate that either both key and cert are specified or neither is
-        if bool(signing_key) ^ bool(signing_cert):
-            raise ValueError(
-                "If one of initrd-efi-image-key or initrd-efi-image-cert is set, both must be set"
+        custom_key = signing_key != SNAKEOIL_KEY
+        custom_cert = signing_cert != SNAKEOIL_CERT
+
+        if custom_key ^ custom_cert:
+            raise errors.PartsError(
+                brief="initrd-efi-image-key and initrd-efi-image-cert must both be set or neither set",
+                resolution="Specify both 'initrd-efi-image-key' and 'initrd-efi-image-cert', or remove both to use the snakeoil defaults",
             )
 
         return self
@@ -129,22 +132,26 @@ class InitrdPlugin(plugins.Plugin):
         super().__init__(properties=properties, part_info=part_info)
         self.options = cast(InitrdPluginProperties, self._options)
 
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
+        """Return whether the plugin performs out-of-source-tree builds."""
+        return True
+
     @override
     def get_pull_commands(self) -> list[str]:
         commands = []
         base = self._part_info.base
         target_arch = self._part_info.target_arch
-        if (release := INITRD_RELEASE_FROM_SNAP_BASE.get(base)) is None:
+        if (release_codename := RELEASE_CODENAME_FROM_SNAP_BASE.get(base)) is None:
             raise errors.PartsError(
-                f"base {base!r} is not supported for the initrd plugin. Supported bases are {humanize_list(INITRD_RELEASE_FROM_SNAP_BASE.keys(), 'and')}"
+                brief=f"base {base!r} is not supported for the initrd plugin",
+                resolution=f"Use one of the supported bases: {humanize_list(RELEASE_CODENAME_FROM_SNAP_BASE.keys(), 'or')}",
             )
 
-        # URL pieces for Ubuntu base
+        # URL pieces for Ubuntu base, tarball name
         tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
-        tar_release = f"{release}/daily/current"
-
-        # Tarball name
-        tar_name = f"{release}-base-{target_arch}.tar.gz"
+        tar_release = f"{release_codename}/daily/current"
+        tar_name = f"{release_codename}-base-{target_arch}.tar.gz"
 
         # Compose the URL
         tar_url = f"{tar_base_url}/{tar_release}/{tar_name}"
@@ -204,11 +211,17 @@ class InitrdPlugin(plugins.Plugin):
         if build_efi_image:
             # There are no EFI stubs for s390x or ppc64el
             if arch in {"s390x", "ppc64el"}:
-                raise ValueError("initrd-build-efi-image not allowed for " + arch)
+                raise errors.PartsError(
+                    brief=f"'initrd-build-efi-image' is not supported on {arch}",
+                    resolution="Remove 'initrd-build-efi-image'",
+                )
 
             # There are no EFI stubs for riscv until 24.04
             if arch == "riscv64" and base == "core22":
-                raise ValueError("initrd-build-efi-image not allowed for riscv64")
+                raise errors.PartsError(
+                    brief="'initrd-build-efi-image' is not supported for riscv64 on core22",
+                    resolution="riscv64 EFI images are only supported on core24 or later",
+                )
 
         return [
             " ".join(

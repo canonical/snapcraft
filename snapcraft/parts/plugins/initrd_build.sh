@@ -42,7 +42,7 @@ mnt() {
 # umnt wraps the umount command
 umnt() {
   dir="$1"; shift
-  mountpoint "${dir}" || umount "$@" "${dir}"
+  { mountpoint "${dir}" && umount "$@" "${dir}" ; } || true
 }
 
 # clean kills processes and unmounts certain paths from the chroot
@@ -52,13 +52,16 @@ clean() {
     return
   fi
 
+  chroot_run "gpgconf --kill dirmngr"
+  chroot_run "gpgconf --kill gpg-agent"
+
   # ensure no chroot processes are left running
   # Some processes are unkillable; don't fail because of it as it's why we are
   # lazy mounting in the first place
   for pid in /proc/*; do
     if [ -e "${pid}/root" ] && [ "$(readlink -f "${pid}/root")" = "${INITRD_ROOT}" ]; then
-      echo "Killing PID ${pid} inside ${INITRD_ROOT} chroot"
-      kill -9 "${pid}" || continue
+      echo "Killing PID ${pid##*/} inside ${INITRD_ROOT} chroot"
+      kill -9 "${pid##*/}" || continue
     fi
   done
 
@@ -73,6 +76,8 @@ clean() {
   umnt "${INITRD_ROOT}/proc"
   umnt "${INITRD_ROOT}/run"
   umnt "${INITRD_ROOT}/sys"
+
+  rm -f "${BASE_CREATED}"
 }
 
 # chroot_setup creates the chroot base and mounts certain filesystems from host
@@ -162,7 +167,7 @@ chroot_configure() {
         chroot_run "apt-get install --no-install-recommends -y snapd"
     };  chroot_run "apt-get install --no-install-recommends -y systemd"
   else
-    chroot_run "apt-get install --no-install-recommends -y libsystemd-shared"
+    chroot_run "apt-get install --no-install-recommends -y libbpf1 libsystemd-shared"
 
     # Install the microcode packages for x86_64
     if [ "${CRAFT_ARCH_BUILD_FOR}" = "amd64" ]; then
@@ -190,8 +195,6 @@ chroot_configure() {
   sed -i -e 's/"cp", "-ar", args./"cp", "-lR", args./g' \
          -e 's/"cp", "-aR", args./"cp", "-lR", args./g' \
     "${INITRD_ROOT}/usr/bin/ubuntu-core-initramfs"
-
-  touch "${BASE_CONFIGURED}"
 }
 
 # add_modules adds modules and their dependencies to a list of modules to include in
@@ -260,9 +263,9 @@ install_extra() {
   # extra_path is the relevant path for any particular type to ensure use by
   # ubuntu-core-initramfs
   case $type in
-    addons)   extra_path="${ramdisk_feature_path}"          ;;
-    firmware) extra_path="${ramdisk_feature_path}/usr/lib/" ;;
-    signing)  extra_path="${INITRD_ROOT}/root"              ;;
+    addons)   extra_path="${ramdisk_feature_path}"                   ;;
+    firmware) extra_path="${ramdisk_feature_path}/usr/lib/firmware/" ;;
+    signing)  extra_path="${INITRD_ROOT}/root"                       ;;
   esac
 
   echo "Installing specified extra files..."
@@ -270,6 +273,10 @@ install_extra() {
 
   # Iterate over objects list in ${CRAFT_STAGE} and install them to $extra_path
   for obj in $objects; do
+    # Strip any erroneous trailing slashes; this can happen if a user feels like being
+    # extra precise when specifying the target is a directory. More than a single trailing
+    # slash is not handled.
+    obj="${obj%/}"
     find "${CRAFT_STAGE}/${type}" -name "${obj##*/}" | while read -r oobj; do
       loc="${extra_path}/${obj%/*}"
       # If the location includes the name, strip it out
@@ -419,7 +426,7 @@ create_initrd() {
     "${CRAFT_PART_INSTALL}/initrd.img"
 }
 
-# create_efi creates an EFI UKI object from a kernel.img and initrd.img
+# create_efi creates an EFI UKI object from a vmlinuz and initrd.img
 # $1 is the signing key to sign the UKI
 # $2 is the corresponding certificate
 create_efi() {
@@ -437,7 +444,7 @@ create_efi() {
                 --key       \"/root/${key##*/}\"  \
                 --cert      \"/root/${cert##*/}\" \
                 --initrd    /boot/initrd.img      \
-                --kernel    /boot/kernel.img      \
+                --kernel    /boot/vmlinuz         \
                 --output    /boot/kernel.efi"
 
   # Install the UKI to the snap
@@ -449,40 +456,66 @@ create_efi() {
     "${CRAFT_PART_INSTALL}/kernel.efi"
 }
 
-# run executes the meat of this script
+# run() always executes the following sequence:
+#
+# Chroot setup (skipped on iterative builds if already prepared):
+#   Creates the Ubuntu base chroot and mounts required filesystems into it.
+#
+# Chroot configuration (skipped on iterative builds if already configured):
+#   ${CRAFT_STAGE}/ubuntu-core-initramfs.deb exists : install it directly
+#   else: add snappy-dev PPA and install ubuntu-core-initramfs
+#   Installs kernel image, modules, and firmware into chroot.
+#   Adds requested modules via add_modules
+#   initrd-addons set: install_extra addons
+#   initrd-firmware set: install_extra firmware
+#
+# create_initrd: Builds initrd.img inside the chroot and installs it to the snap.
+#
+# initrd-build-efi-image=true:
+#   snakeoil key/cert: copied directly from chroot defaults
+#   custom key/cert: staged via install_extra signing
+#   create_efi builds and installs a signed UKI instead of a bare initrd.
+#
+# clean always runs on exit.
 run() {
   # The build occurs within ${CRAFT_PART_SRC} to avoid issues related to iterative
   # builds with the Ubuntu base fetched by the plugin during the pull step.
-  printf 'Preparing to build initrd for arch %s using series %s in %s\n' \
-    "${CRAFT_ARCH_BUILD_FOR}" "${UBUNTU_SERIES}" "${CRAFT_PART_SRC}"
-  chroot_setup
-
-  echo "Installing kernel, firmware, and modules into chroot"
-  # Remove any existing firmware and modules first
-  rm -rf "${INITRD_ROOT}/usr/lib/firmware/"* \
-         "${INITRD_ROOT}/usr/lib/modules"/*
-  # Install kernel, firmware, modules into chroot
-  cp --archive --link --force "${KERNEL_FIRMWARE}" \
-                              "${KERNEL_MODULES}"  \
-                              "${INITRD_ROOT}/usr/lib"
-
-  cp --force "${KERNEL_IMAGE}" "${INITRD_ROOT}/boot"
-
-  # Cleanup dangling links if they exist
-  # The kernel plugin should have removed these, however
-  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build"  || true
-  unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/source" || true
-
-  # Add modules to initrd
-  # This should run even if none are supplied
-  add_modules "${initrd_modules}"
-
-  # Add any extra files from plugin options to initrd
-  [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
-  [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
+  # Track setup/creation/tear-down ourselves.
+  [ -e "${BASE_CREATED}" ] || {
+    printf 'Preparing to build initrd for arch %s using series %s in %s\n' \
+      "${CRAFT_ARCH_BUILD_FOR}" "${UBUNTU_SERIES}" "${CRAFT_PART_SRC}"
+    chroot_setup
+  }
 
   # Configure chroot
-  chroot_configure
+  [ -e "${BASE_CONFIGURED}" ] || {
+    # Remove any existing modules first
+    rm -rf "${INITRD_ROOT}/usr/lib/modules"
+
+    chroot_configure
+
+    # Install kernel, firmware, modules into chroot
+    echo "Installing kernel and modules into chroot"
+    cp --archive --link --force "${KERNEL_MODULES}"  \
+                                "${INITRD_ROOT}/usr/lib"
+
+    cp --force "${KERNEL_IMAGE}" "${INITRD_ROOT}/boot"
+
+    # Cleanup dangling links if they exist
+    # The kernel plugin should have removed these, however
+    unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build"  || true
+    unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/source" || true
+
+    # Add modules to initrd
+    # This should run even if none are supplied
+    add_modules "${initrd_modules}"
+
+    # Add any extra files from plugin options to initrd
+    [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
+    [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
+
+    touch "${BASE_CONFIGURED}"
+  }
 
   # Build the initrd image file
   create_initrd
@@ -528,10 +561,8 @@ main() {
   KERNEL_VERSION="$(basename "${CRAFT_STAGE}/modules/"*)"
   # KERNEL_MODULES provides a path to the kernel file's corresponding modules
   KERNEL_MODULES="${CRAFT_STAGE}/modules"
-  # KERNEL_FIRMWARE provides a path to the kernel firmware files
-  KERNEL_FIRMWARE="${CRAFT_STAGE}/firmware"
   # KERNEL_IMAGE provides a path to the kernel image file
-  KERNEL_IMAGE="${CRAFT_STAGE}/kernel.img-${KERNEL_VERSION}"
+  KERNEL_IMAGE="${CRAFT_STAGE}/vmlinuz-${KERNEL_VERSION}"
 
   # BASE_CREATED tracks whether or not the chroot has been created
   BASE_CREATED="${CRAFT_PART_SRC}/.base_created"
@@ -547,7 +578,6 @@ main() {
            PPA_FINGERPRINT \
            KERNEL_VERSION  \
            KERNEL_MODULES  \
-           KERNEL_FIRMWARE \
            BASE_CREATED    \
            BASE_CONFIGURED \
            SRC_LIST

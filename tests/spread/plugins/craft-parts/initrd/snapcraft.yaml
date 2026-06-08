@@ -30,5 +30,5 @@ parts:
     plugin: initrd
     initrd-build-efi-image: true
     initrd-firmware:
-      - firmware/regulatory.db
-      - firmware/regulatory.db.p7s
+      - regulatory.db
+      - regulatory.db.p7s

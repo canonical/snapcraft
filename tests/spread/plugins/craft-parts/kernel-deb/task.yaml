@@ -13,7 +13,7 @@ environment:
 
 restore: |
   snapcraft clean
-  rm -f ./*.snap
+  rm -rf ./*.snap squashfs-root/
 
 execute: |
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
@@ -22,3 +22,15 @@ execute: |
   rm -f ./*.snap
   snapcraft pack
   ls -l pc-kernel_*.snap
+
+  unsquashfs pc-kernel_*.snap
+
+  for file in bpftool cpupower perf; do
+    find squashfs-root/usr/lib/linux-tools-*/ -name "${file}" -executable | grep -q . || exit 1
+  done
+
+  # nvidia-dkms-535 has no arm64 package on 22.04; remove this guard if this
+  # test is ever updated to run on 24.04+, where arm64 packages are available.
+  if [ "$(uname -m)" = "x86_64" ]; then
+    find squashfs-root/modules/ -name "nvidia.ko" | grep -q . || exit 1
+  fi

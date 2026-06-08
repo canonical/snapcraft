@@ -24,14 +24,20 @@ parse_args() {
       # kernel_ubuntu_release_name specifies the specific release to build from
       # Default value is "".
       kernel_ubuntu_release_name=${arg#*=}    ;;
-      kernel-ubuntu-binary-package=*)
-      # kernel_ubuntu_binary_package specifies if prebuilt debs should be used
-      # Default value is "False".
-      kernel_ubuntu_binary_package=${arg#*=}  ;;
       # kernel_ubuntu_abinumber specifies a particular linux-image package version to fetch
       # Default value is "".
       kernel-ubuntu-abinumber=*)
       kernel_ubuntu_abinumber=${arg#*=}       ;;
+      kernel-ubuntu-binary-package=*)
+      # kernel_ubuntu_binary_package specifies if prebuilt debs should be used
+      # Default value is "False".
+      kernel_ubuntu_binary_package=${arg#*=}  ;;
+      kernel-ubuntu-debian-package=*)
+      # kernel_ubuntu_debian_package specifies if the kernel should build from debian/rules.
+      kernel_ubuntu_debian_package=${arg#*=}  ;;
+      kernel-ubuntu-debian-dkms=*)
+      # kernel_ubuntu_debian_dkms specifies a list of DKMS packages to include in the build.
+      kernel_ubuntu_debian_dkms=${arg#*=}     ;;
       *) echo "err: invalid option: '${arg}'" ;;
     esac
   done
@@ -39,15 +45,12 @@ parse_args() {
 
 # gen_defconfig creates a config from one or more defconfigs
 gen_defconfig() {
-  # _kernel_kdefconfig splits the defconfig list from kernel_kdefconfig as it is
-  # passed comma-separated
-  _kernel_kdefconfig="$(echo "${kernel_kdefconfig}" | sed -e 's/,/ /g')"
   # We want _kernel_kdefconfig to split as it isn't supposed to be a single arg
   # shellcheck disable=SC2086
   make -j1                      \
        -C "${KERNEL_SRC}"       \
         O="${CRAFT_PART_BUILD}" \
-        ${_kernel_kdefconfig}
+        ${kernel_kdefconfig}
 }
 
 # gen_flavour_config generates a kernel config based on the chosen flavour
@@ -87,7 +90,7 @@ add_kconfigs() {
   kconfigs="${1}"
   # _kconfigs splits the kconfig list from kernel_kconfigs as it is
   # passed comma-separated
-  _kconfigs="$(echo "${kconfigs}" | sed -e 's/,/\n/g')"
+  _kconfigs="$(echo "${kconfigs}" | tr ',' '\n')"
 
   echo "Applying extra config...."
 
@@ -110,11 +113,11 @@ remake_config() {
 
 # check_config checks if Ubuntu Core and snap specific options are set
 check_config() {
-  echo "${required_boot}"     \
-       "${required_generic}"  \
-       "${required_security}" \
-       "${required_snappy}"   \
-       "${required_systemd}"  | while read -r config; do
+  for config in ${required_boot}     \
+                ${required_generic}  \
+                ${required_security} \
+                ${required_snappy}   \
+                ${required_systemd}; do
     if ! grep "^CONFIG_${config}=" "${CRAFT_PART_BUILD}/.config"; then
       printf '*** WARNING ***\n'
       printf 'Your kernel config is missing:\n'
@@ -123,6 +126,48 @@ check_config() {
       printf 'Continuing, but you should check your .config\n'
     fi
   done
+}
+
+# validate_kdefconfigs verifies that if a user specified a kdefconfig, that file
+# is in the expected location. The expected location depends on the *kind* of
+# kdefconfig it may be, and there are two cases. The cases hinge on whether
+# we're building a debian package, which uses an annotations file to generate
+# the config, or if we're building a source package, which uses the standard
+# kconfig generation method via various make targets.
+# If any kconfig fragments are provided, they should be in one of
+#  - ${KERNEL_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs,
+#  - ${KERNEL_SRC}/kernel/configs, or, in the case of an annotations fragment,
+#  - ${CRAFT_PROJECT_DIR}/annotations
+validate_kdefconfigs() {
+  # Check if we are dealing with defconfigs which aren't just the default
+  if [ "${kernel_kdefconfig}" != "defconfig" ]; then
+    # Annotations belong in the project directory. This is an opinionated choice
+    # and can always be made different. If there is a standard location for
+    # these, it is non-obvious.
+    if [ "${kernel_ubuntu_debian_package}" = "True" ]; then
+      for fragment in ${kernel_kdefconfig}; do
+        [ -e "${CRAFT_PROJECT_DIR}/annotations/${fragment}" ] || {
+          echo "Please ensure your kdefconfig annotations fragment is in:"
+          echo " \${CRAFT_PROJECT_DIR}/annotations"
+          exit 1
+        }
+      done
+    # The only alternative case is when we're building a source package, in
+    # which case there are some more canonical locations for kconfig fragments
+    # to be located in.
+    else for fragment in ${kernel_kdefconfig}; do
+        # "defconfig" is a kernel make target, not a file fragment
+        [ "${fragment}" = "defconfig" ] ||
+        [ -e "${KERNEL_SRC}/arch/${CRAFT_ARCH_BUILD_FOR}/configs/${fragment}" ] ||
+        [ -e "${KERNEL_SRC}/kernel/configs/${fragment}" ] || {
+          echo "Please ensure your specified kdefconfig files are in either:"
+          echo "  - \${KERNEL_SRC}/arch/\${CRAFT_ARCH_BUILD_FOR}/configs, or"
+          echo "  - \${KERNEL_SRC}/kernel/configs"
+          exit 1
+        }
+      done
+    fi
+  fi
 }
 
 # release_info gathers kernel release info to encode in kernel artifacts
@@ -138,59 +183,50 @@ release_info() {
 }
 
 # build_tool builds a specified tool
-# $1 is the tool name as preferred by the plugin; some cleanup may be required
+# $1 is the tool name
 build_tool() {
-  _tool="${1}"
+  _name="${1}"
 
-  # Some tools are in odd paths. perf is an exception
-  case $_tool in
-    bpf)      _tool=bpf/bpftool    ;;
-    cpupower) _tool=power/cpupower ;;
-    perf)                          ;;
+  # Map each tool name to its subdirectory path within tools/
+  case $_name in
+    bpftool)  _dir="bpf/bpftool"    ;;
+    cpupower) _dir="power/cpupower" ;;
+    perf)     _dir="perf"           ;;
   esac
 
-  echo "Building tool" "${_tool#*/}"
+  echo "Building tool ${_name}"
 
-  mkdir -p "${CRAFT_PART_BUILD}/tools/${_tool}"
+  mkdir -p "${CRAFT_PART_BUILD}/tools/${_dir}"
 
-  if [ "$_tool" = "bpf/bpftool" ]; then
-    # bpf is weird and won't build correctly if we aren't in the tools directory
+  if [ "$_name" = "bpftool" ]; then
+    # bpftool requires building from within its source directory
+    OLDPWD="${PWD}"
     cd "${KERNEL_SRC}/tools/bpf"
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}"      \
-          O="${CRAFT_PART_BUILD}/tools/${_tool}" \
+          O="${CRAFT_PART_BUILD}/tools/${_dir}"  \
          -C bpftool all
 
     make DESTDIR="${CRAFT_PART_INSTALL}" \
       -C bpftool install
-    cd "$OLDPWD"
+    cd "${OLDPWD}"
   else
     make -j "${CRAFT_PARALLEL_BUILD_COUNT}" \
-         -C "${KERNEL_SRC}/tools/${_tool}"  \
-          O="${CRAFT_PART_BUILD}/tools/${_tool}"
+         -C "${KERNEL_SRC}/tools/${_dir}"   \
+          O="${CRAFT_PART_BUILD}/tools/${_dir}"
 
     make DESTDIR="${CRAFT_PART_INSTALL}" \
-      -C "${KERNEL_SRC}/tools/${_tool}" install
+      -C "${KERNEL_SRC}/tools/${_dir}" install
   fi
-
-  # Install at least the final built binary - some tools' install targets don't do this
-  install -Dm0755 "${CRAFT_PART_BUILD}/tools/${_tool}/${_tool#*/}" "${CRAFT_PART_INSTALL}/bin/${_tool#*/}"
 }
 
-# redepmod reruns depmod for the entire built kernel's module tree
-# $1 should be the kernel version directory in ${CRAFT_PART_INSTALL}/lib/modules
-redepmod() {
-  _kver="${1}"
-
-  echo "Rebuilding module dependencies"
-  depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
-}
-
-# repack_deb unpacks the primary linux-image deb package for some version and flavour as
-# well as the corresponding modules and modules-extras packages and then repacks them
+# fetch_deb downloads the linux-image deb package for some version or flavour (if
+# specified, otherwise fetches whatever is currently available on the build host from
+# the archive), along with its corresponding modules and modules-extra packages (if
+# they exist).
 # $1 is the kernel version string as it appears in the kernel deb package
 # $2 is the flavour as it appears in the kernel deb package
 # So for linux-image-x.y.z-a-generic, $1 is "x.y.z-a" and $2 is "generic"
-repack_deb() {
+fetch_deb() {
   _kver="${1}"
   _flavour="${2}"
 
@@ -207,28 +243,33 @@ repack_deb() {
     apt download "linux-${pkg}-${_kver}-${_flavour}:${CRAFT_ARCH_BUILD_FOR}" ||
     echo "No candidate for linux-${pkg}-${_kver}-${_flavour} found"
   done
+}
+
+# repack_deb unpacks some linux-image deb package for some version and flavour as well
+# as the corresponding modules and modules-extras packages and then repacks them
+# $1 is the kernel version string as it appears in the kernel deb package
+# $2 is the flavour as it appears in the kernel deb package
+# So for linux-image-x.y.z-a-generic, $1 is "x.y.z-a" and $2 is "generic"
+repack_deb() {
+  _kver="${1}"
+  _flavour="${2}"
 
   # Unpack the debs into the expected locations
-  for deb in "${CRAFT_PART_BUILD}/"*.deb; do
+  for deb in "${CRAFT_PART_BUILD}/linux-"*.deb; do
     dpkg -x "${deb}" "${CRAFT_PART_INSTALL}"
   done
 
   # Move the relevant files to the expected location
-  # Rename vmlinuz to kernel.img, the others can keep their name
-  mv -f "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}-${_flavour}" \
-        "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}"
-
   mv -f "${CRAFT_PART_INSTALL}/boot/System.map-${_kver}-${_flavour}" \
         "${CRAFT_PART_INSTALL}/boot/config-${_kver}-${_flavour}"     \
+        "${CRAFT_PART_INSTALL}/boot/vmlinuz-${_kver}-${_flavour}"    \
         "${CRAFT_PART_INSTALL}"
 
-  ln -f "${CRAFT_PART_INSTALL}/kernel.img-${_kver}-${_flavour}" \
-    "${CRAFT_PART_INSTALL}/kernel.img"
+  ln -f "${CRAFT_PART_INSTALL}/vmlinuz-${_kver}-${_flavour}" \
+    "${CRAFT_PART_INSTALL}/vmlinuz"
 
   # A little deb cleanup
   rmdir "${CRAFT_PART_INSTALL}/boot"
-  # In theory this is never unset. But to be extra safe...
-  rm -rf "${CRAFT_PART_INSTALL:?}/usr"
 }
 
 # setup_kernel will create a kernel config if one does not exist as specified by the
@@ -308,9 +349,10 @@ install_kernel() {
         modules_install
 
   # Install device trees, if required
+  # Install using -j1 to avoid potential race-conditions
   if [ "${CRAFT_ARCH_BUILD_FOR}" != "amd64" ]; then
     echo "Installing device trees..."
-    make -j "${CRAFT_PARALLEL_BUILD_COUNT}"              \
+    make -j1                                             \
          -C "${KERNEL_SRC}"                              \
           O="${CRAFT_PART_BUILD}"                        \
           INSTALL_DTBS_PATH="${CRAFT_PART_INSTALL}/dtbs" \
@@ -334,7 +376,7 @@ pack_kernel() {
   # Install kernel artifacts
   echo "Copying kernel image..."
   cp -f "${CRAFT_PART_BUILD}/arch/${ARCH}/boot/${KERNEL_IMAGE}" \
-        "${CRAFT_PART_INSTALL}/kernel.img-${_kver}"
+        "${CRAFT_PART_INSTALL}/vmlinuz-${_kver}"
 
   echo "Copying System map..."
   cp -f "${CRAFT_PART_BUILD}/System.map" \
@@ -344,13 +386,226 @@ pack_kernel() {
   cp -f "${CRAFT_PART_BUILD}/.config" \
         "${CRAFT_PART_INSTALL}/config-${_kver}"
 
-  ln -f "${CRAFT_PART_INSTALL}/kernel.img-${_kver}" \
-    "${CRAFT_PART_INSTALL}/kernel.img"
+  ln -f "${CRAFT_PART_INSTALL}/vmlinuz-${_kver}" \
+    "${CRAFT_PART_INSTALL}/vmlinuz"
 
   # Remove symlinks lib/modules/${_kver}/{build,source}
   # It's possible that these are not even installed, however
   unlink "${CRAFT_PART_INSTALL}/lib/modules/${_kver}/build"  || true
   unlink "${CRAFT_PART_INSTALL}/lib/modules/${_kver}/source" || true
+}
+
+# build_bin_pkg is the most strict case of building a kernel snap. It allows you
+# to choose any kernel in the archives available to you at build-time by ABI
+# number and flavour. Not much in the way of customization can occur in this
+# case, but as such it is the fastest way of producing a kernel snap. It takes
+# no arguments, but is responsible for specifying its own kver to be consumed by
+# functions after it in run().
+build_bin_pkg() {
+  if [ -z "$kernel_ubuntu_abinumber" ]; then
+    # kver is the total version string but cuts the upload number
+    kver="$(apt info "linux-image-${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
+    # Trim ~<LTS> as kernels like partner, HWE, or riscv64 append ~<LTS>
+    kver="${kver%~*}"
+    # Trim the kernel release from the string
+    kver="${kver%.*}"
+    # linux-image-${kconfigflavour} has version of the form x.y.z.a-b, but ver
+    # in linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy
+    # so swap .a for -a
+    if [ "${UBUNTU_SERIES}" = "jammy" ];
+      then kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
+    fi
+  else kver="${kernel_ubuntu_abinumber}"
+  fi
+
+  fetch_deb  "${kver}" "${kconfigflavour}"
+  repack_deb "${kver}" "${kconfigflavour}"
+
+  # Update kver to be whatever the kernel debian package says kver should be
+  # This is primarily for redepmod as it needs to know this path
+  kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+}
+
+# build_deb_pkg is the utility case when building a kernel snap: it will build
+# precisely a collection of debian packages containing a kernel and its modules.
+# It offers some flexibility in terms of how that kernel is configured. The
+# source will generally be Canonical. It takes no arguments, but is responsible
+# for specifying its own kver to be consumed by functions after it in run().
+build_deb_pkg() {
+  # Remove any debian packages if they exist
+  rm -f "${CRAFT_PART_SRC}/../"*.deb
+
+  # Clean any leftover DKMS staging trees from previous builds to prevent
+  # 'tree already contains' errors from dkms-build on incremental runs
+  for _dkms_dir in "${KERNEL_SRC}/debian/build/build-${kconfigflavour}/"*dkms; do
+    [ -d "${_dkms_dir}" ] && rm -rf "${_dkms_dir}/build" "${_dkms_dir}/source" || true
+  done
+
+  # To build a deb we must be present in the source directory, which is ${KERNEL_SRC}
+  OLDPWD="${PWD}"
+  cd "${KERNEL_SRC}"
+
+  # Setup the environment -- dpkg rules will probably care about these
+  # debian/debian.env will exist in $KERNEL_SRC when this function runs
+  # shellcheck disable=SC1091
+  . debian/debian.env
+  while IFS='=' read -r _key _val; do
+    [ -n "${_key}" ] && export "${_key}=${_val}"
+  done <<EOF
+$(dpkg-architecture -a"${CRAFT_ARCH_BUILD_FOR}")
+EOF
+
+  # Add any requested DKMS packages to the kernel's dkms-versions file.
+  # Packages sharing the same source (e.g. nvidia-dkms-535 and
+  # nvidia-kernel-source-535 both from nvidia-graphics-drivers-535) are
+  # combined onto one line with multiple debpath= entries, which is what
+  # dkms-build expects. Each source gets exactly one dkms-build invocation.
+  [ -z "${kernel_ubuntu_debian_dkms}" ] || {
+    _dkms_tmp="${CRAFT_PART_BUILD}/dkms_pending"
+    : > "${_dkms_tmp}"
+    for pkg in ${kernel_ubuntu_debian_dkms}; do
+      apt show "${pkg}" > "${CRAFT_PART_BUILD}/pkginfo"
+      _source=$( grep "^Source:"  "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Source: //')
+      _version=$(grep "^Version:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Version: //')
+      _repo=$(   grep "^Section:" "${CRAFT_PART_BUILD}/pkginfo" | sed 's/^Section: \(.*\)\/.*/\1/')
+      _initial=$(printf '%.1s' "${pkg}")
+      # apt metadata (Architecture:) is unreliable for the actual deb filename
+      # suffix - some packages are _all.deb, others are _${arch}.deb, and apt
+      # reports the wrong value for several. Parse the ground-truth filename
+      # from apt-get download --print-uris instead (zero bandwidth, one line).
+      _debfile=$(apt-get download --print-uris "${pkg}" 2>/dev/null \
+                 | grep -o "${pkg}_[^' ]*\.deb" | head -1)
+      _debarch="${_debfile%.deb}"
+      _debarch="${_debarch##*_}"
+      [ -z "${_debarch}" ] && _debarch="${CRAFT_ARCH_BUILD_FOR}"
+      _debpath="debpath=pool/${_repo}/${_initial}/%package%/${pkg}_%version%_${_debarch}.deb"
+      if grep -qF "${_source} " "${_dkms_tmp}"; then
+        # Source already has an entry - append this debpath to that line
+        sed -i "s|^\\(${_source} .*\\)|\\1 ${_debpath}|" "${_dkms_tmp}"
+      else
+        printf '%s %s modulename=%s %s arch=%s rprovides=%s-modules rprovides=%s\n' \
+          "${_source}" "${_version}" "${_source}" "${_debpath}"  \
+          "${CRAFT_ARCH_BUILD_FOR}" "${pkg%%-*}" "${pkg}"        \
+          >> "${_dkms_tmp}"
+      fi
+    done
+    cat "${_dkms_tmp}" >> "debian.master/dkms-versions"
+  }
+
+  # The user may sneakily add an annotations.yaml in a similar fashion as they
+  # would a .config in $CRAFT_PART_BUILD. In that specific case, we should
+  # wholesale import the provided annotations into the current one and build
+  # based on that (updates not-withstanding). Providing annotations in this
+  # fashion is likewise not an explicitly supported avenue and is intended for
+  # iteration and testing.
+  if [ -e "${CRAFT_PART_BUILD}/annotations.yaml" ]; then
+    "${KERNEL_SRC}/debian/scripts/misc/annotations" \
+      --arch "${CRAFT_ARCH_BUILD_FOR}"              \
+      --flavour "${kconfigflavour}"                 \
+      --import "${CRAFT_PART_BUILD}/annotations.yaml"
+  else
+    [ "${kernel_kdefconfig}" = "defconfig" ] || {
+      for fragment in ${kernel_kdefconfig}; do
+        cat "${CRAFT_PROJECT_DIR}/annotations/${fragment}" >> \
+          "${CRAFT_PART_BUILD}/custom_fragment"
+      done
+
+      "${KERNEL_SRC}/debian/scripts/misc/annotations" \
+        --arch "${CRAFT_ARCH_BUILD_FOR}"              \
+        --flavour "${kconfigflavour}"                 \
+        --import "${CRAFT_PART_BUILD}/custom_fragment"
+    }
+  fi
+
+  # Update configs to reflect new defaults
+  fakeroot debian/rules clean
+  fakeroot debian/rules updateconfigs || true
+
+  # Apply rules.d changes AFTER updateconfigs, which may regenerate or reset
+  # files in the rules.d directory. Doing this here ensures the settings are
+  # visible to the subsequent build-* and binary-* targets.
+  #
+  # Unconditionally replace the image target with whatever the plugin has
+  # specified; sed is cheap enough that doing this in every case (even when
+  # they're equivalent) does not matter
+  sed -i "s/^\s*build_image.*/build_image = ${KERNEL_IMAGE}/g" \
+      "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+  sed -i "s|^\s*kernel_file.*|kernel_file = arch/${ARCH}/boot/${KERNEL_IMAGE}|g" \
+      "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+
+  # If the user specified any tools to be built, include them
+  [ -z "${kernel_tools}" ] || {
+      # Disable all per-tool flags in the arch-specific file, then re-enable
+      # only the ones the user asked for. do_tools (master flag) defaults to
+      # true when tools/ exists, so we leave it alone.
+      sed -i 's/^\s*do_tools_\(.*\)\s*=.*/do_tools_\1 = false/g' \
+          "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+      for _tool in ${kernel_tools}; do
+          sed -i "s/^\s*do_tools_${_tool}\s*=.*/do_tools_${_tool} = true/g" \
+              "debian.master/rules.d/${CRAFT_ARCH_BUILD_FOR}.mk"
+      done
+  }
+
+  # Print the environment for debug purposes
+  fakeroot debian/rules printenv
+  # Build the kernel
+  fakeroot debian/rules "build-${kconfigflavour}"
+  # Build per-arch tool packages (bpftool, cpupower, perf, etc.)
+  [ -z "${kernel_tools}" ] || fakeroot debian/rules binary-perarch
+  # Build the deb packages
+  fakeroot debian/rules "binary-${kconfigflavour}"
+
+  # Move the packages we care about to the build directory. debian/rules places
+  # built .deb files in the parent of the source tree, not inside it. Exclude
+  # linux-buildinfo and linux-headers which are not part of the kernel snap.
+  for _deb in "${KERNEL_SRC}/../linux-"*.deb; do
+    case "$(basename "${_deb}")" in
+      linux-buildinfo-*|linux-headers-*) rm -f "${_deb}" ;;
+      *) mv -f "${_deb}" "${CRAFT_PART_BUILD}"           ;;
+    esac
+  done
+
+  # Generate release information from debian/changelog
+  release_info
+
+  cd "${OLDPWD}"
+
+  # Repack the recently built debs
+  repack_deb "${abi_release}" "${kconfigflavour}"
+
+  # Update kver to be whatever the debian package says kver should be
+  # This is primarily for redepmod as it needs to know this path
+  kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+}
+
+# build_src_pkg is the most general case: it handles building a kernel snap from
+# a provided kernel source tree, regardless of provenance. This way offers the
+# most flexibility in terms of what can be changed, what additional things can
+# be built, and what the source is. It takes no arguments, but is responsible
+# for specifying its own kver to be consumed by functions after it in run().
+build_src_pkg() {
+  # Ensure the config is setup properly
+  setup_kernel
+
+  # Perform the build
+  build_kernel
+
+  # Install kernel image, modules, dtbs
+  install_kernel
+
+  # kver depends on if release information is known or not, so
+  # the version varies by if we specified a flavour or not.
+  kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+
+  # Tidy final snap packaging
+  pack_kernel "${kver}"
+
+  if [ -n "${kernel_tools}" ]; then
+    # kernel_tools should be space separated
+    for _tool in $kernel_tools; do
+      build_tool "$_tool"
+    done
+  fi
 }
 
 # create_snap_structure migrates the modules and firmware from their canonical
@@ -373,7 +628,41 @@ create_snap_structure() {
   fi
 }
 
-# run executes the meat of this script
+# redepmod reruns depmod for the entire built kernel's module tree
+# $1 should be the kernel version directory in ${CRAFT_PART_INSTALL}/lib/modules
+redepmod() {
+  _kver="${1}"
+
+  echo "Rebuilding module dependencies"
+  depmod -b "${CRAFT_PART_INSTALL}" "${_kver}"
+}
+
+# run() dispatches to one of three build paths based on the options provided:
+#
+# kernel-ubuntu-binary-package=true -> build_bin_pkg()
+#   Downloads prebuilt debs from the Ubuntu archive and repacks them.
+#   kernel-ubuntu-abinumber set: fetch the specified kernel package by ABI
+#   kernel-ubuntu-abinumber unset: fetch the currently available kernel package
+#   Fetches: linux-image, linux-modules, linux-modules-extra
+#
+# kernel-ubuntu-debian-package=true -> build_deb_pkg()
+#   Builds kernel debs from source using debian/rules and repacks them.
+#   Updates rules.d/<arch>.mk with KERNEL_IMAGE
+#   kernel-tools set: builds the specified collection of tools
+#   kernel-ubuntu-debian-dkms set: populates debian.master/dkms-versions
+#   ${CRAFT_PART_BUILD}/annotations.yaml exists: replace annotations
+#   kernel-kdefconfig != defconfig : update annotations
+#
+# neither -> build_src_pkg()
+#   Builds directly from a kernel source tree of any provenance.
+#     ${CRAFT_PART_BUILD}/.config eixsts: skip config generation
+#     kernel-ubuntu-kconfigflavour != generic: gen_flavour_config
+#     kernel-kdefconfig != defconfig: gen_defconfig
+#     default: gen_flavour_config generic
+#   kernel-kconfigs set: additional config options applied via add_kconfigs
+#   kernel-tools set: specified tools built in build_tool
+#
+# All paths converge at create_snap_structure and redepmod.
 run() {
   # Cleanup previous builds
   echo "Checking if previous build should be cleaned..."
@@ -390,56 +679,22 @@ run() {
     kconfigflavour="${kernel_ubuntu_kconfigflavour}"
   fi
 
-  if [ "$kernel_ubuntu_binary_package" = "True" ]; then
-    if [ -z "$kernel_ubuntu_abinumber" ]; then
-      # kver is the total version string but cuts the upload number
-      kver="$(apt info "linux-image-${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
-      # Trim ~<LTS> as kernels like partner, HWE, or riscv64 append ~<LTS>
-      kver="${kver%~*}"
-      # Trim the kernel release from the string
-      kver="${kver%.*}"
-      # linux-image-${kconfigflavour} has version of the form x.y.z.a-b, but ver in
-      # linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy so
-      # swap .a for -a
-      if [ "${UBUNTU_SERIES}" = "jammy" ]; then
-        kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
-      fi
-    else kver="${kernel_ubuntu_abinumber}"
-    fi
+  # Ensure any potentially user-provided files are in the expected locations
+  validate_kdefconfigs
 
-    repack_deb "${kver}" "${kconfigflavour}"
-
-    # Update kver to be whatever the kernel debian package says kver should be
-    # This is primarily for redepmod as it needs to know this path
-    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
-
-  elif [ "$kernel_ubuntu_binary_package" = "False" ]; then
-    # Ensure the config is setup properly
-    setup_kernel
-
-    # Perform the build
-    build_kernel
-
-    # Install kernel image, modules, dtbs
-    install_kernel
-
-    # kver depends on if release information is known or not, so
-    # the version varies by if we specified a flavour or not.
-    kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
-
-    # Tidy final snap packaging
-    pack_kernel "${kver}"
-
-    if [ -n "${kernel_tools}" ]; then
-      # kernel_tools should be space separated
-      kernel_tools="$(echo "$kernel_tools" | sed -e 's/,/ /g')"
-      for _tool in $kernel_tools; do
-        build_tool "$_tool"
-      done
-    fi
+  # Handle the three major cases of kernel build types. We are building the
+  # kernel snap one of three ways:
+  # 1) from a prebuilt debian package in the archive,
+  # 2) from a debian package built from source, or
+  # 3) from a kernel source tree
+  # Each function is responsible for handling their own kernel versions (kver)
+  # and flavours (kconfigflavour).
+  if   [ "$kernel_ubuntu_binary_package" = "True" ]; then build_bin_pkg
+  elif [ "$kernel_ubuntu_debian_package" = "True" ]; then build_deb_pkg
+  else                                               build_src_pkg
   fi
 
-  # Regardless of kernel source, the final structure looks the same in a snap
+  # The final structure looks the same regardless of how the kernel was built
   create_snap_structure
 
   # Run depmod to ensure all modules are accounted for
@@ -537,8 +792,7 @@ main() {
     # KERNEL_SRC is the true location of the kernel source tree
     # We don't actually have a true KERNEL_SRC, just set it
     KERNEL_SRC="${CRAFT_PART_INSTALL}"
-  elif [ -n "$kernel_ubuntu_release_name" ]        &&
-       [ "$kernel_ubuntu_release_name" != "None" ] ||
+  elif [ "$kernel_ubuntu_release_name" != "None" ] ||
        [ -d "${CRAFT_PART_SRC}/kernel" ]; then
     # We have fetched a source tree and it is in the usual location
     KERNEL_SRC="${CRAFT_PART_SRC}"

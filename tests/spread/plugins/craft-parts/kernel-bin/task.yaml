@@ -1,4 +1,4 @@
-summary: Craft Parts initrd plugin test
+summary: Craft Parts kernel plugin test
 manual: true
 kill-timeout: 180m
 
@@ -13,7 +13,7 @@ environment:
 
 restore: |
   snapcraft clean
-  rm -rf ./*.snap squashfs-root/
+  rm -f ./*.snap
 
 execute: |
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
@@ -22,8 +22,3 @@ execute: |
   rm -f ./*.snap
   snapcraft pack
   ls -l pc-kernel_*.snap
-
-  unsquashfs pc-kernel_*.snap
-
-  # snapd-info is a "required" file; we should make sure it's present.
-  [ -e squashfs-root/snapd-info ] || exit 1

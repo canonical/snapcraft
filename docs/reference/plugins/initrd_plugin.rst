@@ -1,3 +1,6 @@
+.. meta::
+    :description: Reference documentation for the initrd plugin, which builds initial ramdisks for kernel images.
+
 .. _reference-initrd-plugin:
 
 Initrd plugin
@@ -70,10 +73,6 @@ The kernel modules to add to the initrd. If a listed module has dependencies,
 the plugin sources and installs them automatically.
 
 
-The following keys will only work if the target architecture has a package in
-the Ubuntu archive providing an EFI stub. Otherwise, the build will fail.
-
-
 initrd-build-efi-image
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -84,7 +83,10 @@ initrd-build-efi-image
 If true, a Unified Kernel Image (UKI) will be created using the initrd
 compressed CPIO archive created by this plugin and a kernel image file. The
 kernel image must be present in ``${CRAFT_STAGE}`` and must be named
-``kernel.img``.
+``vmlinuz``.
+
+This key is valid only if the target architecture has a package in the Ubuntu
+archive providing an EFI stub. Otherwise, the build will fail.
 
 
 initrd-efi-image-key
@@ -134,8 +136,7 @@ During the build step the plugin performs the following actions:
    build script within the Snapcraft snap.
 #. Fetch a daily compressed archive base of the targeted Ubuntu series.
 #. Unpack the archive into ``${CRAFT_PART_SRC}`` to use as the chroot base.
-#. Copy any kernel firmware or modules from ``${CRAFT_STAGE}/firmware`` and
-   ``${CRAFT_STAGE}/modules`` into the chroot base.
+#. Copy any kernel modules from ``${CRAFT_STAGE}/modules`` into the chroot base.
 #. Install any build-time dependencies such as the ubuntu-core-initramfs
    package into the chroot base.
 #. Add any addons, firmware, or modules to the chroot base.

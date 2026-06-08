@@ -16,7 +16,7 @@
 
 
 import pytest
-from craft_parts import Part, PartInfo, ProjectInfo
+from craft_parts import Part, PartInfo, ProjectInfo, errors
 
 from snapcraft.parts.plugins import KernelPlugin
 
@@ -34,6 +34,68 @@ def part_info(new_dir):
     )
 
 
+def test_validate_release_name_and_source_exclusive():
+    with pytest.raises(
+        errors.PartsError,
+        match="Remove either 'kernel-ubuntu-release-name' or 'source' from the part definition",
+    ):
+        KernelPlugin.properties_class.unmarshal(
+            {
+                "kernel-ubuntu-release-name": "noble",
+                "source": "https://github.com/example/kernel",
+            }
+        )
+
+
+def test_validate_debian_and_binary_exclusive():
+    with pytest.raises(
+        errors.PartsError,
+        match="Choose one build method: set either 'kernel-ubuntu-binary-package' or 'kernel-ubuntu-debian-package', not both",
+    ):
+        KernelPlugin.properties_class.unmarshal(
+            {
+                "kernel-ubuntu-binary-package": True,
+                "kernel-ubuntu-debian-package": True,
+            }
+        )
+
+
+def test_validate_binary_and_tools_exclusive():
+    with pytest.raises(
+        errors.PartsError, match="Add the required tools to 'stage-packages' instead"
+    ):
+        KernelPlugin.properties_class.unmarshal(
+            {
+                "kernel-ubuntu-binary-package": True,
+                "kernel-tools": ["bpftool"],
+            }
+        )
+
+
+def test_validate_debian_dkms_requires_debian_package():
+    with pytest.raises(
+        errors.PartsError,
+        match="Set 'kernel-ubuntu-debian-package: true' or build the module as out-of-tree in the usual way",
+    ):
+        KernelPlugin.properties_class.unmarshal(
+            {
+                "kernel-ubuntu-debian-dkms": ["nvidia-dkms-535"],
+            }
+        )
+
+
+def test_validate_debian_package_and_kconfigs_options_exclusive(emitter):
+    KernelPlugin.properties_class.unmarshal(
+        {
+            "kernel-ubuntu-debian-package": True,
+            "kernel-kconfigs": ["CONFIG_FOO=y"],
+        }
+    )
+    emitter.assert_warning(
+        "'kernel-kconfigs' will be ignored when 'kernel-ubuntu-debian-package' is set",
+    )
+
+
 def test_get_pull_commands_release(part_info):
     properties = KernelPlugin.properties_class.unmarshal(
         {
@@ -46,7 +108,8 @@ def test_get_pull_commands_release(part_info):
     expected_commands = [
         "for name in canonical-kernel ubuntu-kernel; do",
         'team_url="https://git.launchpad.net/~$name/ubuntu/+source/linux/+git/jammy"',
-        'if [ "$(curl -fsSL "$team_url")" != "Invalid OpenID transaction" ]; then',
+        'test_url="$(curl -fsSL "$team_url")"',
+        'if [ -n "$test_url" ] && [ "$test_url" != "Invalid OpenID transaction" ]; then',
         'actual_url="$team_url"',
         "fi",
         "done",
@@ -141,6 +204,197 @@ def test_get_build_packages_core24(part_info, new_dir):
     }
 
 
+def test_get_build_packages_bpftool(part_info):
+    properties = KernelPlugin.properties_class.unmarshal({"kernel-tools": ["bpftool"]})
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_packages() == {
+        "bc",
+        "binutils",
+        "bison",
+        "cmake",
+        "cpio",
+        "cryptsetup",
+        "debhelper",
+        "fakeroot",
+        "flex",
+        "gawk",
+        "gcc-x86-64-linux-gnu",
+        "kmod",
+        "kpartx",
+        "libelf-dev",
+        "libssl-dev",
+        "lz4",
+        "systemd",
+        "xz-utils",
+        "zstd",
+        "libelf-dev:amd64",
+        "zlib1g-dev:amd64",
+        "libcap-dev",
+    }
+
+
+def test_get_build_packages_cpupower(part_info):
+    properties = KernelPlugin.properties_class.unmarshal({"kernel-tools": ["cpupower"]})
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_packages() == {
+        "bc",
+        "binutils",
+        "bison",
+        "cmake",
+        "cpio",
+        "cryptsetup",
+        "debhelper",
+        "fakeroot",
+        "flex",
+        "gawk",
+        "gcc-x86-64-linux-gnu",
+        "kmod",
+        "kpartx",
+        "libelf-dev",
+        "libssl-dev",
+        "lz4",
+        "systemd",
+        "xz-utils",
+        "zstd",
+        "libpci-dev:amd64",
+    }
+
+
+def test_get_build_packages_perf(part_info):
+    properties = KernelPlugin.properties_class.unmarshal({"kernel-tools": ["perf"]})
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_packages() == {
+        "bc",
+        "binutils",
+        "bison",
+        "cmake",
+        "cpio",
+        "cryptsetup",
+        "debhelper",
+        "fakeroot",
+        "flex",
+        "gawk",
+        "gcc-x86-64-linux-gnu",
+        "kmod",
+        "kpartx",
+        "libcap-dev",
+        "libelf-dev",
+        "libiberty-dev:amd64",
+        "libssl-dev",
+        "libtraceevent-dev:amd64",
+        "lz4",
+        "systemd",
+        "xz-utils",
+        "zstd",
+    }
+
+
+def test_get_build_packages_bpftool_perf_libcap(part_info):
+    properties = KernelPlugin.properties_class.unmarshal(
+        {"kernel-tools": ["bpftool", "perf"]}
+    )
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_packages() == {
+        "bc",
+        "binutils",
+        "bison",
+        "cmake",
+        "cpio",
+        "cryptsetup",
+        "debhelper",
+        "fakeroot",
+        "flex",
+        "gawk",
+        "gcc-x86-64-linux-gnu",
+        "kmod",
+        "kpartx",
+        "libcap-dev",
+        "libelf-dev",
+        "libelf-dev:amd64",
+        "libiberty-dev:amd64",
+        "libssl-dev",
+        "libtraceevent-dev:amd64",
+        "lz4",
+        "systemd",
+        "xz-utils",
+        "zlib1g-dev:amd64",
+        "zstd",
+    }
+
+
+def test_get_build_packages_debian_package_tools_rsync(part_info):
+    properties = KernelPlugin.properties_class.unmarshal(
+        {
+            "kernel-ubuntu-debian-package": True,
+            "kernel-tools": ["bpftool"],
+        }
+    )
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_packages() == {
+        "bc",
+        "binutils",
+        "bison",
+        "cmake",
+        "cpio",
+        "cryptsetup",
+        "debhelper",
+        "fakeroot",
+        "flex",
+        "gawk",
+        "gcc-x86-64-linux-gnu",
+        "kmod",
+        "kpartx",
+        "libcap-dev",
+        "libelf-dev",
+        "libelf-dev:amd64",
+        "libssl-dev",
+        "lz4",
+        "rsync",
+        "systemd",
+        "xz-utils",
+        "zlib1g-dev:amd64",
+        "zstd",
+    }
+
+
+def test_get_build_packages_debian_dkms_adds_dkms(part_info):
+    properties = KernelPlugin.properties_class.unmarshal(
+        {
+            "kernel-ubuntu-debian-package": True,
+            "kernel-ubuntu-debian-dkms": ["nvidia-dkms-535"],
+        }
+    )
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_packages() == {
+        "bc",
+        "binutils",
+        "bison",
+        "cmake",
+        "cpio",
+        "cryptsetup",
+        "debhelper",
+        "fakeroot",
+        "flex",
+        "gawk",
+        "gcc-x86-64-linux-gnu",
+        "kmod",
+        "kpartx",
+        "libelf-dev",
+        "libssl-dev",
+        "lz4",
+        "systemd",
+        "xz-utils",
+        "zstd",
+        "dkms",
+    }
+
+
 def test_get_build_environment(part_info):
     properties = KernelPlugin.properties_class.unmarshal({})
     plugin = KernelPlugin(properties=properties, part_info=part_info)
@@ -152,6 +406,54 @@ def test_get_build_environment(part_info):
         "KERNEL_IMAGE": "bzImage",
         "KERNEL_TARGET": "modules",
     }
+
+
+def test_get_build_commands_binary_package(part_info):
+    properties = KernelPlugin.properties_class.unmarshal(
+        {
+            "kernel-ubuntu-binary-package": True,
+        }
+    )
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
+        "kernel-kdefconfig='defconfig' "
+        "kernel-kconfigs='' "
+        "kernel-tools='' "
+        "kernel-ubuntu-kconfigflavour=generic "
+        "kernel-ubuntu-release-name=None "
+        "kernel-ubuntu-abinumber= "
+        "kernel-ubuntu-binary-package=True "
+        "kernel-ubuntu-debian-package=False "
+        "kernel-ubuntu-debian-dkms=''"
+    ]
+
+
+def test_get_build_commands_debian_package(part_info):
+    properties = KernelPlugin.properties_class.unmarshal(
+        {
+            "kernel-ubuntu-debian-package": True,
+            "kernel-ubuntu-debian-dkms": [
+                "nvidia-dkms-535",
+                "nvidia-kernel-source-535",
+            ],
+        }
+    )
+    plugin = KernelPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
+        "kernel-kdefconfig='defconfig' "
+        "kernel-kconfigs='' "
+        "kernel-tools='' "
+        "kernel-ubuntu-kconfigflavour=generic "
+        "kernel-ubuntu-release-name=None "
+        "kernel-ubuntu-abinumber= "
+        "kernel-ubuntu-binary-package=False "
+        "kernel-ubuntu-debian-package=True "
+        "kernel-ubuntu-debian-dkms='nvidia-dkms-535 nvidia-kernel-source-535'"
+    ]
 
 
 def test_get_build_commands(part_info):
@@ -166,22 +468,25 @@ def test_get_build_commands(part_info):
                 "CONFIG_BAR=m",
             ],
             "kernel-tools": [
-                "bpf",
+                "bpftool",
                 "cpupower",
                 "perf",
             ],
             "kernel-ubuntu-release-name": "noble",
+            "kernel-ubuntu-debian-package": "false",
         }
     )
     plugin = KernelPlugin(properties=properties, part_info=part_info)
 
     assert plugin.get_build_commands() == [
         "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/kernel_build.sh "
-        "kernel-kdefconfig=snappy_defconfig,foo_config "
-        "kernel-kconfigs=CONFIG_FOO=y,CONFIG_BAR=m "
-        "kernel-tools=bpf,cpupower,perf "
+        "kernel-kdefconfig='snappy_defconfig foo_config' "
+        "kernel-kconfigs='CONFIG_FOO=y,CONFIG_BAR=m' "
+        "kernel-tools='bpftool cpupower perf' "
         "kernel-ubuntu-kconfigflavour= "
         "kernel-ubuntu-release-name=noble "
+        "kernel-ubuntu-abinumber= "
         "kernel-ubuntu-binary-package=False "
-        "kernel-ubuntu-abinumber="
+        "kernel-ubuntu-debian-package=False "
+        "kernel-ubuntu-debian-dkms=''"
     ]
