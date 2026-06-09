@@ -88,7 +88,7 @@
 +    source: /snap/snapcraft/x2/share/snapcraft/extensions/gpu/command-chain
 +    plugin: make
 +    make-parameters:
-+      - GPU_WRAPPER=gpu-2404-wrapper
++      - GPU_INTERFACE=gpu-2404
 +  kde-neon-6/sdk:
 +    source: /snap/snapcraft/current/share/snapcraft/extensions/desktop/command-chain-kde
 +    plugin: make

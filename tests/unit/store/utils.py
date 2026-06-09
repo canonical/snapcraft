@@ -35,10 +35,10 @@ class FakeResponse(requests.Response):
         return self.status_code == 200
 
     def json(self, **kwargs):
-        return json.loads(self._content)  # type: ignore
+        return json.loads(self._content)  # ty: ignore[invalid-argument-type]
 
     @property
-    def reason(self):  # type: ignore[reportIncompatibleVariableOverride]
+    def reason(self):
         if self._content:
             return self._content.decode()
         return ""

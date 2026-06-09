@@ -5,7 +5,6 @@ systems:
 
 environment:
 
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
   SNAP_DIR/dotnet8: ../snaps/dotnet8-hello
   SNAP_DIR/dotnet9: ../snaps/dotnet9-hello
   SNAP_DIR/dotnet10: ../snaps/dotnet10-hello
@@ -31,7 +30,7 @@ restore: |
 execute: |
 
   cd "$SNAP_DIR"
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft pack --verbose
+  snapcraft pack --verbose
 
   unsquashfs "${SNAP}"_1.0_*.snap
 

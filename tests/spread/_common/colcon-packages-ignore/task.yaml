@@ -1,0 +1,69 @@
+summary: >-
+  Exercise the colcon-packages/colcon-packages-ignore options of colcon plugin
+
+kill-timeout: 180m
+manual: true
+
+environment:
+  SNAP/colcon_packages_ignore: colcon-packages-ignore
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
+  SNAPCRAFT_BUILD_ENVIRONMENT: host
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the colcon plugin and extensions support core26 (#6190)
+  if [[ "$base" == "core26" ]]; then
+    exit 0
+  fi
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  create_dpkg_restore_point
+
+  set_base "${SNAP}/snap/snapcraft.yaml"
+
+execute: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the colcon plugin and extensions support core26 (#6190)
+  if [[ "$base" == "core26" ]]; then
+    exit 0
+  fi
+
+  cd "$SNAP"
+
+  # Build the snap and verify that only package1 was included
+  snapcraft pack
+  [ -d parts/test-part/install/opt/ros/snap/lib/package1 ]
+  [ ! -d parts/test-part/install/opt/ros/snap/lib/package2 ]
+  [ ! -d parts/test-part/install/opt/ros/snap/lib/package3 ]
+
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+  [ "$($SNAP)" = "I am package1" ]
+
+restore: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # remove once the colcon plugin and extensions support core26 (#6190)
+  if [[ "$base" == "core26" ]]; then
+    exit 0
+  fi
+
+  cd "$SNAP"
+  snapcraft clean
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/package-utils.sh
+  . "$TOOLS_DIR/package-utils.sh"
+  dpkg_restore_point
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

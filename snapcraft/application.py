@@ -36,7 +36,6 @@ from typing_extensions import override
 from snapcraft import cli, commands, errors, models, services, store
 from snapcraft.utils import get_effective_base
 
-from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
 from .parts import plugins
 from .parts.yaml_utils import get_snap_project
 
@@ -136,8 +135,6 @@ class Snapcraft(Application):
     def _register_default_plugins(self) -> None:
         """Register per application plugins when initializing."""
         super()._register_default_plugins()
-
-        craft_parts.plugins.unregister("maven-use")
 
         if self._use_craftapp_lib:
             # core22 uses dotnet v1
@@ -306,7 +303,6 @@ class Snapcraft(Application):
             summary=str(self.app.summary),
             extra_global_args=self._global_arguments,
             default_command=commands.PackCommand,
-            allow_default_command=False,
         )
 
     def _get_project_raw(self) -> dict[str, Any] | None:
@@ -344,9 +340,13 @@ def get_app_info() -> tuple[craft_cli.Dispatcher, dict[str, Any]]:
 def main() -> int:
     """Run craft-application based snapcraft with classic fallback."""
     # set lib loggers to debug level so that all messages are sent to Emitter
-    for lib_name in _LIB_NAMES:
+    for lib_name in (
+        "craft_parts",
+        "craft_providers",
+        "craft_store",
+        "snapcraft.remote",
+    ):
         logger = logging.getLogger(lib_name)
-        _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
         logger.setLevel(logging.DEBUG)
 
     app = create_app()

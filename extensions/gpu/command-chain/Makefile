@@ -1,12 +1,13 @@
 #!/usr/bin/make -f
 
 BIN_DIR := $(DESTDIR)/snap/command-chain
-GPU_WRAPPER := gpu-2404-wrapper
+GPU_INTERFACE := gpu-2404
 
-scripts = $(GPU_WRAPPER)
+scripts = $(GPU_INTERFACE)-wrapper
 
-*:
-	install -D -m755 "$@" "$(BIN_DIR)"/"$@"
+$(GPU_INTERFACE)-wrapper: gpu-wrapper
+	install -D -m755 gpu-wrapper "$(BIN_DIR)"/"$@"
+	sed --in-place 's/%GPU_INTERFACE%/$(GPU_INTERFACE)/g' "$(BIN_DIR)"/"$@"
 
 install: $(scripts)
 

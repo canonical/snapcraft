@@ -16,7 +16,7 @@
 
 """Snapcraft commands."""
 
-from . import core22, legacy
+from . import core22
 from .account import (
     StoreExportLoginCommand,
     StoreLoginCommand,
@@ -28,22 +28,21 @@ from .extensions import (
     ExtensionsCommand,
     ListExtensionsCommand,
 )
-from .legacy import (
-    StoreLegacyCreateKeyCommand,
-    StoreLegacyGatedCommand,
-    StoreLegacyListKeysCommand,
-    StoreLegacyKeysCommand,
-    StoreLegacyMetricsCommand,
-    StoreLegacyPromoteCommand,
-    StoreLegacyRegisterKeyCommand,
-    StoreLegacySetDefaultTrackCommand,
-    StoreLegacySignBuildCommand,
-    StoreLegacyUploadMetadataCommand,
-    StoreLegacyValidateCommand,
+from .keys import (
+    StoreCreateKeyCommand,
+    StoreListKeysCommand,
+    StoreKeysCommand,
+    StoreRegisterKeyCommand,
+    StoreSignBuildCommand,
 )
 from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
-from .manage import StoreCloseCommand, StoreReleaseCommand
+from .manage import (
+    StoreCloseCommand,
+    StorePromoteCommand,
+    StoreReleaseCommand,
+    StoreSetDefaultTrackCommand,
+)
 from .names import (
     StoreLegacyListCommand,
     StoreLegacyListRegisteredCommand,
@@ -64,12 +63,21 @@ from .status import (
     StoreStatusCommand,
     StoreTracksCommand,
 )
-from .upload import StoreLegacyPushCommand, StoreUploadCommand
+from .upload import (
+    StoreLegacyPushCommand,
+    StoreUploadCommand,
+    StoreUploadMetadataCommand,
+)
 from .validation_sets import (
     StoreEditValidationSetsCommand,
     StoreListValidationSetsCommand,
     StoreValidationSetsCommand,
 )
+from .validations import (
+    StoreGatedCommand,
+    StoreValidateCommand,
+)
+from .metrics import StoreMetricsCommand
 
 __all__ = [
     "ExpandExtensionsCommand",
@@ -83,39 +91,38 @@ __all__ = [
     "SnapCommand",
     "StoreCloseCommand",
     "StoreConfdbSchemasCommand",
+    "StoreCreateKeyCommand",
     "StoreEditValidationSetsCommand",
     "StoreEditConfdbSchemaCommand",
     "StoreExportLoginCommand",
-    "StoreLegacyCreateKeyCommand",
-    "StoreLegacyGatedCommand",
-    "StoreLegacyKeysCommand",
+    "StoreKeysCommand",
+    "StoreGatedCommand",
     "StoreLegacyListCommand",
-    "StoreLegacyListKeysCommand",
     "StoreLegacyListRegisteredCommand",
-    "StoreLegacyMetricsCommand",
-    "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
-    "StoreLegacyRegisterKeyCommand",
-    "StoreLegacySetDefaultTrackCommand",
-    "StoreLegacySignBuildCommand",
-    "StoreLegacyUploadMetadataCommand",
-    "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
+    "StoreListKeysCommand",
     "StoreListTracksCommand",
     "StoreListValidationSetsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
+    "StoreMetricsCommand",
     "StoreNamesCommand",
+    "StorePromoteCommand",
     "StoreRegisterCommand",
+    "StoreRegisterKeyCommand",
     "StoreReleaseCommand",
     "StoreRevisionsCommand",
+    "StoreSetDefaultTrackCommand",
+    "StoreSignBuildCommand",
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",
+    "StoreUploadMetadataCommand",
+    "StoreValidateCommand",
     "StoreValidationSetsCommand",
     "StoreWhoAmICommand",
     "TryCommand",
     "core22",
-    "legacy",
 ]

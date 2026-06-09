@@ -152,6 +152,14 @@ Snapcraft 8.14.4
 
 - `#5817`_ Unclear remote build error with ``--build-for`` on core20
 
+.. _release-notes-fixes-8.14.5:
+
+Snapcraft 8.14.5
+~~~~~~~~~~~~~~~~
+
+- `#6139`_ The :ref:`reference-colcon-plugin` now correctly stages packages from ROS
+  content sharing snaps that have no upstream release.
+
 Contributors
 ------------
 
@@ -161,6 +169,7 @@ this release.
 :literalref:`@bepri<https://github.com/bepri>`,
 :literalref:`@EdmilsonRodrigues<https://github.com/EdmilsonRodrigues>`,
 :literalref:`@gabelluardo<https://github.com/gabelluardo>`,
+:literalref:`@Guillaumebeuzeboc<https://github.com/Guillaumebeuzeboc>`,
 :literalref:`@jahn-junior<https://github.com/jahn-junior>`,
 :literalref:`@Kyuyrii<https://github.com/Kyuyrii>`,
 :literalref:`@lengau<https://github.com/lengau>`,
@@ -174,3 +183,4 @@ and :literalref:`@tigarmo<https://github.com/tigarmo>`.
 .. _#5831: https://github.com/canonical/snapcraft/issues/5831
 .. _craft-parts#1476: https://github.com/canonical/craft-parts/pull/1476
 .. _#5817: https://github.com/canonical/snapcraft/issues/5817
+.. _#6139: https://github.com/canonical/snapcraft/pull/6139

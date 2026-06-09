@@ -38,9 +38,6 @@ class ExtractedMetadata:
     version: str | None = None
     """The extracted package version."""
 
-    grade: str | None = None
-    """The extracted package version."""
-
     icon: str | None = None
     """The extracted application icon."""
 

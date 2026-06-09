@@ -1312,6 +1312,7 @@ def test_expand_environment_with_partitions(new_dir, mocker):
     }
 
 
+@pytest.mark.slow
 def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
     mocker.patch(
@@ -1369,6 +1370,7 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
     assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
 
 
+@pytest.mark.slow
 def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
     mocker.patch(
@@ -1426,6 +1428,7 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
     assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
 
 
+@pytest.mark.slow
 def test_lifecycle_run_permission_denied(new_dir):
     content = textwrap.dedent(
         """\
@@ -1940,6 +1943,7 @@ def test_get_build_plan_list_without_matching_element_and_build_for_arg(
     )
 
 
+@pytest.mark.slow
 def test_patch_elf(snapcraft_yaml, mocker, new_dir):
     """Patch binaries if the ``enable-patchelf`` build attribute is defined."""
     run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")
@@ -2004,6 +2008,7 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
     ]
 
 
+@pytest.mark.slow
 def test_patch_elf_with_override_prime(snapcraft_yaml, mocker, new_dir, emitter):
     """Patch binaries with `enable-patchelf`` and override-prime defined"""
     run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")

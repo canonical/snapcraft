@@ -97,8 +97,8 @@ COMMAND_GROUPS = [
             commands.StoreNamesCommand,
             commands.StoreLegacyListRegisteredCommand,
             commands.StoreLegacyListCommand,
-            commands.StoreLegacyMetricsCommand,
-            commands.StoreLegacyUploadMetadataCommand,
+            commands.StoreMetricsCommand,
+            commands.StoreUploadMetadataCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -109,7 +109,7 @@ COMMAND_GROUPS = [
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
             commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
-            commands.StoreLegacyPromoteCommand,
+            commands.StorePromoteCommand,
             commands.StoreListRevisionsCommand,  # hidden (alias to revisions)
             commands.StoreRevisionsCommand,
         ],
@@ -119,17 +119,17 @@ COMMAND_GROUPS = [
         [
             commands.StoreListTracksCommand,  # hidden (alias to tracks)
             commands.StoreTracksCommand,
-            commands.StoreLegacySetDefaultTrackCommand,
+            commands.StoreSetDefaultTrackCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Key Management",
         [
-            commands.StoreLegacyCreateKeyCommand,
-            commands.StoreLegacyRegisterKeyCommand,
-            commands.StoreLegacySignBuildCommand,
-            commands.StoreLegacyListKeysCommand,
-            commands.StoreLegacyKeysCommand,
+            commands.StoreCreateKeyCommand,
+            commands.StoreRegisterKeyCommand,
+            commands.StoreSignBuildCommand,
+            commands.StoreListKeysCommand,
+            commands.StoreKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -138,8 +138,8 @@ COMMAND_GROUPS = [
             commands.StoreEditValidationSetsCommand,
             commands.StoreListValidationSetsCommand,  # hidden (alias to validation-sets)
             commands.StoreValidationSetsCommand,
-            commands.StoreLegacyValidateCommand,
-            commands.StoreLegacyGatedCommand,
+            commands.StoreValidateCommand,
+            commands.StoreGatedCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -212,7 +212,6 @@ def get_dispatcher() -> craft_cli.Dispatcher:
         summary="Package, distribute, and update snaps for Linux and IoT",
         extra_global_args=GLOBAL_ARGS,
         default_command=commands.core22.PackCommand,
-        allow_default_command=False,
     )
 
 
@@ -228,7 +227,7 @@ def _run_dispatcher(
     # Load the command with a dummy app config to silence deprecation warnings.
     # This config should not actually get used down the line, so its content
     # shouldn't matter
-    dispatcher.load_command({"app": "snapcraft_legacy", "services": {}})
+    dispatcher.load_command({"app": "snapcraft", "services": {}})
     dispatcher.run()
     emit.ended_ok()
 

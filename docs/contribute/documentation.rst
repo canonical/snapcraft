@@ -167,6 +167,7 @@ the site locally:
 If successful, the terminal prints:
 
 .. terminal::
+    :output-only:
 
     build succeeded.
     The HTML pages are in docs/_build.

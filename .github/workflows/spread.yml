@@ -1,4 +1,4 @@
-name: Spread Tests
+name: Spread tests for source
 
 on:
   pull_request:
@@ -10,35 +10,52 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      source-files: ${{ steps.filter.outputs.source-files }}
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
+      - name: Check which files changed
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
+          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          filters: |
+            source-files:
+              - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
+
       # speed up build times by using wheels, when available
       - name: Use wheels
+        if: steps.filter.outputs.source-files == 'true'
         run: |
           yq eval 'del(.parts.snapcraft.build-environment[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
 
       - name: Build snapcraft snap
         id: build-snapcraft
         uses: canonical/action-build@v1
+        if: steps.filter.outputs.source-files == 'true'
 
       - name: Upload snapcraft snap
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
+        if: steps.filter.outputs.source-files == 'true'
         with:
           name: snap
           path: ${{ steps.build-snapcraft.outputs.snap }}
 
       - name: Verify snapcraft snap
+        if: steps.filter.outputs.source-files == 'true'
         run: |
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
   integration-spread-tests:
     runs-on: [spread-installed]
     needs: build
+    if: ${{ needs.build.outputs.source-files == 'true' }}
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
@@ -50,16 +67,17 @@ jobs:
         spread-jobs:
           - google:ubuntu-22.04-64
           - google:ubuntu-24.04-64
+          - google:ubuntu-26.04-64
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: true
 
       - name: Download snapcraft snap
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: snap
           path: tests
@@ -82,6 +100,7 @@ jobs:
   integration-spread-tests-store:
     runs-on: [spread-installed]
     needs: build
+    if: ${{ needs.build.outputs.source-files == 'true' }}
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
@@ -104,14 +123,14 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: true
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: snap
           path: tests

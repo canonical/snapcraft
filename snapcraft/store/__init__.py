@@ -16,14 +16,19 @@
 
 """Snapcraft CLI interface for the Snap Store."""
 
-from . import constants
+from . import constants, errors
 from ._legacy_account import LegacyUbuntuOne
-from .channel_map import ChannelMap
+from .channel_map import ChannelMap, SnapChannel
+from .channels import Channel
 from .client import StoreClientCLI
 from .onprem_client import OnPremClient
+from .status import SnapStatus
 
 __all__ = [
+    "Channel",
     "ChannelMap",
+    "SnapChannel",
+    "SnapStatus",
     "StoreClientCLI",
     "LegacyUbuntuOne",
     "OnPremClient",

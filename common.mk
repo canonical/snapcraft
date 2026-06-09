@@ -171,7 +171,7 @@ lint-ty: install-ty  ##- Check types with Astral ty (disabled by default)
 ifneq ($(CI),)
 	@echo ::group::$@
 endif
-	ty check --python .venv/bin/python $(SOURCES)
+	ty check --python .venv $(SOURCES)
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
@@ -261,7 +261,7 @@ docs-auto: docs-install  ##- Render the documentation in a live session
 # Override for `install` target in docs project. We still need the Vale setup, so we
 # run that after the parent docs setup.
 .PHONY: docs-install
-docs-install: setup-docs  ##- Set up documentation packages
+docs-install: _setup-docs  ##- Set up documentation packages
 	$(MAKE) -C docs vale-install --no-print-directory
 
 # Alias for `setup-docs`

@@ -1,0 +1,46 @@
+name: matter-lighting
+summary: Matter plugin test
+description: An lighting application to test the matter plugin.
+version: "1.0"
+
+base: core24
+
+grade: stable
+confinement: strict
+
+layout:
+  /mnt:
+    bind: $SNAP_COMMON/mnt
+
+apps:
+  matter-lighting:
+    daemon: simple
+    command: bin/lighting-app
+    install-mode: disable
+    plugs:
+      - network
+      - network-bind
+      - bluez
+      - avahi-control
+
+parts:
+  matter-sdk:
+    plugin: matter-sdk
+    matter-sdk-version: "v1.4.0.0"
+
+  lighting:
+    plugin: nil
+    after: [matter-sdk]
+    override-build: |
+      # Source the Matter SDK environment variables
+      source $CRAFT_STAGE/matter-sdk-env.sh
+
+      # Build the lighting app for snapcraft spread testing purposes
+      cd ../../matter-sdk/build/examples/lighting-app/linux
+      gn gen out/build
+      ninja -C out/build
+
+      ldd out/build/chip-lighting-app
+
+      mkdir -p $CRAFT_PART_INSTALL/bin
+      cp out/build/chip-lighting-app $CRAFT_PART_INSTALL/bin/lighting-app

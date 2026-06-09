@@ -203,7 +203,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
                     filepath=pathlib.Path(self._assertion_name),
                 )
                 craft_cli.emit.progress(f"Edited {self._assertion_name}.")
-                return edited_assertion  # type: ignore[return-value]
+                return edited_assertion
             except (yaml.YAMLError, CraftValidationError) as err:
                 craft_cli.emit.message(f"{err!s}")
                 if not utils.confirm_with_user(
@@ -245,7 +245,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
         filepath.unlink()
 
     @staticmethod
-    def _sign_assertion(assertion: models.Assertion, key_name: str | None) -> bytes:
+    def sign_assertion(assertion: models.Assertion, key_name: str | None) -> bytes:
         """Sign an assertion with `snap sign`.
 
         :param assertion: The assertion to sign.
@@ -312,7 +312,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
                     craft_cli.emit.progress(f"Built {self._assertion_name}.")
                     self._validate_assertion(built_assertion, **kwargs)
 
-                    signed_assertion = self._sign_assertion(built_assertion, key_name)
+                    signed_assertion = self.sign_assertion(built_assertion, key_name)
                     published_assertion = self._post_assertion(signed_assertion)
                     craft_cli.emit.message(
                         self._get_success_message(published_assertion)

@@ -38,6 +38,7 @@ channel status, run:
 If your account authored the snap, the output lists the current revisions by channel.
 
 .. terminal::
+    :output-only:
 
     Track    Arch     Channel    Version    Revision
     latest   amd64    stable     61d336a    127
@@ -54,6 +55,7 @@ to its target deployment percentage. For example, a progressive release of the s
 channel with a deployment target of 30% would produce output like the following.
 
 .. terminal::
+    :output-only:
 
     Track     Arch    Channel    Version    Revision    Progress
     latest    amd64   stable     4.1246     341         73 → 70%
@@ -81,6 +83,7 @@ The output is ordered by revision number, and contains the revisions for all
 architectures.
 
 .. terminal::
+    :output-only:
 
     Rev.    Uploaded              Arches    Version              Channels
     175     2025-03-13T09:26:16Z  riscv64   v0.29.0-6-gc772624   latest/edge*
@@ -124,7 +127,11 @@ This returns the name, registration date, and visibility of all snaps associated
 the current account.
 
 .. terminal::
-    :input: snapcraft names
+    :user:
+    :host:
+    :dir:
+
+    snapcraft names
 
     Name             Since                 Visibility    Notes
     cameractrls      2022-11-28T18:15:44Z  public        -

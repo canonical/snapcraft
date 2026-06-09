@@ -63,12 +63,12 @@ class GNOME(GPUExtension):
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
 
-    - desktop (https://snapcraft.io/docs/desktop-interface)
-    - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
-    - gsettings (https://snapcraft.io/docs/gsettings-interface)
-    - opengl (https://snapcraft.io/docs/opengl-interface)
-    - wayland (https://snapcraft.io/docs/wayland-interface)
-    - x11 (https://snapcraft.io/docs/x11-interface)
+    - desktop (https://snapcraft.io/docs/reference/interfaces/desktop-interface)
+    - desktop-legacy (https://snapcraft.io/docs/reference/interfaces/desktop-legacy-interface)
+    - gsettings (https://snapcraft.io/docs/reference/interfaces/gsettings-interface)
+    - opengl (https://snapcraft.io/docs/reference/interfaces/opengl-interface)
+    - wayland (https://snapcraft.io/docs/reference/interfaces/wayland-interface)
+    - x11 (https://snapcraft.io/docs/reference/interfaces/x11-interface)
     """
 
     @staticmethod
@@ -136,8 +136,9 @@ class GNOME(GPUExtension):
         platform_snap = self.gnome_snaps.content
         base = self.yaml_data["base"]
 
+        snippet: dict[str, Any]
         if base == "core24":
-            snippet: dict[str, Any] = super().get_root_snippet()
+            snippet = super().get_root_snippet()
         else:
             snippet = {
                 "layout": {
@@ -332,16 +333,10 @@ class GNOME(GPUExtension):
         else:
             parts = {}
 
-        parts.update(
-            {
-                "gnome/sdk": {
-                    "source": str(source),
-                    "plugin": "make",
-                },
-            }
-        )
-
-        if self.gnome_snaps.builtin:
-            parts["gnome/sdk"]["build-snaps"] = [_SDK_SNAP[base]]
+        parts["gnome/sdk"] = {
+            "source": str(source),
+            "plugin": "make",
+            **({"build-snaps": [_SDK_SNAP[base]]} if self.gnome_snaps.builtin else {}),
+        }
 
         return parts

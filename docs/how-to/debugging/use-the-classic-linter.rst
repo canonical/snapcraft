@@ -24,8 +24,8 @@ Fix Make warnings with linker flags
 In this example, the warnings about the ELF interpreter and ``rpath`` can be handled by
 adding options to the linker:
 
-- ``-Wl,-dynamic-linker=/snap/core22/current/lib64/ld-linux-x86-64.so.2``
-- ``-Wl,-rpath=/snap/core22/current/lib/x86_64-linux-gnu``
+- ``-Wl,-dynamic-linker=/snap/core26/current/lib64/ld-linux-x86-64.so.2``
+- ``-Wl,-rpath=/snap/core26/current/lib/x86_64-linux-gnu``
 
 In an :ref:`Autotools <craft_parts_autotools_plugin>` project, if the ``LDFLAGS``
 environment variable is used, the project file can be updated to pass these options to
@@ -36,8 +36,8 @@ the Autotools plugin. This is done by using the ``autotools-configure-parameters
     plugin: autotools
     source: .
     autotools-configure-parameters:
-      - LDFLAGS="-Wl,-dynamic-linker=/snap/core22/current/lib64/ld-linux-x86-64.so.2
-                 -Wl,-rpath=/snap/core22/current/lib/x86_64-linux-gnu"
+      - LDFLAGS="-Wl,-dynamic-linker=/snap/core26/current/lib64/ld-linux-x86-64.so.2
+                 -Wl,-rpath=/snap/core26/current/lib/x86_64-linux-gnu"
 
 In a Makefile-based project, if the ``LDFLAGS`` environment variable is used, the
 project file can be updated to pass these options to the Make plugin, like this:
@@ -47,8 +47,8 @@ project file can be updated to pass these options to the Make plugin, like this:
     plugin: make
     source: .
     make-parameters:
-      - LDFLAGS="-Wl,-dynamic-linker=/snap/core22/current/lib64/ld-linux-x86-64.so.2
-                 -Wl,-rpath=/snap/core22/current/lib/x86_64-linux-gnu"
+      - LDFLAGS="-Wl,-dynamic-linker=/snap/core26/current/lib64/ld-linux-x86-64.so.2
+                 -Wl,-rpath=/snap/core26/current/lib/x86_64-linux-gnu"
 
 Both of these options will only be useful for projects where the ``LDFLAGS`` variable
 can be used to influence the build process.
@@ -64,7 +64,7 @@ linker so that the executable is created with the correct ELF interpreter and
 .. code-block:: go
 
     /*
-    #cgo LDFLAGS: -L${SRCDIR}/lib -Wl,-rpath=\$ORIGIN/lib:/snap/core22/current/lib/x86_64-linux-gnu -Wl,--disable-new-dtags -Wl,-dynamic-linker=/snap/core22/current/lib64/ld-linux-x86-64.so.2 -lzstd
+    #cgo LDFLAGS: -L${SRCDIR}/lib -Wl,-rpath=\$ORIGIN/lib:/snap/core26/current/lib/x86_64-linux-gnu -Wl,--disable-new-dtags -Wl,-dynamic-linker=/snap/core26/current/lib64/ld-linux-x86-64.so.2 -lzstd
     #include <zstd.h>
     */
 
@@ -102,7 +102,7 @@ Or, to set the ELF interpreter, the following command can be used:
 
 .. code-block:: text
 
-    patchelf --set-interpreter /snap/core22/current/lib64/ld-linux-x86-64.so.2 foo
+    patchelf --set-interpreter /snap/core26/current/lib64/ld-linux-x86-64.so.2 foo
 
 This can be done using override scripts in order to patch the binaries as part of the
 packaging of the snap. For more information, see
@@ -111,7 +111,7 @@ packaging of the snap. For more information, see
 Enable automatic ELF file patching
 ----------------------------------
 
-Snapcraft 7.3 or higher is required to perform automatic ELF patching for core22 and up
+Snapcraft 7.3 or higher is required to perform automatic ELF patching for core22 and higher
 classic snaps. To use it, declare:
 
 .. code-block:: yaml

@@ -7,8 +7,9 @@ The env-injector extension, referred to internally as ``env-injector``, provides
 interface for altering snap behavior with user-defined environment variables.
 
 When you add the extension to individual apps inside a snap, you open the way for the
-user to `configure the snap <https://snapcraft.io/docs/configuration-in-snaps>`_ or
-affect its behavior with environment variables.
+user to :external+snap:ref:`configure the snap
+<how-to-guides-work-with-snaps-configure-snaps>` or affect its behavior with environment
+variables.
 
 
 How it works
@@ -55,7 +56,7 @@ Runtime process
 When the snap runs, for each app that uses the extension, the exporter program:
 
 1. Runs before the app is executed.
-2. Makes a request to the `snapd API <https://snapcraft.io/docs/using-the-api>`_
+2. Makes a request to the :external+snap:doc:`reference/development/snapd-rest-api`
    through the snapd Unix socket.
 3. Reads the available environment variables or paths to the ``.env`` files.
 4. Translates the snap options into environment variables.

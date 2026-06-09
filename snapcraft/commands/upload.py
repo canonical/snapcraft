@@ -18,6 +18,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import os
 import pathlib
 import textwrap
 from typing import TYPE_CHECKING
@@ -29,7 +31,6 @@ from typing_extensions import override
 
 from snapcraft import errors, store, utils
 from snapcraft.meta import SnapMetadata
-from snapcraft_legacy._store import get_data_from_snap_file
 
 if TYPE_CHECKING:
     import argparse
@@ -116,7 +117,7 @@ class StoreUploadCommand(AppCommand):
 
         client = store.StoreClientCLI()
 
-        snap_yaml, manifest_yaml = get_data_from_snap_file(snap_file)
+        snap_yaml, manifest_yaml = utils.get_data_from_snap_file(snap_file)
         snap_metadata = SnapMetadata.unmarshal(snap_yaml)
         snap_name = snap_metadata.name
         built_at = None
@@ -223,3 +224,110 @@ class StoreLegacyPushCommand(StoreUploadCommand):
     @override
     def run(self, parsed_args: argparse.Namespace):
         raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
+
+
+class StoreUploadMetadataCommand(AppCommand):
+    """Upload metadata for a snap."""
+
+    name = "upload-metadata"
+    help_msg = "Upload metadata from <snap-file> to the store"
+    overview = textwrap.dedent(
+        """
+        The following information will be retrieved from <snap-file> and used to
+        update the store:
+
+        - summary
+        - description
+        - icon
+
+        If --force is used, it will force the local metadata into the Store,
+        ignoring any possible conflict.
+
+        Examples::
+
+            snapcraft upload-metadata my-snap_0.1_amd64.snap
+            snapcraft upload-metadata my-snap_0.1_amd64.snap --force
+        """
+    )
+
+    @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "snap_file",
+            metavar="snap-file",
+            type=str,
+            help="Snap to upload metadata from",
+        )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            default=False,
+            help="Force metadata update to override any possible conflict",
+        )
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        emit.progress(
+            f"Uploading metadata from {os.path.basename(parsed_args.snap_file)!r}"
+        )
+        if not pathlib.Path(parsed_args.snap_file).resolve().is_file():
+            raise errors.SnapcraftError(
+                f"Could not find snap {str(parsed_args.snap_file)!r}."
+            )
+
+        self._upload_metadata(parsed_args.snap_file, force=parsed_args.force)
+
+    def _upload_metadata(self, snap_filename: str, *, force: bool) -> None:
+        """Upload only the metadata to the server.
+
+        :param snap_filename: The snap to get metadata from.
+        :param force: If true, overwrite existing data in the store.
+        """
+        emit.debug(f"Uploading metadata to the Store ({force=})")
+
+        # get the metadata from the snap
+        snap_yaml, _ = utils.get_data_from_snap_file(pathlib.Path(snap_filename))
+        metadata = {
+            "summary": snap_yaml["summary"],
+            "description": snap_yaml["description"],
+        }
+
+        # followed by optional keys
+        if "license" in snap_yaml:
+            metadata["license"] = snap_yaml["license"]
+        if "title" in snap_yaml:
+            metadata["title"] = snap_yaml["title"]
+
+        # other snap info
+        snap_name = snap_yaml["name"]
+
+        # hit the server
+        client = store.StoreClientCLI()
+        client.verify_upload(snap_name=snap_name)
+        client.upload_metadata(snap_name=snap_name, metadata=metadata, force=force)
+        with self._get_icon_from_snap_file(pathlib.Path(snap_filename)) as icon:
+            metadata = {"icon": icon}
+            client.upload_binary_metadata(
+                snap_name=snap_name, metadata=metadata, force=force
+            )
+
+        emit.message(f"Updated metadata for {snap_name}.")
+
+    @contextlib.contextmanager
+    def _get_icon_from_snap_file(self, snap_path: pathlib.Path):
+        icon_file = None
+        with utils.unsquash_snap(
+            snap_path, ["--extract-file", "meta/gui"]
+        ) as unsquashed_snap:
+            emit.debug(f"Output extracting icon from snap {unsquashed_snap}")
+            for extension in ("png", "svg"):
+                icon_name = f"icon.{extension}"
+                icon_path = (unsquashed_snap / f"meta/gui/{icon_name}").resolve()
+                if icon_path.is_file():
+                    icon_file = open(icon_path, "rb")
+                    break
+            try:
+                yield icon_file
+            finally:
+                if icon_file is not None:
+                    icon_file.close()
