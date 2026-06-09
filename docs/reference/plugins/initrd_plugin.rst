@@ -4,7 +4,7 @@
 .. _reference-initrd-plugin:
 
 Initrd plugin
-==============
+=============
 
 The Initrd plugin builds initial ramdisks, or initrds, for kernel snaps. Its
 intended use is to generate the initrds for Ubuntu Core systems.
