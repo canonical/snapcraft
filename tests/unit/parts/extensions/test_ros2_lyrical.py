@@ -27,15 +27,10 @@ _EXTENSION_NAME = "ros2-lyrical"
 @pytest.fixture
 def setup_method_fixture():
     def _setup_method_fixture(yaml_data=None, arch=None, target_arch=None):
-        if yaml_data is None:
-            yaml_data = {}
-        if arch is None:
-            arch = "amd64"
-        if target_arch is None:
-            target_arch = "amd64"
-
         return ROS2LyricalExtension(
-            yaml_data=yaml_data, arch=arch, target_arch=target_arch
+            yaml_data=yaml_data or {},
+            arch=arch or "amd64",
+            target_arch=target_arch or "amd64"
         )
 
     yield _setup_method_fixture
