@@ -345,8 +345,10 @@ class GNOME(GPUExtension):
         """
         source = get_extensions_data_dir() / "desktop" / "command-chain"
 
-        base = self.yaml_data["base"]
-        if base != "core22":
+        base_str = self.yaml_data["base"]
+        base = int(base_str.removeprefix("core"))
+
+        if base >= 24:
             parts = {f"gnome/{k}": v for k, v in super().get_parts_snippet().items()}
         else:
             parts = {}
@@ -354,7 +356,29 @@ class GNOME(GPUExtension):
         parts["gnome/sdk"] = {
             "source": str(source),
             "plugin": "make",
-            **({"build-snaps": [_SDK_SNAP[base]]} if self.gnome_snaps.builtin else {}),
+            **(
+                {"build-snaps": [_SDK_SNAP[base_str]]}
+                if self.gnome_snaps.builtin
+                else {}
+            ),
         }
+
+        if base >= 26:
+            cleanup_srcs = [
+                self.gnome_snaps.sdk,
+                "gtk-common-themes",
+            ]
+            escaped_srcs = [f'"{w}"' for w in cleanup_srcs]
+            parts["gnome/cleanup"] = {
+                "after": list(self.yaml_data.get("parts", {}).keys()),
+                "plugin": "nil",
+                "build-snaps": cleanup_srcs,
+                "override-prime": (
+                    "set -eux\n"
+                    f"for snap in {' '.join(escaped_srcs)}; do\n"
+                    '    cd "/snap/$snap/current" && find . -type f,l -name "*.so.*" -exec rm -f "$CRAFT_PRIME/{}" \\;\n'
+                    "done\n"
+                ),
+            }
 
         return parts

@@ -496,6 +496,17 @@ def test_get_parts_snippet_core26(gnome_extension_core26):
             "plugin": "make",
             "build-snaps": ["gnome-core26-sdk"],
         },
+        "gnome/cleanup": {
+            "after": [],
+            "plugin": "nil",
+            "build-snaps": ["gnome-core26-sdk", "gtk-common-themes"],
+            "override-prime": (
+                "set -eux\n"
+                'for snap in "gnome-core26-sdk" "gtk-common-themes"; do\n'
+                '    cd "/snap/$snap/current" && find . -type f,l -name "*.so.*" -exec rm -f "$CRAFT_PRIME/{}" \\;\n'
+                "done\n"
+            ),
+        },
     }
 
 
