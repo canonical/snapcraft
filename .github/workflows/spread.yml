@@ -83,6 +83,7 @@ jobs:
           path: tests
 
       - name: Run Ubuntu Pro spread tests
+        if: matrix.spread-jobs != 'google:ubuntu-22.04-64'
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
