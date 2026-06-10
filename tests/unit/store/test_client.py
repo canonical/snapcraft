@@ -404,13 +404,6 @@ def test_useragent_linux(mocker):
 #####################
 
 
-@pytest.mark.parametrize("env, expected", (("candid", True), ("not-candid", False)))
-def test_use_candid(monkeypatch, env, expected):
-    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", env)
-
-    assert client.use_candid() is expected
-
-
 def test_get_store_url():
     assert client.get_store_url() == "https://dashboard.snapcraft.io"
 
@@ -457,16 +450,6 @@ def test_get_hostname():
 #######################
 # StoreClient factory #
 #######################
-
-
-@pytest.mark.parametrize("ephemeral", (True, False))
-def test_get_store_client(monkeypatch, ephemeral, legacy_config_path):
-    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
-    legacy_config_path.unlink()
-
-    store_client = client.get_client(ephemeral)
-
-    assert isinstance(store_client, craft_store.StoreClient)
 
 
 @pytest.mark.parametrize("ephemeral", (True, False))

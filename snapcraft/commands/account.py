@@ -63,9 +63,6 @@ class StoreLoginCommand(AppCommand):
         Log in to the Snap Store with your Ubuntu One SSO credentials.
         If you do not have any, you can create them at https://login.ubuntu.com
 
-        To use the alternative authentication mechanism (Candid), set the
-        environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
-
         The login command requires a working keyring on the system it is used on.
         As an alternative, export {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r}
         with the exported credentials. The login command cannot be used while this
@@ -96,7 +93,13 @@ class StoreLoginCommand(AppCommand):
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
                 "'--experimental-login' is no longer supported. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead.",
+                "Remove '--experimental-login' to login with Ubuntu One."
+            )
+
+        if os.getenv(store.constants.ENVIRONMENT_STORE_AUTH) == "candid":
+            raise ArgumentParsingError(
+                f"{store.constants.ENVIRONMENT_STORE_AUTH}=candid is no longer supported. "
+                f"Unset {store.constants.ENVIRONMENT_STORE_AUTH} to login with Ubuntu One."
             )
 
         if parsed_args.login_with:
@@ -116,12 +119,9 @@ class StoreExportLoginCommand(AppCommand):
     name = "export-login"
     help_msg = "Log in to the Snap Store exporting the credentials"
     overview = textwrap.dedent(
-        f"""
+        """
         Log in to the Snap Store with your Ubuntu One SSO credentials.
         If you do not have any, you can create them at https://login.ubuntu.com
-
-        To use the alternative authentication mechanism (Candid), set the
-        environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
 
         This command exports credentials to use on systems where login is not
         possible or desired. The '--acls' option limits the scope of operations
@@ -183,7 +183,13 @@ class StoreExportLoginCommand(AppCommand):
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
                 "'--experimental-login' is no longer supported. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead.",
+                "Remove '--experimental-login' to login with Ubuntu One."
+            )
+
+        if os.getenv(store.constants.ENVIRONMENT_STORE_AUTH) == "candid":
+            raise ArgumentParsingError(
+                f"{store.constants.ENVIRONMENT_STORE_AUTH}=candid is no longer supported. "
+                f"Unset {store.constants.ENVIRONMENT_STORE_AUTH} to login with Ubuntu One."
             )
 
         kwargs: dict[str, Any] = {}
@@ -227,11 +233,6 @@ class StoreExportLoginCommand(AppCommand):
             message = f"Exported login credentials to {parsed_args.login_file!r}"
 
         message += "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
-        if os.getenv(store.constants.ENVIRONMENT_STORE_AUTH) == "candid":
-            message += (
-                f"\nSet '{store.constants.ENVIRONMENT_STORE_AUTH}=candid' for "
-                "these credentials to work."
-            )
         emit.message(message)
 
 
