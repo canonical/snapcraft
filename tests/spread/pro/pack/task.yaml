@@ -1,0 +1,19 @@
+summary: |
+  Pack snap with pro features enabled.
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "./snap/snapcraft.yaml"
+
+restore: |
+  snapcraft clean || true
+  rm -f ./*.snap
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+  snapcraft pack --pro=esm-apps
+  test -f ./*.snap
