@@ -30,7 +30,7 @@ def setup_method_fixture():
         return ROS2LyricalExtension(
             yaml_data=yaml_data or {},
             arch=arch or "amd64",
-            target_arch=target_arch or "amd64"
+            target_arch=target_arch or "amd64",
         )
 
     yield _setup_method_fixture
