@@ -35,7 +35,8 @@ with the format ``ros2-<version>-<metapackage>``. The available extensions are:
         - ``ros2-lyrical-ros-base``
         - ``ros2-lyrical-desktop``
 
-These extensions require Snapcraft 8 and higher, and are experimental.
+The Humble and Jazzy extensions require Snapcraft 8 and higher, and the Lyrical
+extensions require Snapcraft 9 and higher. These extensions are experimental.
 
 
 Included interface connections

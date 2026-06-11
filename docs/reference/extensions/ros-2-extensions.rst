@@ -243,6 +243,7 @@ ROS 2 before launching the app, similar to sourcing the typical ROS 2
                   ROS_VERSION: "2"
                   ROS_DISTRO: lyrical
                   PYTHONPATH: $SNAP/opt/ros/lyrical/lib/python3.14/site-packages:$SNAP/usr/lib/python3/dist-packages:${PYTHONPATH}
+                  LD_LIBRARY_PATH: $SNAP/usr/lib/x86_64-linux-gnu/blas:$SNAP/usr/lib/x86_64-linux-gnu/lapack:$SNAP/usr/lib/aarch64-linux-gnu/blas:$SNAP/usr/lib/aarch64-linux-gnu/lapack:$SNAP/usr/lib/arm-linux-gnueabihf/blas:$SNAP/usr/lib/arm-linux-gnueabihf/lapack:${LD_LIBRARY_PATH}
                   ROS_HOME: $SNAP_USER_DATA/ros
                 command-chain:
                   - snap/command-chain/ros2-launch
