@@ -330,6 +330,23 @@ suites:
       STORE_UPLOAD_URL: https://storage.staging.snapcraftcontent.com
       UBUNTU_ONE_SSO_URL: https://login.staging.ubuntu.com
 
+  tests/spread/pro/:
+    summary: tests of Ubuntu pro integratiom
+    manual: true
+    systems:
+      - ubuntu-24.04*
+      - ubuntu-26.04*
+    environment:
+      SNAPCRAFT_BUILD_ENVIRONMENT: ""
+      UBUNTU_PRO_TOKEN: '$(HOST: echo "$UBUNTU_PRO_TOKEN")'
+    prepare: |
+      sudo pro attach --no-auto-enable $UBUNTU_PRO_TOKEN
+      sudo pro enable --assume-yes esm-apps
+      sudo pro config set lxd_guest_attach=available
+      sudo snap restart lxd
+    restore: |
+      sudo pro detach --assume-yes
+
   docs/how-to/code/:
     summary: tests how-to guides from the docs
     systems:
