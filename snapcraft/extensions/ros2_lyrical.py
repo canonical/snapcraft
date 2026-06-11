@@ -127,7 +127,6 @@ class ROS2LyricalExtension(Extension):
             f"ros2-{self.ROS_DISTRO}/ros2-launch": {
                 "source": f"{get_extensions_data_dir()}/ros2",
                 "plugin": "make",
-                "make-parameters": ["DESTDIR=${CRAFT_PART_INSTALL}"],
                 "build-packages": [
                     f"ros-{self.ROS_DISTRO}-ros-environment",
                     f"ros-{self.ROS_DISTRO}-ros-workspace",

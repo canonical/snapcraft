@@ -117,7 +117,6 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
 
         # Something in the ROS 2 build chain requires to find this lib during cmake call,
         # however its cmake files ship with the '-dev' package.
-        # TODO: Check if this is still needed in 26.04, the Python/CMake integration may have changed
         parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]["build-packages"].append(
             "libpython3.14-dev"
         )
