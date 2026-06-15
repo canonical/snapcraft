@@ -136,7 +136,9 @@ def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
     return status
 
 
-def run_linters(location: Path, *, lint: models.Lint | None) -> list[LinterIssue]:
+def run_linters(
+    location: Path, *, lint: models.Lint | None, build_base: str | None = None
+) -> list[LinterIssue]:
     """Run all the defined linters.
 
     :param location: The root of the snap payload subtree to run linters on.

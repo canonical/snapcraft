@@ -413,3 +413,55 @@ def test_gpu_linter_classic_confinement(mocker, new_dir, mock_elf_files, base, f
 
     # Classic confinement snaps should never trigger GPU linter warnings
     assert len(issues) == 0
+
+
+@pytest.mark.parametrize(
+    "base,build_base,expected_url",
+    [
+        pytest.param(
+            "bare",
+            "core26",
+            "https://ubuntu.com/frame/docs/26/how-to/use-snap-graphics/",
+            id="bare-with-build-base",
+        ),
+        pytest.param(
+            None,
+            "core22",
+            "https://ubuntu.com/frame/docs/22/how-to/use-snap-graphics/",
+            id="none-with-build-base",
+        ),
+        pytest.param(
+            "bare",
+            None,
+            "https://ubuntu.com/frame/docs/24/how-to/use-snap-graphics/",
+            id="bare-no-build-base-fallback",
+        ),
+    ],
+)
+def test_gpu_linter_build_base(mocker, base, build_base, expected_url):
+    """Test that GPU linter respects build_base when base is bare or undefined."""
+    mock_elf = Mock()
+    mock_elf.path = "lib/x86_64-linux-gnu/libGL.so.1"
+
+    mocker.patch(
+        "snapcraft.linters.gpu_linter.elf_utils.get_elf_files", return_value=[mock_elf]
+    )
+
+    mock_metadata = Mock()
+    mock_metadata.type = "app"
+    mock_metadata.confinement = "strict"
+
+    # Mock what get_effective_base would return based on inputs
+    if base == "bare":
+        mock_metadata.get_effective_base.return_value = build_base or "core24"
+    else:
+        mock_metadata.get_effective_base.return_value = base or "core24"
+
+    linter = GpuLinter(
+        name="gpu", snap_metadata=mock_metadata, lint=None, build_base=build_base
+    )
+
+    issues = linter.run()
+
+    assert len(issues) == 1
+    assert issues[0].url == expected_url
