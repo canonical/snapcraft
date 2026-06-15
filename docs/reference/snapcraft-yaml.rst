@@ -1,4 +1,4 @@
-.. meta::
+.. meta:
     :description: Project configuration reference for Snapcraft. Find usage details and examples for every key in a snap's project file.
 
 .. _reference-snapcraft-yaml:
@@ -159,6 +159,11 @@ App keys
 
 .. kitbash-field:: Project apps
 
+General app keys
+~~~~~~~~~~~~~~~~
+
+These keys apply to app definitions generally, whether the app is run as a command or as a service.
+
 .. kitbash-field:: App command
     :prepend-name: apps.<app-name>
 
@@ -176,6 +181,35 @@ App keys
 
 .. kitbash-field:: App completer
     :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App slots
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App plugs
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App aliases
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App environment
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App command_chain
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App sockets
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App passthrough
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App extensions
+    :prepend-name: apps.<app-name>
+
+Service and daemon keys
+~~~~~~~~~~~~~~~~~~~~~~~
+
+These keys apply to apps configured to run as services or daemons. Most are relevant only when ``daemon`` is set.
 
 .. kitbash-field:: App stop_command
     :prepend-name: apps.<app-name>
@@ -201,6 +235,8 @@ App keys
 .. kitbash-field:: App timer
     :prepend-name: apps.<app-name>
 
+.. _reference-snapcraft-yaml-app-keys-app-daemon:
+
 .. kitbash-field:: App daemon
     :prepend-name: apps.<app-name>
 
@@ -225,34 +261,10 @@ App keys
 .. kitbash-field:: App install_mode
     :prepend-name: apps.<app-name>
 
-.. kitbash-field:: App slots
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App plugs
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App aliases
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App environment
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App command_chain
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App sockets
-    :prepend-name: apps.<app-name>
-
 .. kitbash-field:: App daemon_scope
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App activates_on
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App passthrough
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App extensions
     :prepend-name: apps.<app-name>
 
 
