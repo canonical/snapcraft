@@ -6,7 +6,7 @@
  description: |
    An example showing how Flutter programs can be packaged as snaps.
 
- base: core18
+ base: core22
  confinement: strict
  grade: stable
 

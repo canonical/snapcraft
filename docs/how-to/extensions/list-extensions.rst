@@ -20,17 +20,15 @@ differentiating them.
 
     Extension name          Supported bases
     ----------------------  ------------------------------
-    env-injector            core24
-    flutter-beta            core18
-    flutter-dev             core18
-    flutter-master          core18
-    flutter-stable          core18
-    gnome                   core22, core24
-    gnome-3-28              core18
-    gnome-3-34              core18
-    gnome-3-38              core20
-    gpu                     core22, core24, core26
-    kde-neon                core18, core20, core22, core24
+    dotnet10              core24
+    dotnet8               core24
+    dotnet9               core24
+    env-injector          core24
+    gnome                 core22, core24
+    gpu                   core22, core24, core26
+    kde-neon              core22, core24
+    kde-neon-6            core22, core24
+    kde-neon-qt6          core22, core24
     [...]
 
 .. vale on

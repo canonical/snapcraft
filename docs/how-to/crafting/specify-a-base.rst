@@ -37,15 +37,6 @@ major releases support a particular base.
 
 The :ref:`reference-support-schedule` details the support timeline of each base.
 
-``core18``
-^^^^^^^^^^
-
-To build ``core18`` snaps, install snapcraft 7 from the *7.x* track:
-
-.. code-block:: bash
-
-   snap install snapcraft --channel 7.x
-
 ``core``
 ^^^^^^^^
 

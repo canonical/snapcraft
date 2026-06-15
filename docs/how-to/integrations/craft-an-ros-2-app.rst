@@ -8,7 +8,7 @@ unique when crafting a `ROS 2 <https://docs.ros.org/en/rolling/index.html>`__-ba
 snap. We'll work through the aspects unique to ROS 2 apps by examining an existing
 project.
 
-There are four supported bases for ROS 2 -- core24, core22, core20, and core18.
+There are four supported bases for ROS 2 -- core24, core22 and core20.
 
 
 .. _how-to-craft-an-ros-2-app-project-files:
@@ -17,38 +17,6 @@ Example project file for ROS 2 Talker/Listener
 ----------------------------------------------
 
 .. tab-set::
-
-    .. tab-item:: core18
-
-        The following code comprises the project file for the `core18 version of ROS 2
-        Talker/Listener <https://github.com/snapcraft-docs/ros2-talker-listener>`_.
-
-        .. dropdown:: Code
-
-            .. code-block:: yaml
-                :caption: snapcraft.yaml
-
-                name: ros2-talker-listener
-                version: '0.1'
-                summary: ROS 2 Talker/Listener Example
-                description: |
-                  This example launches a ROS 2 talker and listener.
-
-                base: core18
-                confinement: devmode
-
-                parts:
-                  ros-demos:
-                    plugin: colcon
-                    source: https://github.com/ros2/demos.git
-                    source-branch: dashing
-                    colcon-rosdistro: dashing
-                    colcon-source-space: demo_nodes_cpp
-                    stage-packages: [ros-dashing-ros2launch]
-
-                apps:
-                  ros2-talker-listener:
-                    command: opt/ros/dashing/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
 
     .. tab-item:: core20
         :sync: core20
@@ -166,8 +134,6 @@ To add an ROS 2 app:
 
       * - Core
         - Extension
-      * - core18
-        - None
       * - core20
         - :ref:`ros2-foxy <reference-ros-2-extensions>`
       * - core22
@@ -185,11 +151,6 @@ To add an ROS 2 part:
 
 #. Declare the general part keys, such as ``source``, ``override-build``,
    ``build-packages``, and so on.
-#. If you're crafting for core18, set the following special keys:
-
-   - Set ``colcon-rosdistro`` to select the ROS distribution.
-   - Set ``colcon-source-space`` to the path in the source tree where colcon packages
-     are stored.
 
 #. For ``stage-packages``, list the ROS launch command as a dependency, based
    on the core:
@@ -199,8 +160,6 @@ To add an ROS 2 part:
 
       * - Core
         - Extension
-      * - core18
-        - ros-dashing-ros2launch
       * - core20
         - ros-foxy-ros2launch
       * - core22
@@ -215,7 +174,7 @@ Handle build issues
 The following errors can occur while building for ROS 2.
 
 
-core18 and core20
+core20
 ~~~~~~~~~~~~~~~~~
 
 The warnings regarding missing libraries that you might see when building your snap are

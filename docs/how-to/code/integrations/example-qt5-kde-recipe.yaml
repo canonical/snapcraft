@@ -6,7 +6,7 @@ grade: stable
 adopt-info: kcalc
 
 confinement: strict
-base: core18
+base: core22
 
 apps:
   kcalc:
@@ -34,8 +34,8 @@ parts:
     parse-info:
       - usr/share/metainfo/org.kde.kcalc.appdata.xml
     build-snaps:
-      - kde-frameworks-5-core18-sdk
-      - kde-frameworks-5-core18
+      - kde-frameworks-5-core22-sdk
+      - kde-frameworks-5-core22
     build-packages:
       - libmpfr-dev
       - libgmp-dev
