@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import http
 import json
 import textwrap
 import time
@@ -21,7 +22,6 @@ from unittest.mock import ANY, Mock, call
 
 import craft_store
 import pytest
-import requests
 from craft_store import endpoints
 from craft_store.models import RevisionsResponseModel
 
@@ -560,7 +560,7 @@ def test_login_otp(fake_client):
     fake_client.login.side_effect = [
         craft_store.errors.StoreServerError(
             FakeResponse(
-                status_code=requests.codes.unauthorized,
+                status_code=http.HTTPStatus.UNAUTHORIZED,
                 content=json.dumps(
                     {"error_list": [{"message": "2fa", "code": "twofactor-required"}]}
                 ).encode(),
