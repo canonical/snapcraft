@@ -451,11 +451,9 @@ def test_gpu_linter_build_base(mocker, base, build_base, expected_url):
     mock_metadata.type = "app"
     mock_metadata.confinement = "strict"
 
-    # Mock what get_effective_base would return based on inputs
-    if base == "bare":
-        mock_metadata.get_effective_base.return_value = build_base or "core24"
-    else:
-        mock_metadata.get_effective_base.return_value = base or "core24"
+    # Pass actual values to metadata instead of faking a non-existent method
+    mock_metadata.base = base
+    mock_metadata.name = "my-snap"
 
     linter = GpuLinter(
         name="gpu", snap_metadata=mock_metadata, lint=None, build_base=build_base
