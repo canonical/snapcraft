@@ -31,9 +31,8 @@ if os.environ.get("READTHEDOCS_VERSION_TYPE", "external") != "external":
     rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
     release = rtd_version if rtd_version != "latest" else "dev"
 else:
-    release = snapcraft.__version__
     # Because of Autotools, we can safely assume the version starts with `n.n`
-    major, minor, *_ = release.split(".")
+    major, minor, *_ = snapcraft.__version__.split(".")
     release = f"{major}.{minor}"
 
 # Copyright string; shown at the bottom of the page
