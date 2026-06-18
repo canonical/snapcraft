@@ -141,7 +141,7 @@ class KernelPluginProperties(plugins.PluginProperties, frozen=True):
                     if option == "kernel_kdefconfig" and kdefconfig == ["defconfig"]:
                         continue
                     emit.warning(
-                        f"'{option}' will be ignored when 'kernel-ubuntu-binary-package' is set",
+                        f"'{option.replace('_', '-')}' will be ignored when 'kernel-ubuntu-binary-package' is set",
                     )
         return self
 

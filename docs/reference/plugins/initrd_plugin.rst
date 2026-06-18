@@ -17,7 +17,7 @@ architecture. This plugin alleviates those challenges by constructing a minimal
 chroot for the target architecture where any required packages can be added to
 end up in the final initrd.
 
-.. admonition: Note
+.. admonition:: Note
    :class: note
 
    In order to cross-build an initrd the system requires ``binfmt_misc``. This
@@ -83,7 +83,8 @@ initrd-build-efi-image
 If true, a Unified Kernel Image (UKI) will be created using the initrd
 compressed CPIO archive created by this plugin and a kernel image file. The
 kernel image must be present in ``${CRAFT_STAGE}`` and must be named
-``vmlinuz``.
+``vmlinuz-${KERNEL_VERSION}``, where ``${KERNEL_VERSION}`` matches the directory
+name under ``${CRAFT_STAGE}/modules``.
 
 This key is valid only if the target architecture has a package in the Ubuntu
 archive providing an EFI stub. Otherwise, the build will fail.

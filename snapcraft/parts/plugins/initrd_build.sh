@@ -35,14 +35,15 @@ parse_args() {
 
 # mnt wraps the mount command
 mnt() {
-  dest="$1"; shift
-  mountpoint "${dest}" || mount "$@" "${dest}"
+  src="${1}"
+  dest="${2}"
+  mountpoint "${dest}" || mount -o bind "${src}" "${dest}"
 }
 
 # umnt wraps the umount command
 umnt() {
-  dir="$1"; shift
-  { mountpoint "${dir}" && umount "$@" "${dir}" ; } || true
+  dir="${1}"
+  { mountpoint "${dir}" && umount --lazy "${dir}" ; } || true
 }
 
 # clean kills processes and unmounts certain paths from the chroot
@@ -87,18 +88,18 @@ chroot_setup() {
     # sufficient for ensuring an unmount can happen right now. Therefore, unmount lazily
     # to ensure we don't emit an error for no Good Reason and make sure the kernel
     # cleans up outstanding mounts when all PIDs and FDs are no longer relying on it.
-    mnt "${INITRD_ROOT}/dev"         -o bind,lazy /dev
-    mnt "${INITRD_ROOT}/dev/full"    -o bind,lazy /dev/full
-    mnt "${INITRD_ROOT}/dev/null"    -o bind,lazy /dev/null
-    mnt "${INITRD_ROOT}/dev/pts"     -o bind,lazy /dev/pts
-    mnt "${INITRD_ROOT}/dev/random"  -o bind,lazy /dev/random
-    mnt "${INITRD_ROOT}/dev/urandom" -o bind,lazy /dev/urandom
-    mnt "${INITRD_ROOT}/dev/zero"    -o bind,lazy /dev/zero
-    mnt "${INITRD_ROOT}/dev/tty"     -o bind,lazy /dev/tty
+    mnt /dev         "${INITRD_ROOT}/dev"
+    mnt /dev/full    "${INITRD_ROOT}/dev/full"
+    mnt /dev/null    "${INITRD_ROOT}/dev/null"
+    mnt /dev/pts     "${INITRD_ROOT}/dev/pts"
+    mnt /dev/random  "${INITRD_ROOT}/dev/random"
+    mnt /dev/urandom "${INITRD_ROOT}/dev/urandom"
+    mnt /dev/zero    "${INITRD_ROOT}/dev/zero"
+    mnt /dev/tty     "${INITRD_ROOT}/dev/tty"
     # Normally we'd mount with -t but if we're in LXD, we have to mount from "host"
-    mnt "${INITRD_ROOT}/proc"        -o bind,lazy /proc
-    mnt "${INITRD_ROOT}/run"         -o bind,lazy /run
-    mnt "${INITRD_ROOT}/sys"         -o bind,lazy /sys
+    mnt /proc        "${INITRD_ROOT}/proc"
+    mnt /run         "${INITRD_ROOT}/run"
+    mnt /sys         "${INITRD_ROOT}/sys"
 
     touch "${BASE_CREATED}"
 }
@@ -545,7 +546,7 @@ main() {
   set -eux
 
   # Get the build environment's VERSION_CODENAME as this should match our target
-  # shellcheck disable=1091
+  # shellcheck disable=SC1091
   . /etc/os-release
 
   # UBUNTU_SERIES should match the host build environment

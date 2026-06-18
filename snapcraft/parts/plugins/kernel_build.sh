@@ -311,7 +311,7 @@ setup_kernel() {
 build_kernel() {
   echo "Building kernel..."
   # We want build_target to split as it isn't supposed to be a single arg
-  # shellcheck disable=2086
+  # shellcheck disable=SC2086
   # If kconfigflavour has been chosen, we're building an Ubuntu kernel.
   # Otherwise, we're building a "regular" kernel.
   if [ -n "${kernel_ubuntu_kconfigflavour}" ]; then
