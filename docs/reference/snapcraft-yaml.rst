@@ -197,9 +197,6 @@ These keys can be declared for apps whether they run as commands or services.
 .. kitbash-field:: App command_chain
     :prepend-name: apps.<app-name>
 
-.. kitbash-field:: App sockets
-    :prepend-name: apps.<app-name>
-
 .. kitbash-field:: App passthrough
     :prepend-name: apps.<app-name>
 
@@ -210,6 +207,12 @@ Service and daemon keys
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 These keys can be declared for apps run as services or daemons.
+
+.. kitbash-field:: App daemon
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App sockets
+    :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App stop_command
     :prepend-name: apps.<app-name>
@@ -233,9 +236,6 @@ These keys can be declared for apps run as services or daemons.
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App timer
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App daemon
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App after
