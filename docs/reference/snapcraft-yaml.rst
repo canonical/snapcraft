@@ -159,6 +159,11 @@ App keys
 
 .. kitbash-field:: Project apps
 
+General app keys
+~~~~~~~~~~~~~~~~
+
+These keys can be declared for apps whether they run as commands or services.
+
 .. kitbash-field:: App command
     :prepend-name: apps.<app-name>
 
@@ -175,6 +180,38 @@ App keys
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App completer
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App slots
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App plugs
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App aliases
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App environment
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App command_chain
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App passthrough
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App extensions
+    :prepend-name: apps.<app-name>
+
+Service and daemon keys
+~~~~~~~~~~~~~~~~~~~~~~~
+
+These keys can be declared for apps run as services or daemons.
+
+.. kitbash-field:: App daemon
+    :prepend-name: apps.<app-name>
+
+.. kitbash-field:: App sockets
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App stop_command
@@ -201,9 +238,6 @@ App keys
 .. kitbash-field:: App timer
     :prepend-name: apps.<app-name>
 
-.. kitbash-field:: App daemon
-    :prepend-name: apps.<app-name>
-
 .. kitbash-field:: App after
     :prepend-name: apps.<app-name>
 
@@ -225,34 +259,10 @@ App keys
 .. kitbash-field:: App install_mode
     :prepend-name: apps.<app-name>
 
-.. kitbash-field:: App slots
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App plugs
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App aliases
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App environment
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App command_chain
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App sockets
-    :prepend-name: apps.<app-name>
-
 .. kitbash-field:: App daemon_scope
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App activates_on
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App passthrough
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App extensions
     :prepend-name: apps.<app-name>
 
 
