@@ -1,4 +1,4 @@
-summary: Craft Parts kernel plugin test
+summary: Craft Parts initrd plugin test
 manual: true
 kill-timeout: 180m
 
@@ -25,6 +25,5 @@ execute: |
 
   unsquashfs pc-kernel_*.snap
 
-  for file in usr/local/sbin/bpftool usr/bin/cpupower bin/perf; do
-    [ -x "squashfs-root/${file}" ] || exit 1
-  done
+  # snapd-info is a "required" file; we should make sure it's present.
+  [ -e squashfs-root/snapd-info ] || exit 1
