@@ -162,7 +162,7 @@ App keys
 General app keys
 ~~~~~~~~~~~~~~~~
 
-These keys apply to app definitions generally, whether the app is run as a command or as a service.
+These keys can be declared for apps whether they run as commands or services.
 
 .. kitbash-field:: App command
     :prepend-name: apps.<app-name>
