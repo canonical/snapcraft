@@ -235,8 +235,6 @@ These keys can be declared for apps run as services or daemons.
 .. kitbash-field:: App timer
     :prepend-name: apps.<app-name>
 
-.. _reference-snapcraft-yaml-app-keys-app-daemon:
-
 .. kitbash-field:: App daemon
     :prepend-name: apps.<app-name>
 
