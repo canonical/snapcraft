@@ -1,4 +1,4 @@
-.. meta:
+.. meta::
     :description: Project configuration reference for Snapcraft. Find usage details and examples for every key in a snap's project file.
 
 .. _reference-snapcraft-yaml:
