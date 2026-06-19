@@ -209,7 +209,7 @@ These keys can be declared for apps whether they run as commands or services.
 Service and daemon keys
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-These keys apply to apps configured to run as services or daemons. Most are relevant only when ``daemon`` is set.
+These keys can be declared for apps run as services or daemons.
 
 .. kitbash-field:: App stop_command
     :prepend-name: apps.<app-name>
