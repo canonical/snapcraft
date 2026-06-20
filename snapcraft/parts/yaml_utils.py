@@ -25,7 +25,9 @@ from typing import Any, TextIO, cast
 import craft_application.errors
 import craft_cli
 import yaml
+import yaml.constructor
 import yaml.error
+import yaml.resolver
 from craft_parts import ProjectVar, ProjectVarInfo
 
 from snapcraft import const, errors, utils

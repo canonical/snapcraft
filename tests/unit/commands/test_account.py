@@ -78,11 +78,24 @@ def test_login_with_file_error(emitter, mocker, legacy_config_path, fake_app_con
 def test_login_with_experimental_fails(fake_app_config):
     cmd = commands.StoreLoginCommand(fake_app_config)
     expected = re.escape(
-        "'--experimental-login' is no longer supported. Set SNAPCRAFT_STORE_AUTH=candid instead."
+        "'--experimental-login' is no longer supported. "
+        "Remove '--experimental-login' to login with Ubuntu One."
     )
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError, match=expected):
         cmd.run(argparse.Namespace(login_with=None, experimental_login=True))
+
+
+def test_login_with_candid_fails(fake_app_config, monkeypatch):
+    monkeypatch.setenv(store.constants.ENVIRONMENT_STORE_AUTH, "candid")
+    cmd = commands.StoreLoginCommand(fake_app_config)
+    expected = re.escape(
+        f"{store.constants.ENVIRONMENT_STORE_AUTH}=candid is no longer supported. "
+        f"Unset {store.constants.ENVIRONMENT_STORE_AUTH} to login with Ubuntu One."
+    )
+
+    with pytest.raises(craft_cli.errors.ArgumentParsingError, match=expected):
+        cmd.run(argparse.Namespace(login_with=None, experimental_login=False))
 
 
 ########################
@@ -172,44 +185,11 @@ def test_export_login_with_params(emitter, fake_store_login, fake_app_config):
     )
 
 
-def test_export_login_with_candid(
-    emitter, fake_store_login, monkeypatch, fake_app_config
-):
-    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
-
-    cmd = commands.StoreExportLoginCommand(fake_app_config)
-
-    cmd.run(
-        argparse.Namespace(
-            login_file="-",
-            snaps="fake-snap,fake-other-snap",
-            channels="stable,edge",
-            acls="package_manage,package_push",
-            expires="2030-12-12",
-            experimental_login=False,
-        )
-    )
-
-    assert fake_store_login.mock_calls == [
-        call(
-            ANY,
-            packages=["fake-snap", "fake-other-snap"],
-            channels=["stable", "edge"],
-            acls=["package_manage", "package_push"],
-            ttl=ANY,
-        )
-    ]
-    emitter.assert_message(
-        "Exported login credentials:\nsecret"
-        "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
-        "\nSet 'SNAPCRAFT_STORE_AUTH=candid' for these credentials to work."
-    )
-
-
 def test_export_login_with_experimental_fails(fake_app_config):
     cmd = commands.StoreExportLoginCommand(fake_app_config)
     expected = re.escape(
-        "'--experimental-login' is no longer supported. Set SNAPCRAFT_STORE_AUTH=candid instead."
+        "'--experimental-login' is no longer supported. "
+        "Remove '--experimental-login' to login with Ubuntu One."
     )
 
     with pytest.raises(craft_cli.errors.ArgumentParsingError, match=expected):
@@ -221,6 +201,27 @@ def test_export_login_with_experimental_fails(fake_app_config):
                 acls=None,
                 expires=None,
                 experimental_login=True,
+            )
+        )
+
+
+def test_export_login_with_candid_fails(fake_app_config, monkeypatch):
+    monkeypatch.setenv(store.constants.ENVIRONMENT_STORE_AUTH, "candid")
+    cmd = commands.StoreExportLoginCommand(fake_app_config)
+    expected = re.escape(
+        f"{store.constants.ENVIRONMENT_STORE_AUTH}=candid is no longer supported. "
+        f"Unset {store.constants.ENVIRONMENT_STORE_AUTH} to login with Ubuntu One."
+    )
+
+    with pytest.raises(craft_cli.errors.ArgumentParsingError, match=expected):
+        cmd.run(
+            argparse.Namespace(
+                login_file="-",
+                snaps=None,
+                channels=None,
+                acls=None,
+                expires=None,
+                experimental_login=False,
             )
         )
 
