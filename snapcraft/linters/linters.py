@@ -163,7 +163,9 @@ def run_linters(
             if lint and categories and all(lint.all_ignored(c) for c in categories):
                 continue
 
-            linter = linter_class(name=name, lint=lint, snap_metadata=snap_metadata)
+            linter = linter_class(
+                name=name, lint=lint, snap_metadata=snap_metadata, build_base=build_base
+            )
             emit.progress(f"Running linter: {name}")
             issues = linter.run()
             all_issues += issues

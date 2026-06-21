@@ -92,7 +92,7 @@ class GpuLinter(Linter):
         )
 
         if base == "bare" or not base:
-            base = "core24"
+            base = self._build_base or "core24"
 
         elf_files = elf_utils.get_elf_files(current_path)
 
