@@ -257,13 +257,45 @@ available in any of the following scenarios:
 
 .. _supported-architectures:
 
-Supported architectures
------------------------
+Supported CPU architectures
+---------------------------
 
-Supported locally
+core22 and higher
 ^^^^^^^^^^^^^^^^^
 
-The following architectures can be used when building a snap locally.
+Local builds
+""""""""""""
+
+Snapcraft supports building for these architectures locally:
+
+* amd64
+* arm64
+* armhf
+* ppc64el
+* riscv64
+* s390x
+
+.. _supported-architectures-launchpad:
+
+Launchpad builds
+""""""""""""""""
+
+Launchpad supports remote building for these architectures:
+
+* amd64
+* arm64
+* armhf
+* ppc64el
+* riscv64
+* s390x
+
+core20
+^^^^^^
+
+Local builds
+""""""""""""
+
+Snapcraft supports building for these architectures locally:
 
 * amd64
 * arm64
@@ -274,16 +306,15 @@ The following architectures can be used when building a snap locally.
 * riscv64
 * s390x
 
-.. _supported-architectures-launchpad:
+Launchpad builds
+""""""""""""""""
 
-Supported by Launchpad
-^^^^^^^^^^^^^^^^^^^^^^
-
-The following architectures are supported by Launchpad for remote building.
+Launchpad supports remote building for these architectures:
 
 * amd64
 * arm64
 * armhf
+* i386
 * ppc64el
 * riscv64
 * s390x
