@@ -10,7 +10,7 @@ description: |
   How will it perform when push comes to crunch?
   These are the questions that Geekbench can answer.
 confinement: devmode
-base: core18
+base: core22
 
 parts:
   test-geekbench4:

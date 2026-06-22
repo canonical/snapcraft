@@ -6,7 +6,7 @@
  adopt-info: kcalc
 
  confinement: strict
- base: core18
+ base: core22
 
  apps:
    kcalc:
@@ -41,8 +41,8 @@
      parse-info:
        - usr/share/metainfo/org.kde.kcalc.appdata.xml
      build-snaps:
-       - kde-frameworks-5-core18-sdk
-       - kde-frameworks-5-core18
+       - kde-frameworks-5-core22-sdk
+       - kde-frameworks-5-core22
      build-packages:
        - libmpfr-dev
        - libgmp-dev
@@ -67,9 +67,9 @@
 +    build-packages:
 +      - g++
 +    build-snaps:
-+      - kde-frameworks-5-core18-sdk/latest/stable
++      - kde-frameworks-5-core22-sdk/latest/stable
 +    make-parameters:
-+      - PLATFORM_PLUG=kde-frameworks-5-core18
++      - PLATFORM_PLUG=kde-frameworks-5-core22
 +    plugin: make
 +    source: $SNAPCRAFT_EXTENSIONS_DIR/desktop
 +    source-subdir: kde-neon
@@ -83,9 +83,9 @@
 +    default-provider: gtk-common-themes
 +    interface: content
 +    target: $SNAP/data-dir/icons
-+  kde-frameworks-5-core18:
-+    content: kde-frameworks-5-core18-all
-+    default-provider: kde-frameworks-5-core18
++  kde-frameworks-5-core22:
++    content: kde-frameworks-5-core22-all
++    default-provider: kde-frameworks-5-core22
 +    interface: content
 +    target: $SNAP/kf5
 +  sound-themes:

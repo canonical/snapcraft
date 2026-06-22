@@ -15,7 +15,7 @@ license: GPL-2.0
 icon: snap/gui/arduino.png
 grade: stable
 
-base: core18
+base: core22
 confinement: strict
 
 architectures:

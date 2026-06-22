@@ -36,9 +36,6 @@ There are six supported base snaps:
    * - `core20`_
      - built from `Ubuntu 20.04 LTS`_
      - 8.x
-   * - `core18`_
-     - built from `Ubuntu 18.04 ESM`_
-     - 7.x
    * - `core`_
      - built from `Ubuntu 16.04 ESM`_, not to be confused with core16 (see
        below)
@@ -117,7 +114,6 @@ use ``build-base`` for kernel snaps.
 .. _`Ubuntu 24.04 LTS`: https://releases.ubuntu.com/24.04/
 .. _`Ubuntu 26.04 LTS`: https://releases.ubuntu.com/26.04/
 .. _`bare`: https://snapcraft.io/bare
-.. _`core18`: https://snapcraft.io/core18
 .. _`core20`: https://snapcraft.io/core20
 .. _`core22`: https://snapcraft.io/core22
 .. _`core24`: https://snapcraft.io/core24

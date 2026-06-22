@@ -8,9 +8,7 @@ the `Flutter <https://flutter.dev>`__ framework.
 
 .. SNAPCRAFT-1123: Missing link to Flutter plugin.
 
-The Flutter extensions require Snapcraft 7 and lower and are currently only supported
-with the core18 base. Snaps using cores higher than core18 should instead use the
-Flutter plugin with the :ref:`reference-gnome-extension`.
+Snaps should use the Flutter plugin with the :ref:`reference-gnome-extension`.
 
 There are four extensions in the family. Each tracks a different `Flutter build release
 channel

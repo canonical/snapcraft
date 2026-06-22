@@ -7,7 +7,7 @@ This how-to guide covers the steps, decisions, and implementation details that a
 unique when crafting a `ROS 1 <https://wiki.ros.org/noetic>`_-based snap. We'll work
 through the aspects unique to ROS 1 apps by examining an existing project.
 
-There are two supported bases for ROS 1 -- core20 and core18.
+There are two supported bases for ROS 1 -- core20.
 
 .. tip::
 
@@ -27,36 +27,6 @@ Example project file for ROS Talker/Listener
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. tab-set::
-
-    .. tab-item:: core18
-
-        The following code comprises the project file for the `core18 version of ROS
-        Talker/Listener <https://github.com/snapcraft-docs/ros-talker-listener>`_.
-
-        .. dropdown:: Code
-
-            .. code-block:: yaml
-                :caption: snapcraft.yaml
-
-                name: ros-talker-listener
-                version: '0.1'
-                summary: ROS Talker/Listener Example
-                description: |
-                  This example launches a ROS talker and listener.
-
-                confinement: devmode
-                base: core18
-
-                parts:
-                  ros-tutorials:
-                    plugin: catkin
-                    source: https://github.com/ros/ros_tutorials.git
-                    source-branch: melodic-devel
-                    source-space: roscpp_tutorials/
-
-                apps:
-                  ros-talker-listener:
-                    command: roslaunch roscpp_tutorials talker_listener.launch
 
     .. tab-item:: core20
 
