@@ -39,6 +39,13 @@ def gnome_extension_core24():
 
 
 @pytest.fixture
+def gnome_extension_core26():
+    return gnome.GNOME(
+        yaml_data={"base": "core26", "parts": {}}, arch="amd64", target_arch="amd64"
+    )
+
+
+@pytest.fixture
 def gnome_extension_with_build_snap():
     return gnome.GNOME(
         yaml_data={
@@ -68,14 +75,14 @@ def gnome_extension_with_default_build_snap_from_latest_edge():
 
 
 def test_get_supported_bases():
-    assert gnome.GNOME.get_supported_bases() == ("core22", "core24")
+    assert gnome.GNOME.get_supported_bases() == ("core22", "core24", "core26")
 
 
 def test_get_supported_confinement():
     assert gnome.GNOME.get_supported_confinement() == ("strict", "devmode")
 
 
-@pytest.mark.parametrize("base", ["core22", "core24"])
+@pytest.mark.parametrize("base", ["core22", "core24", "core26"])
 def test_is_experimental(base):
     assert gnome.GNOME.is_experimental(base=base) is False
 
@@ -170,6 +177,14 @@ def test_get_root_snippet_with_gpu(gnome_extension_core24):
 
     assert snippet["layout"]["/usr/share/X11/XErrorDB"] == {
         "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
+    }
+
+
+def test_get_root_snippet_with_glycin(gnome_extension_core26):
+    snippet = gnome_extension_core26.get_root_snippet()
+
+    assert snippet["layout"]["/usr/libexec/glycin-loaders"] == {
+        "bind": "$SNAP/gnome-platform/usr/libexec/glycin-loaders",
     }
 
 
