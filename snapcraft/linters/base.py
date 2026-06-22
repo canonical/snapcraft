@@ -93,10 +93,12 @@ class Linter(abc.ABC):
         name: str,
         snap_metadata: "SnapMetadata",
         lint: models.Lint | None,
+        build_base: str | None = None,
     ):
         self._name = name
         self._snap_metadata = snap_metadata
         self._lint = lint or models.Lint(ignore=[])
+        self._build_base = build_base
 
     @abc.abstractmethod
     def run(self) -> list[LinterIssue]:
