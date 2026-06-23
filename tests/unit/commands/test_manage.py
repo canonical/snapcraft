@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import os
 from unittest.mock import ANY, call
 
 import pytest
@@ -286,7 +287,7 @@ def test_promote_with_yes(
     emitter, fake_store_get_snap_status, fake_store_release, fake_app_config
 ):
     cmd = commands.StorePromoteCommand(fake_app_config)
-    cmd.run(
+    result = cmd.run(
         argparse.Namespace(
             snap_name="test-snap",
             from_channel="candidate",
@@ -302,6 +303,7 @@ def test_promote_with_yes(
         ANY, snap_name="test-snap", revision=11, channels=["stable"]
     )
     emitter.assert_message("Promotion from candidate to stable complete")
+    assert result == os.EX_OK
 
 
 @pytest.mark.usefixtures("memory_keyring")
@@ -310,7 +312,7 @@ def test_promote_user_confirms(
 ):
     mocker.patch("craft_cli.emit.confirm", return_value=True)
     cmd = commands.StorePromoteCommand(fake_app_config)
-    cmd.run(
+    result = cmd.run(
         argparse.Namespace(
             snap_name="test-snap",
             from_channel="candidate",
@@ -321,6 +323,7 @@ def test_promote_user_confirms(
 
     assert fake_store_release.called
     emitter.assert_message("Promotion from candidate to stable complete")
+    assert result == os.EX_OK
 
 
 @pytest.mark.usefixtures("memory_keyring")
@@ -329,7 +332,7 @@ def test_promote_user_cancels(
 ):
     mocker.patch("craft_cli.emit.confirm", return_value=False)
     cmd = commands.StorePromoteCommand(fake_app_config)
-    cmd.run(
+    result = cmd.run(
         argparse.Namespace(
             snap_name="test-snap",
             from_channel="candidate",
@@ -340,6 +343,7 @@ def test_promote_user_cancels(
 
     fake_store_release.assert_not_called()
     emitter.assert_message("Channel promotion cancelled")
+    assert result == 1
 
 
 @pytest.mark.usefixtures("memory_keyring")
@@ -387,3 +391,31 @@ def test_promote_no_releases_error(fake_store_get_snap_status, fake_app_config):
                 yes=True,
             )
         )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_promote_warn_snapcraft_has_tty(
+    emitter,
+    fake_store_get_snap_status,
+    fake_store_release,
+    fake_app_config,
+    mocker,
+    monkeypatch,
+):
+    monkeypatch.setenv("SNAPCRAFT_HAS_TTY", "1")
+    mocker.patch("craft_cli.emit.confirm", return_value=False)
+    cmd = commands.StorePromoteCommand(fake_app_config)
+
+    cmd.run(
+        argparse.Namespace(
+            snap_name="test-snap",
+            from_channel="candidate",
+            to_channel="stable",
+            yes=False,
+        )
+    )
+
+    emitter.assert_warning(
+        "The 'SNAPCRAFT_HAS_TTY' environment variable is no longer used. "
+        "Use '--yes' for non-interactive promotions."
+    )

@@ -101,6 +101,10 @@ Promote edge channels with ``--yes``
 The :ref:`ref_commands_promote` command now supports promoting releases from the edge
 channel non-interactively with the ``--yes`` flag.
 
+CI workflows that worked around this limitation using the ``SNAPCRAFT_HAS_TTY``
+environment variable must be updated. See :ref:`release-notes-9.0-snapcraft-has-tty`
+for instructions on removing the workaround.
+
 ``--format`` option for ``validation-sets``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -303,6 +307,19 @@ continue developing:
     git submodule deinit -f docs/sphinx-docs-starter-pack
     rm -r docs/sphinx-docs-starter-pack
 
+.. _release-notes-9.0-snapcraft-has-tty:
+
+Removed ``SNAPCRAFT_HAS_TTY``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, the :ref:`ref_commands_promote` command didn't support the ``--yes`` flag
+for non-interactive promotions from the edge channel. As a workaround, CI workflows
+could pipe ``yes`` into Snapcraft and set ``SNAPCRAFT_HAS_TTY=1`` to bypass the
+interactive prompt.
+
+Snapcraft 9 no longer supports the ``SNAPCRAFT_HAS_TTY`` environment variable. Use the
+``--yes`` flag for non-interactive promotions instead.
+
 
 Fixed bugs and issues
 ---------------------
@@ -324,6 +341,15 @@ Snapcraft 9.0.0
   build packages with versioned dependencies couldn't be resolved.
 - `craft-parts#1492 <https://github.com/canonical/craft-parts/issues/1492>`__ The
   :ref:`craft_parts_poetry_plugin` didn't work for core26 snaps.
+
+.. _release-notes-fixes-9.0.1:
+
+Snapcraft 9.0.1
+~~~~~~~~~~~~~~~~
+
+- `#6294 <https://github.com/canonical/snapcraft/issues/6294>`__ The
+  :ref:`ref_commands_promote` command now returns a non-zero exit code when the
+  promotion prompt is declined.
 
 
 Contributors
