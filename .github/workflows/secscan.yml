@@ -26,5 +26,5 @@ jobs:
         uses: canonical/starflow/secscan@work/secscan-action/CRAFT-5208
         with:
           snap-file: ${{ steps.build-snapcraft.outputs.snap }}
-          cycle: 26.10
+          cycle: "26.10"
           release-channel: edge
