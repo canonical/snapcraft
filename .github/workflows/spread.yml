@@ -52,6 +52,13 @@ jobs:
         run: |
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
+      - name: Secscan
+        uses: canonical/starflow/secscan@work/secscan-action/CRAFT-5208
+        with:
+          snap-file: ${{ steps.build-snapcraft.outputs.snap }}
+          cycle: 26.10
+          release-channel: edge
+
   integration-spread-tests:
     runs-on: [spread-installed]
     needs: build
