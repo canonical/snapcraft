@@ -1,0 +1,17 @@
+name: Test secscan workflow
+on:
+  push:
+    branches:
+      - "main"
+      - "feature/*"
+      - "hotfix/*"
+      - "release/*"
+      - "renovate/*"
+  pull_request:
+
+jobs:
+  secscan:
+    runs-on: ubuntu
+    steps:
+      - name: Secscan
+        uses: canonical/starflow/secscan@work/secscan-action/CRAFT-5208
