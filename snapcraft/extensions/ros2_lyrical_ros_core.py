@@ -16,9 +16,7 @@
 
 """Extension to the Colcon plugin for ROS 2 Lyrical using content sharing."""
 
-import functools
-
-from overrides import overrides
+from typing_extensions import override
 
 from ._ros2_lyrical_meta import ROS2LyricalMetaBase, ROS2LyricalSnaps
 
@@ -26,9 +24,9 @@ from ._ros2_lyrical_meta import ROS2LyricalMetaBase, ROS2LyricalSnaps
 class ROS2LyricalRosCoreExtension(ROS2LyricalMetaBase):
     """Drives ROS 2 build and runtime environment for snap using content-sharing."""
 
-    @functools.cached_property
-    @overrides
-    def ros2_lyrical_snaps(  # type: ignore[reportIncompatibleMethodOverride]
+    @property
+    @override
+    def ros2_lyrical_snaps(
         self,
     ) -> ROS2LyricalSnaps:
         return ROS2LyricalSnaps(

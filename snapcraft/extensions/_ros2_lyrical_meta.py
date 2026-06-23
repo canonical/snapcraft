@@ -20,7 +20,7 @@ import dataclasses
 from abc import abstractmethod
 from typing import Any
 
-from overrides import overrides
+from typing_extensions import override
 
 from .ros2_lyrical import ROS2LyricalExtension
 
@@ -44,11 +44,11 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
         raise NotImplementedError
 
     @staticmethod
-    @overrides
+    @override
     def is_experimental(base: str | None) -> bool:
         return True
 
-    @overrides
+    @override
     def get_root_snippet(self) -> dict[str, Any]:
         root_snippet = super().get_root_snippet()
         root_snippet["plugs"] = {
@@ -61,7 +61,7 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
         }
         return root_snippet
 
-    @overrides
+    @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         app_snippet = super().get_app_snippet(app_name=app_name)
         python_paths = app_snippet["environment"]["PYTHONPATH"]
@@ -89,7 +89,7 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
 
         return app_snippet
 
-    @overrides
+    @override
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         part_snippet = super().get_part_snippet(plugin_name=plugin_name)
 
@@ -102,7 +102,7 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
 
         return part_snippet
 
-    @overrides
+    @override
     def get_parts_snippet(self) -> dict[str, Any]:
         parts_snippet = super().get_parts_snippet()
         # Very unlikely but it may happen that the snapped application doesn't

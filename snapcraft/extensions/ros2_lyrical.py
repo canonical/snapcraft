@@ -18,7 +18,7 @@
 
 from typing import Any, Final
 
-from overrides import overrides
+from typing_extensions import override
 
 from .extension import Extension, get_extensions_data_dir
 
@@ -30,21 +30,21 @@ class ROS2LyricalExtension(Extension):
     ROS_DISTRO: Final[str] = "lyrical"
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_bases() -> tuple[str, ...]:
         return ("core26",)
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_confinement() -> tuple[str, ...]:
         return ("strict", "devmode")
 
     @staticmethod
-    @overrides
+    @override
     def is_experimental(base: str | None) -> bool:
         return True
 
-    @overrides
+    @override
     def get_root_snippet(self) -> dict[str, Any]:
         return {
             "package-repositories": [
@@ -83,7 +83,7 @@ class ROS2LyricalExtension(Extension):
             },
         }
 
-    @overrides
+    @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         python_paths = [
             f"$SNAP/opt/ros/{self.ROS_DISTRO}/lib/python3.14/site-packages",
@@ -112,7 +112,7 @@ class ROS2LyricalExtension(Extension):
             },
         }
 
-    @overrides
+    @override
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         return {
             "build-environment": [
@@ -121,7 +121,7 @@ class ROS2LyricalExtension(Extension):
             ]
         }
 
-    @overrides
+    @override
     def get_parts_snippet(self) -> dict[str, Any]:
         return {
             f"ros2-{self.ROS_DISTRO}/ros2-launch": {
