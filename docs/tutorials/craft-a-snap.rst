@@ -1,6 +1,6 @@
 .. _tutorial-craft-a-snap:
 
-Craft a snap
+Craft a snap wow
 ============
 
 In this tutorial, we'll build a snap package for a Python app called pyfiglet. The
