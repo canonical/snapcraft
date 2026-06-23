@@ -1,0 +1,30 @@
+name: Security scan
+
+on:
+  pull_request:
+
+jobs:
+  secscan:
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Checkout snapcraft
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # speed up build times by using wheels, when available
+      - name: Use wheels
+        run: |
+          yq eval 'del(.parts.snapcraft.build-environment[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
+
+      - name: Build snapcraft snap
+        id: build-snapcraft
+        uses: canonical/action-build@v1
+
+      - name: Secscan
+        uses: canonical/starflow/secscan@work/secscan-action/CRAFT-5208
+        with:
+          snap-file: ${{ steps.build-snapcraft.outputs.snap }}
+          cycle: 26.10
+          release-channel: edge
