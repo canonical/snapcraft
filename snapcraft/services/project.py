@@ -73,8 +73,8 @@ class Project(ProjectService):
     def validate_ua_services(project: dict[str, Any]) -> None:
         """Warn if the 'ua-services' key is used for a base other than core22.
 
-        This warning is only shown once - either before launching a managed instance
-        or in destructive mode.
+        This warning is shown no more than once - either before launching a managed
+        instance or in destructive mode.
         """
         # one-shot
         if Project._ua_service_warning:

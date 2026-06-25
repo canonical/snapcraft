@@ -152,7 +152,7 @@ class TestValidateUaServices:
         emitter.assert_interactions(None)
 
     def test_no_warning_for_core22(self, emitter):
-        """Don't warn for using 'ua-services' on core2."""
+        """Don't warn for using 'ua-services' on core22."""
         project = {"base": "core22", "ua-services": ["esm-apps"]}
 
         Project.validate_ua_services(project)
