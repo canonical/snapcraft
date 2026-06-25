@@ -126,6 +126,7 @@ conflicts = [
     ],
 ]
 constraint-dependencies = [
+    "cryptography>=48.0.1",
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
     # what is available in the noble repositories.
     # https://pynacl.readthedocs.io/en/latest/changelog/
