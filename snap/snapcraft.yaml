@@ -125,8 +125,8 @@ parts:
       # These commands allow rust-based libraries like pydantic-core
       # and cryptography to build using the non-default rust.
       mkdir -p "${CRAFT_PART_INSTALL}/bin"
-      ln -s $(which cargo-1.91) "${CRAFT_PART_INSTALL}/bin/cargo"
-      ln -s $(which rustc-1.91) "${CRAFT_PART_INSTALL}/bin/rustc"
+      ln -sf "$(command -v cargo-1.91)" "${CRAFT_PART_INSTALL}/bin/cargo"
+      ln -sf "$(command -v rustc-1.91)" "${CRAFT_PART_INSTALL}/bin/rustc"
     prime:
       - -*
 
