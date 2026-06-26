@@ -2277,3 +2277,38 @@ def test_on_prem_list_releases(
             headers={"Content-Type": "application/json", "Accept": "application/json"},
         )
     ]
+
+
+def test_notify_upload_error_status_raises_error(mocker):
+    """Test that notify_upload raises SnapcraftError if store processing returns code 'error'."""
+    status_url = "https://dashboard.snapcraft.io/dev/api/snap-push/123/status/"
+
+    # Use the exact class we found from grep
+    test_client = client.StoreClientCLI()
+
+    post_response = mocker.Mock()
+    post_response.json.return_value = {"status_details_url": status_url}
+
+    get_response = mocker.Mock()
+    get_response.json.return_value = {
+        "processed": True,
+        "code": "error",
+        "errors": [],
+        "revision": 1,
+    }
+
+    mocker.patch.object(
+        test_client, "request", side_effect=[post_response, get_response]
+    )
+
+    with pytest.raises(
+        errors.SnapcraftError, match="Store processing failed with status"
+    ):
+        test_client.notify_upload(
+            snap_name="test-snap",
+            upload_id="upload-123",
+            snap_file_size=1024,
+            built_at=None,
+            channels=None,
+            components=None,
+        )
