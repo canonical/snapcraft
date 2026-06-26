@@ -69,17 +69,17 @@ class Project(ProjectService):
     def get_parse_info(self) -> dict[str, list[str]]:
         return extract_parse_info(self.get_raw())
 
-    @staticmethod
-    def validate_ua_services(project: dict[str, Any]) -> None:
+    @classmethod
+    def validate_ua_services(cls, project: dict[str, Any]) -> None:
         """Warn if the 'ua-services' key is used for a base other than core22.
 
         This warning is shown no more than once - either before launching a managed
         instance or in destructive mode.
         """
         # one-shot
-        if Project._ua_service_warning:
+        if cls._ua_service_warning:
             return
-        Project._ua_service_warning = True
+        cls._ua_service_warning = True
 
         if is_managed_mode():
             return
