@@ -48,7 +48,7 @@ APP_METADATA = AppMetadata(
     ProjectClass=models.Project,
     source_ignore_patterns=["*.snap"],
     mandatory_adoptable_fields=list(models.MANDATORY_ADOPTABLE_FIELDS),
-    docs_url="https://documentation.ubuntu.com/snapcraft/{version}",
+    docs_url="https://documentation.ubuntu.com/snapcraft/stable",
     enable_pro_support=True,
 )
 
