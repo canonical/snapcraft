@@ -313,9 +313,9 @@ Removed ``SNAPCRAFT_HAS_TTY``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, the :ref:`ref_commands_promote` command didn't support the ``--yes`` flag
-for non-interactive promotions from the edge channel. As a workaround, CI workflows
-could pipe ``yes`` into Snapcraft and set ``SNAPCRAFT_HAS_TTY=1`` to bypass the
-interactive prompt.
+for non-interactive promotions from the edge channel. Some users bypassed the
+interactive prompt in their CI workflows by piping the ``yes`` command into the
+environment when prompted, and setting ``SNAPCRAFT_HAS_TTY=1``.
 
 Snapcraft 9 no longer supports the ``SNAPCRAFT_HAS_TTY`` environment variable. Use the
 ``--yes`` flag for non-interactive promotions instead.
@@ -347,9 +347,8 @@ Snapcraft 9.0.0
 Snapcraft 9.0.1
 ~~~~~~~~~~~~~~~~
 
-- `#6294 <https://github.com/canonical/snapcraft/issues/6294>`__ The
-  :ref:`ref_commands_promote` command now returns a non-zero exit code when the
-  promotion prompt is declined.
+- `#6294 <https://github.com/canonical/snapcraft/issues/6294>`__ Snapcraft 9 fails
+  silently with pre-9 CI promotion syntax.
 
 
 Contributors
