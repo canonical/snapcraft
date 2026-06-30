@@ -1,3 +1,7 @@
+.. meta::
+     :description: Learn how to define services and daemons in snapcraft.yaml, including daemon models, D-Bus activation, and runtime management.
+
+
 .. _explanation-services-daemons:
 
 Services and daemons
@@ -7,7 +11,7 @@ When :ref:`creating the project file <explanation-snapcraft-yaml>` to build a ne
 
 For details on how to expose an executable from its constituent parts, see :ref:`Defining a command with the project file app keys <reference-snapcraft-yaml-app-keys>`.
 
-A snap daemon or service behaves the same as a native daemon or service, and will either start automatically at boot time and end when the machine is shutdown, or start and stop on demand through socket activation.
+A snap daemon or service behaves the same as a native daemon or service, and will either start automatically at boot time and end when the machine is shut down, or start and stop on demand through socket activation.
 
 Defining a daemon
 -----------------
@@ -40,7 +44,7 @@ Services and daemons can also be managed from within a snap, such as via a hook,
 
 To set memory and CPU resource limits for a service or daemon, see :external+snap:ref:`Quota groups <how-to-guides-manage-snaps-use-resource-quotas>`.
 
-If you need to add user configurable options to your service or daemon, such as which port it should use, see :ref:`Adding snap configuration <how-to-add-a-snap-configuration>`.
+If you need to add user-configurable options to your service or daemon, such as which port it should use, see :ref:`Adding snap configuration <how-to-add-a-snap-configuration>`.
 
 Daemons and D-Bus
 -----------------
@@ -72,7 +76,7 @@ General use
 
 A daemon that needs to provide services to applications can be configured to use a bus name by setting its ``bus-name`` key. This enables the system bus to be used for communication, as with regular system daemons.
 
-The ``daemon`` key does not need to specify the ``dbus`` type for this use case, unless it is convenient to notify systemd about start-up by claiming a D-Bus name.
+The ``daemon`` key does not need to specify the ``dbus`` type for this use case, unless it is convenient to notify systemd about startup by claiming a D-Bus name.
 
 .. The following needs to be removed once any missing pieces get added to the pydantic kitbash schema and the reference documentation gets updated to match so that none of the additional usage description for fields is missing from the reference documentation.
 
