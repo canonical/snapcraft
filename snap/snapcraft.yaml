@@ -45,24 +45,6 @@ apps:
     command: bin/python $SNAP/bin/snapcraft
     completer: completion.sh
 
-build-packages:
-  - cargo
-  - build-essential
-  - intltool
-  - libapt-pkg-dev
-  - libffi-dev
-  - libssl-dev
-  - libsodium-dev
-  - liblzma-dev
-  - libxml2-dev
-  - libxslt1-dev
-  - libyaml-dev
-  - patch
-  - pkg-config
-  - python3-dev
-  - rustc
-  - sed
-
 parts:
   snapcraft-scripts:
     source: snap/local
@@ -116,6 +98,37 @@ parts:
       make check
     prime:
       - bin/patchelf
+
+  build-deps:
+    plugin: nil
+    build-packages:
+      - cargo-1.91
+      - build-essential
+      - intltool
+      - libapt-pkg-dev
+      - libffi-dev
+      - libssl-dev
+      - libsodium-dev
+      - liblzma-dev
+      - libxml2-dev
+      - libxslt1-dev
+      - libyaml-dev
+      - patch
+      - pkg-config
+      - python3-dev
+      - rustc-1.91
+      - sed
+    override-build: |
+      # We need newer versions of cargo and rustc than the cargo
+      # and rustc packages provide, but they don't set the `cargo`
+      # and `rustc` commands needed by maturin.
+      # These commands allow rust-based libraries like pydantic-core
+      # and cryptography to build using the non-default rust.
+      mkdir -p "${CRAFT_PART_INSTALL}/bin"
+      ln -sf "$(command -v cargo-1.91)" "${CRAFT_PART_INSTALL}/bin/cargo"
+      ln -sf "$(command -v rustc-1.91)" "${CRAFT_PART_INSTALL}/bin/rustc"
+    prime:
+      - -*
 
   snapcraft-libs:
     plugin: nil
@@ -239,7 +252,7 @@ parts:
       rm $CRAFT_PART_INSTALL/bin/python*
       ln -s ../usr/bin/python3 $CRAFT_PART_INSTALL/bin/python3
       ln -s python3 $CRAFT_PART_INSTALL/bin/python
-    after: [snapcraft-libs, libgit2, python3-apt]
+    after: [build-deps, snapcraft-libs, libgit2, python3-apt]
 
   chisel:
     plugin: nil
