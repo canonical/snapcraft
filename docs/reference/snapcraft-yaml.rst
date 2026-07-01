@@ -208,6 +208,8 @@ Service and daemon keys
 
 These keys can be declared for apps run as services or daemons.
 
+.. _reference-snapcraft-yaml-app-keys-app-daemon:
+
 .. kitbash-field:: App daemon
     :prepend-name: apps.<app-name>
 
