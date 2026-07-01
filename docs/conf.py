@@ -135,6 +135,7 @@ linkcheck_ignore = [
     # 2026-06-03: Ignore Canonical sites until filtering is resolved
     "https://snapcraft.io",
     "https://juju.is",
+    "https://web.archive.org/web/20230902152422/https://spdx.dev/spdx-specification-21-web-version/#h.twlc0ztnng3b",
 ]
 
 # give linkcheck multiple tries on failure
