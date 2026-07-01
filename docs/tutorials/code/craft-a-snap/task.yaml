@@ -29,5 +29,6 @@ execute: |
 # The local dot path inside the snap is resolving to `/var/lib/snapd/void/`.
 # Need to find a way around this.
 not-executing: |
+  snap connect ukuzama-pyfiglet:dot-pyfiglet-fonts
   ukuzama-pyfiglet -L smbraille.tlf
   ukuzama-pyfiglet -f smbraille hamba kahle

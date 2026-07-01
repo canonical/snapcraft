@@ -528,11 +528,18 @@ Build and reinstall the snap, but this time, install it like a production-ready 
 We must continue passing the ``--dangerous`` argument during installation because it's
 not from the Snap Store, and therefore not checked for safety.
 
-Next, let's gather a font that wasn't included with pyfiglet and install it.
+We'll also need to connect the personal-files interface, since it doesn't connect by
+default, for safety:
 
-Download `Small Braille
-<https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf>`_ from the figlet-fonts
-project and install it with:
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: snap connect ukuzama-pyfiglet:dot-pyfiglet-fonts
+    :end-at: snap connect ukuzama-pyfiglet:dot-pyfiglet-fonts
+    :dedent: 2
+
+Next, let's gather a font that wasn't included with pyfiglet and install it. Download
+`Small Braille <https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf>`__ from
+the figlet-fonts project and install it:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
     :language: bash
@@ -540,7 +547,7 @@ project and install it with:
     :end-at: ukuzama-pyfiglet -L smbraille.tlf
     :dedent: 2
 
-And give the typeface a try, making sure *not* to include the ``.tlf`` extension:
+Finally, give the typeface a try, making sure *not* to include the ``.tlf`` extension:
 
 .. terminal::
     :user:
@@ -553,8 +560,10 @@ And give the typeface a try, making sure *not* to include the ``.tlf`` extension
     ⠇⠸ ⠣⠭ ⠣ ⠣ ⠣⠜,   ⠱⠱⠃ ⠣⠜ ⠏  ⠣ ⠣⠼ ⠅
 
 
-Review the project file
------------------------
+Conclusion and next steps
+-------------------------
+
+And you're done! You have a working snap of pyfiglet.
 
 Here's the complete code for the ukuzama-pyfiglet project. Yours should look similar to
 it.
@@ -563,12 +572,6 @@ it.
 
     .. literalinclude:: code/craft-a-snap/snapcraft.yaml
         :language: yaml
-
-
-Conclusion and next steps
--------------------------
-
-And you're done! You have a snap of pyfiglet that works on your system.
 
 You're ready to begin packaging and publishing your own software as snaps. Take a look
 in the `Snap Store <https://snapcraft.io>`__ to see if the apps you use the most have
