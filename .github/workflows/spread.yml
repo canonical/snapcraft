@@ -82,6 +82,23 @@ jobs:
           name: snap
           path: tests
 
+      - name: Run Ubuntu Pro spread tests
+        if: matrix.spread-jobs != 'google:ubuntu-22.04-64'
+        env:
+          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
+          UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
+        run: |
+          if [ -z "$UBUNTU_PRO_TOKEN" ]; then
+            if [ "${{ github.event.pull_request.head.repo.full_name }}" == "canonical/snapcraft" ]; then
+              echo "Error: UBUNTU_PRO_TOKEN is not set."
+              exit 1
+            else
+              echo "Warning: UBUNTU_PRO_TOKEN is not set. Skipping Pro tests"
+              exit 0
+            fi
+          fi
+          spread ${{ matrix.spread-jobs }}:tests/spread/pro/
+
       - name: Run spread
         env:
           SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}

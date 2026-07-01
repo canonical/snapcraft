@@ -126,6 +126,7 @@ conflicts = [
     ],
 ]
 constraint-dependencies = [
+    "cryptography>=48.0.1",
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
     # what is available in the noble repositories.
     # https://pynacl.readthedocs.io/en/latest/changelog/
@@ -134,6 +135,7 @@ constraint-dependencies = [
     # protobuf 6.33.x segfaults on s390x
     # this issue might be the cause: https://github.com/protocolbuffers/protobuf/issues/24103
     "protobuf==6.32.*",
+    "starlette>=1.0.1",
 ]
 build-constraint-dependencies = [
     # needed until we have rustc >= 1.78
@@ -186,6 +188,8 @@ git_describe_command = [
 # Appends "+dirty" to the version when working dir is dirty
 # Necessary to avoid version numbers being too long
 local_scheme = "dirty-tag"
+# Used when the git version can't be determined, like when building from a worktree.
+fallback_version = "0.0.0"
 
 [tool.setuptools.packages.find]
 include = ["snapcraft", "extensions", "keyrings", "schema"]

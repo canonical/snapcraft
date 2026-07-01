@@ -2,7 +2,6 @@ summary: Test manifest file creation
 
 prepare: |
   snap install review-tools
-  snap install yq
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"

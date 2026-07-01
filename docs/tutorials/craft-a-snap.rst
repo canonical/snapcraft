@@ -505,6 +505,15 @@ Then, add it to the plugs of the ``ukuzama-pyfiglet`` app:
 
 If we repack and reinstall the snap, we can install a new font for pyfiglet to use.
 
+.. note::
+    The ``personal-files`` interface does not auto-connect. You must connect it manually:
+
+    .. code-block:: bash
+
+        snap connect ukuzama-pyfiglet:dot-pyfiglet-fonts
+
+    Additionally, ``personal-files`` is a super-privileged interface. If you intend to publish this snap to the Snap Store, you will need to request manual approval.
+
 However, before we repack, let's go back to two keys we skipped at the beginning.
 
 .. _tutorial-craft-a-snap-secure-the-snap:

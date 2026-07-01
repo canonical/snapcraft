@@ -26,14 +26,14 @@ import snapcraft
 project = "Snapcraft"
 author = "Canonical Ltd."
 
-# Sidebar documentation title; best kept reasonably short
-# The full version, including alpha/beta/rc tags
-release = snapcraft.__version__
-if ".post" in release:
-    release = "dev"
-else:
-    major, minor, *_ = release.split(".")
+# Version string in sidebar
+if os.environ.get("READTHEDOCS_VERSION_TYPE", "external") == "external":  # PR or local build
+    # Because of Autotools, we can safely assume the version starts with `n.n`
+    major, minor, *_ = snapcraft.__version__.split(".")
     release = f"{major}.{minor}"
+else:  # Branch build
+    rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
+    release = "dev" if rtd_version == "latest" else rtd_version
 
 # Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
@@ -118,12 +118,10 @@ rediraffe_redirects = "redirects.txt"
 linkcheck_anchors_ignore = [
     "#",
     ":",
-    r"https://github\.com/.*",
 ]
 linkcheck_ignore = [
-    # GitHub aggressively rate limits us
-    r"^https://github.com/",
     # Entire domains to ignore due to flakiness or issues
+    "https://github.com",
     r"^https://www.gnu.org/",
     r"^https://crates.io/",
     r"^https://([\w-]*\.)?npmjs.org",
@@ -134,6 +132,9 @@ linkcheck_ignore = [
     r"^https://www.npmjs.com/",
     "https://matrix.to/#",
     "https://gitlab.gnome.org",
+    # 2026-06-03: Ignore Canonical sites until filtering is resolved
+    "https://snapcraft.io",
+    "https://juju.is",
 ]
 
 # give linkcheck multiple tries on failure
@@ -266,7 +267,7 @@ intersphinx_mapping = {
     "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
-    "starflow": ("https://canonical-starflow.readthedocs-hosted.com", None),
+    "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
     "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
 }
 

@@ -20,8 +20,6 @@ prepare: |
   # import a registered key
   gpg --homedir "$HOME/.snap/gnupg" --import <(echo "$SNAPCRAFT_ASSERTION_KEY" | base64 --decode)
 
-  snap install yq
-
 execute: |
   # ensure snapcraft is logged in and can access the store
   snapcraft whoami
@@ -35,5 +33,3 @@ execute: |
 
 restore: |
   rm -rf "$HOME/.snap/gnupg"
-
-  snap remove --purge yq
