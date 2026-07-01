@@ -31,6 +31,16 @@ from snapcraft import errors, pack, utils
 from snapcraft.parts import lifecycle as parts_lifecycle
 
 
+def _validate_pro(parsed_args: argparse.Namespace) -> None:
+    """Error if '--pro' was provided."""
+    if getattr(parsed_args, "pro", None) is not None:
+        raise errors.SnapcraftError(
+            "'--pro' is not supported for core22.",
+            resolution="Use the 'ua-services' key in the project file instead.",
+            doc_slug="/reference/snapcraft-yaml/#ua-services",
+        )
+
+
 class _LifecycleCommand(BaseCommand, abc.ABC):
     """Lifecycle-related commands."""
 
@@ -107,12 +117,19 @@ class _LifecycleCommand(BaseCommand, abc.ABC):
             default=os.getenv("SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS", "") != "",
             help="Allow using experimental (unstable) plugins.",
         )
+        parser.add_argument(
+            "--pro",
+            type=str,
+            help=argparse.SUPPRESS,
+        )
 
     @override
     def run(self, parsed_args: argparse.Namespace):
         """Run the command."""
         if not self.name:
             raise RuntimeError("command name not specified")
+
+        _validate_pro(parsed_args)
 
         emit.debug(f"lifecycle command: {self.name!r}, arguments: {parsed_args!r}")
         parts_lifecycle.run(self.name, parsed_args)
@@ -237,6 +254,7 @@ class PackCommand(_LifecycleCommand):
     def run(self, parsed_args: argparse.Namespace):
         """Run the command."""
         if parsed_args.directory:
+            _validate_pro(parsed_args)
             snap_filename = pack.pack_snap(
                 parsed_args.directory, output=parsed_args.output
             )
