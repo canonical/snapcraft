@@ -12,11 +12,9 @@ execute: |
   snapcraft init
   cp ../snapcraft-01-basic.yaml snap/snapcraft.yaml
   snapcraft pack
-  snapcraft pack --shell
   snap install ukuzama-pyfiglet_0.1_amd64.snap --devmode --dangerous
   ukuzama-pyfiglet hello, world!
   ukuzama-pyfiglet -f smscript ciao, mondo!
-  snapcraft clean
   cp ../snapcraft-02-override-build.yaml snap/snapcraft.yaml
   snapcraft pack
   snap install ukuzama-pyfiglet_0.1_amd64.snap --devmode --dangerous
