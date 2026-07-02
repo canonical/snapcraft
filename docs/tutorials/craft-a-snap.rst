@@ -1,48 +1,30 @@
+.. meta::
+    :description: Learn the essentials of Snapcraft. In this tutorial, we package a small Python app into a snap.
+
+
 .. _tutorial-craft-a-snap:
 
 Craft a snap
 ============
 
-In this tutorial, we'll build a snap package for a Python app called pyfiglet. The
-concepts we'll cover transfer to more complex snaps.
+In this tutorial, we'll build a snap package for a Python app called `pyfiglet
+<https://github.com/pwaller/pyfiglet>`__ as a personal snap. The snap will be named *ukuzama-pyfiglet*, after a
+fictional user. Throughout this tutorial, replace *ukuzama* with your own username.
 
 It should take 20 minutes to complete.
 
 You won't need to come prepared with deep knowledge of software packaging, but
 familiarity with Linux paradigms and terminal operations is required.
 
-Once you complete this tutorial, you'll have experience hand-crafting snaps that serves as the basis for further work with creating snaps.
-
-
-Lesson plan
------------
-
-This tutorial is a run-through of the process of constructing a snap. We show you how
-to:
-
-- Start a snap project
-- Assemble the initial project file
-- Pack the snap
-- Modify the build process
-- Share root files with the snap
-- Test the snap
-
-
-What we'll work with
---------------------
-
-The object of this tutorial is to package `pyfiglet
-<https://github.com/pwaller/pyfiglet>`__ as a personal test snap. It's a lightweight app
-for displaying text as ASCII art, and is quick to build and test.
-
-The snap will be named *ukuzama-pyfiglet*, after a fictional user. Throughout this
-tutorial, replace *ukuzama* with your own username.
+Once you complete this tutorial, you'll have experience manually crafting snaps that
+serves as the basis for further work. The concepts we'll cover transfer to more complex
+snaps.
 
 
 What you'll need
 ----------------
 
-- An AMD64 system running Ubuntu 22.04 or Ubuntu 24.04
+- An AMD64 system running Ubuntu 22.04, 24.04, or 26.04
 - A local user with super user privileges
 - 20GB of free storage
 
@@ -66,7 +48,7 @@ run:
 
     .. code-block:: bash
 
-        SNAPCRAFT_BUILD_ENVIRONMENT=multipass
+        export SNAPCRAFT_BUILD_ENVIRONMENT=multipass
 
     Then, proceed to :ref:`tutorial-craft-a-snap-begin-project`.
 
@@ -145,7 +127,7 @@ sometimes informally referred to as its metadata. This information tells both hu
 machines about the snap, such as its purpose, authors, license, and so on. The comments
 in the template describe how to use these keys.
 
-Replace the first block of keys with:
+Mirror these first five keys:
 
 .. literalinclude:: code/craft-a-snap/snapcraft.yaml
     :language: yaml
@@ -154,10 +136,9 @@ Replace the first block of keys with:
     :end-at: amd64:
     :emphasize-lines: 1-10
 
-As this is a personal snap, we prepended the project name with a user name. Replace
-``ukuzama`` with your own user name. You might encounter other snaps in the Snap Store
-with naming that follows this pattern -- it's the recommended format, to keep personal
-copies of snaps distinct from their originals.
+As this is a personal snap, we prepended the project name with the user name. You might
+encounter other snaps in the Snap Store with naming that follows this pattern -- it's
+the recommended format, to keep personal copies of snaps distinct from their originals.
 
 We didn't alter the ``base`` key, since we want our project to be built on top of the
 latest Ubuntu LTS release.
@@ -174,7 +155,7 @@ tutorial, we should constrain our snap to only build on the current CPU architec
 a later point, when you're able to test on other platforms, you could widen the coverage
 to other architectures.
 
-Add the ``platform`` key after the project information:
+Add the ``platforms`` key after the project information:
 
 .. literalinclude:: code/craft-a-snap/snapcraft.yaml
     :language: yaml
@@ -195,7 +176,7 @@ files. In either case, the purpose of a part is to bundle files from a source in
 snap. Usually they're version-controlled components of the project itself, but you can
 aggregate them from a variety of locations.
 
-For the ``parts`` key, add an entry for our main part, the ``pyfiglet`` source code:
+For the ``parts`` key, replace the default part with this ``pyfiglet`` part:
 
 .. literalinclude:: code/craft-a-snap/snapcraft.yaml
     :language: yaml
@@ -230,7 +211,8 @@ snap:
     :end-at: snapcraft pack
     :dedent: 2
 
-After a few seconds, the final result is:
+Downloading the container image can sometimes take a few minutes. Once the actual build
+starts, it should only take a few seconds. The final result is:
 
 .. code-block:: bash
 
@@ -256,14 +238,21 @@ but halt Snapcraft before it finishes:
 .. code-block:: bash
 
     snapcraft pack --shell
-    cd ~/prime
+
+
 
 Adding ``--shell`` popped us into an interactive shell inside the build container. In
 here, we can look around, and even touch files, like we were putting the snap together
 by hand.
 
-The ``prime`` directory contains the state of the final files before they're packed. If
-we take a look at what's inside, we'll see:
+Let's look at the state of the snap's files before they're compressed:
+
+.. code-block:: bash
+
+    cd ~/prime
+    ls
+
+You'll see:
 
 .. code-block:: text
 
@@ -333,7 +322,7 @@ calls the snap by name -- it should match the snap name.
 The core of an app entry is its ``command`` key, which is the shell command that the
 snap calls on the host. It's a path to an executable inside the snap, and can contain
 arguments. It isn't strictly tied to any binary built by the snap. It could instead be,
-for example, a combination of POSIX-compatible commands.
+for example, a combination of standard Linux commands.
 
 .. _tutorial-craft-a-snap-test-the-snap:
 
@@ -353,8 +342,8 @@ Then, install the snap locally:
 Normally, snapd prevents us from installing snaps that aren't vetted or confined. But,
 if we tell it we're comfortable with installing a snap with full system access and that
 doesn't declare itself as stable -- a potentially dangerous decision -- it will install.
-While we're crafting and especially debugging snaps, it's easiest to install them with
-these flags.
+While we're crafting snaps, especially if we need to debug them, it's easiest to install
+them with these flags.
 
 At long last, let's try running our snap.
 
@@ -385,22 +374,6 @@ Pyfiglet can draw with different typeface styles, too. It's a fun little command
     /   | / |  / \_   /|/|/|  / \_/|/|  / |  / \_|
     \__/|/\/|_/\_/o    | | |_/\_/  | |_/\/|_/\_/ o
                   /
-
-
-Clean the build container
--------------------------
-
-Before we continue, we should perform some pre-emptive housekeeping.
-
-As we progress through a build, the contents of the build container can become dirty,
-and eventually cause conflicts or break the build. It's a good idea to periodically
-flush the container for the next build:
-
-.. literalinclude:: code/craft-a-snap/task.yaml
-    :language: bash
-    :start-at: snapcraft clean
-    :end-at: snapcraft clean
-    :dedent: 2
 
 
 Override the main part's build
@@ -486,8 +459,8 @@ the project file, with custom aliases. The alias must be something that users an
 can intuit. For personal-files, the convention is to start with ``dot-`` and follow with
 a short description of our intent.
 
-With all of that in mind, let's create an entry for personal-files after our apps,
-granting it write access to ``~/.local/share/pyfiglet/fonts``:
+After the ``apps`` block, define the top-level ``plugs`` key, and this interface alias
+called ``dot-pyfiglet-fonts``:
 
 .. literalinclude:: code/craft-a-snap/snapcraft.yaml
     :language: yaml
@@ -505,14 +478,10 @@ Then, add it to the plugs of the ``ukuzama-pyfiglet`` app:
 
 If we repack and reinstall the snap, we can install a new font for pyfiglet to use.
 
-.. note::
-    The ``personal-files`` interface does not auto-connect. You must connect it manually:
+.. admonition:: personal-files and the Snap Store
 
-    .. code-block:: bash
-
-        snap connect ukuzama-pyfiglet:dot-pyfiglet-fonts
-
-    Additionally, ``personal-files`` is a super-privileged interface. If you intend to publish this snap to the Snap Store, you will need to request manual approval.
+    The personal-files interface is privileged. If you submit this snap to the Snap
+    Store, its use of this interface will be reviewed.
 
 However, before we repack, let's go back to two keys we skipped at the beginning.
 
@@ -557,13 +526,20 @@ Build and reinstall the snap, but this time, install it like a production-ready 
     :dedent: 2
 
 We must continue passing the ``--dangerous`` argument during installation because it's
-not live in the Snap Store, and therefore not attestable.
+not from the Snap Store, and therefore not checked for safety.
 
-Next, let's gather a font that wasn't included with pyfiglet and install it.
+We'll also need to connect the personal-files interface, since it doesn't connect by
+default, for safety:
 
-Download `Small Braille
-<https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf>`_ from the figlet-fonts
-project and install it with:
+.. literalinclude:: code/craft-a-snap/task.yaml
+    :language: bash
+    :start-at: snap connect ukuzama-pyfiglet:dot-pyfiglet-fonts
+    :end-at: snap connect ukuzama-pyfiglet:dot-pyfiglet-fonts
+    :dedent: 2
+
+Next, let's gather a font that wasn't included with pyfiglet and install it. Download
+`Small Braille <https://github.com/xero/figlet-fonts/blob/master/smbraille.tlf>`__ from
+the figlet-fonts project and install it:
 
 .. literalinclude:: code/craft-a-snap/task.yaml
     :language: bash
@@ -571,7 +547,7 @@ project and install it with:
     :end-at: ukuzama-pyfiglet -L smbraille.tlf
     :dedent: 2
 
-And give it a try:
+Finally, give the typeface a try, making sure *not* to include the ``.tlf`` extension:
 
 .. terminal::
     :user:
@@ -584,8 +560,10 @@ And give it a try:
     ⠇⠸ ⠣⠭ ⠣ ⠣ ⠣⠜,   ⠱⠱⠃ ⠣⠜ ⠏  ⠣ ⠣⠼ ⠅
 
 
-Review the project file
------------------------
+Conclusion and next steps
+-------------------------
+
+And you're done! You have a working snap of pyfiglet.
 
 Here's the complete code for the ukuzama-pyfiglet project. Yours should look similar to
 it.
@@ -594,12 +572,6 @@ it.
 
     .. literalinclude:: code/craft-a-snap/snapcraft.yaml
         :language: yaml
-
-
-Conclusion and next steps
--------------------------
-
-And you're done! You have a snap of pyfiglet that works on your system.
 
 You're ready to begin packaging and publishing your own software as snaps. Take a look
 in the `Snap Store <https://snapcraft.io>`__ to see if the apps you use the most have
