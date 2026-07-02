@@ -207,9 +207,16 @@ def test_no_desktop_section(new_dir):
 
 
 def test_missing_exec_entry(new_dir):
+    """A desktop entry without an Exec key is written through unchanged.
+
+    Exec is not required for D-Bus- or systemd-activated entries (regression
+    test for https://github.com/canonical/snapcraft/issues/5799).
+    """
     with open("foo.desktop", "w") as desktop_file:
         print("[Desktop Entry]", file=desktop_file)
-        print("Icon=foo", file=desktop_file)
+        print("Type=Application", file=desktop_file)
+        print("Name=Foo", file=desktop_file)
+        print("NoDisplay=true", file=desktop_file)
 
     d = DesktopFile(
         snap_name="foo",
@@ -217,6 +224,17 @@ def test_missing_exec_entry(new_dir):
         filename="foo.desktop",
         prime_dir=new_dir,
     )
+    d.write(gui_dir=new_dir)
 
-    with pytest.raises(errors.DesktopFileError):
-        d.write(gui_dir=new_dir)
+    written = new_dir / "foo.desktop"
+    assert written.exists()
+    with written.open() as desktop_file:
+        assert desktop_file.read() == dedent(
+            """\
+            [Desktop Entry]
+            Type=Application
+            Name=Foo
+            NoDisplay=true
+
+            """
+        )
