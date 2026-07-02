@@ -102,6 +102,24 @@ def test_init_default(profile, name, project_dir, emitter, valid_new_dir, mocker
     emitter.assert_message("Successfully initialised project.")
 
 
+def test_init_default_long_directory_name(emitter, tmp_path, monkeypatch, mocker):
+    """Use the default project name when the directory name is too long."""
+    new_dir = tmp_path / "this-working-directory-has-a-very-long-name"
+    new_dir.mkdir()
+    monkeypatch.chdir(new_dir)
+    snapcraft_yaml = new_dir / "snap/snapcraft.yaml"
+    mocker.patch.object(sys, "argv", _create_command())
+
+    app = application.create_app()
+    app.run()
+
+    assert snapcraft_yaml.exists()
+    data = apply_yaml(process_yaml(snapcraft_yaml), "amd64", "amd64")
+    project = Project.unmarshal(data)
+    assert project.name == "my-project"
+    emitter.assert_message("Successfully initialised project.")
+
+
 @pytest.mark.parametrize("yaml_content", ["", "just a string"])
 def test_init_existing_yaml_invalid(yaml_content, emitter, valid_new_dir, mocker):
     """Test the 'snapcraft init' command with existing empty/invalid snapcraft.yaml."""
