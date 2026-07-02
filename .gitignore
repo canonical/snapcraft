@@ -177,3 +177,6 @@ dmypy.json
 # .NET build artifacts
 /tests/**/bin/
 /tests/**/obj/
+
+# Canonical workshop
+/.workshop.lock
