@@ -1858,6 +1858,11 @@ class Project(models.Project):
     Environment variables are set at runtime for all apps.  To set an
     environment variable for a particular app, use the ``environment`` key for
     that ``app`` entry.
+
+    From snapd 2.77 onward, support for BASH syntax ``${VAR:+value}`` and
+    ``${VAR:-default}`` is available for environment variable values. Also
+    ``${VAR:+$OTHER_VAR}`` and ``${VAR:-$OTHER_VAR}`` are supported, but internal
+    braces are not supported (so , for example, ``${VAR:+${OTHER_VAR}}`` won't work).
     """
 
     build_packages: Grammar[list[str]] | None = pydantic.Field(
