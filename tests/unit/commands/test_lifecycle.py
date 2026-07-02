@@ -20,6 +20,7 @@ from unittest.mock import call
 
 import pytest
 
+import snapcraft.cli
 import snapcraft.commands.core22.lifecycle as core22_lifecycle
 import snapcraft.errors
 from snapcraft.application import APP_METADATA
@@ -96,6 +97,36 @@ def test_snap_command_error(mocker):
 
     with pytest.raises(snapcraft.errors.RemovedCommand, match=expected):
         cmd.run(argparse.Namespace(directory=None, output=None, compression=None))
+
+
+@pytest.mark.parametrize(
+    ("cmd_class", "parsed_args"),
+    [
+        *(
+            (cmd, argparse.Namespace(pro="esm-infra", directory=None))
+            for cmd in snapcraft.cli.CORE22_LIFECYCLE_COMMAND_GROUP.commands
+            if not cmd.hidden
+        ),
+        pytest.param(
+            core22_lifecycle.PackCommand,
+            argparse.Namespace(pro="esm-infra", directory="."),
+            id="PackCommand-with-directory",
+        ),
+    ],
+)
+def test_core22_lifecycle_pro_not_supported(cmd_class, parsed_args, mocker):
+    """--pro is not supported for core22 snaps."""
+    mocker.patch("snapcraft.parts.lifecycle.run")
+    mocker.patch("snapcraft.pack.pack_snap")
+    cmd = cmd_class(None)
+    expected = re.escape("'--pro' is not supported for core22.")
+
+    with pytest.raises(snapcraft.errors.SnapcraftError, match=expected) as raised:
+        cmd.run(parsed_args)
+
+    assert raised.value.resolution == (
+        "Use the 'ua-services' key in the project file instead."
+    )
 
 
 @pytest.mark.usefixtures("emitter")
