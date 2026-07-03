@@ -8,15 +8,19 @@ environment:
   SNAP_DIR/dotnet8: ../snaps/dotnet8-hello
   SNAP_DIR/dotnet9: ../snaps/dotnet9-hello
   SNAP_DIR/dotnet10: ../snaps/dotnet10-hello
+  SNAP_DIR/dotnet11: ../snaps/dotnet11-hello
   SNAP/dotnet8: dotnet8-hello
   SNAP/dotnet9: dotnet9-hello
   SNAP/dotnet10: dotnet10-hello
+  SNAP/dotnet11: dotnet11-hello
   DOTNET_CONTENT_SNAP/dotnet8: dotnet-runtime-80
   DOTNET_CONTENT_SNAP/dotnet9: dotnet-runtime-90
   DOTNET_CONTENT_SNAP/dotnet10: dotnet-runtime-100
+  DOTNET_CONTENT_SNAP/dotnet11: dotnet-runtime-110
   DOTNET_RUNTIME_PLUG/dotnet8: dotnet8-runtime
   DOTNET_RUNTIME_PLUG/dotnet9: dotnet9-runtime
   DOTNET_RUNTIME_PLUG/dotnet10: dotnet10-runtime
+  DOTNET_RUNTIME_PLUG/dotnet11: dotnet11-runtime
 
 restore: |
 
