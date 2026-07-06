@@ -202,12 +202,6 @@ class TestExtensionROS2LyricalMetaExtensions:
                     "ros-lyrical-ros-workspace",
                     "ros-lyrical-ament-index-cpp",
                     "ros-lyrical-ament-index-python",
-                    "libpython3.14-minimal",
-                    "libpython3.14-stdlib",
-                    "python3-minimal",
-                    "python3.14-minimal",
-                    "python3.14-venv",
-                    "python3-yaml",
                 ],
             }
         }

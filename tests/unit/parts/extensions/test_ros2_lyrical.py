@@ -147,13 +147,5 @@ class TestExtensionROS2LyricalExtension:
                     "ros-lyrical-ament-index-cpp",
                     "ros-lyrical-ament-index-python",
                 ],
-                "stage-packages": [
-                    "libpython3.14-minimal",
-                    "libpython3.14-stdlib",
-                    "python3-minimal",
-                    "python3.14-minimal",
-                    "python3.14-venv",
-                    "python3-yaml",
-                ],
             }
         }
