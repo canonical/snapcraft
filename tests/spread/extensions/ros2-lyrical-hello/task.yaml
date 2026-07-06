@@ -11,6 +11,7 @@ systems:
   - ubuntu-26.04-arm64
 
 environment:
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
 
   SNAP_DIR: ../snaps/ros2-lyrical-hello
   SNAP: ros2-lyrical-hello

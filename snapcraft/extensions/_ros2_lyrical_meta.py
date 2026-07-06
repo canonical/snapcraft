@@ -113,7 +113,7 @@ class ROS2LyricalMetaBase(ROS2LyricalExtension):
             f"ros-{self.ROS_DISTRO}-ros-workspace",
             f"ros-{self.ROS_DISTRO}-ament-index-cpp",
             f"ros-{self.ROS_DISTRO}-ament-index-python",
-        ] + parts_snippet[f"ros2-{self.ROS_DISTRO}/ros2-launch"]["stage-packages"]
+        ]
 
         # Something in the ROS 2 build chain requires to find this lib during cmake call,
         # however its cmake files ship with the '-dev' package.

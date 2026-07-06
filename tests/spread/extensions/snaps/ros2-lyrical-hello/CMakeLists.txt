@@ -24,8 +24,7 @@ if(NOT WIN32)
 endif()
 
 add_executable(colcon_ros2_rlcpp_hello src/hello.cpp)
-target_link_libraries(colcon_ros2_rlcpp_hello)
-ament_target_dependencies(colcon_ros2_rlcpp_hello rclcpp class_loader)
+target_link_libraries(colcon_ros2_rlcpp_hello rclcpp::rclcpp)
 
 install(TARGETS
   colcon_ros2_rlcpp_hello
