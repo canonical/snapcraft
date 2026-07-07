@@ -440,6 +440,42 @@ class Package(PackageService):
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)
         return lifecycle_service.generate_manifest().to_yaml_string()
 
+    @package_file("meta/component.yaml", partition_re=r"component/.+")
+    def _get_component_yaml(self, partition: str | None = None) -> str:
+        """Generate component.yaml contents for a component partition."""
+        if partition is None or not partition.startswith("component/"):
+            raise errors.SnapcraftError(
+                f"Cannot generate component metadata for partition {partition!r}."
+            )
+
+        component_name = partition.split("/", 1)[1]
+        return component_yaml.get_metadata(self._project, component_name).to_yaml_string()
+
+    @override
+    def _gen_extra_assets(
+        self, partition_name: str | None = None
+    ) -> list[tuple[str | bytes | None | pathlib.Path, pathlib.Path]]:
+        """Generate mediated post-prime assets for a partition.
+
+        A ``(None, destination)`` entry is returned when the asset should not
+        exist in prime; craft-application will delete any stale copy at that
+        destination.
+        """
+        if partition_name not in (None, "default"):
+            return []
+
+        project_file = self._services.get("project").resolve_project_file_path()
+        destination = self._prime_dir_for(partition_name) / "snap" / project_file.name
+        source: pathlib.Path | None = (
+            project_file if self._project_file_copy_enabled() else None
+        )
+        return [(source, destination)]
+
+    @staticmethod
+    def _project_file_copy_enabled() -> bool:
+        """Return whether the project file should be copied into snap/."""
+        return bool(strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")))
+
     @override
     def _package_file_changed(
         self, package_file: PackageFileEntry, partition_name: str | None
@@ -492,8 +528,6 @@ class Package(PackageService):
             self._get_snap_yaml(), encoding="utf-8"
         )
 
-        enable_manifest = strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
-
         # Snapcraft's Lifecycle implementation is what we need to refer to for typing
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)
         snap_dir = path / "snap"
@@ -505,10 +539,14 @@ class Package(PackageService):
         else:
             manifest_path.unlink(missing_ok=True)
 
-        if enable_manifest:
+        project_file_path = self._services.get("project").resolve_project_file_path()
+        source = project_file_path if self._project_file_copy_enabled() else None
+        destination = snap_dir / project_file_path.name
+        if source is not None:
             snap_dir.mkdir(parents=True, exist_ok=True)
-            project_file = self._services.get("project").resolve_project_file_path()
-            shutil.copy(project_file, snap_dir)
+            shutil.copy(source, destination)
+        else:
+            destination.unlink(missing_ok=True)
 
         assets_dir = self._get_assets_dir()
         setup_assets(
@@ -520,10 +558,11 @@ class Package(PackageService):
         )
 
         for component in self._project.get_component_names():
-            component_yaml.write(
-                project=self._project,
-                component_name=component,
-                component_prime_dir=lifecycle_service.get_prime_dir(component),
+            component_prime_dir = lifecycle_service.get_prime_dir(component)
+            component_meta_dir = component_prime_dir / "meta"
+            component_meta_dir.mkdir(parents=True, exist_ok=True)
+            (component_meta_dir / "component.yaml").write_text(
+                self._get_component_yaml(f"component/{component}"), encoding="utf-8"
             )
 
     @property

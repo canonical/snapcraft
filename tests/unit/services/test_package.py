@@ -191,6 +191,54 @@ def test_get_manifest_yaml_enabled(
     assert manifest["grade"] == "devel"
 
 
+def test_project_file_copy_disabled(
+    monkeypatch, default_project, fake_services, setup_project
+):
+    monkeypatch.delenv("SNAPCRAFT_BUILD_INFO", raising=False)
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    assert package_service._project_file_copy_enabled() is False
+
+
+def test_project_file_copy_enabled(
+    monkeypatch, default_project, fake_services, setup_project
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+
+    assert package_service._project_file_copy_enabled() is True
+
+
+def test_gen_extra_assets_includes_project_file(
+    monkeypatch, default_project, fake_services, setup_project, tmp_path
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+
+    project_file = fake_services.get("project").resolve_project_file_path()
+
+    assert package_service._gen_extra_assets() == [
+        (project_file, tmp_path / "prime" / "snap" / project_file.name)
+    ]
+
+
+def test_gen_extra_assets_removes_project_file_when_disabled(
+    monkeypatch, default_project, fake_services, setup_project, tmp_path
+):
+    monkeypatch.delenv("SNAPCRAFT_BUILD_INFO", raising=False)
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    project_file = fake_services.get("project").resolve_project_file_path()
+
+    assert package_service._gen_extra_assets() == [
+        (None, tmp_path / "prime" / "snap" / project_file.name)
+    ]
+
+
 def test_manifest_changed_ignores_started_at(
     monkeypatch, default_project, fake_services, setup_project, tmp_path
 ):
@@ -283,6 +331,25 @@ def test_write_metadata_with_manifest(
     assert manifest.name == snap_yaml["name"]
     assert manifest.grade == snap_yaml["grade"]
     assert manifest.architectures == snap_yaml["architectures"]
+    project_file = fake_services.get("project").resolve_project_file_path()
+    assert (prime_dir / "snap" / project_file.name).read_text() == project_file.read_text()
+
+
+def test_write_metadata_removes_project_file_when_disabled(
+    monkeypatch, default_project, fake_services, setup_project, tmp_path
+):
+    monkeypatch.delenv("SNAPCRAFT_BUILD_INFO", raising=False)
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    project_file = fake_services.get("project").resolve_project_file_path()
+    copied_project_file = tmp_path / "prime" / "snap" / project_file.name
+    copied_project_file.parent.mkdir(parents=True)
+    copied_project_file.write_text("stale project file", encoding="utf-8")
+
+    package_service.write_metadata(tmp_path / "prime")
+
+    assert not copied_project_file.exists()
 
 
 @pytest.fixture(params=["snap", "build-aux/snap"])

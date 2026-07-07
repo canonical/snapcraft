@@ -161,6 +161,7 @@ def test_pack_component_compression(
 def test_get_artifacts(default_project, fake_services, setup_project, tmp_path):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
+    (tmp_path / "artifacts").mkdir()
     package_service.set_output_dir(tmp_path / "artifacts")
 
     assert package_service.get_artifacts() == {
@@ -190,6 +191,32 @@ def test_pack_artifact_component(
         lifecycle_service._work_dir / "partitions/component/firstcomponent/prime",
         compression="xz",
         output_dir=artifact_path.parent,
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_component_yaml(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    assert package_service._get_component_yaml("component/firstcomponent") == dedent(
+        """\
+        component: default+firstcomponent
+        type: test
+        version: '1.0'
+        summary: first component
+        description: lorem ipsum
+    """
+    )
+
+    assert package_service._get_component_yaml("component/secondcomponent") == dedent(
+        """\
+        component: default+secondcomponent
+        type: test
+        version: '1.0'
+        summary: second component
+        description: lorem ipsum
+    """
     )
 
 

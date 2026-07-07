@@ -39,6 +39,26 @@ class ComponentMetadata(SnapcraftMetadata):
     provenance: str | None = None
 
 
+def get_metadata(project: models.Project, component_name: str) -> ComponentMetadata:
+    """Create the component metadata model for a project component."""
+    if not project.components:
+        raise SnapcraftError("Project does not contain any components.")
+
+    component = project.components.get(component_name)
+
+    if not component:
+        raise SnapcraftError("Component does not exist.")
+
+    return ComponentMetadata(
+        component=f"{project.name}+{component_name}",
+        type=component.type,
+        version=component.version,
+        summary=component.summary,
+        description=component.description,
+        provenance=project.provenance,
+    )
+
+
 def write(
     project: models.Project, component_name: str, component_prime_dir: Path
 ) -> None:
@@ -51,21 +71,4 @@ def write(
     meta_dir = component_prime_dir / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
 
-    if not project.components:
-        raise SnapcraftError("Project does not contain any components.")
-
-    component = project.components.get(component_name)
-
-    if not component:
-        raise SnapcraftError("Component does not exist.")
-
-    component_metadata = ComponentMetadata(
-        component=f"{project.name}+{component_name}",
-        type=component.type,
-        version=component.version,
-        summary=component.summary,
-        description=component.description,
-        provenance=project.provenance,
-    )
-
-    component_metadata.to_yaml_file(meta_dir / "component.yaml")
+    get_metadata(project, component_name).to_yaml_file(meta_dir / "component.yaml")
