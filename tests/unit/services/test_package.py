@@ -166,6 +166,50 @@ def test_pack_artifact_snap(default_project, fake_services, setup_project, mocke
     )
 
 
+def test_get_manifest_yaml_disabled(
+    monkeypatch, default_project, fake_services, setup_project
+):
+    monkeypatch.delenv("SNAPCRAFT_BUILD_INFO", raising=False)
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    assert package_service._get_manifest_yaml() is None
+
+
+def test_get_manifest_yaml_enabled(
+    monkeypatch, default_project, fake_services, setup_project
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+
+    manifest = yaml.safe_load(cast("str", package_service._get_manifest_yaml()))
+
+    assert manifest["name"] == "default"
+    assert manifest["version"] == "1.0"
+    assert manifest["architectures"] == ["amd64"]
+    assert manifest["grade"] == "devel"
+
+
+def test_manifest_changed_ignores_started_at(
+    monkeypatch, default_project, fake_services, setup_project, tmp_path
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    prime_dir = tmp_path / "prime"
+    snap_dir = prime_dir / "snap"
+    snap_dir.mkdir(parents=True)
+
+    manifest = yaml.safe_load(cast("str", package_service._get_manifest_yaml()))
+    manifest["snapcraft-started-at"] = "2001-02-03T04:05:06Z"
+    (snap_dir / "manifest.yaml").write_text(
+        yaml.safe_dump(manifest), encoding="utf-8"
+    )
+
+    assert package_service._manifest_changed(None) is False
+
+
 def test_write_metadata(default_project, fake_services, setup_project, new_dir):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
@@ -194,6 +238,22 @@ def test_write_metadata(default_project, fake_services, setup_project, new_dir):
     )
 
     assert not (prime_dir / "snap" / "manifest.yaml").exists()
+
+
+def test_write_metadata_removes_manifest_when_disabled(
+    monkeypatch, default_project, fake_services, setup_project, tmp_path
+):
+    monkeypatch.delenv("SNAPCRAFT_BUILD_INFO", raising=False)
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    manifest_path = tmp_path / "prime" / "snap" / "manifest.yaml"
+    manifest_path.parent.mkdir(parents=True)
+    manifest_path.write_text("stale manifest", encoding="utf-8")
+
+    package_service.write_metadata(tmp_path / "prime")
+
+    assert not manifest_path.exists()
 
 
 def test_write_metadata_with_manifest(

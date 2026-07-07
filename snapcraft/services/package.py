@@ -23,8 +23,9 @@ import pathlib
 import shutil
 from typing import Literal, cast
 
+import yaml
 from craft_application import PackageService
-from craft_application.services.package import package_file
+from craft_application.services.package import PackageFileEntry, package_file
 from craft_application.util import strtobool
 from craft_cli import emit
 from typing_extensions import override
@@ -425,6 +426,60 @@ class Package(PackageService):
 
         return self.metadata.to_yaml_string()
 
+    @package_file("snap/manifest.yaml", partition_re="default")
+    def _get_manifest_yaml(self, partition: str | None = None) -> str | None:
+        """Generate the manifest.yaml file contents for the default partition."""
+        if partition not in (None, "default"):
+            raise errors.SnapcraftError(
+                f"Cannot generate snap manifest for partition {partition!r}."
+            )
+
+        if not strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")):
+            return None
+
+        lifecycle_service = cast(Lifecycle, self._services.lifecycle)
+        return lifecycle_service.generate_manifest().to_yaml_string()
+
+    @override
+    def _package_file_changed(
+        self, package_file: PackageFileEntry, partition_name: str | None
+    ) -> bool:
+        """Return whether a generated package file differs from prime contents."""
+        if package_file.relative_path == pathlib.PurePosixPath("snap/manifest.yaml"):
+            # craft-application normally compares package files byte-for-byte, but
+            # manifest.yaml embeds snapcraft-started-at, which changes on every run.
+            return self._manifest_changed(partition_name)
+
+        return super()._package_file_changed(package_file, partition_name)
+
+    def _manifest_changed(self, partition_name: str | None) -> bool:
+        """Return whether the mediated manifest differs from the primed one.
+
+        Ignores ``snapcraft-started-at`` because it changes on every Snapcraft
+        invocation. Other fields that can drift with the build environment
+        (``snapcraft-version``, OS release IDs, ``image-info``, build/stage
+        package lists) are intentionally considered meaningful content changes
+        that should trigger a repack.
+        """
+        content = self._get_manifest_yaml(partition_name)
+        destination = self._prime_dir_for(partition_name) / "snap" / "manifest.yaml"
+
+        if content is None:
+            return destination.exists()
+
+        if not destination.is_file():
+            return True
+
+        existing = yaml.safe_load(destination.read_text(encoding="utf-8"))
+        generated = yaml.safe_load(content)
+
+        if isinstance(existing, dict):
+            existing.pop("snapcraft-started-at", None)
+        if isinstance(generated, dict):
+            generated.pop("snapcraft-started-at", None)
+
+        return existing != generated
+
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
         """Write the project metadata to metadata.yaml in the given directory.
@@ -441,12 +496,17 @@ class Package(PackageService):
 
         # Snapcraft's Lifecycle implementation is what we need to refer to for typing
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)
-        if enable_manifest:
-            snap_dir = path / "snap"
+        snap_dir = path / "snap"
+        manifest_path = snap_dir / "manifest.yaml"
+        manifest_contents = self._get_manifest_yaml()
+        if manifest_contents is not None:
             snap_dir.mkdir(parents=True, exist_ok=True)
-            manifest = lifecycle_service.generate_manifest()
-            manifest.to_yaml_file(snap_dir / "manifest.yaml")
+            manifest_path.write_text(manifest_contents, encoding="utf-8")
+        else:
+            manifest_path.unlink(missing_ok=True)
 
+        if enable_manifest:
+            snap_dir.mkdir(parents=True, exist_ok=True)
             project_file = self._services.get("project").resolve_project_file_path()
             shutil.copy(project_file, snap_dir)
 
