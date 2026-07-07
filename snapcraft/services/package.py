@@ -24,6 +24,7 @@ import shutil
 from typing import Literal, cast
 
 from craft_application import PackageService
+from craft_application.services.package import package_file
 from craft_application.util import strtobool
 from craft_cli import emit
 from typing_extensions import override
@@ -42,6 +43,12 @@ from snapcraft.utils import process_version
 
 class Package(PackageService):
     """Package service subclass for Snapcraft."""
+
+    @property
+    @override
+    def supports_conditional_repack(self) -> bool:
+        """Disable ST160 pack orchestration until all post-prime writes are mediated."""
+        return False
 
     @override
     def setup(self) -> None:
@@ -269,6 +276,98 @@ class Package(PackageService):
 
         return component_map
 
+    def _get_pack_output(self) -> pathlib.Path:
+        """Return the configured pack output path."""
+        return self.output_dir
+
+    def _get_artifact_output_dir(self) -> pathlib.Path:
+        """Return the directory where component artifacts will be written."""
+        output = self._get_pack_output()
+        if output and not output.is_dir():
+            return output.parent.resolve()
+
+        return output.resolve()
+
+    def _get_default_artifact_path(self) -> pathlib.Path:
+        """Return the expected output path for the snap artifact."""
+        output = self._get_pack_output()
+        output_dir = self._get_artifact_output_dir()
+        filename = pack._get_filename(  # noqa: SLF001
+            str(output) if output else None,
+            self._project.name,
+            process_version(self._project.version),
+            self._platform,
+        )
+        if filename is None:
+            raise errors.SnapcraftError("Could not determine the snap artifact name.")
+
+        return output_dir / filename
+
+    def _get_component_artifact_path(self, component_name: str) -> pathlib.Path:
+        """Return the expected output path for a component artifact."""
+        if self._project.components is None:
+            raise errors.SnapcraftError("Project does not contain any components.")
+
+        component = self._project.components[component_name]
+        version = process_version(component.version or self._project.version)
+        filename = f"{self._project.name}+{component_name}_{version}.comp"
+        return self._get_artifact_output_dir() / filename
+
+    @override
+    def get_artifacts(self) -> dict[str | None, pathlib.Path]:
+        """Get the expected output artifacts for the current pack operation."""
+        artifacts: dict[str | None, pathlib.Path] = {None: self._get_default_artifact_path()}
+
+        for component_name in self._project.get_component_names():
+            artifacts[component_name] = self._get_component_artifact_path(component_name)
+
+        return artifacts
+
+    @override
+    def _pack(self, *, name: str | None = None, path: pathlib.Path) -> None:
+        """Pack a specific snap or component artifact."""
+        if name in (None, "default"):
+            issues = linters.run_linters(
+                self._services.lifecycle.prime_dir, lint=self._project.lint
+            )
+            status = linters.report(issues, intermediate=True)
+
+            # In case of linter errors, stop execution and return the error code.
+            if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
+                raise errors.LinterError("Linter errors found", exit_code=status)
+
+            pack.pack_snap(
+                self._services.lifecycle.prime_dir,
+                output=str(path),
+                compression=self._project.compression,
+                name=self._project.name,
+                version=process_version(self._project.version),
+                target=self._platform,
+            )
+            return
+
+        if self._project.components is None or name not in self._project.components:
+            raise errors.SnapcraftError(f"Unknown component artifact {name!r}.")
+
+        component = self._project.components[name]
+        compression = component.compression or self._project.compression
+        if component.compression:
+            emit.debug(f"Using {component.compression!r} compression for {name!r}.")
+        else:
+            emit.debug(
+                f"Using the snap's {self._project.compression!r} compression for {name!r}."
+            )
+
+        filename = pack.pack_component(
+            cast(Lifecycle, self._services.lifecycle).get_prime_dir(name),
+            compression=compression,
+            output_dir=path.parent,
+        )
+        if filename != path.name:
+            raise errors.SnapcraftError(
+                f"Packed component {name!r} to unexpected file {filename!r}."
+            )
+
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
         """Create one or more packages as appropriate.
@@ -316,6 +415,16 @@ class Package(PackageService):
         # This is for backwards compatibility with setup_assets(...)
         return project_dir / "snap"
 
+    @package_file("meta/snap.yaml", partition_re="default")
+    def _get_snap_yaml(self, partition: str | None = None) -> str:
+        """Generate the snap.yaml file contents for the default partition."""
+        if partition not in (None, "default"):
+            raise errors.SnapcraftError(
+                f"Cannot generate snap metadata for partition {partition!r}."
+            )
+
+        return self.metadata.to_yaml_string()
+
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
         """Write the project metadata to metadata.yaml in the given directory.
@@ -324,7 +433,9 @@ class Package(PackageService):
         """
         meta_dir = path / "meta"
         meta_dir.mkdir(parents=True, exist_ok=True)
-        self.metadata.to_yaml_file(meta_dir / "snap.yaml")
+        (meta_dir / "snap.yaml").write_text(
+            self._get_snap_yaml(), encoding="utf-8"
+        )
 
         enable_manifest = strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
 

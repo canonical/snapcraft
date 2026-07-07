@@ -114,6 +114,58 @@ def test_metadata(default_project, fake_services, setup_project):
     )
 
 
+def test_get_snap_yaml(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    assert package_service._get_snap_yaml() == dedent(
+        """\
+        name: default
+        version: '1.0'
+        summary: default project
+        description: default project
+        license: MIT
+        architectures:
+        - amd64
+        base: core24
+        confinement: devmode
+        grade: devel
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+    """
+    )
+
+
+def test_get_artifacts(default_project, fake_services, setup_project, tmp_path):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    package_service.set_output_dir(tmp_path / "test-output.snap")
+
+    assert package_service.get_artifacts() == {
+        None: tmp_path / "test-output.snap"
+    }
+
+
+def test_pack_artifact_snap(default_project, fake_services, setup_project, mocker, tmp_path):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    mock_pack_snap = mocker.patch.object(pack, "pack_snap")
+    mocker.patch.object(linters, "run_linters")
+    mocker.patch.object(linters, "report")
+
+    package_service._pack(name=None, path=tmp_path / "test-output.snap")
+
+    mock_pack_snap.assert_called_once_with(
+        tmp_path / "prime",
+        name="default",
+        version="1.0",
+        compression="xz",
+        output=str(tmp_path / "test-output.snap"),
+        target="amd64",
+    )
+
+
 def test_write_metadata(default_project, fake_services, setup_project, new_dir):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")

@@ -158,6 +158,42 @@ def test_pack_component_compression(
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_artifacts(default_project, fake_services, setup_project, tmp_path):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    package_service.set_output_dir(tmp_path / "artifacts")
+
+    assert package_service.get_artifacts() == {
+        None: tmp_path / "artifacts" / "default_1.0_amd64.snap",
+        "firstcomponent": tmp_path / "artifacts" / "default+firstcomponent_1.0.comp",
+        "secondcomponent": tmp_path / "artifacts" / "default+secondcomponent_1.0.comp",
+    }
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_pack_artifact_component(
+    default_project, fake_services, setup_project, mocker, tmp_path
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    mock_pack_component = mocker.patch.object(
+        pack,
+        "pack_component",
+        return_value="default+firstcomponent_1.0.comp",
+    )
+
+    artifact_path = tmp_path / "artifacts" / "default+firstcomponent_1.0.comp"
+    package_service._pack(name="firstcomponent", path=artifact_path)
+
+    mock_pack_component.assert_called_once_with(
+        lifecycle_service._work_dir / "partitions/component/firstcomponent/prime",
+        compression="xz",
+        output_dir=artifact_path.parent,
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
 def test_write_metadata(
     default_project,
     fake_services,
