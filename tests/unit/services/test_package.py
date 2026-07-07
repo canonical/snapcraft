@@ -239,6 +239,52 @@ def test_gen_extra_assets_removes_project_file_when_disabled(
     ]
 
 
+@pytest.fixture(params=["snap", "build-aux/snap"])
+def project_hooks_dir(in_project_path, request):
+    hooks_dir = in_project_path / request.param / "hooks"
+    hooks_dir.mkdir(parents=True)
+    yield hooks_dir
+
+
+def test_gen_extra_assets_includes_default_hook_assets(
+    default_project, fake_services, setup_project, project_hooks_dir, tmp_path
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    built_hooks_dir = tmp_path / "prime" / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "configure").write_text("built_configure", encoding="utf-8")
+    (project_hooks_dir / "install").write_text("project_install", encoding="utf-8")
+
+    extra_assets = package_service._gen_extra_assets()
+
+    assert (built_hooks_dir / "configure", tmp_path / "prime" / "meta" / "hooks" / "configure") in extra_assets
+    assert (
+        project_hooks_dir / "install",
+        tmp_path / "prime" / "meta" / "hooks" / "install",
+    ) in extra_assets
+
+
+def test_gen_extra_assets_project_hooks_override_built_hooks(
+    default_project, fake_services, setup_project, project_hooks_dir, tmp_path
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    built_hooks_dir = tmp_path / "prime" / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    built_hook = built_hooks_dir / "configure"
+    project_hook = project_hooks_dir / "configure"
+    built_hook.write_text("built_configure", encoding="utf-8")
+    project_hook.write_text("project_configure", encoding="utf-8")
+
+    extra_assets = package_service._get_hook_assets()
+
+    assert extra_assets == [
+        (built_hook, tmp_path / "prime" / "meta" / "hooks" / "configure"),
+        (project_hook, tmp_path / "prime" / "meta" / "hooks" / "configure"),
+    ]
+
+
 def test_manifest_changed_ignores_started_at(
     monkeypatch, default_project, fake_services, setup_project, tmp_path
 ):
@@ -352,13 +398,6 @@ def test_write_metadata_removes_project_file_when_disabled(
     assert not copied_project_file.exists()
 
 
-@pytest.fixture(params=["snap", "build-aux/snap"])
-def project_hooks_dir(in_project_path, request):
-    hooks_dir = in_project_path / request.param / "hooks"
-    hooks_dir.mkdir(parents=True)
-    yield hooks_dir
-
-
 def test_write_metadata_with_project_hooks(
     default_project, fake_services, setup_project, project_hooks_dir, tmp_path
 ):
@@ -367,6 +406,8 @@ def test_write_metadata_with_project_hooks(
     # Create some hooks
     (project_hooks_dir / "configure").write_text("configure_hook")
     (project_hooks_dir / "install").write_text("install_hook")
+    (project_hooks_dir / "configure").chmod(0o755)
+    (project_hooks_dir / "install").chmod(0o755)
 
     prime_dir = tmp_path / "prime"
     meta_dir = prime_dir / "meta"
@@ -396,8 +437,10 @@ def test_write_metadata_with_project_hooks(
     # and not a wrapped hook.
     assert (meta_dir / "hooks" / "configure").exists()
     assert (meta_dir / "hooks" / "configure").read_text() == "configure_hook"
+    assert (meta_dir / "hooks" / "configure").stat().st_mode & 0o111
     assert (meta_dir / "hooks" / "install").exists()
     assert (meta_dir / "hooks" / "install").read_text() == "install_hook"
+    assert (meta_dir / "hooks" / "install").stat().st_mode & 0o111
 
 
 def test_write_metadata_with_built_hooks(
@@ -411,6 +454,8 @@ def test_write_metadata_with_built_hooks(
     built_hooks_dir.mkdir(parents=True)
     (built_hooks_dir / "configure").write_text("configure_hook")
     (built_hooks_dir / "install").write_text("install_hook")
+    (built_hooks_dir / "configure").chmod(0o755)
+    (built_hooks_dir / "install").chmod(0o755)
 
     package_service.write_metadata(prime_dir)
 
@@ -438,8 +483,10 @@ def test_write_metadata_with_built_hooks(
     # and not a wrapped hook.
     assert (meta_dir / "hooks" / "configure").exists()
     assert (meta_dir / "hooks" / "configure").read_text() == "configure_hook"
+    assert (meta_dir / "hooks" / "configure").stat().st_mode & 0o111
     assert (meta_dir / "hooks" / "install").exists()
     assert (meta_dir / "hooks" / "install").read_text() == "install_hook"
+    assert (meta_dir / "hooks" / "install").stat().st_mode & 0o111
 
 
 def test_write_metadata_with_project_gui(

@@ -315,6 +315,14 @@ class Package(PackageService):
         return self._get_artifact_output_dir() / filename
 
     @override
+    def _prime_dir_for(self, partition_name: str | None) -> pathlib.Path:
+        """Return the prime directory for the default snap or a component artifact."""
+        if partition_name in (None, "default"):
+            return self._services.lifecycle.prime_dir
+
+        return cast(Lifecycle, self._services.lifecycle).get_prime_dir(partition_name)
+
+    @override
     def get_artifacts(self) -> dict[str | None, pathlib.Path]:
         """Get the expected output artifacts for the current pack operation."""
         artifacts: dict[str | None, pathlib.Path] = {None: self._get_default_artifact_path()}
@@ -440,16 +448,15 @@ class Package(PackageService):
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)
         return lifecycle_service.generate_manifest().to_yaml_string()
 
-    @package_file("meta/component.yaml", partition_re=r"component/.+")
+    @package_file("meta/component.yaml", partition_re=r"(?!default$).+")
     def _get_component_yaml(self, partition: str | None = None) -> str:
         """Generate component.yaml contents for a component partition."""
-        if partition is None or not partition.startswith("component/"):
+        if partition is None or partition == "default":
             raise errors.SnapcraftError(
                 f"Cannot generate component metadata for partition {partition!r}."
             )
 
-        component_name = partition.split("/", 1)[1]
-        return component_yaml.get_metadata(self._project, component_name).to_yaml_string()
+        return component_yaml.get_metadata(self._project, partition).to_yaml_string()
 
     @override
     def _gen_extra_assets(
@@ -461,20 +468,67 @@ class Package(PackageService):
         exist in prime; craft-application will delete any stale copy at that
         destination.
         """
-        if partition_name not in (None, "default"):
-            return []
+        assets = self._get_hook_assets(partition_name)
 
-        project_file = self._services.get("project").resolve_project_file_path()
-        destination = self._prime_dir_for(partition_name) / "snap" / project_file.name
-        source: pathlib.Path | None = (
-            project_file if self._project_file_copy_enabled() else None
-        )
-        return [(source, destination)]
+        if partition_name in (None, "default"):
+            project_file = self._services.get("project").resolve_project_file_path()
+            destination = self._prime_dir_for(partition_name) / "snap" / project_file.name
+            source: pathlib.Path | None = (
+                project_file if self._project_file_copy_enabled() else None
+            )
+            assets.insert(0, (source, destination))
+
+        return assets
+
+    def _get_hook_assets(
+        self, partition_name: str | None = None
+    ) -> list[tuple[pathlib.Path, pathlib.Path]]:
+        """Generate hook assets for the default or component partition.
+
+        Project-provided hooks are added after built hooks so they keep their
+        existing precedence when both target the same meta/hooks path.
+        """
+        prime_dir = self._prime_dir_for(partition_name)
+        assets_dir = self._get_partition_assets_dir(partition_name)
+        destination_dir = prime_dir / "meta" / "hooks"
+        assets: list[tuple[pathlib.Path, pathlib.Path]] = []
+
+        built_snap_hooks = prime_dir / "snap" / "hooks"
+        if built_snap_hooks.is_dir():
+            for hook in sorted(built_snap_hooks.iterdir()):
+                assets.append((hook, destination_dir / hook.name))
+
+        project_hooks_dir = assets_dir / "hooks"
+        if project_hooks_dir.is_dir():
+            for hook in sorted(project_hooks_dir.iterdir()):
+                assets.append((hook, destination_dir / hook.name))
+
+        return assets
+
+    def _get_partition_assets_dir(self, partition_name: str | None = None) -> pathlib.Path:
+        """Return the project assets directory for a default or component partition."""
+        assets_dir = self._get_assets_dir()
+        if partition_name in (None, "default"):
+            return assets_dir
+
+        return assets_dir / "component" / partition_name
 
     @staticmethod
     def _project_file_copy_enabled() -> bool:
         """Return whether the project file should be copied into snap/."""
         return bool(strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")))
+
+    @override
+    def _write_asset(
+        self, source: str | bytes | None | pathlib.Path, destination: pathlib.Path
+    ) -> None:
+        """Write a generated package file or extra asset into prime."""
+        if isinstance(source, pathlib.Path):
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(source, destination)
+            return
+
+        super()._write_asset(source, destination)
 
     @override
     def _package_file_changed(
@@ -539,14 +593,9 @@ class Package(PackageService):
         else:
             manifest_path.unlink(missing_ok=True)
 
-        project_file_path = self._services.get("project").resolve_project_file_path()
-        source = project_file_path if self._project_file_copy_enabled() else None
-        destination = snap_dir / project_file_path.name
-        if source is not None:
-            snap_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy(source, destination)
-        else:
-            destination.unlink(missing_ok=True)
+        self._materialize_extra_assets(None)
+        for component in self._project.get_component_names():
+            self._materialize_extra_assets(component)
 
         assets_dir = self._get_assets_dir()
         setup_assets(
@@ -562,7 +611,7 @@ class Package(PackageService):
             component_meta_dir = component_prime_dir / "meta"
             component_meta_dir.mkdir(parents=True, exist_ok=True)
             (component_meta_dir / "component.yaml").write_text(
-                self._get_component_yaml(f"component/{component}"), encoding="utf-8"
+                self._get_component_yaml(component), encoding="utf-8"
             )
 
     @property
@@ -598,32 +647,12 @@ def _hardlink_or_copy(source: pathlib.Path, destination: pathlib.Path) -> bool:
 
 
 def meta_directory_handler(assets_dir: pathlib.Path, path: pathlib.Path):
-    """Handle hooks and gui assets from Snapcraft.
+    """Handle gui assets from Snapcraft.
 
     :param assets_dir: directory with project assets.
     :param path: directory to write assets to.
     """
     meta_dir = path / "meta"
-    built_snap_hooks = path / "snap" / "hooks"
-    hooks_project_dir = assets_dir / "hooks"
-
-    hooks_meta_dir = meta_dir / "hooks"
-
-    if built_snap_hooks.is_dir():
-        hooks_meta_dir.mkdir(parents=True, exist_ok=True)
-        for hook in built_snap_hooks.iterdir():
-            meta_dir_hook = hooks_meta_dir / hook.name
-            # Remove to always refresh to the latest
-            meta_dir_hook.unlink(missing_ok=True)
-            meta_dir_hook.hardlink_to(hook)
-
-    # Overwrite any built hooks with project level ones
-    if hooks_project_dir.is_dir():
-        hooks_meta_dir.mkdir(parents=True, exist_ok=True)
-        for hook in hooks_project_dir.iterdir():
-            meta_dir_hook = hooks_meta_dir / hook.name
-
-            _hardlink_or_copy(hook, meta_dir_hook)
 
     # Write any gui assets
     gui_project_dir = assets_dir / "gui"

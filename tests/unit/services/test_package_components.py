@@ -58,8 +58,8 @@ def extra_project_params(extra_project_params):
 
 
 @pytest.fixture(params=["snap", "build-aux/snap"])
-def project_assets_dir(new_dir, request):
-    assets_dir = new_dir / request.param
+def project_assets_dir(in_project_path, request):
+    assets_dir = in_project_path / request.param
     assets_dir.mkdir(parents=True)
     yield assets_dir
 
@@ -199,7 +199,7 @@ def test_get_component_yaml(default_project, fake_services, setup_project):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
 
-    assert package_service._get_component_yaml("component/firstcomponent") == dedent(
+    assert package_service._get_component_yaml("firstcomponent") == dedent(
         """\
         component: default+firstcomponent
         type: test
@@ -209,7 +209,7 @@ def test_get_component_yaml(default_project, fake_services, setup_project):
     """
     )
 
-    assert package_service._get_component_yaml("component/secondcomponent") == dedent(
+    assert package_service._get_component_yaml("secondcomponent") == dedent(
         """\
         component: default+secondcomponent
         type: test
@@ -218,6 +218,29 @@ def test_get_component_yaml(default_project, fake_services, setup_project):
         description: lorem ipsum
     """
     )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_hook_assets_for_component(
+    default_project, fake_services, setup_project, project_assets_dir, tmp_path
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    component_prime_dir = tmp_path / "partitions" / "component" / "firstcomponent" / "prime"
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    built_hook = built_hooks_dir / "install"
+    project_hook = project_assets_dir / "component" / "firstcomponent" / "hooks" / "configure"
+    project_hook.parent.mkdir(parents=True)
+    built_hook.write_text("built_install", encoding="utf-8")
+    project_hook.write_text("project_configure", encoding="utf-8")
+    built_hook.chmod(0o755)
+    project_hook.chmod(0o755)
+
+    assert package_service._get_hook_assets("firstcomponent") == [
+        (built_hook, component_prime_dir / "meta" / "hooks" / "install"),
+        (project_hook, component_prime_dir / "meta" / "hooks" / "configure"),
+    ]
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
@@ -246,9 +269,9 @@ def test_write_metadata(
 
     # Create some hooks
     (project_assets_dir / "component/firstcomponent/hooks").mkdir(parents=True)
-    (project_assets_dir / "component/firstcomponent/hooks/install").write_text(
-        "install_hook"
-    )
+    component_hook = project_assets_dir / "component/firstcomponent/hooks/install"
+    component_hook.write_text("install_hook")
+    component_hook.chmod(0o755)
     (project_assets_dir / "post-refresh").write_text("post-refresh")
 
     prime_dir = tmp_path / "prime"
@@ -321,3 +344,8 @@ def test_write_metadata(
         description: lorem ipsum
     """
     )
+    component_meta_hook = (
+        lifecycle_service.get_prime_dir("firstcomponent") / "meta" / "hooks" / "install"
+    )
+    assert component_meta_hook.read_text() == "install_hook"
+    assert component_meta_hook.stat().st_mode & 0o111
