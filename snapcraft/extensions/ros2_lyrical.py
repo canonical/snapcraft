@@ -132,6 +132,6 @@ class ROS2LyricalExtension(Extension):
                     f"ros-{self.ROS_DISTRO}-ros-workspace",
                     f"ros-{self.ROS_DISTRO}-ament-index-cpp",
                     f"ros-{self.ROS_DISTRO}-ament-index-python",
-                ]
+                ],
             }
         }
