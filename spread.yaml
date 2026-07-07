@@ -1,5 +1,7 @@
 project: snapcraft
 
+kill-timeout: 90m
+
 environment:
   # Tell snapcraft to use the current host to build
   SNAPCRAFT_BUILD_ENVIRONMENT: "host"
@@ -112,6 +114,10 @@ backends:
           username: root
           password: ubuntu
       - ubuntu-24.04-64:
+          workers: 1
+          username: root
+          password: ubuntu
+      - ubuntu-26.04-64:
           workers: 1
           username: root
           password: ubuntu

@@ -65,6 +65,10 @@ restore: |
   snap remove --purge "${META_SNAP}"
 
 execute: |
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host to avoid building core26
+  # snap with core24 which has libapt 2 and can't read the cache on 26.04.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
   cd "$SNAP_DIR"
 
   # Build what we have and verify the snap runs as expected.

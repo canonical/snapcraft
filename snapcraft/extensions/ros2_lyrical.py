@@ -133,13 +133,5 @@ class ROS2LyricalExtension(Extension):
                     f"ros-{self.ROS_DISTRO}-ament-index-cpp",
                     f"ros-{self.ROS_DISTRO}-ament-index-python",
                 ],
-                "stage-packages": [
-                    "libpython3.14-minimal",
-                    "libpython3.14-stdlib",
-                    "python3-minimal",  # for the "python3" symlink
-                    "python3.14-minimal",
-                    "python3.14-venv",
-                    "python3-yaml",
-                ],
             }
         }
