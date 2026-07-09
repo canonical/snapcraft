@@ -24,16 +24,20 @@ import snapcraft
 
 project = "Snapcraft"
 author = "Canonical Group Ltd"
-# The full version, including alpha/beta/rc tags
-release = snapcraft.__version__
-# The commit hash in the dev release version confuses the spellchecker
-if ".post" in release:
-    release = "dev"
+
+# Version string in sidebar
+if os.environ.get("READTHEDOCS_VERSION_TYPE", "external") == "external":  # PR or local build
+    # Because of Autotools, we can safely assume the version starts with `n.n`
+    major, minor, *_ = snapcraft.__version__.split(".")
+    release = f"{major}.{minor}"
+else:  # Branch build
+    rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
+    release = "dev" if rtd_version == "latest" else rtd_version
 
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
 # region Configuration for canonical-sphinx
-ogp_site_url = "https://documentation.ubuntu.com/snapcraft"
+ogp_site_url = "https://ubuntu.com/docs/snapcraft"
 ogp_site_name = project
 
 # Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
@@ -41,7 +45,7 @@ ogp_site_name = project
 # TODO: If your documentation is hosted on https://docs.ubuntu.com/,
 #       uncomment and update as needed.
 
-slug = "snapcraft"
+slug = "docs/snapcraft"
 
 html_context = {
     "product_page": "snapcraft.io",
@@ -89,19 +93,19 @@ html_css_files = [
     "css/announcement.css",
 ]
 
+html_js_files = [
+    "js/overwrite-links.js",
+]
+
 # region Options for extensions
 
 # Client-side page redirects.
 rediraffe_redirects = "redirects.txt"
 
 # Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
-html_baseurl = "https://documentation.ubuntu.com/snapcraft/"
+html_baseurl = f"{ogp_site_url}/{release}/"
 
-if "READTHEDOCS_VERSION" in os.environ:
-    version = os.environ["READTHEDOCS_VERSION"]
-    sitemap_url_scheme = "{version}{link}"
-else:
-    sitemap_url_scheme = "latest/{link}"
+sitemap_url_scheme = "{link}"
 
 # endregion
 
