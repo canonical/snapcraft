@@ -40,7 +40,7 @@ copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
 
 # Documentation website URL
-ogp_site_url = "https://documentation.ubuntu.com/snapcraft"
+ogp_site_url = "https://ubuntu.com/docs/snapcraft"
 
 # Preview name of the documentation website
 ogp_site_name = project
@@ -71,7 +71,7 @@ html_theme_options = {
 }
 
 # Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
-# slug = ''
+slug = "docs/snapcraft"
 
 
 #######################
@@ -79,19 +79,19 @@ html_theme_options = {
 #######################
 
 # Use RTD canonical URL to ensure duplicate pages have a specific canonical URL
-html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
+html_baseurl = f"{ogp_site_url}/{release}/"
 
 # sphinx-sitemap uses html_baseurl to generate the full URL for each page:
-sitemap_url_scheme = '{link}'
+sitemap_url_scheme = "{link}"
 
 # Include `lastmod` dates in the sitemap:
 # sitemap_show_lastmod = True
 
 # Exclude generated pages from the sitemap:
 sitemap_excludes = [
-    '404/',
-    'genindex/',
-    'search/',
+    "404/",
+    "genindex/",
+    "search/",
 ]
 
 
@@ -229,6 +229,7 @@ html_js_files = [
     "js/bundle.js",
     "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
     "js/support-chart.js",
+    "js/overwrite-links.js",
 ]
 
 
