@@ -1,5 +1,5 @@
 .. meta::
-    :description: How to change the base snap of a snap and access its ChangeLog.
+    :description: How to change the base of a snap. Switch between bases like core24 to core26. This guide describes the different requirements of each migration path.
 
 .. _how-to-change-bases:
 
@@ -60,40 +60,36 @@ transition your snap between specific bases.
     change-from-core24-to-core26
 
 
-ChangeLog for base snaps
--------------------------
+Base changelogs
+---------------
 
-Each release of the base snap includes a ChangeLog at
-``/usr/share/doc/ChangeLog`` that summarises the package updates bundled in
-that release, along with the aggregated updates from previous releases.
+Each base snap contains a changelog at ``/usr/share/doc/ChangeLog``
+that summarizes the package updates bundled in that release,
+along with the aggregated updates from previous releases.
 In the examples below, replace ``<base>`` with the name of
-your base snap (for example, ``core24``). Note that ``core26`` does not
-currently include a ChangeLog.
+your base snap (for example, core24).
 
 
 When the snap is already installed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the base snap is already installed on the system, the ChangeLog is available
+If the base snap is already installed on the system, the changelog is available
 at ``/snap/<base>/current/usr/share/doc/ChangeLog``.
 
-You can list all installed revisions with ``snap list --all <base>``. To inspect
-a specific revision that is not the active one, replace ``current`` with the
-revision number (e.g. ``/snap/<base>/<revision>/usr/share/doc/ChangeLog``).
+You can list all installed revisions and versions with ``snap list --all <base>``.
+To inspect a specific revision that is not the active one, replace ``current`` with
+the revision number. For example, ``/snap/<base>/<revision>/usr/share/doc/ChangeLog``.
 
 
-Via ``snap download``
-~~~~~~~~~~~~~~~~~~~~~
+Download a base
+~~~~~~~~~~~~~~~
 
-You can download a snap without installing it, then extract the
-ChangeLog from the squashfs image:
+You can download a base without installing it, then extract the
+changelog from it:
 
 .. code-block:: bash
 
-    # Download the snap
     snap download <base>
-
-    # Extract the ChangeLog into a local directory
     unsquashfs -d <base>-unpacked <base>_*.snap usr/share/doc/ChangeLog
 
-The ChangeLog is then available at ``<base>-unpacked/usr/share/doc/ChangeLog``.
+The changelog is then available at ``<base>-unpacked/usr/share/doc/ChangeLog``.
