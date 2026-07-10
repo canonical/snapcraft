@@ -1,0 +1,120 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright 2025 Canonical Ltd.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License version 3 as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+import pytest
+from craft_parts import Part, PartInfo, ProjectInfo, errors
+
+from snapcraft.parts.plugins import InitrdPlugin
+
+
+@pytest.fixture(autouse=True)
+def part_info(new_dir):
+    yield PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            cache_dir=new_dir,
+            base="core22",
+            arch="amd64",
+        ),
+        part=Part("my-part", {}),
+    )
+
+
+def test_validate_plugin_options():
+    with pytest.raises(
+        errors.PartsError,
+        match="Specify both 'initrd-efi-image-key' and 'initrd-efi-image-cert', or remove both to use the snakeoil defaults",
+    ):
+        InitrdPlugin.properties_class.unmarshal(
+            {
+                "initrd-efi-image-key": "foo.key",
+            }
+        )
+
+
+def test_get_pull_commands_release(part_info):
+    properties = InitrdPlugin.properties_class.unmarshal({})
+    plugin = InitrdPlugin(properties=properties, part_info=part_info)
+
+    expected_commands = [
+        "curl -fLo jammy-base-amd64.tar.gz https://cdimage.ubuntu.com/ubuntu-base/jammy/daily/current/jammy-base-amd64.tar.gz",
+        "curl -fL https://cdimage.ubuntu.com/ubuntu-base/jammy/daily/current/SHA256SUMS | grep jammy-base-amd64.tar.gz > jammy-base-amd64.tar.gz.sha256sum",
+        "sha256sum -c jammy-base-amd64.tar.gz.sha256sum || exit 1",
+        "mkdir -p uc-initramfs-build",
+        "tar --extract --file jammy-base-amd64.tar.gz --directory uc-initramfs-build",
+        "cp --no-dereference /etc/resolv.conf uc-initramfs-build/etc/resolv.conf",
+        "touch uc-initramfs-build/dev/null",
+    ]
+
+    assert plugin.get_pull_commands() == expected_commands
+
+
+def test_get_build_snaps(part_info):
+    properties = InitrdPlugin.properties_class.unmarshal({})
+    plugin = InitrdPlugin(properties=properties, part_info=part_info)
+    assert plugin.get_build_snaps() == set()
+
+
+def test_get_build_packages(part_info):
+    properties = InitrdPlugin.properties_class.unmarshal({})
+    plugin = InitrdPlugin(properties=properties, part_info=part_info)
+    assert plugin.get_build_packages() == {
+        "curl",
+        "dracut-core",
+        "fakeroot",
+    }
+
+
+def test_get_build_environment(part_info):
+    properties = InitrdPlugin.properties_class.unmarshal({})
+    plugin = InitrdPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_environment() == {}
+
+
+def test_get_build_commands(part_info):
+    properties = InitrdPlugin.properties_class.unmarshal(
+        {
+            "initrd-addons": [
+                "usr/bin/foo",
+                "lib/bar",
+            ],
+            "initrd-firmware": [
+                "foo.bin",
+                "bar/baz.bin",
+            ],
+            "initrd-modules": [
+                "foo",
+                "bar",
+            ],
+            "initrd-build-efi-image": "true",
+            "initrd-efi-image-key": "signing.key",
+            "initrd-efi-image-cert": "cert.pem",
+        }
+    )
+    plugin = InitrdPlugin(properties=properties, part_info=part_info)
+
+    assert plugin.get_build_commands() == [
+        "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh "
+        "initrd-modules=foo,bar "
+        "initrd-firmware=foo.bin,bar/baz.bin "
+        "initrd-addons=usr/bin/foo,lib/bar "
+        "initrd-build-efi-image=True "
+        "initrd-efi-image-key=signing.key "
+        "initrd-efi-image-cert=cert.pem"
+    ]

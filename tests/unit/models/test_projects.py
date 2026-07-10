@@ -2775,6 +2775,43 @@ class TestComponents:
 
         assert partitions is None
 
+    def test_component_compression_default(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].compression is None
+        # compression is `None` but it's not set to `null` in the project file
+        assert "compression" not in test_project.components["foo"].model_fields_set
+
+    @pytest.mark.parametrize("compression", ["xz", "lzo"])
+    def test_component_compression_valid(
+        self, project, compression, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        component["foo"]["compression"] = compression
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].compression == compression
+
+    def test_component_compression_null_invalid(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        """Error if the compression is set to null."""
+        component = {"foo": stub_component_data}
+        component["foo"]["compression"] = None
+
+        with pytest.raises(
+            pydantic.ValidationError,
+            match="Setting compression to null is not supported",
+        ):
+            project.unmarshal(project_yaml_data(components=component))
+
 
 class TestLint:
     """Test the Lint model."""

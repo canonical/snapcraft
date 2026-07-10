@@ -29,6 +29,14 @@ from snapcraft.application import APP_METADATA
 from snapcraft.services.project import Project
 
 
+@pytest.fixture(autouse=True)
+def reset_ua_service_warning():
+    """Reset the one-shot ua-service warning flag between tests."""
+    Project._ua_service_warning = False
+    yield
+    Project._ua_service_warning = False
+
+
 @pytest.mark.parametrize(
     ("raw_project", "expected"),
     [
@@ -106,3 +114,47 @@ def test_render_legacy_platforms_core22_platforms_error(
 
     with pytest.raises(CraftValidationError, match="not supported for base 'core22'"):
         service._app_render_legacy_platforms()
+
+
+class TestValidateUaServices:
+    @pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22"})
+    def test_warns_for_ua_services(self, base, emitter):
+        """Warn for using 'ua-services' on core24+."""
+        project = {"base": base, "ua-services": ["esm-apps"]}
+
+        Project.validate_ua_services(project)
+        Project.validate_ua_services(project)
+
+        emitter.assert_warning(
+            f"The 'ua-services' key is ignored for {base!r}. "
+            "Use '--pro=<services>' instead."
+        )
+        # assert it was only shown once
+        assert len(emitter.interactions) == 1
+
+    @pytest.mark.parametrize("base", const.CURRENT_BASES)
+    def test_no_warning_without_ua_services(self, base, emitter):
+        """Don't warn if 'ua-services' isn't defined."""
+        project = {"base": base}
+
+        Project.validate_ua_services(project)
+
+        emitter.assert_interactions(None)
+
+    @pytest.mark.parametrize("base", const.CURRENT_BASES)
+    def test_no_warning_in_managed_mode(self, base, emitter, mocker):
+        """Don't warn in managed-mode."""
+        mocker.patch("snapcraft.services.project.is_managed_mode", return_value=True)
+        project = {"base": base, "ua-services": ["esm-apps"]}
+
+        Project.validate_ua_services(project)
+
+        emitter.assert_interactions(None)
+
+    def test_no_warning_for_core22(self, emitter):
+        """Don't warn for using 'ua-services' on core22."""
+        project = {"base": "core22", "ua-services": ["esm-apps"]}
+
+        Project.validate_ua_services(project)
+
+        emitter.assert_interactions(None)

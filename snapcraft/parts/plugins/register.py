@@ -24,6 +24,7 @@ from snapcraft.parts.plugins import python_common
 from .colcon_plugin import ColconPlugin
 from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
+from .initrd_plugin import InitrdPlugin
 from .kernel_plugin import KernelPlugin
 from .matter_sdk_plugin import MatterSdkPlugin
 
@@ -37,11 +38,10 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "colcon": ColconPlugin,
         "conda": CondaPlugin,
         "flutter": FlutterPlugin,
+        "kernel": KernelPlugin,
+        "initrd": InitrdPlugin,
         "matter-sdk": MatterSdkPlugin,
     } | python_common.get_python_plugins()
-
-    if core22:
-        plugins["kernel"] = KernelPlugin
 
     return plugins
 

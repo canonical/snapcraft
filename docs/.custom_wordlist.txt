@@ -3,6 +3,7 @@
 (un)?sandbox(ed|ing)
 [Pp]ower(PC|pc)
 aex
+addons
 appstream
 Autoconf
 autoformatte(d|rs?)
@@ -15,6 +16,7 @@ backend
 backends
 backoff
 Boehm
+bool
 booleans?
 bootable
 breakpoints?
@@ -23,6 +25,7 @@ buildd
 Bundler
 Canonical('s)?
 Charmcraft
+chroot
 cameractrls
 cjk
 classpath
@@ -37,6 +40,7 @@ crafters?
 cryptographically
 ctypes?
 DBus
+defconfigs
 devmode
 distros?
 Dockerfiles?
@@ -71,15 +75,21 @@ html
 https
 igor
 Inadyn
+Initrd
 ing
+initrd
+initrds
 Intersphinx
 io
 ip
 Irssi
+iterability
 jemalloc
 JLink
 json
 KCalc
+kconfig
+kdefconfig
 kahle
 keyrings
 landscape
@@ -120,6 +130,7 @@ otf
 patchelf
 pathing
 PDF
+perf
 plaintext
 plantuml
 PNG
@@ -135,6 +146,7 @@ QEMU
 qmake
 rackup
 Read the Docs
+ramdisks
 readthedocs
 redeclare
 repos?
@@ -153,6 +165,7 @@ sed
 sequenceDiagram
 sitecustomize
 sitemapindex
+snakeoil
 smbraille
 smscript
 snapcraftctl

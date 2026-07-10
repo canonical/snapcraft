@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2021 Canonical Ltd
+name: pc-kernel
+summary: Kernel plugin test
+description: A pc kernel to test the kernel plugin.
+
+grade: stable
+build-base: core22
+confinement: strict
+type: kernel
+adopt-info: kernel
+
+parts:
+  kernel:
+    plugin: kernel
+    source: https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/jammy
+    source-depth: 1
+    source-type: git
+    source-tag: Ubuntu-5.15.0-180.190
+    kernel-ubuntu-debian-package: true
+    kernel-ubuntu-kconfigflavour: generic
+    kernel-ubuntu-abinumber: Ubuntu-5.15.0-180.190
+    kernel-kdefconfig: [test_defconfig]
+    kernel-tools: [bpftool, cpupower, perf]
+    kernel-ubuntu-debian-dkms:
+      - nvidia-dkms-535
+      - nvidia-kernel-source-535
+    build-packages:
+      - dwarves
+    stage-packages:
+      - linux-firmware
+      - wireless-regdb
+    override-build: |
+      craftctl default
+
+      kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+
+      # Set the version of the snap to match the kernel version.
+      craftctl set version="$kver"

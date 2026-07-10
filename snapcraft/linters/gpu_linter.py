@@ -22,6 +22,7 @@ from pathlib import Path
 from overrides import overrides
 
 from snapcraft.elf import elf_utils
+from snapcraft.utils import get_effective_base
 
 from .base import Linter, LinterIssue, LinterResult
 
@@ -83,9 +84,15 @@ class GpuLinter(Linter):
         current_path = Path()
         issues: list[LinterIssue] = []
 
-        base = self._snap_metadata.base or "core24"
-        if base == "bare":
-            base = "core24"
+        base = get_effective_base(
+            base=self._snap_metadata.base,
+            build_base=self._build_base,
+            project_type=self._snap_metadata.type,
+            name=self._snap_metadata.name,
+        )
+
+        if base == "bare" or not base:
+            base = self._build_base or "core24"
 
         elf_files = elf_utils.get_elf_files(current_path)
 
