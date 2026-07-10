@@ -72,6 +72,14 @@ jobs:
         run: |
           spread google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel
 
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
+
   remote-build:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
@@ -99,6 +107,14 @@ jobs:
             google:ubuntu-24.04-64:tests/spread/core24/remote-build \
             google:fedora-39-64:tests/spread/core24/remote-build:no_platforms
 
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
+
   matter-sdk:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
@@ -123,6 +139,14 @@ jobs:
           spread \
               google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/matter-sdk \
               google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
 
   colcon-plugins:
     needs: [predicate, snap-build]
@@ -151,6 +175,14 @@ jobs:
             google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener \
             google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
 
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
+
   extensions:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
@@ -173,6 +205,14 @@ jobs:
       - name: extensions test
         run: |
           spread google.*:tests/spread/extensions/
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
 
   snapd-bases:
     needs: [predicate, snap-build]
@@ -197,6 +237,14 @@ jobs:
         run: |
           spread google:ubuntu-22.04-64:tests/spread/snaps/snapd
 
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
+
   squid-proxy:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
@@ -219,3 +267,11 @@ jobs:
       - name: Spread test
         run: |
           spread google:ubuntu-24.04-64:tests/spread/core24/squid-proxy google:ubuntu-22.04-64:tests/spread/core22/squid-proxy
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
