@@ -241,9 +241,7 @@ def test_enable_experimental_ua_services_error(cmd_class, fake_services):
         lifecycle.PackCommand,
     ],
 )
-def test_ua_token_env_warning(
-    cmd_class, fake_services, emitter, monkeypatch, mocker
-):
+def test_ua_token_env_warning(cmd_class, fake_services, emitter, monkeypatch, mocker):
     """Warn that 'SNAPCRAFT_UA_TOKEN' is ignored for core24+ snaps."""
     monkeypatch.setenv("SNAPCRAFT_UA_TOKEN", "my-token")
     mocker.patch.object(cmd_class.__bases__[0], "_run")

@@ -56,7 +56,7 @@ def _validate_ua_args(parsed_args: argparse.Namespace) -> None:
             "The Pro token attached to the host will be used instead."
         )
 
-    if parsed_args.ua_token:
+    if parsed_args.ua_token is not None:
         raise errors.SnapcraftError(
             "'--ua-token' is not supported for this base.",
             details="The Pro token attached to the host is used instead.",
