@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 from craft_cli import emit
 
 from snapcraft import errors
-from snapcraft.meta.appstream import _get_icon_from_theme
+from snapcraft.meta.appstream import get_icon_from_theme
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -98,7 +98,7 @@ class DesktopFile:
             # If icon is just a name (no path separator), try to resolve it from the hicolor icon theme.
             if "/" not in icon:
                 if (
-                    icon_path := _get_icon_from_theme(
+                    icon_path := get_icon_from_theme(
                         os.fspath(self._prime_dir), "hicolor", icon
                     )
                 ) is not None:
