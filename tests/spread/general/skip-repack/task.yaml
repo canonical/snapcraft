@@ -1,0 +1,28 @@
+summary: Check if repacking is skipped
+
+environment:
+  PROJECT_NAME: "test-proj"
+
+systems:
+  - ubuntu-24.04*
+
+execute: |
+  mkdir "${PROJECT_NAME}"
+  cp -rap snap "${PROJECT_NAME}"
+  mkdir "${PROJECT_NAME}/src"
+  touch "${PROJECT_NAME}/foo.txt"
+  pushd "${PROJECT_NAME}"
+
+  snapcraft pack 2>&1 | MATCH "Packing"
+  snapcraft pack 2>&1 | MATCH "Skipping pack"
+  echo "Change" >> snap/icon.svg
+  snapcraft pack 2>&1 | MATCH "Packing"
+  snapcraft pack 2>&1 | MATCH "Skipping pack"
+  echo "echo hello world" >> snap/hooks/configure
+  chmod +x snap/hooks/configure
+  snapcraft pack 2>&1 | MATCH "Packing"
+
+  popd
+
+restore: |
+  rm -rf ./"${PROJECT_NAME}"

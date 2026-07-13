@@ -92,7 +92,7 @@ def setup_assets(
 
     if project.apps:
         for app_name, app in project.apps.items():
-            _validate_command_chain(
+            validate_command_chain(
                 app.command_chain, name=f"app {app_name!r}", prime_dir=prime_dir
             )
 
@@ -121,11 +121,11 @@ def copy_assets(
     if meta_directory_handler:
         meta_directory_handler(assets_dir, prime_dir)
     else:
-        _write_snap_directory(
+        write_snap_directory(
             assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=prime_dir / "meta"
         )
         # create wrappers for hooks in the snap/hooks directory
-        _create_hook_wrappers(prime_dir)
+        create_hook_wrappers(prime_dir)
 
 
 def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
@@ -139,15 +139,15 @@ def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
     if hooks:
         for hook_name, hook in hooks.items():
             if hook.command_chain:
-                _validate_command_chain(
+                validate_command_chain(
                     hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
                 )
-            _ensure_hook(hooks_dir / hook_name)
+            ensure_hook(hooks_dir / hook_name)
 
     # Ensure all hooks are executable
     if hooks_dir.is_dir():
         for hook in hooks_dir.iterdir():
-            _ensure_hook_executable(hook)
+            ensure_hook_executable(hook)
 
 
 def _finalize_icon(
@@ -162,7 +162,7 @@ def _finalize_icon(
 
     # Nothing to do if no icon is configured, search for existing icon.
     if icon is None:
-        return _find_icon_file(assets_dir)
+        return find_icon_file(assets_dir)
 
     # Extracted appstream icon paths will either:
     # (1) point to a file relative to prime
@@ -196,21 +196,21 @@ def _finalize_icon(
             _copy_file(parsed_path, target_icon_path)
         else:
             # No icon found, fall back to searching for existing icon.
-            return _find_icon_file(assets_dir)
+            return find_icon_file(assets_dir)
     else:
         raise RuntimeError(f"Unexpected icon path: {parsed_url!r}")
 
     return target_icon_path
 
 
-def _find_icon_file(assets_dir: Path) -> Path | None:
+def find_icon_file(assets_dir: Path) -> Path | None:
     for icon_path in (assets_dir / "gui/icon.png", assets_dir / "gui/icon.svg"):
         if icon_path.is_file():
             return icon_path
     return None
 
 
-def _validate_command_chain(
+def validate_command_chain(
     command_chain: list[str], *, name: str, prime_dir: Path
 ) -> None:
     """Verify if each item in the command chain is executable."""
@@ -236,7 +236,7 @@ def _is_executable(path: Path) -> bool:
     return bool(mode & stat.S_IXUSR or mode & stat.S_IXGRP or mode & stat.S_IXOTH)
 
 
-def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) -> None:
+def write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) -> None:
     """Record manifest and copy assets found under the assets directory.
 
     These assets have priority over any code generated assets and include:
@@ -263,7 +263,7 @@ def _write_snap_directory(*, assets_dir: Path, prime_dir: Path, meta_dir: Path) 
                 _copy_file(source, destination, follow_symlinks=True)
 
 
-def _ensure_hook(hook_path: Path) -> None:
+def ensure_hook(hook_path: Path) -> None:
     """Create a stub for hook_path if it does not exist.
 
     A stub for hook_name is generated if a command-chain entry is defined
@@ -280,7 +280,7 @@ def _ensure_hook(hook_path: Path) -> None:
     hook_path.write_text("#!/bin/true\n")
 
 
-def _ensure_hook_executable(hook_path: Path) -> None:
+def ensure_hook_executable(hook_path: Path) -> None:
     """Ensure hook is executable.
 
     :param hook_path: file path of the hook
@@ -289,7 +289,7 @@ def _ensure_hook_executable(hook_path: Path) -> None:
         hook_path.chmod(0o755)
 
 
-def _create_hook_wrappers(prime_dir: Path) -> None:
+def create_hook_wrappers(prime_dir: Path) -> None:
     """Create wrappers for hooks.
 
     Hooks in the snap/hooks/ directory are typically built by parts.
@@ -313,11 +313,11 @@ def _create_hook_wrappers(prime_dir: Path) -> None:
 
     # create a wrapper for each hook
     for hook in hooks_in_snap_dir:
-        _ensure_hook_executable(hook)
-        _write_hook_wrapper(hook.name, hooks_meta_dir / hook.name)
+        ensure_hook_executable(hook)
+        write_hook_wrapper(hook.name, hooks_meta_dir / hook.name)
 
 
-def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
+def write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
     """Write hook wrapper file.
 
     The wrapper is a minimal shell script that calls a hook in $SNAP/snap/hooks/

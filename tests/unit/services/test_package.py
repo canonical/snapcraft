@@ -21,6 +21,7 @@ from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from textwrap import dedent
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
@@ -29,7 +30,7 @@ from craft_application import ServiceFactory
 from craft_cli.pytest_plugin import RecordingEmitter
 from pytest_mock import MockerFixture
 
-from snapcraft import __version__, linters, meta, models, pack
+from snapcraft import __version__, const, linters, meta, models, pack
 from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
@@ -191,6 +192,13 @@ def test_get_manifest_yaml_enabled(
     assert manifest["grade"] == "devel"
 
 
+def test_supports_conditional_repack(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    assert package_service.supports_conditional_repack is True
+
+
 def test_project_file_copy_disabled(
     monkeypatch, default_project, fake_services, setup_project
 ):
@@ -285,6 +293,111 @@ def test_gen_extra_assets_project_hooks_override_built_hooks(
     ]
 
 
+def test_get_gui_assets(default_project, fake_services, setup_project, in_project_path, tmp_path):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    project_gui_dir = in_project_path / "snap" / "gui"
+    project_gui_dir.mkdir(parents=True)
+    desktop = project_gui_dir / "default.default.desktop"
+    icon = project_gui_dir / "icon.png"
+    desktop.write_text("desktop_file", encoding="utf-8")
+    icon.write_text("package_png_icon", encoding="utf-8")
+
+    assert package_service._get_gui_assets() == [
+        (desktop, tmp_path / "prime" / "meta" / "gui" / "default.default.desktop"),
+        (icon, tmp_path / "prime" / "meta" / "gui" / "icon.png"),
+    ]
+
+
+def test_get_desktop_assets(default_project, fake_services, setup_project, tmp_path):
+    project_data = default_project.marshal()
+    project_data["apps"] = {
+        "app1": {"command": "bin/test", "desktop": "test.desktop"}
+    }
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    prime_dir = tmp_path / "prime"
+    (prime_dir / "bin").mkdir(parents=True)
+    (prime_dir / "bin" / "test").write_text("#!/bin/true\n", encoding="utf-8")
+    (prime_dir / "bin" / "test").chmod(0o755)
+    (prime_dir / "test.desktop").write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=test
+            Exec=test
+            Type=Application
+            Icon=/usr/share/icons/test.png
+            """
+        ),
+        encoding="utf-8",
+    )
+    (prime_dir / "usr/share/icons").mkdir(parents=True)
+    (prime_dir / "usr/share/icons" / "test.png").write_text("icon", encoding="utf-8")
+
+    assert package_service._get_desktop_assets() == [
+        (
+            dedent(
+                """\
+                [Desktop Entry]
+                Name=test
+                Exec=default.app1
+                Type=Application
+                Icon=${SNAP}/usr/share/icons/test.png
+
+                """
+            ),
+            tmp_path / "prime" / "meta" / "gui" / "app1.desktop",
+        )
+    ]
+
+
+def test_get_icon_assets_remote(monkeypatch, default_project, fake_services, setup_project, mocker, tmp_path):
+    project_data = default_project.marshal()
+    project_data["icon"] = "https://example.com/icon.png"
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    mock_response = mocker.Mock()
+    mock_response.content = b"png-data"
+    mocker.patch("snapcraft.services.package.requests.get", return_value=mock_response)
+
+    assert package_service._get_icon_assets() == [
+        (b"png-data", tmp_path / "prime" / "meta" / "gui" / "icon.png")
+    ]
+
+
+def test_get_system_metadata_assets_gadget(
+    default_project, fake_services, setup_project, in_project_path, tmp_path
+):
+    project_data = default_project.marshal()
+    project_data["type"] = "gadget"
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    gadget_yaml = in_project_path / "gadget.yaml"
+    gadget_yaml.write_text("volumes: {}\n", encoding="utf-8")
+
+    assert package_service._get_system_metadata_assets() == [
+        (gadget_yaml, tmp_path / "prime" / "meta" / "gadget.yaml")
+    ]
+
+
+def test_get_system_metadata_assets_kernel_missing(
+    default_project, fake_services, setup_project, mocker, tmp_path
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    mocker.patch.object(
+        type(package_service),
+        "_project",
+        new_callable=mocker.PropertyMock,
+        return_value=SimpleNamespace(type=const.ProjectType.KERNEL),
+    )
+
+    assert package_service._get_system_metadata_assets() == [
+        (None, tmp_path / "prime" / "meta" / "kernel.yaml")
+    ]
+
+
 def test_manifest_changed_ignores_started_at(
     monkeypatch, default_project, fake_services, setup_project, tmp_path
 ):
@@ -302,6 +415,57 @@ def test_manifest_changed_ignores_started_at(
     )
 
     assert package_service._manifest_changed(None) is False
+
+
+def test_needs_packing_when_write_metadata_changes_prime(
+    default_project, fake_services, setup_project, tmp_path
+):
+    project_data = default_project.marshal()
+    project_data["apps"] = {
+        "app1": {"command": "bin/test", "desktop": "test.desktop"}
+    }
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    artifact_path = tmp_path / "test-output.snap"
+    artifact_path.write_text("artifact", encoding="utf-8")
+
+    prime_dir = tmp_path / "prime"
+    (prime_dir / "bin").mkdir(parents=True)
+    (prime_dir / "bin" / "test").write_text("#!/bin/true\n", encoding="utf-8")
+    (prime_dir / "bin" / "test").chmod(0o755)
+    (prime_dir / "test.desktop").write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=test
+            Exec=test
+            Type=Application
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    package_service.write_metadata(prime_dir)
+
+    assert package_service.needs_packing(None) is True
+
+
+def test_write_metadata_second_run_is_stable(
+    default_project, fake_services, setup_project, tmp_path
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    prime_dir = tmp_path / "prime"
+
+    package_service.write_metadata(prime_dir)
+    snap_yaml = prime_dir / "meta" / "snap.yaml"
+    first_mtime = snap_yaml.stat().st_mtime_ns
+
+    package_service._project_was_updated = False
+    package_service.write_metadata(prime_dir)
+
+    assert package_service._project_was_updated is False
+    assert snap_yaml.stat().st_mtime_ns == first_mtime
 
 
 def test_write_metadata(default_project, fake_services, setup_project, new_dir):
@@ -489,6 +653,39 @@ def test_write_metadata_with_built_hooks(
     assert (meta_dir / "hooks" / "install").stat().st_mode & 0o111
 
 
+def test_write_metadata_generates_declared_hook_stub_as_executable(
+    default_project, fake_services, setup_project, tmp_path
+):
+    project_data = default_project.marshal()
+    project_data["hooks"] = {"post-refresh": {}}
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+
+    prime_dir = tmp_path / "prime"
+    package_service.write_metadata(prime_dir)
+
+    hook_path = prime_dir / "meta" / "hooks" / "post-refresh"
+    assert hook_path.read_text() == "#!/bin/true\n"
+    assert hook_path.stat().st_mode & 0o111
+
+
+def test_write_metadata_makes_non_executable_hook_asset_executable(
+    default_project, fake_services, setup_project, project_hooks_dir, tmp_path
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    project_hook = project_hooks_dir / "configure"
+    project_hook.write_text("configure_hook", encoding="utf-8")
+    project_hook.chmod(0o644)
+
+    prime_dir = tmp_path / "prime"
+    package_service.write_metadata(prime_dir)
+
+    hook_path = prime_dir / "meta" / "hooks" / "configure"
+    assert hook_path.read_text() == "configure_hook"
+    assert hook_path.stat().st_mode & 0o111
+
+
 def test_write_metadata_with_project_gui(
     default_project, fake_services, setup_project, in_project_path, tmp_path
 ):
@@ -532,6 +729,45 @@ def test_write_metadata_with_project_gui(
     assert (meta_dir / "gui" / "icon.png").read_text() == "package_png_icon"
 
 
+def test_write_metadata_generates_desktop_and_marks_project_updated(
+    default_project, fake_services, setup_project, tmp_path
+):
+    project_data = default_project.marshal()
+    project_data["apps"] = {
+        "app1": {"command": "bin/test", "desktop": "test.desktop"}
+    }
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    prime_dir = tmp_path / "prime"
+    (prime_dir / "bin").mkdir(parents=True)
+    (prime_dir / "bin" / "test").write_text("#!/bin/true\n", encoding="utf-8")
+    (prime_dir / "bin" / "test").chmod(0o755)
+    (prime_dir / "test.desktop").write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=test
+            Exec=test
+            Type=Application
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    package_service.write_metadata(prime_dir)
+
+    assert (prime_dir / "meta" / "gui" / "app1.desktop").read_text() == dedent(
+        """\
+        [Desktop Entry]
+        Name=test
+        Exec=default.app1
+        Type=Application
+
+        """
+    )
+    assert package_service._project_was_updated is True
+
+
 def test_update_project_parse_info(
     default_project, fake_services, setup_project, in_project_path, tmp_path, mocker
 ):
@@ -570,6 +806,60 @@ def test_update_project_parse_info(
     )
 
 
+def test_update_project_parse_info_unchanged_does_not_mark_project_updated(
+    default_project, fake_services, setup_project, in_project_path, tmp_path, mocker
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    project_service = fake_services.get("project")
+    lifecycle = fake_services.lifecycle
+    project_info = lifecycle.project_info
+    project_info.execution_finished = True
+
+    fake_metadata = ExtractedMetadata()
+    mocker.patch.object(
+        extract_metadata, "extract_lifecycle_metadata", return_value=[fake_metadata]
+    )
+    mocker.patch.object(update_metadata, "update_from_extracted_metadata")
+    mocker.patch.object(
+        project_service,
+        "get_parse_info",
+        return_value={"my-part": ["file.metadata.xml"]},
+    )
+
+    package_service.update_project()
+
+    assert package_service._project_was_updated is False
+
+
+def test_update_project_parse_info_changed_marks_project_updated(
+    default_project, fake_services, setup_project, in_project_path, tmp_path, mocker
+):
+    project_data = default_project.marshal()
+    project_data["license"] = None
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    project_service = fake_services.get("project")
+    lifecycle = fake_services.lifecycle
+    project_info = lifecycle.project_info
+    project_info.execution_finished = True
+
+    fake_metadata = ExtractedMetadata(license="GPL-3.0")
+    mocker.patch.object(
+        extract_metadata, "extract_lifecycle_metadata", return_value=[fake_metadata]
+    )
+    mocker.patch.object(
+        project_service,
+        "get_parse_info",
+        return_value={"my-part": ["file.metadata.xml"]},
+    )
+
+    package_service.update_project()
+
+    assert project_service.get().license == "GPL-3.0"
+    assert package_service._project_was_updated is True
+
+
 def test_extra_project_updates_makes_targets_core26(
     snapcraft_yaml: Callable[..., Any],
     setup_project: Callable[..., Any],
@@ -589,6 +879,38 @@ def test_extra_project_updates_makes_targets_core26(
 
     mock_precreate_layout.assert_called_once()
     mock_precreate_plugs.assert_called_once()
+
+
+def test_extra_project_updates_core26_no_precreate_changes_not_marked_updated(
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
+    fake_services: ServiceFactory,
+    mocker: MockerFixture,
+) -> None:
+    setup_project(fake_services, snapcraft_yaml(base="core26"))
+    package_service = fake_services.get("package")
+    mocker.patch.object(package_service, "_precreate_layout_targets", return_value=False)
+    mocker.patch.object(package_service, "_precreate_plug_targets", return_value=False)
+
+    package_service.update_project()
+
+    assert package_service._project_was_updated is False
+
+
+def test_extra_project_updates_core26_precreate_change_marks_updated(
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
+    fake_services: ServiceFactory,
+    mocker: MockerFixture,
+) -> None:
+    setup_project(fake_services, snapcraft_yaml(base="core26"))
+    package_service = fake_services.get("package")
+    mocker.patch.object(package_service, "_precreate_layout_targets", return_value=True)
+    mocker.patch.object(package_service, "_precreate_plug_targets", return_value=False)
+
+    package_service.update_project()
+
+    assert package_service._project_was_updated is True
 
 
 @pytest.mark.parametrize(
