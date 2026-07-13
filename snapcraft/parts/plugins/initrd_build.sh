@@ -180,15 +180,16 @@ chroot_configure() {
   # A modified ubuntu-core-initramfs COULD be supplied by the user if they add a deb to
   # CRAFT_STAGE before the plugin is called. This is intended for debugging or
   # testing ubuntu-core-initramfs and not intended for normal consumers of this plugin.
+  ubuntu_core_initramfs="ubuntu-core-initramfs"
   if [ -e "${CRAFT_STAGE}/ubuntu-core-initramfs.deb" ]; then
     cp -f "${CRAFT_STAGE}/ubuntu-core-initramfs.deb" "${INITRD_ROOT}"
-    chroot_run "dpkg -i /ubuntu-core-initramfs.deb"
+    ubuntu_core_initramfs="/ubuntu-core-initramfs.deb"
   else
     setup_ppa "${PPA_FINGERPRINT}"
   fi
 
   chroot_run "apt-get update"
-  chroot_run "apt-get install --no-install-recommends --allow-downgrades -y ubuntu-core-initramfs"
+  chroot_run "apt-get install --no-install-recommends --allow-downgrades -y ${ubuntu_core_initramfs}"
 
   # actual ubuntu-core initramfs build is performed in chroot
   # where tmp is not really tmpfs, avoid excessive use of cp

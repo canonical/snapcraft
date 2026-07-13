@@ -14,12 +14,6 @@ function source_with_prefix() {
 # Save off parameters, the sourced setup scripts may manipulate them.
 original_args=("$@")
 
-if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ]; then
-  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO"
-fi
-if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
-  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/snap"
-fi
 if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ] || [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
 
   case "$SNAP_ARCH" in
@@ -37,6 +31,15 @@ if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ] || [ -d "$SNAP/opt/ros
 
   export PATH="$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
   export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib:$SNAP/opt/ros/underlay_ws/usr/lib/$ARCH_TRIPLET:$LD_LIBRARY_PATH"
+fi
+
+# The sourcing happens after the PATH and LD_LIBRARY_PATH are set,
+# so that the local_setup.bash scripts can find the correct python3 with content sharing.
+if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ]; then
+  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO"
+fi
+if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
+  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/snap"
 fi
 
 source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"

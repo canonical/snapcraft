@@ -88,6 +88,7 @@ communicating with local processes, and storing user credentials.
     Extensions <extensions>
     Components <components>
     snap-configurations
+    services-daemons
     build-overrides
     remote-build
     /common/craft-parts/explanation/filesets

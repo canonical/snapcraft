@@ -23,6 +23,7 @@ import craft_platforms
 import craft_providers.bases
 from craft_application import ProjectService
 from craft_application.errors import CraftValidationError
+from craft_application.util import is_managed_mode
 from typing_extensions import override
 
 from snapcraft.extensions import apply_extensions
@@ -47,6 +48,9 @@ class Project(ProjectService):
 
     __project_file_path: pathlib.Path | None = None
 
+    # Used to only issue a warning once.
+    _ua_service_warning: bool = False
+
     @staticmethod
     @override
     def _app_preprocess_project(
@@ -60,9 +64,38 @@ class Project(ProjectService):
         # craft-parts doesn't allow `parse-info` in parts
         extract_parse_info(project)
         apply_root_packages(project)
+        Project.validate_ua_services(project)
 
     def get_parse_info(self) -> dict[str, list[str]]:
         return extract_parse_info(self.get_raw())
+
+    @classmethod
+    def validate_ua_services(cls, project: dict[str, Any]) -> None:
+        """Warn if the 'ua-services' key is used for a base other than core22.
+
+        This warning is shown no more than once - either before launching a managed
+        instance or in destructive mode.
+        """
+        # one-shot
+        if cls._ua_service_warning:
+            return
+        cls._ua_service_warning = True
+
+        if is_managed_mode():
+            return
+
+        base = get_effective_base(
+            base=project.get("base"),
+            build_base=project.get("build-base"),
+            project_type=project.get("type"),
+            name=project.get("name"),
+            translate_devel=True,
+        )
+        if base is not None and base != "core22" and project.get("ua-services"):
+            craft_cli.emit.warning(
+                f"The 'ua-services' key is ignored for {base!r}. "
+                "Use '--pro=<services>' instead."
+            )
 
     @override
     def resolve_project_file_path(self) -> pathlib.Path:

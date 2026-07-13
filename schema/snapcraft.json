@@ -1650,6 +1650,7 @@
             }
           ],
           "default": null,
+          "deprecated": true,
           "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
           "examples": ["[esm-apps]"],
           "title": "Ua-Services"
@@ -2236,6 +2237,7 @@
             }
           ],
           "default": null,
+          "deprecated": true,
           "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
           "examples": ["[esm-apps]"],
           "title": "Ua-Services"
@@ -2812,6 +2814,7 @@
             }
           ],
           "default": null,
+          "deprecated": true,
           "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
           "examples": ["[esm-apps]"],
           "title": "Ua-Services"
@@ -4144,6 +4147,7 @@
             }
           ],
           "default": null,
+          "deprecated": true,
           "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
           "examples": ["[esm-apps]"],
           "title": "Ua-Services"
@@ -4739,6 +4743,7 @@
             }
           ],
           "default": null,
+          "deprecated": true,
           "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
           "examples": ["[esm-apps]"],
           "title": "Ua-Services"
@@ -5315,6 +5320,7 @@
             }
           ],
           "default": null,
+          "deprecated": true,
           "description": "The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
           "examples": ["[esm-apps]"],
           "title": "Ua-Services"

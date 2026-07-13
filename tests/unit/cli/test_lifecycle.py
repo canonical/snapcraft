@@ -53,6 +53,7 @@ def test_lifecycle_command(cmd, run_method, mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -98,6 +99,7 @@ def test_lifecycle_command_arguments(cmd, run_method, mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -144,6 +146,7 @@ def test_lifecycle_command_arguments_destructive_mode(cmd, run_method, mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -190,6 +193,7 @@ def test_lifecycle_command_arguments_use_lxd(cmd, run_method, mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -233,6 +237,7 @@ def test_lifecycle_command_arguments_bind_ssh(cmd, run_method, mocker):
                 ua_token=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 parts=[],
                 shell=False,
                 shell_after=False,
@@ -280,6 +285,7 @@ def test_lifecycle_command_arguments_ua_token(cmd, run_method, mocker):
                 build_for=None,
                 enable_experimental_ua_services=True,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -324,6 +330,7 @@ def test_lifecycle_command_arguments_debug(cmd, run_method, mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -368,6 +375,7 @@ def test_lifecycle_command_arguments_shell(cmd, run_method, mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -412,6 +420,7 @@ def test_lifecycle_command_arguments_shell_after(cmd, run_method, mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -441,6 +450,7 @@ def test_lifecycle_command_arguments_http_proxy(cmd, run_method, mocker):
                 destructive_mode=False,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy="test-http",
                 https_proxy=None,
@@ -476,6 +486,7 @@ def test_lifecycle_command_arguments_https_proxy(cmd, run_method, mocker):
                 debug=False,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy="test-https",
@@ -514,6 +525,7 @@ def test_lifecycle_command_pack(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -544,6 +556,7 @@ def test_lifecycle_command_pack_destructive_mode(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -574,6 +587,7 @@ def test_lifecycle_command_pack_use_lxd(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -604,6 +618,7 @@ def test_lifecycle_command_pack_enable_manifest(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -635,6 +650,7 @@ def test_lifecycle_command_pack_env_enable_manifest(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -665,6 +681,7 @@ def test_lifecycle_command_pack_manifest_image_information(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -690,6 +707,7 @@ def test_lifecycle_command_pack_env_manifest_image_information(mocker):
                 directory=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy=None,
@@ -720,6 +738,7 @@ def test_lifecycle_command_pack_bind_ssh(mocker):
                 directory=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy=None,
@@ -757,6 +776,7 @@ def test_lifecycle_command_pack_ua_token(mocker):
                 directory=None,
                 enable_experimental_ua_services=True,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy=None,
@@ -788,6 +808,7 @@ def test_lifecycle_command_pack_env_ua_token(mocker):
                 directory=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy=None,
@@ -823,6 +844,7 @@ def test_lifecycle_command_pack_build_for(mocker):
                 build_for="armhf",
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -854,6 +876,7 @@ def test_lifecycle_command_pack_env_build_for(mocker):
                 build_for="armhf",
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -884,6 +907,7 @@ def test_lifecycle_command_pack_debug(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -906,6 +930,7 @@ def test_lifecycle_command_pack_output(mocker, option):
                 directory=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy=None,
@@ -932,6 +957,7 @@ def test_lifecycle_command_pack_directory(mocker):
                 directory="name",
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy=None,
@@ -958,6 +984,7 @@ def test_lifecycle_command_pack_http_proxy(mocker):
                 directory=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy="test-http",
                 https_proxy=None,
@@ -984,6 +1011,7 @@ def test_lifecycle_command_pack_https_proxy(mocker):
                 directory=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy="test-https",
