@@ -167,3 +167,97 @@ def test_core24_snap_error(fake_services, tmp_path):
 
     with pytest.raises(snapcraft.errors.RemovedCommand, match=expected):
         cmd.run(parsed_args)
+
+
+@pytest.mark.parametrize(
+    "cmd_class",
+    [
+        lifecycle.PullCommand,
+        lifecycle.BuildCommand,
+        lifecycle.StageCommand,
+        lifecycle.PrimeCommand,
+        lifecycle.CleanCommand,
+        lifecycle.PackCommand,
+    ],
+)
+def test_ua_token_error(cmd_class, fake_services):
+    """'--ua-token' is not supported for core24+ snaps."""
+    parsed_args = argparse.Namespace(
+        destructive_mode=False,
+        directory=None,
+        ua_token="my-token",
+        enable_experimental_ua_services=False,
+    )
+    cmd = cmd_class({"app": APP_METADATA, "services": fake_services})
+
+    with pytest.raises(snapcraft.errors.SnapcraftError) as raised:
+        cmd.run(parsed_args)
+
+    assert str(raised.value) == "'--ua-token' is not supported for this base."
+    assert raised.value.details == (
+        "The Pro token attached to the host is used instead."
+    )
+    assert raised.value.resolution == "Remove the '--ua-token' argument."
+
+
+@pytest.mark.parametrize(
+    "cmd_class",
+    [
+        lifecycle.PullCommand,
+        lifecycle.BuildCommand,
+        lifecycle.StageCommand,
+        lifecycle.PrimeCommand,
+        lifecycle.CleanCommand,
+        lifecycle.PackCommand,
+    ],
+)
+def test_enable_experimental_ua_services_error(cmd_class, fake_services):
+    """'--enable-experimental-ua-services' is not supported for core24+."""
+    parsed_args = argparse.Namespace(
+        destructive_mode=False,
+        directory=None,
+        ua_token=None,
+        enable_experimental_ua_services=True,
+    )
+    cmd = cmd_class({"app": APP_METADATA, "services": fake_services})
+
+    with pytest.raises(snapcraft.errors.SnapcraftError) as raised:
+        cmd.run(parsed_args)
+
+    assert str(raised.value) == "Pro support is stable for this base."
+    assert raised.value.resolution == (
+        "Remove the '--enable-experimental-ua-services' argument."
+    )
+
+
+@pytest.mark.parametrize(
+    "cmd_class",
+    [
+        lifecycle.PullCommand,
+        lifecycle.BuildCommand,
+        lifecycle.StageCommand,
+        lifecycle.PrimeCommand,
+        lifecycle.CleanCommand,
+        lifecycle.PackCommand,
+    ],
+)
+def test_ua_token_env_warning(
+    cmd_class, fake_services, emitter, monkeypatch, mocker
+):
+    """Warn that 'SNAPCRAFT_UA_TOKEN' is ignored for core24+ snaps."""
+    monkeypatch.setenv("SNAPCRAFT_UA_TOKEN", "my-token")
+    mocker.patch.object(cmd_class.__bases__[0], "_run")
+    parsed_args = argparse.Namespace(
+        destructive_mode=False,
+        directory=None,
+        ua_token=None,
+        enable_experimental_ua_services=False,
+    )
+    cmd = cmd_class({"app": APP_METADATA, "services": fake_services})
+
+    cmd.run(parsed_args)
+
+    emitter.assert_warning(
+        "Ignoring the 'SNAPCRAFT_UA_TOKEN' environment variable. "
+        "The Pro token attached to the host will be used instead."
+    )
