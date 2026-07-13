@@ -867,6 +867,10 @@ class LegacyStoreClientCLI:
                 validation_sets.append(assertion)
                 emit.debug(f"Parsed validation sets: {assertion.model_dump_json()}")
 
+        # Sort by sequence number numerically (the store may return them as
+        # string-sorted, resulting in alphabetical ordering like 1, 10, 11, ..., 2).
+        validation_sets.sort(key=lambda a: a.sequence)
+
         return validation_sets
 
     def build_validation_set(
