@@ -324,8 +324,9 @@ Snapcraft 9.0.0
   build packages with versioned dependencies couldn't be resolved.
 - `craft-parts#1492 <https://github.com/canonical/craft-parts/issues/1492>`__ The
   :ref:`craft_parts_poetry_plugin` didn't work for core26 snaps.
-- `#6301 <https://github.com/canonical/snapcraft/issues/6301>`__ Running
-  ``export-login`` twice to the same file failed with a permission error.
+- `#6301 <https://github.com/canonical/snapcraft/issues/6301>`__ Using
+  ``export-login`` on a credentials file that already exists failed with an
+  internal error.
 
 
 Contributors
