@@ -76,8 +76,8 @@ When the snap is already installed
 If the base snap is already installed on the system, the changelog is available
 at ``/snap/<base>/current/usr/share/doc/ChangeLog``.
 
-You can list all installed revisions and versions with ``snap list --all <base>``.
-To inspect a specific revision that is not the active one, replace ``current`` with
+You can list all installed revisions and versions of a base with ``snap list --all <base>``.
+To inspect a specific revision, replace ``current`` with
 the revision number. For example, ``/snap/<base>/<revision>/usr/share/doc/ChangeLog``.
 
 
