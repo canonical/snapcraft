@@ -84,19 +84,6 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
         emit.debug("Loading project because a directory was not provided.")
         return True
 
-    @override
-    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
-        """Return whether the command should run in managed mode or not.
-
-        Packing a directory always runs locally.
-        """
-        if parsed_args.directory:
-            emit.debug("Not running managed mode because a directory was provided.")
-            return False
-
-        return super().run_managed(parsed_args)
-
-
 class TryCommand(PackCommand):
     """Prepare the parts for ``snap try``."""
 
@@ -108,11 +95,6 @@ class TryCommand(PackCommand):
         final payload, in preparation for ``snap try prime``.
         """
     )
-
-    @override
-    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
-        """Overridden to return false, such that the command fails early."""
-        return False
 
     @override
     def _run(
