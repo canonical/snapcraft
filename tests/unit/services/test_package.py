@@ -380,6 +380,50 @@ def test_get_desktop_assets(default_project, fake_services, setup_project, tmp_p
     ]
 
 
+def test_get_desktop_assets_with_mediated_icon(
+    default_project, fake_services, setup_project, tmp_path
+):
+    project_data = default_project.marshal()
+    project_data["icon"] = "/usr/share/icons/test.svg"
+    project_data["apps"] = {"app1": {"command": "bin/test", "desktop": "test.desktop"}}
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    prime_dir = tmp_path / "prime"
+    (prime_dir / "bin").mkdir(parents=True)
+    (prime_dir / "bin" / "test").write_text("#!/bin/true\n", encoding="utf-8")
+    (prime_dir / "bin" / "test").chmod(0o755)
+    (prime_dir / "test.desktop").write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=test
+            Exec=test
+            Type=Application
+            Icon=/usr/share/icons/test.svg
+            """
+        ),
+        encoding="utf-8",
+    )
+    (prime_dir / "usr/share/icons").mkdir(parents=True)
+    (prime_dir / "usr/share/icons" / "test.svg").write_text("icon", encoding="utf-8")
+
+    assert package_service._get_desktop_assets() == [
+        (
+            dedent(
+                """\
+                [Desktop Entry]
+                Name=test
+                Exec=default.app1
+                Type=Application
+                Icon=${SNAP}/meta/gui/icon.svg
+
+                """
+            ),
+            tmp_path / "prime" / "meta" / "gui" / "app1.desktop",
+        )
+    ]
+
+
 def test_get_icon_assets_remote(
     monkeypatch, default_project, fake_services, setup_project, mocker, tmp_path
 ):

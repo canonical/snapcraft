@@ -89,6 +89,13 @@ class DesktopFile:
             if icon_path is not None:
                 icon = icon_path
 
+                # An explicit icon path is a mediated asset destination that may
+                # not have been written into prime yet.
+                icon = icon[1:] if icon.startswith("/") else icon
+                icon = icon[8:] if icon.startswith("${SNAP}") else icon
+                self._parser[section]["Icon"] = os.path.join("${SNAP}", icon)
+                return
+
             # Strip any leading slash.
             icon = icon[1:] if icon.startswith("/") else icon
 
