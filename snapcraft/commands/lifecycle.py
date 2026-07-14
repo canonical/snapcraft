@@ -35,13 +35,11 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
 
     name = "pack"
     help_msg = "Create the final artifact"
-    overview = textwrap.dedent(
-        """
+    overview = textwrap.dedent("""
         Process parts and create a snap file containing the project payload
         with the provided metadata. If a directory is specified, pack its
         contents instead.
-        """
-    )
+        """)
 
     @override
     def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -84,17 +82,16 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
         emit.debug("Loading project because a directory was not provided.")
         return True
 
+
 class TryCommand(PackCommand):
     """Prepare the parts for ``snap try``."""
 
     name = "try"
     help_msg = 'Prepare a snap for "snap try".'
-    overview = textwrap.dedent(
-        """
+    overview = textwrap.dedent("""
         Process parts and expose the ``prime`` directory containing the
         final payload, in preparation for ``snap try prime``.
-        """
-    )
+        """)
 
     @override
     def _run(
