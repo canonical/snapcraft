@@ -25,11 +25,11 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
+import requests
 import yaml
 from craft_application import ServiceFactory
 from craft_cli.pytest_plugin import RecordingEmitter
 from pytest_mock import MockerFixture
-import requests
 
 from snapcraft import __version__, const, errors, linters, meta, models, pack
 from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
