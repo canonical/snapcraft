@@ -669,7 +669,15 @@ class Package(PackageService):
 
         if parsed_url.scheme in ["http", "https"]:
             emit.progress(f"Fetching icon from {icon!r}")
-            icon_data = requests.get(icon, timeout=self._REMOTE_FETCH_TIMEOUT).content
+            try:
+                response = requests.get(icon, timeout=self._REMOTE_FETCH_TIMEOUT)
+                response.raise_for_status()
+            except requests.RequestException as err:
+                raise errors.SnapcraftError(
+                    f"Failed to fetch icon from {icon!r}.", details=str(err)
+                ) from err
+
+            icon_data = response.content
             return (icon_data, target_icon_path)
 
         if parsed_url.scheme:

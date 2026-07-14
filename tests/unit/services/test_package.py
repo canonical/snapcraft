@@ -29,8 +29,9 @@ import yaml
 from craft_application import ServiceFactory
 from craft_cli.pytest_plugin import RecordingEmitter
 from pytest_mock import MockerFixture
+import requests
 
-from snapcraft import __version__, const, linters, meta, models, pack
+from snapcraft import __version__, const, errors, linters, meta, models, pack
 from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
@@ -389,11 +390,47 @@ def test_get_icon_assets_remote(monkeypatch, default_project, fake_services, set
     package_service = fake_services.get("package")
     mock_response = mocker.Mock()
     mock_response.content = b"png-data"
+    mock_response.raise_for_status.return_value = None
     mocker.patch("snapcraft.services.package.requests.get", return_value=mock_response)
 
     assert package_service._get_icon_assets() == [
         (b"png-data", tmp_path / "prime" / "meta" / "gui" / "icon.png")
     ]
+
+
+def test_get_icon_assets_remote_http_error(
+    default_project, fake_services, setup_project, mocker
+):
+    project_data = default_project.marshal()
+    project_data["icon"] = "https://example.com/icon.png"
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    mock_response = mocker.Mock()
+    mock_response.raise_for_status.side_effect = requests.HTTPError("404 Client Error")
+    mocker.patch("snapcraft.services.package.requests.get", return_value=mock_response)
+
+    with pytest.raises(errors.SnapcraftError, match="Failed to fetch icon") as raised:
+        package_service._get_icon_assets()
+
+    assert raised.value.details == "404 Client Error"
+
+
+def test_get_icon_assets_remote_request_error(
+    default_project, fake_services, setup_project, mocker
+):
+    project_data = default_project.marshal()
+    project_data["icon"] = "https://example.com/icon.png"
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    mocker.patch(
+        "snapcraft.services.package.requests.get",
+        side_effect=requests.RequestException("temporary failure in name resolution"),
+    )
+
+    with pytest.raises(errors.SnapcraftError, match="Failed to fetch icon") as raised:
+        package_service._get_icon_assets()
+
+    assert raised.value.details == "temporary failure in name resolution"
 
 
 def test_get_system_metadata_assets_gadget(
