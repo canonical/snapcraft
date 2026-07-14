@@ -814,9 +814,12 @@ class Package(PackageService):
 
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
-        """Write the project metadata to metadata.yaml in the given directory.
+        """Write mediated package metadata and assets into the given prime directory.
 
-        :param path: The path to the prime directory.
+        This includes generated package files and mediated assets such as hooks,
+        desktop files, icons, and other metadata content.
+
+        :param path: The prime directory to update.
         """
         path.mkdir(parents=True, exist_ok=True)
 
