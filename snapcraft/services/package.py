@@ -592,11 +592,14 @@ class Package(PackageService):
 
         Project-provided hooks override built hooks with the same filename.
         """
-        assets = self._get_project_assets(
-            partition_name,
-            source_subdir="hooks",
-            destination_subdir="meta/hooks",
-            include_built_subdir="snap/hooks",
+        assets: list[tuple[str | pathlib.Path, pathlib.Path]] = []
+        assets.extend(
+            self._get_project_assets(
+                partition_name,
+                source_subdir="hooks",
+                destination_subdir="meta/hooks",
+                include_built_subdir="snap/hooks",
+            )
         )
 
         existing_hooks = {destination.name for _source, destination in assets}
