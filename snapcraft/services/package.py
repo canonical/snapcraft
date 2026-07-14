@@ -236,7 +236,8 @@ class Package(PackageService):
         exist (no-op).
 
         :param path: String path to investigate
-        :returns: A Path object that needs to be created, or None if nothing needs to be done."""
+        :returns: A Path object that needs to be created, or None if nothing needs to be done.
+        """
         # Make explicit references to the snap root ($SNAP) relative
         if path.startswith("$SNAP/"):
             path = path.removeprefix("$SNAP/")
@@ -345,10 +346,14 @@ class Package(PackageService):
     @override
     def get_artifacts(self) -> dict[str | None, pathlib.Path]:
         """Get the expected output artifacts for the current pack operation."""
-        artifacts: dict[str | None, pathlib.Path] = {None: self._get_default_artifact_path()}
+        artifacts: dict[str | None, pathlib.Path] = {
+            None: self._get_default_artifact_path()
+        }
 
         for component_name in self._project.get_component_names():
-            artifacts[component_name] = self._get_component_artifact_path(component_name)
+            artifacts[component_name] = self._get_component_artifact_path(
+                component_name
+            )
 
         return artifacts
 
@@ -499,7 +504,9 @@ class Package(PackageService):
 
         if partition_name in (None, "default"):
             project_file = self._services.get("project").resolve_project_file_path()
-            destination = self._prime_dir_for(partition_name) / "snap" / project_file.name
+            destination = (
+                self._prime_dir_for(partition_name) / "snap" / project_file.name
+            )
             source: pathlib.Path | None = (
                 project_file if self._project_file_copy_enabled() else None
             )
@@ -596,7 +603,9 @@ class Package(PackageService):
         prime_dir = self._prime_dir_for(partition_name)
         for hook_name in self._get_declared_hooks(partition_name):
             if hook_name not in existing_hooks:
-                assets.append((self._HOOK_STUB, prime_dir / "meta" / "hooks" / hook_name))
+                assets.append(
+                    (self._HOOK_STUB, prime_dir / "meta" / "hooks" / hook_name)
+                )
 
         return assets
 
@@ -706,7 +715,9 @@ class Package(PackageService):
         _source, destination = icon_asset
         return str(destination.relative_to(self._prime_dir_for(partition_name)))
 
-    def _get_partition_assets_dir(self, partition_name: str | None = None) -> pathlib.Path:
+    def _get_partition_assets_dir(
+        self, partition_name: str | None = None
+    ) -> pathlib.Path:
         """Return the project assets directory for a default or component partition."""
         assets_dir = self._get_assets_dir()
         if partition_name in (None, "default"):
