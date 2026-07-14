@@ -41,7 +41,11 @@ from snapcraft.models import ContentPlug
 from snapcraft.parts import extract_metadata as extract
 from snapcraft.parts import update_metadata as update
 from snapcraft.parts.desktop_file import DesktopFile
-from snapcraft.parts.setup_assets import find_icon_file, validate_command_chain
+from snapcraft.parts.setup_assets import (
+    ensure_hook_executable,
+    find_icon_file,
+    validate_command_chain,
+)
 from snapcraft.services import Lifecycle
 from snapcraft.utils import process_version
 
@@ -746,8 +750,8 @@ class Package(PackageService):
         else:
             super()._write_asset(source, destination)
 
-        if self._is_hook_asset(destination) and not destination.stat().st_mode & stat.S_IEXEC:
-            destination.chmod(0o755)
+        if self._is_hook_asset(destination):
+            ensure_hook_executable(destination)
 
     @staticmethod
     def _is_hook_asset(path: pathlib.Path) -> bool:
@@ -840,7 +844,7 @@ class Package(PackageService):
         changed = False
         for hook_path in hooks_dir.iterdir():
             if not hook_path.stat().st_mode & stat.S_IEXEC:
-                hook_path.chmod(0o755)
+                ensure_hook_executable(hook_path)
                 changed = True
 
         return changed
