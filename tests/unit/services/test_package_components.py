@@ -231,16 +231,15 @@ def test_get_hook_assets_for_component(
     built_hooks_dir = component_prime_dir / "snap" / "hooks"
     built_hooks_dir.mkdir(parents=True)
     built_hook = built_hooks_dir / "install"
-    project_hook = project_assets_dir / "component" / "firstcomponent" / "hooks" / "configure"
+    project_hook = project_assets_dir / "component" / "firstcomponent" / "hooks" / "install"
     project_hook.parent.mkdir(parents=True)
     built_hook.write_text("built_install", encoding="utf-8")
-    project_hook.write_text("project_configure", encoding="utf-8")
+    project_hook.write_text("project_install", encoding="utf-8")
     built_hook.chmod(0o755)
     project_hook.chmod(0o755)
 
     assert package_service._get_hook_assets("firstcomponent") == [
-        (built_hook, component_prime_dir / "meta" / "hooks" / "install"),
-        (project_hook, component_prime_dir / "meta" / "hooks" / "configure"),
+        (project_hook, component_prime_dir / "meta" / "hooks" / "install"),
         ("#!/bin/true\n", component_prime_dir / "meta" / "hooks" / "post-refresh"),
     ]
 

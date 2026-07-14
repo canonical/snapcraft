@@ -583,8 +583,7 @@ class Package(PackageService):
     ) -> list[tuple[str | pathlib.Path, pathlib.Path]]:
         """Generate hook assets for the default or component partition.
 
-        Project-provided hooks are added after built hooks so they keep their
-        existing precedence when both target the same meta/hooks path.
+        Project-provided hooks override built hooks with the same filename.
         """
         assets = self._get_project_assets(
             partition_name,
@@ -628,7 +627,14 @@ class Package(PackageService):
         if include_built_subdir is not None:
             built_dir = prime_dir / include_built_subdir
             if built_dir.is_dir():
+                overridden_assets = set[str]()
+                project_dir = assets_dir / source_subdir
+                if project_dir.is_dir():
+                    overridden_assets = {asset.name for asset in project_dir.iterdir()}
+
                 for asset in sorted(built_dir.iterdir()):
+                    if asset.name in overridden_assets:
+                        continue
                     assets.append((asset, destination_dir / asset.name))
 
         project_dir = assets_dir / source_subdir

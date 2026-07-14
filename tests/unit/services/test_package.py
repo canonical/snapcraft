@@ -148,6 +148,18 @@ def test_get_artifacts(default_project, fake_services, setup_project, tmp_path):
     }
 
 
+def test_get_artifacts_defaults_to_cwd(
+    default_project, fake_services, setup_project, monkeypatch, tmp_path
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    monkeypatch.chdir(tmp_path)
+
+    assert package_service.get_artifacts() == {
+        None: tmp_path / "default_1.0_amd64.snap"
+    }
+
+
 def test_pack_artifact_snap(default_project, fake_services, setup_project, mocker, tmp_path):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
@@ -288,9 +300,27 @@ def test_gen_extra_assets_project_hooks_override_built_hooks(
     extra_assets = package_service._get_hook_assets()
 
     assert extra_assets == [
-        (built_hook, tmp_path / "prime" / "meta" / "hooks" / "configure"),
         (project_hook, tmp_path / "prime" / "meta" / "hooks" / "configure"),
     ]
+
+
+def test_write_metadata_project_hook_overrides_newer_built_hook(
+    default_project, fake_services, setup_project, project_hooks_dir, tmp_path
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = fake_services.get("package")
+    built_hooks_dir = tmp_path / "prime" / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    built_hook = built_hooks_dir / "configure"
+    project_hook = project_hooks_dir / "configure"
+    project_hook.write_text("project_configure", encoding="utf-8")
+    built_hook.write_text("built_configure", encoding="utf-8")
+
+    package_service.write_metadata(tmp_path / "prime")
+
+    assert (tmp_path / "prime" / "meta" / "hooks" / "configure").read_text() == (
+        "project_configure"
+    )
 
 
 def test_get_gui_assets(default_project, fake_services, setup_project, in_project_path, tmp_path):
