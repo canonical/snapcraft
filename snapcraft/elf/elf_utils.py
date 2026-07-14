@@ -36,21 +36,21 @@ def get_elf_files(root_path: Path) -> list[ElfFile]:
     :param root_path: The root of the subtree to list ELF files from.
     :return: A set of ELF files found in the given subtree.
     """
-    file_list: list[str] = []
-    for root, _, files in os.walk(str(root_path)):
+    file_list: list[Path] = []
+    for root, _, files in os.walk(root_path):
         for file_name in files:
             # Filter out object files
             if file_name.endswith(".o"):
                 continue
 
-            file_path = os.path.join(root, file_name)
-            if not os.path.islink(file_path):
+            file_path = Path(root, file_name)
+            if not file_path.is_symlink():
                 file_list.append(file_path)
 
     return get_elf_files_from_list(root_path, file_list)
 
 
-def get_elf_files_from_list(root: Path, file_list: Iterable[str]) -> list[ElfFile]:
+def get_elf_files_from_list(root: Path, file_list: Iterable[Path]) -> list[ElfFile]:
     """Return a list of ELF files from file_list prepended with root.
 
     :param str root: the root directory from where the file_list is generated.
@@ -61,12 +61,12 @@ def get_elf_files_from_list(root: Path, file_list: Iterable[str]) -> list[ElfFil
 
     for part_file in file_list:
         # Filter out object (*.o) files-- we only care about binaries.
-        if part_file.endswith(".o"):
+        if part_file.suffix == ".o":
             continue
 
         # No need to crawl links-- the original should be here, too.
-        path = Path(root, part_file)
-        if os.path.islink(path):
+        path = root / part_file
+        if path.is_symlink():
             emit.debug(f"Skipped link {path!r} while finding dependencies")
             continue
 
