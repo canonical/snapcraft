@@ -130,8 +130,7 @@ def test_generate_yaml_from_model(fake_confdb_schema_assertion, fake_services):
     )
     yaml_data = confdb_schemas_service._generate_yaml_from_model(assertion)
 
-    assert yaml_data == textwrap.dedent(
-        """\
+    assert yaml_data == textwrap.dedent("""\
         account-id: test-account-id
         name: test-confdb
         # The revision for this confdb-schema
@@ -158,8 +157,7 @@ def test_generate_yaml_from_model(fake_confdb_schema_assertion, fake_services):
             }
           }
 
-          """
-    )
+          """)
 
 
 def test_generate_yaml_from_model_with_summary(
@@ -195,8 +193,7 @@ def test_generate_yaml_from_model_with_summary(
     )
     yaml_data = confdb_schemas_service._generate_yaml_from_model(assertion)
 
-    assert yaml_data == textwrap.dedent(
-        """\
+    assert yaml_data == textwrap.dedent("""\
         account-id: test-account-id
         name: test-confdb
         summary: This is a test confdb-schema summary.
@@ -225,8 +222,7 @@ def test_generate_yaml_from_model_with_summary(
             }
           }
 
-          """
-    )
+          """)
 
 
 def test_generate_yaml_from_template(fake_services):
@@ -236,8 +232,7 @@ def test_generate_yaml_from_template(fake_services):
         name="test-confdb", account_id="test-account-id"
     )
 
-    expected_yaml = textwrap.dedent(
-        """\
+    expected_yaml = textwrap.dedent("""\
         account-id: test-account-id
         name: test-confdb
         summary: Summary of the confdb-schema
@@ -261,8 +256,7 @@ def test_generate_yaml_from_template(fake_services):
               }
             }
           }
-        """
-    )
+        """)
 
     assert yaml_data.strip() == expected_yaml.strip()
 

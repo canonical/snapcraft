@@ -200,25 +200,21 @@ def test_get_component_yaml(default_project, fake_services, setup_project):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
 
-    assert package_service._get_component_yaml("firstcomponent") == dedent(
-        """\
+    assert package_service._get_component_yaml("firstcomponent") == dedent("""\
         component: default+firstcomponent
         type: test
         version: '1.0'
         summary: first component
         description: lorem ipsum
-    """
-    )
+    """)
 
-    assert package_service._get_component_yaml("secondcomponent") == dedent(
-        """\
+    assert package_service._get_component_yaml("secondcomponent") == dedent("""\
         component: default+secondcomponent
         type: test
         version: '1.0'
         summary: second component
         description: lorem ipsum
-    """
-    )
+    """)
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
@@ -227,11 +223,15 @@ def test_get_hook_assets_for_component(
 ):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
-    component_prime_dir = tmp_path / "partitions" / "component" / "firstcomponent" / "prime"
+    component_prime_dir = (
+        tmp_path / "partitions" / "component" / "firstcomponent" / "prime"
+    )
     built_hooks_dir = component_prime_dir / "snap" / "hooks"
     built_hooks_dir.mkdir(parents=True)
     built_hook = built_hooks_dir / "install"
-    project_hook = project_assets_dir / "component" / "firstcomponent" / "hooks" / "install"
+    project_hook = (
+        project_assets_dir / "component" / "firstcomponent" / "hooks" / "install"
+    )
     project_hook.parent.mkdir(parents=True)
     built_hook.write_text("built_install", encoding="utf-8")
     project_hook.write_text("project_install", encoding="utf-8")
@@ -250,8 +250,12 @@ def test_get_gui_assets_for_component(
 ):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
-    component_prime_dir = tmp_path / "partitions" / "component" / "firstcomponent" / "prime"
-    desktop = project_assets_dir / "component" / "firstcomponent" / "gui" / "first.desktop"
+    component_prime_dir = (
+        tmp_path / "partitions" / "component" / "firstcomponent" / "prime"
+    )
+    desktop = (
+        project_assets_dir / "component" / "firstcomponent" / "gui" / "first.desktop"
+    )
     icon = project_assets_dir / "component" / "firstcomponent" / "gui" / "icon.png"
     desktop.parent.mkdir(parents=True)
     desktop.write_text("desktop_file", encoding="utf-8")
@@ -302,8 +306,7 @@ def test_write_metadata(
 
     package_service.write_metadata(prime_dir)
 
-    assert (meta_dir / "snap.yaml").read_text() == dedent(
-        """\
+    assert (meta_dir / "snap.yaml").read_text() == dedent("""\
         name: default
         version: '1.0'
         summary: default project
@@ -341,8 +344,7 @@ def test_write_metadata(
             summary: second component
             description: lorem ipsum
             type: test
-    """
-    )
+    """)
 
     assert (
         lifecycle_service.get_prime_dir("firstcomponent") / "meta" / "component.yaml"
@@ -418,7 +420,9 @@ def test_pack_component_makes_organized_meta_hook_executable(
 
     mocker.patch.object(linters, "run_linters")
     mocker.patch.object(linters, "report")
-    mock_pack_component = mocker.patch.object(pack, "pack_component", return_value="default+firstcomponent_1.0.comp")
+    mock_pack_component = mocker.patch.object(
+        pack, "pack_component", return_value="default+firstcomponent_1.0.comp"
+    )
 
     package_service._pack(
         name="firstcomponent",

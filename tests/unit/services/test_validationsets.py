@@ -113,8 +113,7 @@ def test_generate_yaml_from_model(fake_validation_set_assertion, fake_services):
         fake_validation_set_assertion()
     )
 
-    assert yaml_data == textwrap.dedent(
-        """\
+    assert yaml_data == textwrap.dedent("""\
         account-id: test-account-id
         name: test-validation-set
         sequence: 5
@@ -130,8 +129,7 @@ def test_generate_yaml_from_model(fake_validation_set_assertion, fake_services):
               presence: required
               revision: 10
             component-without-revision: invalid
-        """
-    )
+        """)
 
 
 def test_generate_yaml_from_template(fake_services):
@@ -141,8 +139,7 @@ def test_generate_yaml_from_template(fake_services):
         name="test-validation-set", account_id="test-account-id", sequence=100
     )
 
-    expected_yaml = textwrap.dedent(
-        """\
+    expected_yaml = textwrap.dedent("""\
         account-id: test-account-id
         name: test-validation-set
         sequence: 100
@@ -160,8 +157,7 @@ def test_generate_yaml_from_template(fake_services):
         #        presence: [required|optional|invalid] # Presence of the component. Required.
         #        revision: <n> # The revision of the component, required if the snap's revision is given.
                                # Otherwise, not allowed.
-        """
-    )
+        """)
 
     assert yaml_data.strip() == expected_yaml.strip()
 
