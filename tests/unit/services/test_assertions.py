@@ -206,10 +206,12 @@ def test_list_assertions_table(fake_assertion_service, emitter):
         output_format=const.OutputFormat.table, name="test-confb"
     )
 
-    emitter.assert_message(textwrap.dedent("""\
+    emitter.assert_message(
+        textwrap.dedent("""\
             test-field-1      test-field-2
             test-value-1                 0
-            test-value-2               100"""))
+            test-value-2               100""")
+    )
 
 
 def test_list_assertions_json(fake_assertion_service, emitter):
@@ -218,7 +220,8 @@ def test_list_assertions_json(fake_assertion_service, emitter):
         output_format=const.OutputFormat.json, name="test-confb"
     )
 
-    emitter.assert_message(textwrap.dedent("""\
+    emitter.assert_message(
+        textwrap.dedent("""\
             {
                 "fake assertions": [
                     {
@@ -230,7 +233,8 @@ def test_list_assertions_json(fake_assertion_service, emitter):
                         "test-field-2": 100
                     }
                 ]
-            }"""))
+            }""")
+    )
 
 
 def test_list_assertions_unknown_format(fake_assertion_service):
