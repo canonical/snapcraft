@@ -28,9 +28,9 @@ from snapcraft.parts.setup_assets import (
     create_hook_wrappers,
     ensure_hook,
     ensure_hook_executable,
+    setup_assets,
     validate_command_chain,
     write_hook_wrapper,
-    setup_assets,
 )
 
 

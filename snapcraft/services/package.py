@@ -644,7 +644,7 @@ class Package(PackageService):
 
         return assets
 
-    def _resolve_icon_asset(
+    def _resolve_icon_asset(  # noqa: PLR0911
         self, partition_name: str | None = None
     ) -> tuple[bytes | pathlib.Path, pathlib.Path] | None:
         """Resolve the icon asset that should be added to prime."""
