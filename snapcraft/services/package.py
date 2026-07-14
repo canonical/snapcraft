@@ -843,6 +843,8 @@ class Package(PackageService):
 
         changed = False
         for hook_path in hooks_dir.iterdir():
+            if not hook_path.is_file():
+                continue
             if not hook_path.stat().st_mode & stat.S_IEXEC:
                 ensure_hook_executable(hook_path)
                 changed = True
