@@ -265,12 +265,16 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 intersphinx_mapping = {
     # https://github.com/canonical/snapcraft/issues/6036
     "snap": ("https://snapcraft.io/docs/", None),
-    "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
-    "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
+    "charmcraft": ("https://canonical.com/juju/docs/charmcraft/latest/", None),
+    "rockcraft": ("https://documentation.ubuntu.com/rockcraft/latest/", None),
     "core": ("https://documentation.ubuntu.com/core/", None),
-    "craft-parts": ("https://documentation.ubuntu.com/craft-parts/latest", None),
-    "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
     "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
+    "craft-application": ("https://documentation.ubuntu.com/craft-application/latest", None),
+    "craft-archives": ("https://documentation.ubuntu.com/craft-archives/latest", None),
+    "craft-parts": ("https://documentation.ubuntu.com/craft-parts/latest", None),
+    "craft-providers": ("https://documentation.ubuntu.com/craft-providers/latest", None),
+    "craft-store": ("https://documentation.ubuntu.com/craft-store/latest", None),
+    "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
 }
 
 # Block Intersphinx from looking up external sources with internal references. In other
