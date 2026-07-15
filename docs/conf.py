@@ -214,7 +214,6 @@ exclude_patterns = [
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
-    "how-to/publishing/build-snaps-remotely.rst",
     "README.md",
 ]
 
@@ -235,7 +234,6 @@ html_js_files = [
 
 # Specifies a reST snippet to be appended to each .rst file
 rst_epilog = """
-.. include:: /reuse/links.txt
 """
 
 # Feedback button at the top; enabled by default
@@ -269,6 +267,8 @@ intersphinx_mapping = {
     "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
+    "core": ("https://documentation.ubuntu.com/core/", None),
+    "craft-parts": ("https://documentation.ubuntu.com/craft-parts/latest", None),
     "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
     "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
 }
