@@ -85,7 +85,7 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
         return True
 
     @override
-    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
+    def _use_provider(self, parsed_args: argparse.Namespace) -> bool:
         """Return whether the command should run in managed mode or not.
 
         Packing a directory always runs locally.
@@ -94,7 +94,7 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
             emit.debug("Not running managed mode because a directory was provided.")
             return False
 
-        return super().run_managed(parsed_args)
+        return super()._use_provider(parsed_args)
 
 
 class TryCommand(PackCommand):
@@ -110,7 +110,7 @@ class TryCommand(PackCommand):
     )
 
     @override
-    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
+    def _use_provider(self, parsed_args: argparse.Namespace) -> bool:
         """Overridden to return false, such that the command fails early."""
         return False
 
