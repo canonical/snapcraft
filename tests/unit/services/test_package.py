@@ -441,6 +441,50 @@ def test_get_icon_assets_remote(
     ]
 
 
+def test_get_desktop_assets_with_remote_mediated_icon_does_not_fetch(
+    default_project, fake_services, setup_project, mocker, tmp_path
+):
+    project_data = default_project.marshal()
+    project_data["icon"] = "https://example.com/icon.png"
+    project_data["apps"] = {"app1": {"command": "bin/test", "desktop": "test.desktop"}}
+    setup_project(fake_services, project_data, write_project=True)
+    package_service = fake_services.get("package")
+    prime_dir = tmp_path / "prime"
+    (prime_dir / "bin").mkdir(parents=True)
+    (prime_dir / "bin" / "test").write_text("#!/bin/true\n", encoding="utf-8")
+    (prime_dir / "bin" / "test").chmod(0o755)
+    (prime_dir / "test.desktop").write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=test
+            Exec=test
+            Type=Application
+            Icon=test.png
+            """
+        ),
+        encoding="utf-8",
+    )
+    requests_get = mocker.patch("snapcraft.services.package.requests.get")
+
+    assert package_service._get_desktop_assets() == [
+        (
+            dedent(
+                """\
+                [Desktop Entry]
+                Name=test
+                Exec=default.app1
+                Type=Application
+                Icon=${SNAP}/meta/gui/icon.png
+
+                """
+            ),
+            tmp_path / "prime" / "meta" / "gui" / "app1.desktop",
+        )
+    ]
+    requests_get.assert_not_called()
+
+
 def test_get_icon_assets_remote_http_error(
     default_project, fake_services, setup_project, mocker
 ):

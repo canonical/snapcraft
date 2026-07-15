@@ -711,6 +711,19 @@ class Package(PackageService):
 
     def _get_effective_icon_path(self, partition_name: str | None = None) -> str | None:
         """Return the path desktop rewrites should reference for the icon."""
+        icon = self._project.icon
+        if icon is not None:
+            parsed_url = urllib.parse.urlparse(icon)
+            if parsed_url.scheme in ["http", "https"]:
+                icon_ext = pathlib.Path(parsed_url.path).suffix[1:]
+                destination = (
+                    self._prime_dir_for(partition_name)
+                    / "meta"
+                    / "gui"
+                    / f"icon.{icon_ext}"
+                )
+                return str(destination.relative_to(self._prime_dir_for(partition_name)))
+
         icon_asset = self._resolve_icon_asset(partition_name)
         if icon_asset is None:
             return None
