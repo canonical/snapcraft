@@ -30,7 +30,7 @@ dependencies. Some plugins can provision their own build tools, while others req
 build tools to be available on the system.
 
 For more information on the use of cryptography for plugins provided by Craft Parts, see
-the :external+craft-parts:ref:`Craft Parts crytography
+the :external+craft-parts:ref:`Craft Parts cryptography
 <explanation_cryptographic-technology>` documentation.
 
 For plugins provided by Snapcraft, the following table summarizes how they provision
