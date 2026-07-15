@@ -18,7 +18,11 @@ execute: |
   echo "Change" >> snap/icon.svg
   snapcraft pack 2>&1 | MATCH "Packing"
   snapcraft pack 2>&1 | MATCH "Skipping pack"
-  echo "echo hello world" >> snap/hooks/configure
+  mkdir -p snap/hooks
+  cat <<'EOF' > snap/hooks/configure
+  #!/bin/sh
+  exit 0
+  EOF
   chmod +x snap/hooks/configure
   snapcraft pack 2>&1 | MATCH "Packing"
 

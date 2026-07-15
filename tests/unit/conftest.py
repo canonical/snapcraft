@@ -589,7 +589,14 @@ def fake_project_service_class(fake_project) -> type[services.Project]:
         # This is a final method, but we're overriding it here for convenience when
         # doing internal testing.
         def _load_raw_project(self):  # ty: ignore[override-of-final-method]
-            return fake_project.marshal()
+            project = fake_project.marshal()
+            self._app_preprocess_project(
+                project,
+                build_on="amd64",
+                build_for="amd64",
+                platform="amd64",
+            )
+            return project
 
         # Don't care if the project file exists during this testing.
         # Silencing B019 because we're replicating an inherited method.

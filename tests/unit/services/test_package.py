@@ -600,6 +600,78 @@ def test_write_metadata(default_project, fake_services, setup_project, new_dir):
     assert not (prime_dir / "snap" / "manifest.yaml").exists()
 
 
+def test_write_metadata_omits_default_ld_library_path_when_null(
+    default_project, fake_services, setup_project, tmp_path
+):
+    project_data = default_project.marshal()
+    project_data["confinement"] = "strict"
+    project_data["environment"] = {
+        "LD_LIBRARY_PATH": None,
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "TEST_VARIABLE": "test-1",
+    }
+    project_data["apps"] = {"paths-one-null": {"command": "usr/bin/hello"}}
+    setup_project(fake_services, project_data)
+    package_service = fake_services.get("package")
+
+    package_service.write_metadata(tmp_path / "prime")
+
+    assert (tmp_path / "prime" / "meta" / "snap.yaml").read_text() == dedent(
+        """\
+        name: default
+        version: '1.0'
+        summary: default project
+        description: default project
+        license: MIT
+        architectures:
+        - amd64
+        base: core24
+        apps:
+          paths-one-null:
+            command: usr/bin/hello
+        confinement: strict
+        grade: devel
+        environment:
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+          TEST_VARIABLE: test-1
+    """
+    )
+
+
+def test_write_metadata_omits_environment_block_when_all_default_entries_null(
+    default_project, fake_services, setup_project, tmp_path
+):
+    project_data = default_project.marshal()
+    project_data["confinement"] = "strict"
+    project_data["environment"] = {
+        "LD_LIBRARY_PATH": None,
+        "PATH": None,
+    }
+    project_data["apps"] = {"paths-all-null": {"command": "usr/bin/hello"}}
+    setup_project(fake_services, project_data)
+    package_service = fake_services.get("package")
+
+    package_service.write_metadata(tmp_path / "prime")
+
+    assert (tmp_path / "prime" / "meta" / "snap.yaml").read_text() == dedent(
+        """\
+        name: default
+        version: '1.0'
+        summary: default project
+        description: default project
+        license: MIT
+        architectures:
+        - amd64
+        base: core24
+        apps:
+          paths-all-null:
+            command: usr/bin/hello
+        confinement: strict
+        grade: devel
+    """
+    )
+
+
 def test_write_metadata_removes_manifest_when_disabled(
     monkeypatch, default_project, fake_services, setup_project, tmp_path
 ):

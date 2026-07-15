@@ -885,11 +885,27 @@ class Package(PackageService):
     @property
     def metadata(self) -> snap_yaml.SnapMetadata:
         """Get the metadata model for this project."""
-        return snap_yaml.get_metadata_from_project(
+        metadata = snap_yaml.get_metadata_from_project(
             self._project,
             self._services.lifecycle.prime_dir,
             arch=self._build_for,
         )
+
+        raw_environment = self._project_service.get_raw().get("environment")
+        if not isinstance(raw_environment, dict):
+            return metadata
+
+        if metadata.environment is None:
+            metadata.environment = {}
+
+        for key, value in raw_environment.items():
+            if value is None and metadata.environment is not None:
+                metadata.environment.pop(key, None)
+
+        if metadata.environment == {}:
+            metadata.environment = None
+
+        return metadata
 
 
 def _hardlink_or_copy(source: pathlib.Path, destination: pathlib.Path) -> bool:
