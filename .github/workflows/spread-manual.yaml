@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # speed up build times by using wheels, when available
@@ -59,7 +59,7 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -85,12 +85,12 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
       - name: Download snap artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: snap
           path: tests
@@ -116,7 +116,7 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -151,7 +151,7 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -184,7 +184,7 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -219,7 +219,7 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -250,7 +250,7 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -281,7 +281,7 @@ jobs:
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout Snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
