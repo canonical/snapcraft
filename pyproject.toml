@@ -11,7 +11,7 @@ dependencies = [
     "craft-grammar>=2.3.0",
     "craft-parts>=2.33.0",
     "craft-platforms>=0.11.0",
-    "craft-providers>=3.6.0",
+    "craft-providers>=3.7.1",
     "craft-store>=3.3.0",
     "jsonschema==2.6.0",
     "lazr.restfulclient",
