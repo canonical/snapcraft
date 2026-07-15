@@ -1,3 +1,6 @@
+.. meta::
+    :description: How to build a snap on the Launchpad farm. You can build snaps at scale, offloading large and complex snaps, and building multi-arch snaps concurrently.
+
 .. |Starcraft| replace:: Snapcraft
 .. |star| replace:: snap
 .. |app-command| replace:: snapcraft
