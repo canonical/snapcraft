@@ -6,6 +6,9 @@ environment:
   PROFILE: null
   PROJECT_DIR: null
   NAME: null
+  BASE: core26
+  # the ros2 jazzy template is a core24 project
+  BASE/ros2: core24
   PROFILE/default_profile: null
   PROFILE/simple_profile: simple
   NAME/with_name: test-snap-name
@@ -58,7 +61,7 @@ execute: |
   fi
 
   grep "^name: ${expected_name}" snap/snapcraft.yaml
-  grep "^base: core26" snap/snapcraft.yaml
+  grep "^base: ${BASE}" snap/snapcraft.yaml
 
   # 'snapcraft init' should create a usable snapcraft.yaml file
   snapcraft pack
