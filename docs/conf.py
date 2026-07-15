@@ -26,26 +26,26 @@ import snapcraft
 
 project = "Snapcraft"
 author = "Canonical Group Ltd"
-# The full version, including alpha/beta/rc tags
-release = snapcraft.__version__
-if ".post" in release:
-    release = "dev"
-else:
-    major, minor, *_ = release.split(".")
+
+# Version string in sidebar
+if os.environ.get("READTHEDOCS_VERSION_TYPE", "external") == "external":  # PR or local build
+    # Because of Autotools, we can safely assume the version starts with `n.n`
+    major, minor, *_ = snapcraft.__version__.split(".")
     release = f"{major}.{minor}"
+else:  # Branch build
+    release = os.environ.get("READTHEDOCS_VERSION", "latest")
 
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
 # region Configuration for canonical-sphinx
-ogp_site_url = "https://documentation.ubuntu.com/snapcraft"
+ogp_site_url = "https://ubuntu.com/docs/snapcraft"
 ogp_site_name = project
 
 # Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
 #
 # TODO: If your documentation is hosted on https://docs.ubuntu.com/,
 #       uncomment and update as needed.
-
-slug = "snapcraft"
+slug = "docs/snapcraft"
 
 html_context = {
     "product_page": "snapcraft.io",
@@ -76,6 +76,7 @@ html_js_files = [
     "js/bundle.js",
     "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
     "js/support-chart.js",
+    "js/overwrite-links.js",
 ]
 
 extensions = [
@@ -138,16 +139,16 @@ exclude_patterns = [
 rediraffe_redirects = "redirects.txt"
 
 # Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
-html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
+html_baseurl = f"{ogp_site_url}/{release}/"
 
 # Builds URLs as {html_baseurl}/<page-location>
 sitemap_url_scheme = "{link}"
 
 # Exclude generated pages from the sitemap:
 sitemap_excludes = [
-    '404/',
-    'genindex/',
-    'search/',
+    "404/",
+    "genindex/",
+    "search/",
 ]
 
 # endregion
