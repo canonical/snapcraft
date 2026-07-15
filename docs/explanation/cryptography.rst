@@ -53,10 +53,6 @@ build tools, and which build tools they use to download and verify dependencies.
     - ``flutter``
     - Git
 
-  * - :ref:`Matter SDK <reference_matter_sdk_plugin>`
-    - ``matter``
-    - Git
-
 core22
 ------
 

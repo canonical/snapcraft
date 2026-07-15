@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-_EXPERIMENTAL_PLUGINS = ["kernel", "initrd", "matter-sdk"]
+_EXPERIMENTAL_PLUGINS = ["kernel", "initrd"]
 
 
 def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
