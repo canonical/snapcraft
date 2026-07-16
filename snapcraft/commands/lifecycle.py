@@ -17,6 +17,7 @@
 """Snapcraft lifecycle commands."""
 
 import argparse
+import os
 import textwrap
 from typing import Any, cast
 
@@ -30,7 +31,89 @@ from snapcraft import errors
 from snapcraft.models.project import Project
 
 
-class PackCommand(craft_application.commands.lifecycle.PackCommand):
+def _add_ua_args(parser: argparse.ArgumentParser) -> None:
+    """Add hidden UA args."""
+    parser.add_argument(
+        "--ua-token",
+        type=str,
+        metavar="ua-token",
+        default=None,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--enable-experimental-ua-services",
+        action="store_true",
+        default=False,
+        help=argparse.SUPPRESS,
+    )
+
+
+def _validate_ua_args(parsed_args: argparse.Namespace) -> None:
+    """Validate if UA args or environment variables are used.
+
+    Using a UA command line argument is an error, but the UA environment variable
+    will only emit a warning.
+    """
+    if os.environ.get("SNAPCRAFT_UA_TOKEN"):
+        emit.warning(
+            "Ignoring the 'SNAPCRAFT_UA_TOKEN' environment variable. "
+            "The Pro token attached to the host will be used instead."
+        )
+
+    if parsed_args.ua_token is not None:
+        raise errors.SnapcraftError(
+            "'--ua-token' is not supported for this base.",
+            details="The Pro token attached to the host is used instead.",
+            resolution="Remove the '--ua-token' argument.",
+        )
+
+    if parsed_args.enable_experimental_ua_services:
+        raise errors.SnapcraftError(
+            "Pro support is stable for this base.",
+            resolution="Remove the '--enable-experimental-ua-services' argument.",
+        )
+
+
+class _UAServicesMixin(craft_application.commands.base.ExtensibleCommand):
+    """Mixin to add UA args and validation to lifecycle commands."""
+
+    @override
+    def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        super()._fill_parser(parser)  # type: ignore[misc]
+        _add_ua_args(parser)
+
+    @override
+    def _run(
+        self,
+        parsed_args: argparse.Namespace,
+        step_name: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        _validate_ua_args(parsed_args)
+        super()._run(parsed_args, step_name=step_name, **kwargs)  # type: ignore[misc]
+
+
+class PullCommand(_UAServicesMixin, craft_application.commands.lifecycle.PullCommand):
+    """Snapcraft pull command."""
+
+
+class BuildCommand(_UAServicesMixin, craft_application.commands.lifecycle.BuildCommand):
+    """Snapcraft build command."""
+
+
+class StageCommand(_UAServicesMixin, craft_application.commands.lifecycle.StageCommand):
+    """Snapcraft stage command."""
+
+
+class PrimeCommand(_UAServicesMixin, craft_application.commands.lifecycle.PrimeCommand):
+    """Snapcraft prime command."""
+
+
+class CleanCommand(_UAServicesMixin, craft_application.commands.lifecycle.CleanCommand):
+    """Snapcraft clean command."""
+
+
+class PackCommand(_UAServicesMixin, craft_application.commands.lifecycle.PackCommand):
     """Snapcraft pack command."""
 
     name = "pack"
@@ -72,7 +155,9 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
             )
             emit.message(f"Packed {snap_filename}")
         else:
-            super()._run(parsed_args)
+            # Skip the mixin's _run to avoid validating UA args twice.
+            _validate_ua_args(parsed_args)
+            craft_application.commands.lifecycle.PackCommand._run(self, parsed_args)
 
     @override
     def needs_project(self, parsed_args: argparse.Namespace) -> bool:
