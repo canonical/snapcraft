@@ -306,6 +306,18 @@ class Package(PackageService):
             return None
         return self._package_output_dir
 
+    @override
+    def _prime_dir_for(self, partition_name: str | None) -> pathlib.Path:
+        """Return the prime directory for the requested artifact.
+
+        Component artifacts are keyed by component name in Snapcraft, while
+        craft-application's default implementation expects full partition names.
+        """
+        if partition_name in (None, "default"):
+            return self._services.lifecycle.prime_dir
+
+        return cast(Lifecycle, self._services.lifecycle).get_prime_dir(partition_name)
+
     def _pack_snap(
         self, prime_dir: pathlib.Path, output_path: pathlib.Path
     ) -> pathlib.Path:
