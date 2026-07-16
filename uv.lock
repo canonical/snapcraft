@@ -18,6 +18,7 @@ conflicts = [[
 [manifest]
 constraints = [
     { name = "cryptography", specifier = ">=48.0.1" },
+    { name = "httplib2", specifier = ">=0.32.0" },
     { name = "protobuf", specifier = "==6.32.*" },
     { name = "pynacl", specifier = "<1.6.0" },
     { name = "starlette", specifier = ">=1.0.1" },
@@ -351,14 +352,14 @@ wheels = [
 
 [[package]]
 name = "click"
-version = "8.3.1"
+version = "8.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-noble') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-jammy' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-plucky') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-noble' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-questing') or (extra == 'group-9-snapcraft-dev-plucky' and extra == 'group-9-snapcraft-dev-resolute') or (extra == 'group-9-snapcraft-dev-questing' and extra == 'group-9-snapcraft-dev-resolute')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/fa/656b739db8587d7b5dfa22e22ed02566950fbfbcdc20311993483657a5c0/click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a", size = 295065, upload-time = "2025-11-15T20:45:42.706Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/d4/81420972a676e8ffea40450d8c8c92943e7218a78fe9b64359836cc9876b/click-8.4.2.tar.gz", hash = "sha256:9a6cea6e60b17ebe0a44c5cc636d94f09bd66142c1cd7d8b4cd731c4917a15f6", size = 338000, upload-time = "2026-06-24T17:45:15.148Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/78/01c019cdb5d6498122777c1a43056ebb3ebfeef2076d9d026bfe15583b2b/click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6", size = 108274, upload-time = "2025-11-15T20:45:41.139Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/e2/79c688af8b210d232694e31e59da9f6ec747bae31c3f5946e4e9b98860d5/click-8.4.2-py3-none-any.whl", hash = "sha256:e6f9f66136c816745b9d65817da91d61d957fb16e02e4dcd0552553c5a197b76", size = 119243, upload-time = "2026-06-24T17:45:13.73Z" },
 ]
 
 [[package]]
@@ -813,14 +814,14 @@ wheels = [
 
 [[package]]
 name = "httplib2"
-version = "0.31.1"
+version = "0.32.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyparsing" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/77/df/6eb1d485a513776bbdbb1c919b72e59b5acc51c5e7ef28ad1cd444e252a3/httplib2-0.31.1.tar.gz", hash = "sha256:21591655ac54953624c6ab8d587c71675e379e31e2cfe3147c83c11e9ef41f92", size = 250746, upload-time = "2026-01-13T12:14:14.365Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/84/f5/ccf58de92d61e3ad921119668f54ed36ca1d0cf5dcc5c1657dfb164fd78b/httplib2-0.32.0.tar.gz", hash = "sha256:48a0ef30a42db65d8f3399045e1d09ab0ba66e3b9efc360d07f80ea55d286025", size = 254283, upload-time = "2026-06-26T10:13:56.265Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f0/d8/1b05076441c2f01e4b64f59e5255edc2f0384a711b6d618845c023dc269b/httplib2-0.31.1-py3-none-any.whl", hash = "sha256:d520d22fa7e50c746a7ed856bac298c4300105d01bc2d8c2580a9b57fb9ed617", size = 91101, upload-time = "2026-01-13T12:14:12.676Z" },
+    { url = "https://files.pythonhosted.org/packages/33/a0/550eec327e5f5c7b732531c489f5307efec41f047b0d703bd4ca1e5ad2db/httplib2-0.32.0-py3-none-any.whl", hash = "sha256:dc6705cacdf3fb0a2aba7629fa33c90fd93e30035db0c157325826be177e4816", size = 93148, upload-time = "2026-06-26T10:13:54.985Z" },
 ]
 
 [[package]]
@@ -2353,11 +2354,11 @@ wheels = [
 
 [[package]]
 name = "setuptools"
-version = "80.8.0"
+version = "83.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8d/d2/ec1acaaff45caed5c2dedb33b67055ba9d4e96b091094df90762e60135fe/setuptools-80.8.0.tar.gz", hash = "sha256:49f7af965996f26d43c8ae34539c8d99c5042fbff34302ea151eaa9c207cd257", size = 1319720, upload-time = "2025-05-20T14:02:53.503Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/34/26/f5d29e25ffdb535afef2d35cdb55b325298f96debd670da4c325e08d70f4/setuptools-83.0.0.tar.gz", hash = "sha256:025bccbbf0fa05b6192bc64ae1e7b16e001fd6d6d4d5de03c97b1c1ade523bef", size = 1154254, upload-time = "2026-07-04T15:31:22.699Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/29/93c53c098d301132196c3238c312825324740851d77a8500a2462c0fd888/setuptools-80.8.0-py3-none-any.whl", hash = "sha256:95a60484590d24103af13b686121328cc2736bee85de8936383111e421b9edc0", size = 1201470, upload-time = "2025-05-20T14:02:51.348Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/40/e1e72872c6354b306daef1703549e8e83b4d43cfea356311bf722a043752/setuptools-83.0.0-py3-none-any.whl", hash = "sha256:29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3", size = 1008090, upload-time = "2026-07-04T15:31:20.885Z" },
 ]
 
 [[package]]
@@ -2517,7 +2518,7 @@ types = [
 [package.metadata]
 requires-dist = [
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.1.0" },
-    { name = "click", specifier = ">=8.2" },
+    { name = "click", specifier = ">=8.3.3" },
     { name = "craft-application", extras = ["remote"], specifier = ">=6.4.0" },
     { name = "craft-archives", specifier = ">=2.2.0" },
     { name = "craft-cli", specifier = ">=3.4.0" },
@@ -2538,7 +2539,7 @@ requires-dist = [
     { name = "pyyaml" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "requests-toolbelt" },
-    { name = "setuptools", specifier = ">=69.0,<80.9.0" },
+    { name = "setuptools", specifier = "~=83.0.0" },
     { name = "snap-helpers" },
     { name = "tabulate" },
     { name = "typing-extensions" },
