@@ -49,7 +49,11 @@ def _add_ua_args(parser: argparse.ArgumentParser) -> None:
 
 
 def _validate_ua_args(parsed_args: argparse.Namespace) -> None:
-    """Error if UA args or environment variables are used."""
+    """Validate if UA args or environment variables are used.
+
+    Using a UA command line argument is an error, but the UA environment variable
+    will only emit a warning.
+    """
     if os.environ.get("SNAPCRAFT_UA_TOKEN"):
         emit.warning(
             "Ignoring the 'SNAPCRAFT_UA_TOKEN' environment variable. "
