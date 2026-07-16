@@ -53,6 +53,15 @@ class Package(PackageService):
         """Generate the mediated snap metadata file."""
         return util.dump_yaml(self.metadata.marshal())
 
+    @package_file("meta/component.yaml", partition_re=r"component/[\w-]+")
+    def _get_component_yaml(self, partition: str | None = None) -> str:
+        """Generate mediated component metadata files."""
+        if partition is None:
+            raise ValueError("Component metadata requires a component partition.")
+
+        component_name = partition.removeprefix("component/")
+        return component_yaml.get_str(self._project, component_name)
+
     @override
     def setup(self) -> None:
         """Application-specific service setup."""

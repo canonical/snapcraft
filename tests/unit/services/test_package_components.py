@@ -196,6 +196,22 @@ def test_pack_component_compression(
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_component_yaml(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    assert package_service._get_component_yaml("component/firstcomponent") == dedent(
+        """\
+        component: default+firstcomponent
+        type: test
+        version: '1.0'
+        summary: first component
+        description: lorem ipsum
+        """
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
 def test_write_metadata(
     default_project,
     fake_services,
