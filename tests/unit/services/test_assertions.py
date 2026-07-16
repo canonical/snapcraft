@@ -169,23 +169,19 @@ def fake_assertion_service(fake_services):
 
         @override
         def _generate_yaml_from_model(self, assertion: FakeAssertion) -> str:
-            return textwrap.dedent(
-                """\
+            return textwrap.dedent("""\
                 test-field-1: test-value-1
                 test-field-2: 0
-                """
-            )
+                """)
 
         @override
         def _generate_yaml_from_template(
             self, name: str, account_id: str, **kwargs: dict[str, Any]
         ) -> str:
-            return textwrap.dedent(
-                """\
+            return textwrap.dedent("""\
                 test-field-1: default-value-1
                 test-field-2: 0
-                """
-            )
+                """)
 
         @override
         def _get_success_message(self, assertion: FakeAssertion) -> str:
@@ -211,12 +207,10 @@ def test_list_assertions_table(fake_assertion_service, emitter):
     )
 
     emitter.assert_message(
-        textwrap.dedent(
-            """\
+        textwrap.dedent("""\
             test-field-1      test-field-2
             test-value-1                 0
-            test-value-2               100"""
-        )
+            test-value-2               100""")
     )
 
 
@@ -227,8 +221,7 @@ def test_list_assertions_json(fake_assertion_service, emitter):
     )
 
     emitter.assert_message(
-        textwrap.dedent(
-            """\
+        textwrap.dedent("""\
             {
                 "fake assertions": [
                     {
@@ -240,8 +233,7 @@ def test_list_assertions_json(fake_assertion_service, emitter):
                         "test-field-2": 100
                     }
                 ]
-            }"""
-        )
+            }""")
     )
 
 

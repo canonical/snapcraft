@@ -169,13 +169,11 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
 
     name = "pack"
     help_msg = "Create the final artifact"
-    overview = textwrap.dedent(
-        """
+    overview = textwrap.dedent("""
         Process parts and create a snap file containing the project payload
         with the provided metadata. If a directory is specified, pack its
         contents instead.
-        """
-    )
+        """)
 
     @override
     def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -220,35 +218,16 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
         emit.debug("Loading project because a directory was not provided.")
         return True
 
-    @override
-    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
-        """Return whether the command should run in managed mode or not.
-
-        Packing a directory always runs locally.
-        """
-        if parsed_args.directory:
-            emit.debug("Not running managed mode because a directory was provided.")
-            return False
-
-        return super().run_managed(parsed_args)
-
 
 class TryCommand(PackCommand):
     """Prepare the parts for ``snap try``."""
 
     name = "try"
     help_msg = 'Prepare a snap for "snap try".'
-    overview = textwrap.dedent(
-        """
+    overview = textwrap.dedent("""
         Process parts and expose the ``prime`` directory containing the
         final payload, in preparation for ``snap try prime``.
-        """
-    )
-
-    @override
-    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
-        """Overridden to return false, such that the command fails early."""
-        return False
+        """)
 
     @override
     def _run(

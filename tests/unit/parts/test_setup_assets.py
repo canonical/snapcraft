@@ -25,12 +25,12 @@ import pytest
 from snapcraft import errors, models
 from snapcraft.parts import setup_assets as parts_setup_assets
 from snapcraft.parts.setup_assets import (
-    _create_hook_wrappers,
-    _ensure_hook,
-    _ensure_hook_executable,
-    _validate_command_chain,
-    _write_hook_wrapper,
+    create_hook_wrappers,
+    ensure_hook,
+    ensure_hook_executable,
     setup_assets,
+    validate_command_chain,
+    write_hook_wrapper,
 )
 
 
@@ -532,7 +532,7 @@ class TestCommandChain:
 
     def test_command_chain_path_not_found(self, new_dir):
         with pytest.raises(errors.SnapcraftError) as raised:
-            _validate_command_chain(["file-not-found"], name="foo", prime_dir=new_dir)
+            validate_command_chain(["file-not-found"], name="foo", prime_dir=new_dir)
 
         assert str(raised.value) == (
             "Failed to generate snap metadata: The command-chain item 'file-not-found' "
@@ -546,7 +546,7 @@ class TestCommandChain:
         Path("file-not-executable").touch()
 
         with pytest.raises(errors.SnapcraftError) as raised:
-            _validate_command_chain(
+            validate_command_chain(
                 ["file-executable", "file-not-executable"],
                 name="foo",
                 prime_dir=new_dir,
@@ -561,7 +561,7 @@ class TestCommandChain:
 def test_ensure_hook(new_dir):
     """Verify creation of executable placeholder hooks."""
     hook_path: Path = new_dir / "configure"
-    _ensure_hook(hook_path)
+    ensure_hook(hook_path)
 
     assert hook_path.exists()
     assert hook_path.read_text() == "#!/bin/true\n"
@@ -573,7 +573,7 @@ def test_ensure_hook_does_not_overwrite(new_dir):
     hook_path.write_text("#!/bin/python3\n")
     hook_path.chmod(0o700)
 
-    _ensure_hook(hook_path)
+    ensure_hook(hook_path)
 
     assert hook_path.exists()
     assert hook_path.read_text() == "#!/bin/python3\n"
@@ -581,13 +581,13 @@ def test_ensure_hook_does_not_overwrite(new_dir):
 
 
 def test_ensure_hook_executable(new_dir):
-    """Verify _ensure_hook_executable makes a file executable."""
+    """Verify ensure_hook_executable makes a file executable."""
     # create a non-executable file
     hook_path: Path = new_dir / "configure"
     hook_path.write_text("#!/bin/true\n")
     hook_path.chmod(0o644)
 
-    _ensure_hook_executable(hook_path)
+    ensure_hook_executable(hook_path)
 
     assert hook_path.exists()
     assert oct(hook_path.stat().st_mode)[-3:] == "755"
@@ -605,7 +605,7 @@ def test_create_hook_wrappers(new_dir):
         hook.write_text("#!/bin/true\n")
         hook.chmod(0o644)
 
-    _create_hook_wrappers(new_dir)
+    create_hook_wrappers(new_dir)
 
     # verify prime/meta/hooks directory was created
     hooks_meta_dir = new_dir / "meta" / "hooks"
@@ -634,7 +634,7 @@ def test_write_hook_wrapper(new_dir):
     hook_wrapper_dir.mkdir()
     hook_wrapper = hook_wrapper_dir / hook_name
 
-    _write_hook_wrapper(hook_name, hook_wrapper)
+    write_hook_wrapper(hook_name, hook_wrapper)
 
     # verify content of hook wrapper
     assert hook_wrapper.exists()

@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import configparser
+import io
 import os
 import shlex
 from typing import TYPE_CHECKING
@@ -89,6 +90,13 @@ class DesktopFile:
             if icon_path is not None:
                 icon = icon_path
 
+                # An explicit icon path is a mediated asset destination that may
+                # not have been written into prime yet.
+                icon = icon[1:] if icon.startswith("/") else icon
+                icon = icon[8:] if icon.startswith("${SNAP}") else icon
+                self._parser[section]["Icon"] = os.path.join("${SNAP}", icon)
+                return
+
             # Strip any leading slash.
             icon = icon[1:] if icon.startswith("/") else icon
 
@@ -123,14 +131,19 @@ class DesktopFile:
         for section in self._parser.sections():
             self._parse_and_reformat_section(section=section, icon_path=icon_path)
 
+    def render(self, *, icon_path: str | None = None) -> str:
+        """Return the rewritten desktop file contents."""
+        self._parse_and_reformat(icon_path=icon_path)
+        output = io.StringIO()
+        self._parser.write(output, space_around_delimiters=False)
+        return output.getvalue()
+
     def write(self, *, gui_dir: Path, icon_path: str | None = None) -> None:
         """Write the desktop file.
 
         :param gui_dir: The desktop file destination directory.
         :param icon_path: The icon corresponding to this desktop file.
         """
-        self._parse_and_reformat(icon_path=icon_path)
-
         gui_dir.mkdir(parents=True, exist_ok=True)
 
         # Rename the desktop file to match the app name. This will help
@@ -141,5 +154,4 @@ class DesktopFile:
             # Unlikely. A desktop file in meta/gui/ already existed for
             # this app. Let's pretend it wasn't there and overwrite it.
             target.unlink()
-        with target.open("w", encoding="utf-8") as target_file:
-            self._parser.write(target_file, space_around_delimiters=False)
+        target.write_text(self.render(icon_path=icon_path), encoding="utf-8")
