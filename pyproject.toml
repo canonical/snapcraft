@@ -4,14 +4,14 @@ description = "Create snaps"
 dynamic = ["version"]
 dependencies = [
     "catkin-pkg==1.1.0; sys_platform == 'linux'",
-    "click>=8.2",
+    "click>=8.3.3",
     "craft-application[remote]>=7.1.0",
     "craft-archives>=2.2.0",
     "craft-cli>=3.4.0",
     "craft-grammar>=2.3.0",
     "craft-parts>=2.33.0",
     "craft-platforms>=0.11.0",
-    "craft-providers>=3.6.0",
+    "craft-providers>=3.7.1",
     "craft-store>=3.3.0",
     "jsonschema==2.6.0",
     "lazr.restfulclient",
@@ -28,8 +28,7 @@ dependencies = [
     "pyyaml",
     "requests-toolbelt",
     "requests>=2.32.4",
-    # setuptools >= 80.9 has a noisy warning about pkg_resources
-    "setuptools>=69.0,<80.9.0",
+    "setuptools~=83.0.0",
     "snap-helpers",
     "tabulate",
     "typing-extensions",
@@ -127,6 +126,7 @@ conflicts = [
 ]
 constraint-dependencies = [
     "cryptography>=48.0.1",
+    "httplib2>=0.32.0",
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
     # what is available in the noble repositories.
     # https://pynacl.readthedocs.io/en/latest/changelog/
