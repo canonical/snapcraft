@@ -27,6 +27,7 @@ def test_get_extension_names():
         "dotnet8",
         "dotnet9",
         "dotnet10",
+        "dotnet11",
         "env-injector",
         "gnome",
         "gpu",
