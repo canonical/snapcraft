@@ -1863,6 +1863,9 @@ class Project(models.Project):
     ``${VAR:-default}`` is available for environment variable values. Also
     ``${VAR:+$OTHER_VAR}`` and ``${VAR:-$OTHER_VAR}`` are supported, but internal
     braces are not supported (so , for example, ``${VAR:+${OTHER_VAR}}`` won't work).
+
+    To ensure this feature is available, use the ``assumes`` key to require a
+    minimum version of snapd, for example ``assumes: [snapd2.77]``.
     """
 
     build_packages: Grammar[list[str]] | None = pydantic.Field(
