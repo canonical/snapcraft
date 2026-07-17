@@ -35,7 +35,16 @@ from .keys import (
     StoreRegisterKeyCommand,
     StoreSignBuildCommand,
 )
-from .lifecycle import PackCommand, SnapCommand, TryCommand
+from .lifecycle import (
+    BuildCommand,
+    CleanCommand,
+    PackCommand,
+    PrimeCommand,
+    PullCommand,
+    SnapCommand,
+    StageCommand,
+    TryCommand,
+)
 from .lint import LintCommand
 from .manage import (
     StoreCloseCommand,
@@ -86,9 +95,14 @@ __all__ = [
     "ListExtensionsCommand",
     "ListPluginsCommand",
     "RemoteBuildCommand",
+    "BuildCommand",
+    "CleanCommand",
     "PackCommand",
     "PluginsCommand",
+    "PrimeCommand",
+    "PullCommand",
     "SnapCommand",
+    "StageCommand",
     "StoreCloseCommand",
     "StoreConfdbSchemasCommand",
     "StoreCreateKeyCommand",
