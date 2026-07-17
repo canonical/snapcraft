@@ -25,7 +25,7 @@ from typing import Any, cast
 
 import pytest
 import yaml
-from craft_application import ServiceFactory
+from craft_application import ServiceFactory, util
 from craft_cli.pytest_plugin import RecordingEmitter
 from pytest_mock import MockerFixture
 
@@ -142,6 +142,55 @@ def test_write_metadata(default_project, fake_services, setup_project, new_dir):
     )
 
     assert not (prime_dir / "snap" / "manifest.yaml").exists()
+
+
+def test_get_snap_yaml(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    assert package_service._get_snap_yaml() == util.dump_yaml(
+        package_service.metadata.marshal()
+    )
+
+
+def test_get_artifacts(default_project, fake_services, setup_project, tmp_path):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    package_service.set_output_dir(tmp_path)
+
+    assert package_service.get_artifacts() == {
+        None: tmp_path / "default_1.0_amd64.snap"
+    }
+
+
+def test_pack_artifact(default_project, fake_services, setup_project, mocker, tmp_path):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    package_service.set_output_dir(tmp_path)
+
+    mock_pack_snap = mocker.patch.object(
+        pack, "pack_snap", return_value="default_1.0_amd64.snap"
+    )
+    mocker.patch.object(linters, "run_linters")
+    mocker.patch.object(linters, "report")
+
+    package_service._pack(path=tmp_path / "default_1.0_amd64.snap")
+
+    mock_pack_snap.assert_called_once_with(
+        tmp_path / "prime",
+        name="default",
+        version="1.0",
+        compression="xz",
+        output=str(tmp_path / "default_1.0_amd64.snap"),
+        target="amd64",
+    )
+
+
+def test_supports_conditional_repack(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    assert package_service.supports_conditional_repack is True
 
 
 def test_write_metadata_with_manifest(
