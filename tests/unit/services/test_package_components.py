@@ -212,6 +212,20 @@ def test_get_component_yaml(default_project, fake_services, setup_project):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_component_yaml_unknown_component(
+    default_project, fake_services, setup_project
+):
+    """Requesting an unknown component surfaces a clear error."""
+    from snapcraft.errors import SnapcraftError
+
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    with pytest.raises(SnapcraftError, match="Component does not exist."):
+        package_service._get_component_yaml("component/does-not-exist")
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
 def test_write_metadata(
     default_project,
     fake_services,
