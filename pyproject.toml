@@ -192,7 +192,7 @@ local_scheme = "dirty-tag"
 fallback_version = "0.0.0"
 
 [tool.setuptools.packages.find]
-include = ["snapcraft", "extensions", "keyrings", "schema"]
+include = ["snapcraft", "extensions", "schema"]
 namespaces = true
 
 [tool.setuptools.package-data]
