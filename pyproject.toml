@@ -5,7 +5,7 @@ dynamic = ["version"]
 dependencies = [
     "catkin-pkg==1.1.0; sys_platform == 'linux'",
     "click>=8.3.3",
-    "craft-application[remote]>=6.4.0",
+    "craft-application[remote]>=7.1.0",
     "craft-archives>=2.2.0",
     "craft-cli>=3.4.0",
     "craft-grammar>=2.3.0",
@@ -192,7 +192,7 @@ local_scheme = "dirty-tag"
 fallback_version = "0.0.0"
 
 [tool.setuptools.packages.find]
-include = ["snapcraft", "extensions", "keyrings", "schema"]
+include = ["snapcraft", "extensions", "schema"]
 namespaces = true
 
 [tool.setuptools.package-data]

@@ -23,7 +23,8 @@ import pathlib
 import shutil
 from typing import Literal, cast
 
-from craft_application import PackageService
+from craft_application import PackageService, util
+from craft_application.services.package import package_file
 from craft_application.util import strtobool
 from craft_cli import emit
 from typing_extensions import override
@@ -43,6 +44,15 @@ from snapcraft.utils import process_version
 class Package(PackageService):
     """Package service subclass for Snapcraft."""
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._package_output_dir: str | None = None
+
+    @package_file("meta/snap.yaml", partition_re="default")
+    def _get_snap_yaml(self, partition: str | None = None) -> str:  # noqa: ARG002
+        """Generate the mediated snap metadata file."""
+        return util.dump_yaml(self.metadata.marshal())
+
     @override
     def setup(self) -> None:
         """Application-specific service setup."""
@@ -60,6 +70,12 @@ class Package(PackageService):
             self._build_for = build_plan[0].build_for
             self._platform = build_plan[0].platform
 
+    @override
+    def set_output_dir(self, path: pathlib.Path | str | None) -> None:
+        """Follow the requested output dir so artifact paths match legacy packing."""
+        self._package_output_dir = None if path is None else str(path)
+        super().set_output_dir(pathlib.Path() if path is None else pathlib.Path(path))
+
     @property
     def _project(self) -> models.Project:
         """Get the project.
@@ -70,7 +86,7 @@ class Package(PackageService):
         return cast(models.Project, self._project_service.get())
 
     @override
-    def _extra_project_updates(self) -> None:
+    def _extra_project_updates(self) -> bool:
         # Update the project from parse-info data.
         project_info = self._services.lifecycle.project_info
         extracted_metadata = extract.extract_lifecycle_metadata(
@@ -91,6 +107,8 @@ class Package(PackageService):
         if self._project.get_effective_base() not in ("core22", "core24"):
             self._precreate_layout_targets()
             self._precreate_plug_targets()
+
+        return True
 
     def _precreate_layout_targets(self) -> None:
         """Create layout targets ahead of time for snapd to avoid ENOENT errors."""
@@ -208,7 +226,8 @@ class Package(PackageService):
         exist (no-op).
 
         :param path: String path to investigate
-        :returns: A Path object that needs to be created, or None if nothing needs to be done."""
+        :returns: A Path object that needs to be created, or None if nothing needs to be done.
+        """
         # Make explicit references to the snap root ($SNAP) relative
         if path.startswith("$SNAP/"):
             path = path.removeprefix("$SNAP/")
@@ -269,6 +288,103 @@ class Package(PackageService):
 
         return component_map
 
+    def _component_artifact_path(self, component_name: str) -> pathlib.Path:
+        """Return the expected output path for a component artifact."""
+        if self._project.components is None:
+            raise ValueError("Project does not define components.")
+
+        component = self._project.components[component_name]
+        filename = f"{self._project.name}+{component_name}"
+        if component.version is not None:
+            filename += f"_{component.version}"
+        filename += ".comp"
+        return pathlib.Path(pack._get_directory(self._get_output_dir())) / filename
+
+    def _get_output_dir(self) -> str | None:
+        """Return the requested pack output in the legacy pack_snap format."""
+        if self._package_output_dir is None:
+            return None
+        return self._package_output_dir
+
+    @override
+    def _prime_dir_for(self, partition_name: str | None) -> pathlib.Path:
+        """Return the prime directory for the requested artifact.
+
+        Component artifacts are keyed by component name in Snapcraft, while
+        craft-application's default implementation expects full partition names.
+        """
+        if partition_name in (None, "default"):
+            return self._services.lifecycle.prime_dir
+
+        return cast(Lifecycle, self._services.lifecycle).get_prime_dir(partition_name)
+
+    def _pack_snap(
+        self, prime_dir: pathlib.Path, output_path: pathlib.Path
+    ) -> pathlib.Path:
+        """Pack the main snap artifact."""
+        return pathlib.Path(
+            pack.pack_snap(
+                prime_dir,
+                output=str(output_path),
+                compression=self._project.compression,
+                name=self._project.name,
+                version=process_version(self._project.version),
+                target=self._platform,
+            )
+        )
+
+    def _run_lint_checks(self, prime_dir: pathlib.Path) -> None:
+        """Run configured linters and stop packaging on errors."""
+        issues = linters.run_linters(prime_dir, lint=self._project.lint)
+        status = linters.report(issues, intermediate=True)
+
+        if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
+            raise errors.LinterError("Linter errors found", exit_code=status)
+
+    @override
+    def get_artifacts(self) -> dict[str | None, pathlib.Path]:
+        """Return the declared output artifacts for mediated packaging."""
+        output_dir = self._get_output_dir()
+        main_artifact = pathlib.Path(pack._get_directory(output_dir)) / cast(
+            str,
+            pack._get_filename(
+                output_dir,
+                self._project.name,
+                process_version(self._project.version),
+                self._platform,
+            ),
+        )
+        artifacts: dict[str | None, pathlib.Path] = {None: main_artifact}
+        for component_name in self._project.get_component_names():
+            artifacts[component_name] = self._component_artifact_path(component_name)
+        return artifacts
+
+    @override
+    def _pack(self, *, name: str | None = None, path: pathlib.Path) -> None:
+        """Pack mediated artifacts."""
+        self._run_lint_checks(self._services.lifecycle.prime_dir)
+
+        if name in (None, "default"):
+            prime_dir = self._services.lifecycle.prime_dir
+            self._pack_snap(prime_dir=prime_dir, output_path=path)
+            return
+
+        if name not in self._project.get_component_names():
+            raise ValueError(f"Unexpected artifact name: {name!r}")
+
+        component_prime_dir = cast(Lifecycle, self._services.lifecycle).get_prime_dir(
+            name
+        )
+        compression = self._project.compression
+        if self._project.components and self._project.components[name].compression:
+            compression = self._project.components[name].compression
+
+        pack.pack_component(
+            component_prime_dir,
+            compression=compression,
+            output_dir=path.parent,
+        )
+
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
         """Create one or more packages as appropriate.
@@ -277,23 +393,9 @@ class Package(PackageService):
         :param dest: Directory into which to write the package(s).
         :returns: A list of paths to created packages.
         """
-        issues = linters.run_linters(prime_dir, lint=self._project.lint)
-        status = linters.report(issues, intermediate=True)
+        self._run_lint_checks(prime_dir)
 
-        # In case of linter errors, stop execution and return the error code.
-        if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
-            raise errors.LinterError("Linter errors found", exit_code=status)
-
-        snap_file = pathlib.Path(
-            pack.pack_snap(
-                prime_dir,
-                output=str(dest),
-                compression=self._project.compression,
-                name=self._project.name,
-                version=process_version(self._project.version),
-                target=self._platform,
-            )
-        )
+        snap_file = self._pack_snap(prime_dir=prime_dir, output_path=dest)
         component_map = self._pack_components(dest)
         self._resource_map = component_map
 
@@ -324,7 +426,9 @@ class Package(PackageService):
         """
         meta_dir = path / "meta"
         meta_dir.mkdir(parents=True, exist_ok=True)
-        self.metadata.to_yaml_file(meta_dir / "snap.yaml")
+        meta_dir.joinpath("snap.yaml").write_text(
+            self._get_snap_yaml(), encoding="utf-8"
+        )
 
         enable_manifest = strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
 

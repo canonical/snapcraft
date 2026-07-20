@@ -21,6 +21,7 @@ environment:
   DOTNET_RUNTIME_PLUG/dotnet9: dotnet9-runtime
   DOTNET_RUNTIME_PLUG/dotnet10: dotnet10-runtime
   DOTNET_RUNTIME_PLUG/dotnet11: dotnet11-runtime
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS/dotnet11: 1
 
 restore: |
 
