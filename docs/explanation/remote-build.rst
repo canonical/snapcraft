@@ -3,12 +3,8 @@
 Remote build
 ============
 
-Remote build is a feature in Snapcraft that offloads the build process to
-`Launchpad`_'s `build farm`_ and enables developers to build snaps for
-different architectures.
-
-Architectures supported by Launchpad can be found
-:ref:`here <supported-architectures>`.
+Remote build is a feature in Snapcraft that offloads the build process to `Launchpad`_'s
+`build farm`_ and enables developers to build snaps for different architectures.
 
 
 Public and private projects
@@ -105,8 +101,12 @@ Attempt to recover previously interrupted builds.
 Project platforms and architectures
 -----------------------------------
 
+Launchpad can build for most, but not all, CPU architectures. For a list of compatible
+architectures, see :ref:`reference-platforms-launchpad-builds`.
+
 If the project metadata contains a ``platforms`` or ``architectures`` entry,
 Snapcraft will request a build for each unique ``build-for`` architecture.
+
 
 .. note::
 
@@ -116,6 +116,12 @@ Snapcraft will request a build for each unique ``build-for`` architecture.
 If the project metadata does not contain a ``platforms`` or ``architectures``
 entry and ``--build-for`` is not provided, Snapcraft will request a build on,
 and for, the host's architecture.
+
+
+See also
+--------
+
+For practical guidance on building remotely, see :ref:`how-to-build-snap-remotely`.
 
 .. _`Launchpad account`: https://launchpad.net/+login
 .. _`Launchpad project`: https://launchpad.net/projects/+new
