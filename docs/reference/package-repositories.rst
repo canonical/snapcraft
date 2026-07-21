@@ -19,4 +19,4 @@ packages.
 For more information on how to configure package repositories, see the `Craft Archives
 documentation`_.
 
-.. _Craft Archives documentation: https://canonical-craft-archives.readthedocs-hosted.com/en/latest/reference/repo_properties/
+.. _Craft Archives documentation: https://documentation.ubuntu.com/craft-archives/latest/
