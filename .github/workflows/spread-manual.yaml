@@ -52,7 +52,7 @@ jobs:
   kernel-plugins:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -70,15 +70,15 @@ jobs:
           path: tests
       - name: Kernel plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel       \
-                 google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-bin   \
-                 google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-cross \
-                 google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-deb
+          spread openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel       \
+                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-bin   \
+                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-cross \
+                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-deb
 
   initrd-plugins:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -96,7 +96,7 @@ jobs:
           path: tests
       - name: Initrd plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
+          spread openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
 
       - name: Discard spread workers
         if: always()
@@ -109,7 +109,7 @@ jobs:
   remote-build:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -129,9 +129,8 @@ jobs:
         env:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/core22/remote-build \
-            google:ubuntu-24.04-64:tests/spread/core24/remote-build \
-            google:fedora-39-64:tests/spread/core24/remote-build:no_platforms
+          spread openstack:ubuntu-22.04-64:tests/spread/core22/remote-build \
+            openstack:ubuntu-24.04-64:tests/spread/core24/remote-build
 
       - name: Discard spread workers
         if: always()
@@ -144,7 +143,7 @@ jobs:
   matter-sdk:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -163,8 +162,8 @@ jobs:
       - name: matter-sdk test
         run: |
           spread \
-              google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/matter-sdk \
-              google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
+              openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/matter-sdk \
+              openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
 
       - name: Discard spread workers
         if: always()
@@ -177,7 +176,7 @@ jobs:
   colcon-plugins:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -195,11 +194,11 @@ jobs:
           path: tests
       - name: colcon plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello \
-            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-msg-package \
-            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-packages-ignore \
-            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener \
-            google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
+          spread openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello \
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-msg-package \
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-packages-ignore \
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener \
+            openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
 
       - name: Discard spread workers
         if: always()
@@ -212,7 +211,7 @@ jobs:
   extensions:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -230,7 +229,7 @@ jobs:
           path: tests
       - name: extensions test
         run: |
-          spread google.*:tests/spread/extensions/
+          spread openstack.*:tests/spread/extensions/
 
       - name: Discard spread workers
         if: always()
@@ -243,7 +242,7 @@ jobs:
   snapd-bases:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
@@ -261,7 +260,7 @@ jobs:
           path: tests
       - name: Spread test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/snaps/snapd
+          spread openstack:ubuntu-22.04-64:tests/spread/snaps/snapd
 
       - name: Discard spread workers
         if: always()
@@ -274,7 +273,7 @@ jobs:
   squid-proxy:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Clean up job workspace
         run: |
@@ -292,8 +291,7 @@ jobs:
           path: tests
       - name: Spread test
         run: |
-          spread google:ubuntu-24.04-64:tests/spread/core24/squid-proxy google:ubuntu-22.04-64:tests/spread/core22/squid-proxy
-
+          spread openstack:ubuntu-24.04-64:tests/spread/core24/squid-proxy openstack:ubuntu-22.04-64:tests/spread/core22/squid-proxy
       - name: Discard spread workers
         if: always()
         run: |

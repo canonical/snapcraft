@@ -42,7 +42,7 @@ jobs:
           path: ${{ steps.snapcraft.outputs.snap }}
 
   docs-spread-tests:
-    runs-on: [self-hosted, spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     needs: [docs-snap-build]
     timeout-minutes: 90
 
@@ -65,7 +65,7 @@ jobs:
 
       - name: Run docs spread tests
         run: |
-          spread google:...docs...
+          spread openstack:...docs...
 
       - name: Discard spread workers
         if: always()

@@ -53,7 +53,7 @@ jobs:
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
   integration-spread-tests:
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     needs: build
     if: ${{ needs.build.outputs.source-files == 'true' }}
     strategy:
@@ -65,9 +65,9 @@ jobs:
       fail-fast: false
       matrix:
         spread-jobs:
-          - google:ubuntu-22.04-64
-          - google:ubuntu-24.04-64
-          - google:ubuntu-26.04-64
+          - openstack:ubuntu-22.04-64
+          - openstack:ubuntu-24.04-64
+          - openstack:ubuntu-26.04-64
 
     steps:
       - name: Checkout snapcraft
@@ -83,9 +83,8 @@ jobs:
           path: tests
 
       - name: Run Ubuntu Pro spread tests
-        if: matrix.spread-jobs != 'google:ubuntu-22.04-64'
+        if: matrix.spread-jobs != 'openstack:ubuntu-22.04-64'
         env:
-          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
         run: |
           if [ -z "$UBUNTU_PRO_TOKEN" ]; then
@@ -101,7 +100,6 @@ jobs:
 
       - name: Run spread
         env:
-          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           UA_TOKEN: ${{ secrets.UA_TOKEN }}
           RUN_UA_TESTS: ${{ ! github.event.pull_request.head.repo.fork }}
         run: spread ${{ matrix.spread-jobs }}
@@ -115,7 +113,7 @@ jobs:
           done
 
   integration-spread-tests-store:
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     needs: build
     if: ${{ needs.build.outputs.source-files == 'true' }}
     strategy:
@@ -155,13 +153,12 @@ jobs:
       - if: steps.decisions.outputs.RUN == 'true'
         name: Run spread
         env:
-          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           SNAPCRAFT_ASSERTION_KEY: "${{ secrets.SNAPCRAFT_ASSERTION_KEY }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/store/
+          spread openstack:ubuntu-22.04-64:tests/spread/store/
 
       - name: Discard spread workers
         if: always()
