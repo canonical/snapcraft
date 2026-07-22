@@ -22,6 +22,7 @@ Software dependencies
 Much of the work of making a snap is in determining and adding its dependencies.
 
 - :ref:`how-to-manage-dependencies`
+- :ref:`how-to-pack-a-pro-snap`
 
 
 User settings and data
@@ -70,6 +71,7 @@ with APT.
     specify-a-base
     select-platforms
     manage-dependencies
+    pack-a-pro-snap
     add-a-snap-configuration
     use-layouts
     manage-data-compatibility
