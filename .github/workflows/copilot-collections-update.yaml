@@ -4,6 +4,10 @@ on:
     - cron: "0 9 * * 1" # Run every Monday at 09:00 UTC
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   check-update:
     # Pinned to @main to get the latest logic, but the content version is controlled by .github/copilot-collections.yaml
