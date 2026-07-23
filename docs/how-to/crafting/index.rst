@@ -22,6 +22,7 @@ Software dependencies
 Much of the work of making a snap is in determining and adding its dependencies.
 
 - :ref:`how-to-manage-dependencies`
+- :ref:`how-to-pack-a-pro-snap`
 
 
 User settings and data
@@ -78,3 +79,4 @@ with APT.
     reuse-packages-between-builds
     create-a-component
     enable-classic-confinement
+    pack-a-pro-snap
