@@ -71,7 +71,6 @@ with APT.
     specify-a-base
     select-platforms
     manage-dependencies
-    pack-a-pro-snap
     add-a-snap-configuration
     use-layouts
     manage-data-compatibility
@@ -80,3 +79,4 @@ with APT.
     reuse-packages-between-builds
     create-a-component
     enable-classic-confinement
+    pack-a-pro-snap

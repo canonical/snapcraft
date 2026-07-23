@@ -1,3 +1,6 @@
+.. meta::
+    :description: Pack a snap that contains extended security patches or meets regulatory compliance needs, powered by Ubuntu Pro.
+
 .. |app| replace:: Snapcraft
 .. |app-command| replace:: snapcraft
 .. |artifact| replace:: snap
@@ -7,20 +10,24 @@
 
 .. _how-to-pack-a-pro-snap:
 
+Pack a Pro-compliant snap
+=========================
+
 .. include:: ../../common/craft-application/how-to-guides/pack-a-pro-artifact.rst
-    :end-before: .. Split point for downstream docs: Prerequisites onward
+    :start-after: .. Begin overview
+    :end-before: .. End overview
 
 Core24 and higher
 ~~~~~~~~~~~~~~~~~~~
 
 .. include:: ../../common/craft-application/how-to-guides/pack-a-pro-artifact.rst
-    :start-after: .. Split point for downstream docs: Prerequisites onward
+    :start-after: .. End overview
 
 Core22
 ~~~~~~~
 
-Core22 snaps use a legacy mechanism to pack Pro-compliant snaps. As a result, it uses
-the previous name UA (Ubuntu Advantage) instead of Ubuntu Pro.
+Core22 snaps use a legacy mechanism to pack Pro-compliant snaps. The mechanism uses the
+term *Ubuntu Advantage* (UA) instead of *Ubuntu Pro*.
 
 Prerequisites
 -------------
@@ -40,12 +47,10 @@ First, determine which Pro services fit your needs:
 
 The desired Pro services must be available. On a system with your Pro token
 attached, run ``pro status`` and check the ``ENTITLED`` column for available
-services. The Ubuntu Pro Client documentation has `further information
-<https://documentation.ubuntu.com/pro-client/en/v32/explanations/which_services/>`__ on
-each service.
+services. The Ubuntu Pro Client documentation has `detailed information on each service
+<https://documentation.ubuntu.com/pro-client/en/v32/explanations/which_services/>`__.
 
-To enable the desired Pro services when building your snap, add a ua-services key to
-your project file:
+Add a ``ua-services`` key to your snap, and list the services:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
