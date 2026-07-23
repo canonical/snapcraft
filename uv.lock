@@ -491,8 +491,8 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "7.1.0.post21+gd7f5f5e"
-source = { git = "https://github.com/canonical/craft-application?rev=work%2FCRAFT-5237%2Fpro-docs#d7f5f5e6b55a99e46d0bcd172ad0816d9ca84e35" }
+version = "7.1.0.post24+g9e89e3a"
+source = { git = "https://github.com/canonical/craft-application?rev=work%2FCRAFT-5237%2Fpro-docs#9e89e3a116c2772508fa16b2ef888a2a04926c4e" }
 dependencies = [
     { name = "annotated-types" },
     { name = "craft-archives" },
