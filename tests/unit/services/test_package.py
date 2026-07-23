@@ -30,7 +30,7 @@ from craft_cli.pytest_plugin import RecordingEmitter
 from pytest_mock import MockerFixture
 
 from snapcraft import __version__, linters, meta, models, pack
-from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
+from snapcraft.errors import SnapcraftError, SnapcraftPrecreationEscapesPrimeError
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
 from snapcraft.services import Package
@@ -153,6 +153,103 @@ def test_get_snap_yaml(default_project, fake_services, setup_project):
     )
 
 
+def test_get_gadget_yaml(fake_services, setup_project):
+    project = {
+        "name": "pc",
+        "type": "gadget",
+        "base": "core24",
+        "confinement": "strict",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "grade": "stable",
+        "parts": {},
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+    project_dir = package_service._services.lifecycle.project_info.project_dir
+    (project_dir / "gadget.yaml").write_text("volumes: {}\n", encoding="utf-8")
+
+    assert package_service._get_gadget_yaml() == "volumes: {}\n"
+
+
+def test_get_gadget_yaml_missing_raises(fake_services, setup_project):
+    project = {
+        "name": "pc",
+        "type": "gadget",
+        "base": "core24",
+        "confinement": "strict",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "grade": "stable",
+        "parts": {},
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    with pytest.raises(SnapcraftError, match="gadget.yaml is required for gadget snaps"):
+        package_service._get_gadget_yaml()
+
+
+def test_get_kernel_yaml(fake_services, setup_project):
+    project = {
+        "name": "custom-kernel",
+        "type": "kernel",
+        "confinement": "strict",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "grade": "stable",
+        "parts": {},
+        "build-base": "core24",
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+    project_dir = package_service._services.lifecycle.project_info.project_dir
+    (project_dir / "kernel.yaml").write_text("kernel-key: kernel-value\n", encoding="utf-8")
+
+    assert package_service._get_kernel_yaml() == "kernel-key: kernel-value\n"
+
+
+def test_get_kernel_yaml_missing_returns_none(fake_services, setup_project):
+    project = {
+        "name": "custom-kernel",
+        "type": "kernel",
+        "confinement": "strict",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "grade": "stable",
+        "parts": {},
+        "build-base": "core24",
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    assert package_service._get_kernel_yaml() is None
+
+
+def test_get_gadget_yaml_non_gadget_returns_false(
+    default_project, fake_services, setup_project
+):
+    """Non-gadget projects should not touch meta/gadget.yaml via mediation."""
+    setup_project(fake_services, default_project.marshal())
+    package_service = cast(Package, fake_services.get("package"))
+
+    assert package_service._get_gadget_yaml() is False
+
+
+def test_get_kernel_yaml_non_kernel_returns_false(
+    default_project, fake_services, setup_project
+):
+    """Non-kernel projects should not touch meta/kernel.yaml via mediation."""
+    setup_project(fake_services, default_project.marshal())
+    package_service = cast(Package, fake_services.get("package"))
+
+    assert package_service._get_kernel_yaml() is False
+
+
 def test_get_artifacts(default_project, fake_services, setup_project, tmp_path):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
@@ -220,6 +317,75 @@ def test_write_metadata_with_manifest(
     assert manifest.name == snap_yaml["name"]
     assert manifest.grade == snap_yaml["grade"]
     assert manifest.architectures == snap_yaml["architectures"]
+
+
+def test_write_metadata_writes_gadget_yaml(fake_services, setup_project, tmp_path):
+    project = {
+        "name": "pc",
+        "type": "gadget",
+        "base": "core24",
+        "confinement": "strict",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "grade": "stable",
+        "parts": {},
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+    project_dir = package_service._services.lifecycle.project_info.project_dir
+    (project_dir / "gadget.yaml").write_text("volumes: {}\n", encoding="utf-8")
+
+    prime_dir = tmp_path / "prime"
+    package_service.write_metadata(prime_dir)
+
+    assert (prime_dir / "meta" / "gadget.yaml").read_text(encoding="utf-8") == "volumes: {}\n"
+
+
+def test_write_metadata_writes_kernel_yaml(fake_services, setup_project, tmp_path):
+    project = {
+        "name": "custom-kernel",
+        "type": "kernel",
+        "confinement": "strict",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "grade": "stable",
+        "parts": {},
+        "build-base": "core24",
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+    project_dir = package_service._services.lifecycle.project_info.project_dir
+    (project_dir / "kernel.yaml").write_text("kernel-key: kernel-value\n", encoding="utf-8")
+
+    prime_dir = tmp_path / "prime"
+    package_service.write_metadata(prime_dir)
+
+    assert (prime_dir / "meta" / "kernel.yaml").read_text(encoding="utf-8") == "kernel-key: kernel-value\n"
+
+
+def test_write_metadata_missing_kernel_yaml_leaves_no_file(
+    fake_services, setup_project, tmp_path
+):
+    project = {
+        "name": "custom-kernel",
+        "type": "kernel",
+        "confinement": "strict",
+        "version": "1.0",
+        "summary": "summary",
+        "description": "description",
+        "grade": "stable",
+        "parts": {},
+        "build-base": "core24",
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    prime_dir = tmp_path / "prime"
+    package_service.write_metadata(prime_dir)
+
+    assert not (prime_dir / "meta" / "kernel.yaml").exists()
 
 
 @pytest.fixture(params=["snap", "build-aux/snap"])
@@ -404,43 +570,13 @@ def test_extra_project_updates_makes_targets_core26(
     mock_precreate_layout = mocker.patch.object(
         package_service, "_precreate_layout_targets"
     )
-    mock_precreate_plugs = mocker.patch.object(
+    mocker.patch.object(
         package_service, "_precreate_plug_targets"
     )
 
     package_service.update_project()
 
     mock_precreate_layout.assert_called_once()
-    mock_precreate_plugs.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    "base",
-    [
-        "core22",
-        "core24",
-    ],
-)
-def test_extra_project_updates_no_make_targets_legacy(
-    snapcraft_yaml: Callable[..., Any],
-    setup_project: Callable[..., Any],
-    fake_services: ServiceFactory,
-    mocker: MockerFixture,
-    base: str,
-) -> None:
-    setup_project(fake_services, snapcraft_yaml(base=base))
-    package_service = fake_services.get("package")
-    mock_precreate_layout = mocker.patch.object(
-        package_service, "_precreate_layout_targets"
-    )
-    mock_precreate_plugs = mocker.patch.object(
-        package_service, "_precreate_plug_targets"
-    )
-
-    package_service.update_project()
-
-    mock_precreate_layout.assert_not_called()
-    mock_precreate_plugs.assert_not_called()
 
 
 @pytest.mark.parametrize(

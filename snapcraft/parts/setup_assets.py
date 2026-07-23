@@ -32,6 +32,13 @@ from snapcraft import const, errors, models
 from .desktop_file import DesktopFile
 
 
+def _uses_legacy_system_metadata(project: models.Project) -> bool:
+    """Return whether gadget/kernel metadata should follow the core22 path."""
+    return project.base == "core22" or (
+        project.base is None and project.build_base == "core22"
+    )
+
+
 def setup_assets(
     project: models.Project,
     *,
@@ -67,16 +74,16 @@ def setup_assets(
             )
             setup_hooks(component.hooks, prime_dirs[component_name])
 
-    if project.type == const.ProjectType.GADGET:
-        gadget_yaml = project_dir / "gadget.yaml"
-        if not gadget_yaml.exists():
-            raise errors.SnapcraftError("gadget.yaml is required for gadget snaps")
-        _copy_file(gadget_yaml, meta_dir / "gadget.yaml")
-
-    if project.type == const.ProjectType.KERNEL:
-        kernel_yaml = project_dir / "kernel.yaml"
-        if kernel_yaml.exists():
-            _copy_file(kernel_yaml, meta_dir / "kernel.yaml")
+    if _uses_legacy_system_metadata(project):
+        if project.type == const.ProjectType.GADGET:
+            gadget_yaml = project_dir / "gadget.yaml"
+            if not gadget_yaml.exists():
+                raise errors.SnapcraftError("gadget.yaml is required for gadget snaps")
+            _copy_file(gadget_yaml, meta_dir / "gadget.yaml")
+        elif project.type == const.ProjectType.KERNEL:
+            kernel_yaml = project_dir / "kernel.yaml"
+            if kernel_yaml.exists():
+                _copy_file(kernel_yaml, meta_dir / "kernel.yaml")
 
     icon_path = _finalize_icon(
         project.icon, assets_dir=assets_dir, gui_dir=gui_dir, prime_dir=prime_dir

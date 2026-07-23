@@ -29,7 +29,7 @@ from craft_application.util import strtobool
 from craft_cli import emit
 from typing_extensions import override
 
-from snapcraft import errors, linters, models, pack
+from snapcraft import const, errors, linters, models, pack
 from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import component_yaml, snap_yaml
@@ -67,6 +67,40 @@ class Package(PackageService):
         # the fully qualified partition form for direct callers.
         component_name = partition.removeprefix("component/")
         return component_yaml.get_str(self._project, component_name)
+
+    @package_file("meta/gadget.yaml", partition_re="default")
+    def _get_gadget_yaml(
+        self, partition: str | None = None  # noqa: ARG002
+    ) -> str | Literal[False] | None:
+        """Generate mediated gadget metadata for core24+ gadget snaps.
+
+        Returns ``False`` (leave existing file untouched) when this project
+        should not be mediated (core22 snaps use the legacy copy path in
+        ``setup_assets``) or when the project is not a gadget snap.
+        """
+        if self._project.type != const.ProjectType.GADGET:
+            return False
+
+        return self._read_project_metadata_file(
+            "gadget.yaml",
+            required=True,
+            error_message="gadget.yaml is required for gadget snaps",
+        )
+
+    @package_file("meta/kernel.yaml", partition_re="default")
+    def _get_kernel_yaml(
+        self, partition: str | None = None  # noqa: ARG002
+    ) -> str | Literal[False] | None:
+        """Generate mediated kernel metadata for core24+ kernel snaps.
+
+        Returns ``False`` (leave existing file untouched) when this project
+        should not be mediated (core22 snaps use the legacy copy path in
+        ``setup_assets``) or when the project is not a kernel snap.
+        """
+        if self._project.type != const.ProjectType.KERNEL:
+            return False
+
+        return self._read_project_metadata_file("kernel.yaml")
 
     @override
     def setup(self) -> None:
@@ -433,6 +467,37 @@ class Package(PackageService):
         # This is for backwards compatibility with setup_assets(...)
         return project_dir / "snap"
 
+    def _read_project_metadata_file(
+        self,
+        filename: str,
+        *,
+        required: bool = False,
+        error_message: str | None = None,
+    ) -> str | None:
+        """Read a top-level project metadata file if it exists."""
+        metadata_path = self._services.lifecycle.project_info.project_dir / filename
+        if metadata_path.exists():
+            return metadata_path.read_text(encoding="utf-8")
+
+        if required:
+            raise errors.SnapcraftError(error_message or f"{filename} is required")
+
+        return None
+
+    def _write_system_metadata(self, path: pathlib.Path) -> None:
+        """Materialize mediated gadget/kernel metadata files for core24+ snaps."""
+        meta_dir = path / "meta"
+
+        if self._project.type == const.ProjectType.GADGET:
+            contents = self._get_gadget_yaml()
+            if isinstance(contents, str):
+                (meta_dir / "gadget.yaml").write_text(contents, encoding="utf-8")
+
+        if self._project.type == const.ProjectType.KERNEL:
+            contents = self._get_kernel_yaml()
+            if isinstance(contents, str):
+                (meta_dir / "kernel.yaml").write_text(contents, encoding="utf-8")
+
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
         """Write the project metadata to metadata.yaml in the given directory.
@@ -466,6 +531,7 @@ class Package(PackageService):
             prime_dirs=lifecycle_service.prime_dirs,
             meta_directory_handler=meta_directory_handler,
         )
+        self._write_system_metadata(path)
 
         for component in self._project.get_component_names():
             component_yaml.write(

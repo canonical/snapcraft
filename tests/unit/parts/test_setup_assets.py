@@ -111,6 +111,30 @@ def test_gadget(yaml_data, gadget_yaml_file, new_dir):
     assert gadget_path.is_file()
 
 
+def test_gadget_core24_not_copied(yaml_data, gadget_yaml_file, new_dir):
+    project = models.Project.unmarshal(
+        yaml_data(
+            {
+                "type": "gadget",
+                "base": "core24",
+                "build-base": "core24",
+                "version": "1.0",
+                "summary": "summary",
+                "description": "description",
+            }
+        )
+    )
+
+    setup_assets(
+        project,
+        assets_dir=Path("snap"),
+        project_dir=Path.cwd(),
+        prime_dirs={None: Path("prime")},
+    )
+
+    assert not Path("prime/meta/gadget.yaml").exists()
+
+
 def test_gadget_missing(yaml_data, new_dir):
     project = models.Project.unmarshal(
         yaml_data(
@@ -144,7 +168,7 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
             "summary": "summary",
             "description": "description",
             "parts": {},
-            "build-base": "devel",
+            "build-base": "core22",
         }
     )
 
@@ -160,6 +184,30 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
     assert kernel_path.is_file()
 
 
+def test_kernel_core24_not_copied(yaml_data, kernel_yaml_file, new_dir):
+    project = models.Project.unmarshal(
+        {
+            "name": "custom-kernel",
+            "type": "kernel",
+            "confinement": "strict",
+            "version": "1.0",
+            "summary": "summary",
+            "description": "description",
+            "parts": {},
+            "build-base": "core24",
+        }
+    )
+
+    setup_assets(
+        project,
+        assets_dir=Path("snap"),
+        project_dir=Path.cwd(),
+        prime_dirs={None: Path("prime")},
+    )
+
+    assert not Path("prime/meta/kernel.yaml").exists()
+
+
 def test_kernel_missing(yaml_data, new_dir):
     project = models.Project.unmarshal(
         {
@@ -170,7 +218,7 @@ def test_kernel_missing(yaml_data, new_dir):
             "summary": "summary",
             "description": "description",
             "parts": {},
-            "build-base": "devel",
+            "build-base": "core22",
         }
     )
 
