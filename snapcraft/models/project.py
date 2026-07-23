@@ -1859,10 +1859,14 @@ class Project(models.Project):
     environment variable for a particular app, use the ``environment`` key for
     that ``app`` entry.
 
-    From snapd 2.77 onward, support for BASH syntax ``${VAR:+value}`` and
-    ``${VAR:-default}`` is available for environment variable values. Also
-    ``${VAR:+$OTHER_VAR}`` and ``${VAR:-$OTHER_VAR}`` are supported, but internal
-    braces are not supported (so , for example, ``${VAR:+${OTHER_VAR}}`` won't work).
+    With SnapD 2.77 and higher, this key supports Bash parameter expansions:
+
+    - Override the current value with ``${VAR:+override}``
+    - Fall back to a value with ``${VAR:-fallback}``
+    - Copy another variable's value with ``${VAR:+$OTHER_VAR}``
+    - Fall back to another variable's value with ``${VAR:-$OTHER_VAR}``
+    
+    Nested braces such as ``${VAR:+${OTHER_VAR}}`` aren't supported.
 
     To ensure this feature is available, use the ``assumes`` key to require a
     minimum version of snapd, for example ``assumes: [snapd2.77]``.
