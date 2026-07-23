@@ -283,10 +283,10 @@ is invoked by the consuming application.
 .. _Apt: https://wiki.debian.org/AptCLI
 .. _Bazaar: https://launchpad.net/bzr
 .. _Craft Application cryptography: https://canonical-craft-application.readthedocs-hosted.com/en/latest/explanation/cryptography/
-.. _Craft Archives cryptography: https://canonical-craft-archives.readthedocs-hosted.com/en/latest/explanation/cryptography/
-.. _Craft Parts cryptography: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/explanation/cryptography/
-.. _Craft Providers cryptography: https://canonical-craft-providers.readthedocs-hosted.com/en/latest/explanation/cryptography/
-.. _Craft Store cryptography: https://canonical-craft-store.readthedocs-hosted.com/en/latest/explanation/cryptography/
+.. _Craft Archives cryptography: https://documentation.ubuntu.com/craft-archives/latest/explanation/cryptography/
+.. _Craft Parts cryptography: https://documentation.ubuntu.com/craft-parts/latest/explanation/cryptography/
+.. _Craft Providers cryptography: https://documentation.ubuntu.com/craft-providers/latest/explanation/cryptography/
+.. _Craft Store cryptography: https://documentation.ubuntu.com/craft-store/latest/explanation/cryptography/
 .. _Crystal snap: https://snapcraft.io/crystal
 .. _curl: https://curl.se/
 .. _dirmngr: https://manpages.ubuntu.com/manpages/noble/man8/dirmngr.8.html
@@ -295,7 +295,7 @@ is invoked by the consuming application.
 .. _httpx: https://www.python-httpx.org/
 .. _keyring: https://pypi.org/project/keyring/
 .. _Launchpad: https://launchpad.net
-.. _launchpadlib: https://help.launchpad.net/API/launchpadlib
+.. _launchpadlib: https://ubuntu.com/docs/launchpad/user/how-to/launchpadlib/using-launchpadlib/
 .. _macaroonbakery: https://pypi.org/project/macaroonbakery/
 .. _macaroons: https://research.google/pubs/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/
 .. _Mercurial: https://www.mercurial-scm.org/
