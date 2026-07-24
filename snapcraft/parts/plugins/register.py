@@ -26,7 +26,6 @@ from .conda_plugin import CondaPlugin
 from .flutter_plugin import FlutterPlugin
 from .initrd_plugin import InitrdPlugin
 from .kernel_plugin import KernelPlugin
-from .matter_sdk_plugin import MatterSdkPlugin
 
 
 def get_plugins(core22: bool) -> dict[str, PluginType]:
@@ -40,7 +39,6 @@ def get_plugins(core22: bool) -> dict[str, PluginType]:
         "flutter": FlutterPlugin,
         "kernel": KernelPlugin,
         "initrd": InitrdPlugin,
-        "matter-sdk": MatterSdkPlugin,
     } | python_common.get_python_plugins()
 
     return plugins
