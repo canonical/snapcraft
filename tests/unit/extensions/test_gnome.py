@@ -39,6 +39,13 @@ def gnome_extension_core24():
 
 
 @pytest.fixture
+def gnome_extension_core26():
+    return gnome.GNOME(
+        yaml_data={"base": "core26", "parts": {}}, arch="amd64", target_arch="amd64"
+    )
+
+
+@pytest.fixture
 def gnome_extension_with_build_snap():
     return gnome.GNOME(
         yaml_data={
@@ -68,14 +75,14 @@ def gnome_extension_with_default_build_snap_from_latest_edge():
 
 
 def test_get_supported_bases():
-    assert gnome.GNOME.get_supported_bases() == ("core22", "core24")
+    assert gnome.GNOME.get_supported_bases() == ("core22", "core24", "core26")
 
 
 def test_get_supported_confinement():
     assert gnome.GNOME.get_supported_confinement() == ("strict", "devmode")
 
 
-@pytest.mark.parametrize("base", ["core22", "core24"])
+@pytest.mark.parametrize("base", ["core22", "core24", "core26"])
 def test_is_experimental(base):
     assert gnome.GNOME.is_experimental(base=base) is False
 
@@ -91,6 +98,16 @@ def test_get_app_snippet_core24(gnome_extension_core24):
     assert gnome_extension_core24.get_app_snippet(app_name="test-app") == {
         "command-chain": [
             "snap/command-chain/gpu-2404-wrapper",
+            "snap/command-chain/desktop-launch",
+        ],
+        "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
+    }
+
+
+def test_get_app_snippet_core26(gnome_extension_core26):
+    assert gnome_extension_core26.get_app_snippet(app_name="test-app") == {
+        "command-chain": [
+            "snap/command-chain/gpu-2604-wrapper",
             "snap/command-chain/desktop-launch",
         ],
         "plugs": ["desktop", "desktop-legacy", "gsettings", "opengl", "wayland", "x11"],
@@ -170,6 +187,14 @@ def test_get_root_snippet_with_gpu(gnome_extension_core24):
 
     assert snippet["layout"]["/usr/share/X11/XErrorDB"] == {
         "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
+    }
+
+
+def test_get_root_snippet_with_glycin(gnome_extension_core26):
+    snippet = gnome_extension_core26.get_root_snippet()
+
+    assert snippet["layout"]["/usr/libexec/glycin-loaders"] == {
+        "bind": "$SNAP/gnome-platform/usr/libexec/glycin-loaders",
     }
 
 
@@ -447,6 +472,40 @@ def test_get_parts_snippet_core24(gnome_extension_core24):
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
             "plugin": "make",
             "build-snaps": ["gnome-46-2404-sdk"],
+        },
+    }
+
+
+def test_get_parts_snippet_core26(gnome_extension_core26):
+    assert gnome_extension_core26.get_parts_snippet() == {
+        "gnome/gpu/wrapper": {
+            "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
+            "plugin": "make",
+            "make-parameters": ["GPU_INTERFACE=gpu-2604"],
+        },
+        "gnome/gpu/cleanup": {
+            "after": [],
+            "source": "https://github.com/canonical/gpu-snap.git",
+            "plugin": "nil",
+            "override-prime": (
+                "craftctl default\n${CRAFT_PART_SRC}/bin/gpu-2604-cleanup mesa-2604\n"
+            ),
+        },
+        "gnome/sdk": {
+            "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
+            "plugin": "make",
+            "build-snaps": ["gnome-core26-sdk"],
+        },
+        "gnome/cleanup": {
+            "after": [],
+            "plugin": "nil",
+            "build-snaps": ["gnome-core26-sdk", "gtk-common-themes"],
+            "override-prime": (
+                "set -eux\n"
+                'for snap in "gnome-core26-sdk" "gtk-common-themes"; do\n'
+                '    cd "/snap/$snap/current" && find . -type f,l -name "*.so.*" -exec rm -f "$CRAFT_PRIME/{}" \\;\n'
+                "done\n"
+            ),
         },
     }
 
