@@ -282,7 +282,7 @@ is invoked by the consuming application.
 
 .. _Apt: https://wiki.debian.org/AptCLI
 .. _Bazaar: https://launchpad.net/bzr
-.. _Craft Application cryptography: https://canonical-craft-application.readthedocs-hosted.com/en/latest/explanation/cryptography/
+.. _Craft Application cryptography: https://documentation.ubuntu.com/craft-application/latest/explanation/cryptography/
 .. _Craft Archives cryptography: https://documentation.ubuntu.com/craft-archives/latest/explanation/cryptography/
 .. _Craft Parts cryptography: https://documentation.ubuntu.com/craft-parts/latest/explanation/cryptography/
 .. _Craft Providers cryptography: https://documentation.ubuntu.com/craft-providers/latest/explanation/cryptography/
