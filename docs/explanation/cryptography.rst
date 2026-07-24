@@ -295,7 +295,7 @@ is invoked by the consuming application.
 .. _httpx: https://www.python-httpx.org/
 .. _keyring: https://pypi.org/project/keyring/
 .. _Launchpad: https://launchpad.net
-.. _launchpadlib: https://help.launchpad.net/API/launchpadlib
+.. _launchpadlib: https://ubuntu.com/docs/launchpad/user/how-to/launchpadlib/using-launchpadlib/
 .. _macaroonbakery: https://pypi.org/project/macaroonbakery/
 .. _macaroons: https://research.google/pubs/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/
 .. _Mercurial: https://www.mercurial-scm.org/

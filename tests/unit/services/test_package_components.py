@@ -16,13 +16,16 @@
 
 """Tests for Components in Snapcraft's Package service."""
 
+import re
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import call
 
 import pytest
+from craft_application.services.package import PackageFileEntry
 
 from snapcraft import linters, pack
+from snapcraft.errors import SnapcraftError
 
 
 @pytest.fixture
@@ -193,6 +196,62 @@ def test_pack_component_compression(
             call().__fspath__(),
         ]
     )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_component_yaml(default_project, fake_services, setup_project):
+    """Mediation is invoked with the bare component name used by get_artifacts()."""
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    expected = dedent(
+        """\
+        component: default+firstcomponent
+        type: test
+        version: '1.0'
+        summary: first component
+        description: lorem ipsum
+        """
+    )
+
+    # Bare component name is the artifact key from get_artifacts() and the form
+    # passed through the mediation pipeline.
+    assert package_service._get_component_yaml("firstcomponent") == expected
+    # Fully qualified partition name remains accepted for direct callers.
+    assert package_service._get_component_yaml("component/firstcomponent") == expected
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_component_yaml_unknown_component(
+    default_project, fake_services, setup_project
+):
+    """Requesting an unknown component surfaces a clear error."""
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    with pytest.raises(SnapcraftError, match="Component does not exist."):
+        package_service._get_component_yaml("component/does-not-exist")
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_component_yaml_not_registered_for_default_partition(
+    default_project, fake_services, setup_project
+):
+    """The component.yaml generator must run for the snap artifact."""
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    entries = [
+        entry
+        for entry in package_service._package_file_registry
+        if isinstance(entry, PackageFileEntry)
+        and entry.method_name == "_get_component_yaml"
+    ]
+    assert entries, "component.yaml generator is not registered"
+    entry = entries[0]
+
+    assert re.fullmatch(entry.partition_re, "default") is None
+    assert re.fullmatch(entry.partition_re, "firstcomponent") is not None
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
