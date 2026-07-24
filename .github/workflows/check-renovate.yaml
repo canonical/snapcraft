@@ -21,11 +21,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Install node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v9.0.0
       - name: Install renovate
         run: npm install --global re2 renovate
       - name: Enable ssh access
