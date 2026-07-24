@@ -15,6 +15,16 @@ prepare: |
   sed -i 's|^# via on|via off|' ${SQUID_PROXY_CONF}
   sed -i 's|^# forwarded_for on|forwarded_for delete|' ${SQUID_PROXY_CONF}
 
+  # In proxied environments, squid must chain through the environment's proxy.
+  if [ -n "${HTTP_PROXY:-}" ]; then
+    parent_host_port="${HTTP_PROXY#*://}"       # strip '<scheme>://'
+    parent_host="${parent_host_port%:*}"        # strip ':<port>'
+    parent_port="${parent_host_port##*:}"       # strip '<host>:'
+
+    printf 'cache_peer %s parent %s 0 no-query default\nnever_direct allow all\n' \
+      "${parent_host}" "${parent_port}" | sudo tee -a ${SQUID_PROXY_CONF}
+  fi
+
   sudo systemctl restart squid.service
 
 restore: |
@@ -27,7 +37,10 @@ restore: |
 execute: |
   cd "$SNAP_DIR"
 
-  SQUID_PROXY_URL="http://$(hostname -I | awk '{print $1}'):3128"
+  # In proxied environments, we use the LXD bridge address so the container can talk
+  # to squid without leaving the LXD bridge network. If we used the machine's primary
+  # address, the traffic would get sent directly to the host's proxy.
+  SQUID_PROXY_URL="http://$(lxc network get lxdbr0 ipv4.address | cut -d/ -f1):3128"
 
   http_proxy=${SQUID_PROXY_URL} snapcraft pack
 

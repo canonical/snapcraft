@@ -66,9 +66,53 @@ backends:
           storage: 20G
           workers: 6
 
-      - fedora-39-64:
-          workers: 2
-          manual: true
+      # - fedora-39-64:
+      #     workers: 2
+      #     manual: true
+
+  openstack:
+    key: '$(HOST: echo "$OS_CREDENTIALS_AMD64_PS7")'
+    plan: shared.medium
+    halt-timeout: 2h
+    wait-timeout: 10m
+    proxy: ingress-haproxy.ps7.canonical.com
+    cidr-port-rel: ["10.151.96.0/21:5000"]
+    volume-auto-delete: true
+    environment: &openstack-env
+      SNAPD_USE_PROXY: "true"
+      HTTP_PROXY: "http://egress.ps7.internal:3128"
+      http_proxy: "http://egress.ps7.internal:3128"
+      HTTPS_PROXY: "http://egress.ps7.internal:3128"
+      https_proxy: "http://egress.ps7.internal:3128"
+      no_proxy: "127.0.0.1,127.0.0.53,localhost"
+      NO_PROXY: "127.0.0.1,127.0.0.53,localhost"
+      NTP_SERVER: "ntp.ps7.internal"
+    systems: &openstack-systems
+      - ubuntu-22.04-64:
+          image: snapd-spread/ubuntu-22.04-64
+          workers: 10
+          storage: 20G
+      - ubuntu-24.04-64:
+          image: snapd-spread/ubuntu-24.04-64
+          workers: 6
+          storage: 20G
+      - ubuntu-26.04-64:
+          image: snapd-spread/ubuntu-26.04-64
+          workers: 6
+          storage: 20G
+
+  openstack-dev:
+    type: openstack
+    key: '$(HOST: echo "$OS_CREDENTIALS_STG_AMD64_PS7")'
+    plan: shared.xsmall
+    halt-timeout: 2h
+    wait-timeout: 10m
+    groups: [default]
+    proxy: ingress-haproxy.ps7.canonical.com
+    cidr-port-rel: ["10.151.54.0/24:4000"]
+    volume-auto-delete: true
+    environment: *openstack-env
+    systems: *openstack-systems
 
   multipass:
     type: adhoc
@@ -94,8 +138,8 @@ backends:
         sudo sh -c \
         "if [ -d /etc/ssh/sshd_config.d/ ]
         then
-          echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/10-custom.conf
-          echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config.d/10-custom.conf
+          echo 'PasswordAuthentication yes' > /etc/ssh/sshd_config.d/10-spread.conf
+          echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config.d/10-spread.conf
         else
           sed -i /etc/ssh/sshd_config -E -e 's/^#?PasswordAuthentication.*/PasswordAuthentication yes/' -e 's/^#?PermitRootLogin.*/PermitRootLogin yes/'
         fi"
@@ -136,11 +180,23 @@ prepare: |
   # Now run 'apt-get update', but don't show output unless it fails. The logs are
   # long enough as it is.
   if os.query is-ubuntu; then
+    if [ -n "${HTTP_PROXY:-}" ]; then
+      printf 'Acquire::http::Proxy "%s";\nAcquire::https::Proxy "%s";\n' "${HTTP_PROXY}" "${HTTPS_PROXY}" | tee /etc/apt/apt.conf.d/proxy.conf
+    fi
     tempfile="$(mktemp)"
     if ! apt-get update > "$tempfile" 2>&1; then
         cat "$tempfile"
         exit 1
     fi
+  fi
+
+  #shellcheck source=tests/spread/tools/proxy.sh
+  . tests/spread/tools/proxy.sh
+  if [ -n "${HTTP_PROXY:-}" ]; then
+    # The snapd daemon doesn't see the environment variables, so we must modify its config
+    # to use a proxy with it. Came from:
+    # https://github.com/canonical/snapd/blob/619cc925793591348db21bb45fa4af65288d2c42/tests/lib/prepare.sh#L90
+    tools_setup_snapd_proxy
   fi
 
   tests.pkgs install snapd
@@ -165,6 +221,14 @@ prepare: |
 
   /snap/bin/lxd waitready --timeout=30
   /snap/bin/lxd init --auto
+
+  if [ -n "${HTTP_PROXY:-}" ]; then
+    # Lxd either can't access or doesn't fallback to the environment variables,
+    # so we must set them. This is needed to download remote images.
+    lxc config set core.proxy_http "$HTTP_PROXY"
+    lxc config set core.proxy_https "$HTTPS_PROXY"
+    lxc config set core.proxy_ignore_hosts "$NO_PROXY"
+  fi
 
   install_snapcraft
 
@@ -346,6 +410,11 @@ suites:
       SNAPCRAFT_BUILD_ENVIRONMENT: ""
       UBUNTU_PRO_TOKEN: '$(HOST: echo "$UBUNTU_PRO_TOKEN")'
     prepare: |
+      if [ -n "${HTTP_PROXY:-}" ]; then
+        sudo pro config set http_proxy="$http_proxy"
+        sudo pro config set https_proxy="$https_proxy"
+      fi
+
       sudo pro attach --no-auto-enable $UBUNTU_PRO_TOKEN
       sudo pro enable --assume-yes esm-apps
       sudo pro config set lxd_guest_attach=available
