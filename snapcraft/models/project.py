@@ -1858,6 +1858,18 @@ class Project(models.Project):
     Environment variables are set at runtime for all apps.  To set an
     environment variable for a particular app, use the ``environment`` key for
     that ``app`` entry.
+
+    With SnapD 2.77 and higher, this key supports Bash parameter expansions:
+
+    - Override the current value with ``${VAR:+override}``
+    - Fall back to a value with ``${VAR:-fallback}``
+    - Copy another variable's value with ``${VAR:+$OTHER_VAR}``
+    - Fall back to another variable's value with ``${VAR:-$OTHER_VAR}``
+    
+    Nested braces such as ``${VAR:+${OTHER_VAR}}`` aren't supported.
+
+    To ensure this feature is available, use the ``assumes`` key to require a
+    minimum version of snapd, for example ``assumes: [snapd2.77]``.
     """
 
     build_packages: Grammar[list[str]] | None = pydantic.Field(
