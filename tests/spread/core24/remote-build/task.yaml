@@ -14,6 +14,7 @@ environment:
   SNAP/build_for: build-for
   SNAP/build_for_with_platforms: build-for-with-platforms
   SNAP/build_for_with_shorthand_platforms: build-for-with-shorthand-platforms
+  SNAP/project_dir: project-dir
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
 
 prepare: |
@@ -24,18 +25,20 @@ prepare: |
     exit 1
   fi
 
-  # commit the project
   git config --global --add safe.directory "$PWD"
   git init
-  git add snapcraft.yaml
+
+  if [[ -d "my-subdir" ]]; then
+    git add my-subdir/snapcraft.yaml
+  else
+    git add snapcraft.yaml
+  fi
+
   git commit -m "Initial Commit"
 
-  # set up launchpad token
   mkdir -p "$(dirname "$CREDENTIALS_FILE")"
   echo -e "$LAUNCHPAD_TOKEN" > "$CREDENTIALS_FILE"
 
-  # build ids are based on the project contents
-  # adding a date ensures each test has a unique build id
   date > date.txt
 
 restore: |
@@ -81,3 +84,4 @@ execute: |
       exit 1
     fi
   fi
+1

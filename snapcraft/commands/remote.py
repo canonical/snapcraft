@@ -81,6 +81,14 @@ class RemoteBuildCommand(RemoteBuild):
             dest="remote_build_build_fors",
         )
 
+        parser.add_argument(
+            "--project-dir",
+            type=str,
+            metavar="path",
+            help="Directory containing the snap project to build",
+            dest="project_dir",
+        )
+
     @override
     def _pre_build(self, parsed_args: argparse.Namespace):
         """Perform pre-build validation.
@@ -179,4 +187,9 @@ class RemoteBuildCommand(RemoteBuild):
             )
 
         emit.debug(f"Architectures to build for: {humanize_list(archs, 'and')}")
-        return {"architectures": archs}
+        build_args: dict[str, Any] = {"architectures": archs}
+
+        if getattr(parsed_args, "project_dir", None):
+            build_args["build_path"] = parsed_args.project_dir
+
+        return build_args
