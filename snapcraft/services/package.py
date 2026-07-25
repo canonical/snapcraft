@@ -53,6 +53,21 @@ class Package(PackageService):
         """Generate the mediated snap metadata file."""
         return util.dump_yaml(self.metadata.marshal())
 
+    # The mediation partition name here is the artifact key from get_artifacts(),
+    # which in Snapcraft is the bare component name instead of the fully qualified
+    # partition name. Lifecycle.get_prime_dir and _prime_dir_for are also keyed
+    # by bare component name.
+    @package_file("meta/component.yaml", partition_re=r"(?!default$)[a-z0-9][a-z0-9-]*")
+    def _get_component_yaml(self, partition: str | None = None) -> str:
+        """Generate mediated component metadata files."""
+        if partition is None:
+            raise ValueError("Component metadata requires a component partition.")
+
+        # Accept both the bare component name used by get_artifacts() and
+        # the fully qualified partition form for direct callers.
+        component_name = partition.removeprefix("component/")
+        return component_yaml.get_str(self._project, component_name)
+
     @override
     def setup(self) -> None:
         """Application-specific service setup."""
