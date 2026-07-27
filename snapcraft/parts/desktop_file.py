@@ -98,11 +98,11 @@ class DesktopFile:
             # If icon is just a name (no path separator), try to resolve it from the hicolor icon theme.
             if "/" not in icon:
                 if (
-                    icon_path := get_icon_from_theme(
+                    theme_icon_path := get_icon_from_theme(
                         os.fspath(self._prime_dir), "hicolor", icon
                     )
                 ) is not None:
-                    self._parser[section]["Icon"] = os.path.join("${SNAP}", icon_path)
+                    icon = theme_icon_path
 
             # With everything stripped, check to see if the icon is there.
             # if it is, add "${SNAP}" back and set the icon
