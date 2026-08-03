@@ -551,6 +551,8 @@ def _populate_environment(
             "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         }
 
+    environment = environment.copy()
+
     # if LD_LIBRARY_PATH is not defined, use default value when not classic
     if "LD_LIBRARY_PATH" not in environment and confinement != "classic":
         environment["LD_LIBRARY_PATH"] = get_ld_library_paths(prime_dir, arch_triplet)

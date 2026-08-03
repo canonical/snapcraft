@@ -29,6 +29,7 @@ parts:
     plugin: python
     source: src
     python-packages:
-      - black
+      # patchelf silently fails to patch .so's in black 26.5.0 (NixOS/patchelf#583)
+      - black==26.3.1
     build-attributes:
       - enable-patchelf

@@ -214,7 +214,7 @@ class KDENeon6(GPUExtension):
             lxqt_support_snap: {
                 "content": lxqt_support_snap,
                 "interface": "content",
-                "target": f"$SNAP/{lxqt_support_snap}",
+                "target": "$SNAP/lxqt-support",
                 "default-provider": lxqt_support_snap,
             },
         }
@@ -222,14 +222,6 @@ class KDENeon6(GPUExtension):
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
             "GTK_USE_PORTAL": "1",
             "PLATFORM_PLUG": platform_kf6_snap,
-            "LD_LIBRARY_PATH": (
-                f"$SNAP/{lxqt_support_snap}/usr/lib/"
-                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${LD_LIBRARY_PATH}"
-            ),
-            "QT_PLUGIN_PATH": (
-                f"$SNAP/{lxqt_support_snap}/usr/lib/"
-                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/qt6/plugins:${QT_PLUGIN_PATH}"
-            ),
         }
         snippet["hooks"] = {
             "configure": {
@@ -245,12 +237,7 @@ class KDENeon6(GPUExtension):
             },
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
-            "/usr/share/color-schemes": {
-                "symlink": f"$SNAP/{lxqt_support_snap}/usr/share/color-schemes"
-            },
-            "/usr/share/Kvantum": {
-                "symlink": f"$SNAP/{lxqt_support_snap}/usr/share/Kvantum"
-            },
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         }
         return snippet
 

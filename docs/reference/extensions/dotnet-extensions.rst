@@ -10,6 +10,7 @@ version your application targets. The available extensions are:
 * ``dotnet8``: For applications targeting .NET 8 (``net8.0``)
 * ``dotnet9``: For applications targeting .NET 9 (``net9.0``)
 * ``dotnet10``: For applications targeting .NET 10 (``net10.0``)
+* ``dotnet11``: For applications targeting .NET 11 (``net11.0``)
 
 The .NET extensions are compatible with the core24 base.
 
