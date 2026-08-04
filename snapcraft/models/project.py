@@ -32,6 +32,7 @@ from craft_application.models import (  # noqa: TC002 (typing-only-third-party-i
     VersionStr,
 )
 from craft_application.models.constraints import (
+    LicenseStr,
     SingleEntryDict,
     SingleEntryList,
     UniqueList,
@@ -42,7 +43,14 @@ from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-impor
     Grammar,
 )
 from craft_platforms import DebianArchitecture
-from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
+from pydantic import (
+    ConfigDict,
+    PrivateAttr,
+    StringConstraints,
+    TypeAdapter,
+    ValidationError,
+    error_wrappers,
+)
 from pydantic.json_schema import (
     SkipJsonSchema,  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
 )
@@ -310,6 +318,20 @@ def _get_partitions_from_components(
         return ["default", *[f"component/{name}" for name in components_data.keys()]]
 
     return None
+
+
+def _warn_deprecated_license(lic: str | None) -> str | None:
+    if lic is None:
+        return None
+
+    try:
+        TypeAdapter(LicenseStr).validate_python(lic)
+    except ValidationError:
+        emit.warning(
+            "Non-SPDX licenses are deprecated. Use SPDX license strings or 'proprietary' instead."
+        )
+
+    return lic
 
 
 class Socket(models.CraftBaseModel):
@@ -1475,6 +1497,8 @@ class Project(models.Project):
 
     See :ref:`configure-package-information-reuse-information` for details.
     """
+
+    license: Annotated[str | None, pydantic.BeforeValidator(_warn_deprecated_license)]
 
     contact: UniqueList[str] | str | None = pydantic.Field(
         default=None,
