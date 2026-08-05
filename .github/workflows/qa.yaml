@@ -6,7 +6,6 @@ on:
       - "feature/*"
       - "hotfix/*"
       - "release/*"
-      - "renovate/*"
   pull_request:
 
 permissions:
