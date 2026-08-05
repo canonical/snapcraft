@@ -320,20 +320,6 @@ def _get_partitions_from_components(
     return None
 
 
-def _warn_deprecated_license(lic: str | None) -> str | None:
-    if lic is None:
-        return None
-
-    try:
-        TypeAdapter(LicenseStr).validate_python(lic)
-    except ValidationError:
-        emit.warning(
-            "Non-SPDX licenses are deprecated. Use SPDX license strings or 'proprietary' instead."
-        )
-
-    return lic
-
-
 class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
@@ -1498,8 +1484,6 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    license: Annotated[str | None, pydantic.BeforeValidator(_warn_deprecated_license)]
-
     contact: UniqueList[str] | str | None = pydantic.Field(
         default=None,
         description="The snap author's contact links and email addresses.",
@@ -2300,6 +2284,21 @@ class Project(models.Project):
         or None if no components are defined.
         """
         return _get_partitions_from_components(self.components)
+
+    @pydantic.field_validator("license", mode="before")
+    @classmethod
+    def _warn_deprecated_license(cls, lic: str | None) -> str | None:
+        if lic is None:
+            return None
+
+        try:
+            TypeAdapter(LicenseStr).validate_python(lic)
+        except ValidationError:
+            emit.warning(
+                "Non-SPDX licenses are deprecated. Use SPDX license strings or 'proprietary' instead."
+            )
+
+        return lic
 
 
 def _custom_error(error_msg: str):
