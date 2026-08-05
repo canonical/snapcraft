@@ -995,7 +995,7 @@ class TestProjectValidation:
     )
     def test_non_spdx_deprecation(
         self,
-        lic: str,
+        lic: str | None,
         should_warn: bool,
         project_yaml_data: Callable[..., Any],
         emitter: RecordingEmitter,
