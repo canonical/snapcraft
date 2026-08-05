@@ -150,9 +150,12 @@ key in the project file reference.
 Deprecation of non-SPDX licenses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Previously, the ``license`` key could contain any value. Now, if any value is specified,
-it must either be a valid `SPDX license expression <https://spdx.org/licenses/>`__ or
-the literal value ``"proprietary"``.
+Previously, the ``license`` key could contain any value. Snapcraft now warns when the
+value is not a valid `SPDX license expression <https://spdx.org/licenses/>`__ or
+``proprietary``.
+
+Non-SPDX values are still accepted for compatibility, but are deprecated and may be
+rejected in a future release.
 
 Backwards-incompatible changes
 ------------------------------
