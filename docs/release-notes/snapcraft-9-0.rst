@@ -147,6 +147,13 @@ files had to end in ``.7zip``.
 Additionally, 7zip files are now documented in the :ref:`source-type <PartSpec.source_type>`
 key in the project file reference.
 
+Deprecation of non-SPDX licenses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Previously, the ``license`` key could contain any value. Now, if any value is specified,
+it must either be a valid `SPDX license expression <https://spdx.org/licenses/>`__ or
+the literal value ``"proprietary"``.
+
 Backwards-incompatible changes
 ------------------------------
 
