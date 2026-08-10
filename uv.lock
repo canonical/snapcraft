@@ -23,7 +23,6 @@ constraints = [
     { name = "pynacl", specifier = "<1.6.0" },
     { name = "starlette", specifier = ">=1.0.1" },
 ]
-build-constraints = [{ name = "maturin", marker = "python_full_version < '3.14'", specifier = "<1.10.0" }]
 
 [[package]]
 name = "accessible-pygments"

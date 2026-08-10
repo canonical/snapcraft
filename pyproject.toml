@@ -138,8 +138,6 @@ constraint-dependencies = [
     "starlette>=1.0.1",
 ]
 build-constraint-dependencies = [
-    # needed until we have rustc >= 1.78
-    "maturin<1.10.0 ; python_version < '3.14'",
 ]
 
 [[tool.uv.index]]
