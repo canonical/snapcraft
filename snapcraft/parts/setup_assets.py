@@ -34,9 +34,7 @@ from .desktop_file import DesktopFile
 
 def _uses_legacy_system_metadata(project: models.Project) -> bool:
     """Return whether gadget/kernel metadata should follow the core22 path."""
-    return project.base == "core22" or (
-        project.base is None and project.build_base == "core22"
-    )
+    return project.get_effective_base() == "core22"
 
 
 def setup_assets(
