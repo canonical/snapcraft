@@ -188,7 +188,9 @@ def test_get_gadget_yaml_missing_raises(fake_services, setup_project):
     setup_project(fake_services, project)
     package_service = cast(Package, fake_services.get("package"))
 
-    with pytest.raises(SnapcraftError, match="gadget.yaml is required for gadget snaps"):
+    with pytest.raises(
+        SnapcraftError, match="gadget.yaml is required for gadget snaps"
+    ):
         package_service._get_gadget_yaml()
 
 
@@ -207,7 +209,9 @@ def test_get_kernel_yaml(fake_services, setup_project):
     setup_project(fake_services, project)
     package_service = cast(Package, fake_services.get("package"))
     project_dir = package_service._services.lifecycle.project_info.project_dir
-    (project_dir / "kernel.yaml").write_text("kernel-key: kernel-value\n", encoding="utf-8")
+    (project_dir / "kernel.yaml").write_text(
+        "kernel-key: kernel-value\n", encoding="utf-8"
+    )
 
     assert package_service._get_kernel_yaml() == "kernel-key: kernel-value\n"
 
@@ -339,7 +343,9 @@ def test_write_metadata_writes_gadget_yaml(fake_services, setup_project, tmp_pat
     prime_dir = tmp_path / "prime"
     package_service.write_metadata(prime_dir)
 
-    assert (prime_dir / "meta" / "gadget.yaml").read_text(encoding="utf-8") == "volumes: {}\n"
+    assert (prime_dir / "meta" / "gadget.yaml").read_text(
+        encoding="utf-8"
+    ) == "volumes: {}\n"
 
 
 def test_write_metadata_writes_kernel_yaml(fake_services, setup_project, tmp_path):
@@ -357,12 +363,16 @@ def test_write_metadata_writes_kernel_yaml(fake_services, setup_project, tmp_pat
     setup_project(fake_services, project)
     package_service = cast(Package, fake_services.get("package"))
     project_dir = package_service._services.lifecycle.project_info.project_dir
-    (project_dir / "kernel.yaml").write_text("kernel-key: kernel-value\n", encoding="utf-8")
+    (project_dir / "kernel.yaml").write_text(
+        "kernel-key: kernel-value\n", encoding="utf-8"
+    )
 
     prime_dir = tmp_path / "prime"
     package_service.write_metadata(prime_dir)
 
-    assert (prime_dir / "meta" / "kernel.yaml").read_text(encoding="utf-8") == "kernel-key: kernel-value\n"
+    assert (prime_dir / "meta" / "kernel.yaml").read_text(
+        encoding="utf-8"
+    ) == "kernel-key: kernel-value\n"
 
 
 def test_write_metadata_missing_kernel_yaml_leaves_no_file(
@@ -570,9 +580,7 @@ def test_extra_project_updates_makes_targets_core26(
     mock_precreate_layout = mocker.patch.object(
         package_service, "_precreate_layout_targets"
     )
-    mocker.patch.object(
-        package_service, "_precreate_plug_targets"
-    )
+    mocker.patch.object(package_service, "_precreate_plug_targets")
 
     package_service.update_project()
 

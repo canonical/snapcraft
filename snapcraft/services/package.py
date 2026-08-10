@@ -70,7 +70,8 @@ class Package(PackageService):
 
     @package_file("meta/gadget.yaml", partition_re="default")
     def _get_gadget_yaml(
-        self, partition: str | None = None  # noqa: ARG002
+        self,
+        partition: str | None = None,  # noqa: ARG002
     ) -> str | Literal[False] | None:
         """Generate mediated gadget metadata for core24+ gadget snaps.
 
@@ -89,7 +90,8 @@ class Package(PackageService):
 
     @package_file("meta/kernel.yaml", partition_re="default")
     def _get_kernel_yaml(
-        self, partition: str | None = None  # noqa: ARG002
+        self,
+        partition: str | None = None,  # noqa: ARG002
     ) -> str | Literal[False] | None:
         """Generate mediated kernel metadata for core24+ kernel snaps.
 
