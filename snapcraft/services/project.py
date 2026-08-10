@@ -76,12 +76,12 @@ class Project(ProjectService):
     @classmethod
     def validate_license_spdx(cls, project: dict[str, Any]) -> None:
         if cls._license_spdx_warning:
-            return None
+            return
         cls._license_spdx_warning = True
 
         lic = project.get("license")
         if lic is None:
-            return None
+            return
 
         try:
             TypeAdapter(LicenseStr).validate_python(lic)
@@ -89,8 +89,6 @@ class Project(ProjectService):
             craft_cli.emit.warning(
                 "Non-SPDX licenses are deprecated. Use SPDX license strings or 'proprietary' instead. For more information, see https://spdx.org/licenses/."
             )
-
-        return lic
 
     @classmethod
     def validate_ua_services(cls, project: dict[str, Any]) -> None:
