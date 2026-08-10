@@ -22,7 +22,7 @@ prepare: |
     parent_port="${parent_host_port##*:}"       # strip '<host>:'
 
     printf 'cache_peer %s parent %s 0 no-query default\nnever_direct allow all\n' \
-      "${parent_host}" "${parent_port}" | sudo tee -a ${SQUID_PROXY_CONF}
+      "${parent_host}" "${parent_port}" | sudo tee -a "${SQUID_PROXY_CONF}"
   fi
 
   sudo systemctl restart squid.service

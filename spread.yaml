@@ -48,27 +48,6 @@ backends:
       - ubuntu-22.04
       - ubuntu-24.04
       - ubuntu-26.04
-  google:
-    key: '$(HOST: echo "$SPREAD_GOOGLE_KEY")'
-    location: snapd-spread/us-east1-b
-    halt-timeout: 2h
-    systems:
-      - ubuntu-22.04-64:
-          workers: 10
-          storage: 20G
-          image: ubuntu-2204-64
-      - ubuntu-24.04-64:
-          image: ubuntu-2404-64
-          storage: 20G
-          workers: 6
-      - ubuntu-26.04-64:
-          image: ubuntu-2604-64
-          storage: 20G
-          workers: 6
-
-      # - fedora-39-64:
-      #     workers: 2
-      #     manual: true
 
   openstack:
     key: '$(HOST: echo "$OS_CREDENTIALS_AMD64_PS7")'
@@ -411,8 +390,8 @@ suites:
       UBUNTU_PRO_TOKEN: '$(HOST: echo "$UBUNTU_PRO_TOKEN")'
     prepare: |
       if [ -n "${HTTP_PROXY:-}" ]; then
-        sudo pro config set http_proxy="$http_proxy"
-        sudo pro config set https_proxy="$https_proxy"
+        sudo pro config set http_proxy="${HTTP_PROXY}"
+        sudo pro config set https_proxy="${HTTPS_PROXY:-$HTTP_PROXY}"
       fi
 
       sudo pro attach --no-auto-enable $UBUNTU_PRO_TOKEN
