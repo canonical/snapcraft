@@ -177,6 +177,17 @@ class TestValidateLicense:
         # assert it was only shown once
         assert len(emitter.interactions) == 1
 
+    def test_no_warning_in_managed_mode(
+        self, emitter: RecordingEmitter, mocker: pytest_mock.MockerFixture
+    ):
+        """Don't warn in managed-mode."""
+        mocker.patch("snapcraft.services.project.is_managed_mode", return_value=True)
+        project = {"license": "maybe"}
+
+        Project.validate_ua_services(project)
+
+        emitter.assert_interactions(None)
+
     @pytest.mark.parametrize(
         ("lic", "should_warn"),
         [

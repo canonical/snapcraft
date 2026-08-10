@@ -79,6 +79,9 @@ class Project(ProjectService):
             return
         cls._license_spdx_warning = True
 
+        if is_managed_mode():
+            return
+
         lic = project.get("license")
         if lic is None:
             return
