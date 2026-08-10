@@ -32,7 +32,6 @@ from craft_application.models import (  # noqa: TC002 (typing-only-third-party-i
     VersionStr,
 )
 from craft_application.models.constraints import (
-    LicenseStr,
     SingleEntryDict,
     SingleEntryList,
     UniqueList,
@@ -47,8 +46,6 @@ from pydantic import (
     ConfigDict,
     PrivateAttr,
     StringConstraints,
-    TypeAdapter,
-    ValidationError,
     error_wrappers,
 )
 from pydantic.json_schema import (
@@ -2284,21 +2281,6 @@ class Project(models.Project):
         or None if no components are defined.
         """
         return _get_partitions_from_components(self.components)
-
-    @pydantic.field_validator("license", mode="before")
-    @classmethod
-    def _warn_deprecated_license(cls, lic: str | None) -> str | None:
-        if lic is None:
-            return None
-
-        try:
-            TypeAdapter(LicenseStr).validate_python(lic)
-        except ValidationError:
-            emit.warning(
-                "Non-SPDX licenses are deprecated. Use SPDX license strings or 'proprietary' instead."
-            )
-
-        return lic
 
 
 def _custom_error(error_msg: str):

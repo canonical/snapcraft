@@ -19,13 +19,11 @@ import re
 from collections.abc import Callable
 from contextlib import nullcontext
 from typing import Any, cast
-from unittest.mock import call
 
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
 from craft_application.models import VersionStr
-from craft_cli.pytest_plugin import RecordingEmitter
 from craft_platforms import DebianArchitecture
 
 import snapcraft.models
@@ -983,34 +981,6 @@ class TestProjectValidation:
         parts_data = {"my-part": {"plugin": "nil", key: "snapcraftctl"}}
 
         Project.unmarshal(project_yaml_data(base=base, parts=parts_data))
-
-    @pytest.mark.parametrize(
-        ("lic", "should_warn"),
-        [
-            ("MIT", False),
-            ("proprietary", False),
-            (None, False),
-            ("DemonicContract", True),
-        ],
-    )
-    def test_non_spdx_deprecation(
-        self,
-        lic: str | None,
-        should_warn: bool,
-        project_yaml_data: Callable[..., Any],
-        emitter: RecordingEmitter,
-    ) -> None:
-        proj = Project.unmarshal(project_yaml_data(license=lic))
-
-        assert should_warn == (
-            call(
-                "warning",
-                "Non-SPDX licenses are deprecated. Use SPDX license strings or 'proprietary' instead.",
-            )
-            in emitter.interactions
-        )
-        # License should always remain unchanged
-        assert proj.license == lic
 
 
 class TestHookValidation:

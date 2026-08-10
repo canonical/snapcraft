@@ -23,7 +23,9 @@ import craft_platforms
 import craft_providers.bases
 from craft_application import ProjectService
 from craft_application.errors import CraftValidationError
+from craft_application.models.constraints import LicenseStr
 from craft_application.util import is_managed_mode
+from pydantic import TypeAdapter, ValidationError
 from typing_extensions import override
 
 from snapcraft.extensions import apply_extensions
@@ -48,8 +50,9 @@ class Project(ProjectService):
 
     __project_file_path: pathlib.Path | None = None
 
-    # Used to only issue a warning once.
+    # Used to only issue key warnings once.
     _ua_service_warning: bool = False
+    _license_spdx_warning: bool = False
 
     @staticmethod
     @override
@@ -65,9 +68,29 @@ class Project(ProjectService):
         extract_parse_info(project)
         apply_root_packages(project)
         Project.validate_ua_services(project)
+        Project.validate_license_spdx(project)
 
     def get_parse_info(self) -> dict[str, list[str]]:
         return extract_parse_info(self.get_raw())
+
+    @classmethod
+    def validate_license_spdx(cls, project: dict[str, Any]) -> None:
+        if cls._license_spdx_warning:
+            return None
+        cls._license_spdx_warning = True
+
+        lic = project.get("license")
+        if lic is None:
+            return None
+
+        try:
+            TypeAdapter(LicenseStr).validate_python(lic)
+        except ValidationError:
+            craft_cli.emit.warning(
+                "Non-SPDX licenses are deprecated. Use SPDX license strings or 'proprietary' instead. For more information, see https://spdx.org/licenses/."
+            )
+
+        return lic
 
     @classmethod
     def validate_ua_services(cls, project: dict[str, Any]) -> None:
