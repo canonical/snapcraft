@@ -17,6 +17,7 @@
 """Tests for the Snapcraft Package service."""
 
 import datetime
+import os
 from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
@@ -437,13 +438,9 @@ def test_write_metadata_with_project_hooks(
     """
     )
 
-    assert (meta_dir / "hooks").exists()
-    # Ensure the hook is the one we provided in the project
-    # and not a wrapped hook.
-    assert (meta_dir / "hooks" / "configure").exists()
-    assert (meta_dir / "hooks" / "configure").read_text() == "configure_hook"
-    assert (meta_dir / "hooks" / "install").exists()
-    assert (meta_dir / "hooks" / "install").read_text() == "install_hook"
+    # Hooks are mediated to snap/hooks by the packaging flow, not copied by
+    # write_metadata.
+    assert not (meta_dir / "hooks").exists()
 
 
 def test_write_metadata_with_built_hooks(
@@ -479,13 +476,11 @@ def test_write_metadata_with_built_hooks(
     """
     )
 
-    assert (meta_dir / "hooks").exists()
-    # Ensure the hook is the one we provided in the project
-    # and not a wrapped hook.
-    assert (meta_dir / "hooks" / "configure").exists()
-    assert (meta_dir / "hooks" / "configure").read_text() == "configure_hook"
-    assert (meta_dir / "hooks" / "install").exists()
-    assert (meta_dir / "hooks" / "install").read_text() == "install_hook"
+    # Built hooks are not hardlinked into meta/hooks by write_metadata; the
+    # mediated packaging flow creates the meta/hooks wrappers.
+    assert not (meta_dir / "hooks").exists()
+    assert (built_hooks_dir / "configure").read_text() == "configure_hook"
+    assert (built_hooks_dir / "install").read_text() == "install_hook"
 
 
 def test_write_metadata_with_project_gui(
@@ -522,13 +517,214 @@ def test_write_metadata_with_project_gui(
     """
     )
 
-    assert (meta_dir / "gui").exists()
-    # Ensure the hook is the one we provided in the project
-    # and not a wrapped hook.
-    assert (meta_dir / "gui" / "default.default.desktop").exists()
-    assert (meta_dir / "gui" / "default.default.desktop").read_text() == "desktop_file"
-    assert (meta_dir / "gui" / "icon.png").exists()
-    assert (meta_dir / "gui" / "icon.png").read_text() == "package_png_icon"
+    # GUI assets are mediated to meta/gui by the packaging flow, not copied by
+    # write_metadata. The directory itself is created unconditionally.
+    assert (meta_dir / "gui").is_dir()
+    assert not (meta_dir / "gui" / "default.default.desktop").exists()
+    assert not (meta_dir / "gui" / "icon.png").exists()
+
+
+def test_gen_extra_assets_with_project_hooks(
+    default_project, fake_services, setup_project
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    project_hooks_dir = package_service._get_assets_dir() / "hooks"
+    project_hooks_dir.mkdir(parents=True)
+    (project_hooks_dir / "configure").write_text("configure_hook")
+    (project_hooks_dir / "install").write_text("install_hook")
+
+    assert sorted(package_service._gen_extra_assets()) == sorted(
+        [
+            (
+                project_hooks_dir / "configure",
+                fake_services.lifecycle.prime_dir / "snap/hooks/configure",
+            ),
+            (
+                project_hooks_dir / "install",
+                fake_services.lifecycle.prime_dir / "snap/hooks/install",
+            ),
+        ]
+    )
+
+
+def test_gen_extra_assets_with_built_hooks(
+    default_project, fake_services, setup_project, tmp_path
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    built_hooks_dir = tmp_path / "prime" / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "configure").write_text("configure_hook")
+    (built_hooks_dir / "install").write_text("install_hook")
+
+    assert package_service._gen_extra_assets() == []
+
+
+def test_gen_extra_assets_project_hooks_override_built_hooks(
+    default_project, fake_services, setup_project, tmp_path
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    project_hooks_dir = package_service._get_assets_dir() / "hooks"
+    project_hooks_dir.mkdir(parents=True)
+    built_hooks_dir = tmp_path / "prime" / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "configure").write_text("built_configure_hook")
+    (project_hooks_dir / "configure").write_text("project_configure_hook")
+
+    assert package_service._gen_extra_assets() == [
+        (
+            project_hooks_dir / "configure",
+            fake_services.lifecycle.prime_dir / "snap/hooks/configure",
+        ),
+    ]
+
+
+def test_gen_extra_assets_with_project_gui(
+    default_project, fake_services, setup_project
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    project_gui_dir = package_service._get_assets_dir() / "gui"
+    project_gui_dir.mkdir(parents=True)
+    (project_gui_dir / "default.default.desktop").write_text("desktop_file")
+    (project_gui_dir / "icon.png").write_text("package_png_icon")
+
+    assert sorted(package_service._gen_extra_assets()) == sorted(
+        [
+            (
+                project_gui_dir / "default.default.desktop",
+                fake_services.lifecycle.prime_dir / "meta/gui/default.default.desktop",
+            ),
+            (
+                project_gui_dir / "icon.png",
+                fake_services.lifecycle.prime_dir / "meta/gui/icon.png",
+            ),
+        ]
+    )
+
+
+def test_write_asset_preserves_hook_executable(
+    default_project, fake_services, setup_project
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    project_hooks_dir = package_service._get_assets_dir() / "hooks"
+    project_hooks_dir.mkdir(parents=True)
+    source = project_hooks_dir / "configure"
+    source.write_text("configure_hook")
+    source.chmod(0o644)
+    destination = fake_services.lifecycle.prime_dir / "snap" / "hooks" / "configure"
+
+    package_service._write_asset(source, destination)
+
+    assert destination.read_text() == "configure_hook"
+    assert oct(destination.stat().st_mode)[-3:] == "755"
+    assert oct(source.stat().st_mode)[-3:] == "644"
+
+
+def test_materialize_extra_assets_project_hooks_override_built_hooks(
+    default_project, fake_services, setup_project
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+
+    built_hooks_dir = prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "configure").write_text("built_configure_hook")
+
+    project_hooks_dir = package_service._get_assets_dir() / "hooks"
+    project_hooks_dir.mkdir(parents=True)
+    source = project_hooks_dir / "configure"
+    source.write_text("project_configure_hook")
+    source.chmod(0o644)
+
+    package_service._materialize_extra_assets(None)
+
+    destination = prime_dir / "snap" / "hooks" / "configure"
+    assert destination.read_text() == "project_configure_hook"
+    assert oct(destination.stat().st_mode)[-3:] == "755"
+
+
+def test_materialize_extra_assets_creates_meta_hook_wrappers(
+    default_project, fake_services, setup_project
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+
+    project_hooks_dir = package_service._get_assets_dir() / "hooks"
+    project_hooks_dir.mkdir(parents=True)
+    source = project_hooks_dir / "configure"
+    source.write_text("configure_hook")
+
+    package_service._materialize_extra_assets(None)
+
+    real_hook = prime_dir / "snap" / "hooks" / "configure"
+    wrapper = prime_dir / "meta" / "hooks" / "configure"
+    assert real_hook.read_text() == "configure_hook"
+    assert wrapper.read_text() == '#!/bin/sh\nexec "$SNAP/snap/hooks/configure" "$@"\n'
+    assert oct(wrapper.stat().st_mode)[-3:] == "755"
+
+
+def test_needs_packing_project_hooks(
+    default_project, fake_services, setup_project, new_dir, mocker
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    # Force the asset checks to be the deciding factor in needs_packing.
+    mocker.patch.dict(package_service._app.__dict__, {"always_repack": False})
+    package_service._project_was_updated = False
+
+    project_hooks_dir = package_service._get_assets_dir() / "hooks"
+    project_hooks_dir.mkdir(parents=True)
+    source = project_hooks_dir / "configure"
+    source.write_text("configure_hook")
+
+    package_service._materialize_package_files(None)
+    package_service._materialize_extra_assets(None)
+    package_service.get_artifacts()[None].touch()
+
+    assert package_service.needs_packing() is False
+
+    # Modifying the project hook makes the primed hook stale.
+    source.write_text("modified_hook")
+    # Bump the source mtime past the primed copy to account for coarse
+    # filesystem timestamp granularity.
+    for src, dest in package_service._gen_extra_assets(None):
+        os.utime(src, (dest.stat().st_mtime + 10, dest.stat().st_mtime + 10))
+    assert package_service.needs_packing() is True
+
+
+def test_needs_packing_project_gui(
+    default_project, fake_services, setup_project, new_dir, mocker
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    # Force the asset checks to be the deciding factor in needs_packing.
+    mocker.patch.dict(package_service._app.__dict__, {"always_repack": False})
+    package_service._project_was_updated = False
+
+    project_gui_dir = package_service._get_assets_dir() / "gui"
+    project_gui_dir.mkdir(parents=True)
+    source = project_gui_dir / "icon.png"
+    source.write_text("icon_data")
+
+    package_service._materialize_package_files(None)
+    package_service._materialize_extra_assets(None)
+    package_service.get_artifacts()[None].touch()
+
+    assert package_service.needs_packing() is False
+
+    # Modifying the project icon makes the primed icon stale.
+    source.write_text("modified_icon_data")
+    # Bump the source mtime past the primed copy to account for coarse
+    # filesystem timestamp granularity.
+    for src, dest in package_service._gen_extra_assets(None):
+        os.utime(src, (dest.stat().st_mtime + 10, dest.stat().st_mtime + 10))
+    assert package_service.needs_packing() is True
 
 
 def test_update_project_parse_info(

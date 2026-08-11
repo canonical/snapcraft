@@ -44,6 +44,7 @@ def setup_assets(
     project_dir: Path,
     prime_dirs: dict[str | None, Path],
     meta_directory_handler: Callable[[Path, Path], None] | None = None,
+    copy_hooks_and_gui: bool = True,
 ) -> None:
     """Copy assets to the appropriate locations in the snap filesystem.
 
@@ -54,22 +55,27 @@ def setup_assets(
         map to the default prime directory.
     :param meta_directory_handler: callback that overrides default behavior for
         handling hooks and gui. The arguments passed are assets_dir and prime_dir.
+    :param copy_hooks_and_gui: Whether to copy hooks and gui assets. When False, the
+        application is expected to handle hooks and gui assets through the mediated
+        packing flow.
     """
     prime_dir = prime_dirs[None]
     meta_dir = prime_dir / "meta"
     gui_dir = meta_dir / "gui"
     gui_dir.mkdir(parents=True, exist_ok=True)
 
-    copy_assets(assets_dir, prime_dir, meta_directory_handler)
+    if copy_hooks_and_gui:
+        copy_assets(assets_dir, prime_dir, meta_directory_handler)
     setup_hooks(project.hooks, prime_dir)
 
     if project.components:
         for component_name, component in project.components.items():
-            copy_assets(
-                assets_dir / "component" / component_name,
-                prime_dirs[component_name],
-                meta_directory_handler,
-            )
+            if copy_hooks_and_gui:
+                copy_assets(
+                    assets_dir / "component" / component_name,
+                    prime_dirs[component_name],
+                    meta_directory_handler,
+                )
             setup_hooks(component.hooks, prime_dirs[component_name])
 
     if _uses_legacy_system_metadata(project):
@@ -130,7 +136,7 @@ def copy_assets(
             assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=prime_dir / "meta"
         )
         # create wrappers for hooks in the snap/hooks directory
-        _create_hook_wrappers(prime_dir)
+        create_hook_wrappers(prime_dir)
 
 
 def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
@@ -294,7 +300,7 @@ def _ensure_hook_executable(hook_path: Path) -> None:
         hook_path.chmod(0o755)
 
 
-def _create_hook_wrappers(prime_dir: Path) -> None:
+def create_hook_wrappers(prime_dir: Path) -> None:
     """Create wrappers for hooks.
 
     Hooks in the snap/hooks/ directory are typically built by parts.
@@ -338,6 +344,8 @@ def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
             f'exec "{Path("$SNAP", "snap", "hooks", hook_name)}" "$@"',
             file=wrapper_file,
         )
+
+    wrapper_path.chmod(0o755)
 
 
 def _copy_file(source: Path, destination: Path, **kwargs) -> None:

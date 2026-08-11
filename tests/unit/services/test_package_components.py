@@ -355,3 +355,111 @@ def test_write_metadata(
         description: lorem ipsum
     """
     )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_gen_extra_assets_for_component_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    (component_assets_dir / "install").write_text("install_hook")
+
+    assert package_service._gen_extra_assets("firstcomponent") == [
+        (
+            component_assets_dir / "install",
+            fake_services.get("lifecycle").get_prime_dir("firstcomponent")
+            / "snap/hooks/install",
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_hooks_override_built_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_install_hook")
+
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    source = component_assets_dir / "install"
+    source.write_text("project_install_hook")
+    source.chmod(0o644)
+
+    package_service._materialize_extra_assets("firstcomponent")
+
+    destination = component_prime_dir / "snap" / "hooks" / "install"
+    assert destination.read_text() == "project_install_hook"
+    assert oct(destination.stat().st_mode)[-3:] == "755"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_creates_meta_hook_wrappers(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    (component_assets_dir / "install").write_text("install_hook")
+
+    package_service._materialize_extra_assets("firstcomponent")
+
+    real_hook = component_prime_dir / "snap" / "hooks" / "install"
+    wrapper = component_prime_dir / "meta" / "hooks" / "install"
+    assert real_hook.read_text() == "install_hook"
+    assert wrapper.read_text() == '#!/bin/sh\nexec "$SNAP/snap/hooks/install" "$@"\n'
+    assert oct(wrapper.stat().st_mode)[-3:] == "755"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_gen_extra_assets_component_hooks_override_built_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    built_hooks_dir = (
+        lifecycle_service.get_prime_dir("firstcomponent") / "snap" / "hooks"
+    )
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_install_hook")
+
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    (component_assets_dir / "install").write_text("project_install_hook")
+
+    assert package_service._gen_extra_assets("firstcomponent") == [
+        (
+            component_assets_dir / "install",
+            lifecycle_service.get_prime_dir("firstcomponent") / "snap/hooks/install",
+        ),
+    ]
