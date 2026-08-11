@@ -372,7 +372,9 @@ class Package(PackageService):
         if partition_name in (None, "default"):
             return self._services.lifecycle.prime_dir
 
-        return cast(Lifecycle, self._services.lifecycle).get_prime_dir(partition_name)
+        return cast(Lifecycle, self._services.lifecycle).get_prime_dir(
+            get_component_name(partition_name)
+        )
 
     @override
     def _gen_extra_assets(
