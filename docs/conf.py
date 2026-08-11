@@ -109,9 +109,9 @@ html_theme_options = {
   "source_edit_link": "https://github.com/canonical/starbase",
 }
 
-# TODO: If your documentation is hosted on https://documentation.ubuntu.com/,
-#       uncomment and set to the RTD slug.
-# slug = ""
+# The project slug passed to the sphinx-notfound-page extension
+# TODO: Set this to the project's RTD slug
+slug = "starbase"
 
 
 #########################
