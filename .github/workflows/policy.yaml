@@ -9,6 +9,9 @@ on:
 
 jobs:
   policy:
+    permissions:
+      contents: read
+      security-events: write
     uses: canonical/starflow/.github/workflows/policy.yaml@main
   python-scans:
     name: Security scan
