@@ -18,7 +18,7 @@ Pack a Pro-compliant snap
     :end-before: .. End overview
 
 Core24 and higher
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 .. include:: ../../common/craft-application/how-to-guides/pack-a-pro-artifact.rst
     :start-after: .. End overview
@@ -50,7 +50,7 @@ attached, run ``pro status`` and check the ``ENTITLED`` column for available
 services. The Ubuntu Pro Client documentation has `detailed information on each service
 <https://documentation.ubuntu.com/pro-client/en/v32/explanations/which_services/>`__.
 
-Add a ``ua-services`` key to your snap, and list the services:
+List the desired services with the ``ua-services`` key in your project file:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
@@ -62,7 +62,8 @@ Add a ``ua-services`` key to your snap, and list the services:
 Pack the snap
 -------------
 
-Now you can pack the snap with the desired services by passing the Pro token:
+Pack your Pro-compliant snap with the ``pack`` command, providing the Pro token with the
+``--ua-token`` option:
 
 .. code-block:: bash
     :substitutions:
@@ -76,8 +77,8 @@ The Pro token can also be provided as an environment variable:
 
     SNAPCRAFT_UA_TOKEN=<token> snapcraft pack --enable-experimental-ua-services
 
-As Pro enablement is an experimental feature, ``--enable-experimental-ua-services`` is
-needed in either case.
+As Pro enablement is an experimental feature, the ``--enable-experimental-ua-services``
+option is needed in either case.
 
 Snapcraft will automatically attach the Pro subscription and enable the requested
 services in the build environment while packing the snap.
