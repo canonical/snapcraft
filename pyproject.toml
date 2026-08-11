@@ -125,7 +125,7 @@ conflicts = [
     ],
 ]
 constraint-dependencies = [
-    "cryptography>=48.0.1",
+    "cryptography>=50.0.0",
     "httplib2>=0.32.0",
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
     # what is available in the noble repositories.
@@ -138,8 +138,6 @@ constraint-dependencies = [
     "starlette>=1.0.1",
 ]
 build-constraint-dependencies = [
-    # needed until we have rustc >= 1.78
-    "maturin<1.10.0 ; python_version < '3.14'",
 ]
 
 [[tool.uv.index]]
@@ -296,6 +294,7 @@ lint.ignore = [
     "S106",    # Allow Possible hardcoded password.
     "S108",    # Allow Probable insecure usage of temporary file or directory
     "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
+    "PLR0917", # Allow many positional arguments for test functions (useful if we need many fixtures)
     "PLR2004", # Allow magic values in tests
     "SLF",     # Allow accessing private members from tests.
 ]
