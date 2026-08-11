@@ -222,6 +222,16 @@ prepare: |
 restore-each: |
   "$TOOLS_DIR"/restore.sh
 
+debug-each: |
+  if command -v lxc >/dev/null 2>&1 && lxc project list --format csv 2>/dev/null | grep -q '^snapcraft,'; then
+    echo "==== LXD containers (project: snapcraft) ===="
+    lxc --project snapcraft list || true
+    for c in $(lxc --project snapcraft list -f csv -c n 2>/dev/null); do
+      echo "---- lxc --project snapcraft info --show-log $c ----"
+      lxc --project snapcraft info --show-log "$c" || true
+    done
+  fi
+
 suites:
   tests/spread/core22/:
     summary: core22 specific tests
