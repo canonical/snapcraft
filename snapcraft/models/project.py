@@ -42,7 +42,12 @@ from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-impor
     Grammar,
 )
 from craft_platforms import DebianArchitecture
-from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
+from pydantic import (
+    ConfigDict,
+    PrivateAttr,
+    StringConstraints,
+    error_wrappers,
+)
 from pydantic.json_schema import (
     SkipJsonSchema,  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
 )
