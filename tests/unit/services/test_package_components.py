@@ -467,6 +467,31 @@ def test_materialize_extra_assets_component_accepts_qualified_partition_name(
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_accepts_qualified_partition_name(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    (component_assets_dir / "install").write_text("install_hook")
+
+    package_service._materialize_extra_assets("component/firstcomponent")
+
+    real_hook = component_prime_dir / "snap" / "hooks" / "install"
+    wrapper = component_prime_dir / "meta" / "hooks" / "install"
+    assert real_hook.read_text() == "install_hook"
+    assert wrapper.read_text() == '#!/bin/sh\nexec "$SNAP/snap/hooks/install" "$@"\n'
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
 def test_gen_extra_assets_component_hooks_override_built_hooks(
     default_project,
     fake_services,
