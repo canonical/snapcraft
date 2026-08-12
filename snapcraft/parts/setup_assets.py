@@ -361,7 +361,9 @@ def provision_hooks(prime_dir: Path, *, overwrite: bool = True) -> None:
         _ensure_hook_executable(destination)
 
 
-def _write_hook_wrapper(hook_name: str, wrapper_path: Path, *, overwrite: bool = True) -> None:
+def _write_hook_wrapper(
+    hook_name: str, wrapper_path: Path, *, overwrite: bool = True
+) -> None:
     """Write hook wrapper file.
 
     The wrapper is a minimal shell script that calls a hook in $SNAP/snap/hooks/
