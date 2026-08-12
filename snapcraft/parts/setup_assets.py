@@ -336,8 +336,7 @@ def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
     :param hook_name: name of the hook
     :param wrapper_path: file path of hook wrapper
     """
-    if wrapper_path.exists():
-        return
+    wrapper_path.unlink(missing_ok=True)
 
     with open(wrapper_path, "w+", encoding="utf-8") as wrapper_file:
         print("#!/bin/sh", file=wrapper_file)

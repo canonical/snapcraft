@@ -390,7 +390,7 @@ class Package(PackageService):
         if project_hooks_dir.is_dir():
             for hook in project_hooks_dir.iterdir():
                 if hook.is_file():
-                    assets.append((hook, prime_dir / "meta" / "hooks" / hook.name))
+                    assets.append((hook, prime_dir / "snap" / "hooks" / hook.name))
 
         if normalized_partition is None:
             gui_project_dir = assets_dir / "gui"

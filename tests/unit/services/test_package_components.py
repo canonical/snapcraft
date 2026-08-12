@@ -375,7 +375,7 @@ def test_gen_extra_assets_for_component_hooks(
         (
             component_assets_dir / "install",
             fake_services.get("lifecycle").get_prime_dir("firstcomponent")
-            / "meta/hooks/install",
+            / "snap/hooks/install",
         ),
     ]
 
@@ -405,11 +405,17 @@ def test_materialize_extra_assets_component_hooks_override_built_hooks(
 
     package_service._materialize_extra_assets("firstcomponent")
 
-    # Built hook remains untouched in snap/hooks
-    assert (component_prime_dir / "snap" / "hooks" / "install").read_text() == "built_install_hook"
-    # Project hook placed in meta/hooks, overriding the built hook
+    # Project hook overrides the built hook in snap/hooks
+    assert (component_prime_dir / "snap" / "hooks" / "install").read_text() == "project_install_hook"
+    assert oct((component_prime_dir / "snap" / "hooks" / "install").stat().st_mode)[-3:] == "755"
+    # Wrapper points to the final hook in snap/hooks
     destination = component_prime_dir / "meta" / "hooks" / "install"
-    assert destination.read_text() == "project_install_hook"
+    assert destination.read_text() == dedent(
+        """\
+        #!/bin/sh
+        exec "$SNAP/snap/hooks/install" "$@"
+    """
+    )
     assert oct(destination.stat().st_mode)[-3:] == "755"
 
 
@@ -438,11 +444,16 @@ def test_materialize_extra_assets_component_creates_meta_hook_wrappers(
 
     package_service._materialize_extra_assets("firstcomponent")
 
-    # Built hook remains in snap/hooks
-    assert (component_prime_dir / "snap" / "hooks" / "install").read_text() == "built_hook"
-    # Project hook placed in meta/hooks, taking priority
+    # Project hook overrides the built hook in snap/hooks
+    assert (component_prime_dir / "snap" / "hooks" / "install").read_text() == "install_hook"
+    # Wrapper points to the final hook in snap/hooks
     wrapper = component_prime_dir / "meta" / "hooks" / "install"
-    assert wrapper.read_text() == "install_hook"
+    assert wrapper.read_text() == dedent(
+        """\
+        #!/bin/sh
+        exec "$SNAP/snap/hooks/install" "$@"
+    """
+    )
     assert oct(wrapper.stat().st_mode)[-3:] == "755"
 
 
@@ -471,11 +482,16 @@ def test_materialize_extra_assets_component_accepts_qualified_partition_name(
 
     package_service._materialize_extra_assets("component/firstcomponent")
 
-    # Built hook remains in snap/hooks
-    assert (component_prime_dir / "snap" / "hooks" / "install").read_text() == "built_hook"
-    # Project hook placed in meta/hooks, taking priority
+    # Project hook overrides the built hook in snap/hooks
+    assert (component_prime_dir / "snap" / "hooks" / "install").read_text() == "install_hook"
+    # Wrapper points to the final hook in snap/hooks
     wrapper = component_prime_dir / "meta" / "hooks" / "install"
-    assert wrapper.read_text() == "install_hook"
+    assert wrapper.read_text() == dedent(
+        """\
+        #!/bin/sh
+        exec "$SNAP/snap/hooks/install" "$@"
+    """
+    )
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
@@ -502,6 +518,6 @@ def test_gen_extra_assets_component_hooks_override_built_hooks(
     assert package_service._gen_extra_assets("firstcomponent") == [
         (
             component_assets_dir / "install",
-            lifecycle_service.get_prime_dir("firstcomponent") / "meta/hooks/install",
+            lifecycle_service.get_prime_dir("firstcomponent") / "snap/hooks/install",
         ),
     ]
