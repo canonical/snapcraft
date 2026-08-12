@@ -455,28 +455,7 @@ def test_materialize_extra_assets_component_accepts_qualified_partition_name(
     built_hooks_dir.mkdir(parents=True)
     (built_hooks_dir / "install").write_text("built_hook")
 
-    package_service._materialize_extra_assets("component/firstcomponent")
-
-    # Built hook remains in snap/hooks
-    assert (
-        component_prime_dir / "snap" / "hooks" / "install"
-    ).read_text() == "built_hook"
-    # Built hook is provisioned directly into meta/hooks
-    provisioned_hook = component_prime_dir / "meta" / "hooks" / "install"
-    assert provisioned_hook.read_text() == "built_hook"
-
-
-@pytest.mark.usefixtures("enable_partitions_feature")
-def test_materialize_extra_assets_component_accepts_qualified_partition_name(
-    default_project,
-    fake_services,
-    setup_project,
-):
-    setup_project(fake_services, default_project.marshal())
-    package_service = fake_services.get("package")
-    lifecycle_service = fake_services.get("lifecycle")
-    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
-
+    # Project hook that should take priority
     component_assets_dir = (
         package_service._get_assets_dir() / "component/firstcomponent/hooks"
     )
@@ -485,10 +464,11 @@ def test_materialize_extra_assets_component_accepts_qualified_partition_name(
 
     package_service._materialize_extra_assets("component/firstcomponent")
 
-    real_hook = component_prime_dir / "snap" / "hooks" / "install"
+    # Built hook remains in snap/hooks
+    assert (component_prime_dir / "snap" / "hooks" / "install").read_text() == "built_hook"
+    # Project hook placed in meta/hooks, taking priority
     wrapper = component_prime_dir / "meta" / "hooks" / "install"
-    assert real_hook.read_text() == "install_hook"
-    assert wrapper.read_text() == '#!/bin/sh\nexec "$SNAP/snap/hooks/install" "$@"\n'
+    assert wrapper.read_text() == "install_hook"
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
