@@ -538,11 +538,11 @@ def test_gen_extra_assets_with_project_hooks(
         [
             (
                 project_hooks_dir / "configure",
-                fake_services.lifecycle.prime_dir / "snap/hooks/configure",
+                fake_services.lifecycle.prime_dir / "meta/hooks/configure",
             ),
             (
                 project_hooks_dir / "install",
-                fake_services.lifecycle.prime_dir / "snap/hooks/install",
+                fake_services.lifecycle.prime_dir / "meta/hooks/install",
             ),
         ]
     )
@@ -576,7 +576,7 @@ def test_gen_extra_assets_project_hooks_override_built_hooks(
     assert package_service._gen_extra_assets() == [
         (
             project_hooks_dir / "configure",
-            fake_services.lifecycle.prime_dir / "snap/hooks/configure",
+            fake_services.lifecycle.prime_dir / "meta/hooks/configure",
         ),
     ]
 
@@ -643,9 +643,14 @@ def test_materialize_extra_assets_project_hooks_override_built_hooks(
 
     package_service._materialize_extra_assets(None)
 
-    destination = prime_dir / "snap" / "hooks" / "configure"
+    # Built hook remains untouched in snap/hooks
+    assert (prime_dir / "snap" / "hooks" / "configure").read_text() == "built_configure_hook"
+    # Project hook placed in meta/hooks, overriding the built hook
+    destination = prime_dir / "meta" / "hooks" / "configure"
     assert destination.read_text() == "project_configure_hook"
     assert oct(destination.stat().st_mode)[-3:] == "755"
+    # No wrapper created since project hook exists
+    assert not destination.read_text().startswith("#!/bin/sh")
 
 
 def test_materialize_extra_assets_creates_meta_hook_wrappers(
@@ -655,6 +660,12 @@ def test_materialize_extra_assets_creates_meta_hook_wrappers(
     package_service = cast(Package, fake_services.get("package"))
     prime_dir = fake_services.lifecycle.prime_dir
 
+    # Code-generated hook from part lifecycle
+    built_hooks_dir = prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "configure").write_text("built_hook")
+
+    # Project hook that should take priority
     project_hooks_dir = package_service._get_assets_dir() / "hooks"
     project_hooks_dir.mkdir(parents=True)
     source = project_hooks_dir / "configure"
@@ -662,10 +673,11 @@ def test_materialize_extra_assets_creates_meta_hook_wrappers(
 
     package_service._materialize_extra_assets(None)
 
-    real_hook = prime_dir / "snap" / "hooks" / "configure"
+    # Built hook remains in snap/hooks
+    assert (prime_dir / "snap" / "hooks" / "configure").read_text() == "built_hook"
+    # Project hook placed in meta/hooks, taking priority
     wrapper = prime_dir / "meta" / "hooks" / "configure"
-    assert real_hook.read_text() == "configure_hook"
-    assert wrapper.read_text() == '#!/bin/sh\nexec "$SNAP/snap/hooks/configure" "$@"\n'
+    assert wrapper.read_text() == "configure_hook"
     assert oct(wrapper.stat().st_mode)[-3:] == "755"
 
 
