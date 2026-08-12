@@ -470,8 +470,8 @@ def test_write_metadata_with_built_hooks(
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
     """)
 
-    # Built hooks are not hardlinked into meta/hooks by write_metadata; the
-    # mediated packaging flow creates the meta/hooks wrappers.
+    # Built hooks are not copied into meta/hooks by write_metadata; the
+    # mediated packaging flow provisions meta/hooks during asset materialization.
     assert not (meta_dir / "hooks").exists()
     assert (built_hooks_dir / "configure").read_text() == "configure_hook"
     assert (built_hooks_dir / "install").read_text() == "install_hook"
@@ -639,13 +639,13 @@ def test_materialize_extra_assets_project_hooks_override_built_hooks(
     assert (
         prime_dir / "snap" / "hooks" / "configure"
     ).read_text() == "built_configure_hook"
-    # Project hook in meta/hooks overrides the built hook wrapper
+    # Project hook in meta/hooks overrides the built hook provision
     destination = prime_dir / "meta" / "hooks" / "configure"
     assert destination.read_text() == "project_configure_hook"
     assert oct(destination.stat().st_mode)[-3:] == "755"
 
 
-def test_materialize_extra_assets_creates_meta_hook_wrappers(
+def test_materialize_extra_assets_provisions_meta_hooks(
     default_project, fake_services, setup_project
 ):
     setup_project(fake_services, default_project.marshal(), write_project=True)
@@ -657,20 +657,14 @@ def test_materialize_extra_assets_creates_meta_hook_wrappers(
     built_hooks_dir.mkdir(parents=True)
     (built_hooks_dir / "configure").write_text("built_hook")
 
-    # Project hook that should take priority
-    project_hooks_dir = package_service._get_assets_dir() / "hooks"
-    project_hooks_dir.mkdir(parents=True)
-    source = project_hooks_dir / "configure"
-    source.write_text("configure_hook")
-
     package_service._materialize_extra_assets(None)
 
     # Built hook remains in snap/hooks
     assert (prime_dir / "snap" / "hooks" / "configure").read_text() == "built_hook"
-    # Project hook placed in meta/hooks, taking priority
-    wrapper = prime_dir / "meta" / "hooks" / "configure"
-    assert wrapper.read_text() == "configure_hook"
-    assert oct(wrapper.stat().st_mode)[-3:] == "755"
+    # Built hook is provisioned directly into meta/hooks
+    provisioned_hook = prime_dir / "meta" / "hooks" / "configure"
+    assert provisioned_hook.read_text() == "built_hook"
+    assert oct(provisioned_hook.stat().st_mode)[-3:] == "755"
 
 
 def test_needs_packing_project_hooks(

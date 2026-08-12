@@ -329,6 +329,38 @@ def create_hook_wrappers(prime_dir: Path, *, overwrite: bool = True) -> None:
         _write_hook_wrapper(hook.name, hooks_meta_dir / hook.name, overwrite=overwrite)
 
 
+def provision_hooks(prime_dir: Path, *, overwrite: bool = True) -> None:
+    """Provision built hooks directly into meta/hooks.
+
+    Hooks in snap/hooks/ are copied into meta/hooks/ so the primed tree contains
+    directly runnable hook payloads. Existing meta/hooks entries can be preserved
+    to let project hooks override generated ones. This matches the previous hook
+    installation strategy for core24.
+
+    :param prime_dir: The directory containing the content to be snapped.
+    :param overwrite: Whether to replace an existing hook in meta/hooks.
+    """
+    hooks_snap_dir = Path(prime_dir, "snap", "hooks")
+    hooks_in_snap_dir = hooks_snap_dir.iterdir() if hooks_snap_dir.is_dir() else []
+
+    if not hooks_in_snap_dir:
+        return
+
+    hooks_meta_dir = Path(prime_dir, "meta", "hooks")
+    hooks_meta_dir.mkdir(parents=True, exist_ok=True)
+
+    for hook in hooks_in_snap_dir:
+        _ensure_hook_executable(hook)
+
+        destination = hooks_meta_dir / hook.name
+        if destination.exists() and not overwrite:
+            continue
+
+        destination.unlink(missing_ok=True)
+        _copy_file(hook, destination, follow_symlinks=True)
+        _ensure_hook_executable(destination)
+
+
 def _write_hook_wrapper(hook_name: str, wrapper_path: Path, *, overwrite: bool = True) -> None:
     """Write hook wrapper file.
 

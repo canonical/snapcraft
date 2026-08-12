@@ -36,7 +36,7 @@ from snapcraft.meta import component_yaml, snap_yaml
 from snapcraft.models import ContentPlug
 from snapcraft.parts import extract_metadata as extract
 from snapcraft.parts import update_metadata as update
-from snapcraft.parts.setup_assets import create_hook_wrappers, setup_assets
+from snapcraft.parts.setup_assets import provision_hooks, setup_assets
 from snapcraft.services import Lifecycle
 from snapcraft.utils import get_component_name, process_version
 
@@ -538,9 +538,9 @@ class Package(PackageService):
 
     @override
     def _materialize_extra_assets(self, partition_name: str | None = None) -> None:
-        """Materialize mediated hook and GUI assets, including hook wrappers."""
+        """Materialize mediated hook and GUI assets, including hook provisioning."""
         super()._materialize_extra_assets(partition_name)
-        create_hook_wrappers(self._prime_dir_for(partition_name), overwrite=False)
+        provision_hooks(self._prime_dir_for(partition_name), overwrite=False)
 
     def _write_system_metadata(self, path: pathlib.Path) -> None:
         """Materialize mediated gadget/kernel metadata files for core24+ snaps."""
