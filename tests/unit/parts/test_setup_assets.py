@@ -25,11 +25,11 @@ import pytest
 from snapcraft import errors, models
 from snapcraft.parts import setup_assets as parts_setup_assets
 from snapcraft.parts.setup_assets import (
-    create_hook_wrappers,
     _ensure_hook,
     _ensure_hook_executable,
     _validate_command_chain,
     _write_hook_wrapper,
+    create_hook_wrappers,
     setup_assets,
 )
 
