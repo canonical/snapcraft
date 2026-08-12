@@ -530,11 +530,11 @@ def test_gen_extra_assets_with_project_hooks(
         [
             (
                 project_hooks_dir / "configure",
-                fake_services.lifecycle.prime_dir / "snap/hooks/configure",
+                fake_services.lifecycle.prime_dir / "meta/hooks/configure",
             ),
             (
                 project_hooks_dir / "install",
-                fake_services.lifecycle.prime_dir / "snap/hooks/install",
+                fake_services.lifecycle.prime_dir / "meta/hooks/install",
             ),
         ]
     )
@@ -568,7 +568,7 @@ def test_gen_extra_assets_project_hooks_override_built_hooks(
     assert package_service._gen_extra_assets() == [
         (
             project_hooks_dir / "configure",
-            fake_services.lifecycle.prime_dir / "snap/hooks/configure",
+            fake_services.lifecycle.prime_dir / "meta/hooks/configure",
         ),
     ]
 
@@ -635,19 +635,13 @@ def test_materialize_extra_assets_project_hooks_override_built_hooks(
 
     package_service._materialize_extra_assets(None)
 
-    # Project hook overrides the built hook in snap/hooks
+    # Built hook remains untouched in snap/hooks
     assert (
         prime_dir / "snap" / "hooks" / "configure"
-    ).read_text() == "project_configure_hook"
-    assert (
-        oct((prime_dir / "snap" / "hooks" / "configure").stat().st_mode)[-3:] == "755"
-    )
-    # Wrapper points to the final hook in snap/hooks
+    ).read_text() == "built_configure_hook"
+    # Project hook in meta/hooks overrides the built hook wrapper
     destination = prime_dir / "meta" / "hooks" / "configure"
-    assert destination.read_text() == dedent("""\
-        #!/bin/sh
-        exec "$SNAP/snap/hooks/configure" "$@"
-    """)
+    assert destination.read_text() == "project_configure_hook"
     assert oct(destination.stat().st_mode)[-3:] == "755"
 
 
@@ -671,14 +665,11 @@ def test_materialize_extra_assets_creates_meta_hook_wrappers(
 
     package_service._materialize_extra_assets(None)
 
-    # Project hook overrides the built hook in snap/hooks
-    assert (prime_dir / "snap" / "hooks" / "configure").read_text() == "configure_hook"
-    # Wrapper points to the final hook in snap/hooks
+    # Built hook remains in snap/hooks
+    assert (prime_dir / "snap" / "hooks" / "configure").read_text() == "built_hook"
+    # Project hook placed in meta/hooks, taking priority
     wrapper = prime_dir / "meta" / "hooks" / "configure"
-    assert wrapper.read_text() == dedent("""\
-        #!/bin/sh
-        exec "$SNAP/snap/hooks/configure" "$@"
-    """)
+    assert wrapper.read_text() == "configure_hook"
     assert oct(wrapper.stat().st_mode)[-3:] == "755"
 
 

@@ -300,7 +300,7 @@ def _ensure_hook_executable(hook_path: Path) -> None:
         hook_path.chmod(0o755)
 
 
-def create_hook_wrappers(prime_dir: Path) -> None:
+def create_hook_wrappers(prime_dir: Path, *, overwrite: bool = True) -> None:
     """Create wrappers for hooks.
 
     Hooks in the snap/hooks/ directory are typically built by parts.
@@ -309,6 +309,7 @@ def create_hook_wrappers(prime_dir: Path) -> None:
     execute the hook in $SNAP/snap/hooks/.
 
     :param prime_dir: The directory containing the content to be snapped.
+    :param overwrite: Whether wrappers should replace existing meta/hooks entries.
     """
     # collect hooks in snap/hooks directory
     hooks_snap_dir = Path(prime_dir, "snap", "hooks")
@@ -325,18 +326,22 @@ def create_hook_wrappers(prime_dir: Path) -> None:
     # create a wrapper for each hook
     for hook in hooks_in_snap_dir:
         _ensure_hook_executable(hook)
-        _write_hook_wrapper(hook.name, hooks_meta_dir / hook.name)
+        _write_hook_wrapper(hook.name, hooks_meta_dir / hook.name, overwrite=overwrite)
 
 
-def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
+def _write_hook_wrapper(hook_name: str, wrapper_path: Path, *, overwrite: bool = True) -> None:
     """Write hook wrapper file.
 
     The wrapper is a minimal shell script that calls a hook in $SNAP/snap/hooks/
 
     :param hook_name: name of the hook
     :param wrapper_path: file path of hook wrapper
+    :param overwrite: Whether to replace an existing hook at wrapper_path.
     """
-    wrapper_path.unlink(missing_ok=True)
+    if wrapper_path.exists():
+        if not overwrite:
+            return
+        wrapper_path.unlink()
 
     with open(wrapper_path, "w+", encoding="utf-8") as wrapper_file:
         print("#!/bin/sh", file=wrapper_file)

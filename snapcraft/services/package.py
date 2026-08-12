@@ -390,7 +390,7 @@ class Package(PackageService):
         if project_hooks_dir.is_dir():
             for hook in project_hooks_dir.iterdir():
                 if hook.is_file():
-                    assets.append((hook, prime_dir / "snap" / "hooks" / hook.name))
+                    assets.append((hook, prime_dir / "meta" / "hooks" / hook.name))
 
         if normalized_partition is None:
             gui_project_dir = assets_dir / "gui"
@@ -540,7 +540,7 @@ class Package(PackageService):
     def _materialize_extra_assets(self, partition_name: str | None = None) -> None:
         """Materialize mediated hook and GUI assets, including hook wrappers."""
         super()._materialize_extra_assets(partition_name)
-        create_hook_wrappers(self._prime_dir_for(partition_name))
+        create_hook_wrappers(self._prime_dir_for(partition_name), overwrite=False)
 
     def _write_system_metadata(self, path: pathlib.Path) -> None:
         """Materialize mediated gadget/kernel metadata files for core24+ snaps."""
