@@ -692,6 +692,7 @@ def test_needs_packing_project_hooks(
     # Bump the source mtime past the primed copy to account for coarse
     # filesystem timestamp granularity.
     for src, dest in package_service._gen_extra_assets(None):
+        assert isinstance(src, Path)
         os.utime(src, (dest.stat().st_mtime + 10, dest.stat().st_mtime + 10))
     assert package_service.needs_packing() is True
 
@@ -721,6 +722,7 @@ def test_needs_packing_project_gui(
     # Bump the source mtime past the primed copy to account for coarse
     # filesystem timestamp granularity.
     for src, dest in package_service._gen_extra_assets(None):
+        assert isinstance(src, Path)
         os.utime(src, (dest.stat().st_mtime + 10, dest.stat().st_mtime + 10))
     assert package_service.needs_packing() is True
 
