@@ -124,8 +124,7 @@ def test_write_metadata(default_project, fake_services, setup_project, new_dir):
 
     package_service.write_metadata(prime_dir)
 
-    assert (meta_dir / "snap.yaml").read_text() == dedent(
-        """\
+    assert (meta_dir / "snap.yaml").read_text() == dedent("""\
         name: default
         version: '1.0'
         summary: default project
@@ -139,8 +138,7 @@ def test_write_metadata(default_project, fake_services, setup_project, new_dir):
         environment:
           LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
-    """
-    )
+    """)
 
     assert not (prime_dir / "snap" / "manifest.yaml").exists()
 
@@ -420,8 +418,7 @@ def test_write_metadata_with_project_hooks(
 
     package_service.write_metadata(prime_dir)
 
-    assert (meta_dir / "snap.yaml").read_text() == dedent(
-        """\
+    assert (meta_dir / "snap.yaml").read_text() == dedent("""\
         name: default
         version: '1.0'
         summary: default project
@@ -435,8 +432,7 @@ def test_write_metadata_with_project_hooks(
         environment:
           LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
-    """
-    )
+    """)
 
     # Hooks are mediated to snap/hooks by the packaging flow, not copied by
     # write_metadata.
@@ -458,8 +454,7 @@ def test_write_metadata_with_built_hooks(
     package_service.write_metadata(prime_dir)
 
     meta_dir = prime_dir / "meta"
-    assert (meta_dir / "snap.yaml").read_text() == dedent(
-        """\
+    assert (meta_dir / "snap.yaml").read_text() == dedent("""\
         name: default
         version: '1.0'
         summary: default project
@@ -473,8 +468,7 @@ def test_write_metadata_with_built_hooks(
         environment:
           LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
-    """
-    )
+    """)
 
     # Built hooks are not hardlinked into meta/hooks by write_metadata; the
     # mediated packaging flow creates the meta/hooks wrappers.
@@ -499,8 +493,7 @@ def test_write_metadata_with_project_gui(
 
     package_service.write_metadata(prime_dir)
 
-    assert (meta_dir / "snap.yaml").read_text() == dedent(
-        """\
+    assert (meta_dir / "snap.yaml").read_text() == dedent("""\
         name: default
         version: '1.0'
         summary: default project
@@ -514,8 +507,7 @@ def test_write_metadata_with_project_gui(
         environment:
           LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
-    """
-    )
+    """)
 
     # GUI assets are mediated to meta/gui by the packaging flow, not copied by
     # write_metadata. The directory itself is created unconditionally.
@@ -644,16 +636,18 @@ def test_materialize_extra_assets_project_hooks_override_built_hooks(
     package_service._materialize_extra_assets(None)
 
     # Project hook overrides the built hook in snap/hooks
-    assert (prime_dir / "snap" / "hooks" / "configure").read_text() == "project_configure_hook"
-    assert oct((prime_dir / "snap" / "hooks" / "configure").stat().st_mode)[-3:] == "755"
+    assert (
+        prime_dir / "snap" / "hooks" / "configure"
+    ).read_text() == "project_configure_hook"
+    assert (
+        oct((prime_dir / "snap" / "hooks" / "configure").stat().st_mode)[-3:] == "755"
+    )
     # Wrapper points to the final hook in snap/hooks
     destination = prime_dir / "meta" / "hooks" / "configure"
-    assert destination.read_text() == dedent(
-        """\
+    assert destination.read_text() == dedent("""\
         #!/bin/sh
         exec "$SNAP/snap/hooks/configure" "$@"
-    """
-    )
+    """)
     assert oct(destination.stat().st_mode)[-3:] == "755"
 
 
@@ -681,12 +675,10 @@ def test_materialize_extra_assets_creates_meta_hook_wrappers(
     assert (prime_dir / "snap" / "hooks" / "configure").read_text() == "configure_hook"
     # Wrapper points to the final hook in snap/hooks
     wrapper = prime_dir / "meta" / "hooks" / "configure"
-    assert wrapper.read_text() == dedent(
-        """\
+    assert wrapper.read_text() == dedent("""\
         #!/bin/sh
         exec "$SNAP/snap/hooks/configure" "$@"
-    """
-    )
+    """)
     assert oct(wrapper.stat().st_mode)[-3:] == "755"
 
 
