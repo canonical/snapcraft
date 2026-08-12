@@ -799,8 +799,6 @@ def test_materialize_extra_assets_project_hooks_override_built_hooks(
     destination = prime_dir / "meta" / "hooks" / "configure"
     assert destination.read_text() == "project_configure_hook"
     assert oct(destination.stat().st_mode)[-3:] == "755"
-    # No wrapper created since project hook exists
-    assert not destination.read_text().startswith("#!/bin/sh")
 
 
 def test_materialize_extra_assets_provisions_meta_hooks(
