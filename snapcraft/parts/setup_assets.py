@@ -469,8 +469,7 @@ def provision_hooks(prime_dir: Path, *, overwrite: bool = True) -> None:
 
     Hooks in snap/hooks/ are copied into meta/hooks/ so the primed tree contains
     directly runnable hook payloads. Existing meta/hooks entries can be preserved
-    to let project hooks override generated ones. This matches the previous hook
-    installation strategy for core24.
+    to let project hooks override generated ones.
 
     :param prime_dir: The directory containing the content to be snapped.
     :param overwrite: Whether to replace an existing hook in meta/hooks.
