@@ -19,6 +19,7 @@
 import argparse
 import os
 import textwrap
+from pathlib import Path
 from typing import Any, Literal, cast
 
 import craft_application.errors
@@ -97,6 +98,12 @@ class RemoteBuildCommand(RemoteBuild):
         :raises RemoteBuildError: If an unsupported architecture is specified, or multiple
         artifacts will be created for the same build-on.
         """
+        # Change the process's working directory early so all underlying
+        # services naturally find snapcraft.yaml in the provided --project-dir path.
+        if getattr(parsed_args, "project_dir", None):
+            project_path = Path(parsed_args.project_dir).resolve()
+            os.chdir(project_path)
+
         for build_for in cast(list[str], parsed_args.remote_build_build_fors) or []:
             if build_for not in [*SUPPORTED_ARCHS, "all"]:
                 raise craft_application.errors.RemoteBuildError(
@@ -145,6 +152,7 @@ class RemoteBuildCommand(RemoteBuild):
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
         project = self._services.get("project").get_raw()
+
         if parsed_args.remote_build_build_fors:
             build_fors: list[DebianArchitecture | Literal["all"]] | None = [
                 "all" if arch == "all" else craft_platforms.DebianArchitecture(arch)
