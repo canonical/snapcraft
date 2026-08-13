@@ -127,6 +127,22 @@ def test_write_component_yaml_complex(stub_project_data, new_dir):
     )
 
 
+def test_get_component_yaml_str(stub_project_data):
+    """Render component.yaml contents as a string."""
+    project = models.Project.unmarshal(stub_project_data)
+
+    assert component_yaml.get_str(project, "component-a") == textwrap.dedent(
+        """\
+        component: mytest+component-a
+        type: test
+        version: '1.0'
+        summary: test summary
+        description: test description
+        provenance: test-provenance
+        """
+    )
+
+
 def test_write_component_no_components(stub_project_data, new_dir):
     """Raise an error if no components are defined."""
     stub_project_data.pop("components")
