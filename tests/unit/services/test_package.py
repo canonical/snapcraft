@@ -34,6 +34,7 @@ from snapcraft import __version__, linters, meta, models, pack
 from snapcraft.errors import SnapcraftError, SnapcraftPrecreationEscapesPrimeError
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
+from snapcraft.parts.setup_assets import get_mediated_icon_asset
 from snapcraft.services import Package
 
 
@@ -150,6 +151,27 @@ def test_get_snap_yaml(default_project, fake_services, setup_project):
     assert package_service._get_snap_yaml() == util.dump_yaml(
         package_service.metadata.marshal()
     )
+
+
+def test_get_manifest_yaml_disabled(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = cast(Package, fake_services.get("package"))
+
+    assert package_service._get_manifest_yaml() is False
+
+
+def test_get_manifest_yaml_enabled(
+    monkeypatch, default_project, fake_services, setup_project
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal())
+    package_service = cast(Package, fake_services.get("package"))
+
+    manifest_dict = yaml.safe_load(package_service._get_manifest_yaml())
+    manifest = models.Manifest.model_validate(manifest_dict)
+
+    assert manifest.snapcraft_version == __version__
+    assert manifest.name == package_service.metadata.name
 
 
 def test_get_gadget_yaml(fake_services, setup_project):
@@ -595,6 +617,140 @@ def test_gen_extra_assets_with_project_gui(
             ),
         ]
     )
+
+
+def test_materialize_extra_assets_generated_desktop_and_icon(
+    default_project, fake_services, setup_project, tmp_path
+):
+    project = {
+        **default_project.marshal(),
+        "apps": {"app1": {"command": "bin/app1", "desktop": "test.desktop"}},
+        "icon": "usr/share/icons/my-icon.svg",
+    }
+    setup_project(fake_services, project, write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+
+    (prime_dir / "usr/share/icons").mkdir(parents=True)
+    (prime_dir / "usr/share/icons/my-icon.svg").write_text("icon-data")
+    (prime_dir / "test.desktop").write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=appstream-desktop
+            Exec=appstream
+            Type=Application
+            Icon=/usr/share/icons/my-icon.svg
+            """
+        )
+    )
+
+    package_service._mediated_icon_asset = get_mediated_icon_asset(
+        package_service._project,
+        assets_dir=package_service._get_assets_dir(),
+        prime_dir=prime_dir,
+    )
+    package_service._materialize_extra_assets(None)
+
+    assert (prime_dir / "meta/gui/icon.svg").read_text() == "icon-data"
+    assert (prime_dir / "meta/gui/app1.desktop").read_text() == dedent(
+        """\
+        [Desktop Entry]
+        Name=appstream-desktop
+        Exec=default.app1
+        Type=Application
+        Icon=${SNAP}/meta/gui/icon.svg
+
+        """
+    )
+
+
+def test_needs_packing_generated_desktop(
+    default_project, fake_services, setup_project, mocker
+):
+    project = {
+        **default_project.marshal(),
+        "apps": {"app1": {"command": "bin/app1", "desktop": "test.desktop"}},
+    }
+    setup_project(fake_services, project, write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    mocker.patch.dict(package_service._app.__dict__, {"always_repack": False})
+    package_service._project_was_updated = False
+
+    project_gui_dir = package_service._get_assets_dir() / "gui"
+    project_gui_dir.mkdir(parents=True)
+    (project_gui_dir / "icon.svg").write_text("icon-data")
+    source = prime_dir / "test.desktop"
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=appstream-desktop
+            Exec=appstream
+            Type=Application
+            Icon=icon.svg
+            """
+        )
+    )
+
+    package_service._materialize_package_files(None)
+    package_service._materialize_extra_assets(None)
+    package_service.get_artifacts()[None].touch()
+
+    assert package_service.needs_packing() is False
+
+    source.write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=appstream-desktop
+            Exec=appstream --new
+            Type=Application
+            Icon=icon.svg
+            """
+        )
+    )
+    materialized = prime_dir / "meta/gui/app1.desktop"
+    os.utime(source, (materialized.stat().st_mtime + 10, materialized.stat().st_mtime + 10))
+
+    assert package_service.needs_packing() is True
+
+
+def test_needs_packing_generated_icon(
+    default_project, fake_services, setup_project, mocker
+):
+    project = {
+        **default_project.marshal(),
+        "icon": "usr/share/icons/my-icon.svg",
+    }
+    setup_project(fake_services, project, write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    mocker.patch.dict(package_service._app.__dict__, {"always_repack": False})
+    package_service._project_was_updated = False
+
+    source = prime_dir / "usr/share/icons/my-icon.svg"
+    source.parent.mkdir(parents=True)
+    source.write_text("icon-data")
+
+    package_service._mediated_icon_asset = get_mediated_icon_asset(
+        package_service._project,
+        assets_dir=package_service._get_assets_dir(),
+        prime_dir=prime_dir,
+    )
+    package_service._materialize_package_files(None)
+    package_service._materialize_extra_assets(None)
+    package_service.get_artifacts()[None].touch()
+
+    assert package_service.needs_packing() is False
+
+    source.write_text("modified-icon-data")
+    destination = prime_dir / "meta/gui/icon.svg"
+    os.utime(source, (destination.stat().st_mtime + 10, destination.stat().st_mtime + 10))
+
+    assert package_service.needs_packing() is True
 
 
 def test_write_asset_preserves_hook_executable(

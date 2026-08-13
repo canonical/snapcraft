@@ -22,6 +22,7 @@ import shutil
 import stat
 import urllib.parse
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 
 import requests
@@ -30,6 +31,15 @@ from craft_cli import emit
 from snapcraft import const, errors, models
 
 from .desktop_file import DesktopFile
+
+
+@dataclass(frozen=True)
+class MediatedIconAsset:
+    """A resolved icon for mediated packaging."""
+
+    source: Path | bytes | None
+    destination: Path
+    icon_path: str
 
 
 def _uses_legacy_system_metadata(project: models.Project) -> bool:
@@ -89,6 +99,9 @@ def setup_assets(
             if kernel_yaml.exists():
                 _copy_file(kernel_yaml, meta_dir / "kernel.yaml")
 
+    if not copy_hooks_and_gui:
+        return
+
     icon_path = _finalize_icon(
         project.icon, assets_dir=assets_dir, gui_dir=gui_dir, prime_dir=prime_dir
     )
@@ -115,6 +128,82 @@ def setup_assets(
                     prime_dir=prime_dir,
                 )
                 desktop_file.write(gui_dir=gui_dir, icon_path=relative_icon_path)
+
+
+def get_mediated_icon_asset(
+    project: models.Project, *, assets_dir: Path, prime_dir: Path
+) -> MediatedIconAsset | None:
+    """Resolve the mediated icon for the project, fetching remote icons once.
+
+    The result is intended to be cached at prime time and reused for every
+    pack-time ``needs_packing``/materialization call so remote icons are not
+    re-fetched and network failures do not surface during repack checks.
+    """
+    return _get_mediated_icon_asset(
+        project.icon, assets_dir=assets_dir, prime_dir=prime_dir
+    )
+
+
+def get_mediated_gui_assets(
+    project: models.Project,
+    *,
+    assets_dir: Path,
+    prime_dir: Path,
+    icon: MediatedIconAsset | None,
+) -> list[tuple[str | bytes | Path, Path]]:
+    """Generate mediated desktop and icon assets for core24+ packaging.
+
+    ``icon`` must be the cached result of :func:`get_mediated_icon_asset`.
+    Desktop files are re-rendered on each call so that edits to their sources
+    are always reflected in pack-time change detection.
+    """
+    assets: list[tuple[str | bytes | Path, Path]] = []
+    relative_icon_path = icon.icon_path if icon is not None else None
+
+    if icon is not None and icon.source is not None:
+        assets.append((icon.source, prime_dir / icon.destination))
+
+    if not project.apps:
+        return assets
+
+    for app_name, app in project.apps.items():
+        if app.desktop:
+            desktop_filename = app.desktop
+            desktop_source = prime_dir / desktop_filename
+            if not desktop_source.is_file():
+                desktop_source = assets_dir / desktop_filename
+
+            desktop_file = DesktopFile(
+                snap_name=project.name,
+                app_name=app_name,
+                filename=str(desktop_source.relative_to(prime_dir))
+                if desktop_source.is_relative_to(prime_dir)
+                else os.fspath(desktop_source),
+                prime_dir=prime_dir,
+            )
+            assets.append(
+                (
+                    desktop_file.render(icon_path=relative_icon_path),
+                    prime_dir / "meta" / "gui" / f"{app_name}.desktop",
+                )
+            )
+
+    return assets
+
+
+def validate_command_chains(project: models.Project, *, prime_dir: Path) -> None:
+    """Validate app command chains before packing.
+
+    Called once at metadata-write time so errors surface before the pack-time
+    ``needs_packing`` check, which must remain free of side effects.
+    """
+    if not project.apps:
+        return
+
+    for app_name, app in project.apps.items():
+        _validate_command_chain(
+            app.command_chain, name=f"app {app_name!r}", prime_dir=prime_dir
+        )
 
 
 def copy_assets(
@@ -214,6 +303,58 @@ def _finalize_icon(
     return target_icon_path
 
 
+def _get_mediated_icon_asset(
+    icon: str | None, *, assets_dir: Path, prime_dir: Path
+) -> MediatedIconAsset | None:
+    destination: Path | None = None
+
+    if icon is None:
+        icon_path = _find_icon_file(assets_dir)
+        if icon_path is None:
+            return None
+
+        destination = Path("meta", "gui", icon_path.name)
+        return MediatedIconAsset(
+            source=None, destination=destination, icon_path=destination.as_posix()
+        )
+
+    parsed_url = urllib.parse.urlparse(icon)
+    parsed_path = Path(parsed_url.path)
+    icon_ext = parsed_path.suffix[1:]
+    destination = Path("meta", "gui", f"icon.{icon_ext}")
+
+    if parsed_url.scheme in ["http", "https"]:
+        emit.progress(f"Fetching icon from {icon!r}")
+        return MediatedIconAsset(
+            source=requests.get(icon, timeout=120).content,
+            destination=destination,
+            icon_path=destination.as_posix(),
+        )
+
+    if parsed_url.scheme == "":
+        source_path = Path(
+            prime_dir,
+            parsed_path.relative_to("/") if parsed_path.is_absolute() else parsed_path,
+        )
+        if source_path.exists():
+            return MediatedIconAsset(
+                source=source_path,
+                destination=destination,
+                icon_path=destination.as_posix(),
+            )
+
+        if parsed_path.exists():
+            return MediatedIconAsset(
+                source=parsed_path,
+                destination=destination,
+                icon_path=destination.as_posix(),
+            )
+
+        return _get_mediated_icon_asset(None, assets_dir=assets_dir, prime_dir=prime_dir)
+
+    raise RuntimeError(f"Unexpected icon path: {parsed_url!r}")
+
+
 def _find_icon_file(assets_dir: Path) -> Path | None:
     for icon_path in (assets_dir / "gui/icon.png", assets_dir / "gui/icon.svg"):
         if icon_path.is_file():
@@ -311,17 +452,11 @@ def create_hook_wrappers(prime_dir: Path, *, overwrite: bool = True) -> None:
     :param prime_dir: The directory containing the content to be snapped.
     :param overwrite: Whether wrappers should replace existing meta/hooks entries.
     """
-    # collect hooks in snap/hooks directory
-    hooks_snap_dir = Path(prime_dir, "snap", "hooks")
-    hooks_in_snap_dir = hooks_snap_dir.iterdir() if hooks_snap_dir.is_dir() else []
-
-    # return if there are no hooks to process
+    hooks_in_snap_dir = _get_built_hooks(prime_dir)
     if not hooks_in_snap_dir:
         return
 
-    # create directory to hold hook wrappers
-    hooks_meta_dir = Path(prime_dir, "meta", "hooks")
-    hooks_meta_dir.mkdir(parents=True, exist_ok=True)
+    hooks_meta_dir = _ensure_meta_hooks_dir(prime_dir)
 
     # create a wrapper for each hook
     for hook in hooks_in_snap_dir:
@@ -340,14 +475,11 @@ def provision_hooks(prime_dir: Path, *, overwrite: bool = True) -> None:
     :param prime_dir: The directory containing the content to be snapped.
     :param overwrite: Whether to replace an existing hook in meta/hooks.
     """
-    hooks_snap_dir = Path(prime_dir, "snap", "hooks")
-    hooks_in_snap_dir = hooks_snap_dir.iterdir() if hooks_snap_dir.is_dir() else []
-
+    hooks_in_snap_dir = _get_built_hooks(prime_dir)
     if not hooks_in_snap_dir:
         return
 
-    hooks_meta_dir = Path(prime_dir, "meta", "hooks")
-    hooks_meta_dir.mkdir(parents=True, exist_ok=True)
+    hooks_meta_dir = _ensure_meta_hooks_dir(prime_dir)
 
     for hook in hooks_in_snap_dir:
         _ensure_hook_executable(hook)
@@ -359,6 +491,22 @@ def provision_hooks(prime_dir: Path, *, overwrite: bool = True) -> None:
         destination.unlink(missing_ok=True)
         _copy_file(hook, destination, follow_symlinks=True)
         _ensure_hook_executable(destination)
+
+
+def _get_built_hooks(prime_dir: Path) -> list[Path]:
+    """Return hooks built into ``snap/hooks`` for the given prime directory."""
+    hooks_snap_dir = Path(prime_dir, "snap", "hooks")
+    if not hooks_snap_dir.is_dir():
+        return []
+
+    return [hook for hook in hooks_snap_dir.iterdir() if hook.is_file()]
+
+
+def _ensure_meta_hooks_dir(prime_dir: Path) -> Path:
+    """Ensure ``meta/hooks`` exists and return its path."""
+    hooks_meta_dir = Path(prime_dir, "meta", "hooks")
+    hooks_meta_dir.mkdir(parents=True, exist_ok=True)
+    return hooks_meta_dir
 
 
 def _write_hook_wrapper(
