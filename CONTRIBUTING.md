@@ -126,7 +126,7 @@ and effort by checking for prior work.
 
 <If your project has a forum, link it here. If not, remove this paragraph.>
 
-For changes that require coordination with the the broader community, create a post on
+For changes that require coordination with the broader community, create a post on
 the [Starbase forum](https://forum.example.com), the hub for users and developers.
 
 Once you've found or created an issue you'd like to take on, propose your solution in
