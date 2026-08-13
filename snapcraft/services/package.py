@@ -36,9 +36,9 @@ from snapcraft.meta import component_yaml, snap_yaml
 from snapcraft.models import ContentPlug
 from snapcraft.parts import extract_metadata as extract
 from snapcraft.parts import update_metadata as update
-from snapcraft.parts.setup_assets import setup_assets
+from snapcraft.parts.setup_assets import provision_hooks, setup_assets
 from snapcraft.services import Lifecycle
-from snapcraft.utils import process_version
+from snapcraft.utils import get_component_name, process_version
 
 
 class Package(PackageService):
@@ -60,12 +60,9 @@ class Package(PackageService):
     @package_file("meta/component.yaml", partition_re=r"(?!default$)[a-z0-9][a-z0-9-]*")
     def _get_component_yaml(self, partition: str | None = None) -> str:
         """Generate mediated component metadata files."""
-        if partition is None:
+        component_name = get_component_name(partition)
+        if component_name is None:
             raise ValueError("Component metadata requires a component partition.")
-
-        # Accept both the bare component name used by get_artifacts() and
-        # the fully qualified partition form for direct callers.
-        component_name = partition.removeprefix("component/")
         return component_yaml.get_str(self._project, component_name)
 
     @package_file("meta/gadget.yaml", partition_re="default")
@@ -357,6 +354,14 @@ class Package(PackageService):
             return None
         return self._package_output_dir
 
+    def _get_partition_assets_dir(self, component_name: str | None) -> pathlib.Path:
+        """Return the project assets directory for a mediated artifact."""
+        assets_dir = self._get_assets_dir()
+        if component_name is None:
+            return assets_dir
+
+        return assets_dir / "component" / component_name
+
     @override
     def _prime_dir_for(self, partition_name: str | None) -> pathlib.Path:
         """Return the prime directory for the requested artifact.
@@ -367,7 +372,35 @@ class Package(PackageService):
         if partition_name in (None, "default"):
             return self._services.lifecycle.prime_dir
 
-        return cast(Lifecycle, self._services.lifecycle).get_prime_dir(partition_name)
+        return cast(Lifecycle, self._services.lifecycle).get_prime_dir(
+            get_component_name(partition_name)
+        )
+
+    @override
+    def _gen_extra_assets(
+        self, partition_name: str | None = None
+    ) -> list[tuple[str | bytes | None | pathlib.Path, pathlib.Path]]:
+        """Generate mediated hook and GUI assets for the requested artifact."""
+        normalized_partition = get_component_name(partition_name)
+        prime_dir = self._prime_dir_for(normalized_partition)
+        assets_dir = self._get_partition_assets_dir(normalized_partition)
+
+        assets: list[tuple[str | bytes | None | pathlib.Path, pathlib.Path]] = []
+        project_hooks_dir = assets_dir / "hooks"
+        if project_hooks_dir.is_dir():
+            for hook in project_hooks_dir.iterdir():
+                if hook.is_file():
+                    assets.append((hook, prime_dir / "meta" / "hooks" / hook.name))
+
+        if normalized_partition is None:
+            gui_project_dir = assets_dir / "gui"
+            gui_meta_dir = prime_dir / "meta" / "gui"
+            if gui_project_dir.is_dir():
+                for gui_asset in gui_project_dir.iterdir():
+                    if gui_asset.is_file():
+                        assets.append((gui_asset, gui_meta_dir / gui_asset.name))
+
+        return assets
 
     def _pack_snap(
         self, prime_dir: pathlib.Path, output_path: pathlib.Path
@@ -486,6 +519,29 @@ class Package(PackageService):
 
         return None
 
+    @override
+    def _write_asset(
+        self, source: str | bytes | None | pathlib.Path, destination: pathlib.Path
+    ) -> None:
+        """Write a mediated asset while preserving hook executability."""
+        if isinstance(source, pathlib.Path):
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(source, destination)
+        else:
+            super()._write_asset(source, destination)
+
+        if destination.parent.name == "hooks" and destination.parent.parent.name in {
+            "meta",
+            "snap",
+        }:
+            destination.chmod(0o755)
+
+    @override
+    def _materialize_extra_assets(self, partition_name: str | None = None) -> None:
+        """Materialize mediated hook and GUI assets, including hook provisioning."""
+        super()._materialize_extra_assets(partition_name)
+        provision_hooks(self._prime_dir_for(partition_name), overwrite=False)
+
     def _write_system_metadata(self, path: pathlib.Path) -> None:
         """Materialize mediated gadget/kernel metadata files for core24+ snaps."""
         meta_dir = path / "meta"
@@ -531,7 +587,7 @@ class Package(PackageService):
             assets_dir=assets_dir,
             project_dir=self._services.lifecycle.project_info.project_dir,
             prime_dirs=lifecycle_service.prime_dirs,
-            meta_directory_handler=meta_directory_handler,
+            copy_hooks_and_gui=False,
         )
         self._write_system_metadata(path)
 
@@ -550,64 +606,3 @@ class Package(PackageService):
             self._services.lifecycle.prime_dir,
             arch=self._build_for,
         )
-
-
-def _hardlink_or_copy(source: pathlib.Path, destination: pathlib.Path) -> bool:
-    """Try to hardlink and fallback to copy if it fails.
-
-    :param source: the source path.
-    :param destination: the destination path.
-    :returns: True if a hardlink was done or False for copy.
-    """
-    # Unlink the destination to avoid link failures
-    destination.unlink(missing_ok=True)
-
-    try:
-        destination.hardlink_to(source)
-    except OSError as os_error:
-        # Cross device link
-        if os_error.errno != 18:
-            raise
-        shutil.copy(source, destination)
-        return False
-
-    return True
-
-
-def meta_directory_handler(assets_dir: pathlib.Path, path: pathlib.Path):
-    """Handle hooks and gui assets from Snapcraft.
-
-    :param assets_dir: directory with project assets.
-    :param path: directory to write assets to.
-    """
-    meta_dir = path / "meta"
-    built_snap_hooks = path / "snap" / "hooks"
-    hooks_project_dir = assets_dir / "hooks"
-
-    hooks_meta_dir = meta_dir / "hooks"
-
-    if built_snap_hooks.is_dir():
-        hooks_meta_dir.mkdir(parents=True, exist_ok=True)
-        for hook in built_snap_hooks.iterdir():
-            meta_dir_hook = hooks_meta_dir / hook.name
-            # Remove to always refresh to the latest
-            meta_dir_hook.unlink(missing_ok=True)
-            meta_dir_hook.hardlink_to(hook)
-
-    # Overwrite any built hooks with project level ones
-    if hooks_project_dir.is_dir():
-        hooks_meta_dir.mkdir(parents=True, exist_ok=True)
-        for hook in hooks_project_dir.iterdir():
-            meta_dir_hook = hooks_meta_dir / hook.name
-
-            _hardlink_or_copy(hook, meta_dir_hook)
-
-    # Write any gui assets
-    gui_project_dir = assets_dir / "gui"
-    gui_meta_dir = meta_dir / "gui"
-    if gui_project_dir.is_dir():
-        gui_meta_dir.mkdir(parents=True, exist_ok=True)
-        for gui in gui_project_dir.iterdir():
-            meta_dir_gui = gui_meta_dir / gui.name
-
-            _hardlink_or_copy(gui, meta_dir_gui)
