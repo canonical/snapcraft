@@ -413,6 +413,10 @@ class Package(PackageService):
                     assets.append((hook, prime_dir / "meta" / "hooks" / hook.name))
 
         if normalized_partition is None:
+            if strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")):
+                project_file = self._services.get("project").resolve_project_file_path()
+                assets.append((project_file, prime_dir / "snap" / project_file.name))
+
             gui_project_dir = assets_dir / "gui"
             gui_meta_dir = prime_dir / "meta" / "gui"
             if gui_project_dir.is_dir():
@@ -585,10 +589,6 @@ class Package(PackageService):
                 continue
 
             self._write_asset(content, path / package_file.relative_path)
-
-        if strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")):
-            project_file = self._services.get("project").resolve_project_file_path()
-            shutil.copy(project_file, path / "snap")
 
         assets_dir = self._get_assets_dir()
         setup_assets(

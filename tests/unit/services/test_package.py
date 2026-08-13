@@ -342,6 +342,7 @@ def test_write_metadata_with_manifest(
     assert manifest.name == snap_yaml["name"]
     assert manifest.grade == snap_yaml["grade"]
     assert manifest.architectures == snap_yaml["architectures"]
+    assert not (prime_dir / "snap" / "snapcraft.yaml").exists()
 
 
 def test_write_metadata_writes_gadget_yaml(fake_services, setup_project, tmp_path):
@@ -593,6 +594,19 @@ def test_gen_extra_assets_project_hooks_override_built_hooks(
             fake_services.lifecycle.prime_dir / "meta/hooks/configure",
         ),
     ]
+
+
+def test_gen_extra_assets_with_manifest_project_file(
+    monkeypatch, default_project, fake_services, setup_project
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+
+    assert (
+        package_service._services.get("project").resolve_project_file_path(),
+        fake_services.lifecycle.prime_dir / "snap" / "snapcraft.yaml",
+    ) in package_service._gen_extra_assets()
 
 
 def test_gen_extra_assets_with_project_gui(
@@ -850,6 +864,30 @@ def test_needs_packing_project_hooks(
     for src, dest in package_service._gen_extra_assets(None):
         assert isinstance(src, Path)
         os.utime(src, (dest.stat().st_mtime + 10, dest.stat().st_mtime + 10))
+    assert package_service.needs_packing() is True
+
+
+def test_needs_packing_manifest_project_file(
+    monkeypatch, default_project, fake_services, setup_project, mocker
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    mocker.patch.dict(package_service._app.__dict__, {"always_repack": False})
+    package_service._project_was_updated = False
+
+    package_service._materialize_package_files(None)
+    package_service._materialize_extra_assets(None)
+    package_service.get_artifacts()[None].touch()
+
+    assert package_service.needs_packing() is False
+
+    source = package_service._services.get("project").resolve_project_file_path()
+    destination = prime_dir / "snap" / source.name
+    source.write_text(source.read_text() + "\n# changed\n", encoding="utf-8")
+    os.utime(source, (destination.stat().st_mtime + 10, destination.stat().st_mtime + 10))
+
     assert package_service.needs_packing() is True
 
 
