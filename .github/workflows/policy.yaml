@@ -12,10 +12,12 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: canonical/starflow/.github/workflows/policy.yaml@main
+    uses: canonical/starflow/.github/workflows/policy.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
   python-scans:
     name: Security scan
-    uses: canonical/starflow/.github/workflows/scan-python.yaml@main
+    permissions:
+      contents: read
+    uses: canonical/starflow/.github/workflows/scan-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
     with:
       osv-extra-args: "--config=osv-scanner.toml"
       osv-exclude-paths: |

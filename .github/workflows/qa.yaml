@@ -19,9 +19,10 @@ jobs:
       source-files: ${{ steps.filter.outputs.source-files }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         id: filter
         with:
@@ -31,12 +32,12 @@ jobs:
             source-files:
               - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
   lint:
-    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
     needs: filter
     with:
       source-files: ${{ needs.filter.outputs.source-files }}
   test:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
     needs: filter
     with:
       source-files: ${{ needs.filter.outputs.source-files }}

@@ -8,8 +8,11 @@ on:
 
 jobs:
   TICS:
-    uses: canonical/starflow/.github/workflows/tics.yaml@main
+    permissions:
+      contents: read
+    uses: canonical/starflow/.github/workflows/tics.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
     # Uncomment this and add your project's name on Tiobe TICS
     # with:
     #   project: "starcraft"
-    secrets: inherit
+    secrets:
+      TICSAUTHTOKEN: ${{ secrets.TICSAUTHTOKEN }}
