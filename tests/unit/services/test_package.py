@@ -167,7 +167,9 @@ def test_get_manifest_yaml_enabled(
     setup_project(fake_services, default_project.marshal())
     package_service = cast(Package, fake_services.get("package"))
 
-    manifest_dict = yaml.safe_load(package_service._get_manifest_yaml())
+    manifest_yaml = package_service._get_manifest_yaml()
+    assert isinstance(manifest_yaml, str)
+    manifest_dict = yaml.safe_load(manifest_yaml)
     manifest = models.Manifest.model_validate(manifest_dict)
 
     assert manifest.snapcraft_version == __version__
