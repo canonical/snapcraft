@@ -767,6 +767,43 @@ def test_needs_packing_generated_icon(
     assert package_service.needs_packing() is True
 
 
+def test_needs_packing_generated_remote_icon_uses_cached_bytes(
+    default_project, fake_services, setup_project, mocker
+):
+    project = {
+        **default_project.marshal(),
+        "icon": "https://example.com/my-icon.svg",
+    }
+    setup_project(fake_services, project, write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    mocker.patch.dict(package_service._app.__dict__, {"always_repack": False})
+    package_service._project_was_updated = False
+
+    response = mocker.Mock()
+    response.content = b"icon-data"
+    requests_get = mocker.patch(
+        "snapcraft.parts.setup_assets.requests.get", return_value=response
+    )
+
+    package_service._mediated_icon_asset = get_mediated_icon_asset(
+        package_service._project,
+        assets_dir=package_service._get_assets_dir(),
+        prime_dir=prime_dir,
+    )
+    package_service._materialize_package_files(None)
+    package_service._materialize_extra_assets(None)
+    package_service.get_artifacts()[None].touch()
+
+    assert (prime_dir / "meta/gui/icon.svg").read_bytes() == b"icon-data"
+    requests_get.assert_called_once_with("https://example.com/my-icon.svg", timeout=120)
+    response.raise_for_status.assert_called_once_with()
+
+    assert package_service.needs_packing() is False
+    requests_get.assert_called_once_with("https://example.com/my-icon.svg", timeout=120)
+    response.raise_for_status.assert_called_once_with()
+
+
 def test_write_asset_preserves_hook_executable(
     default_project, fake_services, setup_project
 ):
