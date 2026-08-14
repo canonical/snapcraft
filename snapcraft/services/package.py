@@ -582,13 +582,13 @@ class Package(PackageService):
         :param path: The path to the prime directory.
         """
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)
-        for package_file in self._package_files(None):
-            generator = getattr(self, package_file.method_name)
+        for package in self._package_files(None):
+            generator = getattr(self, package.method_name)
             content = generator(None)
             if content is False:
                 continue
 
-            self._write_asset(content, path / package_file.relative_path)
+            self._write_asset(content, path / package.relative_path)
 
         assets_dir = self._get_assets_dir()
         setup_assets(
