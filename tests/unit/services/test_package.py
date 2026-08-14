@@ -725,7 +725,9 @@ def test_needs_packing_generated_desktop(
         )
     )
     materialized = prime_dir / "meta/gui/app1.desktop"
-    os.utime(source, (materialized.stat().st_mtime + 10, materialized.stat().st_mtime + 10))
+    os.utime(
+        source, (materialized.stat().st_mtime + 10, materialized.stat().st_mtime + 10)
+    )
 
     assert package_service.needs_packing() is True
 
@@ -921,7 +923,9 @@ def test_needs_packing_manifest_project_file(
     source = package_service._services.get("project").resolve_project_file_path()
     destination = prime_dir / "snap" / source.name
     source.write_text(source.read_text() + "\n# changed\n", encoding="utf-8")
-    os.utime(source, (destination.stat().st_mtime + 10, destination.stat().st_mtime + 10))
+    os.utime(
+        source, (destination.stat().st_mtime + 10, destination.stat().st_mtime + 10)
+    )
 
     assert package_service.needs_packing() is True
 

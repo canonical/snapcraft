@@ -352,7 +352,9 @@ def _get_mediated_icon_asset(
                 icon_path=destination.as_posix(),
             )
 
-        return _get_mediated_icon_asset(None, assets_dir=assets_dir, prime_dir=prime_dir)
+        return _get_mediated_icon_asset(
+            None, assets_dir=assets_dir, prime_dir=prime_dir
+        )
 
     raise RuntimeError(f"Unexpected icon path: {parsed_url!r}")
 

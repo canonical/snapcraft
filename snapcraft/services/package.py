@@ -603,9 +603,7 @@ class Package(PackageService):
             assets_dir=assets_dir,
             prime_dir=lifecycle_service.prime_dir,
         )
-        validate_command_chains(
-            self._project, prime_dir=lifecycle_service.prime_dir
-        )
+        validate_command_chains(self._project, prime_dir=lifecycle_service.prime_dir)
 
         # These assets are mediated, but we create them here so they
         # will be part of primed tree contents.
