@@ -130,9 +130,16 @@ setup_ppa() {
   chroot_run "mkdir -p --mode 700 /root/.gnupg"
   chroot_run "mkdir -p            ${gpg_file%/*}"
   chroot_run "echo keyserver hkp://keyserver.ubuntu.com > ${dirmngr_conf}"
+
+  keyserver_options=""
+  if [ -n "${http_proxy:-}" ]; then
+    keyserver_options="--keyserver-options http-proxy=${http_proxy}"
+  fi
+
   chroot_run "gpg --homedir /root/.gnupg         \
                   --no-default-keyring           \
                   --keyring \"${snappy_key}\"    \
+                  ${keyserver_options}           \
                   --recv-keys \"${fingerprint}\""
 
   chroot_run "gpg --homedir /root/.gnupg         \

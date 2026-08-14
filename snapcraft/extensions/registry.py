@@ -23,6 +23,7 @@ from snapcraft import errors
 from .dotnet8 import Dotnet8Extension
 from .dotnet9 import Dotnet9Extension
 from .dotnet10 import Dotnet10Extension
+from .dotnet11 import Dotnet11Extension
 from .env_injector import EnvInjector
 from .gnome import GNOME
 from .gpu_extension import GPUExtension
@@ -51,6 +52,7 @@ _EXTENSIONS: dict[str, "ExtensionType"] = {
     "dotnet8": Dotnet8Extension,
     "dotnet9": Dotnet9Extension,
     "dotnet10": Dotnet10Extension,
+    "dotnet11": Dotnet11Extension,
     "env-injector": EnvInjector,
     "gnome": GNOME,
     "gpu": GPUExtension,

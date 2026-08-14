@@ -36,6 +36,7 @@ def test_command(emitter, fake_app_config):
         Extension name         Supported bases
         ---------------------  ----------------------
         dotnet10               core24
+        dotnet11               core24
         dotnet8                core24
         dotnet9                core24
         env-injector           core24

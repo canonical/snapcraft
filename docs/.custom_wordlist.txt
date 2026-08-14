@@ -50,6 +50,7 @@ dvipng
 drwxr-xr-x
 drwxrwxrwx
 emacs
+enablement
 FIGlet
 Filesets?
 filetrees?

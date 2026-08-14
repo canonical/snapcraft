@@ -815,6 +815,26 @@ def test_project_environment_ld_library_path_null(simple_project, new_dir):
     )
 
 
+def test_project_environment_all_null_does_not_mutate_project(simple_project, new_dir):
+    environment = {"LD_LIBRARY_PATH": None, "PATH": None}
+    project = simple_project(environment=environment)
+
+    first_metadata = snap_yaml.get_metadata_from_project(
+        project,
+        Path(new_dir),
+        arch="amd64",
+    )
+    second_metadata = snap_yaml.get_metadata_from_project(
+        project,
+        Path(new_dir),
+        arch="amd64",
+    )
+
+    assert first_metadata.environment is None
+    assert second_metadata.environment is None
+    assert project.environment == environment
+
+
 @pytest.mark.parametrize(
     "ld_library_path",
     [{}, {"LD_LIBRARY_PATH": None}, {"LD_LIBRARY_PATH": "test-ld-library-path"}],

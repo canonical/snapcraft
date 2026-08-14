@@ -32,6 +32,11 @@ from snapcraft import const, errors, models
 from .desktop_file import DesktopFile
 
 
+def _uses_legacy_system_metadata(project: models.Project) -> bool:
+    """Return whether gadget/kernel metadata should follow the core22 path."""
+    return project.get_effective_base() == "core22"
+
+
 def setup_assets(
     project: models.Project,
     *,
@@ -39,6 +44,7 @@ def setup_assets(
     project_dir: Path,
     prime_dirs: dict[str | None, Path],
     meta_directory_handler: Callable[[Path, Path], None] | None = None,
+    copy_hooks_and_gui: bool = True,
 ) -> None:
     """Copy assets to the appropriate locations in the snap filesystem.
 
@@ -49,34 +55,39 @@ def setup_assets(
         map to the default prime directory.
     :param meta_directory_handler: callback that overrides default behavior for
         handling hooks and gui. The arguments passed are assets_dir and prime_dir.
+    :param copy_hooks_and_gui: Whether to copy hooks and gui assets. When False, the
+        application is expected to handle hooks and gui assets through the mediated
+        packing flow.
     """
     prime_dir = prime_dirs[None]
     meta_dir = prime_dir / "meta"
     gui_dir = meta_dir / "gui"
     gui_dir.mkdir(parents=True, exist_ok=True)
 
-    copy_assets(assets_dir, prime_dir, meta_directory_handler)
+    if copy_hooks_and_gui:
+        copy_assets(assets_dir, prime_dir, meta_directory_handler)
     setup_hooks(project.hooks, prime_dir)
 
     if project.components:
         for component_name, component in project.components.items():
-            copy_assets(
-                assets_dir / "component" / component_name,
-                prime_dirs[component_name],
-                meta_directory_handler,
-            )
+            if copy_hooks_and_gui:
+                copy_assets(
+                    assets_dir / "component" / component_name,
+                    prime_dirs[component_name],
+                    meta_directory_handler,
+                )
             setup_hooks(component.hooks, prime_dirs[component_name])
 
-    if project.type == const.ProjectType.GADGET:
-        gadget_yaml = project_dir / "gadget.yaml"
-        if not gadget_yaml.exists():
-            raise errors.SnapcraftError("gadget.yaml is required for gadget snaps")
-        _copy_file(gadget_yaml, meta_dir / "gadget.yaml")
-
-    if project.type == const.ProjectType.KERNEL:
-        kernel_yaml = project_dir / "kernel.yaml"
-        if kernel_yaml.exists():
-            _copy_file(kernel_yaml, meta_dir / "kernel.yaml")
+    if _uses_legacy_system_metadata(project):
+        if project.type == const.ProjectType.GADGET:
+            gadget_yaml = project_dir / "gadget.yaml"
+            if not gadget_yaml.exists():
+                raise errors.SnapcraftError("gadget.yaml is required for gadget snaps")
+            _copy_file(gadget_yaml, meta_dir / "gadget.yaml")
+        elif project.type == const.ProjectType.KERNEL:
+            kernel_yaml = project_dir / "kernel.yaml"
+            if kernel_yaml.exists():
+                _copy_file(kernel_yaml, meta_dir / "kernel.yaml")
 
     icon_path = _finalize_icon(
         project.icon, assets_dir=assets_dir, gui_dir=gui_dir, prime_dir=prime_dir
@@ -125,7 +136,7 @@ def copy_assets(
             assets_dir=assets_dir, prime_dir=prime_dir, meta_dir=prime_dir / "meta"
         )
         # create wrappers for hooks in the snap/hooks directory
-        _create_hook_wrappers(prime_dir)
+        create_hook_wrappers(prime_dir)
 
 
 def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
@@ -289,7 +300,7 @@ def _ensure_hook_executable(hook_path: Path) -> None:
         hook_path.chmod(0o755)
 
 
-def _create_hook_wrappers(prime_dir: Path) -> None:
+def create_hook_wrappers(prime_dir: Path, *, overwrite: bool = True) -> None:
     """Create wrappers for hooks.
 
     Hooks in the snap/hooks/ directory are typically built by parts.
@@ -298,6 +309,7 @@ def _create_hook_wrappers(prime_dir: Path) -> None:
     execute the hook in $SNAP/snap/hooks/.
 
     :param prime_dir: The directory containing the content to be snapped.
+    :param overwrite: Whether wrappers should replace existing meta/hooks entries.
     """
     # collect hooks in snap/hooks directory
     hooks_snap_dir = Path(prime_dir, "snap", "hooks")
@@ -314,18 +326,56 @@ def _create_hook_wrappers(prime_dir: Path) -> None:
     # create a wrapper for each hook
     for hook in hooks_in_snap_dir:
         _ensure_hook_executable(hook)
-        _write_hook_wrapper(hook.name, hooks_meta_dir / hook.name)
+        _write_hook_wrapper(hook.name, hooks_meta_dir / hook.name, overwrite=overwrite)
 
 
-def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
+def provision_hooks(prime_dir: Path, *, overwrite: bool = True) -> None:
+    """Provision built hooks directly into meta/hooks.
+
+    Hooks in snap/hooks/ are copied into meta/hooks/ so the primed tree contains
+    directly runnable hook payloads. Existing meta/hooks entries can be preserved
+    to let project hooks override generated ones. This matches the previous hook
+    installation strategy for core24.
+
+    :param prime_dir: The directory containing the content to be snapped.
+    :param overwrite: Whether to replace an existing hook in meta/hooks.
+    """
+    hooks_snap_dir = Path(prime_dir, "snap", "hooks")
+    hooks_in_snap_dir = hooks_snap_dir.iterdir() if hooks_snap_dir.is_dir() else []
+
+    if not hooks_in_snap_dir:
+        return
+
+    hooks_meta_dir = Path(prime_dir, "meta", "hooks")
+    hooks_meta_dir.mkdir(parents=True, exist_ok=True)
+
+    for hook in hooks_in_snap_dir:
+        _ensure_hook_executable(hook)
+
+        destination = hooks_meta_dir / hook.name
+        if destination.exists() and not overwrite:
+            continue
+
+        destination.unlink(missing_ok=True)
+        _copy_file(hook, destination, follow_symlinks=True)
+        _ensure_hook_executable(destination)
+
+
+def _write_hook_wrapper(
+    hook_name: str, wrapper_path: Path, *, overwrite: bool = True
+) -> None:
     """Write hook wrapper file.
 
     The wrapper is a minimal shell script that calls a hook in $SNAP/snap/hooks/
 
     :param hook_name: name of the hook
     :param wrapper_path: file path of hook wrapper
+    :param overwrite: Whether to replace an existing hook at wrapper_path.
     """
-    wrapper_path.unlink(missing_ok=True)
+    if wrapper_path.exists():
+        if not overwrite:
+            return
+        wrapper_path.unlink()
 
     with open(wrapper_path, "w+", encoding="utf-8") as wrapper_file:
         print("#!/bin/sh", file=wrapper_file)
@@ -333,6 +383,8 @@ def _write_hook_wrapper(hook_name: str, wrapper_path: Path) -> None:
             f'exec "{Path("$SNAP", "snap", "hooks", hook_name)}" "$@"',
             file=wrapper_file,
         )
+
+    wrapper_path.chmod(0o755)
 
 
 def _copy_file(source: Path, destination: Path, **kwargs) -> None:
