@@ -607,8 +607,13 @@ class Package(PackageService):
             self._project, prime_dir=lifecycle_service.prime_dir
         )
 
+        # These assets are mediated, but we create them here so they
+        # will be part of primed tree contents.
+        self._materialize_extra_assets(None)
+
         for component in self._project.get_component_names():
             self._materialize_package_files(component)
+            self._materialize_extra_assets(component)
 
     @property
     def metadata(self) -> snap_yaml.SnapMetadata:

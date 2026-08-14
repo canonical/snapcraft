@@ -342,7 +342,7 @@ def test_write_metadata_with_manifest(
     assert manifest.name == snap_yaml["name"]
     assert manifest.grade == snap_yaml["grade"]
     assert manifest.architectures == snap_yaml["architectures"]
-    assert not (prime_dir / "snap" / "snapcraft.yaml").exists()
+    assert (prime_dir / "snap" / "snapcraft.yaml").exists()
 
 
 def test_write_metadata_writes_gadget_yaml(fake_services, setup_project, tmp_path):
@@ -457,9 +457,8 @@ def test_write_metadata_with_project_hooks(
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
     """)
 
-    # Hooks are mediated to snap/hooks by the packaging flow, not copied by
-    # write_metadata.
-    assert not (meta_dir / "hooks").exists()
+    assert (meta_dir / "hooks" / "configure").read_text() == "configure_hook"
+    assert (meta_dir / "hooks" / "install").read_text() == "install_hook"
 
 
 def test_write_metadata_with_built_hooks(
@@ -493,9 +492,8 @@ def test_write_metadata_with_built_hooks(
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
     """)
 
-    # Built hooks are not copied into meta/hooks by write_metadata; the
-    # mediated packaging flow provisions meta/hooks during asset materialization.
-    assert not (meta_dir / "hooks").exists()
+    assert (meta_dir / "hooks" / "configure").read_text() == "configure_hook"
+    assert (meta_dir / "hooks" / "install").read_text() == "install_hook"
     assert (built_hooks_dir / "configure").read_text() == "configure_hook"
     assert (built_hooks_dir / "install").read_text() == "install_hook"
 
@@ -532,11 +530,11 @@ def test_write_metadata_with_project_gui(
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
     """)
 
-    # GUI assets are mediated to meta/gui by the packaging flow, not copied by
-    # write_metadata. The directory itself is created unconditionally.
+    # GUI assets are still created during prime so the primed tree preserves
+    # the pre-ST160 behavior.
     assert (meta_dir / "gui").is_dir()
-    assert not (meta_dir / "gui" / "default.default.desktop").exists()
-    assert not (meta_dir / "gui" / "icon.png").exists()
+    assert (meta_dir / "gui" / "default.default.desktop").read_text() == "desktop_file"
+    assert (meta_dir / "gui" / "icon.png").read_text() == "package_png_icon"
 
 
 def test_gen_extra_assets_with_project_hooks(
