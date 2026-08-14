@@ -762,7 +762,9 @@ def test_needs_packing_generated_icon(
 
     source.write_text("modified-icon-data")
     destination = prime_dir / "meta/gui/icon.svg"
-    os.utime(source, (destination.stat().st_mtime + 10, destination.stat().st_mtime + 10))
+    os.utime(
+        source, (destination.stat().st_mtime + 10, destination.stat().st_mtime + 10)
+    )
 
     assert package_service.needs_packing() is True
 
