@@ -325,8 +325,10 @@ def _get_mediated_icon_asset(
 
     if parsed_url.scheme in ["http", "https"]:
         emit.progress(f"Fetching icon from {icon!r}")
+        response = requests.get(icon, timeout=120)
+        response.raise_for_status()
         return MediatedIconAsset(
-            source=requests.get(icon, timeout=120).content,
+            source=response.content,
             destination=destination,
             icon_path=destination.as_posix(),
         )
