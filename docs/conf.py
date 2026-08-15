@@ -26,13 +26,10 @@ import snapcraft
 
 project = "Snapcraft"
 author = "Canonical Group Ltd"
-# The full version, including alpha/beta/rc tags
-release = snapcraft.__version__
-if ".post" in release:
-    release = "dev"
-else:
-    major, minor, *_ = release.split(".")
-    release = f"{major}.{minor}"
+
+# Version string in sidebar
+major, minor, *_ = snapcraft.__version__.split(".")
+release = "dev" if os.environ.get("READTHEDOCS_VERSION") == "latest" else f"{major}.{minor}"
 
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
