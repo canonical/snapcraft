@@ -26,13 +26,16 @@ import snapcraft
 project = "Snapcraft"
 author = "Canonical Ltd."
 
-# Version string in sidebar
-if os.environ.get("READTHEDOCS_VERSION_TYPE", "external") == "external":  # PR or local build
-    # Because of Autotools, we can safely assume the version starts with `n.n`
-    major, minor, *_ = snapcraft.__version__.split(".")
-    release = f"{major}.{minor}"
-else:  # Branch build
-    release = os.environ.get("READTHEDOCS_VERSION", "latest")
+# # Version string in sidebar
+# if os.environ.get("READTHEDOCS_VERSION_TYPE", "external") == "external":  # PR or local build
+#     # Because of setuptools, we can safely assume the version starts with `n.n`
+#     major, minor, *_ = snapcraft.__version__.split(".")
+#     release = f"{major}.{minor}"
+# else:  # Branch build
+#     release = os.environ.get("READTHEDOCS_VERSION", "latest")
+
+major, minor, *_ = snapcraft.__version__.split(".")
+release = f"{major}.{minor}"
 
 # Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
