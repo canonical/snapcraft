@@ -204,15 +204,13 @@ def test_get_component_yaml(default_project, fake_services, setup_project):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
 
-    expected = dedent(
-        """\
+    expected = dedent("""\
         component: default+firstcomponent
         type: test
         version: '1.0'
         summary: first component
         description: lorem ipsum
-        """
-    )
+        """)
 
     # Bare component name is the artifact key from get_artifacts() and the form
     # passed through the mediation pipeline.
@@ -290,8 +288,7 @@ def test_write_metadata(
 
     package_service.write_metadata(prime_dir)
 
-    assert (meta_dir / "snap.yaml").read_text() == dedent(
-        """\
+    assert (meta_dir / "snap.yaml").read_text() == dedent("""\
         name: default
         version: '1.0'
         summary: default project
@@ -329,8 +326,7 @@ def test_write_metadata(
             summary: second component
             description: lorem ipsum
             type: test
-    """
-    )
+    """)
 
     assert (
         lifecycle_service.get_prime_dir("firstcomponent") / "meta" / "component.yaml"
@@ -355,3 +351,145 @@ def test_write_metadata(
         description: lorem ipsum
     """
     )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_gen_extra_assets_for_component_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    (component_assets_dir / "install").write_text("install_hook")
+
+    assert package_service._gen_extra_assets("firstcomponent") == [
+        (
+            component_assets_dir / "install",
+            fake_services.get("lifecycle").get_prime_dir("firstcomponent")
+            / "meta/hooks/install",
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_hooks_override_built_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_install_hook")
+
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    source = component_assets_dir / "install"
+    source.write_text("project_install_hook")
+    source.chmod(0o644)
+
+    package_service._materialize_extra_assets("firstcomponent")
+
+    # Built hook remains untouched in snap/hooks
+    assert (
+        component_prime_dir / "snap" / "hooks" / "install"
+    ).read_text() == "built_install_hook"
+    # Project hook in meta/hooks overrides the built hook provision
+    destination = component_prime_dir / "meta" / "hooks" / "install"
+    assert destination.read_text() == "project_install_hook"
+    assert oct(destination.stat().st_mode)[-3:] == "755"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_provisions_meta_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    # Code-generated hook from part lifecycle
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_hook")
+
+    package_service._materialize_extra_assets("firstcomponent")
+
+    # Built hook remains in snap/hooks
+    assert (
+        component_prime_dir / "snap" / "hooks" / "install"
+    ).read_text() == "built_hook"
+    # Built hook is provisioned directly into meta/hooks
+    provisioned_hook = component_prime_dir / "meta" / "hooks" / "install"
+    assert provisioned_hook.read_text() == "built_hook"
+    assert oct(provisioned_hook.stat().st_mode)[-3:] == "755"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_accepts_qualified_partition_name(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    # Code-generated hook from part lifecycle
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_hook")
+
+    package_service._materialize_extra_assets("component/firstcomponent")
+
+    # Built hook remains in snap/hooks
+    assert (
+        component_prime_dir / "snap" / "hooks" / "install"
+    ).read_text() == "built_hook"
+    # Built hook is provisioned directly into meta/hooks
+    provisioned_hook = component_prime_dir / "meta" / "hooks" / "install"
+    assert provisioned_hook.read_text() == "built_hook"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_gen_extra_assets_component_hooks_override_built_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    built_hooks_dir = (
+        lifecycle_service.get_prime_dir("firstcomponent") / "snap" / "hooks"
+    )
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_install_hook")
+
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    (component_assets_dir / "install").write_text("project_install_hook")
+
+    assert package_service._gen_extra_assets("firstcomponent") == [
+        (
+            component_assets_dir / "install",
+            lifecycle_service.get_prime_dir("firstcomponent") / "meta/hooks/install",
+        ),
+    ]
