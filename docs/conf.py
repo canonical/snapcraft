@@ -15,12 +15,10 @@
 #
 
 import datetime
-import os
 import pathlib
 import sys
 
 import craft_parts_docs
-import snapcraft
 
 project = "Snapcraft"
 author = "Canonical Group Ltd"
