@@ -3,18 +3,18 @@
 GPU_WRAPPER="${SNAP}/%GPU_INTERFACE%/bin/%GPU_INTERFACE%-provider-wrapper"
 
 if [ -z "$1" ]; then
-  echo "Usage: %GPU_INTERFACE%-wrapper <command>"
-  exit 1
+    echo "Usage: %GPU_INTERFACE%-wrapper <command>"
+    exit 1
 fi
 
 if [ -z "${SNAP}" ]; then
-  echo "Not running inside a snap context: SNAP not declared"
-  exit 2
+    echo "Not running inside a snap context: SNAP not declared"
+    exit 2
 fi
 
 if [ ! -f "${GPU_WRAPPER}" ]; then
-  echo "Content snap GPU wrapper '${GPU_WRAPPER}' not found: ensure slot is connected"
-  exit 3
+    echo "Content snap GPU wrapper '${GPU_WRAPPER}' not found: ensure slot is connected"
+    exit 3
 fi
 
 # emulate "exec $@" using "source"
