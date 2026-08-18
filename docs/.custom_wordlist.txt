@@ -175,6 +175,7 @@ Sphinx
 Spread
 spread_test_example
 Starcraft
+Starbase
 stderr
 stdin
 stdout

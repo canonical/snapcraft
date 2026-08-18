@@ -1,4 +1,5 @@
 import datetime
+import importlib
 import os
 import pathlib
 import sys
@@ -273,6 +274,11 @@ exclude_patterns = [
     "README.md",  # Docs README
 ]
 
+git_exclude_patterns = [
+    "common/craft-parts/**",
+    "common/craft-application/**",
+]
+
 # Adds custom CSS files, located remotely or in 'html_static_path'.
 html_css_files = [
     "css/cookie-banner.css",
@@ -323,7 +329,7 @@ intersphinx_mapping = {
     # https://github.com/canonical/snapcraft/issues/6036
     "snap": ("https://snapcraft.io/docs/", None),
     "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
-    "rockcraft": ("https://documentation.ubuntu.com/rockcraft/stable/", None),
+    "rockcraft": ("https://ubuntu.com/containers/rockcraft/docs/latest/", None),
     "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
     "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
 }
@@ -355,13 +361,19 @@ def setup(app):
 
 # Setup libraries documentation snippets for use in snapcraft docs.
 common_docs_path = pathlib.Path(__file__).parent / "common"
-craft_application_docs_path = pathlib.Path(craft_application_docs.__file__).parent / "craft-application"
-craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-parts"
-(common_docs_path / "craft-application").unlink(missing_ok=True)
-(common_docs_path / "craft-parts").unlink(missing_ok=True)
-(common_docs_path / "craft-application").symlink_to(
-    craft_application_docs_path, target_is_directory=True
-)
-(common_docs_path / "craft-parts").symlink_to(
-    craft_parts_docs_path, target_is_directory=True
-)
+def link_common_docs(library_name: str) -> None:
+    """Create a link to the appropriate common documentation directory."""
+    common_lib_path = common_docs_path / library_name
+
+    docs_module_name = f"{library_name.replace('-', '_')}_docs"
+    docs_module = importlib.import_module(docs_module_name)
+    docs_path = pathlib.Path(docs_module.__file__).parent / library_name
+
+    if common_lib_path.is_symlink() and common_lib_path.readlink() == docs_path:
+        return
+
+    common_lib_path.unlink(missing_ok=True)
+    common_lib_path.symlink_to(docs_path, target_is_directory=True)
+
+link_common_docs("craft-parts")
+link_common_docs("craft-application")
