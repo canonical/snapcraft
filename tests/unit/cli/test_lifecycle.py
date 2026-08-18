@@ -281,7 +281,7 @@ def test_lifecycle_command_arguments_ua_token(cmd, run_method, mocker):
                 enable_manifest=False,
                 manifest_image_information=None,
                 bind_ssh=False,
-                ua_token="my-ua-token",
+                ua_token="my-ua-token",  # noqa: S106 (hardcoded-password-func-arg)
                 build_for=None,
                 enable_experimental_ua_services=True,
                 enable_experimental_plugins=False,
@@ -782,7 +782,7 @@ def test_lifecycle_command_pack_ua_token(mocker):
                 https_proxy=None,
                 manifest_image_information=None,
                 output=None,
-                ua_token="my-ua-token",
+                ua_token="my-ua-token",  # noqa: S106 (hardcoded-password-func-arg)
                 use_lxd=False,
             )
         )
@@ -814,7 +814,7 @@ def test_lifecycle_command_pack_env_ua_token(mocker):
                 https_proxy=None,
                 manifest_image_information=None,
                 output=None,
-                ua_token="my-ua-token",
+                ua_token="my-ua-token",  # noqa: S106 (hardcoded-password-func-arg)
                 use_lxd=False,
             )
         )
