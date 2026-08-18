@@ -3,6 +3,7 @@ self-hosted-runner:
   # Labels of self-hosted runner in array of strings.
   labels:
     - spread-installed
+    - spread-enabled
     # Architectures
     - amd64
     - arm64
