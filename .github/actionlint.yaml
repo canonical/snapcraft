@@ -1,0 +1,27 @@
+# Configuration related to self-hosted runner.
+self-hosted-runner:
+  # Labels of self-hosted runner in array of strings.
+  labels:
+    - spread-installed
+    # Architectures
+    - amd64
+    - arm64
+    - ppc64el
+    - riscv64
+    - s390x
+    # Ubuntu releases
+    - focal
+    - jammy
+    - noble
+    - resolute
+    # Sizes
+    - medium
+    - large
+    - xlarge
+    - 2xlarge
+    - 2xlarge-extra
+    # Additional possible labels
+    - edge
+    - tiobe
+    - large-tiobe
+    - 2xlarge-tiobe

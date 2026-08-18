@@ -1,3 +1,6 @@
+.. meta::
+    :description: The tutorials for Starcraft. These tutorials are guided lessons that help you develop skills by using Starcraft.
+
 .. _tutorials:
 
 Tutorials

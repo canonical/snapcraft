@@ -28,10 +28,13 @@ PRETTIER_IGNORE_DIRS := .github/instructions .github/skills
 PRETTIER_FILES += $(foreach dir,$(PRETTIER_IGNORE_DIRS),"!$(dir)/**")
 
 .PHONY: format
-format: format-ruff format-codespell format-prettier format-pre-commit  ## Run all automatic formatters
+format: format-ruff format-codespell format-prettier format-shfmt format-pre-commit  ## Run all automatic formatters
 
 .PHONY: lint
-lint: lint-ruff lint-codespell lint-ty lint-prettier lint-shellcheck lint-docs lint-twine lint-uv-lockfile  ## Run all linters
+lint: lint-code lint-docs lint-twine lint-uv-lockfile lint-actions  ## Run all linters
+
+.PHONY: lint-code
+lint-code: lint-ruff lint-ty lint-codespell lint-prettier lint-shfmt lint-shellcheck  ## Run code-specific linters
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages
