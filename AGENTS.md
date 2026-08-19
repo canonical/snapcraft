@@ -2,8 +2,8 @@
 
 ## Overview
 
-`canonical/snapcraft` is a Python CLI tool for packaging software into the snap
-container format.
+`canonical/snapcraft` is a CLI tool written in Python for packaging software into the
+snap container format.
 
 ## Craft apps and libraries
 

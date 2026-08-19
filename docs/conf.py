@@ -152,7 +152,7 @@ rediraffe_dir_only = True
 llms_txt_description = textwrap.dedent(
     """\
     This is the documentation for Snapcraft, the tool for packaging software into the
-snap container format.
+    snap container format.
     """
 )
 

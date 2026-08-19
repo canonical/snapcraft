@@ -174,8 +174,8 @@ snapctl
 Sphinx
 Spread
 spread_test_example
-Starcraft
 Starbase
+Starcraft
 stderr
 stdin
 stdout
