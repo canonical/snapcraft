@@ -84,6 +84,19 @@ def _get_esm_error_for_base(base: str) -> None:
     )
 
 
+def _get_base_warning_for_base(base: str) -> None:
+    """Emit a warning to use Snapcraft 9.x for core22, core24, and core26 bases."""
+    match base:
+        case "core22" | "core24" | "core26":
+            emit.warning(
+                f"Base {base!r} is supported in Snapcraft 9.x. "
+                "It is recommended to upgrade to Snapcraft 9.x via the 'latest/stable' channel "
+                "to benefit from the latest bug fixes and performance improvements."
+            )
+        case _:
+            return
+
+
 class Snapcraft(Application):
     """Snapcraft application definition."""
 
@@ -174,6 +187,7 @@ class Snapcraft(Application):
             )
             _get_esm_error_for_base(effective_base)
             self._ensure_remote_build_supported(effective_base)
+            _get_base_warning_for_base(effective_base)
 
         super()._pre_run(dispatcher)
 
