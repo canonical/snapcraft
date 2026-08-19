@@ -137,6 +137,7 @@ class Snapcraft(Application):
     def _register_default_plugins(self) -> None:
         """Register per application plugins when initializing."""
         super()._register_default_plugins()
+        craft_parts.plugins.unregister("gradle-use")
 
         if self._use_craftapp_lib:
             # core22 uses dotnet v1

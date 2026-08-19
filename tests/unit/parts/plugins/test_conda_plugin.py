@@ -22,7 +22,10 @@ from pydantic import ValidationError
 
 from snapcraft import errors
 from snapcraft.parts.plugins import CondaPlugin
-from snapcraft.parts.plugins.conda_plugin import _get_miniconda_source
+from snapcraft.parts.plugins.conda_plugin import (
+    _get_architecture,
+    _get_miniconda_source,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -212,4 +215,44 @@ def test_get_miniconda_unsupported_arch(
 
     assert str(raised.value) == (
         f"Architecture not supported for conda plugin: {snap_arch!r}"
+    )
+
+
+@pytest.mark.parametrize(
+    ("machine", "architecture", "expected"),
+    [
+        ("x86_64", "64bit", "x86_64"),
+        ("x86_64", "32bit", "x86"),
+        # armv8l indicates a 64-bit armv8 system running a 32-bit compatible armhf environment.
+        ("armv8l", "32bit", "armv7l"),
+    ],
+)
+def test_get_architecture_from_platform(monkeypatch, machine, architecture, expected):
+    if os.getenv("SNAP_ARCH"):
+        monkeypatch.delenv("SNAP_ARCH")
+    monkeypatch.setattr("platform.machine", lambda: machine)
+    monkeypatch.setattr("platform.architecture", lambda: (architecture, "ELF"))
+
+    assert _get_architecture() == expected
+
+
+@pytest.mark.parametrize(
+    ("machine", "architecture"),
+    [
+        ("x86_64", "16bit"),
+        ("armv8l", "64bit"),
+        ("s390x", "64bit"),
+    ],
+)
+def test_get_architecture_from_platform_unsupported(monkeypatch, machine, architecture):
+    if os.getenv("SNAP_ARCH"):
+        monkeypatch.delenv("SNAP_ARCH")
+    monkeypatch.setattr("platform.machine", lambda: machine)
+    monkeypatch.setattr("platform.architecture", lambda: (architecture, "ELF"))
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        _get_architecture()
+
+    assert str(raised.value) == (
+        f"Architecture not supported for conda plugin: {machine!r} {architecture!r}"
     )

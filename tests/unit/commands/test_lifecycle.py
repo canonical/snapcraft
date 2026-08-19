@@ -185,7 +185,7 @@ def test_ua_token_error(cmd_class, fake_services):
     parsed_args = argparse.Namespace(
         destructive_mode=False,
         directory=None,
-        ua_token="my-token",
+        ua_token="my-token",  # noqa: S106 (hardcoded-password-func-arg)
         enable_experimental_ua_services=False,
     )
     cmd = cmd_class({"app": APP_METADATA, "services": fake_services})

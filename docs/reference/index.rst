@@ -1,3 +1,6 @@
+.. meta::
+    :description: The reference documentation for Snapcraft. These references describe the structure and function of the individual components in Snapcraft.
+
 .. _reference:
 
 Reference
