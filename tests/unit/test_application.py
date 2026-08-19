@@ -325,6 +325,15 @@ def test_application_dotnet_registered(
     assert craft_parts.plugins.get_plugin_class("dotnet") == expected_plugin
 
 
+def test_application_gradle_use_unregistered():
+    """gradle-use plugin is unregistered for snapcraft."""
+    app = application.create_app()
+
+    app._register_default_plugins()
+
+    assert "gradle-use" not in craft_parts.plugins.get_registered_plugins()
+
+
 def test_default_command_integrated(monkeypatch, mocker, new_dir):
     """Test that for core24 projects we accept "pack" as the default command."""
 

@@ -33,7 +33,7 @@ CMake
 Cointop
 Colcon
 Conda
-confdb
+confdbs?
 connectedhomeip
 Craftctl
 crafters?
@@ -106,6 +106,7 @@ libcurl
 libproxy
 linter('?s)?
 liquidctl
+LXQt
 Makefile
 Makefiles?
 Miniconda
@@ -122,6 +123,7 @@ ncursesw
 nano
 Nextcloud
 Ninjemys
+nodejs
 noops?
 npm
 Numpy
@@ -132,6 +134,7 @@ patchelf
 pathing
 PDF
 perf
+pkgconfig
 plaintext
 plantuml
 PNG
