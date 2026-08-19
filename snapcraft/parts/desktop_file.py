@@ -78,10 +78,12 @@ class DesktopFile:
     def _parse_and_reformat_section(
         self, *, section: str, icon_path: str | None = None
     ):
-        if "Exec" not in self._parser[section]:
-            raise errors.DesktopFileError(self._filename, "missing 'Exec' key")
-
-        self._parse_and_reformat_section_exec(section)
+        # Exec is not required: desktop entries that are D-Bus- or
+        # systemd-activated (often with NoDisplay=true) are valid without it,
+        # per the Desktop Entry specification and desktop-file-validate. Only
+        # reformat the Exec line when it is present.
+        if "Exec" in self._parser[section]:
+            self._parse_and_reformat_section_exec(section)
 
         if "Icon" in self._parser[section]:
             icon = self._parser[section]["Icon"]
