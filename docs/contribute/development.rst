@@ -69,6 +69,59 @@ Inside the project directory, set up the development environment:
 If these commands complete without error, your environment is ready.
 
 
+Develop with Workshop
+---------------------
+
+.. admonition:: Work in progress
+    :class: caution
+
+    Workshop integration for Snapcraft is under active development. Some
+    features may be incomplete or subject to change.
+
+Local development environments require periodic maintenance and debugging. You can
+instead develop inside a sandbox, where the required development software
+is pre-installed and immutable. Snapcraft provides a development image that's
+controlled with `Workshop <https://documentation.ubuntu.com/canonical-workshop/>`__.
+
+With the `Workshop Snap <https://snapcraft.io/workshop>`__ installed, start the
+development environment by running ``workshop launch dev`` from within the Snapcraft
+directory. When the workshop starts, it automatically runs ``make setup`` inside the
+container. From there, use the pre-configured actions to carry out common
+development tasks:
+
+.. code-block:: bash
+
+    workshop run -- setup          # re-run the virtual environment setup
+    workshop run -- lint           # run all linters
+    workshop run -- format         # run the autoformatters
+    workshop run -- test           # run the full test suite
+    workshop run -- test-fast      # run the fast test suite
+    workshop run -- test-coverage  # run tests with a coverage report
+    workshop run -- schema         # regenerate the JSON schema
+    workshop run -- clean          # remove temporary build artifacts
+
+Two additional actions support dependency work.
+
+The ``lock`` action runs ``uv lock`` with any arguments you pass, then re-runs
+``make setup``:
+
+.. code-block:: bash
+
+    workshop run -- lock --upgrade-package craft-parts
+
+The ``install-branch`` action installs a dependency directly from a Git branch. Pass a
+short package name (resolves to the canonical GitHub organization by default)
+or a full repository URL:
+
+.. code-block:: bash
+
+    workshop run -- install-branch craft-parts main
+    workshop run -- install-branch https://github.com/user/craft-parts.git feat/my-fix
+
+Workshop provides most of the features needed for developing Snapcraft. Read the
+`Workshop tutorial <https://documentation.ubuntu.com/canonical-workshop/latest/tutorial/>`__
+to learn what else Workshop can do.
+
 Choose a task
 -------------
 
