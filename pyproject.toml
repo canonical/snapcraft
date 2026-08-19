@@ -28,7 +28,7 @@ dependencies = [
     "pyyaml",
     "requests-toolbelt",
     "requests>=2.32.4",
-    "setuptools~=83.0.0",
+    "setuptools~=84.0.0",
     "snap-helpers",
     "tabulate",
     "typing-extensions",
