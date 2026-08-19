@@ -13,4 +13,5 @@ jobs:
     uses: canonical/starflow/.github/workflows/tics.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
     with:
       project: "snapcraft"
-    secrets: inherit
+    secrets:
+      TICSAUTHTOKEN: ${{ secrets.TICSAUTHTOKEN }}
