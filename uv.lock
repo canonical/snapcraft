@@ -2576,6 +2576,7 @@ dependencies = [
     { name = "setuptools" },
     { name = "snap-helpers" },
     { name = "tabulate" },
+    { name = "tomli" },
     { name = "typing-extensions" },
     { name = "validators" },
 ]
@@ -2701,6 +2702,7 @@ requires-dist = [
     { name = "setuptools", specifier = "~=84.0.0" },
     { name = "snap-helpers" },
     { name = "tabulate" },
+    { name = "tomli", specifier = ">=2.4.0" },
     { name = "typing-extensions" },
     { name = "validators", specifier = ">=0.28.3" },
 ]

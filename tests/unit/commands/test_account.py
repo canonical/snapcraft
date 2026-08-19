@@ -156,6 +156,33 @@ def test_export_login_file(project_path, emitter, fake_store_login, fake_app_con
     assert login_file.read_text() == "secret"
 
 
+def test_export_login_file_overwrite(
+    project_path, emitter, fake_store_login, fake_app_config
+):
+    """Re-exporting to an existing read-only credentials file should succeed."""
+    cmd = commands.StoreExportLoginCommand(fake_app_config)
+    namespace = argparse.Namespace(
+        login_file="target_file",
+        snaps=None,
+        channels=None,
+        acls=None,
+        expires=None,
+        experimental_login=False,
+    )
+
+    cmd.run(namespace)
+
+    login_file = project_path / "target_file"
+    # The first run leaves the file owner-read-only.
+    assert login_file.stat().st_mode & 0o777 == 0o400
+
+    # A second run must not fail with PermissionError.
+    cmd.run(namespace)
+
+    assert login_file.read_text() == "secret"
+    assert login_file.stat().st_mode & 0o777 == 0o400
+
+
 def test_export_login_with_params(emitter, fake_store_login, fake_app_config):
     cmd = commands.StoreExportLoginCommand(fake_app_config)
 

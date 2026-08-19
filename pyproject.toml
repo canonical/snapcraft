@@ -32,6 +32,7 @@ dependencies = [
     "setuptools~=84.0.0",
     "snap-helpers",
     "tabulate",
+    "tomli>=2.4.0",
     "typing-extensions",
     "validators>=0.28.3",
 ]

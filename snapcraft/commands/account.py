@@ -221,6 +221,16 @@ class StoreExportLoginCommand(AppCommand):
             # This is sensitive-- it should only be accessible by the owner
             private_open = functools.partial(os.open, mode=0o600)
 
+            # If the file already exists from a previous export, it was made
+            # owner-read-only by the chmod below. The opener's mode only applies
+            # when creating a new file, so an existing read-only file would fail
+            # to open for writing. Restore owner write access first. Limit this
+            # to regular files so an unusual login_file (e.g. a directory) isn't
+            # mutated unexpectedly.
+            login_path = pathlib.Path(parsed_args.login_file)
+            if login_path.is_file():
+                login_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+
             with open(
                 parsed_args.login_file, "w", opener=private_open, encoding="utf-8"
             ) as login_fd:
