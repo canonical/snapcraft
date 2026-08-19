@@ -1,3 +1,5 @@
+# OSV Scanner configuration
+
 [[IgnoredVulns]]
 id = "CVE-2025-69277"
 reason = """

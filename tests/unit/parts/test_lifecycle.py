@@ -322,7 +322,7 @@ def test_lifecycle_run_ua_services_without_experimental_flag(
                 destructive_mode=False,
                 use_lxd=False,
                 provider=None,
-                ua_token="my-token",
+                ua_token="my-token",  # noqa: S106 (hardcoded-password-func-arg)
                 build_for=str(DebianArchitecture.from_host()),
                 enable_experimental_ua_services=False,
             ),
@@ -1585,7 +1585,7 @@ def test_lifecycle_run_in_provider_all_options(
     parts = ["test-part-1", "test-part-2"]
     output = "test-output"
     manifest_image_information = "test-image-info"
-    ua_token = "test-ua-token"
+    ua_token = "test-ua-token"  # noqa: S105 (hardcoded-password-string)
     http_proxy = "1.2.3.4"
     https_proxy = "5.6.7.8"
     expected_command = (

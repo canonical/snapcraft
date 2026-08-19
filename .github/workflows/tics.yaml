@@ -8,7 +8,9 @@ on:
 
 jobs:
   TICS:
-    uses: canonical/starflow/.github/workflows/tics.yaml@main
+    permissions:
+      contents: read
+    uses: canonical/starflow/.github/workflows/tics.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
     with:
       project: "snapcraft"
     secrets: inherit

@@ -1,19 +1,18 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-  echo "run <command>"
-  exit 1
+    echo "run <command>"
+    exit 1
 fi
 
 if [ -z "${SNAP}" ]; then
-  echo "Not running inside a snap context: SNAP not declared"
-  exit
+    echo "Not running inside a snap context: SNAP not declared"
+    exit
 fi
 
-
 if [ ! -f "$1" ]; then
-  echo "Content snap command-chain for $1 not found: ensure slot is connected"
-  exit
+    echo "Content snap command-chain for $1 not found: ensure slot is connected"
+    exit
 fi
 
 # emulate "exec $@" using "source"

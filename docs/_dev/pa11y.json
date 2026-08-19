@@ -1,8 +1,6 @@
 {
   "chromeLaunchConfig": {
-    "args": [
-      "--no-sandbox"
-    ]
+    "args": ["--no-sandbox"]
   },
   "reporter": "cli",
   "standard": "WCAG2AA"
