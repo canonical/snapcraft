@@ -115,6 +115,10 @@ def test_application_map_log_verbosity_env_var(monkeypatch):
     craft_cli.emit.set_mode(old_emit_level)
 
 
+def test_app_metadata_enables_conditional_repack():
+    assert application.APP_METADATA.always_repack is False
+
+
 @pytest.fixture()
 def extension_source(default_project):
     source = default_project.marshal()
