@@ -66,7 +66,7 @@ class DesktopFile:
 
     @staticmethod
     def _normalize_icon_path(icon: str) -> str:
-        icon = icon.removeprefix("${SNAP}").lstrip("/")
+        return icon.removeprefix("${SNAP}").lstrip("/")
 
     def _parse_and_reformat_section_exec(self, section: str):
         exec_value = self._parser[section]["Exec"]
