@@ -68,7 +68,8 @@ Conditional repacking
 
 Repeated calls to ``snapcraft pack`` are now faster when the source hasn't changed.
 Snapcraft skips repacking the snap unless a lifecycle step reran or the metadata
-Snapcraft generates for the snap changed.
+Snapcraft generates for the snap changed. This is useful when iterating with ``snapcraft
+test``, as unchanged snaps aren't rebuilt between test runs.
 
 Per-component compression
 ~~~~~~~~~~~~~~~~~~~~~~~~~
