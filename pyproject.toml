@@ -2,6 +2,7 @@
 name = "snapcraft"
 description = "Create snaps"
 dynamic = ["version"]
+# Applications should avoid CVEs in direct dependencies by setting a minimum version in 'dependencies'.
 dependencies = [
     "catkin-pkg==1.1.0; sys_platform == 'linux'",
     "click>=8.3.3",
@@ -28,7 +29,7 @@ dependencies = [
     "pyyaml",
     "requests-toolbelt",
     "requests>=2.32.4",
-    "setuptools~=83.0.0",
+    "setuptools~=84.0.0",
     "snap-helpers",
     "tabulate",
     "typing-extensions",
@@ -50,6 +51,9 @@ license-files = ["LICENSE"]
 requires-python = ">=3.10"
 readme = { file = "README.md", content-type = "text/markdown" }
 
+
+# Applications should avoid CVEs in optional, direct dependencies by setting a minimum
+# version in 'dependency-groups'.
 [dependency-groups]
 dev = [
     "coverage[toml]",
@@ -64,38 +68,40 @@ dev = [
 ]
 docs = [
     "pydantic-kitbash~=1.0",
-    "sphinx-pydantic==0.1.1",
     "sphinx-lint~=1.0",
-    "sphinxext-rediraffe==0.3.0",
+    "sphinx-pydantic==0.1.1",
     "sphinx-substitution-extensions==2025.1.2",
-    "sphinx-copybutton",
-    {include-group = "docs-starter-pack"},
+    "sphinxext-rediraffe==0.3.0",
+    {include-group = "docs-sphinx-stack"},
 ]
 # We disable the unused but default SP dependencies slated for removal
 # https://warthogs.atlassian.net/browse/DOCPR-2387
-docs-starter-pack = [
+docs-sphinx-stack = [
     "canonical-sphinx~=0.6",
-    "myst-parser>=4.0.1",
-    "packaging>=25.0",
+    "myst-parser~=4.0",
+    "packaging~=26.1",
     "rst2html>=2020.7.4",
     "sphinx-autobuild>=2024.10.3",
-    # "sphinx-config-options>=0.1.0",
-    # "sphinx-contributor-listing>=0.1.0",
-    "sphinx-design>=0.6.1",
-    # "sphinx-filtered-toctree>=0.1.0",
-    # "sphinx-last-updated-by-git>=0.3.8",
-    "sphinx-notfound-page>=1.1.0",
-    "sphinx-related-links>=0.1.1",
-    "sphinx-roles>=0.1.0",
-    "sphinx-sitemap>=2.6.0",
-    # "sphinx-tabs>=3.4.5",
-    "sphinx-terminal>=1.0.2",
-    # "sphinx-ubuntu-images>=0.1.0",
-    # "sphinx-youtube-links>=0.1.0",
-    "sphinxcontrib-jquery>=4.1",
-    # "sphinxcontrib-svg2pdfconverter[cairosvg]>=2.0.0",
-    "sphinxext-opengraph>=0.13.0",
-    "vale>=3.13.0.0",
+    # "sphinx-config-options~=0.1",
+    # "sphinx-contributor-listing~=0.1",
+    "sphinx-design==0.6.1",
+    # "sphinx-filtered-toctree~=0.1",
+    # "sphinx-last-updated-by-git~=0.3",
+    "sphinx-llm~=0.4",
+    "sphinx-notfound-page~=1.1",
+    "sphinx-related-links~=0.1",
+    # "sphinx-reredirects==0.1.6",
+    "sphinx-rerediraffe>=0.0.3,<1.0.0",
+    "sphinx-roles~=0.1",
+    "sphinx-sitemap~=2.9",
+    # "sphinx-tabs~=3.5",
+    "sphinx-terminal~=1.0",
+    # "sphinx-ubuntu-images~=0.1",
+    # "sphinx-youtube-links~=0.1",
+    "sphinxcontrib-jquery~=4.1",
+    # "sphinxcontrib-svg2pdfconverter[cairosvg]~=2.1",
+    "sphinxext-opengraph~=0.13",
+    "vale~=3.13",
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
 types = [
@@ -125,6 +131,10 @@ conflicts = [
     ],
 ]
 constraint-dependencies = [
+    # Basic constraints to allow --resolution=lowest.
+    #
+    # Applications should avoid CVEs in transitive dependencies by setting a minimum
+    # version in this section.
     "cryptography>=50.0.0",
     "httplib2>=0.32.0",
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
@@ -136,8 +146,6 @@ constraint-dependencies = [
     # this issue might be the cause: https://github.com/protocolbuffers/protobuf/issues/24103
     "protobuf==6.32.*",
     "starlette>=1.0.1",
-]
-build-constraint-dependencies = [
 ]
 
 [[tool.uv.index]]
@@ -290,8 +298,6 @@ lint.ignore = [
     "ARG",     # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
     "S101",    # Allow assertions in tests
     "S103",    # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
-    "S105",    # Allow Possible hardcoded password.
-    "S106",    # Allow Possible hardcoded password.
     "S108",    # Allow Probable insecure usage of temporary file or directory
     "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
     "PLR0917", # Allow many positional arguments for test functions (useful if we need many fixtures)

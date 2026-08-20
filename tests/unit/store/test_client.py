@@ -533,7 +533,7 @@ def test_login(fake_client):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
     ]
 
@@ -570,7 +570,7 @@ def test_login_otp(fake_client):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         ),
         call(
             ttl=31536000,
@@ -587,7 +587,7 @@ def test_login_otp(fake_client):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
             otp="123456",
         ),
     ]
@@ -616,7 +616,7 @@ def test_login_with_params(fake_client):
             ],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
     ]
 
@@ -691,7 +691,7 @@ def test_login_from_401_request(fake_client, emitter):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
     ]
 
@@ -790,7 +790,7 @@ def test_request_not_logged_in(fake_client, emitter):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
     ]
 

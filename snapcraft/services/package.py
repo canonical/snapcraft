@@ -36,7 +36,14 @@ from snapcraft.meta import component_yaml, snap_yaml
 from snapcraft.models import ContentPlug
 from snapcraft.parts import extract_metadata as extract
 from snapcraft.parts import update_metadata as update
-from snapcraft.parts.setup_assets import provision_hooks, setup_assets
+from snapcraft.parts.setup_assets import (
+    MediatedIconAsset,
+    get_mediated_gui_assets,
+    get_mediated_icon_asset,
+    provision_hooks,
+    setup_assets,
+    validate_command_chains,
+)
 from snapcraft.services import Lifecycle
 from snapcraft.utils import get_component_name, process_version
 
@@ -47,6 +54,7 @@ class Package(PackageService):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._package_output_dir: str | None = None
+        self._mediated_icon_asset: MediatedIconAsset | None = None
 
     @package_file("meta/snap.yaml", partition_re="default")
     def _get_snap_yaml(self, partition: str | None = None) -> str:  # noqa: ARG002
@@ -64,6 +72,18 @@ class Package(PackageService):
         if component_name is None:
             raise ValueError("Component metadata requires a component partition.")
         return component_yaml.get_str(self._project, component_name)
+
+    @package_file("snap/manifest.yaml", partition_re="default")
+    def _get_manifest_yaml(
+        self,
+        partition: str | None = None,  # noqa: ARG002
+    ) -> str | Literal[False]:
+        """Generate mediated manifest metadata when build-info is enabled."""
+        if not strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")):
+            return False
+
+        lifecycle_service = cast(Lifecycle, self._services.lifecycle)
+        return util.dump_yaml(lifecycle_service.generate_manifest().marshal())
 
     @package_file("meta/gadget.yaml", partition_re="default")
     def _get_gadget_yaml(
@@ -393,12 +413,25 @@ class Package(PackageService):
                     assets.append((hook, prime_dir / "meta" / "hooks" / hook.name))
 
         if normalized_partition is None:
+            if strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")):
+                project_file = self._services.get("project").resolve_project_file_path()
+                assets.append((project_file, prime_dir / "snap" / project_file.name))
+
             gui_project_dir = assets_dir / "gui"
             gui_meta_dir = prime_dir / "meta" / "gui"
             if gui_project_dir.is_dir():
                 for gui_asset in gui_project_dir.iterdir():
                     if gui_asset.is_file():
                         assets.append((gui_asset, gui_meta_dir / gui_asset.name))
+
+            assets.extend(
+                get_mediated_gui_assets(
+                    self._project,
+                    assets_dir=assets_dir,
+                    prime_dir=prime_dir,
+                    icon=self._mediated_icon_asset,
+                )
+            )
 
         return assets
 
@@ -542,44 +575,20 @@ class Package(PackageService):
         super()._materialize_extra_assets(partition_name)
         provision_hooks(self._prime_dir_for(partition_name), overwrite=False)
 
-    def _write_system_metadata(self, path: pathlib.Path) -> None:
-        """Materialize mediated gadget/kernel metadata files for core24+ snaps."""
-        meta_dir = path / "meta"
-
-        if self._project.type == const.ProjectType.GADGET:
-            contents = self._get_gadget_yaml()
-            if isinstance(contents, str):
-                (meta_dir / "gadget.yaml").write_text(contents, encoding="utf-8")
-
-        if self._project.type == const.ProjectType.KERNEL:
-            contents = self._get_kernel_yaml()
-            if isinstance(contents, str):
-                (meta_dir / "kernel.yaml").write_text(contents, encoding="utf-8")
-
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
         """Write the project metadata to metadata.yaml in the given directory.
 
         :param path: The path to the prime directory.
         """
-        meta_dir = path / "meta"
-        meta_dir.mkdir(parents=True, exist_ok=True)
-        meta_dir.joinpath("snap.yaml").write_text(
-            self._get_snap_yaml(), encoding="utf-8"
-        )
-
-        enable_manifest = strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
-
-        # Snapcraft's Lifecycle implementation is what we need to refer to for typing
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)
-        if enable_manifest:
-            snap_dir = path / "snap"
-            snap_dir.mkdir(parents=True, exist_ok=True)
-            manifest = lifecycle_service.generate_manifest()
-            manifest.to_yaml_file(snap_dir / "manifest.yaml")
+        for package in self._package_files(None):
+            generator = getattr(self, package.method_name)
+            content = generator(None)
+            if content is False:
+                continue
 
-            project_file = self._services.get("project").resolve_project_file_path()
-            shutil.copy(project_file, snap_dir)
+            self._write_asset(content, path / package.relative_path)
 
         assets_dir = self._get_assets_dir()
         setup_assets(
@@ -589,14 +598,20 @@ class Package(PackageService):
             prime_dirs=lifecycle_service.prime_dirs,
             copy_hooks_and_gui=False,
         )
-        self._write_system_metadata(path)
+        self._mediated_icon_asset = get_mediated_icon_asset(
+            self._project,
+            assets_dir=assets_dir,
+            prime_dir=lifecycle_service.prime_dir,
+        )
+        validate_command_chains(self._project, prime_dir=lifecycle_service.prime_dir)
+
+        # These assets are mediated, but we create them here so they
+        # will be part of primed tree contents.
+        self._materialize_extra_assets(None)
 
         for component in self._project.get_component_names():
-            component_yaml.write(
-                project=self._project,
-                component_name=component,
-                component_prime_dir=lifecycle_service.get_prime_dir(component),
-            )
+            self._materialize_package_files(component)
+            self._materialize_extra_assets(component)
 
     @property
     def metadata(self) -> snap_yaml.SnapMetadata:
