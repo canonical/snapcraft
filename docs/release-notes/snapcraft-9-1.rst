@@ -99,9 +99,8 @@ simplify building the `Matter SDK <https://github.com/project-chip/connectedhome
 which required patches to the upstream source code. Those patches have since been
 merged into the Matter project, so the plugin is no longer needed. If
 your snap used the Matter SDK plugin, follow `Matter's compilation guide
-<https://project-chip.github.io/connectedhomeip-doc/getting_started/first_example.html#c
-ompiling-running-and-controlling-matter-examples>`__ using Snapcraft's :ref:`override
-keys <how-to-override-the-parts-lifecycle>`.
+<https://project-chip.github.io/connectedhomeip-doc/getting_started/first_example.html#c ompiling-running-and-controlling-matter-examples>`__
+using Snapcraft's :ref:`override keys <how-to-override-the-parts-lifecycle>`.
 
 Removed candid login
 ~~~~~~~~~~~~~~~~~~~~
@@ -153,7 +152,8 @@ Snapcraft 9.1.0
   network errors while downloading file sources produced a raw traceback instead of a
   clear error message.
 - `craft-parts#1562 <https://github.com/canonical/craft-parts/issues/1562>`__ The
-  organize key allowed organizing files from outside the install directory.
+  :ref:`organize <PartSpec.organize_files>` key allowed organizing files from outside
+  the install directory.
 - `snapcraft#6327 <https://github.com/canonical/snapcraft/issues/6327>`__ Desktop
   extensions incorrectly set ``LD_LIBRARY_PATH``, preventing Snapcraft from setting
   its own default value and breaking library loading.
