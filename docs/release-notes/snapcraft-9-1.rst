@@ -159,6 +159,8 @@ Snapcraft 9.1.0
 - `snapcraft#6327 <https://github.com/canonical/snapcraft/issues/6327>`__ Desktop
   extensions incorrectly set ``LD_LIBRARY_PATH``, preventing Snapcraft from setting
   its own default value and breaking library loading.
+- `snapcraft#6399 <https://github.com/canonical/snapcraft/issues/6399>`__ GPU and
+  desktop extensions tried to write to ``/snap/command-chain/`` at build time.
 
 
 Contributors
