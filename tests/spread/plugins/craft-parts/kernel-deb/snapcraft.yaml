@@ -23,8 +23,8 @@ parts:
     kernel-kdefconfig: [test_defconfig]
     kernel-tools: [bpftool, cpupower, perf]
     kernel-ubuntu-debian-dkms:
-      - nvidia-dkms-535
-      - nvidia-kernel-source-535
+      - nvidia-dkms-580
+      - nvidia-kernel-source-580
     build-packages:
       - dwarves
     stage-packages:
