@@ -992,7 +992,7 @@ def test_update_project_parse_info(
     package_service.update_project()
 
     mocked_extract.assert_called_once_with(
-        default_project.adopt_info, parse_info, tmp_path, partitions=None
+        default_project.adopt_info, parse_info, tmp_path, partitions=["default"]
     )
     mocked_update.assert_called_once_with(
         fake_services.get("project").get(),

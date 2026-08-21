@@ -1156,6 +1156,8 @@ def test_get_snap_project_no_base(snapcraft_yaml, new_dir):
 def test_set_global_environment(base, mocker, new_dir):
     """Set the global environment."""
     expected_global_environment = {
+        "SNAPCRAFT_DEFAULT_PRIME": f"{new_dir}/prime",
+        "SNAPCRAFT_DEFAULT_STAGE": f"{new_dir}/stage",
         "SNAPCRAFT_PARALLEL_BUILD_COUNT": "1",
         "SNAPCRAFT_PRIME": f"{new_dir}/prime",
         "SNAPCRAFT_PROJECT_DIR": str(new_dir),
