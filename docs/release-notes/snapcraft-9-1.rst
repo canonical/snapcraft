@@ -26,8 +26,8 @@ Support for Ubuntu Pro-compliant snaps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Snapcraft 9.1 supports packing snaps containing the extended security maintenance fixes
-and regulatory compliance enabled by Ubuntu Pro. This feature requires a Pro-enabled
-system and is further described on :ref:`this page <how-to-pack-a-pro-snap>`.
+and compliance features of Ubuntu Pro. System requirements and guidance on packing
+Pro-compliant snaps can be found in :ref:`how-to-pack-a-pro-snap`.
 
 Kernel and initrd plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,10 +66,9 @@ Snapcraft 9.1 brings the following minor changes.
 Conditional repacking
 ~~~~~~~~~~~~~~~~~~~~~
 
-Repeated calls to ``snapcraft pack`` are now faster when the source hasn't changed.
-Snapcraft skips repacking the snap unless a lifecycle step reran or the metadata
-Snapcraft generates for the snap changed. This is useful when iterating with ``snapcraft
-test``, as unchanged snaps aren't rebuilt between test runs.
+To speed up redundant ``snapcraft pack`` commands, Snapcraft now only repacks snaps
+if the source changed or the snap's metadata need to be updated. This is useful when
+iterating with ``snapcraft test``, as unchanged snaps aren't rebuilt between test runs.
 
 Per-component compression
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,15 +99,16 @@ simplify building the `Matter SDK <https://github.com/project-chip/connectedhome
 which required patches to the upstream source code. Those patches have since been
 merged into the Matter project, so the plugin is no longer needed. If
 your snap used the Matter SDK plugin, follow `Matter's compilation guide
-<https://project-chip.github.io/connectedhomeip-doc/getting_started/first_example.html#c ompiling-running-and-controlling-matter-examples>`__
-using Snapcraft's :ref:`override keys <how-to-override-the-parts-lifecycle>`.
+<https://project-chip.github.io/connectedhomeip-doc/getting_started/first_example.html#compiling-running-and-controlling-matter-examples>`__
+as done in the
+`Chip Tool <https://github.com/canonical/chip-tool-snap/blob/main/snap/snapcraft.yaml>`__
+snap.
 
-Removed candid login
+Removed Candid login
 ~~~~~~~~~~~~~~~~~~~~
 
-Candid, a deprecated authentication method for the Snap store, has been removed.
-Instead, you should authenticate with Ubuntu One as described on :ref:`this page
-<how-to-authenticate>`.
+Candid, a deprecated authentication method for the Snap Store, has been removed.
+Instead, :ref:`authenticate with Ubuntu One <how-to-authenticate>`.
 
 
 Feature deprecations
@@ -120,8 +120,8 @@ The following features are deprecated in Snapcraft 9.1:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :ref:`Project.ua_services` key was unused for core24 and higher snaps. It's now been
-deprecated in favor of the new ``--pro=<services>`` command-line option described in the
-:ref:`how-to-pack-a-pro-snap` page.
+deprecated in favor of the new ``--pro=<services>`` command-line option described in
+:ref:`how-to-pack-a-pro-snap`.
 
 Non-SPDX compliant licenses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,11 +142,11 @@ Snapcraft 9.1.0
 ~~~~~~~~~~~~~~~
 
 - `craft-application#1073 <https://github.com/canonical/craft-application/pull/1073>`__
-  ``--debug`` would fail to enter a debug shell during post-prime step failures, such as
+  ``--debug`` wouldn't enter a debug shell for failures after the prime step, such as
   a failure to run ``snap pack``.
 - `craft-archives#229
   <https://github.com/canonical/craft-archives/pull/229>`__ When retrieving the signing
-  key for a package repository, gpg wouldn't use the system's proxy.
+  key for a package repository, GPG wouldn't use the system's proxy.
 - `craft-cli#449 <https://github.com/canonical/craft-cli/issues/449>`__ Deprecated
   commands appeared in the *See also* section of command help text.
 - `craft-parts#1396 <https://github.com/canonical/craft-parts/issues/1396>`__ Certain
