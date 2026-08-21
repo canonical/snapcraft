@@ -406,6 +406,14 @@ pack_kernel() {
   unlink "${CRAFT_PART_INSTALL}/lib/modules/${_kver}/source" || true
 }
 
+# normalize_kernel_version converts the version reported by apt into the version
+# used in kernel binary package names.
+normalize_kernel_version() (
+  version="${1%~*}"
+  printf '%s\n' "$version" | sed -E \
+    's/^([0-9]+\.[0-9]+\.[0-9]+)[.-]([0-9]+)[.-].*$/\1-\2/'
+)
+
 # build_bin_pkg is the most strict case of building a kernel snap. It allows you
 # to choose any kernel in the archives available to you at build-time by ABI
 # number and flavour. Not much in the way of customization can occur in this
@@ -416,16 +424,7 @@ build_bin_pkg() {
   if [ -z "$kernel_ubuntu_abinumber" ]; then
     # kver is the total version string but cuts the upload number
     kver="$(apt info "linux-image-${kconfigflavour}" | grep '^Version: ' | cut -d' ' -f2)"
-    # Trim ~<LTS> as kernels like partner, HWE, or riscv64 append ~<LTS>
-    kver="${kver%~*}"
-    # Trim the kernel release from the string
-    kver="${kver%.*}"
-    # linux-image-${kconfigflavour} has version of the form x.y.z.a-b, but ver
-    # in linux-modules-<ver>-${kconfigflavour} is of the form x.y.z-a-b on Jammy
-    # so swap .a for -a
-    if [ "${UBUNTU_SERIES}" = "jammy" ]; then
-      kver="$(echo "$kver" | sed -E 's/(.*)\./\1-/')"
-    fi
+    kver="$(normalize_kernel_version "$kver")"
   else
     kver="${kernel_ubuntu_abinumber}"
   fi
@@ -821,4 +820,6 @@ main() {
   run
 }
 
-main "$@"
+if [ "${SNAPCRAFT_TESTING:-0}" != "1" ]; then
+  main "$@"
+fi
