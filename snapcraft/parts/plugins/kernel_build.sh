@@ -722,7 +722,6 @@ main() {
   # /etc/os-release is guaranteed as build host is Ubuntu
   # shellcheck disable=SC1091
   . /etc/os-release
-  UBUNTU_SERIES="${UBUNTU_CODENAME}"
 
   # required_boot are Kconfigs required for booting Ubuntu Core
   required_boot="SQUASHFS"
