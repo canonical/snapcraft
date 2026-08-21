@@ -33,7 +33,7 @@ CMake
 Cointop
 Colcon
 Conda
-confdb
+confdbs?
 connectedhomeip
 Craftctl
 crafters?
@@ -50,6 +50,7 @@ dvipng
 drwxr-xr-x
 drwxrwxrwx
 emacs
+enablement
 FIGlet
 Filesets?
 filetrees?
@@ -105,6 +106,7 @@ libcurl
 libproxy
 linter('?s)?
 liquidctl
+LXQt
 Makefile
 Makefiles?
 Miniconda
@@ -121,6 +123,7 @@ ncursesw
 nano
 Nextcloud
 Ninjemys
+nodejs
 noops?
 npm
 Numpy
@@ -131,6 +134,7 @@ patchelf
 pathing
 PDF
 perf
+pkgconfig
 plaintext
 plantuml
 PNG
@@ -145,6 +149,7 @@ pytest
 QEMU
 qmake
 rackup
+ramdisk
 Read the Docs
 ramdisks
 readthedocs
@@ -173,6 +178,7 @@ snapctl
 Sphinx
 Spread
 spread_test_example
+Starbase
 Starcraft
 stderr
 stdin
@@ -202,6 +208,7 @@ untrusted
 URIs?
 URL
 usermod
+userspace
 utils
 uv
 vendored

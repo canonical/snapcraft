@@ -110,6 +110,9 @@ class TestGetDynamicLinker:
             pytest.param("x86_64", "lib64/ld-linux-x86-64.so.2", id="amd64"),
             pytest.param("aarch64", "lib/ld-linux-aarch64.so.1", id="arm64"),
             pytest.param("armv7l", "lib/ld-linux-armhf.so.3", id="armhf"),
+            pytest.param(
+                "armv8l", "lib/ld-linux-armhf.so.3", id="armhf on arm64 kernel"
+            ),
             pytest.param("riscv64", "lib/ld-linux-riscv64-lp64d.so.1", id="riscv64"),
             pytest.param("ppc64le", "lib64/ld64.so.2", id="ppc64el"),
             pytest.param("s390x", "lib/ld64.so.1", id="s390x"),
@@ -171,6 +174,7 @@ class TestArchConfig:
         [
             ("aarch64", "aarch64-linux-gnu"),
             ("armv7l", "arm-linux-gnueabihf"),
+            ("armv8l", "arm-linux-gnueabihf"),
             ("ppc64le", "powerpc64le-linux-gnu"),
             ("riscv64", "riscv64-linux-gnu"),
             ("s390x", "s390x-linux-gnu"),
@@ -190,6 +194,7 @@ class TestArchConfig:
         [
             ("aarch64", "aarch64-linux-gnu"),
             ("armv7l", "arm-linux-gnueabihf"),
+            ("armv8l", "arm-linux-gnueabihf"),
             ("ppc64le", "powerpc64le-linux-gnu"),
             ("riscv64", "riscv64-linux-gnu"),
             ("s390x", "s390x-linux-gnu"),

@@ -28,8 +28,8 @@ jobs:
 
       - name: Check with stored schema
         run: |
-          test -f $SNAPCRAFT_JSON &&
-          diff generated_schema.json $SNAPCRAFT_JSON
+          test -f "$SNAPCRAFT_JSON" &&
+          diff generated_schema.json "$SNAPCRAFT_JSON"
 
   validate-schema:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
 
@@ -55,8 +55,8 @@ jobs:
           # Don't fail immediately if one validation fails
           EXIT_CODE=0
           for proj_file in $SPREAD_FILES_GLOB; do
-            if ! ajv validate -s $SNAPCRAFT_JSON \
-              -d $proj_file \
+            if ! ajv validate -s "$SNAPCRAFT_JSON" \
+              -d "$proj_file" \
               --strict=false --spec=draft2020; then
               EXIT_CODE=1
             fi

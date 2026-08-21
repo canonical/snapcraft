@@ -4,31 +4,37 @@
 parse_args() {
   for arg; do
     case "${arg}" in
-      initrd-modules=*)
+    initrd-modules=*)
       # initrd_modules is a list of modules by name to add to the initrd
       # Default value is "".
-      initrd_modules="${arg#*=}"              ;;
-      initrd-firmware=*)
+      initrd_modules="${arg#*=}"
+      ;;
+    initrd-firmware=*)
       # initrd_firmware is a list of firmware files relative to CRAFT_STAGE to add to the initrd
       # Default value is "".
-      initrd_firmware="${arg#*=}"             ;;
-      initrd-addons=*)
+      initrd_firmware="${arg#*=}"
+      ;;
+    initrd-addons=*)
       # initrd_addons is a list of files relative to CRAFT_STAGE to add to the initrd
       # Default value is "".
-      initrd_addons="${arg#*=}"               ;;
-      initrd-build-efi-image=*)
+      initrd_addons="${arg#*=}"
+      ;;
+    initrd-build-efi-image=*)
       # initrd_build_efi_image if true builds an EFI file instead of an initrd.img
       # Default value is "False".
-      initrd_build_efi_image="${arg#*=}"      ;;
-      initrd-efi-image-key=*)
+      initrd_build_efi_image="${arg#*=}"
+      ;;
+    initrd-efi-image-key=*)
       # initrd_efi_image_key is a key file used to sign the EFI UKI relative to ${CRAFT_STAGE}/signing
       # Default value is /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key
-      initrd_efi_image_key="${arg#*=}"        ;;
-      initrd-efi-image-cert=*)
+      initrd_efi_image_key="${arg#*=}"
+      ;;
+    initrd-efi-image-cert=*)
       # initrd_efi_image_cert is a cert file used to sign the EFI UKI relative to ${CRAFT_STAGE}/signing
       # Default value is /usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem
-      initrd_efi_image_cert="${arg#*=}"       ;;
-      *) echo "err: invalid option: '${arg}'" ;;
+      initrd_efi_image_cert="${arg#*=}"
+      ;;
+    *) echo "err: invalid option: '${arg}'" ;;
     esac
   done
 }
@@ -43,7 +49,7 @@ mnt() {
 # umnt wraps the umount command
 umnt() {
   dir="${1}"
-  { mountpoint "${dir}" && umount --lazy "${dir}" ; } || true
+  { mountpoint "${dir}" && umount --lazy "${dir}"; } || true
 }
 
 # clean kills processes and unmounts certain paths from the chroot
@@ -83,32 +89,32 @@ clean() {
 
 # chroot_setup creates the chroot base and mounts certain filesystems from host
 chroot_setup() {
-    # This is a minimum viable collection of mounts.
-    # Even though we try to settle any existing processes, on some systems this isn't
-    # sufficient for ensuring an unmount can happen right now. Therefore, unmount lazily
-    # to ensure we don't emit an error for no Good Reason and make sure the kernel
-    # cleans up outstanding mounts when all PIDs and FDs are no longer relying on it.
-    mnt /dev         "${INITRD_ROOT}/dev"
-    mnt /dev/full    "${INITRD_ROOT}/dev/full"
-    mnt /dev/null    "${INITRD_ROOT}/dev/null"
-    mnt /dev/pts     "${INITRD_ROOT}/dev/pts"
-    mnt /dev/random  "${INITRD_ROOT}/dev/random"
-    mnt /dev/urandom "${INITRD_ROOT}/dev/urandom"
-    mnt /dev/zero    "${INITRD_ROOT}/dev/zero"
-    mnt /dev/tty     "${INITRD_ROOT}/dev/tty"
-    # Normally we'd mount with -t but if we're in LXD, we have to mount from "host"
-    mnt /proc        "${INITRD_ROOT}/proc"
-    mnt /run         "${INITRD_ROOT}/run"
-    mnt /sys         "${INITRD_ROOT}/sys"
+  # This is a minimum viable collection of mounts.
+  # Even though we try to settle any existing processes, on some systems this isn't
+  # sufficient for ensuring an unmount can happen right now. Therefore, unmount lazily
+  # to ensure we don't emit an error for no Good Reason and make sure the kernel
+  # cleans up outstanding mounts when all PIDs and FDs are no longer relying on it.
+  mnt /dev "${INITRD_ROOT}/dev"
+  mnt /dev/full "${INITRD_ROOT}/dev/full"
+  mnt /dev/null "${INITRD_ROOT}/dev/null"
+  mnt /dev/pts "${INITRD_ROOT}/dev/pts"
+  mnt /dev/random "${INITRD_ROOT}/dev/random"
+  mnt /dev/urandom "${INITRD_ROOT}/dev/urandom"
+  mnt /dev/zero "${INITRD_ROOT}/dev/zero"
+  mnt /dev/tty "${INITRD_ROOT}/dev/tty"
+  # Normally we'd mount with -t but if we're in LXD, we have to mount from "host"
+  mnt /proc "${INITRD_ROOT}/proc"
+  mnt /run "${INITRD_ROOT}/run"
+  mnt /sys "${INITRD_ROOT}/sys"
 
-    touch "${BASE_CREATED}"
+  touch "${BASE_CREATED}"
 }
 
 # chroot_run runs command within chroot
 # $1 is the command to run; must be quoted
 chroot_run() {
-    cmd="${1}"
-    chroot "${INITRD_ROOT}" /bin/bash -c "${cmd}"
+  cmd="${1}"
+  chroot "${INITRD_ROOT}" /bin/bash -c "${cmd}"
 }
 
 # setup_ppa adds a PPA to chroot
@@ -130,9 +136,16 @@ setup_ppa() {
   chroot_run "mkdir -p --mode 700 /root/.gnupg"
   chroot_run "mkdir -p            ${gpg_file%/*}"
   chroot_run "echo keyserver hkp://keyserver.ubuntu.com > ${dirmngr_conf}"
+
+  keyserver_options=""
+  if [ -n "${http_proxy:-}" ]; then
+    keyserver_options="--keyserver-options http-proxy=${http_proxy}"
+  fi
+
   chroot_run "gpg --homedir /root/.gnupg         \
                   --no-default-keyring           \
                   --keyring \"${snappy_key}\"    \
+                  ${keyserver_options}           \
                   --recv-keys \"${fingerprint}\""
 
   chroot_run "gpg --homedir /root/.gnupg         \
@@ -141,7 +154,7 @@ setup_ppa() {
                   --export --out \"${gpg_file}\""
 
   # Create the PPA sources.list file
-  cat > "${INITRD_ROOT}/${source_file}" << EOF
+  cat >"${INITRD_ROOT}/${source_file}" <<EOF
 Types: deb
 URIs: https://ppa.launchpadcontent.net/snappy-dev/image/ubuntu/
 Suites: ${UBUNTU_SERIES}
@@ -164,9 +177,10 @@ chroot_configure() {
     # that /etc/resolv.conf and /run/systemd/resolve/stub-resolv.conf are the same file
     # and refusing to overwrite it; remove the file and reattempt the build
     chroot_run "apt-get install --no-install-recommends -y snapd" || {
-        rm "${INITRD_ROOT}/etc/resolv.conf"
-        chroot_run "apt-get install --no-install-recommends -y snapd"
-    };  chroot_run "apt-get install --no-install-recommends -y systemd"
+      rm "${INITRD_ROOT}/etc/resolv.conf"
+      chroot_run "apt-get install --no-install-recommends -y snapd"
+    }
+    chroot_run "apt-get install --no-install-recommends -y systemd"
   else
     chroot_run "apt-get install --no-install-recommends -y libbpf1 libsystemd-shared"
 
@@ -195,7 +209,7 @@ chroot_configure() {
   # where tmp is not really tmpfs, avoid excessive use of cp
   # cp "-ar"/"-aR" -> cp "-lR"
   sed -i -e 's/"cp", "-ar", args./"cp", "-lR", args./g' \
-         -e 's/"cp", "-aR", args./"cp", "-lR", args./g' \
+    -e 's/"cp", "-aR", args./"cp", "-lR", args./g' \
     "${INITRD_ROOT}/usr/bin/ubuntu-core-initramfs"
 }
 
@@ -219,7 +233,7 @@ add_modules() {
     modules=""
     while read -r m; do
       modules="${modules} ${m}"
-    done < "${initrd_modules_conf}"
+    done <"${initrd_modules_conf}"
   fi
 
   rm -f "${initrd_modules_conf}"
@@ -228,9 +242,9 @@ add_modules() {
   initrd_modules_conf="${initrd_modules_conf%/*}/modules/main/extra-modules.conf"
 
   # Create the file tree hierarchy
-  mkdir -p "${initrd_conf_dir}"    \
-           "${initrd_modules_dir}" \
-           "${initrd_modules_conf%/*}"
+  mkdir -p "${initrd_conf_dir}" \
+    "${initrd_modules_dir}" \
+    "${initrd_modules_conf%/*}"
 
   echo "Adding '${modules}' to ubuntu-core-initramfs.conf"
 
@@ -242,10 +256,10 @@ add_modules() {
 
   # Ensure any dependencies for $modules are also included
   echo "Gathering module dependencies"
-  echo "# configured modules" > "${initrd_conf}"
+  echo "# configured modules" >"${initrd_conf}"
   for m in ${modules}; do
     if [ -n "$(modprobe -n -q --show-depends -d "${CRAFT_STAGE}" -S "${KERNEL_VERSION}" "${m}")" ]; then
-      echo "${m}" >> "${initrd_conf}"
+      echo "${m}" >>"${initrd_conf}"
     fi
   done
   unset IFS
@@ -265,9 +279,9 @@ install_extra() {
   # extra_path is the relevant path for any particular type to ensure use by
   # ubuntu-core-initramfs
   case $type in
-    addons)   extra_path="${ramdisk_feature_path}"                   ;;
-    firmware) extra_path="${ramdisk_feature_path}/usr/lib/firmware/" ;;
-    signing)  extra_path="${INITRD_ROOT}/root"                       ;;
+  addons) extra_path="${ramdisk_feature_path}" ;;
+  firmware) extra_path="${ramdisk_feature_path}/usr/lib/firmware/" ;;
+  signing) extra_path="${INITRD_ROOT}/root" ;;
   esac
 
   echo "Installing specified extra files..."
@@ -312,61 +326,61 @@ generate_manifest() {
 
   # Generate a list of repositories from their URIs
   for path in $SRC_LIST; do
-    apt-cache policy -o "${path}" |\
-    grep -E 'http:|mirror:|file:|cdrom:|ftp:|copy:|rsh:|ssh:' |\
+    apt-cache policy -o "${path}" |
+      grep -E 'http:|mirror:|file:|cdrom:|ftp:|copy:|rsh:|ssh:' |
       while read -r _ uri _; do
-          echo "${uri}" >> repo_list
+        echo "${uri}" >>repo_list
       done
   done
 
   # Create a unique list of repositories from the generated list
-  sort -u < repo_list > uri_list
+  sort -u <repo_list >uri_list
 
   # Generate a list of components and suites for each repository
   while read -r uri; do
     for path in ${SRC_LIST}; do
       # sc is the suite and component for each URI, formatted as suite/component
-      apt-cache policy -o "${path}" |\
-      grep "${uri}" | while read -r _ _ sc _; do
-          comp="${sc##*/}"
-          suite="${sc%%/*}"
-          _uri="$(echo "${uri}" | sed -e 's/\//\+/g')"
-          # Create a list of suites/components for each repository
-          echo "${comp}"  | tr ' ' '\n' >> "${_uri}.comp_list"
-          echo "${suite}" | tr ' ' '\n' >> "${_uri}.suite_list"
+      apt-cache policy -o "${path}" |
+        grep "${uri}" | while read -r _ _ sc _; do
+        comp="${sc##*/}"
+        suite="${sc%%/*}"
+        _uri="$(echo "${uri}" | sed -e 's/\//\+/g')"
+        # Create a list of suites/components for each repository
+        echo "${comp}" | tr ' ' '\n' >>"${_uri}.comp_list"
+        echo "${suite}" | tr ' ' '\n' >>"${_uri}.suite_list"
       done
     done
-  done < uri_list
+  done <uri_list
 
   # Create a unique list of suites/components for each repository
   for _list in *comp_list *suite_list; do
-    sort -u < "${_list}" > "${_list}.uniq"
+    sort -u <"${_list}" >"${_list}.uniq"
   done
 
   # Begin creating the manifest json
-  echo package-repositories: > "${manifest_file}"
+  echo package-repositories: >"${manifest_file}"
 
   # Write the package-repositories used to fetch packages to the manifest json
   while read -r uri; do
     # Use correct filename and put suites/components in comma-separated list
     _uri="$(echo "${uri}" | sed -e 's/\//\+/g')"
-    _comps="$( tr '\n' ',' < "${_uri}.comp_list.uniq")"
-    _suites="$(tr '\n' ',' < "${_uri}.suite_list.uniq")"
+    _comps="$(tr '\n' ',' <"${_uri}.comp_list.uniq")"
+    _suites="$(tr '\n' ',' <"${_uri}.suite_list.uniq")"
 
     # Trim last ,
     _comps="${_comps%*,}"
     _suites="${_suites%*,}"
 
     # Small formatting tweak
-    comps="$( echo "${_comps}"  | sed -e 's/,/, /g')"
+    comps="$(echo "${_comps}" | sed -e 's/,/, /g')"
     suites="$(echo "${_suites}" | sed -e 's/,/, /g')"
 
     printf -- '- type: apt\n  url: %s\n  suites: [ %s ]\n  components: [ %s ]\n' \
-      "${uri}" "${suites}" "${comps}" >> "${manifest_file}"
-  done < uri_list
+      "${uri}" "${suites}" "${comps}" >>"${manifest_file}"
+  done <uri_list
 
   # Begin the package list in the manifest json
-  echo packages: >> "${manifest_file}"
+  echo packages: >>"${manifest_file}"
 
   # Print the packages installed to $INITRD_ROOT to the manifest json
   for pkg in "${INITRD_ROOT}/var/lib/dpkg/info/"*.md5sums; do
@@ -378,9 +392,9 @@ generate_manifest() {
     pkg=${pkg%%:*}
 
     # Format each package installed to $INITRD_ROOT as name=version
-    dpkg-query --admindir="${INITRD_ROOT}/var/lib/dpkg"      \
+    dpkg-query --admindir="${INITRD_ROOT}/var/lib/dpkg" \
       --show --showformat='- ${binary:Package}=${Version}\n' \
-      "${pkg}" >> "${manifest_file}"
+      "${pkg}" >>"${manifest_file}"
   done
 }
 
@@ -498,14 +512,14 @@ run() {
 
     # Install kernel, firmware, modules into chroot
     echo "Installing kernel and modules into chroot"
-    cp --archive --link --force "${KERNEL_MODULES}"  \
-                                "${INITRD_ROOT}/usr/lib"
+    cp --archive --link --force "${KERNEL_MODULES}" \
+      "${INITRD_ROOT}/usr/lib"
 
     cp --force "${KERNEL_IMAGE}" "${INITRD_ROOT}/boot"
 
     # Cleanup dangling links if they exist
     # The kernel plugin should have removed these, however
-    unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build"  || true
+    unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/build" || true
     unlink "${INITRD_ROOT}/usr/lib/modules/${KERNEL_VERSION}/source" || true
 
     # Add modules to initrd
@@ -513,7 +527,7 @@ run() {
     add_modules "${initrd_modules}"
 
     # Add any extra files from plugin options to initrd
-    [ -z "${initrd_addons}"   ] || install_extra addons   "${initrd_addons}"
+    [ -z "${initrd_addons}" ] || install_extra addons "${initrd_addons}"
     [ -z "${initrd_firmware}" ] || install_extra firmware "${initrd_firmware}"
 
     touch "${BASE_CONFIGURED}"
@@ -525,13 +539,14 @@ run() {
   # Build the EFI image if requested
   [ "${initrd_build_efi_image}" = "False" ] || {
     # Ensure we have the correct values for key and cert if they're snakeoil
-    if [ "${initrd_efi_image_key##*/}"  = PkKek-1-snakeoil.key ] &&
-       [ "${initrd_efi_image_cert##*/}" = PkKek-1-snakeoil.pem ]; then
-      cp -f "${INITRD_ROOT}/${initrd_efi_image_key}"  \
-            "${INITRD_ROOT}/${initrd_efi_image_cert}" \
-            "${INITRD_ROOT}/root"
-    else install_extra signing "${initrd_efi_image_key}"
-         install_extra signing "${initrd_efi_image_cert}"
+    if [ "${initrd_efi_image_key##*/}" = PkKek-1-snakeoil.key ] &&
+      [ "${initrd_efi_image_cert##*/}" = PkKek-1-snakeoil.pem ]; then
+      cp -f "${INITRD_ROOT}/${initrd_efi_image_key}" \
+        "${INITRD_ROOT}/${initrd_efi_image_cert}" \
+        "${INITRD_ROOT}/root"
+    else
+      install_extra signing "${initrd_efi_image_key}"
+      install_extra signing "${initrd_efi_image_cert}"
     fi
 
     # Create the EFI UKI
@@ -576,13 +591,13 @@ main() {
             Dir::Etc::SourceParts=${INITRD_ROOT}/etc/apt/sources.list.d
             Dir::Etc::State::Lists=${INITRD_ROOT}/var/lib/apt/lists"
 
-  readonly INITRD_ROOT     \
-           PPA_FINGERPRINT \
-           KERNEL_VERSION  \
-           KERNEL_MODULES  \
-           BASE_CREATED    \
-           BASE_CONFIGURED \
-           SRC_LIST
+  readonly INITRD_ROOT \
+    PPA_FINGERPRINT \
+    KERNEL_VERSION \
+    KERNEL_MODULES \
+    BASE_CREATED \
+    BASE_CONFIGURED \
+    SRC_LIST
 
   # clean if we fail
   trap 'clean' EXIT INT

@@ -1,3 +1,6 @@
+.. meta::
+    :description: The explanatory documentation for Snapcraft. These explanations aid in understanding the concepts and relationships of Snapcraft as a complete system.
+
 .. _explanation:
 
 Explanation
