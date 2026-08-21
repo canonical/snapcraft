@@ -13,6 +13,7 @@ Learn about the new features, changes, and fixes introduced in Snapcraft 9.1.
 
 Requirements and compatibility
 ------------------------------
+
 See :ref:`reference-system-requirements` for information on the minimum hardware and
 installed software.
 

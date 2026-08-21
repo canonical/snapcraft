@@ -128,6 +128,7 @@ development keeps pace with the OS's new releases and support lifecycle.
 
   Requirements and compatibility
   ------------------------------
+
   See :ref:`reference-system-requirements` for information on the minimum hardware and
   installed software.
 
