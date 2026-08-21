@@ -32,6 +32,23 @@ class Init(services.InitService):
     """Service class for initializing a project."""
 
     @override
+    def validate_project_name(self, name: str, *, use_default: bool = False) -> str:
+        """Validate that ``name`` is valid as a snap name."""
+        try:
+            validate_name(name=name, field_name="snap")
+            if len(name) > 40:
+                raise ValueError("snap names must be 40 characters or less")
+        except ValueError as err:
+            if use_default:
+                return self._default_name
+            raise errors.SnapcraftError(
+                message=f"Invalid snap name {name!r}: {str(err)}.",
+                resolution="Provide a valid name with '--name' or rename the project directory.",
+            ) from err
+
+        return name
+
+    @override
     def initialise_project(
         self,
         *,
@@ -39,16 +56,6 @@ class Init(services.InitService):
         project_name: str,
         template_dir: pathlib.Path,
     ) -> None:
-        try:
-            validate_name(name=project_name, field_name="snap")
-            if len(project_name) > 40:
-                raise ValueError("snap names must be 40 characters or less")
-        except ValueError as err:
-            raise errors.SnapcraftError(
-                message=f"Invalid snap name {project_name!r}: {str(err)}.",
-                resolution="Provide a valid name with '--name' or rename the project directory.",
-            ) from err
-
         super().initialise_project(
             project_dir=project_dir,
             project_name=project_name,
