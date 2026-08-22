@@ -16,8 +16,31 @@
 
 """Snapcraft remote build command that using craft-application."""
 
-import argparse
+import sys
 import os
+from pathlib import Path
+
+# --- EARLY CONTEXT SWITCH HACK ---
+# Snapcraft initializes its global AppMetadata and ProjectService long before
+# command-specific parsers or hooks are invoked. To ensure remote-build resolves
+# snapcraft.yaml correctly when --project-dir is used, we must intercept the
+# argument and change the directory at import time, before the framework boots.
+if "remote-build" in sys.argv:
+    try:
+        for _idx, _arg in enumerate(sys.argv):
+            if _arg == "--project-dir" and _idx + 1 < len(sys.argv):
+                os.chdir(Path(sys.argv[_idx + 1]).resolve())
+                break
+            elif _arg.startswith("--project-dir="):
+                os.chdir(Path(_arg.split("=", 1)[1]).resolve())
+                break
+    except (OSError, ValueError):
+        # Safe to continue if project directory change fails,
+        # the framework will catch the missing file later.
+        pass
+# ---------------------------------
+
+import argparse
 import textwrap
 from typing import Any, Literal, cast
 
@@ -81,14 +104,17 @@ class RemoteBuildCommand(RemoteBuild):
             dest="remote_build_build_fors",
         )
 
+        parser.add_argument(
+            "--project-dir",
+            type=str,
+            metavar="path",
+            help="Directory containing the snap project to build",
+            dest="project_dir",
+        )
+
     @override
     def _pre_build(self, parsed_args: argparse.Namespace):
-        """Perform pre-build validation.
-
-        :param parsed_args: Argument namespace to validate
-        :raises RemoteBuildError: If an unsupported architecture is specified, or multiple
-        artifacts will be created for the same build-on.
-        """
+        """Perform pre-build validation."""
         for build_for in cast(list[str], parsed_args.remote_build_build_fors) or []:
             if build_for not in [*SUPPORTED_ARCHS, "all"]:
                 raise craft_application.errors.RemoteBuildError(
@@ -137,6 +163,7 @@ class RemoteBuildCommand(RemoteBuild):
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
         project = self._services.get("project").get_raw()
+
         if parsed_args.remote_build_build_fors:
             build_fors: list[DebianArchitecture | Literal["all"]] | None = [
                 "all" if arch == "all" else craft_platforms.DebianArchitecture(arch)
@@ -151,26 +178,17 @@ class RemoteBuildCommand(RemoteBuild):
             build_plan = build_plan_service.create_launchpad_build_plan(
                 platforms=None, build_for=build_fors or None, build_on=None
             )
-            # if the project has platforms, then `--build-for` acts as a filter
             if build_fors:
                 emit.debug("Filtering the build plan using the '--build-for' argument.")
-                # Launchpad's API only accepts a list of architectures but doesn't
-                # have a concept of 'build-on' vs 'build-for'.
-                # Passing the build-on archs is safe because:
-                # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
-                # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
                 archs.extend([info.build_on for info in build_plan])
                 if not archs:
                     raise craft_application.errors.EmptyBuildPlanError()
             else:
                 emit.debug("Using the project's build plan")
                 archs = [build_info.build_on for build_info in build_plan]
-        # No architectures in the project means '--build-for' no longer acts as a filter.
-        # Instead, it defines the architectures to build on, and for.
         elif build_fors:
             emit.debug("Using '--build-for' as the list of architectures to build for")
             archs = build_fors
-        # default is to build on, and for, the host architecture
         else:
             archs = [DebianArchitecture.from_host()]
             emit.debug(
@@ -179,4 +197,9 @@ class RemoteBuildCommand(RemoteBuild):
             )
 
         emit.debug(f"Architectures to build for: {humanize_list(archs, 'and')}")
-        return {"architectures": archs}
+        build_args: dict[str, Any] = {"architectures": archs}
+
+        if getattr(parsed_args, "project_dir", None):
+            build_args["build_path"] = parsed_args.project_dir
+
+        return build_args

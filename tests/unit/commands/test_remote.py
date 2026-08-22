@@ -536,7 +536,7 @@ def test_unknown_build_for_error(
     ],
 )
 @pytest.mark.usefixtures("emitter", "mock_argv", "mock_remote_start_builds")
-def test_multiple_artifacts_per_build_on(
+def test_multiple_artifacts_per_build_on( # noqa: PLR0917
     default_project,
     fake_services,
     setup_project,
@@ -567,3 +567,37 @@ def test_multiple_artifacts_per_build_on(
     )
     for message in error_messages:
         check.is_in(message, err)
+
+
+@pytest.mark.usefixtures("emitter")
+def test_project_dir_argument(
+    default_project,
+    fake_services,
+    setup_project,
+    mock_remote_start_builds,
+    fake_app,
+    mocker,
+):
+    """Test that `--project-dir` passes the build_path argument."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "snapcraft",
+            "remote-build",
+            "--launchpad-accept-public-upload",
+            "--project-dir",
+            "my-subdir",
+        ],
+    )
+    setup_project(
+        fake_services,
+        {**default_project.marshal(), "base": "core24"},
+        write_project=True,
+    )
+
+    fake_app.run()
+
+    mock_remote_start_builds.assert_called_once_with(
+        ANY, architectures=[str(DebianArchitecture.from_host())], build_path="my-subdir"
+    )
