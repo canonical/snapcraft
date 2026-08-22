@@ -7,3 +7,4 @@ tests/spread
 
 # Files from the Starter Pack
 docs/.sphinx
+docs/_dev

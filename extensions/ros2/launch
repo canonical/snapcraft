@@ -4,8 +4,8 @@ function source_with_prefix() {
     export ROS_WORKSPACE_CURRENT_PREFIX="$1"
     SETUP_SCRIPT="$ROS_WORKSPACE_CURRENT_PREFIX/local_setup.bash"
     if [ ! -f "$SETUP_SCRIPT" ]; then
-      echo "error: $SETUP_SCRIPT not found"
-      exit 1
+        echo "error: $SETUP_SCRIPT not found"
+        exit 1
     fi
     # shellcheck disable=SC1090,SC1091
     source "$SETUP_SCRIPT"
@@ -16,36 +16,39 @@ original_args=("$@")
 
 if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ] || [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
 
-  case "$SNAP_ARCH" in
-    "amd64") ARCH_TRIPLET='x86_64-linux-gnu'
-    ;;
-    "arm64") ARCH_TRIPLET="aarch64-linux-gnu"
-    ;;
-    "armhf") ARCH_TRIPLET="arm-linux-gnueabihf"
-    ;;
+    case "$SNAP_ARCH" in
+    "amd64")
+        ARCH_TRIPLET='x86_64-linux-gnu'
+        ;;
+    "arm64")
+        ARCH_TRIPLET="aarch64-linux-gnu"
+        ;;
+    "armhf")
+        ARCH_TRIPLET="arm-linux-gnueabihf"
+        ;;
     *)
-      echo "Unsupported architecture '$SNAP_ARCH' for this app build."
-      exit 1
-    ;;
-  esac
+        echo "Unsupported architecture '$SNAP_ARCH' for this app build."
+        exit 1
+        ;;
+    esac
 
-  export PATH="$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
-  export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib:$SNAP/opt/ros/underlay_ws/usr/lib/$ARCH_TRIPLET:$LD_LIBRARY_PATH"
+    export PATH="$SNAP/opt/ros/underlay_ws/usr/bin:$PATH"
+    export LD_LIBRARY_PATH="$SNAP/opt/ros/underlay_ws/usr/lib:$SNAP/opt/ros/underlay_ws/usr/lib/$ARCH_TRIPLET:$LD_LIBRARY_PATH"
 fi
 
 # The sourcing happens after the PATH and LD_LIBRARY_PATH are set,
 # so that the local_setup.bash scripts can find the correct python3 with content sharing.
 if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ]; then
-  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO"
+    source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO"
 fi
 if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/snap" ]; then
-  source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/snap"
+    source_with_prefix "$SNAP/opt/ros/underlay_ws/opt/ros/snap"
 fi
 
 source_with_prefix "$SNAP/opt/ros/$ROS_DISTRO"
 
 if [ -f "$SNAP/opt/ros/snap/local_setup.bash" ]; then
-  source_with_prefix "$SNAP/opt/ros/snap"
+    source_with_prefix "$SNAP/opt/ros/snap"
 fi
 
 exec "${original_args[@]}"

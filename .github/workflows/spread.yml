@@ -131,9 +131,9 @@ jobs:
           # Secrets cannot be used in conditionals, so this is our dance:
           # https://github.com/actions/runner/issues/520
           if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}" ]]; then
-            echo RUN=true >> $GITHUB_OUTPUT
+            echo RUN=true >> "$GITHUB_OUTPUT"
           else
-            echo RUN= >> $GITHUB_OUTPUT
+            echo RUN= >> "$GITHUB_OUTPUT"
           fi
 
       - if: steps.decisions.outputs.RUN == 'true'
