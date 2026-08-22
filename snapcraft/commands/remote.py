@@ -16,10 +16,30 @@
 
 """Snapcraft remote build command that using craft-application."""
 
-import argparse
+import sys
 import os
-import textwrap
 from pathlib import Path
+
+# --- EARLY CONTEXT SWITCH HACK ---
+# Snapcraft initializes its global AppMetadata and ProjectService long before
+# command-specific parsers or hooks are invoked. To ensure remote-build resolves
+# snapcraft.yaml correctly when --project-dir is used, we must intercept the
+# argument and change the directory at import time, before the framework boots.
+if "remote-build" in sys.argv:
+    try:
+        for _idx, _arg in enumerate(sys.argv):
+            if _arg == "--project-dir" and _idx + 1 < len(sys.argv):
+                os.chdir(Path(sys.argv[_idx + 1]).resolve())
+                break
+            elif _arg.startswith("--project-dir="):
+                os.chdir(Path(_arg.split("=", 1)[1]).resolve())
+                break
+    except Exception:
+        pass
+# ---------------------------------
+
+import argparse
+import textwrap
 from typing import Any, Literal, cast
 
 import craft_application.errors
@@ -92,18 +112,7 @@ class RemoteBuildCommand(RemoteBuild):
 
     @override
     def _pre_build(self, parsed_args: argparse.Namespace):
-        """Perform pre-build validation.
-
-        :param parsed_args: Argument namespace to validate
-        :raises RemoteBuildError: If an unsupported architecture is specified, or multiple
-        artifacts will be created for the same build-on.
-        """
-        # Change the process's working directory early so all underlying
-        # services naturally find snapcraft.yaml in the provided --project-dir path.
-        if getattr(parsed_args, "project_dir", None):
-            project_path = Path(parsed_args.project_dir).resolve()
-            os.chdir(project_path)
-
+        """Perform pre-build validation."""
         for build_for in cast(list[str], parsed_args.remote_build_build_fors) or []:
             if build_for not in [*SUPPORTED_ARCHS, "all"]:
                 raise craft_application.errors.RemoteBuildError(
@@ -151,14 +160,6 @@ class RemoteBuildCommand(RemoteBuild):
 
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
-        if getattr(parsed_args, "project_dir", None):
-            project_path = Path(parsed_args.project_dir).resolve()
-
-            # Change the process's working directory so that all underlying
-            # services (like ProjectService) naturally find snapcraft.yaml
-            # in the provided --project-dir path.
-            os.chdir(project_path)
-
         project = self._services.get("project").get_raw()
 
         if parsed_args.remote_build_build_fors:
@@ -175,26 +176,17 @@ class RemoteBuildCommand(RemoteBuild):
             build_plan = build_plan_service.create_launchpad_build_plan(
                 platforms=None, build_for=build_fors or None, build_on=None
             )
-            # if the project has platforms, then `--build-for` acts as a filter
             if build_fors:
                 emit.debug("Filtering the build plan using the '--build-for' argument.")
-                # Launchpad's API only accepts a list of architectures but doesn't
-                # have a concept of 'build-on' vs 'build-for'.
-                # Passing the build-on archs is safe because:
-                # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
-                # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
                 archs.extend([info.build_on for info in build_plan])
                 if not archs:
                     raise craft_application.errors.EmptyBuildPlanError()
             else:
                 emit.debug("Using the project's build plan")
                 archs = [build_info.build_on for build_info in build_plan]
-        # No architectures in the project means '--build-for' no longer acts as a filter.
-        # Instead, it defines the architectures to build on, and for.
         elif build_fors:
             emit.debug("Using '--build-for' as the list of architectures to build for")
             archs = build_fors
-        # default is to build on, and for, the host architecture
         else:
             archs = [DebianArchitecture.from_host()]
             emit.debug(
