@@ -34,7 +34,9 @@ if "remote-build" in sys.argv:
             elif _arg.startswith("--project-dir="):
                 os.chdir(Path(_arg.split("=", 1)[1]).resolve())
                 break
-    except Exception:
+    except (OSError, ValueError):
+        # Safe to continue if project directory change fails,
+        # the framework will catch the missing file later.
         pass
 # ---------------------------------
 
