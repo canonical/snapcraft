@@ -151,6 +151,14 @@ class RemoteBuildCommand(RemoteBuild):
 
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
+        if getattr(parsed_args, "project_dir", None):
+            project_path = Path(parsed_args.project_dir).resolve()
+
+            # Change the process's working directory so that all underlying
+            # services (like ProjectService) naturally find snapcraft.yaml
+            # in the provided --project-dir path.
+            os.chdir(project_path)
+
         project = self._services.get("project").get_raw()
 
         if parsed_args.remote_build_build_fors:
