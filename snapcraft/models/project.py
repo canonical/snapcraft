@@ -1868,8 +1868,8 @@ class Project(models.Project):
     
     Nested braces such as ``${VAR:+${OTHER_VAR}}`` aren't supported.
 
-    To ensure this feature is available, use the ``assumes`` key to require a
-    minimum version of snapd, for example ``assumes: [snapd2.77]``.
+    Since this feature requires a minimum version of SnapD, use the ``assumes`` key to
+    constrain your snap to a supported SnapD version with ``assumes: [snapd2.77]``.
     """
 
     build_packages: Grammar[list[str]] | None = pydantic.Field(
