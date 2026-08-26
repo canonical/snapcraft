@@ -16,37 +16,16 @@
 
 """Snapcraft remote build command that using craft-application."""
 
-import sys
-import os
-from pathlib import Path
-
-# --- EARLY CONTEXT SWITCH HACK ---
-# Snapcraft initializes its global AppMetadata and ProjectService long before
-# command-specific parsers or hooks are invoked. To ensure remote-build resolves
-# snapcraft.yaml correctly when --project-dir is used, we must intercept the
-# argument and change the directory at import time, before the framework boots.
-if "remote-build" in sys.argv:
-    try:
-        for _idx, _arg in enumerate(sys.argv):
-            if _arg == "--project-dir" and _idx + 1 < len(sys.argv):
-                os.chdir(Path(sys.argv[_idx + 1]).resolve())
-                break
-            elif _arg.startswith("--project-dir="):
-                os.chdir(Path(_arg.split("=", 1)[1]).resolve())
-                break
-    except (OSError, ValueError):
-        # Safe to continue if project directory change fails,
-        # the framework will catch the missing file later.
-        pass
-# ---------------------------------
-
 import argparse
+import os
 import textwrap
+from pathlib import Path
 from typing import Any, Literal, cast
 
 import craft_application.errors
 import craft_platforms
 from craft_application.commands import RemoteBuild
+from craft_application.services.project import ProjectService
 from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
@@ -60,6 +39,7 @@ class RemoteBuildCommand(RemoteBuild):
     """Command passthrough for the remote-build command."""
 
     help_msg = "Build a snap remotely on Launchpad."
+
     overview = textwrap.dedent(
         """
         Command remote-build sends the current project to be built
@@ -99,8 +79,6 @@ class RemoteBuildCommand(RemoteBuild):
             metavar="arch",
             default=os.getenv("CRAFT_BUILD_FOR"),
             help="Comma-separated list of architectures to build for",
-            # '--build-for' needs to be handled differently since remote-build can
-            # build for architecture that is not in the project metadata
             dest="remote_build_build_fors",
         )
 
@@ -112,9 +90,34 @@ class RemoteBuildCommand(RemoteBuild):
             dest="project_dir",
         )
 
+    def _setup_target_project(self, parsed_args: argparse.Namespace) -> None:
+        """Dynamically point the Project and BuildPlan services to the target directory."""
+        if not getattr(parsed_args, "project_dir", None):
+            return
+
+        target_dir = Path(parsed_args.project_dir).resolve()
+
+        # Re-initialize services for the target directory WITHOUT altering
+        # the global OS working directory so root .git checks still pass.
+        project_svc = ProjectService(
+            app=self._app,
+            services=self._services,
+            project_dir=target_dir
+        )
+
+        project_svc.configure(platform=None, build_for=None)
+
+        self._services._services["project"] = project_svc
+        self._services._services["build_plan"] = BuildPlan(
+            app=self._app,
+            services=self._services
+        )
+
     @override
     def _pre_build(self, parsed_args: argparse.Namespace):
         """Perform pre-build validation."""
+        self._setup_target_project(parsed_args)
+
         for build_for in cast(list[str], parsed_args.remote_build_build_fors) or []:
             if build_for not in [*SUPPORTED_ARCHS, "all"]:
                 raise craft_application.errors.RemoteBuildError(
@@ -132,12 +135,10 @@ class RemoteBuildCommand(RemoteBuild):
             platforms=None, build_for=None, build_on=None
         )
 
-        # mapping of `build-on` to `build-for` architectures
         build_map: dict[str, list[str]] = {}
         for build_info in build_plan:
             build_map.setdefault(build_info.build_on, []).append(build_info.build_for)
 
-        # assemble a list so all errors are shown at once
         build_on_errors = []
         for build_on, build_fors in build_map.items():
             if len(build_fors) > 1:
@@ -162,6 +163,8 @@ class RemoteBuildCommand(RemoteBuild):
 
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
+        self._setup_target_project(parsed_args)
+
         project = self._services.get("project").get_raw()
 
         if parsed_args.remote_build_build_fors:
@@ -199,6 +202,7 @@ class RemoteBuildCommand(RemoteBuild):
         emit.debug(f"Architectures to build for: {humanize_list(archs, 'and')}")
         build_args: dict[str, Any] = {"architectures": archs}
 
+        # Natively pass the build_path argument for Launchpad
         if getattr(parsed_args, "project_dir", None):
             build_args["build_path"] = parsed_args.project_dir
 
