@@ -90,7 +90,7 @@ The following code comprises the project file of an Avalonia app, `XamlPlaygroun
 for experimenting with XAML markup and seeing the results in real time. It's
 `published on the Snap Store <https://snapcraft.io/avalonia-xaml-playground>`_,
 and its packaging is maintained in the `community snap repository
-<https://github.com/mateusrodrigues/avalonia-xaml-playground-snap>`_.
+<https://github.com/snapcraft-docs/avalonia-xaml-playground-snap>`_.
 
 .. dropdown:: XamlPlayground project file
 
