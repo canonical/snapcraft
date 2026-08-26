@@ -149,6 +149,7 @@ pytest
 QEMU
 qmake
 rackup
+ramdisk
 Read the Docs
 ramdisks
 readthedocs
@@ -207,6 +208,7 @@ untrusted
 URIs?
 URL
 usermod
+userspace
 utils
 uv
 vendored

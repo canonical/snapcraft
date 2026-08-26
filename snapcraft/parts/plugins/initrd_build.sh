@@ -230,13 +230,11 @@ add_modules() {
 
   # A bug in releases pre-24.04; ensure modules are properly added
   if [ "${UBUNTU_SERIES}" = "jammy" ]; then
-    modules=""
-    while read -r m; do
-      modules="${modules} ${m}"
-    done <"${initrd_modules_conf}"
+    mkdir -p "${initrd_modules_conf%/*}"
+    for m in ${modules}; do
+      echo "${m}" >>"${initrd_modules_conf}"
+    done
   fi
-
-  rm -f "${initrd_modules_conf}"
 
   # Shorten initrd_modules_conf
   initrd_modules_conf="${initrd_modules_conf%/*}/modules/main/extra-modules.conf"
