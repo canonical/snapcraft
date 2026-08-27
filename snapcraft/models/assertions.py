@@ -74,6 +74,24 @@ class ConfdbSchema(models.CraftBaseModel):
     """Optional nested rules."""
 
 
+class Parameter(models.CraftBaseModel):
+    """A named constraint to filter results."""
+
+    summary: str | None = None
+    """Optional summary of the parameter."""
+
+    presence: Literal[
+        "required", "required-on-read", "required-on-write", "optional"
+    ] = "optional"
+    """The scenarios where a parameter must be assigned a value."""
+
+
+class Filter(models.CraftBaseModel):
+    """A constraint on whether a parameter is required for a filter to match."""
+
+    optional: bool
+
+
 class Rules(models.CraftBaseModel):
     """A list of confdb schemas for a particular view."""
 
@@ -81,6 +99,12 @@ class Rules(models.CraftBaseModel):
     """Optional summary for this view."""
 
     rules: list[ConfdbSchema]
+
+    parameters: dict[str, Parameter] | None = None
+    """Parameters used to create filters."""
+
+    filters: list[dict[str, Filter]] | None = None
+    """Combinations of parameters that filter which rules apply."""
 
 
 class EditableConfdbSchemaAssertion(models.CraftBaseModel):
@@ -98,6 +122,8 @@ class EditableConfdbSchemaAssertion(models.CraftBaseModel):
     views: dict[str, Rules]
     """A map of logical views of how the storage is accessed."""
 
+    # This is a string of json data, not the data itself. The json is awkward to edit in a yaml file.
+    # This could be changed to an 'Any' field and converted to a json string when marshaled.
     body: str | None = None
     """A JSON schema that defines the storage structure."""
 
