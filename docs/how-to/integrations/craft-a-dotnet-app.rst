@@ -48,8 +48,10 @@ To add a .NET part:
 #. Declare the general part keys, such as ``source``, ``override-build``, and
    so on.
 #. Set the ``plugin`` key to ``dotnet``.
-#. If you need to override the build configuration, set
-   ``dotnet-build-configuration`` to the name of a configuration.
+#. By default, the plugin builds with the ``Release`` configuration, which is
+   what you want for a published snap. If you're iterating on a development
+   snap and need the extra debugging symbols and unoptimized code of the
+   ``Debug`` configuration, set the ``dotnet-build-configuration`` key to ``Debug``.
 #. If you need to build the project as a single binary:
 
    #. In the ``.csproj`` file, add the following to the ``<PropertyGroup>``
@@ -135,14 +137,16 @@ To add the .NET part:
 #. Declare the general part keys, such as ``source``, ``override-build``, and
    so on.
 #. Set the ``plugin`` key to ``dotnet``.
-#. Set the ``dotnet-version`` key to the version of the .NET SDK to download and build # Check if there is a char limit here.
-   with. It must match the framework version the project targets, as declared
-   by the ``<TargetFramework>`` tag in the ``.csproj`` file. XamlPlayground
-   targets ``net10.0``, so the version is ``"10.0"``.
+#. Set the ``dotnet-version`` key to the version of the .NET SDK to download
+   and build with. It must match the framework version the project targets, as
+   declared by the ``<TargetFramework>`` tag in the ``.csproj`` file.
+   XamlPlayground targets ``net10.0``, so the version is ``"10.0"``.
 #. If the repository contains multiple projects, set ``dotnet-project`` to the
    path of the project file that builds the app.
-#. If you need to override the build configuration, set
-   ``dotnet-configuration`` to the name of a configuration.
+#. By default, the plugin builds with the ``Release`` configuration, which is
+   what you want for a published snap. If you're iterating on a development
+   snap and need the extra debugging symbols and unoptimized code of the
+   ``Debug`` configuration, set the ``dotnet-configuration`` key to ``Debug``.
 #. The plugin publishes the app directly into the part's install directory. To
    keep the published files separate from the system directories of the snap,
    use the ``organize`` key to move them into a dedicated directory, such as
@@ -185,7 +189,7 @@ Declare the Avalonia app
     :end-at: - wayland
 
 Avalonia apps must use the .NET extension that matches their target framework.
-Apps targeting the `net10.0` framework, for example, must use the ``dotnet10``
+Apps targeting the ``net10.0`` framework, for example, must use the ``dotnet10``
 extension. The extension configures the app's runtime environment and connects
 it to the shared .NET runtime snap. The :ref:`reference-dotnet-extensions` reference
 provides details on how the extensions modify snap project files.
