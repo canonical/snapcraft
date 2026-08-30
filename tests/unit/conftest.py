@@ -18,9 +18,9 @@ import base64
 import contextlib
 import io
 import textwrap
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import Mock
 
 import craft_application.application
@@ -32,8 +32,8 @@ from craft_parts import Features, callbacks, plugins
 from craft_platforms import BuildInfo, DebianArchitecture
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
-from overrides import override
 from pymacaroons import Caveat, Macaroon
+from typing_extensions import override
 
 from snapcraft import const, models, services
 from snapcraft.extensions import extension, register, unregister
@@ -254,40 +254,6 @@ def fake_extension_experimental():
 
 
 @pytest.fixture
-def fake_extension_name_from_legacy():
-    """A fake_extension variant with a name collision with legacy."""
-
-    class ExtensionImpl(extension.Extension):
-        """The test extension implementation."""
-
-        @staticmethod
-        def get_supported_bases() -> tuple[str, ...]:
-            return ("core22",)
-
-        @staticmethod
-        def get_supported_confinement() -> tuple[str, ...]:
-            return ("strict",)
-
-        @staticmethod
-        def is_experimental(base: str | None = None) -> bool:
-            return False
-
-        def get_root_snippet(self) -> dict[str, Any]:
-            return {}
-
-        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
-            return {"plugs": ["fake-plug", "fake-plug-extra"]}
-
-        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
-            return {"after": ["fake-extension-extra/fake-part"]}
-
-        def get_parts_snippet(self) -> dict[str, Any]:
-            return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
-
-    yield ExtensionImpl
-
-
-@pytest.fixture
 def fake_client(mocker):
     """Forces get_client to return a fake craft_store.BaseClient"""
     client = mocker.patch("craft_store.BaseClient", autospec=True)
@@ -394,10 +360,9 @@ def fake_provider(mock_instance):
         def is_provider_installed(cls) -> bool:
             return True
 
-        def create_environment(  # type: ignore[reportIncompatibleMethodOverride]
-            self, *, instance_name: str
-        ):
-            yield mock_instance
+        @override
+        def create_environment(self, *, instance_name: str):
+            return mock_instance
 
         @contextlib.contextmanager
         def launched_environment(
@@ -412,8 +377,23 @@ def fake_provider(mock_instance):
             shutdown_delay_mins: int | None = None,
             use_base_instance: bool = True,
             prepare_instance: Callable[[Executor], None] | None = None,
+            instance_architecture: str | None = None,
         ):
             yield mock_instance
+
+        @override
+        def list_instances(
+            self,
+            *,
+            project_name: str | None = None,
+            instance_name_prefix: str | None = None,
+            include_base_instances: bool = False,
+        ) -> Collection[Executor]:
+            return []
+
+        @override
+        def prune(self, *, project_name: str, prune_templates: bool = False) -> None:
+            pass
 
     return FakeProvider()
 
@@ -457,6 +437,7 @@ def fake_services(
     fake_project_service_class,
     fake_provider_service_class,
     fake_confdb_schemas_service_class,
+    fake_validation_sets_service_class,
     project_path,
 ):
     from snapcraft.application import (  # noqa: PLC0415 (import-outside-top-level)
@@ -475,6 +456,9 @@ def fake_services(
     services.SnapcraftServiceFactory.register("project", fake_project_service_class)
     services.SnapcraftServiceFactory.register(
         "confdb_schemas", fake_confdb_schemas_service_class
+    )
+    services.SnapcraftServiceFactory.register(
+        "validation_sets", fake_validation_sets_service_class
     )
     services.SnapcraftServiceFactory.register("provider", fake_provider_service_class)
     services.SnapcraftServiceFactory.register("build_plan", BuildPlan)
@@ -604,7 +588,7 @@ def fake_project_service_class(fake_project) -> type[services.Project]:
     class FakeProjectService(services.Project):
         # This is a final method, but we're overriding it here for convenience when
         # doing internal testing.
-        def _load_raw_project(self):  # type: ignore[reportIncompatibleMethodOverride]
+        def _load_raw_project(self):  # ty: ignore[override-of-final-method]
             return fake_project.marshal()
 
         # Don't care if the project file exists during this testing.
@@ -616,9 +600,12 @@ def fake_project_service_class(fake_project) -> type[services.Project]:
         def set(self, value: models.Project) -> None:
             """Set the project model. Only for use during testing!"""
             self._project_model = value
-            # this is from craft-application, why does pyright only flag this in snapcraft?
-            self._platform = next(iter(value.platforms))  # type: ignore[reportCallIssue, reportArgumentType]
-            self._build_for = value.platforms[self._platform].build_for[0]  # type: ignore[reportOptionalSubscript]
+            assert value.platforms is not None
+            # assume base > core22 for these tests by assuming no "architectures" key
+            self._platform = next(iter(value.platforms))
+            self._build_for = cast(
+                "list[str]", value.platforms[self._platform].build_for
+            )[0]
 
     return FakeProjectService
 
@@ -638,10 +625,6 @@ def fake_remote_build_service_class(mocker):
     import lazr.restfulclient.resource  # noqa: PLC0415 (import-outside-top-level)
     from craft_application import (  # noqa: PLC0415 (import-outside-top-level)
         AppMetadata,
-        services,
-    )
-    from craft_application.launchpad.models import (  # noqa: PLC0415 (import-outside-top-level)
-        SnapRecipe,
     )
 
     from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
@@ -654,10 +637,10 @@ def fake_remote_build_service_class(mocker):
     class FakeRemoteBuildService(RemoteBuild):
         """Fake remote build service with snap recipe."""
 
-        RecipeClass = SnapRecipe
-
         @override
-        def __init__(self, app: AppMetadata, services: services.ServiceFactory) -> None:
+        def __init__(
+            self, app: AppMetadata, services: craft_application.services.ServiceFactory
+        ) -> None:
             super().__init__(app=app, services=services)
             self._is_setup = True
 
@@ -716,6 +699,63 @@ def fake_confdb_schema_assertion():
         )
 
     return _fake_confdb_schema_assertion
+
+
+@pytest.fixture()
+def fake_validation_sets_service_class(mocker):
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        ValidationSets,
+    )
+
+    class FakeValidationSetsService(ValidationSets):
+        def setup(self) -> None:
+            """Application-specific service setup."""
+            self._store_client = mocker.patch(
+                "snapcraft.store.StoreClientCLI", autospec=True
+            )
+            super().setup()
+
+    return FakeValidationSetsService
+
+
+@pytest.fixture()
+def fake_validation_set_assertion():
+    """Returns a fake validation set assertion with required fields."""
+    from snapcraft.models import (  # noqa: PLC0415 (import-outside-top-level)
+        ValidationSetAssertion,
+    )
+
+    def _fake_validation_set_assertion(**kwargs) -> ValidationSetAssertion:
+        return ValidationSetAssertion.unmarshal(
+            {
+                "account_id": "test-account-id",
+                "name": "test-validation-set",
+                "revision": "4",
+                "sequence": "5",
+                "snaps": [
+                    {
+                        "name": "hello-world",
+                        "id": "test-snap-id",
+                        "presence": "required",
+                        "revision": "6",
+                        "components": {
+                            "component-with-revision": {
+                                "presence": "required",
+                                "revision": "10",
+                            },
+                            "component-without-revision": "invalid",
+                        },
+                    }
+                ],
+                "authority_id": "test-authority-id",
+                "series": "16",
+                "timestamp": "2026-01-01T10:20:30Z",
+                "type": "validation-set",
+                **kwargs,
+            }
+        )
+
+    return _fake_validation_set_assertion
 
 
 @pytest.fixture()

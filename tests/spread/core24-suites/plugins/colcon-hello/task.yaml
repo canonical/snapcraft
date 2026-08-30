@@ -39,14 +39,14 @@ execute: |
   snapcraft build
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   [ "$($SNAP)" = "hello world" ]
 
   # Clean the hello part, then build and run again.
   snapcraft clean hello
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   [ "$($SNAP)" = "hello world" ]
@@ -54,7 +54,7 @@ execute: |
   # Make sure that what we built runs with the changes applied.
   sed -i "src/hello.cpp" -e 's/hello world/hello rebuilt world/'
 
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   [ "$($SNAP)" = "hello rebuilt world" ]

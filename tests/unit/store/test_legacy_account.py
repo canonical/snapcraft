@@ -180,7 +180,7 @@ def test_login():
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
 
 

@@ -23,11 +23,15 @@ import os
 import pathlib
 import re
 import shutil
+import subprocess
 import sys
+import tempfile
+from contextlib import contextmanager
 from getpass import getpass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import yaml
 from craft_application.util import strtobool
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
@@ -36,7 +40,7 @@ from craft_platforms import DebianArchitecture
 from snapcraft import errors
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator, Sequence
 
     from craft_parts import ProjectInfo
 
@@ -188,7 +192,7 @@ def prompt(prompt_text: str, *, hide: bool = False) -> str:
     if hide:
         method = getpass
     else:
-        method = input  # type: ignore
+        method = input
 
     with emit.pause():
         return str(method(prompt_text))
@@ -355,6 +359,21 @@ def is_snapcraft_running_from_snap() -> bool:
     return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
 
 
+def get_component_name(partition_name: str | None) -> str | None:
+    """Normalize a partition name to a component name.
+
+    Partition names may come in as either bare component names
+    (e.g. "foo") or fully qualified names (e.g. "component/foo").
+    This function normalizes both to just the component name.
+
+    :param partition_name: The partition name to normalize.
+    :returns: The component name, or None if the input was None or "default".
+    """
+    if partition_name in (None, "default"):
+        return None
+    return partition_name.removeprefix("component/")
+
+
 def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:
     """Get a mapping of component names to prime directories from a ProjectInfo.
 
@@ -368,7 +387,71 @@ def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, P
     # strip 'component/' prefix so that the component name is the key
     for partition, prime_dir in partition_prime_dirs.items():
         if partition and partition.startswith("component/"):
-            component = partition.split("/", 1)[1]
+            component = get_component_name(partition)
             component_prime_dirs[component] = prime_dir
 
     return component_prime_dirs
+
+
+@contextmanager
+def unsquash_snap(snap_file: Path, extra_args: Sequence[str] = ()) -> Iterator[Path]:
+    """Unsquash a snap file to a temporary directory.
+
+    :param snap_file: Snap package to extract.
+    :param extra_args: Extra args to pass to unsquashfs.
+
+    :yields: Path to the snap's unsquashed directory.
+
+    :raises errors.SnapcraftError: If the snap fails to unsquash.
+    """
+    snap_file = snap_file.resolve()
+
+    with tempfile.TemporaryDirectory(dir=str(snap_file.parent)) as temp_dir:
+        emit.progress(f"Unsquashing snap file {snap_file.name!r}.")
+
+        # unsquashfs [options] filesystem [directories or files to extract] options:
+        # -force: if file already exists then overwrite
+        # -dest <pathname>: unsquash to <pathname>
+        extract_command = [
+            "unsquashfs",
+            "-force",
+            "-dest",
+            temp_dir,
+            str(snap_file),
+            *extra_args,
+        ]
+
+        try:
+            subprocess.run(extract_command, capture_output=True, check=True)
+        except subprocess.CalledProcessError as error:
+            raise errors.SnapcraftError(
+                f"could not unsquash snap file {snap_file.name!r}"
+            ) from error
+
+        yield Path(temp_dir)
+
+
+def get_data_from_snap_file(snap_path: Path) -> tuple[dict, dict | None]:
+    """Extract snap.yaml and manifest.yaml data from a snap file.
+
+    :param snap_path: Path to the snap file.
+
+    :returns: A tuple of (snap.yaml, manifest.yaml) where manifest.yaml may be None.
+
+    :raises SnapcraftError: If the snap file cannot be read.
+    :raises FileNotFoundError: If snap.yaml doesn't exist.
+    """
+    with unsquash_snap(
+        snap_path, extra_args=["meta/snap.yaml", "snap/manifest.yaml"]
+    ) as snap_dir:
+        snap_yaml_path = snap_dir / "meta" / "snap.yaml"
+        with snap_yaml_path.open() as yaml_file:
+            snap_yaml = yaml.safe_load(yaml_file)
+
+        manifest_yaml: dict | None = None
+        manifest_path = snap_dir / "snap" / "manifest.yaml"
+        if manifest_path.exists():
+            with manifest_path.open() as manifest_yaml_file:
+                manifest_yaml = yaml.safe_load(manifest_yaml_file)
+
+    return snap_yaml, manifest_yaml

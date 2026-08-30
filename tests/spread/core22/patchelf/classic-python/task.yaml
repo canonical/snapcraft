@@ -1,14 +1,14 @@
 summary: Build and run a Python-based core22 classic snap
 
-# To ensure the patchelf fixes are correct, we run this test on focal systems.
+# To ensure the patchelf fixes are correct, we run this test on noble systems.
 systems:
-  - ubuntu-20.04
-  - ubuntu-20.04-64
-  - ubuntu-20.04-amd64
-  - ubuntu-20.04-arm64
-  - ubuntu-20.04-armhf
-  - ubuntu-20.04-s390x
-  - ubuntu-20.04-ppc64el
+  - ubuntu-24.04
+  - ubuntu-24.04-64
+  - ubuntu-24.04-amd64
+  - ubuntu-24.04-arm64
+  - ubuntu-24.04-armhf
+  - ubuntu-24.04-s390x
+  - ubuntu-24.04-ppc64el
 
 prepare: |
   # Clone the snapcraft-docs/python-ctypes-example

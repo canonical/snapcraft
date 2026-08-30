@@ -3,10 +3,10 @@
 Snapshots
 =========
 
-A snap's system and user data can be excluded from `snapshots
-<https://snapcraft.io/docs/snapshots>`_ by specifying exclusion patterns in an optional
-metadata file called ``snapshots.yaml``. Such exclusions can be used to control snapshot
-content and size.
+A snap's system and user data can be excluded from :external+snap:ref:`snapshots
+<how-to-guides-manage-snaps-create-data-snapshots>` by specifying exclusion patterns in
+an optional metadata file called ``snapshots.yaml``. Such exclusions can be used to
+control snapshot content and size.
 
 .. important::
 
@@ -38,5 +38,5 @@ Including ``snapshots.yaml`` in a snap
 
 The ``snapshots.yaml`` file must be located within a snap's ``meta`` directory. This is
 typically done by creating a part that uses either the :ref:`craft_parts_dump_plugin` or
-a :ref:`build step override <how-to-override-the-default-build>` to copy
+a :ref:`build step override <how-to-override-the-parts-lifecycle>` to copy
 ``snapshots.yaml`` from another directory.

@@ -155,10 +155,10 @@ Audio interfaces
 ----------------
 
 For applications which play or record audio, the interface names have changed.
-Previously the `pulseaudio <https://snapcraft.io/docs/pulseaudio-interface>`_ interface
-was used for both playback and recording of audio. This has been replaced by
-`audio-playback <https://snapcraft.io/docs/audio-playback-interface>`_ and
-`audio-record <https://snapcraft.io/docs/audio-record-interface>`_:
+Previously the :external+snap:ref:`interfaces-pulseaudio-interface` was used for both
+playback and recording of audio. This has been replaced by
+:external+snap:ref:`interfaces-audio-playback-interface` and
+:external+snap:ref:`interfaces-audio-record-interface`:
 
 .. code-block:: diff
     :caption: snapcraft.yaml of Xonotic
@@ -181,10 +181,9 @@ Snapcraft forum asking for it.
 Version scripts
 ---------------
 
-The top-level ``version-script`` key has been `deprecated
-<https://snapcraft.io/docs/deprecation-notices/dn10>`_ in favor of ``adopt-info``. This
-requires you to specify ``adopt-info`` with a reference to the part in which the version
-data (and some other metadata) may be set.
+The top-level ``version-script`` key has been deprecated in favor of ``adopt-info``.
+This requires you to specify ``adopt-info`` with a reference to the part in which the
+version data (and some other metadata) may be set.
 
 Within the parts section, use ``snapcraftctl set-version`` to define the Snapcraft
 project version number used at build time. For example, the `Cointop snap's core
@@ -230,7 +229,11 @@ Plugins can now be queried with the ``snapcraft help <plugin name> --base <base 
 command:
 
 .. terminal::
-    :input: snapcraft help npm --base core20
+    :user:
+    :host:
+    :dir:
+
+    snapcraft help npm --base core20
 
     Displaying help for the 'npm' plugin for 'core20'.
     [...]
@@ -239,7 +242,11 @@ You can also list plugins for a specific base with ``snapcraft list plugins --ba
 name>``:
 
 .. terminal::
-    :input: snapcraft plugins --base core20
+    :user:
+    :host:
+    :dir:
+
+    snapcraft plugins --base core20
 
     Displaying plugins available for 'core20'
     autotools  catkin  catkin-tools  cmake  colcon  dump  go  make

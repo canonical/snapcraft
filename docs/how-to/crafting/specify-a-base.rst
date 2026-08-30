@@ -3,25 +3,26 @@
 Specify a base
 ==============
 
-.. include:: /reuse/bases-intro.rst
+This guide describes how to declare, upgrade, and downgrade the base of a snap.
+
 
 How to use a base
 -----------------
 
 The base a snap will use is defined in the snap's project file.
 
-To use the ``core24`` base for a snap:
+To use the core26 base for a snap:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
 
-    base: core24
+    base: core26
 
 
-How to migrate to a newer base
-------------------------------
+How to migrate to a higher base
+-------------------------------
 
-See :ref:`how-to-change-bases` for details on migrating to a newer base.
+See :ref:`how-to-change-bases` for details on migrating to a higher base.
 
 .. _how-to-deprecated-base:
 
@@ -29,13 +30,12 @@ How to use a deprecated base
 ----------------------------
 
 The latest release of Snapcraft does not support older bases. Prior major
-Snapcraft releases are supported and can be installed from Snapcraft's
-`tracks`_.
+Snapcraft releases are supported and can be installed from their respective tracks.
 
 See :ref:`base snaps<base-snap-reference>` for a list of which Snapcraft
 major releases support a particular base.
 
-See `Snapcraft and ESM`_ for details on support for deprecated bases.
+The :ref:`reference-support-schedule` details the support timeline of each base.
 
 ``core18``
 ^^^^^^^^^^
@@ -81,9 +81,8 @@ require re-downloading Snapcraft.
 Parallel installs
 ^^^^^^^^^^^^^^^^^
 
-Multiple instances of Snapcraft can be installed via ``snapd``'s experimental
-parallel install feature. See the `Parallel installs`_ documentation for
-details.
+Multiple instances of Snapcraft can be installed with the experimental
+:external+snap:ref:`parallel installs <interfaces-parallel-installs>` feature in SnapD.
 
 .. code-block:: bash
 
@@ -132,7 +131,7 @@ How to build a kernel snap
 The ``build-base`` key is used to build kernel snaps for Ubuntu LTS
 releases.
 
-To build a kernel snap targeting the Ubuntu 22.04 release, use the following
+To build a kernel snap targeting the Ubuntu 26.04 release, use the following
 project file snippet:
 
 .. code-block:: yaml
@@ -140,13 +139,13 @@ project file snippet:
 
     name: pc-kernel
     type: kernel
-    build-base: core22
+    build-base: core26
 
 This snippet will do the following:
 
-* create a kernel snap for Ubuntu 22.04
-* build the snap inside an Ubuntu 22.04 build environment
-* use the ``core22`` feature set and ``snapcraft.yaml`` schema
+* create a kernel snap for Ubuntu 26.04
+* build the snap inside an Ubuntu 26.04 build environment
+* use the core26 feature set and ``snapcraft.yaml`` schema
 
 How to build a bare base snap
 -----------------------------
@@ -161,13 +160,10 @@ To build a bare base snap, use the following project file snippet:
 
     name: my-snap
     base: bare
-    build-base: core24
+    build-base: core26
 
-This snippet will build a bare base snap inside an Ubuntu 24.04 build
+This snippet will build a bare base snap inside an Ubuntu 26.04 build
 environment.
 
 
-.. _`Snapcraft and ESM`: https://snapcraft.io/docs/snapcraft-esm
 .. _`Snapcraft rocks`: https://github.com/canonical/snapcraft-rocks
-.. _`parallel installs`: https://snapcraft.io/docs/parallel-installs
-.. _`tracks`: https://snapcraft.io/docs/channels#heading--tracks

@@ -14,7 +14,7 @@ body:
     attributes:
       label: Bug description
       value: >
-        <!-- Describe the bug, including any relevant context or screenshots. -->
+        Describe the bug, including any relevant context or screenshots.
     validations:
       required: true
   - type: textarea
@@ -22,7 +22,7 @@ body:
     attributes:
       label: Steps to reproduce
       value: >
-        <!-- Provide step-by-step instructions to reproduce the bug. -->
+        Provide step-by-step instructions to reproduce the bug.
     validations:
       required: true
   - type: textarea
@@ -30,9 +30,9 @@ body:
     attributes:
       label: Environment
       value: >
-        <!-- We need to understand the context in which Snapcraft failed. Please let us
+        We need to understand the context in which Snapcraft failed. Please let us
         know if you are running Snapcraft in destructive mode, whether you are using LXD
-        or Multipass, and which operating system you are running Snapcraft on. -->
+        or Multipass, and which operating system you are running Snapcraft on.
     validations:
       required: true
   - type: textarea
@@ -40,15 +40,15 @@ body:
     attributes:
       label: snapcraft.yaml
       value: >
-        <!-- If the issue is specific to a project, share its `snapcraft.yaml`. This
+        If the issue is specific to a project, share its `snapcraft.yaml`. This
         field automatically renders as YAML, so you don't need to add special
-        formatting. -->
+        formatting.
       render: yaml
   - type: textarea
     id: logs
     attributes:
       label: Log output
       value: >
-        <!-- Provide any relevant logging. This field automatically renders as
-        a log, so you don't need to add special formatting. -->
+        Provide any relevant logging. This field automatically renders as
+        a log, so you don't need to add special formatting.
       render: shell

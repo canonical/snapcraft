@@ -14,7 +14,7 @@ body:
     attributes:
       label: Request
       value: >
-        <!-- Describe the feature you'd like to see implemented. -->
+        Describe the feature you'd like to see implemented.
     validations:
       required: true
   - type: textarea
@@ -22,6 +22,6 @@ body:
     attributes:
       label: The problem it solves
       value: >
-        <!-- Describe the impact your request would have. -->
+        Describe the impact your request would have.
     validations:
       required: true

@@ -20,7 +20,6 @@ prepare: |
   # import a registered key
   gpg --homedir "$HOME/.snap/gnupg" --import <(echo "$SNAPCRAFT_ASSERTION_KEY" | base64 --decode)
 
-  snap install yq
   # confdb schemas only available in edge
   snap refresh snapd --edge
 
@@ -33,10 +32,9 @@ execute: |
 
   snapcraft edit-confdb-schema "$(snapcraft whoami | yq .id)" testset --key-name test-staging-key
 
-  snapcraft list-confdb-schemas | MATCH testset
+  snapcraft confdb-schemas | MATCH testset
 
 restore: |
   rm -rf "$HOME/.snap/gnupg"
 
-  snap remove --purge yq
   snap refresh snapd --stable

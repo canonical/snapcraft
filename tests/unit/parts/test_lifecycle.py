@@ -35,7 +35,7 @@ from snapcraft.elf import ElfFile
 from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts import set_global_environment, yaml_utils
-from snapcraft.parts.plugins import KernelPlugin, MatterSdkPlugin
+from snapcraft.parts.plugins import KernelPlugin
 from snapcraft.parts.update_metadata import update_project_metadata
 
 _SNAPCRAFT_YAML_FILENAMES = [
@@ -284,49 +284,6 @@ def test_lifecycle_run_no_components(new_dir, snapcraft_yaml, mocker):
 @pytest.mark.parametrize(
     "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
 )
-def test_lifecycle_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
-    """Option --provider is not supported in core22."""
-    snapcraft_yaml(base="core22")
-    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-
-    with pytest.raises(errors.SnapcraftError) as raised:
-        parts_lifecycle.run(
-            cmd,
-            parsed_args=argparse.Namespace(
-                destructive_mode=False,
-                use_lxd=False,
-                provider="some",
-                build_for=str(DebianArchitecture.from_host()),
-            ),
-        )
-
-    assert run_mock.mock_calls == []
-    assert str(raised.value) == "Option --provider is not supported."
-
-
-@pytest.mark.parametrize("cmd", ["pull", "build", "stage", "prime", "snap", "clean"])
-def test_lifecycle_legacy_run_provider(cmd, snapcraft_yaml, new_dir, mocker):
-    """Option --provider is supported by legacy."""
-    snapcraft_yaml(base="core20")
-    run_mock = mocker.patch("snapcraft.parts.PartsLifecycle.run")
-
-    with pytest.raises(errors.LegacyFallback) as raised:
-        parts_lifecycle.run(
-            cmd,
-            parsed_args=argparse.Namespace(
-                destructive_mode=False,
-                use_lxd=False,
-                provider="some",
-            ),
-        )
-
-    assert run_mock.mock_calls == []
-    assert str(raised.value) == "base is core20"
-
-
-@pytest.mark.parametrize(
-    "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
-)
 def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, mocker):
     """UA services require --ua-token."""
     snapcraft_yaml(base="core22", **{"ua-services": ["svc1", "svc2"]})
@@ -365,7 +322,7 @@ def test_lifecycle_run_ua_services_without_experimental_flag(
                 destructive_mode=False,
                 use_lxd=False,
                 provider=None,
-                ua_token="my-token",
+                ua_token="my-token",  # noqa: S106 (hardcoded-password-func-arg)
                 build_for=str(DebianArchitecture.from_host()),
                 enable_experimental_ua_services=False,
             ),
@@ -1164,11 +1121,12 @@ def test_lifecycle_adopt_project_vars(snapcraft_yaml, new_dir):
 
 
 def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
-    craft_parts.plugins.register(
-        {"kernel": KernelPlugin, "matter-sdk": MatterSdkPlugin}
-    )
+    craft_parts.plugins.register({"kernel": KernelPlugin})
     project = Project.unmarshal(
-        snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
+        snapcraft_yaml(
+            base="core22",
+            parts={"foo": {"plugin": "kernel", "source": "."}},
+        )
     )
 
     with pytest.raises(errors.SnapcraftError) as raised:
@@ -1177,28 +1135,13 @@ def test_check_experimental_plugins_disabled(snapcraft_yaml, mocker):
         "Plugin 'kernel' in part 'foo' is unstable and may change in the future."
     )
 
-    project = Project.unmarshal(
-        snapcraft_yaml(
-            base="core22",
-            parts={
-                "foo": {
-                    "plugin": "matter-sdk",
-                    "matter-sdk-version": "1536ca20c5917578ca40ce509400e97b52751788",
-                }
-            },
-        )
-    )
-    with pytest.raises(errors.SnapcraftError) as raised:
-        parts_lifecycle._check_experimental_plugins(project, False)
-    assert str(raised.value) == (
-        "Plugin 'matter-sdk' in part 'foo' is unstable and may change in the future."
-    )
-
 
 def test_check_experimental_plugins_enabled(snapcraft_yaml, mocker):
     craft_parts.plugins.register({"kernel": KernelPlugin})
     project = Project.unmarshal(
-        snapcraft_yaml(base="core22", parts={"foo": {"plugin": "kernel"}})
+        snapcraft_yaml(
+            base="core22", parts={"foo": {"plugin": "kernel", "source": "."}}
+        )
     )
     parts_lifecycle._check_experimental_plugins(project, True)
 
@@ -1350,6 +1293,7 @@ def test_expand_environment_with_partitions(new_dir, mocker):
     }
 
 
+@pytest.mark.slow
 def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
     mocker.patch(
@@ -1407,6 +1351,7 @@ def test_lifecycle_run_expand_snapcraft_vars(new_dir, mocker):
     assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
 
 
+@pytest.mark.slow
 def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
     mocker.patch("platform.machine", return_value="aarch64")
     mocker.patch(
@@ -1464,6 +1409,7 @@ def test_lifecycle_run_expand_craft_vars(new_dir, mocker):
     assert "command: usr/aarch64-linux-gnu/foo" in meta_yaml
 
 
+@pytest.mark.slow
 def test_lifecycle_run_permission_denied(new_dir):
     content = textwrap.dedent(
         """\
@@ -1639,7 +1585,7 @@ def test_lifecycle_run_in_provider_all_options(
     parts = ["test-part-1", "test-part-2"]
     output = "test-output"
     manifest_image_information = "test-image-info"
-    ua_token = "test-ua-token"
+    ua_token = "test-ua-token"  # noqa: S105 (hardcoded-password-string)
     http_proxy = "1.2.3.4"
     https_proxy = "5.6.7.8"
     expected_command = (
@@ -1978,6 +1924,7 @@ def test_get_build_plan_list_without_matching_element_and_build_for_arg(
     )
 
 
+@pytest.mark.slow
 def test_patch_elf(snapcraft_yaml, mocker, new_dir):
     """Patch binaries if the ``enable-patchelf`` build attribute is defined."""
     run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")
@@ -2042,6 +1989,7 @@ def test_patch_elf(snapcraft_yaml, mocker, new_dir):
     ]
 
 
+@pytest.mark.slow
 def test_patch_elf_with_override_prime(snapcraft_yaml, mocker, new_dir, emitter):
     """Patch binaries with `enable-patchelf`` and override-prime defined"""
     run_patchelf_mock = mocker.patch("snapcraft.elf._patcher.Patcher._run_patchelf")
@@ -2342,5 +2290,5 @@ def test_lifecycle_warn_on_multiple_builds(
     )
     emitter.assert_message(
         "For more information, check out: "
-        "https://snapcraft.io/docs/explanation-architectures#core22-8"
+        "https://documentation.ubuntu.com/snapcraft/stable/explanation/architectures/#core22"
     )

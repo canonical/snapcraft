@@ -15,7 +15,7 @@ execute: |
   cp -r src ./"${SPREAD_VARIANT}"/
   cd ./"${SPREAD_VARIANT}"
 
-  snapcraft
+  snapcraft pack
   # shellcheck disable=SC2086
   snap install python-hello-"${SPREAD_VARIANT}"_1.0_*.snap --dangerous ${PARAM}
 

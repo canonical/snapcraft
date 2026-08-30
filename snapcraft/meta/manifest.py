@@ -38,8 +38,8 @@ class Manifest(craft_application.models.CraftBaseModel):
     # Project fields
     name: str
     version: str
-    summary: str
-    description: str
+    summary: str | None
+    description: str | None
     base: str | None = None
     grade: str
     confinement: str
@@ -94,8 +94,8 @@ def write(  # noqa PLR0913
         # Project fields
         name=project.name,
         version=version,
-        summary=project.summary,  # type: ignore
-        description=project.description,  # type: ignore
+        summary=project.summary,
+        description=project.description,
         base=project.base,
         grade=project.grade or "stable",
         confinement=project.confinement,

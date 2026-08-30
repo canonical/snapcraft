@@ -2,6 +2,11 @@ name: CI
 
 on:
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "*.md"
+      - ".readthedocs.yaml"
   push:
     branches:
       - "feature/**"
@@ -23,14 +28,14 @@ jobs:
           # Secrets cannot be used in conditionals, so this is our dance:
           # https://github.com/actions/runner/issues/520
           if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}" ]]; then
-            echo PUBLISH=true >> $GITHUB_OUTPUT
+            echo PUBLISH=true >> "$GITHUB_OUTPUT"
           else
-            echo PUBLISH= >> $GITHUB_OUTPUT
+            echo PUBLISH= >> "$GITHUB_OUTPUT"
           fi
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Checkout Snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           # Fetch all of history so Snapcraft can determine its own version from git.
           fetch-depth: 0
@@ -55,7 +60,8 @@ jobs:
           then
             echo "branch=pr-${{ github.event.number }}" >> "$GITHUB_OUTPUT"
           else
-            branch=$(echo ${GITHUB_REF#refs/*/} | sed -e 's|feature/\(.*\)|\1|')
+            branch="${GITHUB_REF#refs/*/}"
+            branch="${branch#feature/}"
             echo "branch=$branch" >> "$GITHUB_OUTPUT"
           fi
 

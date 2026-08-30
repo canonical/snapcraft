@@ -3,8 +3,6 @@
 Create a component
 ==================
 
-.. include:: ../../reuse/components-intro.rst
-
 Start with a simple project file:
 
 .. literalinclude:: ../code/crafting/basic/snapcraft.yaml
@@ -88,6 +86,6 @@ and the component file for the ``translations`` component.
    snapcraft upload hello-components_1.0_amd64.snap \
      --component translations=hello-components+translations_1.0.comp
 
-The store expects a snap and its components to be uploaded together. However, the component
-may have a different version than the snap. To dynamically set the component version,
-see :ref:`how-to-customize-the-build-and-part-variables-access-project-variables`.
+The store expects a snap and its components to be uploaded together. However, the
+component may have a different version than the snap. To dynamically set the component
+version, see :ref:`how-to-override-the-parts-lifecycle-access-project-variables`.

@@ -25,19 +25,15 @@ import tabulate
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
-from overrides import overrides
 from pydantic import BaseModel
+from typing_extensions import override
 
-from snapcraft import const, extensions, models
+from snapcraft import errors, extensions, models
 from snapcraft.parts.yaml_utils import (
     apply_yaml,
     extract_parse_info,
     get_snap_project,
     process_yaml,
-)
-from snapcraft_legacy.internal.project_loader import (
-    find_extension,
-    supported_extension_names,
 )
 
 if TYPE_CHECKING:
@@ -69,31 +65,16 @@ class ExtensionsCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         extension_presentation: dict[str, ExtensionModel] = {}
 
-        # New extensions.
         for extension_name in extensions.registry.get_extension_names():
             extension_class = extensions.registry.get_extension_class(extension_name)
             extension_bases = list(extension_class.get_supported_bases())
             extension_presentation[extension_name] = ExtensionModel(
                 name=extension_name, bases=extension_bases
             )
-
-        # Extensions from snapcraft_legacy.
-        for _extension_name in supported_extension_names():
-            # Ignore assignment type error as the conversion from legacy to modern Snapcraft `Extension`
-            # should be trivial
-            extension_class = find_extension(_extension_name)  # type: ignore[assignment]
-            extension_name = _extension_name.replace("_", "-")
-            extension_bases = list(extension_class.get_supported_bases())
-            if extension_name in extension_presentation:
-                extension_presentation[extension_name].bases += extension_bases
-            else:
-                extension_presentation[extension_name] = ExtensionModel(
-                    name=extension_name, bases=extension_bases
-                )
 
         printable_extensions = sorted(
             [v.marshal() for v in extension_presentation.values()],
@@ -103,18 +84,14 @@ class ExtensionsCommand(AppCommand):
 
 
 class ListExtensionsCommand(ExtensionsCommand):
-    """A command alias to list the available extensions."""
+    """Removed alias to list available extensions."""
 
     name = "list-extensions"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class ExpandExtensionsCommand(AppCommand):
@@ -129,11 +106,10 @@ class ExpandExtensionsCommand(AppCommand):
         """
     )
 
-    @overrides
-    def run(self, parsed_args: argparse.Namespace):
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        """Expand extensions in the project file and output them."""
         snap_project = get_snap_project()
-
-        # load yaml file and trigger legacy behavior if base is core, core18, or core20
         yaml_data = process_yaml(snap_project.project_file)
 
         # process yaml before unmarshalling the data

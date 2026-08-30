@@ -24,8 +24,9 @@ after the hook finishes executing.
 
 This allows changes to be rolled back if errors occur during the execution of a hook.
 This happens if a non-zero value is returned with either the configure or
-default-configure hooks or if an error occurs with any hook involved with
-an `interface auto-connection <https://snapcraft.io/docs/auto-connection-mechanism>`_.
+default-configure hooks or if an error occurs with any hook involved with an
+:external+snap:ref:`interface auto-connection
+<explanation-interfaces-interface-auto-connection>`.
 
 Environment
 -----------
@@ -56,7 +57,7 @@ A hook can be added to a snap by placing the hook executable in the project's
 ``snap/hooks/`` directory. The following example shows the location of a configure
 hook executable:
 
-.. terminal::
+.. code-block:: text
 
    .
    └── snap
@@ -87,11 +88,11 @@ part that adds a configure hook using the :ref:`craft_parts_dump_plugin` and the
 Accessing resources
 -------------------
 
-If a hook requires access to system resources outside of a snap’s confined environment,
+If a hook requires access to system resources outside of a snap's confined environment,
 it needs to use :ref:`interfaces <explanation-interfaces>` to access those resources.
 
-The following example registers an install hook making use of the `network
-<https://snapcraft.io/docs/network-interface>`_ interface:
+The following example registers an install hook making use of the
+:external+snap:ref:`interfaces-network-interface`:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml

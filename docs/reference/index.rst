@@ -1,3 +1,6 @@
+.. meta::
+    :description: The reference documentation for Snapcraft. These references describe the structure and function of the individual components in Snapcraft.
+
 .. _reference:
 
 Reference
@@ -12,6 +15,7 @@ Commands
 Snapcraft is operated from the command line, with a command for each function.
 
 - :ref:`reference-commands`
+- :ref:`reference-build-environment-options`
 
 
 Project file
@@ -20,7 +24,8 @@ Project file
 The main object inside a snap project is a configurable project file. Read on for a
 complete reference of the structure and contents of this file.
 
-- :ref:`Project file references <reference-project-file>`
+- :ref:`snapcraft.yaml reference <reference-snapcraft-yaml>`
+- :ref:`reference-extensions`
 
 
 Bases and architectures
@@ -30,7 +35,7 @@ Snaps are built using existing technologies and must be configured to build for 
 CPU architectures.
 
 - :ref:`reference-bases`
-- :ref:`reference-architectures`
+- :ref:`reference-platforms`
 
 
 Parts
@@ -42,27 +47,28 @@ the software's language and build systems.
 - :ref:`reference-parts-and-steps`
 - :ref:`reference-part-environment-variables`
 - :ref:`reference-plugins`
-- :ref:`reference-extensions`
 
 
-Processes
----------
+Requirements and support
+------------------------
 
-Snapcraft has defined processes underlying its basic operation.
+Snapcraft is actively supported on Linux systems, and Canonical provides long term
+support (LTS) for it.
 
-- :ref:`reference-snap-build-process`
-- :ref:`reference-snap-publishing-process`
+- :ref:`reference-system-requirements`
+- :ref:`reference-support-schedule`
 
 
 .. toctree::
     :hidden:
 
+    snapcraft-yaml
     commands
     build-environment-options
-    project-file/index
     bases
-    architectures
-    parts/index
+    platforms
+    parts-steps
+    part-environment-variables
     plugins
     package-repositories
     extensions/index
@@ -75,5 +81,5 @@ Snapcraft has defined processes underlying its basic operation.
     channels
     snapshots
     metrics
-    processes/index
     system-requirements
+    support-schedule

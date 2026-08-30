@@ -1,0 +1,28 @@
+name: hello-compression
+version: "1.0"
+summary: Test per-component compression
+description: Test per-component compression
+base: core24
+confinement: strict
+compression: xz
+
+apps:
+  hello-app:
+    command: hello-app
+  hello-comp:
+    command: load-comp
+
+components:
+  test-comp:
+    version: "1.0"
+    type: standard
+    summary: A test component
+    description: A test component for compression testing
+    compression: xz
+
+parts:
+  hello:
+    plugin: dump
+    source: src
+    organize:
+      hello-comp: (component/test-comp)/hello-comp

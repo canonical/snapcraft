@@ -1,3 +1,6 @@
+.. meta::
+    :description: The practical, goal-oriented documentation for Snapcraft. These guides provide directions for completing tasks and solving problems with Snapcraft.
+
 .. _how-to-guides:
 
 How-to guides
@@ -25,7 +28,7 @@ choosing the target CPU architectures, to the advanced, such as configuring layo
 
 - :ref:`how-to-configure-package-information`
 - :ref:`how-to-specify-a-base`
-- :ref:`how-to-select-architectures`
+- :ref:`how-to-select-platforms`
 
 
 Integrations and extensions

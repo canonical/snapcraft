@@ -30,7 +30,7 @@ execute: |
   cd "$SNAP"
 
   # Build the snap and verify that only package1 was included
-  snapcraft
+  snapcraft pack
   [ -d parts/test-part/install/opt/ros/snap/lib/package1 ]
   [ ! -d parts/test-part/install/opt/ros/snap/lib/package2 ]
   [ ! -d parts/test-part/install/opt/ros/snap/lib/package3 ]

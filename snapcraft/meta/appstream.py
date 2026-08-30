@@ -221,7 +221,7 @@ def _get_latest_release_from_nodes(nodes: list[lxml.etree._Element]) -> str | No
 def _get_desktop_file_ids_from_nodes(nodes: list[lxml.etree._Element]) -> list[str]:
     desktop_file_ids: list[str] = []
     for node in nodes:
-        if "type" in node.attrib and node.attrib["type"] == "desktop-id":
+        if "type" in node.attrib and node.attrib["type"] == "desktop-id" and node.text:
             desktop_file_ids.append(node.text.strip())
     return desktop_file_ids
 
@@ -250,13 +250,16 @@ def _extract_icon(
     else:
         icon_node_type = None
 
-    icon = icon_node.text.strip() if icon_node is not None else None
+    if icon_node is not None and icon_node.text:
+        icon = icon_node.text.strip()
+    else:
+        icon = None
 
     if icon_node_type == "remote":
         return icon
 
     if icon_node_type == "stock" and icon is not None:
-        return _get_icon_from_theme(workdir, "hicolor", icon)
+        return get_icon_from_theme(workdir, "hicolor", icon)
 
     # If an icon path is specified and the icon file exists, we'll use that, otherwise
     # we'll fall back to what's listed in the desktop file.
@@ -284,14 +287,14 @@ def _get_icon_from_desktop_file(
         icon_path = (
             icon
             if os.path.isabs(icon)
-            else _get_icon_from_theme(workdir, "hicolor", icon)
+            else get_icon_from_theme(workdir, "hicolor", icon)
         )
         return icon_path
 
     return None
 
 
-def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> str | None:
+def get_icon_from_theme(workdir: str, theme: str, icon: str) -> str | None:
     # Icon themes can carry icons in different pre-rendered sizes or scalable. Scalable
     # implementation is optional, so we'll try the largest pixmap and then scalable if
     # no other sizes are available.

@@ -27,7 +27,7 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  output="$(snapcraft)"
+  output="$(snapcraft pack)"
   snap install neon-hello-qt6_*.snap --dangerous
   snap connect neon-hello-qt6:kde-qt6-core24 kde-qt6-core24:kde-qt6-core24
 

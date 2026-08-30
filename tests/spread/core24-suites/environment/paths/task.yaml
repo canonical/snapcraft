@@ -11,7 +11,7 @@ systems:
 
 restore: |
   cd "../snaps/$SNAP"
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
 
 execute: |

@@ -17,7 +17,7 @@
 """The Snapcraft Poetry plugin."""
 
 from craft_parts.plugins import poetry_plugin
-from overrides import override
+from typing_extensions import override
 
 from snapcraft.parts.plugins import python_common
 

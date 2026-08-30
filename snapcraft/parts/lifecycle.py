@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-_EXPERIMENTAL_PLUGINS = ["kernel", "matter-sdk"]
+_EXPERIMENTAL_PLUGINS = ["kernel", "initrd"]
 
 
 def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
@@ -55,16 +55,12 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     :raises SnapcraftError: if the step name is invalid, or the project
         yaml file cannot be loaded.
-    :raises LegacyFallback: if the project's base is core20 or below.
     """
     emit.debug(f"command: {command_name}, arguments: {parsed_args}")
 
     snap_project = yaml_utils.get_snap_project()
     yaml_data = yaml_utils.process_yaml(snap_project.project_file)
     start_time = datetime.now()
-
-    if parsed_args.provider:
-        raise errors.SnapcraftError("Option --provider is not supported.")
 
     if yaml_data.get("ua-services"):
         if not parsed_args.ua_token:
@@ -690,7 +686,9 @@ def patch_elf(step_info: StepInfo, use_system_libs: bool = True) -> bool:
 
     migrated_files = step_info.state.files
     patcher = Patcher(dynamic_linker=linker, root_path=step_info.prime_dir)
-    elf_files = elf_utils.get_elf_files_from_list(step_info.prime_dir, migrated_files)
+    elf_files = elf_utils.get_elf_files_from_list(
+        step_info.prime_dir, (str(file) for file in migrated_files)
+    )
     soname_cache = SonameCache()
     arch_triplet = elf_utils.get_arch_triplet()
 
@@ -775,7 +773,7 @@ def get_build_plan(
     host_arch = str(DebianArchitecture.from_host())
     build_plan: list[tuple[str, str]] = []
 
-    # `isinstance()` calls are for mypy type checking and should not change logic
+    # `isinstance()` calls are for type checking and should not change logic
     for arch in [arch for arch in archs if isinstance(arch, models.Architecture)]:
         for build_on in arch.build_on:
             if build_on in host_arch and isinstance(arch.build_for, list):
@@ -862,5 +860,5 @@ def _warn_on_multiple_builds(
         )
         emit.message(
             "For more information, check out: "
-            "https://snapcraft.io/docs/explanation-architectures#core22-8"
+            "https://documentation.ubuntu.com/snapcraft/stable/explanation/architectures/#core22"
         )

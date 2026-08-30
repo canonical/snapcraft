@@ -38,7 +38,7 @@ package may not run as expected.
 There are multiple ways dynamic linking parameters can be manipulated:
 
 .. image:: https://assets.ubuntu.com/v1/24ce3093-confinement_03.png
-    :alt: The flow diagram for dynamic linking parameteres in the snap confinement process at build-time.
+    :alt: The flow diagram for dynamic linking parameters in the snap confinement process at build-time.
 
 - **Runtime library paths**. The dynamic section of an ELF file contains the RPATH
   entry, which lists the runtime paths to shared libraries to be searched before the
@@ -92,12 +92,12 @@ linked binaries will try to load the required dependencies at runtime:
 
 - It tries to load the dependencies, including stage packages and any other
   libraries, inside the snap.
-- (core24) If not found, it looks for the dependencies in the base snap under
+- Starting with core24, if not found, it looks for the dependencies in the base snap under
   ``/snap/<base>``. The libraries must match the name and version of libraries as
   provided by the Ubuntu package archives for the specific base. In other words, snaps
-  built with core24 must use the relevant libraries by name or version, the way they are
-  defined for Ubuntu 24.04 LTS.
-- (core22) If not found, it looks for the dependencies on the host system. If found
+  built with core24 and higher must use the relevant libraries by name or version, the way they are
+  defined for their corresponding Ubuntu LTS release (such as Ubuntu 26.04 LTS for core26).
+- With core22, if not found, it looks for the dependencies on the host system. If found
   there, the snap daemon can't guarantee that the dependencies will match the expected
   snap and core version. They might result in app instability, unknown behavior, or
   crashing.

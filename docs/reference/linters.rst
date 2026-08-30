@@ -23,4 +23,7 @@ Snapcraft runs the following linters:
   dependencies, such as libraries, are missing, and that no extra libraries are included
   in the snap package.
 - :ref:`Metadata <how-to-use-the-metadata-linter>`. Verifies that the snap contains all the
-  :ref:`metadata <reference-anatomy-of-snapcraft-yaml-metadata>` needed for a better listing in the snap store.
+  :ref:`metadata <reference-anatomy-of-snapcraft-yaml-metadata>` needed for a better
+  listing in the Snap Store.
+- :ref:`GPU <how-to-use-the-gpu-linter>`. Checks that the snap doesn't contain GPU support
+  libraries that should generally be provided by a GPU content snap.

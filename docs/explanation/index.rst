@@ -1,3 +1,6 @@
+.. meta::
+    :description: The explanatory documentation for Snapcraft. These explanations aid in understanding the concepts and relationships of Snapcraft as a complete system.
+
 .. _explanation:
 
 Explanation
@@ -7,6 +10,15 @@ Explanations provide a wider perspective of Snapcraft. They aid in understanding
 concepts and relationships of Snapcraft as a complete system.
 
 
+The project file
+----------------
+
+Snaps are blueprinted in the ``snapcraft.yaml`` file. Your understanding of Snapcraft
+should begin with an exploration of this file.
+
+- :ref:`explanation-snapcraft-yaml`
+
+
 Bases and architectures
 -----------------------
 
@@ -14,7 +26,7 @@ Bases and architectures are key concepts in snaps. They ensure that snaps are st
 and compatible across different machines.
 
 - :ref:`explanation-bases`
-- :ref:`explanation-architectures`
+- :ref:`explanation-platforms`
 
 
 Parts
@@ -48,6 +60,15 @@ a traditional app.
 - :ref:`explanation-classic-confinement`
 
 
+Processes
+---------
+
+During operation, Snapcraft follows underlying processes.
+
+- :ref:`explanation-snap-build-process`
+- :ref:`explanation-snap-publishing-process`
+
+
 Cryptography
 ------------
 
@@ -59,18 +80,22 @@ communicating with local processes, and storing user credentials.
 
 .. toctree::
     :titlesonly:
-    :maxdepth: 1
     :hidden:
 
-    Cryptographic technology <cryptography>
-    architectures
-    bases
-    parts
+    snapcraft.yaml <snapcraft-yaml>
+    Platforms <platforms>
+    Bases <bases>
+    Parts <parts>
     parts-lifecycle
-    interfaces
-    extensions
-    components
+    Interfaces <interfaces>
+    Extensions <extensions>
+    Components <components>
     snap-configurations
+    services-daemons
+    build-overrides
     remote-build
     /common/craft-parts/explanation/filesets
     classic-confinement
+    snap-build-process
+    snap-publishing-process
+    Cryptographic technology <cryptography>

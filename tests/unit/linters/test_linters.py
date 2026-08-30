@@ -18,7 +18,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, call
 
 import pytest
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import linters, models
 from snapcraft.linters.base import Linter, LinterResult
@@ -132,7 +132,7 @@ class TestLinterStatus:
 
 
 class _TestLinter(Linter):
-    @overrides
+    @override
     def run(self) -> list[linters.LinterIssue]:
         assert self._snap_metadata.name == "mytest"
         return [

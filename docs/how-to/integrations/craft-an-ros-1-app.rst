@@ -26,14 +26,14 @@ There are two supported bases for ROS 1 -- core20 and core18.
 Example project file for ROS Talker/Listener
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. tabs:: ROS Talker/Listener example
+.. tab-set::
 
-    .. group-tab:: core18
+    .. tab-item:: core18
 
         The following code comprises the project file for the `core18 version of ROS
         Talker/Listener <https://github.com/snapcraft-docs/ros-talker-listener>`_.
 
-        .. collapse:: Code
+        .. dropdown:: Code
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -58,13 +58,13 @@ Example project file for ROS Talker/Listener
                   ros-talker-listener:
                     command: roslaunch roscpp_tutorials talker_listener.launch
 
-    .. group-tab:: core20
+    .. tab-item:: core20
 
         The following code comprises the project file for the `core20 version of ROS
         Talker/Listener
         <https://github.com/snapcraft-docs/ros-talker-listener-core20>`_.
 
-        .. collapse:: Code
+        .. dropdown:: Code
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml

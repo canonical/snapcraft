@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import cast
-
 import pytest
 from craft_store.models import SnapListReleasesModel
 
@@ -454,9 +452,7 @@ def test_channel_map_from_list_releases_model():
         }
     )
 
-    cm = channel_map.ChannelMap.from_list_releases(
-        cast(SnapListReleasesModel, list_releases)
-    )
+    cm = channel_map.ChannelMap.from_list_releases(list_releases)
 
     # Check "channel-map".
     assert len(cm.channel_map) == 1

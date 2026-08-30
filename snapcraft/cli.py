@@ -34,7 +34,6 @@ from snapcraft import errors, store, utils
 from snapcraft.parts import plugins
 
 from . import commands
-from .legacy_cli import run_legacy
 
 CORE22_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
     "Lifecycle",
@@ -53,11 +52,11 @@ CORE22_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
 CORE24_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
     "Lifecycle",
     [
-        craft_application.commands.lifecycle.CleanCommand,
-        craft_application.commands.lifecycle.PullCommand,
-        craft_application.commands.lifecycle.BuildCommand,
-        craft_application.commands.lifecycle.StageCommand,
-        craft_application.commands.lifecycle.PrimeCommand,
+        commands.CleanCommand,
+        commands.PullCommand,
+        commands.BuildCommand,
+        commands.StageCommand,
+        commands.PrimeCommand,
         craft_application.commands.lifecycle.TestCommand,
         commands.PackCommand,
         commands.SnapCommand,  # Hidden (legacy compatibility)
@@ -98,8 +97,8 @@ COMMAND_GROUPS = [
             commands.StoreNamesCommand,
             commands.StoreLegacyListRegisteredCommand,
             commands.StoreLegacyListCommand,
-            commands.StoreLegacyMetricsCommand,
-            commands.StoreLegacyUploadMetadataCommand,
+            commands.StoreMetricsCommand,
+            commands.StoreUploadMetadataCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -110,7 +109,7 @@ COMMAND_GROUPS = [
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
             commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
-            commands.StoreLegacyPromoteCommand,
+            commands.StorePromoteCommand,
             commands.StoreListRevisionsCommand,  # hidden (alias to revisions)
             commands.StoreRevisionsCommand,
         ],
@@ -120,27 +119,27 @@ COMMAND_GROUPS = [
         [
             commands.StoreListTracksCommand,  # hidden (alias to tracks)
             commands.StoreTracksCommand,
-            commands.StoreLegacySetDefaultTrackCommand,
+            commands.StoreSetDefaultTrackCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Key Management",
         [
-            commands.StoreLegacyCreateKeyCommand,
-            commands.StoreLegacyRegisterKeyCommand,
-            commands.StoreLegacySignBuildCommand,
-            commands.StoreLegacyListKeysCommand,
-            commands.StoreLegacyKeysCommand,
+            commands.StoreCreateKeyCommand,
+            commands.StoreRegisterKeyCommand,
+            commands.StoreSignBuildCommand,
+            commands.StoreListKeysCommand,
+            commands.StoreKeysCommand,
         ],
     ),
     craft_cli.CommandGroup(
         "Store Validation Sets",
         [
             commands.StoreEditValidationSetsCommand,
-            commands.StoreLegacyListValidationSetsCommand,  # hidden (alias to validation-sets)
-            commands.StoreLegacyValidationSetsCommand,
-            commands.StoreLegacyValidateCommand,
-            commands.StoreLegacyGatedCommand,
+            commands.StoreListValidationSetsCommand,  # hidden (alias to validation-sets)
+            commands.StoreValidationSetsCommand,
+            commands.StoreValidateCommand,
+            commands.StoreGatedCommand,
         ],
     ),
     craft_cli.CommandGroup(
@@ -228,7 +227,7 @@ def _run_dispatcher(
     # Load the command with a dummy app config to silence deprecation warnings.
     # This config should not actually get used down the line, so its content
     # shouldn't matter
-    dispatcher.load_command({"app": "snapcraft_legacy", "services": {}})
+    dispatcher.load_command({"app": "snapcraft", "services": {}})
     dispatcher.run()
     emit.ended_ok()
 
@@ -259,13 +258,6 @@ def run():  # noqa: C901 (complex-structure)
         _run_dispatcher(dispatcher, global_args)
         retcode = 0
     except ArgumentParsingError as err:
-        # TODO https://github.com/canonical/craft-cli/issues/78
-        with contextlib.suppress(KeyError, IndexError):
-            if (
-                err.__context__ is not None
-                and err.__context__.args[0] not in dispatcher.commands
-            ):
-                run_legacy(err)
         print(err, file=sys.stderr)  # to stderr, as argparse normally does
         emit.ended_ok()
         retcode = 1
@@ -273,8 +265,6 @@ def run():  # noqa: C901 (complex-structure)
         print(err, file=sys.stderr)  # to stderr, as argparse normally does
         emit.ended_ok()
         retcode = 0
-    except errors.LegacyFallback as err:
-        run_legacy(err)
     except KeyboardInterrupt as err:
         _emit_error(craft_cli.errors.CraftError("Interrupted."), cause=err)
         retcode = 1

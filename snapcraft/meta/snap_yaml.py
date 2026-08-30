@@ -69,7 +69,8 @@ class SnapApp(SnapcraftMetadata):
     """Snap.yaml app entry.
 
     This is currently a partial implementation, see
-    https://snapcraft.io/docs/snap-format for details.
+    https://snapcraft.io/docs/reference/development/yaml-schemas/the-snap-format/ for
+    details.
 
     TODO: implement desktop (CRAFT-804)
     TODO: implement extensions (CRAFT-805)
@@ -94,6 +95,7 @@ class SnapApp(SnapcraftMetadata):
     refresh_mode: str | None = None
     stop_mode: str | None = None
     restart_condition: str | None = None
+    success_exit_status: list[int] | None = None
     install_mode: str | None = None
     plugs: list[str] | None = None
     slots: list[str] | None = None
@@ -105,7 +107,7 @@ class SnapApp(SnapcraftMetadata):
     activates_on: list[str] | None = None
 
 
-class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
+class ContentPlug(SnapcraftMetadata):
     """Content plug definition in the snap metadata."""
 
     model_config = pydantic.ConfigDict(
@@ -188,7 +190,7 @@ class Links(SnapcraftMetadata):
     ) -> constraints.UniqueStrList | None:
         result: constraints.UniqueStrList | None
         if isinstance(value, str):
-            result = cast(constraints.UniqueStrList, [value])
+            result = [value]
         else:
             result = value
         return result
@@ -211,7 +213,7 @@ class Links(SnapcraftMetadata):
         )
 
 
-class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
+class ComponentMetadata(SnapcraftMetadata):
     """Component metadata model.
 
     This model contains different information than the model in the
@@ -242,7 +244,8 @@ class SnapMetadata(SnapcraftMetadata):
     """The snap.yaml model.
 
     This is currently a partial implementation, see
-    https://snapcraft.io/docs/snap-format for details.
+    https://snapcraft.io/docs/reference/development/yaml-schemas/the-snap-format/ for
+    details.
 
     TODO: should platforms replace architectures for core24?
     """
@@ -359,6 +362,9 @@ def _create_snap_app(app: models.App, assumes: set[str]) -> SnapApp:
     if app.command_chain:
         assumes.add("command-chain")
 
+    if app.success_exit_status:
+        assumes.add("snapd2.74")
+
     snap_app = SnapApp(
         command=app.command,
         autostart=app.autostart,
@@ -379,6 +385,7 @@ def _create_snap_app(app: models.App, assumes: set[str]) -> SnapApp:
         refresh_mode=app.refresh_mode,
         stop_mode=app.stop_mode,
         restart_condition=app.restart_condition,
+        success_exit_status=app.success_exit_status,
         install_mode=app.install_mode,
         plugs=app.plugs,
         slots=app.slots,
@@ -543,6 +550,8 @@ def _populate_environment(
             "LD_LIBRARY_PATH": get_ld_library_paths(prime_dir, arch_triplet),
             "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         }
+
+    environment = environment.copy()
 
     # if LD_LIBRARY_PATH is not defined, use default value when not classic
     if "LD_LIBRARY_PATH" not in environment and confinement != "classic":

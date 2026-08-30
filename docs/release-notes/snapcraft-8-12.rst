@@ -38,8 +38,8 @@ Remote builds: ``--build-for`` and shorthand platforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, the :ref:`remote builder <explanation-remote-build>` couldn't accept the
-``--build-for`` argument when building core24 snaps with a shorthand :ref:`platforms
-<reference-architectures>` definition.
+``--build-for`` argument when building core24 snaps with a shorthand
+:ref:`reference-platforms` definition.
 
 Due to improvements made by the Launchpad team, ``--build-for`` can now be used when
 building core24 snaps remotely.
@@ -51,7 +51,12 @@ The output of ``snapcraft status`` was reworked to allow for easier parsing.
 Prior to the change, the output was formatted as follows:
 
 .. terminal::
-    :input: snapcraft status snapcraft | grep pr- | head
+    :user:
+    :host:
+    :dir:
+
+    snapcraft status snapcraft | grep pr- | head
+
                       edge/pr-5718  8.11.1.post15             15744       -           2025-09-19T00:00:00Z
                       edge/pr-5715  8.11.1.post10             15719       -           2025-09-18T00:00:00Z
                       edge/pr-5714  8.11.1.post10             15712       -           2025-09-18T00:00:00Z
@@ -66,7 +71,11 @@ Prior to the change, the output was formatted as follows:
 The same status query now produces the following output:
 
 .. terminal::
-    :input: snapcraft status snapcraft | grep pr- | head
+    :user:
+    :host:
+    :dir:
+
+    snapcraft status snapcraft | grep pr- | head
 
     latest   amd64    edge/pr-5718  8.11.1.post15             15744       -           2025-09-19T00:00:00Z
     latest   amd64    edge/pr-5715  8.11.1.post10             15719       -           2025-09-18T00:00:00Z
@@ -90,6 +99,11 @@ Snapcraft 8.12.0
 ~~~~~~~~~~~~~~~~
 
 - `#5696`_ YAML structure is not validated before preprocessing
+
+Snapcraft 8.12.1
+~~~~~~~~~~~~~~~~
+
+- Launchpad requests ignore ``HTTP_PROXY``
 
 Contributors
 ------------

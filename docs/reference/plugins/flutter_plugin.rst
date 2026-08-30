@@ -10,7 +10,7 @@ The Flutter plugin simplifies the building of applications that employ the `Flut
 Keys
 ----
 
-This plugin provides the following unique keys for core22 and newer snaps.
+This plugin provides the following unique keys for core22 and higher snaps.
 
 
 flutter-channel
@@ -36,7 +36,7 @@ The path to the app's entrypoint ``.dart`` file.
 Dependencies
 ------------
 
-For core22 and newer snaps, this plugin installs:
+For core22 and higher snaps, this plugin installs:
 
 * ``clang``
 * ``curl``

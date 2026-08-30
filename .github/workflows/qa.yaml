@@ -6,15 +6,41 @@ on:
       - "feature/*"
       - "hotfix/*"
       - "release/*"
-      - "renovate/*"
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  filter:
+    runs-on: ubuntu-slim
+    outputs:
+      source-files: ${{ steps.filter.outputs.source-files }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
+          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          filters: |
+            source-files:
+              - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
   lint:
-    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
-  test:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
+    needs: filter
     with:
+      source-files: ${{ needs.filter.outputs.source-files }}
+  test:
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
+    needs: filter
+    with:
+      source-files: ${{ needs.filter.outputs.source-files }}
       # Snapcraft currently only tests on Python 3.12 on Ubuntu 24.04
       fast-test-platforms: '["ubuntu-24.04"]'
       slow-test-platforms: '["ubuntu-24.04"]'

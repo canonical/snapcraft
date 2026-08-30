@@ -23,7 +23,10 @@ import craft_platforms
 import craft_providers.bases
 from craft_application import ProjectService
 from craft_application.errors import CraftValidationError
-from overrides import override
+from craft_application.models.constraints import LicenseStr
+from craft_application.util import is_managed_mode
+from pydantic import TypeAdapter, ValidationError
+from typing_extensions import override
 
 from snapcraft.extensions import apply_extensions
 from snapcraft.models.project import ComponentProject, Platform, apply_root_packages
@@ -47,6 +50,10 @@ class Project(ProjectService):
 
     __project_file_path: pathlib.Path | None = None
 
+    # Used to only issue key warnings once.
+    _ua_service_warning: bool = False
+    _license_spdx_warning: bool = False
+
     @staticmethod
     @override
     def _app_preprocess_project(
@@ -60,9 +67,59 @@ class Project(ProjectService):
         # craft-parts doesn't allow `parse-info` in parts
         extract_parse_info(project)
         apply_root_packages(project)
+        Project.validate_ua_services(project)
+        Project.validate_license_spdx(project)
 
     def get_parse_info(self) -> dict[str, list[str]]:
         return extract_parse_info(self.get_raw())
+
+    @classmethod
+    def validate_license_spdx(cls, project: dict[str, Any]) -> None:
+        if cls._license_spdx_warning:
+            return
+        cls._license_spdx_warning = True
+
+        if is_managed_mode():
+            return
+
+        lic = project.get("license")
+        if lic is None:
+            return
+
+        try:
+            TypeAdapter(LicenseStr).validate_python(lic)
+        except ValidationError:
+            craft_cli.emit.warning(
+                "Non-SPDX licenses are deprecated. Use SPDX license strings or 'proprietary' instead. For more information, see https://spdx.org/licenses/."
+            )
+
+    @classmethod
+    def validate_ua_services(cls, project: dict[str, Any]) -> None:
+        """Warn if the 'ua-services' key is used for a base other than core22.
+
+        This warning is shown no more than once - either before launching a managed
+        instance or in destructive mode.
+        """
+        # one-shot
+        if cls._ua_service_warning:
+            return
+        cls._ua_service_warning = True
+
+        if is_managed_mode():
+            return
+
+        base = get_effective_base(
+            base=project.get("base"),
+            build_base=project.get("build-base"),
+            project_type=project.get("type"),
+            name=project.get("name"),
+            translate_devel=True,
+        )
+        if base is not None and base != "core22" and project.get("ua-services"):
+            craft_cli.emit.warning(
+                f"The 'ua-services' key is ignored for {base!r}. "
+                "Use '--pro=<services>' instead."
+            )
 
     @override
     def resolve_project_file_path(self) -> pathlib.Path:
@@ -113,12 +170,13 @@ class Project(ProjectService):
             )
         )
 
+        platforms: dict[str, craft_platforms.PlatformDict]
         # For backwards compatibility with core22, convert the platforms.
         if (
             effective_base == craft_providers.bases.BuilddBaseAlias.JAMMY
             and project.get("architectures")
         ):
-            platforms: dict[str, craft_platforms.PlatformDict] = {
+            platforms = {
                 key: cast(craft_platforms.PlatformDict, value.marshal())
                 for key, value in Platform.from_architectures(
                     project["architectures"]

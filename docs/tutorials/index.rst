@@ -1,3 +1,6 @@
+.. meta::
+    :description: The tutorials for Snapcraft. These tutorials are guided lessons that help you develop skills by using Snapcraft.
+
 .. _tutorials:
 
 Tutorials

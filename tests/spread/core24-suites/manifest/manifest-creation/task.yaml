@@ -8,10 +8,9 @@ environment:
 
 prepare: |
   snap install review-tools
-  snap install yq
 
 restore: |
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
   rm -f ~/manifest_0.1_*.snap
   rm -f ~/manifest.yaml

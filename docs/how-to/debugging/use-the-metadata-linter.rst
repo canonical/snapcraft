@@ -12,7 +12,6 @@ The following metadata keys are linted:
 - ``title``
 - ``contact``
 - ``license``
-- ``donation``
 - ``issues``
 - ``source-code``
 - ``website``

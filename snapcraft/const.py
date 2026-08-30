@@ -18,9 +18,16 @@
 
 import enum
 
-DEPRECATED_COMMAND_WARNING = (
-    "The '{old}' command was renamed to '{new}'. Use '{new}' instead. "
-    "The old name will be removed in a future release."
+REMOVED_COMMAND_MESSAGE = "The '{old}' command was renamed to '{new}'."
+
+REMOVED_COMMAND_RESOLUTION = "Use '{new}' instead."
+
+DEPRECATED_COMMAND_WARNING = " ".join(
+    [
+        REMOVED_COMMAND_MESSAGE,
+        REMOVED_COMMAND_RESOLUTION,
+        "The old name will be removed in a future release.",
+    ]
 )
 
 
@@ -35,10 +42,10 @@ class StrEnum(str, enum.Enum):
 class ProjectType(StrEnum):
     """The type of snap project."""
 
-    BASE = "base"
-    """A base snap, e.g. core26"""
     APP = "app"
     """An application snap (the default). Most snaps are this type."""
+    BASE = "base"
+    """A base snap, e.g. core26"""
     GADGET = "gadget"
     """A gadget snap."""
     KERNEL = "kernel"
@@ -52,12 +59,12 @@ class StableBase(StrEnum):
 
     CORE22 = "core22"
     CORE24 = "core24"
+    CORE26 = "core26"
 
 
 class UnstableBase(StrEnum):
     """Bases that require "devel" as their build-base."""
 
-    CORE26 = "core26"
     DEVEL = "devel"
 
 
@@ -103,13 +110,10 @@ OUTPUT_FORMATS = frozenset(output_format.value for output_format in OutputFormat
 CURRENT_BASES = frozenset(b.value for b in (*StableBase, *UnstableBase))
 """Bases handled by the current snapcraft codebase."""
 
-LEGACY_BASES = frozenset({"core20"})
-"""Bases handled by the legacy snapcraft codebase."""
-
-ESM_BASES = frozenset({"core", "core18"})
+ESM_BASES = frozenset({"core", "core18", "core20"})
 """Bases no longer supported by the current version of snapcraft."""
 
-BASES = CURRENT_BASES | LEGACY_BASES | ESM_BASES
+BASES = CURRENT_BASES | ESM_BASES
 """All bases recognized by snapcraft."""
 
 

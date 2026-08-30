@@ -60,7 +60,7 @@ Publish a branch
 
 Publishing a :ref:`branch <reference-channels-branch>` is similar process, but you must
 provide a full channel name, meaning it must include the track, risk, and the new branch
-name. A branch name can't contain undercores (_) or forward slashes (/).
+name. A branch name can't contain underscores (_) or forward slashes (/).
 
 As with regular publication, you can publish after uploading the revision:
 

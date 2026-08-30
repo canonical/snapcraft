@@ -17,7 +17,7 @@
 """The Snapcraft uv plugin."""
 
 from craft_parts.plugins import uv_plugin
-from overrides import override
+from typing_extensions import override
 
 from snapcraft.parts.plugins import python_common
 

@@ -60,5 +60,5 @@ parts:
     stage-packages:
       - openjdk-11-jre-headless
     override-prime: |
-      snapcraftctl prime
+      craftctl default
       rm -vf usr/lib/jvm/java-11-openjdk-*/lib/security/blacklisted.certs

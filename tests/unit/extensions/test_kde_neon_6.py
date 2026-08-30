@@ -188,6 +188,7 @@ def test_get_root_snippet(kde_neon_6_extension):
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -217,6 +218,12 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "default-provider": "kf6-core22",
                 "target": "$SNAP/kf6",
             },
+            "lxqt-support-core22": {
+                "content": "lxqt-support-core22",
+                "interface": "content",
+                "default-provider": "lxqt-support-core22",
+                "target": "$SNAP/lxqt-support",
+            },
         },
     }
 
@@ -241,6 +248,7 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -274,6 +282,12 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
                 "default-provider": "mesa-2404",
                 "interface": "content",
                 "target": "$SNAP/gpu-2404",
+            },
+            "lxqt-support-core24": {
+                "content": "lxqt-support-core24",
+                "interface": "content",
+                "default-provider": "lxqt-support-core24",
+                "target": "$SNAP/lxqt-support",
             },
         },
     }
@@ -325,6 +339,7 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -354,6 +369,12 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "default-provider": "kf6-core22",
                 "target": "$SNAP/kf6",
             },
+            "lxqt-support-core22": {
+                "content": "lxqt-support-core22",
+                "interface": "content",
+                "default-provider": "lxqt-support-core22",
+                "target": "$SNAP/lxqt-support",
+            },
         },
     }
 
@@ -380,6 +401,7 @@ def test_get_root_snippet_with_external_sdk_core24(
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
             "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
+            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -413,6 +435,12 @@ def test_get_root_snippet_with_external_sdk_core24(
                 "default-provider": "mesa-2404",
                 "interface": "content",
                 "target": "$SNAP/gpu-2404",
+            },
+            "lxqt-support-core24": {
+                "content": "lxqt-support-core24",
+                "interface": "content",
+                "default-provider": "lxqt-support-core24",
+                "target": "$SNAP/lxqt-support",
             },
         },
     }
@@ -709,11 +737,26 @@ def test_get_parts_snippet_core24(kde_neon_6_extension_core24):
     source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
     assert kde_neon_6_extension_core24.get_parts_snippet() == {
+        "kde-neon-6/gpu/wrapper": {
+            "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
+            "plugin": "make",
+            "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+        },
+        "kde-neon-6/gpu/cleanup": {
+            "after": [],
+            "source": "https://github.com/canonical/gpu-snap.git",
+            "plugin": "nil",
+            "override-prime": (
+                "craftctl default\n"
+                "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404\n"
+                "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+            ),
+        },
         "kde-neon-6/sdk": {
             "source": str(source),
             "plugin": "make",
             "make-parameters": [
-                "GPU_WRAPPER=gpu-2404-wrapper",
                 "PLATFORM_PLUG=kf6-core24",
             ],
             "build-snaps": ["kde-qt6-core24-sdk", "kf6-core24-sdk"],
@@ -728,7 +771,7 @@ def test_get_parts_snippet_core24(kde_neon_6_extension_core24):
                 "libgl-dev",
                 "libglvnd-dev",
             ],
-        }
+        },
     }
 
 
@@ -753,13 +796,28 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
     assert (
         kde_neon_6_extension_with_default_build_snap_from_latest_edge_core24.get_parts_snippet()
         == {
+            "kde-neon-6/gpu/wrapper": {
+                "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
+                "plugin": "make",
+                "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+            },
+            "kde-neon-6/gpu/cleanup": {
+                "after": ["part1"],
+                "source": "https://github.com/canonical/gpu-snap.git",
+                "plugin": "nil",
+                "override-prime": (
+                    "craftctl default\n"
+                    "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404\n"
+                    "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                    'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+                ),
+            },
             "kde-neon-6/sdk": {
                 "source": str(source),
                 "plugin": "make",
                 "make-parameters": [
-                    "GPU_WRAPPER=gpu-2404-wrapper",
                     "PLATFORM_PLUG=kf6-core24",
                 ],
-            }
+            },
         }
     )

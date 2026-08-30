@@ -1,4 +1,4 @@
-name: Spread Tests
+name: Spread tests for source
 
 on:
   pull_request:
@@ -10,35 +10,52 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      source-files: ${{ steps.filter.outputs.source-files }}
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
+      - name: Check which files changed
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
+          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          filters: |
+            source-files:
+              - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
+
       # speed up build times by using wheels, when available
       - name: Use wheels
+        if: steps.filter.outputs.source-files == 'true'
         run: |
-          yq eval 'del(.parts.snapcraft.build-environment[] | select(.PIP_NO_BINARY == ":all:"))' -i snap/snapcraft.yaml
+          yq eval 'del(.parts.snapcraft.build-environment[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
 
       - name: Build snapcraft snap
         id: build-snapcraft
         uses: canonical/action-build@v1
+        if: steps.filter.outputs.source-files == 'true'
 
       - name: Upload snapcraft snap
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
+        if: steps.filter.outputs.source-files == 'true'
         with:
           name: snap
           path: ${{ steps.build-snapcraft.outputs.snap }}
 
       - name: Verify snapcraft snap
+        if: steps.filter.outputs.source-files == 'true'
         run: |
           sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
 
   integration-spread-tests:
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     needs: build
+    if: ${{ needs.build.outputs.source-files == 'true' }}
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
@@ -48,27 +65,42 @@ jobs:
       fail-fast: false
       matrix:
         spread-jobs:
-          - google:ubuntu-20.04-64
-          - google:ubuntu-22.04-64
-          - google:ubuntu-24.04-64
+          - openstack:ubuntu-22.04-64
+          - openstack:ubuntu-24.04-64
+          - openstack:ubuntu-26.04-64
 
     steps:
       - name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
 
       - name: Download snapcraft snap
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: snap
           path: tests
 
+      - name: Run Ubuntu Pro spread tests
+        if: matrix.spread-jobs != 'openstack:ubuntu-22.04-64'
+        env:
+          UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
+        run: |
+          if [ -z "$UBUNTU_PRO_TOKEN" ]; then
+            if [ "${{ github.event.pull_request.head.repo.full_name }}" == "canonical/snapcraft" ]; then
+              echo "Error: UBUNTU_PRO_TOKEN is not set."
+              exit 1
+            else
+              echo "Warning: UBUNTU_PRO_TOKEN is not set. Skipping Pro tests"
+              exit 0
+            fi
+          fi
+          spread ${{ matrix.spread-jobs }}:tests/spread/pro/
+
       - name: Run spread
         env:
-          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
-          UA_TOKEN: ${{ secrets.UA_TOKEN }}
+          UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
           RUN_UA_TESTS: ${{ ! github.event.pull_request.head.repo.fork }}
         run: spread ${{ matrix.spread-jobs }}
 
@@ -81,8 +113,9 @@ jobs:
           done
 
   integration-spread-tests-store:
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     needs: build
+    if: ${{ needs.build.outputs.source-files == 'true' }}
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
@@ -98,21 +131,21 @@ jobs:
           # Secrets cannot be used in conditionals, so this is our dance:
           # https://github.com/actions/runner/issues/520
           if [[ -n "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}" ]]; then
-            echo RUN=true >> $GITHUB_OUTPUT
+            echo RUN=true >> "$GITHUB_OUTPUT"
           else
-            echo RUN= >> $GITHUB_OUTPUT
+            echo RUN= >> "$GITHUB_OUTPUT"
           fi
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Checkout snapcraft
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Download snapcraft snap
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: snap
           path: tests
@@ -120,13 +153,12 @@ jobs:
       - if: steps.decisions.outputs.RUN == 'true'
         name: Run spread
         env:
-          SPREAD_GOOGLE_KEY: ${{ secrets.SPREAD_GOOGLE_KEY }}
           SNAPCRAFT_ASSERTION_KEY: "${{ secrets.SNAPCRAFT_ASSERTION_KEY }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/store/
+          spread openstack:ubuntu-22.04-64:tests/spread/store/
 
       - name: Discard spread workers
         if: always()

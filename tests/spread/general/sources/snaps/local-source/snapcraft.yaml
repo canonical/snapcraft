@@ -1,11 +1,11 @@
 name: local-source
-base: core20
+base: core22
 version: "0.1"
 summary: one line summary
 description: a longer description
 confinement: strict
 
 parts:
-    make-project:
-        plugin: dump
-        source: .
+  make-project:
+    plugin: dump
+    source: .

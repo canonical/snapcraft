@@ -1,7 +1,7 @@
 summary: Verify SNAPCRAFT_BUILD_INFO works with LXD
 
 environment:
-  SNAP_DIR: ../snaps/make-hello
+  SNAP_DIR: ../snaps/uv-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -31,11 +31,11 @@ execute: |
   export SNAPCRAFT_IMAGE_INFO='{"build_url":"http://example.com/"}'
 
   snapcraft pack --use-lxd
-  sudo snap install make-hello_*.snap --dangerous
+  sudo snap install uv-hello_*.snap --dangerous
 
   # Check that the snap includes build info
-  [ -f /snap/make-hello/current/snap/manifest.yaml ]
-  [ -f /snap/make-hello/current/snap/snapcraft.yaml ]
+  [ -f /snap/uv-hello/current/snap/manifest.yaml ]
+  [ -f /snap/uv-hello/current/snap/snapcraft.yaml ]
 
   # Check that the snap manifest includes the image info
-  MATCH "build_url: http://example.com/" < /snap/make-hello/current/snap/manifest.yaml
+  MATCH "build_url: http://example.com/" < /snap/uv-hello/current/snap/manifest.yaml
