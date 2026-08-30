@@ -33,7 +33,12 @@ class Init(services.InitService):
 
     @override
     def validate_project_name(self, name: str, *, use_default: bool = False) -> str:
-        """Validate that ``name`` is valid as a snap name."""
+        """Validate that ``name`` is valid as a snap name.
+
+        If ``name`` is invalid and ``use_default`` is True, return the default
+        project name instead of raising an error. Otherwise, raise a
+        ``SnapcraftError`` for invalid names.
+        """
         try:
             validate_name(name=name, field_name="snap")
             if len(name) > 40:
