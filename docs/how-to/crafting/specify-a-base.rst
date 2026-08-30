@@ -3,7 +3,8 @@
 Specify a base
 ==============
 
-.. include:: /reuse/bases-intro.rst
+This guide describes how to declare, upgrade, and downgrade the base of a snap.
+
 
 How to use a base
 -----------------

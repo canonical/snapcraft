@@ -1,0 +1,46 @@
+summary: Appstream desktop file test
+
+environment:
+  SNAP/desktop: desktop
+  SNAP/icon_desktop: icon-desktop
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP}/snap/snapcraft.yaml"
+
+execute: |
+  # This test is only intended to run on amd64
+  [ "$(dpkg --print-architecture)" = "amd64" ] || exit 0
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  cd "${SNAP}"
+
+  snapcraft pack
+
+  # assert snap contents
+  unsquashfs -dest "snap-contents" appstream-desktop*.snap
+
+  if ! diff -U10 snap-contents/meta/snap.yaml "expected-$base-snap.yaml"; then
+      echo "The formatting for snap.yaml is incorrect"
+      exit 1
+  fi
+
+  if ! diff -U10 snap-contents/meta/gui/appstream-desktop.desktop expected-appstream-desktop.desktop; then
+      echo "The formatting for appstream-desktop.desktop is incorrect"
+      exit 1
+  fi
+
+restore: |
+  cd "${SNAP}"
+
+  snapcraft clean
+  rm -f ./*.snap
+  rm -rf ./snap-contents
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"

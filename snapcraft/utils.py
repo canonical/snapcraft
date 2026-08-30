@@ -192,7 +192,7 @@ def prompt(prompt_text: str, *, hide: bool = False) -> str:
     if hide:
         method = getpass
     else:
-        method = input  # type: ignore
+        method = input
 
     with emit.pause():
         return str(method(prompt_text))
@@ -359,6 +359,21 @@ def is_snapcraft_running_from_snap() -> bool:
     return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
 
 
+def get_component_name(partition_name: str | None) -> str | None:
+    """Normalize a partition name to a component name.
+
+    Partition names may come in as either bare component names
+    (e.g. "foo") or fully qualified names (e.g. "component/foo").
+    This function normalizes both to just the component name.
+
+    :param partition_name: The partition name to normalize.
+    :returns: The component name, or None if the input was None or "default".
+    """
+    if partition_name in (None, "default"):
+        return None
+    return partition_name.removeprefix("component/")
+
+
 def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:
     """Get a mapping of component names to prime directories from a ProjectInfo.
 
@@ -372,7 +387,7 @@ def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, P
     # strip 'component/' prefix so that the component name is the key
     for partition, prime_dir in partition_prime_dirs.items():
         if partition and partition.startswith("component/"):
-            component = partition.split("/", 1)[1]
+            component = get_component_name(partition)
             component_prime_dirs[component] = prime_dir
 
     return component_prime_dirs
@@ -426,7 +441,9 @@ def get_data_from_snap_file(snap_path: Path) -> tuple[dict, dict | None]:
     :raises SnapcraftError: If the snap file cannot be read.
     :raises FileNotFoundError: If snap.yaml doesn't exist.
     """
-    with unsquash_snap(snap_path) as snap_dir:
+    with unsquash_snap(
+        snap_path, extra_args=["meta/snap.yaml", "snap/manifest.yaml"]
+    ) as snap_dir:
         snap_yaml_path = snap_dir / "meta" / "snap.yaml"
         with snap_yaml_path.open() as yaml_file:
             snap_yaml = yaml.safe_load(yaml_file)

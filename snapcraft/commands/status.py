@@ -36,13 +36,13 @@ if TYPE_CHECKING:
     import argparse
     from collections.abc import Sequence
 
+    from snapcraft.models import Releases
     from snapcraft.store.channel_map import (
         ChannelMap,
         MappedChannel,
         Revision,
         SnapChannel,
     )
-    from snapcraft_legacy.storeapi.v2.releases import Releases
 
 
 class StoreStatusCommand(AppCommand):
@@ -476,9 +476,7 @@ class StoreRevisionsCommand(AppCommand):
 
     @override
     def run(self, parsed_args: argparse.Namespace):
-        releases = store.StoreClientCLI().list_revisions(
-            snap_name=parsed_args.snap_name
-        )
+        releases = store.StoreClientCLI().list_releases(snap_name=parsed_args.snap_name)
 
         parsed_revisions: list[tuple[str, ...]] = []
         for rev in releases.revisions:

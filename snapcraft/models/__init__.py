@@ -22,6 +22,7 @@ from .assertions import (
     EditableValidationSetAssertion,
     ConfdbSchema,
     ConfdbSchemaAssertion,
+    ValidationAssertion,
     ValidationSetAssertion,
 )
 from .manifest import Manifest
@@ -32,8 +33,12 @@ from .project import (
     ArchitectureProject,
     BareCore22Project,
     BareCore24Project,
+    BareCore26Project,
+    BareDevelProject,
     Core22Project,
     Core24Project,
+    Core26Project,
+    DevelBaseProject,
     Component,
     ComponentProject,
     ContentPlug,
@@ -44,8 +49,26 @@ from .project import (
     Project,
     Socket,
 )
+from .metrics import (
+    Metric,
+    MetricsResponse,
+    MetricName,
+    Series,
+)
+from .releases import (
+    Epoch,
+    Progressive,
+    Release,
+    Releases,
+    Revision,
+)
 
 __all__ = [
+    "Epoch",
+    "Progressive",
+    "Release",
+    "Releases",
+    "Revision",
     "MANDATORY_ADOPTABLE_FIELDS",
     "Assertion",
     "App",
@@ -53,8 +76,12 @@ __all__ = [
     "ArchitectureProject",
     "BareCore22Project",
     "BareCore24Project",
+    "BareCore26Project",
+    "BareDevelProject",
     "Core22Project",
     "Core24Project",
+    "Core26Project",
+    "DevelBaseProject",
     "Component",
     "ComponentProject",
     "ContentPlug",
@@ -65,10 +92,15 @@ __all__ = [
     "Hook",
     "Lint",
     "Manifest",
+    "Metric",
+    "MetricName",
+    "MetricsResponse",
     "Platform",
     "Project",
     "ConfdbSchema",
     "ConfdbSchemaAssertion",
+    "Series",
     "Socket",
+    "ValidationAssertion",
     "ValidationSetAssertion",
 ]

@@ -1,11 +1,17 @@
+.. meta::
+    :description: Reference for the available bases for snaps and the requirements for using them across the different snap types.
+
 .. _reference-bases:
 
 Bases
 =====
 
-.. include:: /reuse/bases-intro.rst
+This reference details the available bases for snaps and the requirements for using them
+across the different snap types.
+
 
 .. _base-snap-reference:
+.. _reference-bases-snaps:
 
 Base snaps
 ----------
@@ -52,19 +58,21 @@ and ``core16`` are two distinct packages.
 
 The :ref:`reference-support-schedule` details the support timeline for ESM releases.
 
+
 ``base``
 --------
 
-The ``base`` key in a project file:
+The ``base`` key in a project file defines:
 
-* defines the feature set used by Snapcraft
-* the ``snapcraft.yaml`` schema
-* the environment where the snap is built if ``build-base`` is not defined
-* and which base snap is used at runtime
+- the feature set used by Snapcraft
+- the ``snapcraft.yaml`` schema
+- the environment where the snap is built if ``build-base`` isn't defined
+- which base snap is used at runtime
 
-``base`` must be defined except for base, snapd, and kernel snaps.
+The base must be defined in all snaps except for base, snapd, and kernel snaps.
 
-``base`` must be a :ref:`supported base<base-snap-reference>`.
+The base must be a :ref:`supported base <base-snap-reference>`.
+
 
 ``build-base``
 --------------
@@ -77,7 +85,7 @@ built.
 Bare base snaps
 ^^^^^^^^^^^^^^^
 
-``build-base`` must be a :ref:`supported base<base-snap-reference>` when
+``build-base`` must be a :ref:`supported base <base-snap-reference>` when
 ``base: bare`` is defined.
 
 Devel builds

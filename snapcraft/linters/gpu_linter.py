@@ -22,13 +22,14 @@ from pathlib import Path
 from overrides import overrides
 
 from snapcraft.elf import elf_utils
+from snapcraft.utils import get_effective_base
 
 from .base import Linter, LinterIssue, LinterResult
 
 _HELP_URLS = {
-    "core22": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics-on-base-core22/",
-    "core24": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics-on-base-core24/",
-    "core26": "https://canonical-ubuntu-frame-documentation.readthedocs-hosted.com/how-to/use-snap-graphics/",
+    "core22": "https://ubuntu.com/frame/docs/22/how-to/use-snap-graphics/",
+    "core24": "https://ubuntu.com/frame/docs/24/how-to/use-snap-graphics/",
+    "core26": "https://ubuntu.com/frame/docs/26/how-to/use-snap-graphics/",
 }
 
 _CORE22_PATTERNS = {
@@ -82,7 +83,16 @@ class GpuLinter(Linter):
 
         current_path = Path()
         issues: list[LinterIssue] = []
-        base = self._snap_metadata.base or "core24"
+
+        base = get_effective_base(
+            base=self._snap_metadata.base,
+            build_base=self._build_base,
+            project_type=self._snap_metadata.type,
+            name=self._snap_metadata.name,
+        )
+
+        if base == "bare" or not base:
+            base = self._build_base or "core24"
 
         elf_files = elf_utils.get_elf_files(current_path)
 

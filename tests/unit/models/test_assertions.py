@@ -26,7 +26,14 @@ from snapcraft.models import (
     EditableValidationSetAssertion,
     ValidationSetAssertion,
 )
-from snapcraft.models.assertions import Snap, cast_dict_scalars_to_strings
+from snapcraft.models.assertions import (
+    Filter,
+    Parameter,
+    Rules,
+    Snap,
+    ValidationAssertion,
+    cast_dict_scalars_to_strings,
+)
 
 
 @pytest.fixture()
@@ -159,6 +166,72 @@ def test_confdb_schema_nested(check):
     )
 
 
+def test_parameter_defaults(check):
+    """Test default values of the Parameter model."""
+    parameter = Parameter.unmarshal({})
+
+    check.is_none(parameter.summary)
+    check.equal(parameter.presence, "optional")
+
+
+def test_parameter_all_fields(check):
+    """Test that all Parameter fields are set correctly when provided."""
+    parameter = Parameter.unmarshal(
+        {"summary": "test-parameter-summary", "presence": "required"}
+    )
+
+    check.equal(parameter.summary, "test-parameter-summary")
+    check.equal(parameter.presence, "required")
+
+
+def test_rules_defaults(check):
+    """Test default values of the Rules model."""
+    rules = Rules.unmarshal({"rules": [{"storage": "test-storage"}]})
+
+    check.is_none(rules.summary)
+    check.is_none(rules.parameters)
+    check.is_none(rules.filters)
+
+
+def test_rules_parameters(check):
+    """Test that parameters are unmarshalled correctly."""
+    rules = Rules.unmarshal(
+        {
+            "rules": [{"storage": "test-storage"}],
+            "parameters": {
+                "test-parameter": {
+                    "summary": "test-parameter-summary",
+                    "presence": "required-on-write",
+                }
+            },
+        }
+    )
+
+    check.equal(
+        rules.parameters,
+        {
+            "test-parameter": Parameter(
+                summary="test-parameter-summary", presence="required-on-write"
+            )
+        },
+    )
+
+
+def test_rules_filters(check):
+    """Test that filters are unmarshalled correctly."""
+    rules = Rules.unmarshal(
+        {
+            "rules": [{"storage": "test-storage"}],
+            "filters": [{"test-parameter": {"optional": True}}],
+        }
+    )
+
+    check.equal(
+        rules.filters,
+        [{"test-parameter": Filter(optional=True)}],
+    )
+
+
 def test_editable_confdb_schema_assertion_defaults(check):
     """Test default values of the EditableConfdbSchemaAssertion model."""
     assertion = EditableConfdbSchemaAssertion.unmarshal(
@@ -234,6 +307,7 @@ def test_confdb_schema_assertion_defaults(check):
     check.equal(assertion.revision, 0)
     check.is_none(assertion.summary)
     check.is_none(assertion.views["wifi-setup"].summary)
+    check.is_none(assertion.views["wifi-setup"].parameters)
 
 
 def test_confdb_schema_assertion_marshal_as_str():
@@ -353,3 +427,57 @@ def test_validation_set_marshal_as_str(fake_validation_set):
         "timestamp": "2026-01-01T10:20:30Z",
         "type": "validation-set",
     }
+
+
+class TestValidation:
+    """Tests for the ValidationAssertion"""
+
+    @pytest.fixture()
+    def fake_validation_assertion(self):
+        return ValidationAssertion(
+            assertion_type="validation",
+            authority_id="test-authority-id",
+            series="16",
+            snap_id="test-snap-id",
+            approved_snap_id="test-approved-snap-id",
+            approved_snap_revision="42",
+            timestamp="2026-01-01T10:20:30Z",
+            revoked=False,
+            revision=3,
+        )
+
+    @pytest.mark.parametrize("revoked", [True, False])
+    def test_validation_marshal_as_str(self, fake_validation_assertion, revoked):
+        """Cast all scalars to string when marshalling."""
+        fake_validation_assertion.revoked = revoked
+        data = fake_validation_assertion.marshal_scalars_as_strings()
+
+        assert data == {
+            "type": "validation",
+            "authority-id": "test-authority-id",
+            "series": "16",
+            "snap-id": "test-snap-id",
+            "approved-snap-id": "test-approved-snap-id",
+            "approved-snap-revision": "42",
+            "timestamp": "2026-01-01T10:20:30Z",
+            "revoked": str(revoked).lower(),
+            "revision": "3",
+        }
+
+    def test_validation_marshal_as_str_exclude_revision(self):
+        """Exclude revision when it's None."""
+        assertion = ValidationAssertion(
+            assertion_type="validation",
+            authority_id="test-authority-id",
+            series="16",
+            snap_id="test-snap-id",
+            approved_snap_id="test-approved-snap-id",
+            approved_snap_revision="42",
+            timestamp="2026-01-01T10:20:30Z",
+            revoked=False,
+            revision=None,
+        )
+
+        data = assertion.marshal_scalars_as_strings()
+
+        assert "revision" not in data

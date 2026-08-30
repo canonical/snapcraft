@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2021 Canonical Ltd
+name: pc-kernel
+summary: Initrd plugin test
+description: A pc kernel to test the initrd plugin.
+
+grade: stable
+build-base: core22
+confinement: strict
+type: kernel
+adopt-info: kernel
+
+parts:
+  kernel:
+    plugin: kernel
+    kernel-ubuntu-binary-package: true
+    stage-packages:
+      - wireless-regdb
+    override-build: |
+      craftctl default
+
+      kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+
+      craftctl set version="${kver}"
+    prime:
+      - -kernel.img*
+
+  initrd:
+    after: [kernel]
+    plugin: initrd
+    initrd-build-efi-image: true
+    initrd-firmware:
+      - regulatory.db
+      - regulatory.db.p7s

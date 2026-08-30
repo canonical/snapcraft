@@ -52,11 +52,11 @@ CORE22_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
 CORE24_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
     "Lifecycle",
     [
-        craft_application.commands.lifecycle.CleanCommand,
-        craft_application.commands.lifecycle.PullCommand,
-        craft_application.commands.lifecycle.BuildCommand,
-        craft_application.commands.lifecycle.StageCommand,
-        craft_application.commands.lifecycle.PrimeCommand,
+        commands.CleanCommand,
+        commands.PullCommand,
+        commands.BuildCommand,
+        commands.StageCommand,
+        commands.PrimeCommand,
         craft_application.commands.lifecycle.TestCommand,
         commands.PackCommand,
         commands.SnapCommand,  # Hidden (legacy compatibility)
@@ -97,7 +97,7 @@ COMMAND_GROUPS = [
             commands.StoreNamesCommand,
             commands.StoreLegacyListRegisteredCommand,
             commands.StoreLegacyListCommand,
-            commands.StoreLegacyMetricsCommand,
+            commands.StoreMetricsCommand,
             commands.StoreUploadMetadataCommand,
         ],
     ),
@@ -109,7 +109,7 @@ COMMAND_GROUPS = [
             commands.StoreStatusCommand,
             commands.StoreUploadCommand,
             commands.StoreLegacyPushCommand,  # hidden (legacy for upload)
-            commands.StoreLegacyPromoteCommand,
+            commands.StorePromoteCommand,
             commands.StoreListRevisionsCommand,  # hidden (alias to revisions)
             commands.StoreRevisionsCommand,
         ],
@@ -127,7 +127,7 @@ COMMAND_GROUPS = [
         [
             commands.StoreCreateKeyCommand,
             commands.StoreRegisterKeyCommand,
-            commands.StoreLegacySignBuildCommand,
+            commands.StoreSignBuildCommand,
             commands.StoreListKeysCommand,
             commands.StoreKeysCommand,
         ],
@@ -138,7 +138,7 @@ COMMAND_GROUPS = [
             commands.StoreEditValidationSetsCommand,
             commands.StoreListValidationSetsCommand,  # hidden (alias to validation-sets)
             commands.StoreValidationSetsCommand,
-            commands.StoreLegacyValidateCommand,
+            commands.StoreValidateCommand,
             commands.StoreGatedCommand,
         ],
     ),
@@ -227,7 +227,7 @@ def _run_dispatcher(
     # Load the command with a dummy app config to silence deprecation warnings.
     # This config should not actually get used down the line, so its content
     # shouldn't matter
-    dispatcher.load_command({"app": "snapcraft_legacy", "services": {}})
+    dispatcher.load_command({"app": "snapcraft", "services": {}})
     dispatcher.run()
     emit.ended_ok()
 

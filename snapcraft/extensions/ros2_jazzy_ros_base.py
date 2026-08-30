@@ -28,7 +28,7 @@ class ROS2JazzyRosBaseExtension(ROS2JazzyMetaBase):
 
     @functools.cached_property
     @override
-    def ros2_jazzy_snaps(  # type: ignore[reportIncompatibleMethodOverride]
+    def ros2_jazzy_snaps(
         self,
     ) -> ROS2JazzySnaps:
         return ROS2JazzySnaps(

@@ -1,0 +1,13 @@
+name: grade-snap
+version: "1.0"
+summary: Build a snap to test the grade
+description: Build a snap to test the grade
+base: core24
+confinement: strict
+
+grade: stable
+
+parts:
+  hello:
+    source: .
+    plugin: nil

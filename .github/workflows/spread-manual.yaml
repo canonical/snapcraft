@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # speed up build times by using wheels, when available
@@ -52,14 +52,14 @@ jobs:
   kernel-plugins:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -70,19 +70,53 @@ jobs:
           path: tests
       - name: Kernel plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel
+          spread openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel       \
+                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-bin   \
+                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-cross \
+                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-deb
 
-  remote-build:
+  initrd-plugins:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Download snap artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: snap
+          path: tests
+      - name: Initrd plugin test
+        run: |
+          spread openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
+
+  remote-build:
+    needs: [predicate, snap-build]
+    if: needs.predicate.outputs.should_run == 'true'
+    runs-on: [self-hosted, spread-enabled]
+    steps:
+      - name: Cleanup job workspace
+        run: |
+          rm -rf "${{ github.workspace }}"
+          mkdir "${{ github.workspace }}"
+      - name: Checkout snapcraft
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -95,46 +129,28 @@ jobs:
         env:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/core22/remote-build \
-            google:ubuntu-24.04-64:tests/spread/core24/remote-build \
-            google:fedora-39-64:tests/spread/core24/remote-build:no_platforms
+          spread openstack:ubuntu-22.04-64:tests/spread/core22/remote-build \
+            openstack:ubuntu-24.04-64:tests/spread/core24/remote-build
 
-  matter-sdk:
-    needs: [predicate, snap-build]
-    if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
-    steps:
-      - name: Cleanup job workspace
+      - name: Discard spread workers
+        if: always()
         run: |
-          rm -rf "${{ github.workspace }}"
-          mkdir "${{ github.workspace }}"
-      - name: Checkout snapcraft
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          submodules: true
-      - name: Download snap artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: snap
-          path: tests
-      - name: matter-sdk test
-        run: |
-          spread \
-              google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/matter-sdk \
-              google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/matter-sdk
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
 
   colcon-plugins:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -145,23 +161,31 @@ jobs:
           path: tests
       - name: colcon plugin test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello \
-            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-msg-package \
-            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-packages-ignore \
-            google:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener \
-            google:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
+          spread openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello \
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-msg-package \
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-packages-ignore \
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener \
+            openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
 
   extensions:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -172,19 +196,27 @@ jobs:
           path: tests
       - name: extensions test
         run: |
-          spread google.*:tests/spread/extensions/
+          spread openstack.*:tests/spread/extensions/
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
 
   snapd-bases:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Cleanup job workspace
         run: |
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -195,19 +227,27 @@ jobs:
           path: tests
       - name: Spread test
         run: |
-          spread google:ubuntu-22.04-64:tests/spread/snaps/snapd
+          spread openstack:ubuntu-22.04-64:tests/spread/snaps/snapd
+
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done
 
   squid-proxy:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
-    runs-on: [spread-installed]
+    runs-on: [self-hosted, spread-enabled]
     steps:
       - name: Clean up job workspace
         run: |
           rm -rf "${{ github.workspace }}"
           mkdir "${{ github.workspace }}"
       - name: Checkout Snapcraft
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
@@ -218,4 +258,11 @@ jobs:
           path: tests
       - name: Spread test
         run: |
-          spread google:ubuntu-24.04-64:tests/spread/core24/squid-proxy google:ubuntu-22.04-64:tests/spread/core22/squid-proxy
+          spread openstack:ubuntu-24.04-64:tests/spread/core24/squid-proxy openstack:ubuntu-22.04-64:tests/spread/core22/squid-proxy
+      - name: Discard spread workers
+        if: always()
+        run: |
+          shopt -s nullglob
+          for r in .spread-reuse.*.yaml; do
+            spread -discard -reuse-pid="$(echo "$r" | grep -o -E '[0-9]+')"
+          done

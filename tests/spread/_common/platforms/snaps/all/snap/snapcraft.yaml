@@ -1,0 +1,14 @@
+name: all
+version: "1.0"
+summary: test
+description: A snap that builds for `all`.
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: [amd64, arm64]
+    build-for: [all]
+
+parts:
+  nil:
+    plugin: nil

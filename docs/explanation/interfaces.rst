@@ -1,7 +1,7 @@
 .. _explanation-interfaces:
 
-Interfaces
-==========
+About interfaces
+================
 
 A strictly-confined snap is considered untrusted and runs in a restricted environment.
 It's only able to access a limited set of resources outside the environment it runs in.

@@ -16,7 +16,7 @@
 
 """Snapcraft commands."""
 
-from . import core22, legacy
+from . import core22
 from .account import (
     StoreExportLoginCommand,
     StoreLoginCommand,
@@ -33,17 +33,22 @@ from .keys import (
     StoreListKeysCommand,
     StoreKeysCommand,
     StoreRegisterKeyCommand,
+    StoreSignBuildCommand,
 )
-from .legacy import (
-    StoreLegacyMetricsCommand,
-    StoreLegacyPromoteCommand,
-    StoreLegacySignBuildCommand,
-    StoreLegacyValidateCommand,
+from .lifecycle import (
+    BuildCommand,
+    CleanCommand,
+    PackCommand,
+    PrimeCommand,
+    PullCommand,
+    SnapCommand,
+    StageCommand,
+    TryCommand,
 )
-from .lifecycle import PackCommand, SnapCommand, TryCommand
 from .lint import LintCommand
 from .manage import (
     StoreCloseCommand,
+    StorePromoteCommand,
     StoreReleaseCommand,
     StoreSetDefaultTrackCommand,
 )
@@ -74,10 +79,14 @@ from .upload import (
 )
 from .validation_sets import (
     StoreEditValidationSetsCommand,
-    StoreGatedCommand,
     StoreListValidationSetsCommand,
     StoreValidationSetsCommand,
 )
+from .validations import (
+    StoreGatedCommand,
+    StoreValidateCommand,
+)
+from .metrics import StoreMetricsCommand
 
 __all__ = [
     "ExpandExtensionsCommand",
@@ -86,9 +95,14 @@ __all__ = [
     "ListExtensionsCommand",
     "ListPluginsCommand",
     "RemoteBuildCommand",
+    "BuildCommand",
+    "CleanCommand",
     "PackCommand",
     "PluginsCommand",
+    "PrimeCommand",
+    "PullCommand",
     "SnapCommand",
+    "StageCommand",
     "StoreCloseCommand",
     "StoreConfdbSchemasCommand",
     "StoreCreateKeyCommand",
@@ -99,11 +113,7 @@ __all__ = [
     "StoreGatedCommand",
     "StoreLegacyListCommand",
     "StoreLegacyListRegisteredCommand",
-    "StoreLegacyMetricsCommand",
-    "StoreLegacyPromoteCommand",
     "StoreLegacyPushCommand",
-    "StoreLegacySignBuildCommand",
-    "StoreLegacyValidateCommand",
     "StoreListRevisionsCommand",
     "StoreListConfdbSchemasCommand",
     "StoreListKeysCommand",
@@ -111,19 +121,22 @@ __all__ = [
     "StoreListValidationSetsCommand",
     "StoreLoginCommand",
     "StoreLogoutCommand",
+    "StoreMetricsCommand",
     "StoreNamesCommand",
+    "StorePromoteCommand",
     "StoreRegisterCommand",
     "StoreRegisterKeyCommand",
     "StoreReleaseCommand",
     "StoreRevisionsCommand",
     "StoreSetDefaultTrackCommand",
+    "StoreSignBuildCommand",
     "StoreStatusCommand",
     "StoreTracksCommand",
     "StoreUploadCommand",
     "StoreUploadMetadataCommand",
+    "StoreValidateCommand",
     "StoreValidationSetsCommand",
     "StoreWhoAmICommand",
     "TryCommand",
     "core22",
-    "legacy",
 ]

@@ -41,15 +41,26 @@
     <div class="copyright">
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e -%}
-          <a href="{{ path }}">Copyright</a> &#169; {{ copyright }}
+          <a href="{{ path }}">&copy; {{ copyright }} {{ author }}</a>
         {%- endtrans %}
       {%- else %}
         {% trans copyright=copyright|e -%}
-          Copyright &#169; {{ copyright }}
+          &copy; {{ copyright }} {{ author }}
         {%- endtrans %}
       {%- endif %}
     </div>
     {%- endif %}
+    {%- if license and license.name -%}
+      {%- if license.url -%}
+      <div class="license">
+        This page is licensed under <a href="{{ license.url }}">{{ license.name }}</a>
+      </div>
+      {%- else -%}
+      <div class="license">
+        This page is licensed under {{ license.name }}
+      </div>
+      {%- endif -%}
+    {%- endif -%}
 
     {# mod: removed "Made with" #}
 

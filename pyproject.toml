@@ -2,54 +2,36 @@
 name = "snapcraft"
 description = "Create snaps"
 dynamic = ["version"]
+# Applications should avoid CVEs in direct dependencies by setting a minimum version in 'dependencies'.
 dependencies = [
-    "attrs",
     "catkin-pkg==1.1.0; sys_platform == 'linux'",
-    "click>=8.2",
-    "craft-application[remote]>=6.2.0",
-    "craft-archives>=2.2.0",
-    "craft-cli>=3.3.0",
+    "click>=8.3.3",
+    "craft-application[remote]>=7.2.0",
+    "craft-archives>=2.2.1",
+    "craft-cli>=3.4.0",
     "craft-grammar>=2.3.0",
-    "craft-parts>=2.32.0",
-    "craft-platforms>=0.10.0",
-    "craft-providers>=3.3.0",
+    "craft-parts>=2.33.0",
+    "craft-platforms>=0.11.0",
+    "craft-providers>=3.7.1",
     "craft-store>=3.3.0",
-    "cryptography",
-    "gnupg",
     "jsonschema==2.6.0",
-    "launchpadlib",
     "lazr.restfulclient",
     "lxml",
-    "macaroonbakery",
-    "mypy-extensions",
     "overrides",
     "packaging",
-    "progressbar",
     "pydantic~=2.8",
     "pyelftools",
     # Pygit2 and libgit2 need to match versions.
     # Further info: https://www.pygit2.org/install.html#version-numbers
     # 1.18 is the last minor version that supports Python 3.10
     "pygit2~=1.18.2",
-    # Snapcraft directly only cares about pylxd on Linux. However, as a note for
-    # packagers: As of 3.1.0, craft-providers depends on pylxd on all platforms.
-    # If we drop the direct dependency we will remove the following line, but pylxd
-    # will still be in the dependency tree.
-    "pylxd",
-    "python-debian ; sys_platform == 'linux'",
     "pyxdg",
     "pyyaml",
-    "raven",
     "requests-toolbelt",
-    "requests-unixsocket2",
     "requests>=2.32.4",
-    # setuptools >= 80.9 has a noisy warning about pkg_resources
-    "setuptools>=69.0,<80.9.0",
-    "simplejson",
+    "setuptools~=84.0.0",
     "snap-helpers",
     "tabulate",
-    "toml",
-    "tinydb",
     "typing-extensions",
     "validators>=0.28.3",
 ]
@@ -69,20 +51,15 @@ license-files = ["LICENSE"]
 requires-python = ">=3.10"
 readme = { file = "README.md", content-type = "text/markdown" }
 
+
+# Applications should avoid CVEs in optional, direct dependencies by setting a minimum
+# version in 'dependency-groups'.
 [dependency-groups]
 dev = [
     "coverage[toml]",
-    "pyflakes",
-    "fixtures",
-    "mccabe",
-    "testscenarios",
-    "pexpect",
     "pip",
-    "pycodestyle",
-    "pyftpdlib",
     "pyinstaller ; sys_platform == 'win32'",
     "pymacaroons",
-    "pyramid",
     "pytest",
     "pytest-cov",
     "pytest-check",
@@ -91,42 +68,43 @@ dev = [
 ]
 docs = [
     "pydantic-kitbash~=1.0",
-    "sphinx-pydantic==0.1.1",
     "sphinx-lint~=1.0",
-    "sphinxext-rediraffe==0.3.0",
+    "sphinx-pydantic==0.1.1",
     "sphinx-substitution-extensions==2025.1.2",
-    "sphinx-copybutton",
-    {include-group = "docs-starter-pack"},
+    "sphinxext-rediraffe==0.3.0",
+    {include-group = "docs-sphinx-stack"},
 ]
 # We disable the unused but default SP dependencies slated for removal
 # https://warthogs.atlassian.net/browse/DOCPR-2387
-docs-starter-pack = [
+docs-sphinx-stack = [
     "canonical-sphinx~=0.6",
-    "myst-parser>=4.0.1",
-    "packaging>=25.0",
+    "myst-parser~=4.0",
+    "packaging~=26.1",
     "rst2html>=2020.7.4",
     "sphinx-autobuild>=2024.10.3",
-    # "sphinx-config-options>=0.1.0",
-    # "sphinx-contributor-listing>=0.1.0",
-    "sphinx-design>=0.6.1",
-    # "sphinx-filtered-toctree>=0.1.0",
-    # "sphinx-last-updated-by-git>=0.3.8",
-    "sphinx-notfound-page>=1.1.0",
-    "sphinx-related-links>=0.1.1",
-    "sphinx-roles>=0.1.0",
-    "sphinx-sitemap>=2.6.0",
-    # "sphinx-tabs>=3.4.5",
-    "sphinx-terminal>=1.0.2",
-    # "sphinx-ubuntu-images>=0.1.0",
-    # "sphinx-youtube-links>=0.1.0",
-    "sphinxcontrib-jquery>=4.1",
-    # "sphinxcontrib-svg2pdfconverter[cairosvg]>=2.0.0",
-    "sphinxext-opengraph>=0.13.0",
-    "vale>=3.13.0.0",
+    # "sphinx-config-options~=0.1",
+    # "sphinx-contributor-listing~=0.1",
+    "sphinx-design==0.6.1",
+    # "sphinx-filtered-toctree~=0.1",
+    # "sphinx-last-updated-by-git~=0.3",
+    "sphinx-llm~=0.4",
+    "sphinx-notfound-page~=1.1",
+    "sphinx-related-links~=0.1",
+    # "sphinx-reredirects==0.1.6",
+    "sphinx-rerediraffe>=0.0.3,<1.0.0",
+    "sphinx-roles~=0.1",
+    "sphinx-sitemap~=2.9",
+    # "sphinx-tabs~=3.5",
+    "sphinx-terminal~=1.0",
+    # "sphinx-ubuntu-images~=0.1",
+    # "sphinx-youtube-links~=0.1",
+    "sphinxcontrib-jquery~=4.1",
+    # "sphinxcontrib-svg2pdfconverter[cairosvg]~=2.1",
+    "sphinxext-opengraph~=0.13",
+    "vale~=3.13",
 ]
 lint = ["codespell[toml]", { include-group = "types" }]
 types = [
-    "mypy~=1.20.0",
     "types-PyYAML",
     "types-requests>=2.32",
     "types-setuptools",
@@ -153,6 +131,12 @@ conflicts = [
     ],
 ]
 constraint-dependencies = [
+    # Basic constraints to allow --resolution=lowest.
+    #
+    # Applications should avoid CVEs in transitive dependencies by setting a minimum
+    # version in this section.
+    "cryptography>=50.0.0",
+    "httplib2>=0.32.0",
     # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
     # what is available in the noble repositories.
     # https://pynacl.readthedocs.io/en/latest/changelog/
@@ -161,10 +145,7 @@ constraint-dependencies = [
     # protobuf 6.33.x segfaults on s390x
     # this issue might be the cause: https://github.com/protocolbuffers/protobuf/issues/24103
     "protobuf==6.32.*",
-]
-build-constraint-dependencies = [
-    # needed until we have rustc >= 1.78
-    "maturin<1.10.0 ; python_version < '3.14'",
+    "starlette>=1.0.1",
 ]
 
 [[tool.uv.index]]
@@ -183,7 +164,7 @@ requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-script-files = ["bin/snapcraftctl", "bin/snapcraftctl-compat"]
+script-files = ["bin/snapcraftctl-compat"]
 
 [tool.setuptools_scm]
 write_to = "snapcraft/_version.py"
@@ -213,32 +194,15 @@ git_describe_command = [
 # Appends "+dirty" to the version when working dir is dirty
 # Necessary to avoid version numbers being too long
 local_scheme = "dirty-tag"
+# Used when the git version can't be determined, like when building from a worktree.
+fallback_version = "0.0.0"
 
 [tool.setuptools.packages.find]
-include = ["snapcraft", "extensions", "keyrings", "schema", "snapcraft_legacy"]
+include = ["snapcraft", "extensions", "schema"]
 namespaces = true
 
 [tool.setuptools.package-data]
 snapcraft = ["templates/*"]
-
-[tool.mypy]
-python_version = "3.10"
-ignore_missing_imports = true
-follow_imports = "silent"
-exclude = [
-    "build",
-    "snapcraft_legacy",
-    "tests/spread",
-    "tests/legacy",
-    "tools",
-    "venv",
-]
-plugins = ["pydantic.mypy"]
-
-[tool.pyright]
-include = ["snapcraft", "tests"]
-exclude = ["build", "tests/legacy", "tests/spread"]
-pythonVersion = "3.10"
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
@@ -247,8 +211,6 @@ line-length = 88
 extend-exclude = [
     "docs",
     "__pycache__",
-    "snapcraft_legacy",
-    "tests/legacy",
     "snapcraft/_version.py", # setuptools_scm generates old-style type annotations and single quotes
 ]
 lint.select = [
@@ -336,10 +298,9 @@ lint.ignore = [
     "ARG",     # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
     "S101",    # Allow assertions in tests
     "S103",    # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
-    "S105",    # Allow Possible hardcoded password.
-    "S106",    # Allow Possible hardcoded password.
     "S108",    # Allow Probable insecure usage of temporary file or directory
     "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
+    "PLR0917", # Allow many positional arguments for test functions (useful if we need many fixtures)
     "PLR2004", # Allow magic values in tests
     "SLF",     # Allow accessing private members from tests.
 ]
@@ -360,9 +321,7 @@ strict-checking = true
 [tool.ruff.lint.pydocstyle]
 ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
     "typing.overload", # Default configuration
-    # The next four are all variations on override, so child classes don't have to repeat parent classes' docstrings.
-    "overrides.override",  # Used in snapcraft_legacy
-    "overrides.overrides",  # Used in snapcraft_legacy
+    # The following are variations on override, so child classes don't have to repeat parent classes' docstrings.
     "typing.override",
     "typing_extensions.override",
 ]
@@ -378,18 +337,10 @@ classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 [tool.ty.src]
 exclude = [
     "build",
-    "snapcraft_legacy",
     "tests/spread",
-    "tests/legacy",
     "tools",
     "venv",
 ]
-
-[tool.ty.rules]
-
-# Temporarily disabled while mypy and pyright are still in use.
-# See: https://github.com/canonical/snapcraft/issues/6007
-unused-type-ignore-comment = "ignore"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
