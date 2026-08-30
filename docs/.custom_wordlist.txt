@@ -3,6 +3,7 @@
 (un)?sandbox(ed|ing)
 [Pp]ower(PC|pc)
 aex
+addons
 appstream
 Autoconf
 autoformatte(d|rs?)
@@ -15,6 +16,7 @@ backend
 backends
 backoff
 Boehm
+bool
 booleans?
 bootable
 breakpoints?
@@ -23,6 +25,7 @@ buildd
 Bundler
 Canonical('s)?
 Charmcraft
+chroot
 cameractrls
 cjk
 classpath
@@ -30,13 +33,14 @@ CMake
 Cointop
 Colcon
 Conda
-confdb
+confdbs?
 connectedhomeip
 Craftctl
 crafters?
 cryptographically
 ctypes?
 DBus
+defconfigs
 devmode
 distros?
 Dockerfiles?
@@ -46,6 +50,7 @@ dvipng
 drwxr-xr-x
 drwxrwxrwx
 emacs
+enablement
 FIGlet
 Filesets?
 filetrees?
@@ -71,15 +76,21 @@ html
 https
 igor
 Inadyn
+Initrd
 ing
+initrd
+initrds
 Intersphinx
 io
 ip
 Irssi
+iterability
 jemalloc
 JLink
 json
 KCalc
+kconfig
+kdefconfig
 kahle
 keyrings
 landscape
@@ -95,6 +106,7 @@ libcurl
 libproxy
 linter('?s)?
 liquidctl
+LXQt
 Makefile
 Makefiles?
 Miniconda
@@ -111,6 +123,7 @@ ncursesw
 nano
 Nextcloud
 Ninjemys
+nodejs
 noops?
 npm
 Numpy
@@ -120,6 +133,8 @@ otf
 patchelf
 pathing
 PDF
+perf
+pkgconfig
 plaintext
 plantuml
 PNG
@@ -134,7 +149,9 @@ pytest
 QEMU
 qmake
 rackup
+ramdisk
 Read the Docs
+ramdisks
 readthedocs
 redeclare
 repos?
@@ -153,6 +170,7 @@ sed
 sequenceDiagram
 sitecustomize
 sitemapindex
+snakeoil
 smbraille
 smscript
 snapcraftctl
@@ -160,6 +178,7 @@ snapctl
 Sphinx
 Spread
 spread_test_example
+Starbase
 Starcraft
 stderr
 stdin
@@ -189,6 +208,7 @@ untrusted
 URIs?
 URL
 usermod
+userspace
 utils
 uv
 vendored

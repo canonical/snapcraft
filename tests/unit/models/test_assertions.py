@@ -27,6 +27,9 @@ from snapcraft.models import (
     ValidationSetAssertion,
 )
 from snapcraft.models.assertions import (
+    Filter,
+    Parameter,
+    Rules,
     Snap,
     ValidationAssertion,
     cast_dict_scalars_to_strings,
@@ -163,6 +166,72 @@ def test_confdb_schema_nested(check):
     )
 
 
+def test_parameter_defaults(check):
+    """Test default values of the Parameter model."""
+    parameter = Parameter.unmarshal({})
+
+    check.is_none(parameter.summary)
+    check.equal(parameter.presence, "optional")
+
+
+def test_parameter_all_fields(check):
+    """Test that all Parameter fields are set correctly when provided."""
+    parameter = Parameter.unmarshal(
+        {"summary": "test-parameter-summary", "presence": "required"}
+    )
+
+    check.equal(parameter.summary, "test-parameter-summary")
+    check.equal(parameter.presence, "required")
+
+
+def test_rules_defaults(check):
+    """Test default values of the Rules model."""
+    rules = Rules.unmarshal({"rules": [{"storage": "test-storage"}]})
+
+    check.is_none(rules.summary)
+    check.is_none(rules.parameters)
+    check.is_none(rules.filters)
+
+
+def test_rules_parameters(check):
+    """Test that parameters are unmarshalled correctly."""
+    rules = Rules.unmarshal(
+        {
+            "rules": [{"storage": "test-storage"}],
+            "parameters": {
+                "test-parameter": {
+                    "summary": "test-parameter-summary",
+                    "presence": "required-on-write",
+                }
+            },
+        }
+    )
+
+    check.equal(
+        rules.parameters,
+        {
+            "test-parameter": Parameter(
+                summary="test-parameter-summary", presence="required-on-write"
+            )
+        },
+    )
+
+
+def test_rules_filters(check):
+    """Test that filters are unmarshalled correctly."""
+    rules = Rules.unmarshal(
+        {
+            "rules": [{"storage": "test-storage"}],
+            "filters": [{"test-parameter": {"optional": True}}],
+        }
+    )
+
+    check.equal(
+        rules.filters,
+        [{"test-parameter": Filter(optional=True)}],
+    )
+
+
 def test_editable_confdb_schema_assertion_defaults(check):
     """Test default values of the EditableConfdbSchemaAssertion model."""
     assertion = EditableConfdbSchemaAssertion.unmarshal(
@@ -238,6 +307,7 @@ def test_confdb_schema_assertion_defaults(check):
     check.equal(assertion.revision, 0)
     check.is_none(assertion.summary)
     check.is_none(assertion.views["wifi-setup"].summary)
+    check.is_none(assertion.views["wifi-setup"].parameters)
 
 
 def test_confdb_schema_assertion_marshal_as_str():
@@ -364,8 +434,8 @@ class TestValidation:
 
     @pytest.fixture()
     def fake_validation_assertion(self):
-        return ValidationAssertion(  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
-            assertion_type="validation",  # pyright: ignore[reportCallIssue]  # ty: ignore[unknown-argument]
+        return ValidationAssertion(
+            assertion_type="validation",
             authority_id="test-authority-id",
             series="16",
             snap_id="test-snap-id",
@@ -396,8 +466,8 @@ class TestValidation:
 
     def test_validation_marshal_as_str_exclude_revision(self):
         """Exclude revision when it's None."""
-        assertion = ValidationAssertion(  # pyright: ignore[reportCallIssue]  # ty: ignore[missing-argument]
-            assertion_type="validation",  # pyright: ignore[reportCallIssue]  # ty: ignore[unknown-argument]
+        assertion = ValidationAssertion(
+            assertion_type="validation",
             authority_id="test-authority-id",
             series="16",
             snap_id="test-snap-id",

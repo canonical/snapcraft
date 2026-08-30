@@ -23,7 +23,7 @@ from typing import Any, cast
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
-from craft_application.models import UniqueStrList, VersionStr
+from craft_application.models import VersionStr
 from craft_platforms import DebianArchitecture
 
 import snapcraft.models
@@ -165,8 +165,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
-                build_for=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
+                build_on=[str(DebianArchitecture.from_host())],
+                build_for=[str(DebianArchitecture.from_host())],
             )
         ]
         assert project.ua_services is None
@@ -433,7 +433,7 @@ class TestProjectValidation:
         else:
             error = "Input should be 'stable' or 'devel'"
             with pytest.raises(pydantic.ValidationError, match=error):
-                project.grade = grade  # type: ignore
+                project.grade = grade
 
     def test_project_summary_valid(self, project_yaml_data):
         summary = "x" * 78
@@ -1071,7 +1071,7 @@ class TestPlatforms:
         """Raise an error if build-for is provided by build-on is not."""
         error = r"build-on\n  Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
-            Platform(**{"build-for": [const.SnapArch.amd64]})  # type: ignore[reportArgumentType]
+            Platform.unmarshal({"build-for": [str(const.SnapArch.amd64)]})
 
     @pytest.mark.parametrize(
         ("architectures", "expected"),
@@ -2774,6 +2774,43 @@ class TestComponents:
         partitions = test_project.get_partitions()
 
         assert partitions is None
+
+    def test_component_compression_default(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].compression is None
+        # compression is `None` but it's not set to `null` in the project file
+        assert "compression" not in test_project.components["foo"].model_fields_set
+
+    @pytest.mark.parametrize("compression", ["xz", "lzo"])
+    def test_component_compression_valid(
+        self, project, compression, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        component["foo"]["compression"] = compression
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].compression == compression
+
+    def test_component_compression_null_invalid(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        """Error if the compression is set to null."""
+        component = {"foo": stub_component_data}
+        component["foo"]["compression"] = None
+
+        with pytest.raises(
+            pydantic.ValidationError,
+            match="Setting compression to null is not supported",
+        ):
+            project.unmarshal(project_yaml_data(components=component))
 
 
 class TestLint:

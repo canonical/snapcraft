@@ -4,8 +4,6 @@ environment:
   SNAPCRAFT_PARALLEL_BUILD_COUNT: 1
 
 prepare: |
-  snap install yq
-
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "snapcraft.yaml"
@@ -23,7 +21,6 @@ execute: |
   fi
 
 restore: |
-  snap remove --purge yq
   rm -f ./*.snap
   snapcraft clean
 

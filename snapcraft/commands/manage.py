@@ -19,8 +19,9 @@
 from __future__ import annotations
 
 import operator
+import os
 import textwrap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -168,7 +169,11 @@ class StorePromoteCommand(AppCommand):
         )
 
     @override
-    def run(self, parsed_args: argparse.Namespace):
+    def run(self, parsed_args: argparse.Namespace) -> int | None:
+        """Promote a build set from a channel in the Snap Store.
+
+        Returns non-zero if the promotion fails or is declined by the user.
+        """
         emit.warning(
             "snapcraft promote does not have a stable CLI interface. Use with caution in scripts."
         )
@@ -204,12 +209,26 @@ class StorePromoteCommand(AppCommand):
             for c in from_channel_set:
                 client.release(
                     snap_name=parsed_args.snap_name,
-                    revision=c.revision,  # type: ignore[arg-type]  # get_channel_set ensures this will not be none
+                    revision=cast(
+                        int, c.revision
+                    ),  # get_channel_set ensures this will not be none
                     channels=[str(to_channel)],
                 )
             emit.message(f"Promotion from {from_channel} to {to_channel} complete")
-        else:
-            emit.message("Channel promotion cancelled")
+            return os.EX_OK
+
+        # Prior to Snapcraft 9, the promote command didn't allow using '--yes' for non-interactive
+        # promotions from edge, so users had to do: 'yes | SNAPCRAFT_HAS_TTY=1 snapcraft promote'.
+        # This env var isn't supported anymore, so we provide helpful guidance.
+        if os.getenv("SNAPCRAFT_HAS_TTY"):
+            emit.warning(
+                "The 'SNAPCRAFT_HAS_TTY' environment variable is no longer used. "
+                "Use '--yes' for non-interactive promotions."
+            )
+
+        emit.message("Channel promotion cancelled")
+        # Return 1 because there isn't a good sysexits code for a user denying a prompt.
+        return 1
 
 
 class StoreCloseCommand(AppCommand):

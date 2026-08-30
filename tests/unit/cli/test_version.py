@@ -30,10 +30,7 @@ def test_version_command(mocker):
         "craft_application.commands.other.VersionCommand.run"
     )
     app.run()
-    assert mock_version_cmd.mock_calls == [
-        call(argparse.Namespace()),
-        call().__bool__(),
-    ]
+    assert mock_version_cmd.mock_calls == [call(argparse.Namespace())]
 
 
 def test_version_argument(mocker, emitter):

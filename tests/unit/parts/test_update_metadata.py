@@ -150,14 +150,12 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
                 "summary": "project summary",
                 "description": "project description",
                 "title": "project title",
-                "grade": "stable",
             },
             {
                 "version": "1.2.3",
                 "summary": "project summary",
                 "description": "project description",
                 "title": "project title",
-                "grade": "stable",
             },
         ),
         (
@@ -167,7 +165,6 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
                 "summary": "metadata summary",
                 "description": "metadata description",
                 "title": "metadata title",
-                "grade": "devel",
             },
         ),
     ],
@@ -189,7 +186,6 @@ def test_update_project_metadata_fields(
         summary="metadata summary",
         description="metadata description",
         title="metadata title",
-        grade="devel",
     )
     prj_vars = {"version": None, "grade": None}
 
@@ -205,7 +201,6 @@ def test_update_project_metadata_fields(
     assert project.summary == expected["summary"]
     assert project.description == expected["description"]
     assert project.title == expected["title"]
-    assert project.grade == expected["grade"]
 
 
 @pytest.mark.parametrize(
@@ -217,14 +212,12 @@ def test_update_project_metadata_fields(
                 "summary": "project summary",
                 "description": "project description",
                 "title": "project title",
-                "grade": "stable",
             },
             {
                 "version": "1.2.3",
                 "summary": "project summary",
                 "description": "project description",
                 "title": "project title",
-                "grade": "stable",
             },
         ),
         (
@@ -234,7 +227,6 @@ def test_update_project_metadata_fields(
                 "summary": "metadata summary",
                 "description": "metadata description",
                 "title": "metadata title",
-                "grade": "devel",
             },
         ),
     ],
@@ -261,9 +253,7 @@ def test_update_project_metadata_multiple(
         issues=["issues1", "issues3"],
         donation=["donation1", "donation2"],
     )
-    metadata3 = ExtractedMetadata(
-        version="7.8.9", title="metadata title", grade="devel"
-    )
+    metadata3 = ExtractedMetadata(version="7.8.9", title="metadata title")
     metadata4 = ExtractedMetadata(
         summary="extra summary", description="extra description"
     )
@@ -295,7 +285,6 @@ def test_update_project_metadata_multiple(
     assert project.summary == expected["summary"]
     assert project.description == expected["description"]
     assert project.title == expected["title"]
-    assert project.grade == expected["grade"]
     assert project.contact == ["contact1", "contact2"]
     assert project.license == "GPL-3.0"
     assert project.donation == ["donation1", "donation2"]

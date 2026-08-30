@@ -1,5 +1,9 @@
 #!/usr/bin/make -f
 
+# The make plugin runs `make` (default goal) before `make install DESTDIR=...`.
+# Keep the default goal a no-op so the initial bare `make` doesn't run `install` with an empty DESTDIR.
+all:
+
 BIN_DIR := $(DESTDIR)/snap/command-chain
 GPU_INTERFACE := gpu-2404
 
@@ -11,4 +15,4 @@ $(GPU_INTERFACE)-wrapper: gpu-wrapper
 
 install: $(scripts)
 
-.PHONY: $(scripts)
+.PHONY: all $(scripts)

@@ -23,25 +23,103 @@ import pathlib
 import shutil
 from typing import Literal, cast
 
-from craft_application import PackageService
+from craft_application import PackageService, util
+from craft_application.services.package import package_file
 from craft_application.util import strtobool
 from craft_cli import emit
 from typing_extensions import override
 
-from snapcraft import errors, linters, models, pack
+from snapcraft import const, errors, linters, models, pack
 from snapcraft.errors import SnapcraftPrecreationEscapesPrimeError
 from snapcraft.linters import LinterStatus
 from snapcraft.meta import component_yaml, snap_yaml
 from snapcraft.models import ContentPlug
 from snapcraft.parts import extract_metadata as extract
 from snapcraft.parts import update_metadata as update
-from snapcraft.parts.setup_assets import setup_assets
+from snapcraft.parts.setup_assets import (
+    MediatedIconAsset,
+    get_mediated_gui_assets,
+    get_mediated_icon_asset,
+    provision_hooks,
+    setup_assets,
+    validate_command_chains,
+)
 from snapcraft.services import Lifecycle
-from snapcraft.utils import process_version
+from snapcraft.utils import get_component_name, process_version
 
 
 class Package(PackageService):
     """Package service subclass for Snapcraft."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._package_output_dir: str | None = None
+        self._mediated_icon_asset: MediatedIconAsset | None = None
+
+    @package_file("meta/snap.yaml", partition_re="default")
+    def _get_snap_yaml(self, partition: str | None = None) -> str:  # noqa: ARG002
+        """Generate the mediated snap metadata file."""
+        return util.dump_yaml(self.metadata.marshal())
+
+    # The mediation partition name here is the artifact key from get_artifacts(),
+    # which in Snapcraft is the bare component name instead of the fully qualified
+    # partition name. Lifecycle.get_prime_dir and _prime_dir_for are also keyed
+    # by bare component name.
+    @package_file("meta/component.yaml", partition_re=r"(?!default$)[a-z0-9][a-z0-9-]*")
+    def _get_component_yaml(self, partition: str | None = None) -> str:
+        """Generate mediated component metadata files."""
+        component_name = get_component_name(partition)
+        if component_name is None:
+            raise ValueError("Component metadata requires a component partition.")
+        return component_yaml.get_str(self._project, component_name)
+
+    @package_file("snap/manifest.yaml", partition_re="default")
+    def _get_manifest_yaml(
+        self,
+        partition: str | None = None,  # noqa: ARG002
+    ) -> str | Literal[False]:
+        """Generate mediated manifest metadata when build-info is enabled."""
+        if not strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")):
+            return False
+
+        lifecycle_service = cast(Lifecycle, self._services.lifecycle)
+        return util.dump_yaml(lifecycle_service.generate_manifest().marshal())
+
+    @package_file("meta/gadget.yaml", partition_re="default")
+    def _get_gadget_yaml(
+        self,
+        partition: str | None = None,  # noqa: ARG002
+    ) -> str | Literal[False] | None:
+        """Generate mediated gadget metadata for core24+ gadget snaps.
+
+        Returns ``False`` (leave existing file untouched) when this project
+        should not be mediated (core22 snaps use the legacy copy path in
+        ``setup_assets``) or when the project is not a gadget snap.
+        """
+        if self._project.type != const.ProjectType.GADGET:
+            return False
+
+        return self._read_project_metadata_file(
+            "gadget.yaml",
+            required=True,
+            error_message="gadget.yaml is required for gadget snaps",
+        )
+
+    @package_file("meta/kernel.yaml", partition_re="default")
+    def _get_kernel_yaml(
+        self,
+        partition: str | None = None,  # noqa: ARG002
+    ) -> str | Literal[False] | None:
+        """Generate mediated kernel metadata for core24+ kernel snaps.
+
+        Returns ``False`` (leave existing file untouched) when this project
+        should not be mediated (core22 snaps use the legacy copy path in
+        ``setup_assets``) or when the project is not a kernel snap.
+        """
+        if self._project.type != const.ProjectType.KERNEL:
+            return False
+
+        return self._read_project_metadata_file("kernel.yaml")
 
     @override
     def setup(self) -> None:
@@ -60,6 +138,12 @@ class Package(PackageService):
             self._build_for = build_plan[0].build_for
             self._platform = build_plan[0].platform
 
+    @override
+    def set_output_dir(self, path: pathlib.Path | str | None) -> None:
+        """Follow the requested output dir so artifact paths match legacy packing."""
+        self._package_output_dir = None if path is None else str(path)
+        super().set_output_dir(pathlib.Path() if path is None else pathlib.Path(path))
+
     @property
     def _project(self) -> models.Project:
         """Get the project.
@@ -70,7 +154,7 @@ class Package(PackageService):
         return cast(models.Project, self._project_service.get())
 
     @override
-    def _extra_project_updates(self) -> None:
+    def _extra_project_updates(self) -> bool:
         # Update the project from parse-info data.
         project_info = self._services.lifecycle.project_info
         extracted_metadata = extract.extract_lifecycle_metadata(
@@ -91,6 +175,8 @@ class Package(PackageService):
         if self._project.get_effective_base() not in ("core22", "core24"):
             self._precreate_layout_targets()
             self._precreate_plug_targets()
+
+        return True
 
     def _precreate_layout_targets(self) -> None:
         """Create layout targets ahead of time for snapd to avoid ENOENT errors."""
@@ -208,7 +294,8 @@ class Package(PackageService):
         exist (no-op).
 
         :param path: String path to investigate
-        :returns: A Path object that needs to be created, or None if nothing needs to be done."""
+        :returns: A Path object that needs to be created, or None if nothing needs to be done.
+        """
         # Make explicit references to the snap root ($SNAP) relative
         if path.startswith("$SNAP/"):
             path = path.removeprefix("$SNAP/")
@@ -245,15 +332,175 @@ class Package(PackageService):
 
     def _pack_components(self, dest: pathlib.Path) -> dict[str, pathlib.Path]:
         component_map: dict[str, pathlib.Path] = {}
-        for component in self._project.get_component_names():
-            filename = pack.pack_component(
-                cast(Lifecycle, self._services.lifecycle).get_prime_dir(component),
-                compression=self._project.compression,
-                output_dir=dest,
-            )
-            component_map[component] = pathlib.Path(filename)
+
+        if self._project.components is not None:
+            for component_name, component in self._project.components.items():
+                if compression := component.compression:
+                    emit.debug(
+                        f"Using {compression!r} compression for {component_name!r}."
+                    )
+                else:
+                    compression = self._project.compression
+                    emit.debug(
+                        f"Using the snap's {compression!r} compression for {component_name!r}."
+                    )
+
+                filename = pack.pack_component(
+                    cast(Lifecycle, self._services.lifecycle).get_prime_dir(
+                        component_name
+                    ),
+                    compression=compression,
+                    output_dir=dest,
+                )
+                component_map[component_name] = pathlib.Path(filename)
 
         return component_map
+
+    def _component_artifact_path(self, component_name: str) -> pathlib.Path:
+        """Return the expected output path for a component artifact."""
+        if self._project.components is None:
+            raise ValueError("Project does not define components.")
+
+        component = self._project.components[component_name]
+        filename = f"{self._project.name}+{component_name}"
+        if component.version is not None:
+            filename += f"_{component.version}"
+        filename += ".comp"
+        return pathlib.Path(pack._get_directory(self._get_output_dir())) / filename
+
+    def _get_output_dir(self) -> str | None:
+        """Return the requested pack output in the legacy pack_snap format."""
+        if self._package_output_dir is None:
+            return None
+        return self._package_output_dir
+
+    def _get_partition_assets_dir(self, component_name: str | None) -> pathlib.Path:
+        """Return the project assets directory for a mediated artifact."""
+        assets_dir = self._get_assets_dir()
+        if component_name is None:
+            return assets_dir
+
+        return assets_dir / "component" / component_name
+
+    @override
+    def _prime_dir_for(self, partition_name: str | None) -> pathlib.Path:
+        """Return the prime directory for the requested artifact.
+
+        Component artifacts are keyed by component name in Snapcraft, while
+        craft-application's default implementation expects full partition names.
+        """
+        if partition_name in (None, "default"):
+            return self._services.lifecycle.prime_dir
+
+        return cast(Lifecycle, self._services.lifecycle).get_prime_dir(
+            get_component_name(partition_name)
+        )
+
+    @override
+    def _gen_extra_assets(
+        self, partition_name: str | None = None
+    ) -> list[tuple[str | bytes | None | pathlib.Path, pathlib.Path]]:
+        """Generate mediated hook and GUI assets for the requested artifact."""
+        normalized_partition = get_component_name(partition_name)
+        prime_dir = self._prime_dir_for(normalized_partition)
+        assets_dir = self._get_partition_assets_dir(normalized_partition)
+
+        assets: list[tuple[str | bytes | None | pathlib.Path, pathlib.Path]] = []
+        project_hooks_dir = assets_dir / "hooks"
+        if project_hooks_dir.is_dir():
+            for hook in project_hooks_dir.iterdir():
+                if hook.is_file():
+                    assets.append((hook, prime_dir / "meta" / "hooks" / hook.name))
+
+        if normalized_partition is None:
+            if strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n")):
+                project_file = self._services.get("project").resolve_project_file_path()
+                assets.append((project_file, prime_dir / "snap" / project_file.name))
+
+            gui_project_dir = assets_dir / "gui"
+            gui_meta_dir = prime_dir / "meta" / "gui"
+            if gui_project_dir.is_dir():
+                for gui_asset in gui_project_dir.iterdir():
+                    if gui_asset.is_file():
+                        assets.append((gui_asset, gui_meta_dir / gui_asset.name))
+
+            assets.extend(
+                get_mediated_gui_assets(
+                    self._project,
+                    assets_dir=assets_dir,
+                    prime_dir=prime_dir,
+                    icon=self._mediated_icon_asset,
+                )
+            )
+
+        return assets
+
+    def _pack_snap(
+        self, prime_dir: pathlib.Path, output_path: pathlib.Path
+    ) -> pathlib.Path:
+        """Pack the main snap artifact."""
+        return pathlib.Path(
+            pack.pack_snap(
+                prime_dir,
+                output=str(output_path),
+                compression=self._project.compression,
+                name=self._project.name,
+                version=process_version(self._project.version),
+                target=self._platform,
+            )
+        )
+
+    def _run_lint_checks(self, prime_dir: pathlib.Path) -> None:
+        """Run configured linters and stop packaging on errors."""
+        issues = linters.run_linters(prime_dir, lint=self._project.lint)
+        status = linters.report(issues, intermediate=True)
+
+        if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
+            raise errors.LinterError("Linter errors found", exit_code=status)
+
+    @override
+    def get_artifacts(self) -> dict[str | None, pathlib.Path]:
+        """Return the declared output artifacts for mediated packaging."""
+        output_dir = self._get_output_dir()
+        main_artifact = pathlib.Path(pack._get_directory(output_dir)) / cast(
+            str,
+            pack._get_filename(
+                output_dir,
+                self._project.name,
+                process_version(self._project.version),
+                self._platform,
+            ),
+        )
+        artifacts: dict[str | None, pathlib.Path] = {None: main_artifact}
+        for component_name in self._project.get_component_names():
+            artifacts[component_name] = self._component_artifact_path(component_name)
+        return artifacts
+
+    @override
+    def _pack(self, *, name: str | None = None, path: pathlib.Path) -> None:
+        """Pack mediated artifacts."""
+        self._run_lint_checks(self._services.lifecycle.prime_dir)
+
+        if name in (None, "default"):
+            prime_dir = self._services.lifecycle.prime_dir
+            self._pack_snap(prime_dir=prime_dir, output_path=path)
+            return
+
+        if name not in self._project.get_component_names():
+            raise ValueError(f"Unexpected artifact name: {name!r}")
+
+        component_prime_dir = cast(Lifecycle, self._services.lifecycle).get_prime_dir(
+            name
+        )
+        compression = self._project.compression
+        if self._project.components and self._project.components[name].compression:
+            compression = self._project.components[name].compression
+
+        pack.pack_component(
+            component_prime_dir,
+            compression=compression,
+            output_dir=path.parent,
+        )
 
     @override
     def pack(self, prime_dir: pathlib.Path, dest: pathlib.Path) -> list[pathlib.Path]:
@@ -263,23 +510,9 @@ class Package(PackageService):
         :param dest: Directory into which to write the package(s).
         :returns: A list of paths to created packages.
         """
-        issues = linters.run_linters(prime_dir, lint=self._project.lint)
-        status = linters.report(issues, intermediate=True)
+        self._run_lint_checks(prime_dir)
 
-        # In case of linter errors, stop execution and return the error code.
-        if status in (LinterStatus.ERRORS, LinterStatus.FATAL):
-            raise errors.LinterError("Linter errors found", exit_code=status)
-
-        snap_file = pathlib.Path(
-            pack.pack_snap(
-                prime_dir,
-                output=str(dest),
-                compression=self._project.compression,
-                name=self._project.name,
-                version=process_version(self._project.version),
-                target=self._platform,
-            )
-        )
+        snap_file = self._pack_snap(prime_dir=prime_dir, output_path=dest)
         component_map = self._pack_components(dest)
         self._resource_map = component_map
 
@@ -302,28 +535,60 @@ class Package(PackageService):
         # This is for backwards compatibility with setup_assets(...)
         return project_dir / "snap"
 
+    def _read_project_metadata_file(
+        self,
+        filename: str,
+        *,
+        required: bool = False,
+        error_message: str | None = None,
+    ) -> str | None:
+        """Read a top-level project metadata file if it exists."""
+        metadata_path = self._services.lifecycle.project_info.project_dir / filename
+        if metadata_path.exists():
+            return metadata_path.read_text(encoding="utf-8")
+
+        if required:
+            raise errors.SnapcraftError(error_message or f"{filename} is required")
+
+        return None
+
+    @override
+    def _write_asset(
+        self, source: str | bytes | None | pathlib.Path, destination: pathlib.Path
+    ) -> None:
+        """Write a mediated asset while preserving hook executability."""
+        if isinstance(source, pathlib.Path):
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(source, destination)
+        else:
+            super()._write_asset(source, destination)
+
+        if destination.parent.name == "hooks" and destination.parent.parent.name in {
+            "meta",
+            "snap",
+        }:
+            destination.chmod(0o755)
+
+    @override
+    def _materialize_extra_assets(self, partition_name: str | None = None) -> None:
+        """Materialize mediated hook and GUI assets, including hook provisioning."""
+        super()._materialize_extra_assets(partition_name)
+        provision_hooks(self._prime_dir_for(partition_name), overwrite=False)
+
     @override
     def write_metadata(self, path: pathlib.Path) -> None:
         """Write the project metadata to metadata.yaml in the given directory.
 
         :param path: The path to the prime directory.
         """
-        meta_dir = path / "meta"
-        meta_dir.mkdir(parents=True, exist_ok=True)
-        self.metadata.to_yaml_file(meta_dir / "snap.yaml")
-
-        enable_manifest = strtobool(os.getenv("SNAPCRAFT_BUILD_INFO", "n"))
-
-        # Snapcraft's Lifecycle implementation is what we need to refer to for typing
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)
-        if enable_manifest:
-            snap_dir = path / "snap"
-            snap_dir.mkdir(parents=True, exist_ok=True)
-            manifest = lifecycle_service.generate_manifest()
-            manifest.to_yaml_file(snap_dir / "manifest.yaml")
+        for package in self._package_files(None):
+            generator = getattr(self, package.method_name)
+            content = generator(None)
+            if content is False:
+                continue
 
-            project_file = self._services.get("project").resolve_project_file_path()
-            shutil.copy(project_file, snap_dir)
+            self._write_asset(content, path / package.relative_path)
 
         assets_dir = self._get_assets_dir()
         setup_assets(
@@ -331,15 +596,22 @@ class Package(PackageService):
             assets_dir=assets_dir,
             project_dir=self._services.lifecycle.project_info.project_dir,
             prime_dirs=lifecycle_service.prime_dirs,
-            meta_directory_handler=meta_directory_handler,
+            copy_hooks_and_gui=False,
         )
+        self._mediated_icon_asset = get_mediated_icon_asset(
+            self._project,
+            assets_dir=assets_dir,
+            prime_dir=lifecycle_service.prime_dir,
+        )
+        validate_command_chains(self._project, prime_dir=lifecycle_service.prime_dir)
+
+        # These assets are mediated, but we create them here so they
+        # will be part of primed tree contents.
+        self._materialize_extra_assets(None)
 
         for component in self._project.get_component_names():
-            component_yaml.write(
-                project=self._project,
-                component_name=component,
-                component_prime_dir=lifecycle_service.get_prime_dir(component),
-            )
+            self._materialize_package_files(component)
+            self._materialize_extra_assets(component)
 
     @property
     def metadata(self) -> snap_yaml.SnapMetadata:
@@ -349,64 +621,3 @@ class Package(PackageService):
             self._services.lifecycle.prime_dir,
             arch=self._build_for,
         )
-
-
-def _hardlink_or_copy(source: pathlib.Path, destination: pathlib.Path) -> bool:
-    """Try to hardlink and fallback to copy if it fails.
-
-    :param source: the source path.
-    :param destination: the destination path.
-    :returns: True if a hardlink was done or False for copy.
-    """
-    # Unlink the destination to avoid link failures
-    destination.unlink(missing_ok=True)
-
-    try:
-        destination.hardlink_to(source)
-    except OSError as os_error:
-        # Cross device link
-        if os_error.errno != 18:
-            raise
-        shutil.copy(source, destination)
-        return False
-
-    return True
-
-
-def meta_directory_handler(assets_dir: pathlib.Path, path: pathlib.Path):
-    """Handle hooks and gui assets from Snapcraft.
-
-    :param assets_dir: directory with project assets.
-    :param path: directory to write assets to.
-    """
-    meta_dir = path / "meta"
-    built_snap_hooks = path / "snap" / "hooks"
-    hooks_project_dir = assets_dir / "hooks"
-
-    hooks_meta_dir = meta_dir / "hooks"
-
-    if built_snap_hooks.is_dir():
-        hooks_meta_dir.mkdir(parents=True, exist_ok=True)
-        for hook in built_snap_hooks.iterdir():
-            meta_dir_hook = hooks_meta_dir / hook.name
-            # Remove to always refresh to the latest
-            meta_dir_hook.unlink(missing_ok=True)
-            meta_dir_hook.hardlink_to(hook)
-
-    # Overwrite any built hooks with project level ones
-    if hooks_project_dir.is_dir():
-        hooks_meta_dir.mkdir(parents=True, exist_ok=True)
-        for hook in hooks_project_dir.iterdir():
-            meta_dir_hook = hooks_meta_dir / hook.name
-
-            _hardlink_or_copy(hook, meta_dir_hook)
-
-    # Write any gui assets
-    gui_project_dir = assets_dir / "gui"
-    gui_meta_dir = meta_dir / "gui"
-    if gui_project_dir.is_dir():
-        gui_meta_dir.mkdir(parents=True, exist_ok=True)
-        for gui in gui_project_dir.iterdir():
-            meta_dir_gui = gui_meta_dir / gui.name
-
-            _hardlink_or_copy(gui, meta_dir_gui)

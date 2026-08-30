@@ -22,10 +22,9 @@ ENVIRONMENT_STORE_CREDENTIALS: Final[str] = "SNAPCRAFT_STORE_CREDENTIALS"
 """Environment variable where credentials can be picked up from."""
 
 ENVIRONMENT_STORE_AUTH: Final[str] = "SNAPCRAFT_STORE_AUTH"
-"""Environment variable used to set an alternative login method.
+"""Environment variable used to set an alternative login method instead of Ubuntu One.
 
-The only setting that changes the behavior is `candid`, every
-other value uses Ubuntu SSO.
+The only supported choice is `onprem`.
 """
 
 ENVIRONMENT_ADMIN_MACAROON: Final[str] = "SNAPCRAFT_ADMIN_MACAROON"

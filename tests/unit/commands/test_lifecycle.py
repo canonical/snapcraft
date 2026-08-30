@@ -20,6 +20,7 @@ from unittest.mock import call
 
 import pytest
 
+import snapcraft.cli
 import snapcraft.commands.core22.lifecycle as core22_lifecycle
 import snapcraft.errors
 from snapcraft.application import APP_METADATA
@@ -98,6 +99,36 @@ def test_snap_command_error(mocker):
         cmd.run(argparse.Namespace(directory=None, output=None, compression=None))
 
 
+@pytest.mark.parametrize(
+    ("cmd_class", "parsed_args"),
+    [
+        *(
+            (cmd, argparse.Namespace(pro="esm-infra", directory=None))
+            for cmd in snapcraft.cli.CORE22_LIFECYCLE_COMMAND_GROUP.commands
+            if not cmd.hidden
+        ),
+        pytest.param(
+            core22_lifecycle.PackCommand,
+            argparse.Namespace(pro="esm-infra", directory="."),
+            id="PackCommand-with-directory",
+        ),
+    ],
+)
+def test_core22_lifecycle_pro_not_supported(cmd_class, parsed_args, mocker):
+    """--pro is not supported for core22 snaps."""
+    mocker.patch("snapcraft.parts.lifecycle.run")
+    mocker.patch("snapcraft.pack.pack_snap")
+    cmd = cmd_class(None)
+    expected = re.escape("'--pro' is not supported for core22.")
+
+    with pytest.raises(snapcraft.errors.SnapcraftError, match=expected) as raised:
+        cmd.run(parsed_args)
+
+    assert raised.value.resolution == (
+        "Use the 'ua-services' key in the project file instead."
+    )
+
+
 @pytest.mark.usefixtures("emitter")
 @pytest.mark.parametrize("base", ["core24", "core26"])
 def test_try_command(tmp_path, fake_services, base, setup_project, default_project):
@@ -136,3 +167,95 @@ def test_core24_snap_error(fake_services, tmp_path):
 
     with pytest.raises(snapcraft.errors.RemovedCommand, match=expected):
         cmd.run(parsed_args)
+
+
+@pytest.mark.parametrize(
+    "cmd_class",
+    [
+        lifecycle.PullCommand,
+        lifecycle.BuildCommand,
+        lifecycle.StageCommand,
+        lifecycle.PrimeCommand,
+        lifecycle.CleanCommand,
+        lifecycle.PackCommand,
+    ],
+)
+def test_ua_token_error(cmd_class, fake_services):
+    """'--ua-token' is not supported for core24+ snaps."""
+    parsed_args = argparse.Namespace(
+        destructive_mode=False,
+        directory=None,
+        ua_token="my-token",  # noqa: S106 (hardcoded-password-func-arg)
+        enable_experimental_ua_services=False,
+    )
+    cmd = cmd_class({"app": APP_METADATA, "services": fake_services})
+
+    with pytest.raises(snapcraft.errors.SnapcraftError) as raised:
+        cmd.run(parsed_args)
+
+    assert str(raised.value) == "'--ua-token' is not supported for this base."
+    assert raised.value.details == (
+        "The Pro token attached to the host is used instead."
+    )
+    assert raised.value.resolution == "Remove the '--ua-token' argument."
+
+
+@pytest.mark.parametrize(
+    "cmd_class",
+    [
+        lifecycle.PullCommand,
+        lifecycle.BuildCommand,
+        lifecycle.StageCommand,
+        lifecycle.PrimeCommand,
+        lifecycle.CleanCommand,
+        lifecycle.PackCommand,
+    ],
+)
+def test_enable_experimental_ua_services_error(cmd_class, fake_services):
+    """'--enable-experimental-ua-services' is not supported for core24+."""
+    parsed_args = argparse.Namespace(
+        destructive_mode=False,
+        directory=None,
+        ua_token=None,
+        enable_experimental_ua_services=True,
+    )
+    cmd = cmd_class({"app": APP_METADATA, "services": fake_services})
+
+    with pytest.raises(snapcraft.errors.SnapcraftError) as raised:
+        cmd.run(parsed_args)
+
+    assert str(raised.value) == "Pro support is stable for this base."
+    assert raised.value.resolution == (
+        "Remove the '--enable-experimental-ua-services' argument."
+    )
+
+
+@pytest.mark.parametrize(
+    "cmd_class",
+    [
+        lifecycle.PullCommand,
+        lifecycle.BuildCommand,
+        lifecycle.StageCommand,
+        lifecycle.PrimeCommand,
+        lifecycle.CleanCommand,
+        lifecycle.PackCommand,
+    ],
+)
+def test_ua_token_env_warning(cmd_class, fake_services, emitter, monkeypatch, mocker):
+    """Warn that 'SNAPCRAFT_UA_TOKEN' is ignored for core24+ snaps."""
+    monkeypatch.setenv("SNAPCRAFT_UA_TOKEN", "my-token")
+    mocker.patch.object(cmd_class.__bases__[0], "_run")
+    parsed_args = argparse.Namespace(
+        destructive_mode=False,
+        directory=None,
+        ua_token=None,
+        enable_experimental_ua_services=False,
+    )
+    cmd = cmd_class({"app": APP_METADATA, "services": fake_services})
+
+    cmd.run(parsed_args)
+
+    emitter.assert_warning(
+        "Ignoring the 'SNAPCRAFT_UA_TOKEN' environment variable. "
+        "The Pro token attached to the host will be used instead."
+    )

@@ -38,7 +38,12 @@ ON_PREM_ENDPOINTS: Final = endpoints.Endpoints(
 
 
 class OnPremClient(BaseClient):
-    """On Premises Snapcraft Store Client."""
+    """On Premises Snapcraft Store Client.
+
+    This client uses the Candid credentials model, but doesn't actually use Candid
+    auth code. It's more like a macaroon exchange auth that happens to use the Candid
+    credentials model.
+    """
 
     @override
     def _get_macaroon(self, token_request: dict[str, Any]) -> str:

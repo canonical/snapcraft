@@ -16,13 +16,16 @@
 
 """Tests for Components in Snapcraft's Package service."""
 
+import re
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import call
 
 import pytest
+from craft_application.services.package import PackageFileEntry
 
 from snapcraft import linters, pack
+from snapcraft.errors import SnapcraftError
 
 
 @pytest.fixture
@@ -109,6 +112,147 @@ def test_pack(default_project, fake_services, setup_project, mocker):
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_artifacts(default_project, fake_services, setup_project, tmp_path):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    package_service.set_output_dir(tmp_path)
+
+    assert package_service.get_artifacts() == {
+        None: tmp_path / "default_1.0_amd64.snap",
+        "firstcomponent": tmp_path / "default+firstcomponent_1.0.comp",
+        "secondcomponent": tmp_path / "default+secondcomponent_1.0.comp",
+    }
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_pack_component_artifact(
+    default_project, fake_services, setup_project, mocker, tmp_path
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    package_service.set_output_dir(tmp_path)
+
+    mock_pack_component = mocker.patch.object(
+        pack, "pack_component", return_value="default+firstcomponent_1.0.comp"
+    )
+    mocker.patch.object(linters, "run_linters")
+    mocker.patch.object(linters, "report")
+
+    package_service._pack(
+        name="firstcomponent", path=tmp_path / "default+firstcomponent_1.0.comp"
+    )
+
+    mock_pack_component.assert_called_once_with(
+        tmp_path / "partitions/component/firstcomponent/prime",
+        compression="xz",
+        output_dir=tmp_path,
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_pack_component_compression(
+    default_project, fake_services, setup_project, mocker
+):
+    """Component-level compression overrides the snap-level compression."""
+    project_data = default_project.marshal()
+    project_data["compression"] = "xz"
+    # 'firstcomponent' defines a compression, 'secondcomponent' defaults to the snaps compression
+    project_data["components"]["firstcomponent"]["compression"] = "lzo"
+    setup_project(fake_services, project_data)
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    mock_pack_snap = mocker.patch.object(pack, "pack_snap")
+    mock_pack_component = mocker.patch.object(pack, "pack_component")
+
+    mocker.patch.object(linters, "run_linters")
+    mocker.patch.object(linters, "report")
+
+    package_service.pack(prime_dir=Path("prime"), dest=Path())
+
+    mock_pack_snap.assert_called_once_with(
+        Path("prime"),
+        name="default",
+        version="1.0",
+        compression="xz",
+        output=".",
+        target="amd64",
+    )
+
+    mock_pack_component.assert_has_calls(
+        [
+            call(
+                lifecycle_service._work_dir
+                / "partitions/component/firstcomponent/prime",
+                compression="lzo",
+                output_dir=Path("."),
+            ),
+            call().__fspath__(),
+            call(
+                lifecycle_service._work_dir
+                / "partitions/component/secondcomponent/prime",
+                compression="xz",
+                output_dir=Path("."),
+            ),
+            call().__fspath__(),
+        ]
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_component_yaml(default_project, fake_services, setup_project):
+    """Mediation is invoked with the bare component name used by get_artifacts()."""
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    expected = dedent("""\
+        component: default+firstcomponent
+        type: test
+        version: '1.0'
+        summary: first component
+        description: lorem ipsum
+        """)
+
+    # Bare component name is the artifact key from get_artifacts() and the form
+    # passed through the mediation pipeline.
+    assert package_service._get_component_yaml("firstcomponent") == expected
+    # Fully qualified partition name remains accepted for direct callers.
+    assert package_service._get_component_yaml("component/firstcomponent") == expected
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_get_component_yaml_unknown_component(
+    default_project, fake_services, setup_project
+):
+    """Requesting an unknown component surfaces a clear error."""
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    with pytest.raises(SnapcraftError, match="Component does not exist."):
+        package_service._get_component_yaml("component/does-not-exist")
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_component_yaml_not_registered_for_default_partition(
+    default_project, fake_services, setup_project
+):
+    """The component.yaml generator must run for the snap artifact."""
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+
+    entries = [
+        entry
+        for entry in package_service._package_file_registry
+        if isinstance(entry, PackageFileEntry)
+        and entry.method_name == "_get_component_yaml"
+    ]
+    assert entries, "component.yaml generator is not registered"
+    entry = entries[0]
+
+    assert re.fullmatch(entry.partition_re, "default") is None
+    assert re.fullmatch(entry.partition_re, "firstcomponent") is not None
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
 def test_write_metadata(
     default_project,
     fake_services,
@@ -144,8 +288,7 @@ def test_write_metadata(
 
     package_service.write_metadata(prime_dir)
 
-    assert (meta_dir / "snap.yaml").read_text() == dedent(
-        """\
+    assert (meta_dir / "snap.yaml").read_text() == dedent("""\
         name: default
         version: '1.0'
         summary: default project
@@ -183,8 +326,7 @@ def test_write_metadata(
             summary: second component
             description: lorem ipsum
             type: test
-    """
-    )
+    """)
 
     assert (
         lifecycle_service.get_prime_dir("firstcomponent") / "meta" / "component.yaml"
@@ -209,3 +351,145 @@ def test_write_metadata(
         description: lorem ipsum
     """
     )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_gen_extra_assets_for_component_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    (component_assets_dir / "install").write_text("install_hook")
+
+    assert package_service._gen_extra_assets("firstcomponent") == [
+        (
+            component_assets_dir / "install",
+            fake_services.get("lifecycle").get_prime_dir("firstcomponent")
+            / "meta/hooks/install",
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_hooks_override_built_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_install_hook")
+
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    source = component_assets_dir / "install"
+    source.write_text("project_install_hook")
+    source.chmod(0o644)
+
+    package_service._materialize_extra_assets("firstcomponent")
+
+    # Built hook remains untouched in snap/hooks
+    assert (
+        component_prime_dir / "snap" / "hooks" / "install"
+    ).read_text() == "built_install_hook"
+    # Project hook in meta/hooks overrides the built hook provision
+    destination = component_prime_dir / "meta" / "hooks" / "install"
+    assert destination.read_text() == "project_install_hook"
+    assert oct(destination.stat().st_mode)[-3:] == "755"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_provisions_meta_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    # Code-generated hook from part lifecycle
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_hook")
+
+    package_service._materialize_extra_assets("firstcomponent")
+
+    # Built hook remains in snap/hooks
+    assert (
+        component_prime_dir / "snap" / "hooks" / "install"
+    ).read_text() == "built_hook"
+    # Built hook is provisioned directly into meta/hooks
+    provisioned_hook = component_prime_dir / "meta" / "hooks" / "install"
+    assert provisioned_hook.read_text() == "built_hook"
+    assert oct(provisioned_hook.stat().st_mode)[-3:] == "755"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_materialize_extra_assets_component_accepts_qualified_partition_name(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    # Code-generated hook from part lifecycle
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_hook")
+
+    package_service._materialize_extra_assets("component/firstcomponent")
+
+    # Built hook remains in snap/hooks
+    assert (
+        component_prime_dir / "snap" / "hooks" / "install"
+    ).read_text() == "built_hook"
+    # Built hook is provisioned directly into meta/hooks
+    provisioned_hook = component_prime_dir / "meta" / "hooks" / "install"
+    assert provisioned_hook.read_text() == "built_hook"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_gen_extra_assets_component_hooks_override_built_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    built_hooks_dir = (
+        lifecycle_service.get_prime_dir("firstcomponent") / "snap" / "hooks"
+    )
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("built_install_hook")
+
+    component_assets_dir = (
+        package_service._get_assets_dir() / "component/firstcomponent/hooks"
+    )
+    component_assets_dir.mkdir(parents=True)
+    (component_assets_dir / "install").write_text("project_install_hook")
+
+    assert package_service._gen_extra_assets("firstcomponent") == [
+        (
+            component_assets_dir / "install",
+            lifecycle_service.get_prime_dir("firstcomponent") / "meta/hooks/install",
+        ),
+    ]
