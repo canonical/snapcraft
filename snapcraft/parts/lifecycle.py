@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-_EXPERIMENTAL_PLUGINS = ["kernel", "initrd", "matter-sdk"]
+_EXPERIMENTAL_PLUGINS = ["kernel", "initrd"]
 
 
 def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
@@ -686,7 +686,9 @@ def patch_elf(step_info: StepInfo, use_system_libs: bool = True) -> bool:
 
     migrated_files = step_info.state.files
     patcher = Patcher(dynamic_linker=linker, root_path=step_info.prime_dir)
-    elf_files = elf_utils.get_elf_files_from_list(step_info.prime_dir, migrated_files)
+    elf_files = elf_utils.get_elf_files_from_list(
+        step_info.prime_dir, (str(file) for file in migrated_files)
+    )
     soname_cache = SonameCache()
     arch_triplet = elf_utils.get_arch_triplet()
 

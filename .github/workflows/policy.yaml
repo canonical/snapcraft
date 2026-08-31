@@ -9,15 +9,21 @@ on:
 
 jobs:
   policy:
-    uses: canonical/starflow/.github/workflows/policy.yaml@main
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    uses: canonical/starflow/.github/workflows/policy.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
   python-scans:
     name: Security scan
-    uses: canonical/starflow/.github/workflows/scan-python.yaml@main
+    permissions:
+      contents: read
+    uses: canonical/starflow/.github/workflows/scan-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
     with:
-      # 1. requirements-noble.txt can't build on jammy
-      # 2. Ignore requirements files in spread tests, as some of these intentionally
-      #    contain vulnerable versions.
-      # 3. Docs contain requirements.txt files that don't specify versions.
-      requirements-find-args: '! -name requirements-noble.txt ! -path "./tests/spread*" ! -path "./docs/**"'
-      trivy-extra-args: "--severity HIGH,CRITICAL --ignore-unfixed --skip-dirs tests/spread/"
-      osv-extra-args: "--config source/osv-scanner.toml"
+      osv-extra-args: "--config=osv-scanner.toml"
+      osv-exclude-paths: |
+        docs
+        tests/spread
+      uv-export-no-groups: |
+        docs
+        docs-sphinx-stack

@@ -1,3 +1,6 @@
+.. meta::
+    :description: The practical, goal-oriented documentation for Snapcraft. These guides provide directions for completing tasks and solving problems with Snapcraft.
+
 .. _how-to-guides:
 
 How-to guides

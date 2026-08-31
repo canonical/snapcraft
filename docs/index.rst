@@ -26,8 +26,7 @@ In this documentation
     :header-rows: 0
 
     * - **Tutorial**
-      - :ref:`tutorial-craft-a-snap-define-package-information` •
-        :ref:`tutorial-craft-a-snap-define-the-target-platforms` •
+      - :ref:`tutorial-craft-a-snap-define-project-basics` •
         :ref:`tutorial-craft-a-snap-define-the-main-part` •
         :ref:`tutorial-craft-a-snap-pack-the-snap` •
         :ref:`tutorial-craft-a-snap-test-the-snap` •

@@ -177,9 +177,8 @@ class StoreValidateCommand(AppCommand):
                 "%Y-%m-%dT%H:%M:%S.%fZ"
             )
 
-            # ty isn't aware of pydantic aliases (https://github.com/astral-sh/ty/issues/1438)
-            assertion = models.ValidationAssertion(  # ty: ignore[missing-argument]
-                assertion_type="validation",  # ty: ignore[unknown-argument]
+            assertion = models.ValidationAssertion(
+                assertion_type="validation",
                 authority_id=authority_id,
                 series=store.constants.DEFAULT_SERIES,
                 snap_id=snap_id,

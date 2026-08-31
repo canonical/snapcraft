@@ -42,6 +42,7 @@ def test_default_command(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -68,6 +69,7 @@ def test_default_command_destructive_mode(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -94,6 +96,7 @@ def test_default_command_use_lxd(mocker):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -121,6 +124,7 @@ def test_default_command_output(mocker, option):
                 build_for=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 http_proxy=None,
                 https_proxy=None,
             )
@@ -142,6 +146,7 @@ def test_default_command_http_proxy(mocker):
                 directory=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy="test-http",
                 https_proxy=None,
@@ -168,6 +173,7 @@ def test_default_command_https_proxy(mocker):
                 directory=None,
                 enable_experimental_ua_services=False,
                 enable_experimental_plugins=False,
+                pro=None,
                 enable_manifest=False,
                 http_proxy=None,
                 https_proxy="test-https",

@@ -1,3 +1,6 @@
+.. meta::
+    :description: The explanatory documentation for Snapcraft. These explanations aid in understanding the concepts and relationships of Snapcraft as a complete system.
+
 .. _explanation:
 
 Explanation
@@ -88,6 +91,7 @@ communicating with local processes, and storing user credentials.
     Extensions <extensions>
     Components <components>
     snap-configurations
+    services-daemons
     build-overrides
     remote-build
     /common/craft-parts/explanation/filesets

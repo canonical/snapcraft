@@ -117,7 +117,7 @@ Finally, initialize LXD with a lightweight configuration:
     sudo lxd init --auto
 
 If you need help troubleshooting your LXD installation, see `How to install LXD
-<https://documentation.ubuntu.com/lxd/en/latest/installing/#installing>`_ in the LXD
+<https://canonical.com/lxd/docs/latest/installing/#installing>`_ in the LXD
 documentation.
 
 

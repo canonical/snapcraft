@@ -52,11 +52,11 @@ CORE22_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
 CORE24_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
     "Lifecycle",
     [
-        craft_application.commands.lifecycle.CleanCommand,
-        craft_application.commands.lifecycle.PullCommand,
-        craft_application.commands.lifecycle.BuildCommand,
-        craft_application.commands.lifecycle.StageCommand,
-        craft_application.commands.lifecycle.PrimeCommand,
+        commands.CleanCommand,
+        commands.PullCommand,
+        commands.BuildCommand,
+        commands.StageCommand,
+        commands.PrimeCommand,
         craft_application.commands.lifecycle.TestCommand,
         commands.PackCommand,
         commands.SnapCommand,  # Hidden (legacy compatibility)
