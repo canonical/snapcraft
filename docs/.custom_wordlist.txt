@@ -10,6 +10,7 @@ autoformatte(d|rs?)
 Autogen
 Automake
 Autotools
+Avalonia
 bonjour
 Bazel
 backend
@@ -141,6 +142,7 @@ PNG
 PR
 precompiled?
 prepended
+prereqs?
 pulseaudio
 pyfiglet
 Pygments
@@ -203,6 +205,7 @@ txt
 ukuzama
 unbuilt
 uncomment(ing)?
+unoptimized
 unsets
 untrusted
 URIs?
@@ -224,6 +227,7 @@ whitespace
 whitespaces
 whoami
 wordlist
+XAML
 xetex
 xindy
 xml
