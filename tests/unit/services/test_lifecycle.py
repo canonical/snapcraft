@@ -113,7 +113,7 @@ def test_post_prime_patchelf(
         **{
             "base": "core24",
             "build_attributes": ["enable-patchelf"],
-            "state.files": ["usr/bin/ls"],
+            "state.files": [Path("usr/bin/ls")],
             "prime_dir": tmp_path / "prime",
             "part_name": "my-part",
         }
