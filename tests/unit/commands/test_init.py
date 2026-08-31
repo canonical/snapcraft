@@ -102,6 +102,46 @@ def test_init_default(profile, name, project_dir, emitter, valid_new_dir, mocker
     emitter.assert_message("Successfully initialised project.")
 
 
+def test_init_default_long_directory_name(emitter, tmp_path, monkeypatch, mocker):
+    """Use the default project name when the directory name is too long."""
+    new_dir = tmp_path / "this-working-directory-has-a-very-long-name"
+    new_dir.mkdir()
+    monkeypatch.chdir(new_dir)
+    snapcraft_yaml = new_dir / "snap/snapcraft.yaml"
+    mocker.patch.object(sys, "argv", _create_command())
+
+    app = application.create_app()
+    app.run()
+
+    assert snapcraft_yaml.exists()
+    data = apply_yaml(process_yaml(snapcraft_yaml), "amd64", "amd64")
+    project = Project.unmarshal(data)
+    assert project.name == "my-project"
+    emitter.assert_message("Successfully initialised project.")
+
+
+def test_init_invalid_explicit_name(valid_new_dir, mocker, capsys):
+    """Do not fall back to the default for an explicitly invalid name."""
+    name = "a2345678901234567890123456789012345678901"
+    snapcraft_yaml = valid_new_dir / "snap/snapcraft.yaml"
+    mocker.patch.object(sys, "argv", _create_command(name=name))
+
+    app = application.create_app()
+    return_code = app.run()
+
+    out, err = capsys.readouterr()
+    assert not out
+    assert (
+        f"Invalid snap name {name!r}: snap names must be 40 characters or less." in err
+    )
+    assert (
+        "Recommended resolution: Provide a valid name with '--name' "
+        "or rename the project directory." in err
+    )
+    assert return_code != 0
+    assert not snapcraft_yaml.exists()
+
+
 @pytest.mark.parametrize("yaml_content", ["", "just a string"])
 def test_init_existing_yaml_invalid(yaml_content, emitter, valid_new_dir, mocker):
     """Test the 'snapcraft init' command with existing empty/invalid snapcraft.yaml."""
