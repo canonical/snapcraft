@@ -171,6 +171,9 @@ Snapcraft 9.1.1
   ``export-login`` on a credentials file that already exists failed with an internal
   error. The command now reports that the file exists and leaves it untouched.
 
+- `craft-application#1173 <https://github.com/canonical/craft-application/issues/1173>`__
+  Snapcraft failed to build ARMHF snaps on ARMV8L systems.
+
 
 Contributors
 ------------
