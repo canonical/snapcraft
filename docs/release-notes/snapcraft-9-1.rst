@@ -162,6 +162,15 @@ Snapcraft 9.1.0
 - `snapcraft#6399 <https://github.com/canonical/snapcraft/issues/6399>`__ GPU and
   desktop extensions tried to write to ``/snap/command-chain/`` at build time.
 
+.. _release-notes-fixes-9.1.1:
+
+Snapcraft 9.1.1
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6301 <https://github.com/canonical/snapcraft/issues/6301>`__ Using
+  ``export-login`` on a credentials file that already exists failed with an internal
+  error. The command now reports that the file exists and leaves it untouched.
+
 
 Contributors
 ------------
