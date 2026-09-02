@@ -1,11 +1,12 @@
 import argparse
+import re
 from textwrap import dedent
 
 import pytest
 
-from snapcraft import commands
+from snapcraft import commands, errors
+from snapcraft.models import Releases
 from snapcraft.store import channel_map
-from snapcraft_legacy.storeapi.v2.releases import Releases
 
 ############
 # Fixtures #
@@ -203,14 +204,21 @@ def list_revisions_result():
 
 
 @pytest.fixture
-def fake_store_list_revisions(mocker, list_revisions_result):
+def fake_store_list_releases(mocker, list_revisions_result):
     fake_client = mocker.patch(
-        "snapcraft.store.StoreClientCLI.list_revisions",
+        "snapcraft.store.StoreClientCLI.list_releases",
         autospec=True,
         return_value=list_revisions_result,
     )
 
     return fake_client
+
+
+@pytest.fixture(autouse=True)
+def stdout_tty(request, mocker):
+    """Present stdout as a tty."""
+    is_tty = getattr(request, "param", True)
+    mocker.patch("sys.stdout.isatty", return_value=is_tty)
 
 
 ##################
@@ -219,8 +227,8 @@ def fake_store_list_revisions(mocker, list_revisions_result):
 
 
 @pytest.mark.usefixtures("memory_keyring", "fake_store_get_status_map")
-def test_default(emitter):
-    cmd = commands.StoreStatusCommand(None)
+def test_default(emitter, fake_app_config):
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -243,8 +251,36 @@ def test_default(emitter):
     )
 
 
+@pytest.mark.usefixtures("memory_keyring", "fake_store_get_status_map")
+@pytest.mark.parametrize("stdout_tty", [False], indirect=True)
+def test_stdout_not_a_tty(emitter, fake_app_config):
+    cmd = commands.StoreStatusCommand(fake_app_config)
+
+    cmd.run(
+        argparse.Namespace(
+            name="test-snap",
+            arch=None,
+            track=None,
+        )
+    )
+
+    emitter.assert_message(
+        "Track    Arch    Channel    Version    Revision    Progress\n"
+        "2.1      amd64   stable     -          -           -\n"
+        "2.1      amd64   candidate  -          -           -\n"
+        "2.1      amd64   beta       10         19          -\n"
+        "2.1      amd64   edge       ↑          ↑           -\n"
+        "2.0      amd64   stable     -          -           -\n"
+        "2.0      amd64   candidate  -          -           -\n"
+        "2.0      amd64   beta       10         18          -\n"
+        "2.0      amd64   edge       ↑          ↑           -"
+    )
+
+
 @pytest.mark.usefixtures("memory_keyring")
-def test_following(emitter, fake_store_get_status_map, channel_map_result):
+def test_following(
+    emitter, fake_store_get_status_map, channel_map_result, fake_app_config
+):
     channel_map_result.channel_map = [
         channel_map.MappedChannel(
             channel="2.1/stable",
@@ -261,7 +297,7 @@ def test_following(emitter, fake_store_get_status_map, channel_map_result):
     )
     fake_store_get_status_map.return_value = channel_map_result
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -282,10 +318,12 @@ def test_following(emitter, fake_store_get_status_map, channel_map_result):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_no_releases(emitter, fake_store_get_status_map, channel_map_result):
+def test_no_releases(
+    emitter, fake_store_get_status_map, channel_map_result, fake_app_config
+):
     channel_map_result.channel_map = []
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -299,7 +337,9 @@ def test_no_releases(emitter, fake_store_get_status_map, channel_map_result):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_progressive(emitter, fake_store_get_status_map, channel_map_result):
+def test_progressive(
+    emitter, fake_store_get_status_map, channel_map_result, fake_app_config
+):
     channel_map_result.channel_map.append(
         channel_map.MappedChannel(
             channel="2.1/beta",
@@ -316,7 +356,7 @@ def test_progressive(emitter, fake_store_get_status_map, channel_map_result):
     )
     fake_store_get_status_map.return_value = channel_map_result
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -341,7 +381,7 @@ def test_progressive(emitter, fake_store_get_status_map, channel_map_result):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_arch(emitter, fake_store_get_status_map, channel_map_result):
+def test_arch(emitter, fake_store_get_status_map, channel_map_result, fake_app_config):
     channel_map_result.channel_map.append(
         channel_map.MappedChannel(
             channel="2.1/beta",
@@ -358,7 +398,7 @@ def test_arch(emitter, fake_store_get_status_map, channel_map_result):
     )
     fake_store_get_status_map.return_value = channel_map_result
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -378,7 +418,9 @@ def test_arch(emitter, fake_store_get_status_map, channel_map_result):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_multiple_arch(emitter, fake_store_get_status_map, channel_map_result):
+def test_multiple_arch(
+    emitter, fake_store_get_status_map, channel_map_result, fake_app_config
+):
     channel_map_result.channel_map.append(
         channel_map.MappedChannel(
             channel="2.1/beta",
@@ -409,7 +451,7 @@ def test_multiple_arch(emitter, fake_store_get_status_map, channel_map_result):
     )
     fake_store_get_status_map.return_value = channel_map_result
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -433,8 +475,8 @@ def test_multiple_arch(emitter, fake_store_get_status_map, channel_map_result):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_track(emitter, fake_store_get_status_map):
-    cmd = commands.StoreStatusCommand(None)
+def test_track(emitter, fake_store_get_status_map, fake_app_config):
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -454,8 +496,8 @@ def test_track(emitter, fake_store_get_status_map):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_multi_track(emitter, fake_store_get_status_map):
-    cmd = commands.StoreStatusCommand(None)
+def test_multi_track(emitter, fake_store_get_status_map, fake_app_config):
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -479,7 +521,9 @@ def test_multi_track(emitter, fake_store_get_status_map):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_arch_and_track(emitter, fake_store_get_status_map, channel_map_result):
+def test_arch_and_track(
+    emitter, fake_store_get_status_map, channel_map_result, fake_app_config
+):
     channel_map_result.channel_map.append(
         channel_map.MappedChannel(
             channel="2.1/beta",
@@ -510,7 +554,7 @@ def test_arch_and_track(emitter, fake_store_get_status_map, channel_map_result):
     )
     fake_store_get_status_map.return_value = channel_map_result
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -530,7 +574,9 @@ def test_arch_and_track(emitter, fake_store_get_status_map, channel_map_result):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_branch(emitter, fake_store_get_status_map, channel_map_result):
+def test_branch(
+    emitter, fake_store_get_status_map, channel_map_result, fake_app_config
+):
     channel_map_result.channel_map.append(
         channel_map.MappedChannel(
             channel="2.1/stable/hotfix1",
@@ -556,7 +602,7 @@ def test_branch(emitter, fake_store_get_status_map, channel_map_result):
     )
     fake_store_get_status_map.return_value = channel_map_result
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -581,7 +627,9 @@ def test_branch(emitter, fake_store_get_status_map, channel_map_result):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_progressive_branch(emitter, fake_store_get_status_map, channel_map_result):
+def test_progressive_branch(
+    emitter, fake_store_get_status_map, channel_map_result, fake_app_config
+):
     channel_map_result.channel_map.append(
         channel_map.MappedChannel(
             channel="2.1/stable/hotfix1",
@@ -607,7 +655,7 @@ def test_progressive_branch(emitter, fake_store_get_status_map, channel_map_resu
     )
     fake_store_get_status_map.return_value = channel_map_result
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -632,12 +680,14 @@ def test_progressive_branch(emitter, fake_store_get_status_map, channel_map_resu
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_progressive_unknown(emitter, fake_store_get_status_map, channel_map_result):
+def test_progressive_unknown(
+    emitter, fake_store_get_status_map, channel_map_result, fake_app_config
+):
     channel_map_result.channel_map[0].progressive.percentage = 10.0
     channel_map_result.channel_map[0].progressive.current_percentage = None
     fake_store_get_status_map.return_value = channel_map_result
 
-    cmd = commands.StoreStatusCommand(None)
+    cmd = commands.StoreStatusCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -666,16 +716,9 @@ def test_progressive_unknown(emitter, fake_store_get_status_map, channel_map_res
 #######################
 
 
-@pytest.mark.parametrize(
-    "command_class",
-    [
-        commands.StoreListTracksCommand,
-        commands.StoreTracksCommand,
-    ],
-)
 @pytest.mark.usefixtures("memory_keyring", "fake_store_get_status_map")
-def test_list_tracks(emitter, command_class):
-    cmd = command_class(None)
+def test_tracks(emitter, fake_app_config):
+    cmd = commands.StoreTracksCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(name="test-snap"))
 
@@ -686,14 +729,24 @@ def test_list_tracks(emitter, command_class):
     )
 
 
+@pytest.mark.usefixtures("memory_keyring")
+def test_list_tracks_error(fake_app_config):
+    """Error on removed 'list-tracks' command."""
+    cmd = commands.StoreListTracksCommand(fake_app_config)
+    expected = re.escape("The 'list-tracks' command was renamed to 'tracks'.")
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        cmd.run(argparse.Namespace(name="test-snap"))
+
+
 ##########################
 # List Revisions Command #
 ##########################
 
 
-@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
-def test_list_revisions(emitter):
-    cmd = commands.StoreListRevisionsCommand(None)
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_releases")
+def test_revisions(emitter, fake_app_config):
+    cmd = commands.StoreRevisionsCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
 
@@ -707,9 +760,19 @@ def test_list_revisions(emitter):
     )
 
 
-@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
-def test_list_revisions_arch(emitter):
-    cmd = commands.StoreListRevisionsCommand(None)
+@pytest.mark.usefixtures("memory_keyring")
+def test_list_revisions_error(fake_app_config):
+    """Error on removed 'list-revisions' command."""
+    cmd = commands.StoreListRevisionsCommand(fake_app_config)
+    expected = re.escape("The 'list-revisions' command was renamed to 'revisions'.")
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
+
+
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_releases")
+def test_list_releases_arch(emitter, fake_app_config):
+    cmd = commands.StoreRevisionsCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(snap_name="test-snap", arch="amd64"))
 
@@ -722,11 +785,13 @@ def test_list_revisions_arch(emitter):
     )
 
 
-@pytest.mark.usefixtures("memory_keyring", "fake_store_list_revisions")
-def test_list_revisions_no_release_information(emitter, list_revisions_result):
+@pytest.mark.usefixtures("memory_keyring", "fake_store_list_releases")
+def test_list_releases_no_release_information(
+    emitter, list_revisions_result, fake_app_config
+):
     list_revisions_result.releases = []
 
-    cmd = commands.StoreListRevisionsCommand(None)
+    cmd = commands.StoreRevisionsCommand(fake_app_config)
 
     cmd.run(argparse.Namespace(snap_name="test-snap", arch=None))
 

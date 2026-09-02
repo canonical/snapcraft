@@ -1,1 +1,1 @@
-No build matches the current execution environment.
+Cannot generate a project that builds on amd64 and builds for armhf

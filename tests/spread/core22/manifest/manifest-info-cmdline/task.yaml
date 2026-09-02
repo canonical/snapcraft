@@ -4,13 +4,16 @@ prepare: |
   snap install review-tools
 
 restore: |
-  snapcraft clean
+  # The regular clean can potentially fail depending on if/when the test itself failed, but
+  # they should always both be attempted
+  snapcraft clean || true
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
   rm -f ~/manifest_0.1_*.snap
 
 execute: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
-  snapcraft --use-lxd --enable-manifest --manifest-image-information='{"test-var": "value"}'
+  snapcraft pack --use-lxd --enable-manifest --manifest-image-information='{"test-var": "value"}'
 
   unsquashfs manifest_0.1_*.snap
   grep '^  test-var: value' squashfs-root/snap/manifest.yaml
@@ -21,7 +24,7 @@ execute: |
   rm ~/manifest_0.1_*.snap
 
   # also test in destructive mode
-  snapcraft --destructive-mode --enable-manifest --manifest-image-information='{"test-var": "value"}'
+  snapcraft pack --destructive-mode --enable-manifest --manifest-image-information='{"test-var": "value"}'
 
   grep '^  test-var: value' prime/snap/manifest.yaml
 

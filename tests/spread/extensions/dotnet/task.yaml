@@ -1,0 +1,50 @@
+summary: Build and run a basic hello-world snap using the .NET extensions
+
+systems:
+  - ubuntu-24.04*
+
+environment:
+
+  SNAP_DIR/dotnet8: ../snaps/dotnet8-hello
+  SNAP_DIR/dotnet9: ../snaps/dotnet9-hello
+  SNAP_DIR/dotnet10: ../snaps/dotnet10-hello
+  SNAP_DIR/dotnet11: ../snaps/dotnet11-hello
+  SNAP/dotnet8: dotnet8-hello
+  SNAP/dotnet9: dotnet9-hello
+  SNAP/dotnet10: dotnet10-hello
+  SNAP/dotnet11: dotnet11-hello
+  DOTNET_CONTENT_SNAP/dotnet8: dotnet-runtime-80
+  DOTNET_CONTENT_SNAP/dotnet9: dotnet-runtime-90
+  DOTNET_CONTENT_SNAP/dotnet10: dotnet-runtime-100
+  DOTNET_CONTENT_SNAP/dotnet11: dotnet-runtime-110
+  DOTNET_RUNTIME_PLUG/dotnet8: dotnet8-runtime
+  DOTNET_RUNTIME_PLUG/dotnet9: dotnet9-runtime
+  DOTNET_RUNTIME_PLUG/dotnet10: dotnet10-runtime
+  DOTNET_RUNTIME_PLUG/dotnet11: dotnet11-runtime
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS/dotnet11: 1
+
+restore: |
+
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snap/snapcraft.yaml"
+
+execute: |
+
+  cd "$SNAP_DIR"
+  snapcraft pack --verbose
+
+  unsquashfs "${SNAP}"_1.0_*.snap
+
+  # Check that the launcher script is present
+  [ -f ./squashfs-root/bin/command-chain/launcher.sh ] || exit 1
+
+  snap install "${SNAP}"_1.0_*.snap --dangerous
+
+  # Connect dotnet-runtime slot
+  snap connect "${SNAP}":"${DOTNET_RUNTIME_PLUG}" "${DOTNET_CONTENT_SNAP}":dotnet-runtime || exit 1
+
+  ${SNAP}.hello || exit 1

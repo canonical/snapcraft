@@ -1,0 +1,13 @@
+name: skip-repack
+base: core24
+version: '0.1'
+summary: Skip-repack test
+description: Skip-repack test.
+grade: stable
+confinement: strict
+icon: snap/icon.svg
+
+parts:
+  my-part:
+    plugin: nil
+    source: src

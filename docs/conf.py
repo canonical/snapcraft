@@ -1,101 +1,376 @@
-# Copyright 2023-2024 Canonical Ltd.
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License version 3 as published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-
 import datetime
+import importlib
 import os
 import pathlib
 import sys
+import textwrap
 
+import craft_application_docs
 import craft_parts_docs
-
 import snapcraft
 
-project_dir = pathlib.Path("..").resolve()
-sys.path.insert(0, str(project_dir.absolute()))
+# Configuration for the Sphinx documentation builder.
+# All configuration specific to your project should be done in this file.
+#
+# If you're new to Sphinx and don't want any advanced or custom features,
+# just go through the items marked 'TODO'.
+#
+# A complete list of built-in Sphinx configuration values:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+#
+# The Sphinx Stack uses the Canonical Sphinx theme to keep all documentation consistent
+# and on brand:
+# https://github.com/canonical/canonical-sphinx
 
+
+#######################
+# Project information #
+#######################
+
+# Project name
 project = "Snapcraft"
-author = "Canonical Group Ltd"
-copyright = "%s, %s" % (datetime.date.today().year, author)
-release = snapcraft.__version__
 
-# region Configuration for canonical-sphinx
-ogp_site_url = "https://canonical-snapcraft.readthedocs-hosted.com/"
+# Author name; used in the default copyright statement in the page footer
+author = "Canonical Ltd."
+
+# Version string in sidebar
+major, minor, *_ = snapcraft.__version__.split(".")
+release = "dev" if os.environ.get("READTHEDOCS_VERSION") == "latest" else f"{major}.{minor}"
+
+# The year in the copyright statement
+copyright = f"2015-{datetime.date.today().year}"
+
+# Documentation website URL
+ogp_site_url = "https://ubuntu.com/docs/snapcraft"
+
+# Preview name of the documentation website
 ogp_site_name = project
 
+# Preview image URL
+ogp_image = "https://assets.ubuntu.com/v1/cc828679-docs_illustration.svg"
+
+# Product favicon; shown in bookmarks, browser tabs, etc.
+# TODO: To customise the favicon, uncomment and update the next line.
+# html_favicon = ".sphinx/_static/favicon.png"
+
+# Dictionary of values to pass into the Sphinx context for all pages:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-html_context
 html_context = {
-    "product_page": "github.com/canonical/snapcraft",
+    # Product page URL; can be different from product docs URL
+    "product_page": "snapcraft.io",
+    # Product tag image; the orange part of your logo, shown in the page header
+    # "product_tag": "_static/tag.png",
+    # Your Discourse instance URL
+    # TODO: Change to your Discourse instance URL or leave empty.
+    "discourse": "https://forum.snapcraft.io",
+    # Your Matrix channel URL
+    # TODO: Change to your Matrix channel URL or leave empty.
+    "matrix": "https://matrix.to/#/#snapcraft:ubuntu.com",
+    # Your documentation GitHub repository URL. If set, links for viewing the
+    # documentation source files and creating GitHub issues are added at the bottom of
+    # each page.
+    # TODO: Change to your documentation GitHub repository URL or leave empty.
     "github_url": "https://github.com/canonical/snapcraft",
+    # Docs branch in the repo; used in links for viewing the source files
+    "repo_default_branch": "main",
+    # Docs location in the repo; used in links for viewing the source files
+    "repo_folder": "/docs/",
+    # List contributors on individual pages
     "display_contributors": False,
+    # Required for feedback button
+    'github_issues': 'enabled',
+    # Passes the top-level 'author' value to the theme
+    "author": author,
+    # Documentation license information
+    "license": {
+        # For the name, we recommend using the standard shorthand identifier from
+        # https://spdx.org/licenses
+        "name": "GPL-3.0",
+        # TODO: Link directly to your project's license statement.
+        "url": "https://github.com/canonical/snapcraft/blob/main/LICENSE",
+    },
 }
 
-extensions = [
-    "canonical_sphinx",
+html_theme_options = {
+  "source_edit_link": "https://github.com/canonical/snapcraft",
+}
+
+# The project slug passed to the sphinx-notfound-page extension
+slug = "docs/snapcraft"
+
+
+#########################
+# Sitemap configuration #
+#########################
+
+# Use RTD canonical URL to ensure duplicate pages have a specific canonical URL
+html_baseurl = f"{ogp_site_url}/{release}/"
+
+# sphinx-sitemap uses html_baseurl to generate the full URL for each page:
+sitemap_url_scheme = "{link}"
+
+# Include `lastmod` dates in the sitemap:
+# sitemap_show_lastmod = True
+
+# Exclude generated pages from the sitemap:
+sitemap_excludes = [
+    "404/",
+    "genindex/",
+    "search/",
 ]
 
-sphinx_tabs_disable_tab_closing = True
-# endregion
 
-extensions.extend(
-    (
-        "sphinx.ext.ifconfig",
-        "sphinxcontrib.details.directive",
-        "sphinx_toolbox.collapse",
-    )
+################################
+# Template and asset locations #
+################################
+
+html_static_path = ["_static"]
+templates_path = ["_templates"]
+
+
+#############
+# Redirects #
+#############
+
+# Add redirects to the 'redirects.txt' file
+# https://sphinxext-rediraffe.readthedocs.io/en/latest/
+
+# To set up redirects in the Read the Docs project dashboard:
+# https://docs.readthedocs.io/en/stable/guides/redirects.html
+
+rediraffe_redirects = "redirects.txt"
+
+# Strips '/index.html' from destination URLs when building with 'dirhtml'
+rediraffe_dir_only = True
+
+############################
+# sphinx-llm configuration #
+############################
+
+# This description is included in llms.txt to provide some initial context for your
+# product docs.
+llms_txt_description = textwrap.dedent(
+    """\
+    This is the documentation for Snapcraft, the tool for packaging software into the
+    snap container format.
+    """
 )
 
-rst_epilog = """
-.. include:: /reuse/links.txt
-"""
+# The base URL for references built by sphinx-markdown-builder.
+if os.environ.get("READTHEDOCS"):
+    markdown_http_base = html_baseurl
 
+###########################
+# Link checker exceptions #
+###########################
+
+linkcheck_ignore = [
+    # Entire domains to ignore due to flakiness or issues
+    "https://github.com",
+    r"^https://www.gnu.org/",
+    r"^https://crates.io/",
+    r"^https://([\w-]*\.)?npmjs.org",
+    r"^https://rsync.samba.org",
+    r"^https://ubuntu.com",
+    r"^https://packages.ubuntu.com",
+    r"^https://www.freedesktop.org/",
+    r"^https://www.npmjs.com/",
+    "https://matrix.to/#",
+    "https://gitlab.gnome.org",
+    # 2026-06-03: Ignore Canonical sites until filtering is resolved
+    "https://snapcraft.io",
+    "https://juju.is",
+    "https://web.archive.org/web/20230902152422/https://spdx.dev/spdx-specification-21-web-version/#h.twlc0ztnng3b",
+]
+
+# Anchor strings to ignore
+linkcheck_anchors_ignore = [
+    "#",
+    ":",
+]
+
+# Give linkcheck multiple tries on failure
+linkcheck_retries = 20
+
+# Report timeouts as 'timeout' instead of 'broken'
+linkcheck_report_timeouts_as_broken = False
+
+########################
+# Configuration extras #
+########################
+
+# Custom Sphinx extensions; see
+# https://www.sphinx-doc.org/en/master/usage/extensions/index.html
+extensions = [
+    "canonical_sphinx",
+    "notfound.extension",
+    "sphinx_design",
+    "sphinxext.rediraffe",
+    # "sphinx_tabs.tabs",
+    # "sphinxcontrib.jquery"
+    "sphinxext.opengraph",
+    # "sphinx_config_options",
+    # "sphinx_contributor_listing",
+    # "sphinx_filtered_toctree",
+    "sphinx_llm.txt",
+    "sphinx_related_links",
+    "sphinx_roles",
+    "sphinx_terminal",
+    # "sphinx_ubuntu_images",
+    # "sphinx_youtube_links",
+    # "sphinxcontrib.cairosvgconverter",
+    # "sphinx_last_updated_by_git",
+    "sphinx.ext.intersphinx",
+    "sphinx_sitemap",
+    "sphinx_copybutton",
+    # Custom Craft extensions
+    "pydantic_kitbash",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.doctest",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.viewcode",
+    "sphinx_substitution_extensions",
+]
+
+# Excludes files or directories from processing
 exclude_patterns = [
-    "sphinx-resources",
     # Excluded because Snapcraft doesn't use overlays
     "common/craft-parts/overlay_parameters.rst",
     # Excluded here because they are either included explicitly in other
     # documents (so they generate "duplicate label" errors) or they aren't
     # used in this documentation at all (so they generate "unreferenced"
     # errors).
+    "common/craft-application/*",
+    "common/craft-parts/explanation/dump_plugin.rst",
+    "common/craft-parts/explanation/file-migration.rst",
+    "common/craft-parts/explanation/gradle_plugin.rst",
+    "common/craft-parts/explanation/how_parts_are_built.rst",
+    "common/craft-parts/explanation/lifecycle.rst",
     "common/craft-parts/explanation/overlay_parameters.rst",
     "common/craft-parts/explanation/overlays.rst",
-    "common/craft-parts/explanation/how_parts_are_built.rst",
     "common/craft-parts/explanation/parts.rst",
     "common/craft-parts/how-to/craftctl.rst",
+    "common/craft-parts/how-to/override_build.rst",
+    "common/craft-parts/reference/part_properties.rst",
     "common/craft-parts/reference/parts_steps.rst",
     "common/craft-parts/reference/step_execution_environment.rst",
     "common/craft-parts/reference/step_output_directories.rst",
+    "common/craft-parts/reference/plugins/gradle_use_plugin.rst",
+    "common/craft-parts/reference/plugins/maven_plugin.rst",
     "common/craft-parts/reference/plugins/poetry_plugin.rst",
     "common/craft-parts/reference/plugins/python_plugin.rst",
-    "common/craft-parts/reference/plugins/maven_plugin.rst",
+    "common/craft-parts/reference/plugins/python_v2_plugin.rst",
+    "common/craft-parts/reference/plugins/uv_plugin.rst",
+    # Excluded because Snapcraft has its own version
+    "common/craft-parts/reference/plugins/colcon_plugin.rst",
     # Extra non-craft-parts exclusions can be added after this comment
+    # Staged files for Discourse migration
+    "how-to/crafting/add-a-part.rst",
+    "how-to/publishing/build-snaps-remotely.rst",
+    "README.md",  # Docs README
+]
+
+git_exclude_patterns = [
+    "common/craft-parts/**",
+    "common/craft-application/**",
+]
+
+# Adds custom CSS files, located remotely or in 'html_static_path'.
+html_css_files = [
+    "css/cookie-banner.css",
+    "css/support-chart.css",
+]
+
+# Adds custom JavaScript files, located remotely or in 'html_static_path'.
+html_js_files = [
+    "js/bundle.js",
+    "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
+    "js/support-chart.js",
+    "js/overwrite-links.js",
 ]
 
 
-def generate_cli_docs(nil):
-    gen_cli_docs_path = (project_dir / "tools" / "docs" / "gen_cli_docs.py").resolve()
-    os.system("%s %s" % (gen_cli_docs_path, project_dir / "docs"))
+# Specifies a reST snippet to be appended to each .rst file
+rst_epilog = """
+.. include:: /reuse/links.txt
+"""
 
+# Feedback button at the top; enabled by default
+# disable_feedback_button = True
+
+# Your manpage URL
+# manpages_url = 'https://manpages.ubuntu.com/manpages/{codename}/en/' + \
+#     'man{section}/{page}.{section}.html'
+
+# Specifies a reST snippet to be prepended to each .rst file
+# This defines a :center: role that centers table cell content.
+# This defines a :h2: role that styles content for use with PDF generation.
+rst_prolog = """
+.. role:: center
+   :class: align-center
+.. role:: h2
+    :class: hclass2
+.. role:: woke-ignore
+    :class: woke-ignore
+.. role:: vale-ignore
+    :class: vale-ignore
+"""
+
+# Workaround for https://github.com/canonical/canonical-sphinx/issues/34
+if "discourse_prefix" not in html_context and "discourse" in html_context:
+    html_context["discourse_prefix"] = f"{html_context['discourse']}/t/"
+
+# Add configuration for intersphinx mapping
+intersphinx_mapping = {
+    # https://github.com/canonical/snapcraft/issues/6036
+    "snap": ("https://snapcraft.io/docs/", None),
+    "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
+    "rockcraft": ("https://ubuntu.com/containers/rockcraft/docs/latest/", None),
+    "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
+    "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
+}
+
+# Block Intersphinx from looking up external sources with internal references. In other
+# words, only :external+<project>... will search in other projects.
+intersphinx_disabled_reftypes = ["std:*"]
+
+
+##############################
+# Custom Craft configuration #
+##############################
+
+# Type hints configuration
+set_type_checking_flag = True
+typehints_fully_qualified = False
+always_document_param_types = True
+
+# Automated documentation
+project_dir = pathlib.Path(__file__).parents[1].resolve()
+sys.path.insert(0, str(project_dir.absolute()))
+
+def generate_cli_docs(nil):
+    gen_cli_docs_path = (project_dir / "tools/docs/gen_cli_docs.py").resolve()
+    os.system("%s %s" % (gen_cli_docs_path, project_dir / "docs"))
 
 def setup(app):
     app.connect("builder-inited", generate_cli_docs)
 
-
 # Setup libraries documentation snippets for use in snapcraft docs.
 common_docs_path = pathlib.Path(__file__).parent / "common"
-craft_parts_docs_path = pathlib.Path(craft_parts_docs.__file__).parent / "craft-parts"
-(common_docs_path / "craft-parts").unlink(missing_ok=True)
-(common_docs_path / "craft-parts").symlink_to(
-    craft_parts_docs_path, target_is_directory=True
-)
+def link_common_docs(library_name: str) -> None:
+    """Create a link to the appropriate common documentation directory."""
+    common_lib_path = common_docs_path / library_name
+
+    docs_module_name = f"{library_name.replace('-', '_')}_docs"
+    docs_module = importlib.import_module(docs_module_name)
+    docs_path = pathlib.Path(docs_module.__file__).parent / library_name
+
+    if common_lib_path.is_symlink() and common_lib_path.readlink() == docs_path:
+        return
+
+    common_lib_path.unlink(missing_ok=True)
+    common_lib_path.symlink_to(docs_path, target_is_directory=True)
+
+link_common_docs("craft-parts")
+link_common_docs("craft-application")

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Unit tests for SnapConfig class."""
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -43,13 +44,6 @@ def test_unmarshal():
     config = SnapConfig.unmarshal({"provider": "lxd"})
 
     assert config.provider == "lxd"
-
-
-def test_unmarshal_not_a_dictionary():
-    """Verify unmarshalling with data that is not a dictionary raises an error."""
-    error = "Project data is not a dictionary"
-    with pytest.raises(TypeError, match=error):
-        SnapConfig.unmarshal("provider=lxd")  # type: ignore
 
 
 def test_unmarshal_invalid_provider_error():

@@ -20,5 +20,5 @@ restore: |
 
 execute: |
   cd "$SNAP"
-  snapcraft --destructive-mode 2>&1 | tee progress.txt
+  snapcraft pack --destructive-mode 2>&1 | tee progress.txt
   grep "Created snap package ${SNAP}_1.0_amd64.snap" progress.txt

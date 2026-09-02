@@ -20,11 +20,9 @@ import argparse
 import os
 import shlex
 import subprocess
-import tempfile
 import textwrap
-from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import Any, Iterator, Optional
+from typing import Any
 
 from craft_application.commands import AppCommand
 from craft_cli import emit
@@ -32,7 +30,7 @@ from craft_cli.errors import ArgumentParsingError
 from craft_platforms import DebianArchitecture
 from craft_providers.multipass import MultipassProvider
 from craft_providers.util import snap_cmd
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import errors, linters, models, providers
 from snapcraft.meta import snap_yaml
@@ -40,6 +38,7 @@ from snapcraft.parts.yaml_utils import apply_yaml, extract_parse_info, process_y
 from snapcraft.utils import (
     get_managed_environment_home_path,
     is_managed_mode,
+    unsquash_snap,
 )
 
 
@@ -59,7 +58,7 @@ class LintCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
@@ -108,7 +107,7 @@ class LintCommand(AppCommand):
                 snap_file, assert_file, parsed_args.http_proxy, parsed_args.https_proxy
             )
 
-    def _get_assert_file(self, snap_file: Path) -> Optional[Path]:
+    def _get_assert_file(self, snap_file: Path) -> Path | None:
         """Get an assertion file for a snap file.
 
         The assertion file name should be formatted as `<snap-name>.assert`.
@@ -134,9 +133,9 @@ class LintCommand(AppCommand):
     def _prepare_instance(
         self,
         snap_file: Path,
-        assert_file: Optional[Path],
-        http_proxy: Optional[str],
-        https_proxy: Optional[str],
+        assert_file: Path | None,
+        http_proxy: str | None,
+        https_proxy: str | None,
     ) -> None:
         """Prepare an instance to lint a snap file.
 
@@ -203,14 +202,14 @@ class LintCommand(AppCommand):
             finally:
                 providers.capture_logs_from_instance(instance)
 
-    def _run_linter(self, snap_file: Path, assert_file: Optional[Path]) -> None:
+    def _run_linter(self, snap_file: Path, assert_file: Path | None) -> None:
         """Run snapcraft linters on a snap file.
 
         :param snap_file: Path to snap file to lint.
         :param assert_file: Optional path to assertion file for the snap file.
         """
         # unsquash, load snap.yaml, and optionally load snapcraft.yaml
-        with self._unsquash_snap(snap_file) as unsquashed_snap:
+        with unsquash_snap(snap_file) as unsquashed_snap:
             snap_metadata = snap_yaml.read(unsquashed_snap)
             project = self._load_project(unsquashed_snap / "snap" / "snapcraft.yaml")
 
@@ -222,42 +221,7 @@ class LintCommand(AppCommand):
         issues = linters.run_linters(location=snap_install_path, lint=lint_filters)
         linters.report(issues, intermediate=True)
 
-    @contextmanager
-    def _unsquash_snap(self, snap_file: Path) -> Iterator[Path]:
-        """Unsquash a snap file to a temporary directory.
-
-        :param snap_file: Snap package to extract.
-
-        :yields: Path to the snap's unsquashed directory.
-
-        :raises errors.SnapcraftError: If the snap fails to unsquash.
-        """
-        snap_file = snap_file.resolve()
-
-        with tempfile.TemporaryDirectory(prefix=str(snap_file.parent)) as temp_dir:
-            emit.progress(f"Unsquashing snap file {snap_file.name!r}.")
-
-            # unsquashfs [options] filesystem [directories or files to extract] options:
-            # -force: if file already exists then overwrite
-            # -dest <pathname>: unsquash to <pathname>
-            extract_command = [
-                "unsquashfs",
-                "-force",
-                "-dest",
-                temp_dir,
-                str(snap_file),
-            ]
-
-            try:
-                subprocess.run(extract_command, capture_output=True, check=True)
-            except subprocess.CalledProcessError as error:
-                raise errors.SnapcraftError(
-                    f"could not unsquash snap file {snap_file.name!r}"
-                ) from error
-
-            yield Path(temp_dir)
-
-    def _load_project(self, snapcraft_yaml_file: Path) -> Optional[models.Project]:
+    def _load_project(self, snapcraft_yaml_file: Path) -> models.Project | None:
         """Load a snapcraft Project from a snapcraft.yaml, if present.
 
         The snapcraft.yaml exist for snaps built with the `--enable-manifest` parameter.
@@ -274,7 +238,7 @@ class LintCommand(AppCommand):
         try:
             # process_yaml will not parse core, core18, and core20 snaps
             yaml_data = process_yaml(snapcraft_yaml_file)
-        except (errors.LegacyFallback, errors.MaintenanceBase) as error:
+        except errors.MaintenanceBase as error:
             raise errors.SnapcraftError(
                 "can not lint snap using a base older than core22"
             ) from error
@@ -290,7 +254,7 @@ class LintCommand(AppCommand):
     def _install_snap(
         self,
         snap_file: Path,
-        assert_file: Optional[Path],
+        assert_file: Path | None,
         snap_metadata: snap_yaml.SnapMetadata,
     ) -> Path:
         """Install a snap file and optional assertion file.
@@ -343,7 +307,7 @@ class LintCommand(AppCommand):
 
         return Path("/snap") / snap_metadata.name / "current"
 
-    def _load_lint_filters(self, project: Optional[models.Project]) -> models.Lint:
+    def _load_lint_filters(self, project: models.Project | None) -> models.Lint:
         """Load lint filters from a Project and disable the classic linter.
 
         :param project: Project from the snap file, if present.

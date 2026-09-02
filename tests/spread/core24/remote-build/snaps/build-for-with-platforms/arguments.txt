@@ -1,0 +1,1 @@
+--build-for amd64,armhf

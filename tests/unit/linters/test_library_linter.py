@@ -63,14 +63,14 @@ def test_library_linter_missing_library(mocker, new_dir):
             result=LinterResult.WARNING,
             filename="elf.bin",
             text="missing dependency 'libbar.so.5'.",
-            url="https://snapcraft.io/docs/linters-library",
+            url="https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter",
         ),
         LinterIssue(
             name="library",
             result=LinterResult.WARNING,
             filename="elf.bin",
             text="missing dependency 'libfoo.so.1'.",
-            url="https://snapcraft.io/docs/linters-library",
+            url="https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter",
         ),
     ]
 
@@ -118,7 +118,7 @@ def test_library_linter_unused_library(mocker, new_dir):
             result=LinterResult.WARNING,
             filename="libfoo.so",
             text="unused library 'lib/libfoo.so'.",
-            url="https://snapcraft.io/docs/linters-library",
+            url="https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter",
         ),
     ]
 
@@ -246,7 +246,7 @@ def test_library_linter_mixed_filters(mocker, new_dir):
             result=LinterResult.WARNING,
             filename="libfoo.so",
             text="unused library 'lib/libfoo.so'.",
-            url="https://snapcraft.io/docs/linters-library",
+            url="https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter",
         ),
     ]
 

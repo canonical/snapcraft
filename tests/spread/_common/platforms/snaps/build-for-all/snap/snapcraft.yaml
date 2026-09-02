@@ -1,0 +1,14 @@
+name: build-for-all
+version: "1.0"
+summary: test
+description: Match the `all` target via the build-for argument.
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: [amd64]
+    build-for: [all]
+
+parts:
+  nil:
+    plugin: nil

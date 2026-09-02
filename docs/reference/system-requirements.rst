@@ -1,4 +1,4 @@
-.. _system-requirements:
+.. _reference-system-requirements:
 
 System requirements
 ===================
@@ -29,8 +29,8 @@ Platform requirements
     - Version
     - Software requirements
   * - GNU/Linux
-    - Popular distributions that ship with systemd and are `compatible with
-      snapd <https://snapcraft.io/docs/installing-snapd>`_
+    - Popular distributions that ship with systemd and are
+      :external+snap:ref:`compatible with snapd <tutorials-install-the-daemon-index>`
     - systemd
 
       snapd 2.44.3 or higher

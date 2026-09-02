@@ -63,7 +63,7 @@ execute: |
   cd "$SNAP_DIR"
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   # Check that the snap size is fairly small

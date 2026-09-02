@@ -1,0 +1,21 @@
+name: dotnet10-hello
+base: core24
+version: '1.0'
+summary: A simple hello world snap using the dotnet8 extension
+description: |
+  This is a simple hello world snap using the dotnet8 extension.
+
+grade: stable
+confinement: strict
+
+parts:
+  hello:
+    plugin: dotnet
+    source: .
+    dotnet-version: '10.0'
+    dotnet-configuration: Release
+
+apps:
+  hello:
+    command: dotnet10-hello
+    extensions: [ dotnet10 ]

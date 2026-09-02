@@ -17,8 +17,9 @@
 """Snapcraft lifecycle commands."""
 
 import argparse
+import os
 import textwrap
-from typing import Any
+from typing import Any, cast
 
 import craft_application.commands
 from craft_cli import emit
@@ -26,6 +27,141 @@ from typing_extensions import override
 
 import snapcraft.errors
 import snapcraft.pack
+from snapcraft import errors
+from snapcraft.models.project import Project
+
+
+def _add_ua_args(parser: argparse.ArgumentParser) -> None:
+    """Add hidden UA args."""
+    parser.add_argument(
+        "--ua-token",
+        type=str,
+        metavar="ua-token",
+        default=None,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--enable-experimental-ua-services",
+        action="store_true",
+        default=False,
+        help=argparse.SUPPRESS,
+    )
+
+
+def _validate_ua_args(parsed_args: argparse.Namespace) -> None:
+    """Validate if UA args or environment variables are used.
+
+    Using a UA command line argument is an error, but the UA environment variable
+    will only emit a warning.
+    """
+    if os.environ.get("SNAPCRAFT_UA_TOKEN"):
+        emit.warning(
+            "Ignoring the 'SNAPCRAFT_UA_TOKEN' environment variable. "
+            "The Pro token attached to the host will be used instead."
+        )
+
+    if parsed_args.ua_token is not None:
+        raise errors.SnapcraftError(
+            "'--ua-token' is not supported for this base.",
+            details="The Pro token attached to the host is used instead.",
+            resolution="Remove the '--ua-token' argument.",
+        )
+
+    if parsed_args.enable_experimental_ua_services:
+        raise errors.SnapcraftError(
+            "Pro support is stable for this base.",
+            resolution="Remove the '--enable-experimental-ua-services' argument.",
+        )
+
+
+class PullCommand(craft_application.commands.lifecycle.PullCommand):
+    """Snapcraft pull command."""
+
+    @override
+    def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        super()._fill_parser(parser)
+        _add_ua_args(parser)
+
+    @override
+    def _run(
+        self,
+        parsed_args: argparse.Namespace,
+        step_name: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        _validate_ua_args(parsed_args)
+        super()._run(parsed_args, step_name=step_name, **kwargs)
+
+
+class BuildCommand(craft_application.commands.lifecycle.BuildCommand):
+    """Snapcraft build command."""
+
+    @override
+    def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        super()._fill_parser(parser)
+        _add_ua_args(parser)
+
+    @override
+    def _run(
+        self,
+        parsed_args: argparse.Namespace,
+        step_name: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        _validate_ua_args(parsed_args)
+        super()._run(parsed_args, step_name=step_name, **kwargs)
+
+
+class StageCommand(craft_application.commands.lifecycle.StageCommand):
+    """Snapcraft stage command."""
+
+    @override
+    def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        super()._fill_parser(parser)
+        _add_ua_args(parser)
+
+    @override
+    def _run(
+        self,
+        parsed_args: argparse.Namespace,
+        step_name: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        _validate_ua_args(parsed_args)
+        super()._run(parsed_args, step_name=step_name, **kwargs)
+
+
+class PrimeCommand(craft_application.commands.lifecycle.PrimeCommand):
+    """Snapcraft prime command."""
+
+    @override
+    def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        super()._fill_parser(parser)
+        _add_ua_args(parser)
+
+    @override
+    def _run(
+        self,
+        parsed_args: argparse.Namespace,
+        step_name: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        _validate_ua_args(parsed_args)
+        super()._run(parsed_args, step_name=step_name, **kwargs)
+
+
+class CleanCommand(craft_application.commands.lifecycle.CleanCommand):
+    """Snapcraft clean command."""
+
+    @override
+    def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        super()._fill_parser(parser)
+        _add_ua_args(parser)
+
+    @override
+    def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> None:
+        _validate_ua_args(parsed_args)
+        super()._run(parsed_args, **kwargs)
 
 
 class PackCommand(craft_application.commands.lifecycle.PackCommand):
@@ -45,6 +181,7 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
     def _fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the pack command."""
         super()._fill_parser(parser)
+        _add_ua_args(parser)
 
         parser.add_argument(
             "directory",
@@ -70,6 +207,7 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
             )
             emit.message(f"Packed {snap_filename}")
         else:
+            _validate_ua_args(parsed_args)
             super()._run(parsed_args)
 
     @override
@@ -83,7 +221,7 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
         return True
 
     @override
-    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
+    def _use_provider(self, parsed_args: argparse.Namespace) -> bool:
         """Return whether the command should run in managed mode or not.
 
         Packing a directory always runs locally.
@@ -92,7 +230,7 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
             emit.debug("Not running managed mode because a directory was provided.")
             return False
 
-        return super().run_managed(parsed_args)
+        return super()._use_provider(parsed_args)
 
 
 class TryCommand(PackCommand):
@@ -108,7 +246,7 @@ class TryCommand(PackCommand):
     )
 
     @override
-    def run_managed(self, parsed_args: argparse.Namespace) -> bool:
+    def _use_provider(self, parsed_args: argparse.Namespace) -> bool:
         """Overridden to return false, such that the command fails early."""
         return False
 
@@ -119,13 +257,16 @@ class TryCommand(PackCommand):
         step_name: str | None = None,
         **kwargs: Any,
     ) -> None:
+        project = cast(Project, self.services.get("project").get())
+        effective_base = project.get_effective_base()
+
         raise snapcraft.errors.FeatureNotImplemented(
-            '"snapcraft try" is not implemented for core24'
+            f"'snapcraft try' is not implemented for {effective_base!r}"
         )
 
 
 class SnapCommand(PackCommand):
-    """Deprecated legacy command to pack the final snap payload."""
+    """Removed command to pack the final snap payload."""
 
     name = "snap"
     hidden = True
@@ -137,10 +278,4 @@ class SnapCommand(PackCommand):
         step_name: str | None = None,
         **kwargs: Any,
     ) -> None:
-        emit.progress(
-            "Warning: the 'snap' command is deprecated and will be removed "
-            "in a future release of Snapcraft. Use 'pack' instead.",
-            permanent=True,
-        )
-
-        super()._run(parsed_args, step_name, **kwargs)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

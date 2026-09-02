@@ -117,6 +117,9 @@ def test_get_root_snippet(gnome_extension):
             "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
                 "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
             },
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy": {
+                "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy"
+            },
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
             },
@@ -190,6 +193,9 @@ def test_get_root_snippet_with_external_sdk(gnome_extension_with_build_snap):
             "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
                 "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
             },
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy": {
+                "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy"
+            },
             "/usr/share/xml/iso-codes": {
                 "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
             },
@@ -238,6 +244,7 @@ class TestGetPartSnippet:
     def assert_get_part_snippet(gnome_instance):
         assert gnome_instance.get_part_snippet(plugin_name="autotools") == {
             "build-environment": [
+                {"SNAPCRAFT_GNOME_SDK": "/snap/gnome-42-2204-sdk/current/"},
                 {"PATH": "/snap/gnome-42-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
                 {
                     "XDG_DATA_DIRS": (
@@ -308,6 +315,14 @@ class TestGetPartSnippet:
                     )
                     + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
                 },
+                {
+                    "CMAKE_PREFIX_PATH": (
+                        "$CRAFT_STAGE/usr:"
+                        "/snap/gnome-42-2204-sdk/current/usr"
+                        "${CMAKE_PREFIX_PATH:"
+                        "+:$CMAKE_PREFIX_PATH}"
+                    )
+                },
             ]
         }
 
@@ -315,6 +330,7 @@ class TestGetPartSnippet:
 def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
     assert gnome_extension_with_build_snap.get_part_snippet(plugin_name="meson") == {
         "build-environment": [
+            {"SNAPCRAFT_GNOME_SDK": "/snap/gnome-44-2204-sdk/current/"},
             {"PATH": "/snap/gnome-44-2204-sdk/current/usr/bin${PATH:+:$PATH}"},
             {
                 "XDG_DATA_DIRS": (
@@ -387,6 +403,14 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
                 )
                 + "${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
             },
+            {
+                "CMAKE_PREFIX_PATH": (
+                    "$CRAFT_STAGE/usr:"
+                    "/snap/gnome-44-2204-sdk/current/usr"
+                    "${CMAKE_PREFIX_PATH:"
+                    "+:$CMAKE_PREFIX_PATH}"
+                )
+            },
         ]
     }
 
@@ -403,10 +427,25 @@ def test_get_parts_snippet(gnome_extension):
 
 def test_get_parts_snippet_core24(gnome_extension_core24):
     assert gnome_extension_core24.get_parts_snippet() == {
+        "gnome/gpu/wrapper": {
+            "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
+            "plugin": "make",
+            "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+        },
+        "gnome/gpu/cleanup": {
+            "after": [],
+            "source": "https://github.com/canonical/gpu-snap.git",
+            "plugin": "nil",
+            "override-prime": (
+                "craftctl default\n"
+                "${CRAFT_PART_SRC}/bin/gpu-2404-cleanup mesa-2404\n"
+                "# Workaround for https://bugs.launchpad.net/snapd/+bug/2055273\n"
+                'mkdir -p "${CRAFT_PRIME}/gpu-2404"'
+            ),
+        },
         "gnome/sdk": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
             "plugin": "make",
-            "make-parameters": ["GPU_WRAPPER=gpu-2404-wrapper"],
             "build-snaps": ["gnome-46-2404-sdk"],
         },
     }

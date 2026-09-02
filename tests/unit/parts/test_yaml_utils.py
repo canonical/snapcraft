@@ -17,20 +17,22 @@
 
 import io
 import pathlib
+import re
 from textwrap import dedent
 
+import craft_application.errors
 import pytest
+from craft_parts import ProjectVar, ProjectVarInfo
 
-from snapcraft import errors
+from snapcraft import const, errors
 from snapcraft.parts import yaml_utils
 
 
 def test_yaml_load():
-    assert (
-        yaml_utils.load(
-            io.StringIO(
-                dedent(
-                    """\
+    assert yaml_utils.load(
+        io.StringIO(
+            dedent(
+                """\
         base: core22
         entry:
             sub-entry:
@@ -38,17 +40,15 @@ def test_yaml_load():
               - list2
         scalar: scalar-value
     """
-                )
             )
         )
-        == {
-            "base": "core22",
-            "entry": {
-                "sub-entry": ["list1", "list2"],
-            },
-            "scalar": "scalar-value",
-        }
-    )
+    ) == {
+        "base": "core22",
+        "entry": {
+            "sub-entry": ["list1", "list2"],
+        },
+        "scalar": "scalar-value",
+    }
 
 
 def test_yaml_load_duplicates_errors():
@@ -96,65 +96,48 @@ def test_yaml_load_unhashable_errors():
 
 
 def test_yaml_load_build_base():
-    assert (
-        yaml_utils.load(
-            io.StringIO(
-                dedent(
-                    """\
+    assert yaml_utils.load(
+        io.StringIO(
+            dedent(
+                """\
         base: foo
         build-base: core22
     """
-                )
             )
         )
-        == {
-            "base": "foo",
-            "build-base": "core22",
-        }
-    )
+    ) == {
+        "base": "foo",
+        "build-base": "core22",
+    }
 
 
-def test_yaml_load_not_core22_base():
-    with pytest.raises(errors.LegacyFallback) as raised:
-        yaml_utils.load(
-            io.StringIO(
-                dedent(
-                    """\
-            base: core20
-    """
-                )
-            )
-        )
-
-    assert str(raised.value) == "base is core20"
-
-
-def test_yaml_load_esm_base():
+@pytest.mark.parametrize("base", const.ESM_BASES)
+def test_yaml_load_esm_base(base):
     with pytest.raises(errors.MaintenanceBase):
         yaml_utils.load(
             io.StringIO(
                 dedent(
-                    """\
-            base: core
-    """
+                    f"""\
+                    base: {base}
+                    """
                 )
             )
         )
 
 
 def test_yaml_load_no_base():
-    with pytest.raises(errors.LegacyFallback) as raised:
+    expected = re.escape("Project file has no base or build-base.")
+
+    with pytest.raises(errors.MissingBase, match=expected):
         yaml_utils.load(
             io.StringIO(
                 dedent(
                     """\
-            entry: foo
-    """
+                    entry: foo
+                    """
                 )
             )
         )
-
-    assert str(raised.value) == "no base defined"
 
 
 def test_extract_parse_info():
@@ -261,3 +244,91 @@ def test_get_snap_project(project, project_dir, new_dir):
     actual_project = yaml_utils.get_snap_project(project_dir)
 
     assert actual_project == project
+
+
+@pytest.mark.parametrize("project_dir", [None, "test-project-dir"])
+def test_get_snap_project_snap_not_a_directory(project_dir, new_dir):
+    project_dir = pathlib.Path(project_dir) if project_dir else new_dir
+    project_dir.mkdir(parents=True, exist_ok=True)
+    (project_dir / "snap").touch()
+
+    with pytest.raises(craft_application.errors.ProjectDirectoryTypeError) as raised:
+        yaml_utils.get_snap_project(project_dir)
+
+    assert "Given project directory path is not a directory:" in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    ("data", "expected"),
+    [
+        pytest.param(
+            {},
+            ProjectVarInfo.unmarshal(
+                {
+                    "version": ProjectVar().marshal(),
+                    "grade": ProjectVar().marshal(),
+                }
+            ),
+            id="minimal",
+        ),
+        pytest.param(
+            {
+                "version": "1.0",
+                "grade": "stable",
+                "adopt-info": "part1",
+                "components": {
+                    "my-component": {
+                        "version": "2.0",
+                        "adopt-info": "part2",
+                    },
+                    "your-component": {
+                        "version": "3.0",
+                        "adopt-info": "part3",
+                    },
+                },
+            },
+            ProjectVarInfo.unmarshal(
+                {
+                    "version": ProjectVar(
+                        value="1.0",
+                        part_name="part1",
+                    ).marshal(),
+                    "grade": ProjectVar(
+                        value="stable",
+                        part_name="part1",
+                    ).marshal(),
+                    "components": {
+                        "my-component": {
+                            "version": ProjectVar(
+                                value="2.0",
+                                part_name="part2",
+                            ).marshal(),
+                        },
+                        "your-component": {
+                            "version": ProjectVar(
+                                value="3.0",
+                                part_name="part3",
+                            ).marshal(),
+                        },
+                    },
+                }
+            ),
+            id="complex",
+        ),
+    ],
+)
+def test_create_project_vars(data, expected):
+    """Create a minimal project var."""
+    project_vars = yaml_utils.create_project_vars(
+        {
+            "name": "name",
+            "base": "core22",
+            "confinement": "strict",
+            "summary": "summary",
+            "description": "description",
+            "parts": {"nil": {}},
+            **data,
+        }
+    )
+
+    assert project_vars == expected

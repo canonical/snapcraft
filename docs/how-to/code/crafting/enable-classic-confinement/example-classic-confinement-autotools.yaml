@@ -1,0 +1,31 @@
+# autotools-classic-example, an example of a classically-confined project with Autotools
+
+name: autotools-classic-example
+version: "1.0"
+summary: An example snap for an autotools project
+description: |
+  Shows how to create a snap for an application that uses Autotools for
+  build and installation.
+
+grade: devel
+base: core22
+confinement: classic
+
+architectures:
+  amd64:
+
+apps:
+  # Using the name of the snap as the key name allows the program to be invoked
+  # by its name.
+  autotools-classic-example:
+    command: usr/bin/autotools-classic-example
+
+parts:
+  hello:
+    plugin: autotools
+    source: .
+    autotools-configure-parameters:
+      - LDFLAGS="
+        -Wl,-dynamic-linker=/snap/core22/current/lib64/ld-linux-x86-64.so.2
+        -Wl,-rpath=/snap/core22/current/lib/x86_64-linux-gnu"
+      - --prefix=/usr

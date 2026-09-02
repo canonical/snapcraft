@@ -1,0 +1,23 @@
+name: colcon-msg-package
+version: "1.0"
+summary: snapcraft test
+description: |
+  Make sure ROS downloaded packages are properly sourced
+
+grade: stable
+confinement: strict
+base: core24
+
+apps:
+  colcon-msg-package:
+    command: opt/ros/jazzy/bin/rosidl
+    plugs: [network, network-bind]
+    extensions: [ros2-jazzy]
+
+parts:
+  test-part:
+    plugin: colcon
+    source: https://github.com/ros2/demos.git
+    source-branch: jazzy
+    source-subdir: pendulum_msgs
+    build-packages: [g++, make]

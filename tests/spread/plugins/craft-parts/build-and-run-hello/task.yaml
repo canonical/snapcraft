@@ -4,14 +4,14 @@ summary: >-
 
 environment:
   SNAP/conda: conda-hello
-  SNAP/colcon_ros2_humble: colcon-ros2-humble-hello
-  SNAP/colcon_ros2_wrapper: colcon-ros2-wrapper
   SNAP/flutter: flutter-hello
   SNAP/python: python-hello
   SNAP/poetry: poetry-hello
   SNAP/qmake: qmake-hello
   SNAP/maven: maven-hello
   SNAP/dotnet: dotnet-hello
+  SNAP/ruby: ruby-hello
+  SNAP/uv: uv-hello
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -35,6 +35,7 @@ restore: |
   [ -f hello.js ] && git checkout hello.js
   [ -f main.go ] && git checkout main.go
   [ -f src/hello.cpp ] && git checkout src/hello.cpp
+  [ -f hello.rb ] && git checkout hello.rb
   [ -f src/main.rs ] && git checkout src/main.rs
   [ -f lib/src/lib.rs ] && git checkout lib/src/lib.rs
   [ -f lib/main.dart ] && git checkout lib/main.dart
@@ -54,7 +55,7 @@ execute: |
   snapcraft expand-extensions
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
@@ -63,7 +64,7 @@ execute: |
 
   # Clean the hello part, then build and run again.
   snapcraft clean hello
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
@@ -85,6 +86,8 @@ execute: |
     modified_file=main.go
   elif [ -f src/hello.cpp ]; then
     modified_file=src/hello.cpp
+  elif [ -f hello.rb ]; then
+    modified_file=hello.rb
   elif [ -f src/main.rs ]; then
     modified_file=src/main.rs
   elif [ -f say/src/lib.rs ]; then
@@ -101,7 +104,7 @@ execute: |
 
   sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
 
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then

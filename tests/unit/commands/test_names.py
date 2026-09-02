@@ -16,12 +16,13 @@
 
 import argparse
 import json
+import re
 from textwrap import dedent
 from unittest.mock import ANY, call
 
 import pytest
 
-from snapcraft import commands
+from snapcraft import commands, errors
 
 ############
 # Fixtures #
@@ -58,10 +59,12 @@ def fake_store_get_names(mocker):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_register_default(emitter, fake_confirmation_prompt, fake_store_register):
+def test_register_default(
+    emitter, fake_confirmation_prompt, fake_store_register, fake_app_config
+):
     fake_confirmation_prompt.return_value = True
 
-    cmd = commands.StoreRegisterCommand(None)
+    cmd = commands.StoreRegisterCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -95,8 +98,8 @@ def test_register_default(emitter, fake_confirmation_prompt, fake_store_register
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_register_yes(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+def test_register_yes(emitter, fake_store_register, fake_app_config):
+    cmd = commands.StoreRegisterCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -111,8 +114,32 @@ def test_register_yes(emitter, fake_store_register):
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_register_no(emitter, fake_confirmation_prompt, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+def test_register_shows_registration_documentation(
+    emitter, fake_store_register, fake_app_config
+):
+    cmd = commands.StoreRegisterCommand(fake_app_config)
+
+    cmd.run(
+        argparse.Namespace(
+            store_id=None, private=False, yes=True, **{"snap-name": "test-snap"}
+        )
+    )
+
+    fake_store_register.assert_called_once_with(
+        ANY, "test-snap", is_private=False, store_id=None
+    )
+    emitter.assert_progress(
+        "Go to https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/"
+        "register-a-snap/ for more information on registering a snap.",
+        permanent=True,
+    )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_register_no(
+    emitter, fake_confirmation_prompt, fake_store_register, fake_app_config
+):
+    cmd = commands.StoreRegisterCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -121,7 +148,7 @@ def test_register_no(emitter, fake_confirmation_prompt, fake_store_register):
     )
 
     assert fake_store_register.mock_calls == []
-    emitter.assert_messages(["Snap name 'test-snap' not registered"])
+    emitter.assert_message("Snap name 'test-snap' not registered")
     assert fake_confirmation_prompt.mock_calls == [
         call(
             dedent(
@@ -144,8 +171,8 @@ def test_register_no(emitter, fake_confirmation_prompt, fake_store_register):
 
 
 @pytest.mark.usefixtures("memory_keyring", "fake_confirmation_prompt")
-def test_register_private(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+def test_register_private(emitter, fake_store_register, fake_app_config):
+    cmd = commands.StoreRegisterCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -165,14 +192,12 @@ def test_register_private(emitter, fake_store_register):
         ),
         permanent=True,
     )
-    emitter.assert_message(
-        "Snap name 'test-snap' not registered",
-    )
+    emitter.assert_message("Snap name 'test-snap' not registered")
 
 
 @pytest.mark.usefixtures("memory_keyring")
-def test_register_store_id(emitter, fake_store_register):
-    cmd = commands.StoreRegisterCommand(None)
+def test_register_store_id(emitter, fake_store_register, fake_app_config):
+    cmd = commands.StoreRegisterCommand(fake_app_config)
 
     cmd.run(
         argparse.Namespace(
@@ -191,20 +216,35 @@ def test_register_store_id(emitter, fake_store_register):
 #################
 
 
-@pytest.mark.parametrize(
-    "command_class",
-    [
-        commands.StoreNamesCommand,
-        commands.StoreLegacyListCommand,
-        commands.StoreLegacyListRegisteredCommand,
-    ],
-)
 @pytest.mark.usefixtures("memory_keyring")
 class TestNames:
     """Tests for the names command."""
 
-    def test_table(self, emitter, fake_store_get_names, command_class):
-        cmd = command_class(None)
+    @pytest.mark.parametrize(
+        "command_class",
+        [commands.StoreLegacyListCommand, commands.StoreLegacyListRegisteredCommand],
+    )
+    def test_removed_command_error(
+        self, emitter, fake_store_get_names, command_class, fake_app_config
+    ):
+        """Error on removed commands."""
+        cmd = command_class(fake_app_config)
+        namespace = argparse.Namespace(
+            store_id="1234",
+            private=False,
+            yes=True,
+            format="table",
+            **{"snap-name": "test-snap"},
+        )
+        expected = re.escape(
+            f"The {command_class.name!r} command was renamed to 'names'."
+        )
+
+        with pytest.raises(errors.RemovedCommand, match=expected):
+            cmd.run(namespace)
+
+    def test_table(self, emitter, fake_store_get_names, fake_app_config):
+        cmd = commands.StoreNamesCommand(fake_app_config)
 
         cmd.run(
             argparse.Namespace(
@@ -216,8 +256,6 @@ class TestNames:
             )
         )
 
-        if command_class.hidden:
-            emitter.assert_progress("This command is deprecated: use 'names' instead")
         emitter.assert_message(
             dedent(
                 """\
@@ -227,8 +265,8 @@ class TestNames:
             )
         )
 
-    def test_json(self, emitter, fake_store_get_names, command_class):
-        cmd = command_class(None)
+    def test_json(self, emitter, fake_store_get_names, fake_app_config):
+        cmd = commands.StoreNamesCommand(fake_app_config)
 
         cmd.run(
             argparse.Namespace(
@@ -239,9 +277,6 @@ class TestNames:
                 **{"snap-name": "test-snap"},
             )
         )
-
-        if command_class.hidden:
-            emitter.assert_progress("This command is deprecated: use 'names' instead")
 
         emitter.assert_message(
             json.dumps(
@@ -265,8 +300,8 @@ class TestNames:
             )
         )
 
-    def test_format_error(self, emitter, fake_store_get_names, command_class):
-        cmd = command_class(None)
+    def test_format_error(self, emitter, fake_store_get_names, fake_app_config):
+        cmd = commands.StoreNamesCommand(fake_app_config)
 
         with pytest.raises(NotImplementedError) as exc_info:
             cmd.run(

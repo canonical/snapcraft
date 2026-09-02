@@ -19,6 +19,7 @@ from textwrap import dedent
 import pytest
 from craft_parts import Part, PartInfo, ProjectInfo, Step, StepInfo, errors
 
+from snapcraft import const
 from snapcraft.parts.plugins import PythonPlugin, python_common
 
 
@@ -60,7 +61,6 @@ def test_get_build_environment(plugin, new_dir):
 
 
 def test_get_build_commands(plugin, new_dir):
-
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/my-part/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
@@ -80,7 +80,7 @@ def test_get_build_commands(plugin, new_dir):
             # look for python3.10
             basename=$(basename $(readlink -f ${{PARTS_PYTHON_VENV_INTERP_PATH}}))
             echo Looking for a Python interpreter called \\"${{basename}}\\" in the payload...
-            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null)
+            payload_python=$(find "$install_dir" "$stage_dir" -type f -executable -name "${{basename}}" -print -quit 2>/dev/null || true)
 
             if [ -n "$payload_python" ]; then
                 # We found a provisioned interpreter, use it.
@@ -95,12 +95,12 @@ def test_get_build_commands(plugin, new_dir):
                 fi
             else
                 # Otherwise use what _get_system_python_interpreter() told us.
-                echo "Python interpreter not found in payload."
+                echo "Python interpreter not found in payload." >&2
                 symlink_target="/usr/bin/python3.10"
             fi
 
             if [ -z "$symlink_target" ]; then
-                echo "No suitable Python interpreter found, giving up."
+                echo "No suitable Python interpreter found, giving up." >&2
                 exit 1
             fi
 
@@ -118,21 +118,25 @@ def test_should_remove_symlinks(plugin):
 
 
 @pytest.mark.parametrize(
-    "confinement,interpreter",
+    ("base", "confinement", "interpreter"),
     [
-        ("strict", "/usr/bin/python3.10"),
-        ("classic", None),
-        ("devmode", "/usr/bin/python3.10"),
+        ("core22", "strict", "/usr/bin/python3.10"),
+        ("core22", "classic", None),
+        ("core22", "devmode", "/usr/bin/python3.10"),
+        ("core24", "strict", "/usr/bin/python3.12"),
+        ("core24", "classic", None),
+        ("core24", "devmode", "/usr/bin/python3.12"),
     ],
 )
-def test_get_system_python_interpreter(confinement, interpreter, new_dir):
+def test_get_system_python_interpreter_in_base(base, confinement, interpreter, new_dir):
+    """Get the system python interpreter on bases that include python (core24 and lower)."""
     part_info = PartInfo(
         project_info=ProjectInfo(
             application_name="test",
             project_name="test-snap",
-            base="core22",
+            base=base,
             confinement=confinement,
-            project_base="core22",
+            project_base=base,
             cache_dir=new_dir,
         ),
         part=Part("my-part", {}),
@@ -141,6 +145,27 @@ def test_get_system_python_interpreter(confinement, interpreter, new_dir):
     plugin = PythonPlugin(properties=properties, part_info=part_info)
 
     assert plugin._get_system_python_interpreter() == interpreter
+
+
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"core22", "core24", "devel"})
+@pytest.mark.parametrize("confinement", ["strict", "classic", "devmode"])
+def test_get_system_python_interpreter_not_in_base(base, confinement, new_dir):
+    """Don't return a system python interpreter on bases that don't include python (core26 and higher)."""
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base=base,
+            confinement=confinement,
+            project_base=base,
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {}),
+    )
+    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+    plugin = PythonPlugin(properties=properties, part_info=part_info)
+
+    assert plugin._get_system_python_interpreter() is None
 
 
 @pytest.mark.parametrize(

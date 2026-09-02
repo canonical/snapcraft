@@ -1,6 +1,6 @@
 name: expand-extensions
 base: core22
-version: '0.1'
+version: "0.1"
 summary: "Test `expand-extensions` expands extensions."
 description: |
   This snapcraft.yaml includes regression tests to verify extensions, parse-info,
@@ -13,14 +13,14 @@ architectures: [amd64, arm64, armhf]
 apps:
   expand-extensions:
     command: /bin/true
-    # kde-neon is available for core18|20|22
+    # kde-neon is available for core22|24
     extensions: [kde-neon]
 
 parts:
   nil:
     plugin: nil
     parse-info:
-    - usr/share/metainfo/app.appdata.xml
+      - usr/share/metainfo/app.appdata.xml
     stage-packages:
       - mesa-opencl-icd
       - ocl-icd-libopencl1

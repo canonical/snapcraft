@@ -21,14 +21,14 @@ from craft_application.services.provider import DEFAULT_FORWARD_ENVIRONMENT_VARI
 from snapcraft.const import SNAPCRAFT_ENVIRONMENT_VARIABLES
 
 
-def test_provider(provider_service, monkeypatch):
+def test_provider(fake_services, monkeypatch):
     variables = SNAPCRAFT_ENVIRONMENT_VARIABLES | set(
         DEFAULT_FORWARD_ENVIRONMENT_VARIABLES
     )
     for variable in variables:
         monkeypatch.setenv(variable, f"{variable}-test-value")
 
-    provider_service.setup()
+    provider_service = fake_services.get("provider")
 
     for variable in variables:
         assert provider_service.environment[variable] == f"{variable}-test-value"

@@ -1,2 +1,0 @@
-test-snap-platform-arg-core24_1.0_amd64.snap
-test-snap-platform-arg-core24_1.0_s390x.snap

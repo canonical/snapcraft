@@ -1,11 +1,24 @@
-.. _tutorial:
+.. meta::
+    :description: The tutorials for Snapcraft. These tutorials are guided lessons that help you develop skills by using Snapcraft.
+
+.. _tutorials:
 
 Tutorials
-*********
+=========
 
-If you want to learn the basics from experience, then our tutorials will help
-you acquire the necessary competencies from real-life examples with fully
-reproducible steps.
+The tutorials are guided lessons that help you develop skills by using Snapcraft. Each
+is self-contained and delivers a working result that marks a learning milestone and is
+an opportunity for further exploration. If you're a newcomer to Snapcraft, this is the
+best way to start.
+
+The first tutorial works through the process of packaging a snap with Snapcraft. It will
+introduce you to key concepts and operations, from installation and setup to finalizing
+your first snap.
+
+- :ref:`tutorial-craft-a-snap`
+
 
 .. toctree::
-   :maxdepth: 1
+    :hidden:
+
+    craft-a-snap

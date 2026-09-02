@@ -16,29 +16,30 @@
 
 """Snapcraft extension commands."""
 
+from __future__ import annotations
+
 import textwrap
-from typing import Dict, List, cast
+from typing import TYPE_CHECKING, cast
 
 import tabulate
 from craft_application.commands import AppCommand
 from craft_cli import emit
-from overrides import overrides
 from pydantic import BaseModel
+from typing_extensions import override
 
-from snapcraft import extensions, models
-from snapcraft_legacy.internal.project_loader import (
-    find_extension,
-    supported_extension_names,
-)
+from snapcraft import errors, extensions, models
+
+if TYPE_CHECKING:
+    import argparse
 
 
 class ExtensionModel(BaseModel):
     """Extension model for presentation."""
 
     name: str
-    bases: List[str]
+    bases: list[str]
 
-    def marshal(self) -> Dict[str, str]:
+    def marshal(self) -> dict[str, str]:
         """Marshal model into a dictionary for presentation."""
         return {
             "Extension name": self.name,
@@ -46,10 +47,10 @@ class ExtensionModel(BaseModel):
         }
 
 
-class ListExtensionsCommand(AppCommand):
+class ExtensionsCommand(AppCommand):
     """List available extensions for all supported bases."""
 
-    name = "list-extensions"
+    name = "extensions"
     help_msg = "List available extensions for all supported bases."
     overview = textwrap.dedent(
         """
@@ -57,29 +58,16 @@ class ListExtensionsCommand(AppCommand):
         """
     )
 
-    @overrides
-    def run(self, parsed_args):
-        extension_presentation: Dict[str, ExtensionModel] = {}
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        extension_presentation: dict[str, ExtensionModel] = {}
 
-        # New extensions.
         for extension_name in extensions.registry.get_extension_names():
             extension_class = extensions.registry.get_extension_class(extension_name)
             extension_bases = list(extension_class.get_supported_bases())
             extension_presentation[extension_name] = ExtensionModel(
                 name=extension_name, bases=extension_bases
             )
-
-        # Extensions from snapcraft_legacy.
-        for _extension_name in supported_extension_names():
-            extension_class = find_extension(_extension_name)
-            extension_name = _extension_name.replace("_", "-")
-            extension_bases = list(extension_class.get_supported_bases())
-            if extension_name in extension_presentation:
-                extension_presentation[extension_name].bases += extension_bases
-            else:
-                extension_presentation[extension_name] = ExtensionModel(
-                    name=extension_name, bases=extension_bases
-                )
 
         printable_extensions = sorted(
             [v.marshal() for v in extension_presentation.values()],
@@ -88,11 +76,15 @@ class ListExtensionsCommand(AppCommand):
         emit.message(tabulate.tabulate(printable_extensions, headers="keys"))
 
 
-class ExtensionsCommand(ListExtensionsCommand):
-    """A command alias to list the available extensions."""
+class ListExtensionsCommand(ExtensionsCommand):
+    """Removed alias to list available extensions."""
 
-    name = "extensions"
+    name = "list-extensions"
     hidden = True
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)
 
 
 class ExpandExtensionsCommand(AppCommand):
@@ -109,7 +101,8 @@ class ExpandExtensionsCommand(AppCommand):
 
     always_load_project = True
 
-    @overrides
-    def run(self, parsed_args):
-        project = cast(models.Project, self._services.project)
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        """Expand extensions in the project file and output them."""
+        project = cast(models.Project, self._services.get("project").get())
         emit.message(project.to_yaml_string())

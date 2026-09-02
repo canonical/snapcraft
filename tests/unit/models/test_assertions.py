@@ -19,8 +19,80 @@
 
 import pytest
 
-from snapcraft.models import EditableRegistryAssertion, Registry, RegistryAssertion
-from snapcraft.models.assertions import cast_dict_scalars_to_strings
+from snapcraft.models import (
+    ConfdbSchema,
+    ConfdbSchemaAssertion,
+    EditableConfdbSchemaAssertion,
+    EditableValidationSetAssertion,
+    ValidationSetAssertion,
+)
+from snapcraft.models.assertions import (
+    Filter,
+    Parameter,
+    Rules,
+    Snap,
+    ValidationAssertion,
+    cast_dict_scalars_to_strings,
+)
+
+
+@pytest.fixture()
+def fake_snap_data():
+    return {
+        "name": "hello-world",
+        "id": "test-snap-id",
+        "presence": "required",
+        "revision": "6",
+        "components": {
+            "component-with-revision": {
+                "presence": "required",
+                "revision": "10",
+            },
+            "component-without-revision": "invalid",
+        },
+    }
+
+
+@pytest.fixture()
+def fake_snap(fake_snap_data):
+    return Snap.unmarshal(fake_snap_data)
+
+
+@pytest.fixture()
+def fake_editable_validation_set_data(fake_snap_data):
+    return {
+        "account-id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [fake_snap_data],
+    }
+
+
+@pytest.fixture()
+def fake_editable_validation_set(fake_editable_validation_set_data):
+    return EditableValidationSetAssertion.unmarshal(fake_editable_validation_set_data)
+
+
+@pytest.fixture()
+def fake_validation_set_data(fake_snap_data):
+    return {
+        "account-id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [fake_snap_data],
+        "authority-id": "test-authority-id",
+        "series": "16",
+        "sign-key-sha3-384": "test-sign-key",
+        "timestamp": "2026-01-01T10:20:30Z",
+        "type": "validation-set",
+    }
+
+
+@pytest.fixture()
+def fake_validation_set(fake_validation_set_data):
+    return ValidationSetAssertion.unmarshal(fake_validation_set_data)
 
 
 @pytest.mark.parametrize(
@@ -55,18 +127,18 @@ def test_cast_dict_scalars_to_strings(input_dict, expected_dict):
     assert actual == expected_dict
 
 
-def test_registry_defaults(check):
-    """Test default values of the Registry model."""
-    registry = Registry.unmarshal({"storage": "test-storage"})
+def test_confdb_schema_defaults(check):
+    """Test default values of the ConfdbSchema model."""
+    confdb_schema = ConfdbSchema.unmarshal({"storage": "test-storage"})
 
-    check.is_none(registry.request)
-    check.is_none(registry.access)
-    check.is_none(registry.content)
+    check.is_none(confdb_schema.request)
+    check.is_none(confdb_schema.access)
+    check.is_none(confdb_schema.content)
 
 
-def test_registry_nested(check):
-    """Test that nested registries are supported."""
-    registry = Registry.unmarshal(
+def test_confdb_schema_nested(check):
+    """Test that nested confdb schemas are supported."""
+    confdb_schema = ConfdbSchema.unmarshal(
         {
             "request": "test-request",
             "storage": "test-storage",
@@ -81,21 +153,91 @@ def test_registry_nested(check):
         }
     )
 
-    check.equal(registry.request, "test-request")
-    check.equal(registry.storage, "test-storage")
-    check.equal(registry.access, "read")
+    check.equal(confdb_schema.request, "test-request")
+    check.equal(confdb_schema.storage, "test-storage")
+    check.equal(confdb_schema.access, "read")
     check.equal(
-        registry.content,
-        [Registry(request="nested-request", storage="nested-storage", access="write")],
+        confdb_schema.content,
+        [
+            ConfdbSchema(
+                request="nested-request", storage="nested-storage", access="write"
+            )
+        ],
     )
 
 
-def test_editable_registry_assertion_defaults(check):
-    """Test default values of the EditableRegistryAssertion model."""
-    assertion = EditableRegistryAssertion.unmarshal(
+def test_parameter_defaults(check):
+    """Test default values of the Parameter model."""
+    parameter = Parameter.unmarshal({})
+
+    check.is_none(parameter.summary)
+    check.equal(parameter.presence, "optional")
+
+
+def test_parameter_all_fields(check):
+    """Test that all Parameter fields are set correctly when provided."""
+    parameter = Parameter.unmarshal(
+        {"summary": "test-parameter-summary", "presence": "required"}
+    )
+
+    check.equal(parameter.summary, "test-parameter-summary")
+    check.equal(parameter.presence, "required")
+
+
+def test_rules_defaults(check):
+    """Test default values of the Rules model."""
+    rules = Rules.unmarshal({"rules": [{"storage": "test-storage"}]})
+
+    check.is_none(rules.summary)
+    check.is_none(rules.parameters)
+    check.is_none(rules.filters)
+
+
+def test_rules_parameters(check):
+    """Test that parameters are unmarshalled correctly."""
+    rules = Rules.unmarshal(
+        {
+            "rules": [{"storage": "test-storage"}],
+            "parameters": {
+                "test-parameter": {
+                    "summary": "test-parameter-summary",
+                    "presence": "required-on-write",
+                }
+            },
+        }
+    )
+
+    check.equal(
+        rules.parameters,
+        {
+            "test-parameter": Parameter(
+                summary="test-parameter-summary", presence="required-on-write"
+            )
+        },
+    )
+
+
+def test_rules_filters(check):
+    """Test that filters are unmarshalled correctly."""
+    rules = Rules.unmarshal(
+        {
+            "rules": [{"storage": "test-storage"}],
+            "filters": [{"test-parameter": {"optional": True}}],
+        }
+    )
+
+    check.equal(
+        rules.filters,
+        [{"test-parameter": Filter(optional=True)}],
+    )
+
+
+def test_editable_confdb_schema_assertion_defaults(check):
+    """Test default values of the EditableConfdbSchemaAssertion model."""
+    assertion = EditableConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -112,12 +254,12 @@ def test_editable_registry_assertion_defaults(check):
     check.is_none(assertion.body)
 
 
-def test_editable_registry_assertion_marshal_as_str():
+def test_editable_confdb_schema_assertion_marshal_as_str():
     """Cast all scalars to string when marshalling."""
-    assertion = EditableRegistryAssertion.unmarshal(
+    assertion = EditableConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "revision": 10,
             "views": {
                 "wifi-setup": {
@@ -136,15 +278,15 @@ def test_editable_registry_assertion_marshal_as_str():
     assert assertion_dict["revision"] == "10"
 
 
-def test_registry_assertion_defaults(check):
-    """Test default values of the RegistryAssertion model."""
-    assertion = RegistryAssertion.unmarshal(
+def test_confdb_schema_assertion_defaults(check):
+    """Test default values of the ConfdbSchemaAssertion model."""
+    assertion = ConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "timestamp": "2024-01-01T10:20:30Z",
-            "type": "registry",
+            "type": "confdb-schema",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -153,7 +295,7 @@ def test_registry_assertion_defaults(check):
                             "request": "ssids",
                             "storage": "wifi.ssids",
                         }
-                    ]
+                    ],
                 }
             },
         }
@@ -163,18 +305,21 @@ def test_registry_assertion_defaults(check):
     check.is_none(assertion.body_length)
     check.is_none(assertion.sign_key_sha3_384)
     check.equal(assertion.revision, 0)
+    check.is_none(assertion.summary)
+    check.is_none(assertion.views["wifi-setup"].summary)
+    check.is_none(assertion.views["wifi-setup"].parameters)
 
 
-def test_registry_assertion_marshal_as_str():
+def test_confdb_schema_assertion_marshal_as_str():
     """Cast all scalars to strings when marshalling."""
-    assertion = RegistryAssertion.unmarshal(
+    assertion = ConfdbSchemaAssertion.unmarshal(
         {
             "account_id": "test-account-id",
             "authority_id": "test-authority-id",
-            "name": "test-registry",
+            "name": "test-confdb",
             "revision": 10,
             "timestamp": "2024-01-01T10:20:30Z",
-            "type": "registry",
+            "type": "confdb-schema",
             "views": {
                 "wifi-setup": {
                     "rules": [
@@ -190,3 +335,149 @@ def test_registry_assertion_marshal_as_str():
     assertion_dict = assertion.marshal_scalars_as_strings()
 
     assert assertion_dict["revision"] == "10"
+
+
+def test_confdb_schema_assertion_with_summary(check):
+    """Test that summaries are set correctly when provided."""
+    assertion = ConfdbSchemaAssertion.unmarshal(
+        {
+            "account_id": "test-account-id",
+            "authority_id": "test-authority-id",
+            "name": "test-confdb",
+            "summary": "This is a test confdb-schema summary.",
+            "timestamp": "2024-01-01T10:20:30Z",
+            "type": "confdb-schema",
+            "views": {
+                "wifi-setup": {
+                    "summary": "This is a test views summary.",
+                    "rules": [
+                        {
+                            "access": "read-write",
+                            "request": "ssids",
+                            "storage": "wifi.ssids",
+                        }
+                    ],
+                }
+            },
+        }
+    )
+
+    check.equal(assertion.summary, "This is a test confdb-schema summary.")
+    check.equal(assertion.views["wifi-setup"].summary, "This is a test views summary.")
+
+
+def test_ignore_sign_key(fake_validation_set):
+    """Ignore the sign key when unmarshalling."""
+    assert not fake_validation_set.sign_key_sha3_384
+
+
+def test_editable_validation_set_marshal_as_str(fake_editable_validation_set):
+    """Cast all scalars to string when marshalling."""
+    data = fake_editable_validation_set.marshal_scalars_as_strings()
+
+    assert data == {
+        "account-id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [
+            {
+                "name": "hello-world",
+                "id": "test-snap-id",
+                "presence": "required",
+                "revision": "6",
+                "components": {
+                    "component-with-revision": {
+                        "presence": "required",
+                        "revision": "10",
+                    },
+                    "component-without-revision": "invalid",
+                },
+            }
+        ],
+    }
+
+
+def test_validation_set_marshal_as_str(fake_validation_set):
+    """Cast all scalars to string when marshalling."""
+    data = fake_validation_set.marshal_scalars_as_strings()
+
+    assert data == {
+        "account-id": "test-account-id",
+        "name": "test-validation-set",
+        "revision": "4",
+        "sequence": "5",
+        "snaps": [
+            {
+                "name": "hello-world",
+                "id": "test-snap-id",
+                "presence": "required",
+                "revision": "6",
+                "components": {
+                    "component-with-revision": {
+                        "presence": "required",
+                        "revision": "10",
+                    },
+                    "component-without-revision": "invalid",
+                },
+            }
+        ],
+        "authority-id": "test-authority-id",
+        "series": "16",
+        "timestamp": "2026-01-01T10:20:30Z",
+        "type": "validation-set",
+    }
+
+
+class TestValidation:
+    """Tests for the ValidationAssertion"""
+
+    @pytest.fixture()
+    def fake_validation_assertion(self):
+        return ValidationAssertion(
+            assertion_type="validation",
+            authority_id="test-authority-id",
+            series="16",
+            snap_id="test-snap-id",
+            approved_snap_id="test-approved-snap-id",
+            approved_snap_revision="42",
+            timestamp="2026-01-01T10:20:30Z",
+            revoked=False,
+            revision=3,
+        )
+
+    @pytest.mark.parametrize("revoked", [True, False])
+    def test_validation_marshal_as_str(self, fake_validation_assertion, revoked):
+        """Cast all scalars to string when marshalling."""
+        fake_validation_assertion.revoked = revoked
+        data = fake_validation_assertion.marshal_scalars_as_strings()
+
+        assert data == {
+            "type": "validation",
+            "authority-id": "test-authority-id",
+            "series": "16",
+            "snap-id": "test-snap-id",
+            "approved-snap-id": "test-approved-snap-id",
+            "approved-snap-revision": "42",
+            "timestamp": "2026-01-01T10:20:30Z",
+            "revoked": str(revoked).lower(),
+            "revision": "3",
+        }
+
+    def test_validation_marshal_as_str_exclude_revision(self):
+        """Exclude revision when it's None."""
+        assertion = ValidationAssertion(
+            assertion_type="validation",
+            authority_id="test-authority-id",
+            series="16",
+            snap_id="test-snap-id",
+            approved_snap_id="test-approved-snap-id",
+            approved_snap_revision="42",
+            timestamp="2026-01-01T10:20:30Z",
+            revoked=False,
+            revision=None,
+        )
+
+        data = assertion.marshal_scalars_as_strings()
+
+        assert "revision" not in data

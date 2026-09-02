@@ -16,20 +16,26 @@
 
 import base64
 import contextlib
+import io
 import textwrap
+from collections.abc import Callable, Collection
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, cast
 from unittest.mock import Mock
 
+import craft_application.application
+import craft_application.services
+import craft_application.util
 import pytest
 import yaml
 from craft_parts import Features, callbacks, plugins
-from craft_platforms import DebianArchitecture
+from craft_platforms import BuildInfo, DebianArchitecture
 from craft_providers import Executor, Provider
 from craft_providers.base import Base
-from overrides import override
 from pymacaroons import Caveat, Macaroon
+from typing_extensions import override
 
+from snapcraft import const, models, services
 from snapcraft.extensions import extension, register, unregister
 
 
@@ -45,10 +51,12 @@ def reset_plugins():
     plugins.unregister_all()
 
 
-@pytest.fixture(autouse=True)
-def set_debug(monkeypatch):
-    # Instead of eating exceptions, calls to app.run() will raise them.
-    monkeypatch.setenv("CRAFT_DEBUG", "1")
+def _write_yaml(file_path: Path, content: dict[str, Any]) -> None:
+    """Write a YAML file from a dict."""
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(
+        yaml.safe_dump(content, indent=2, sort_keys=False), encoding="utf-8"
+    )
 
 
 @pytest.fixture
@@ -57,7 +65,7 @@ def snapcraft_yaml(new_dir):
 
     def write_file(
         *, filename: str = "snap/snapcraft.yaml", **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         content = {
             "name": "mytest",
             "version": "0.1",
@@ -72,14 +80,32 @@ def snapcraft_yaml(new_dir):
             },
             **kwargs,
         }
-        yaml_path = Path(filename)
-        yaml_path.parent.mkdir(parents=True, exist_ok=True)
-        yaml_path.write_text(
-            yaml.safe_dump(content, indent=2, sort_keys=False), encoding="utf-8"
-        )
+        _write_yaml(Path(filename), content)
         return content
 
     yield write_file
+
+
+FAKE_PROJECT_YAML = """\
+name: mytest
+version: 0.1
+summary: Just some test data
+description: This is just some test data.
+grade: stable
+confinement: strict
+base: core24
+parts:
+   part1:
+     plugin: nil
+"""
+
+
+@pytest.fixture
+def fake_project() -> models.Project:
+    with io.StringIO(FAKE_PROJECT_YAML) as project_io:
+        return models.Project.unmarshal(
+            craft_application.util.safe_yaml_load(project_io)
+        )
 
 
 @pytest.fixture
@@ -90,30 +116,30 @@ def fake_extension():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
-            return ("core22", "core24")
+        def get_supported_bases() -> tuple[str, ...]:
+            return ("core22", "core24", "core26")
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {"grade": "fake-grade"}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             if plugin_name == "catkin":
                 return {}
 
             return {"after": ["fake-extension/fake-part"]}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {"fake-extension/fake-part": {"plugin": "nil"}}
 
     register("fake-extension", ExtensionImpl)
@@ -129,27 +155,27 @@ def fake_extension_extra():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core22",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {"plugs": ["fake-plug", "fake-plug-extra"]}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             return {"after": ["fake-extension-extra/fake-part"]}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
 
     register("fake-extension-extra", ExtensionImpl)
@@ -163,27 +189,27 @@ def fake_extension_invalid_parts():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core22",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return False
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {"grade": "fake-grade"}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {"plugs": ["fake-plug"]}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             return {"after": ["fake-extension/fake-part"]}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {"fake-part": {"plugin": "nil"}, "fake-part-2": {"plugin": "nil"}}
 
     register("fake-extension-invalid-parts", ExtensionImpl)
@@ -199,66 +225,32 @@ def fake_extension_experimental():
         """The test extension implementation."""
 
         @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
+        def get_supported_bases() -> tuple[str, ...]:
             return ("core22",)
 
         @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
+        def get_supported_confinement() -> tuple[str, ...]:
             return ("strict",)
 
         @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
+        def is_experimental(base: str | None = None) -> bool:
             return True
 
-        def get_root_snippet(self) -> Dict[str, Any]:
+        def get_root_snippet(self) -> dict[str, Any]:
             return {}
 
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+        def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
             return {}
 
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+        def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
             return {}
 
-        def get_parts_snippet(self) -> Dict[str, Any]:
+        def get_parts_snippet(self) -> dict[str, Any]:
             return {}
 
     register("fake-extension-experimental", ExtensionImpl)
     yield ExtensionImpl
     unregister("fake-extension-experimental")
-
-
-@pytest.fixture
-def fake_extension_name_from_legacy():
-    """A fake_extension variant with a name collision with legacy."""
-
-    class ExtensionImpl(extension.Extension):
-        """The test extension implementation."""
-
-        @staticmethod
-        def get_supported_bases() -> Tuple[str, ...]:
-            return ("core22",)
-
-        @staticmethod
-        def get_supported_confinement() -> Tuple[str, ...]:
-            return ("strict",)
-
-        @staticmethod
-        def is_experimental(base: Optional[str] = None) -> bool:
-            return False
-
-        def get_root_snippet(self) -> Dict[str, Any]:
-            return {}
-
-        def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
-            return {"plugs": ["fake-plug", "fake-plug-extra"]}
-
-        def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
-            return {"after": ["fake-extension-extra/fake-part"]}
-
-        def get_parts_snippet(self) -> Dict[str, Any]:
-            return {"fake-extension-extra/fake-part": {"plugin": "nil"}}
-
-    yield ExtensionImpl
 
 
 @pytest.fixture
@@ -368,10 +360,9 @@ def fake_provider(mock_instance):
         def is_provider_installed(cls) -> bool:
             return True
 
-        def create_environment(  # type: ignore[reportIncompatibleMethodOverride]
-            self, *, instance_name: str
-        ):
-            yield mock_instance
+        @override
+        def create_environment(self, *, instance_name: str):
+            return mock_instance
 
         @contextlib.contextmanager
         def launched_environment(
@@ -380,11 +371,29 @@ def fake_provider(mock_instance):
             project_name: str,
             project_path: Path,
             base_configuration: Base,
-            build_base: Optional[str] = None,
+            build_base: str | None = None,
             instance_name: str,
             allow_unstable: bool = False,
+            shutdown_delay_mins: int | None = None,
+            use_base_instance: bool = True,
+            prepare_instance: Callable[[Executor], None] | None = None,
+            instance_architecture: str | None = None,
         ):
             yield mock_instance
+
+        @override
+        def list_instances(
+            self,
+            *,
+            project_name: str | None = None,
+            instance_name_prefix: str | None = None,
+            include_base_instances: bool = False,
+        ) -> Collection[Executor]:
+            return []
+
+        @override
+        def prune(self, *, project_name: str, prune_templates: bool = False) -> None:
+            pass
 
     return FakeProvider()
 
@@ -395,12 +404,11 @@ def extra_project_params():
     return {"confinement": "devmode"}
 
 
-# The factory setup from CraftApplication is imported at the fixture level.
-
-
 @pytest.fixture()
 def default_project(extra_project_params):
-    from snapcraft.models.project import Project
+    from snapcraft.models.project import (  # noqa: PLC0415 (import-outside-top-level)
+        Project,
+    )
 
     parts = extra_project_params.pop("parts", {})
 
@@ -420,97 +428,208 @@ def default_project(extra_project_params):
 
 
 @pytest.fixture()
-def default_factory(default_project):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import SnapcraftServiceFactory
-
-    factory = SnapcraftServiceFactory(
-        app=APP_METADATA,
-        project=default_project,
+def fake_services(
+    request: pytest.FixtureRequest,
+    tmp_path,
+    fake_package_service_class,
+    fake_lifecycle_service_class,
+    fake_remote_build_service_class,
+    fake_project_service_class,
+    fake_provider_service_class,
+    fake_confdb_schemas_service_class,
+    fake_validation_sets_service_class,
+    project_path,
+):
+    from snapcraft.application import (  # noqa: PLC0415 (import-outside-top-level)
+        APP_METADATA,
     )
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        BuildPlan,
+        SnapcraftServiceFactory,
+    )
+
+    services.SnapcraftServiceFactory.register("package", fake_package_service_class)
+    services.SnapcraftServiceFactory.register("lifecycle", fake_lifecycle_service_class)
+    services.SnapcraftServiceFactory.register(
+        "remote_build", fake_remote_build_service_class
+    )
+    services.SnapcraftServiceFactory.register("project", fake_project_service_class)
+    services.SnapcraftServiceFactory.register(
+        "confdb_schemas", fake_confdb_schemas_service_class
+    )
+    services.SnapcraftServiceFactory.register(
+        "validation_sets", fake_validation_sets_service_class
+    )
+    services.SnapcraftServiceFactory.register("provider", fake_provider_service_class)
+    services.SnapcraftServiceFactory.register("build_plan", BuildPlan)
+
+    factory = SnapcraftServiceFactory(app=APP_METADATA)
+
+    factory.update_kwargs(
+        "lifecycle", work_dir=tmp_path, cache_dir=tmp_path / "cache", build_plan=[]
+    )
+    factory.update_kwargs("project", project_dir=project_path)
+    factory.update_kwargs("provider", work_dir=tmp_path)
+
     return factory
 
 
+@pytest.fixture
+def fake_app(fake_services):
+    from snapcraft.application import (  # noqa: PLC0415 (import-outside-top-level)
+        APP_METADATA,
+        Snapcraft,
+    )
+    from snapcraft.cli import (  # noqa: PLC0415 (import-outside-top-level)
+        COMMAND_GROUPS,
+        CORE24_LIFECYCLE_COMMAND_GROUP,
+    )
+
+    app = Snapcraft(app=APP_METADATA, services=fake_services)
+
+    for group in [CORE24_LIFECYCLE_COMMAND_GROUP, *COMMAND_GROUPS]:
+        app.add_command_group(group.name, group.commands)
+
+    return app
+
+
 @pytest.fixture()
-def default_build_plan():
-    from craft_application import util
-    from craft_application.models import BuildInfo
+def fake_app_config(fake_app) -> dict[str, Any]:
+    return fake_app.app_config
 
-    # Set the build info base to match the host's, so we can test in destructive
-    # mode with no issues.
-    arch = str(DebianArchitecture.from_host())
-    base = util.get_host_base()
 
-    return [
-        BuildInfo(
-            platform="generic-x86-64",
-            build_on=arch,
-            build_for=arch,
-            base=base,
+def fake_build_info(fake_base):
+    arch = DebianArchitecture.from_host()
+    return BuildInfo(
+        platform=str(arch),
+        build_on=arch,
+        build_for=arch,
+        build_base=fake_base,
+    )
+
+
+@pytest.fixture
+def setup_project(mocker, project_path):
+    """A helper function to set up the project and build plan."""
+
+    def _setup_services(project_services, project_data, *, write_project: bool = False):
+        from snapcraft import models  # noqa: PLC0415 (import-outside-top-level)
+
+        if project_data.get("base") in (b.value for b in const.UnstableBase):
+            project_data |= {
+                "build-base": "devel",
+                "grade": "devel",
+            }
+
+        if write_project:
+            _write_yaml(
+                file_path=project_path / "snapcraft.yaml",
+                content=project_data,
+            )
+
+        mocker.patch.object(
+            project_services.get("project"),
+            "_load_raw_project",
+            return_value=project_data,
         )
-    ]
+        project_services.get("project").configure(platform=None, build_for=None)
+
+        return models.Project.unmarshal(project_data)
+
+    return _setup_services
 
 
 @pytest.fixture()
-def lifecycle_service(default_project, default_factory, default_build_plan, tmp_path):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import Lifecycle
+def fake_lifecycle_service_class(in_project_path):
+    from snapcraft.services import Lifecycle  # noqa: PLC0415 (import-outside-top-level)
 
-    return Lifecycle(
-        app=APP_METADATA,
-        project=default_project,
-        services=default_factory,
-        work_dir=tmp_path / "work",
-        cache_dir=tmp_path / "cache",
-        build_plan=default_build_plan,
-        partitions=default_project.get_partitions(),
+    class FakeLifecycleService(Lifecycle):
+        def __init__(
+            self,
+            app: craft_application.application.AppMetadata,
+            services: craft_application.services.ServiceFactory,
+            **kwargs: Any,
+        ):
+            kwargs.pop("build_plan", None)  # We'll use ours
+            super().__init__(
+                app,
+                services,
+                work_dir=kwargs.pop("work_dir", in_project_path / "work"),
+                cache_dir=kwargs.pop("cache_dir", in_project_path / "cache"),
+                platform=None,
+                **kwargs,
+            )
+
+    return FakeLifecycleService
+
+
+@pytest.fixture()
+def fake_provider_service_class(project_path):
+    from snapcraft.services import Provider  # noqa: PLC0415 (import-outside-top-level)
+
+    class FakeProviderService(Provider):
+        def __init__(
+            self,
+            app: craft_application.application.AppMetadata,
+            services: craft_application.services.ServiceFactory,
+            work_dir: Path,
+        ):
+            super().__init__(
+                app,
+                services,
+                work_dir=project_path,
+            )
+
+    return FakeProviderService
+
+
+@pytest.fixture
+def fake_project_service_class(fake_project) -> type[services.Project]:
+    class FakeProjectService(services.Project):
+        # This is a final method, but we're overriding it here for convenience when
+        # doing internal testing.
+        def _load_raw_project(self):  # ty: ignore[override-of-final-method]
+            return fake_project.marshal()
+
+        # Don't care if the project file exists during this testing.
+        # Silencing B019 because we're replicating an inherited method.
+        @override
+        def resolve_project_file_path(self) -> Path:
+            return (self._project_dir / f"{self._app.name}.yaml").resolve()
+
+        def set(self, value: models.Project) -> None:
+            """Set the project model. Only for use during testing!"""
+            self._project_model = value
+            assert value.platforms is not None
+            # assume base > core22 for these tests by assuming no "architectures" key
+            self._platform = next(iter(value.platforms))
+            self._build_for = cast(
+                "list[str]", value.platforms[self._platform].build_for
+            )[0]
+
+    return FakeProjectService
+
+
+@pytest.fixture()
+def fake_package_service_class(default_project, snapcraft_yaml, tmp_path):
+    from snapcraft.services import Package  # noqa: PLC0415 (import-outside-top-level)
+
+    class FakePackageService(Package):
+        pass
+
+    return FakePackageService
+
+
+@pytest.fixture()
+def fake_remote_build_service_class(mocker):
+    import lazr.restfulclient.resource  # noqa: PLC0415 (import-outside-top-level)
+    from craft_application import (  # noqa: PLC0415 (import-outside-top-level)
+        AppMetadata,
     )
 
-
-@pytest.fixture()
-def provider_service(default_project, default_factory, default_build_plan, tmp_path):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import Provider as ProviderSvc
-
-    return ProviderSvc(
-        app=APP_METADATA,
-        services=default_factory,
-        project=default_project,
-        work_dir=tmp_path / "work",
-        build_plan=default_build_plan,
-        install_snap=False,
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        RemoteBuild,
     )
-
-
-@pytest.fixture()
-def package_service(
-    default_build_plan, default_project, default_factory, snapcraft_yaml, tmp_path
-):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import Package
-
-    file_path = tmp_path / "snap" / "snapcraft.yaml"
-    snapcraft_yaml(filename=file_path)
-
-    return Package(
-        app=APP_METADATA,
-        project=default_project,
-        services=default_factory,
-        snapcraft_yaml_path=file_path,
-        build_plan=default_build_plan,
-        parse_info={},
-    )
-
-
-@pytest.fixture()
-def remote_build_service(default_factory, mocker):
-    import launchpadlib.launchpad
-    import lazr.restfulclient.resource
-    from craft_application import launchpad
-    from craft_application.launchpad.models import SnapRecipe
-
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import RemoteBuild
 
     me = Mock(lazr.restfulclient.resource.Entry)
     me.name = "craft_test_user"
@@ -518,51 +637,52 @@ def remote_build_service(default_factory, mocker):
     class FakeRemoteBuildService(RemoteBuild):
         """Fake remote build service with snap recipe."""
 
-        RecipeClass = SnapRecipe
+        @override
+        def __init__(
+            self, app: AppMetadata, services: craft_application.services.ServiceFactory
+        ) -> None:
+            super().__init__(app=app, services=services)
+            self._is_setup = True
 
     # The login should not do anything
     mocker.patch("craft_application.launchpad.Launchpad.anonymous")
     mocker.patch("craft_application.launchpad.Launchpad.login")
 
-    fake_lp = launchpad.Launchpad(
-        APP_METADATA.name, Mock(spec=launchpadlib.launchpad.Launchpad, me=me)
-    )
-
-    service = FakeRemoteBuildService(
-        app=APP_METADATA,
-        services=default_factory,
-    )
-    service.lp = fake_lp
-
-    return service
+    return FakeRemoteBuildService
 
 
 @pytest.fixture()
-def registries_service(default_factory, mocker):
-    from snapcraft.application import APP_METADATA
-    from snapcraft.services import Registries
-
-    service = Registries(app=APP_METADATA, services=default_factory)
-    service._store_client = mocker.patch(
-        "snapcraft.store.StoreClientCLI", autospec=True
+def fake_confdb_schemas_service_class(mocker):
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        ConfdbSchemas,
     )
 
-    return service
+    class FakeConfdbSchemasService(ConfdbSchemas):
+        def setup(self) -> None:
+            """Application-specific service setup."""
+            self._store_client = mocker.patch(
+                "snapcraft.store.StoreClientCLI", autospec=True
+            )
+            super().setup()
+
+    return FakeConfdbSchemasService
 
 
 @pytest.fixture()
-def fake_registry_assertion():
-    """Returns a fake registry assertion with required fields."""
-    from snapcraft.models import RegistryAssertion
+def fake_confdb_schema_assertion():
+    """Returns a fake confdb-schema assertion with required fields."""
+    from snapcraft.models import (  # noqa: PLC0415 (import-outside-top-level)
+        ConfdbSchemaAssertion,
+    )
 
-    def _fake_registry_assertion(**kwargs) -> RegistryAssertion:
-        return RegistryAssertion.unmarshal(
+    def _fake_confdb_schema_assertion(**kwargs) -> ConfdbSchemaAssertion:
+        return ConfdbSchemaAssertion.unmarshal(
             {
                 "account_id": "test-account-id",
                 "authority_id": "test-authority-id",
-                "name": "test-registry",
+                "name": "test-confdb",
                 "timestamp": "2024-01-01T10:20:30Z",
-                "type": "registry",
+                "type": "confdb-schema",
                 "views": {
                     "wifi-setup": {
                         "rules": [
@@ -578,23 +698,64 @@ def fake_registry_assertion():
             }
         )
 
-    return _fake_registry_assertion
+    return _fake_confdb_schema_assertion
 
 
 @pytest.fixture()
-def fake_services(
-    default_factory, lifecycle_service, package_service, remote_build_service
-):
-    lifecycle_service.setup()
-    default_factory.lifecycle = lifecycle_service
+def fake_validation_sets_service_class(mocker):
+    from snapcraft.services import (  # noqa: PLC0415 (import-outside-top-level)
+        ValidationSets,
+    )
 
-    package_service.setup()
-    default_factory.package = package_service
+    class FakeValidationSetsService(ValidationSets):
+        def setup(self) -> None:
+            """Application-specific service setup."""
+            self._store_client = mocker.patch(
+                "snapcraft.store.StoreClientCLI", autospec=True
+            )
+            super().setup()
 
-    remote_build_service.setup()
-    default_factory.remote_build = remote_build_service
+    return FakeValidationSetsService
 
-    return default_factory
+
+@pytest.fixture()
+def fake_validation_set_assertion():
+    """Returns a fake validation set assertion with required fields."""
+    from snapcraft.models import (  # noqa: PLC0415 (import-outside-top-level)
+        ValidationSetAssertion,
+    )
+
+    def _fake_validation_set_assertion(**kwargs) -> ValidationSetAssertion:
+        return ValidationSetAssertion.unmarshal(
+            {
+                "account_id": "test-account-id",
+                "name": "test-validation-set",
+                "revision": "4",
+                "sequence": "5",
+                "snaps": [
+                    {
+                        "name": "hello-world",
+                        "id": "test-snap-id",
+                        "presence": "required",
+                        "revision": "6",
+                        "components": {
+                            "component-with-revision": {
+                                "presence": "required",
+                                "revision": "10",
+                            },
+                            "component-without-revision": "invalid",
+                        },
+                    }
+                ],
+                "authority_id": "test-authority-id",
+                "series": "16",
+                "timestamp": "2026-01-01T10:20:30Z",
+                "type": "validation-set",
+                **kwargs,
+            }
+        )
+
+    return _fake_validation_set_assertion
 
 
 @pytest.fixture()

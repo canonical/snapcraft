@@ -15,14 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generic GNOME extension to support core22 and onwards."""
+
 import dataclasses
 import functools
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from overrides import overrides
+from typing_extensions import override
 
-from .extension import Extension, get_extensions_data_dir, prepend_to_env
+from .extension import get_extensions_data_dir, prepend_to_env
+from .gpu_extension import GPUExtension
 
 _SDK_SNAP = {"core22": "gnome-42-2204-sdk", "core24": "gnome-46-2404-sdk"}
 _PLATFORM_TRANSLATION = {"core22": "2204", "core24": "2404"}
@@ -42,7 +44,7 @@ class GNOMESnaps:
     builtin: bool = True
 
 
-class GNOME(Extension):
+class GNOME(GPUExtension):
     """An extension that eases the creation of snaps that integrate with GNOME.
 
     When used with core22 GNOME 42 will be used.
@@ -61,45 +63,49 @@ class GNOME(Extension):
     For easier desktop integration, it also configures each application
     entry with these additional plugs:
 
-    - desktop (https://snapcraft.io/docs/desktop-interface)
-    - desktop-legacy (https://snapcraft.io/docs/desktop-legacy-interface)
-    - gsettings (https://snapcraft.io/docs/gsettings-interface)
-    - opengl (https://snapcraft.io/docs/opengl-interface)
-    - wayland (https://snapcraft.io/docs/wayland-interface)
-    - x11 (https://snapcraft.io/docs/x11-interface)
+    - desktop (https://snapcraft.io/docs/reference/interfaces/desktop-interface)
+    - desktop-legacy (https://snapcraft.io/docs/reference/interfaces/desktop-legacy-interface)
+    - gsettings (https://snapcraft.io/docs/reference/interfaces/gsettings-interface)
+    - opengl (https://snapcraft.io/docs/reference/interfaces/opengl-interface)
+    - wayland (https://snapcraft.io/docs/reference/interfaces/wayland-interface)
+    - x11 (https://snapcraft.io/docs/reference/interfaces/x11-interface)
     """
 
     @staticmethod
-    @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    @override
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core22", "core24")
 
     @staticmethod
-    @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    @override
+    def get_supported_confinement() -> tuple[str, ...]:
         return "strict", "devmode"
 
     @staticmethod
-    @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    @override
+    def is_experimental(base: str | None) -> bool:
         return False
 
-    @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
-        command_chain = ["snap/command-chain/desktop-launch"]
+    @override
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         if self.yaml_data["base"] == "core24":
-            command_chain.insert(0, "snap/command-chain/gpu-2404-wrapper")
-        return {
-            "command-chain": command_chain,
-            "plugs": [
-                "desktop",
-                "desktop-legacy",
-                "gsettings",
-                "opengl",
-                "wayland",
-                "x11",
-            ],
-        }
+            snippet = super().get_app_snippet(app_name=app_name)
+        else:
+            snippet = {}
+        snippet["command-chain"] = [
+            *snippet.get("command-chain", []),
+            "snap/command-chain/desktop-launch",
+        ]
+        snippet["plugs"] = [
+            *snippet.get("plugs", []),
+            "desktop",
+            "desktop-legacy",
+            "gsettings",
+            "opengl",
+            "wayland",
+            "x11",
+        ]
+        return snippet
 
     @functools.cached_property
     def gnome_snaps(self) -> GNOMESnaps:
@@ -107,7 +113,7 @@ class GNOME(Extension):
         base = self.yaml_data["base"]
         sdk_snap = _SDK_SNAP[base]
 
-        build_snaps: List[str] = []
+        build_snaps: list[str] = []
         for part in self.yaml_data["parts"].values():
             build_snaps.extend(part.get("build-snaps", []))
 
@@ -125,100 +131,93 @@ class GNOME(Extension):
 
         return GNOMESnaps(sdk=sdk_snap, content=content, builtin=builtin)
 
-    @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    @override
+    def get_root_snippet(self) -> dict[str, Any]:
         platform_snap = self.gnome_snaps.content
         base = self.yaml_data["base"]
 
-        match base:
-            case "core22":
-                gpu_plugs = {}
-                gpu_layouts = {
+        snippet: dict[str, Any]
+        if base == "core24":
+            snippet = super().get_root_snippet()
+        else:
+            snippet = {
+                "layout": {
                     "/usr/share/libdrm": {
                         "bind": "$SNAP/gnome-platform/usr/share/libdrm"
                     },
                 }
-            case "core24":
-                gpu_plugs = {
-                    "gpu-2404": {
-                        "interface": "content",
-                        "target": "$SNAP/gpu-2404",
-                        "default-provider": "mesa-2404",
-                    },
-                }
+            }
 
-                gpu_layouts = {
-                    "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
-                    "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
-                    "/usr/share/X11/XErrorDB": {
-                        "symlink": "$SNAP/gpu-2404/X11/XErrorDB"
-                    },
-                }
-            case _:
-                raise AssertionError(f"Unsupported base: {base}")
-
-        return {
-            "assumes": ["snapd2.43"],  # for 'snapctl is-connected'
-            "plugs": {
-                "desktop": {"mount-host-font-cache": False},
-                "gtk-3-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/themes",
-                    "default-provider": "gtk-common-themes",
-                },
-                "icon-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/icons",
-                    "default-provider": "gtk-common-themes",
-                },
-                "sound-themes": {
-                    "interface": "content",
-                    "target": "$SNAP/data-dir/sounds",
-                    "default-provider": "gtk-common-themes",
-                },
-                platform_snap: {
-                    "interface": "content",
-                    "target": "$SNAP/gnome-platform",
-                    "default-provider": platform_snap,
-                },
-                **gpu_plugs,
+        snippet["assumes"] = ["snapd2.43"]  # for 'snapctl is-connected'
+        snippet["plugs"] = {
+            **snippet.get("plugs", {}),
+            "desktop": {"mount-host-font-cache": False},
+            "gtk-3-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/themes",
+                "default-provider": "gtk-common-themes",
             },
-            "environment": {
-                "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
-                "GTK_USE_PORTAL": "1",
+            "icon-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/icons",
+                "default-provider": "gtk-common-themes",
             },
-            "hooks": {
-                "configure": {
-                    "plugs": ["desktop"],
-                    "command-chain": ["snap/command-chain/hooks-configure-fonts"],
-                }
+            "sound-themes": {
+                "interface": "content",
+                "target": "$SNAP/data-dir/sounds",
+                "default-provider": "gtk-common-themes",
             },
-            "layout": {
-                "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
-                    "bind": (
-                        "$SNAP/gnome-platform/usr/lib/"
-                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0"
-                    )
-                },
-                "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
-                    "bind": (
-                        "$SNAP/gnome-platform/usr/lib/"
-                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
-                    )
-                },
-                "/usr/share/xml/iso-codes": {
-                    "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
-                },
-                **gpu_layouts,
+            platform_snap: {
+                "interface": "content",
+                "target": "$SNAP/gnome-platform",
+                "default-provider": platform_snap,
             },
         }
+        snippet["environment"] = {
+            "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+            "GTK_USE_PORTAL": "1",
+        }
+        snippet["hooks"] = {
+            "configure": {
+                "plugs": ["desktop"],
+                "command-chain": ["snap/command-chain/hooks-configure-fonts"],
+            }
+        }
+        snippet["layout"] = {
+            **snippet.get("layout", {}),
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
+                "bind": (
+                    "$SNAP/gnome-platform/usr/lib/"
+                    "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0"
+                )
+            },
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
+                "bind": (
+                    "$SNAP/gnome-platform/usr/lib/"
+                    "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
+                )
+            },
+            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy": {
+                "bind": (
+                    "$SNAP/gnome-platform/usr/lib/"
+                    "$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy"
+                )
+            },
+            "/usr/share/xml/iso-codes": {
+                "bind": "$SNAP/gnome-platform/usr/share/xml/iso-codes"
+            },
+        }
+        return snippet
 
-    @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    @override
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         sdk_snap = self.gnome_snaps.sdk
 
         return {
             "build-environment": [
+                {
+                    "SNAPCRAFT_GNOME_SDK": f"/snap/{sdk_snap}/current/",
+                },
                 {
                     "PATH": prepend_to_env(
                         "PATH", [f"/snap/{sdk_snap}/current/usr/bin"]
@@ -306,11 +305,21 @@ class GNOME(Extension):
                         ],
                     )
                 },
+                {
+                    "CMAKE_PREFIX_PATH": prepend_to_env(
+                        "CMAKE_PREFIX_PATH",
+                        [
+                            "$CRAFT_STAGE/usr",
+                            f"/snap/{sdk_snap}/current/usr",
+                        ],
+                        separator=":",
+                    ),
+                },
             ],
         }
 
-    @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    @override
+    def get_parts_snippet(self) -> dict[str, Any]:
         """Get the parts snippet for the GNOME extension.
 
         If the GNOME SDK is not built into the content snap, the add the
@@ -318,26 +327,16 @@ class GNOME(Extension):
         """
         source = get_extensions_data_dir() / "desktop" / "command-chain"
 
-        gpu_opts = {}
-        if self.yaml_data["base"] == "core24":
-            gpu_opts["make-parameters"] = ["GPU_WRAPPER=gpu-2404-wrapper"]
+        base = self.yaml_data["base"]
+        if base != "core22":
+            parts = {f"gnome/{k}": v for k, v in super().get_parts_snippet().items()}
+        else:
+            parts = {}
 
-        if self.gnome_snaps.builtin:
-            base = self.yaml_data["base"]
-            sdk_snap = _SDK_SNAP[base]
-            return {
-                "gnome/sdk": {
-                    "source": str(source),
-                    "plugin": "make",
-                    "build-snaps": [sdk_snap],
-                    **gpu_opts,
-                },
-            }
-
-        return {
-            "gnome/sdk": {
-                "source": str(source),
-                "plugin": "make",
-                **gpu_opts,
-            },
+        parts["gnome/sdk"] = {
+            "source": str(source),
+            "plugin": "make",
+            **({"build-snaps": [_SDK_SNAP[base]]} if self.gnome_snaps.builtin else {}),
         }
+
+        return parts

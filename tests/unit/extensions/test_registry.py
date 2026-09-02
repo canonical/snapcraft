@@ -24,8 +24,13 @@ from snapcraft import errors, extensions
 @pytest.mark.usefixtures("fake_extension_experimental")
 def test_get_extension_names():
     assert extensions.get_extension_names() == [
+        "dotnet8",
+        "dotnet9",
+        "dotnet10",
+        "dotnet11",
         "env-injector",
         "gnome",
+        "gpu",
         "ros2-humble",
         "ros2-humble-ros-core",
         "ros2-humble-ros-base",
@@ -34,8 +39,13 @@ def test_get_extension_names():
         "ros2-jazzy-ros-core",
         "ros2-jazzy-ros-base",
         "ros2-jazzy-desktop",
+        "ros2-lyrical",
+        "ros2-lyrical-ros-core",
+        "ros2-lyrical-ros-base",
+        "ros2-lyrical-desktop",
         "kde-neon",
         "kde-neon-6",
+        "kde-neon-qt6",
         "fake-extension-experimental",
         "fake-extension-extra",
         "fake-extension",

@@ -1,0 +1,40 @@
+name: gpu-hello
+version: "1.0"
+summary: test the gpu extension
+description: This is a basic gpu snap
+
+grade: devel
+base: core24
+confinement: strict
+
+apps:
+  gpuinfo:
+    command: usr/local/bin/gpuinfo
+    extensions: [gpu]
+
+lint:
+  ignore:
+  - classic
+  - library
+  - metadata
+
+parts:
+  project:
+    source: .
+    plugin: nil
+    build-packages:
+    - gcc
+    - libc6-dev
+    - libegl-dev
+    - libgl-dev
+    - libgles2-mesa-dev
+    stage-packages:
+    - libegl1
+    - libgl1
+    - libgles2
+    override-build: |
+      gcc -std=c11 -O2 -Wall -Wextra -pedantic \
+        "gpuinfo.c" \
+        -o "gpuinfo" \
+        -lEGL -lGL -lGLESv2
+      install -D -m755 "gpuinfo" "${CRAFT_PART_INSTALL}/usr/local/bin/gpuinfo"

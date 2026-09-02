@@ -111,17 +111,14 @@ class TestDesktopIcon:
         expected_desktop_file = new_dir / f"{app_name}.desktop"
         assert expected_desktop_file.exists()
         with expected_desktop_file.open() as desktop_file:
-            assert (
-                desktop_file.read()
-                == dedent(
-                    """\
+            assert desktop_file.read() == dedent(
+                """\
             [Desktop Entry]
             Exec=foo
             Icon={}
 
         """
-                ).format(expected_icon)
-            )
+            ).format(expected_icon)
 
     @pytest.mark.parametrize(
         "icon,icon_path,expected_icon",
@@ -181,6 +178,43 @@ class TestDesktopIcon:
                 """
             )
 
+    def test_generate_desktop_file_icon_from_theme(self, new_dir):
+        """Icon name without path separator is resolved from the hicolor icon theme."""
+        snap_name = app_name = "foo"
+        icon = "io.snapcraft.test-icon"
+
+        theme_icon_dir = (
+            new_dir / "usr" / "share" / "icons" / "hicolor" / "48x48" / "apps"
+        )
+        theme_icon_dir.mkdir(parents=True)
+        (theme_icon_dir / f"{icon}.png").touch()
+
+        desktop_file_path = new_dir / "app.desktop"
+        with desktop_file_path.open("w") as desktop_file:
+            print("[Desktop Entry]", file=desktop_file)
+            print("Exec=in-snap-exe", file=desktop_file)
+            print(f"Icon={icon}", file=desktop_file)
+
+        d = DesktopFile(
+            snap_name=snap_name,
+            app_name=app_name,
+            filename=desktop_file_path,
+            prime_dir=new_dir,
+        )
+        d.write(gui_dir=Path())
+
+        expected_desktop_file = new_dir / f"{app_name}.desktop"
+        assert expected_desktop_file.exists()
+        with expected_desktop_file.open() as desktop_file:
+            assert desktop_file.read() == dedent(
+                f"""\
+                [Desktop Entry]
+                Exec=foo
+                Icon=${{SNAP}}/usr/share/icons/hicolor/48x48/apps/{icon}.png
+
+                """
+            )
+
 
 def test_not_found(new_dir):
     with pytest.raises(errors.DesktopFileError):
@@ -210,9 +244,16 @@ def test_no_desktop_section(new_dir):
 
 
 def test_missing_exec_entry(new_dir):
+    """A desktop entry without an Exec key is written through unchanged.
+
+    Exec is not required for D-Bus- or systemd-activated entries (regression
+    test for https://github.com/canonical/snapcraft/issues/5799).
+    """
     with open("foo.desktop", "w") as desktop_file:
         print("[Desktop Entry]", file=desktop_file)
-        print("Icon=foo", file=desktop_file)
+        print("Type=Application", file=desktop_file)
+        print("Name=Foo", file=desktop_file)
+        print("NoDisplay=true", file=desktop_file)
 
     d = DesktopFile(
         snap_name="foo",
@@ -220,6 +261,17 @@ def test_missing_exec_entry(new_dir):
         filename="foo.desktop",
         prime_dir=new_dir,
     )
+    d.write(gui_dir=new_dir)
 
-    with pytest.raises(errors.DesktopFileError):
-        d.write(gui_dir=new_dir)
+    written = new_dir / "foo.desktop"
+    assert written.exists()
+    with written.open() as desktop_file:
+        assert desktop_file.read() == dedent(
+            """\
+            [Desktop Entry]
+            Type=Application
+            Name=Foo
+            NoDisplay=true
+
+            """
+        )

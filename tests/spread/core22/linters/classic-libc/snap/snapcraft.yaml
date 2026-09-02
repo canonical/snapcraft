@@ -13,6 +13,8 @@ confinement: strict
 
 lint:
   ignore:
+    - gpu
+    - metadata
     - library
 
 parts:

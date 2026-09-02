@@ -1,16 +1,101 @@
+.. meta::
+    :description: The explanatory documentation for Snapcraft. These explanations aid in understanding the concepts and relationships of Snapcraft as a complete system.
+
 .. _explanation:
 
 Explanation
-***********
+===========
+
+Explanations provide a wider perspective of Snapcraft. They aid in understanding the
+concepts and relationships of Snapcraft as a complete system.
+
+
+The project file
+----------------
+
+Snaps are blueprinted in the ``snapcraft.yaml`` file. Your understanding of Snapcraft
+should begin with an exploration of this file.
+
+- :ref:`explanation-snapcraft-yaml`
+
+
+Bases and architectures
+-----------------------
+
+Bases and architectures are key concepts in snaps. They ensure that snaps are stable
+and compatible across different machines.
+
+- :ref:`explanation-bases`
+- :ref:`explanation-platforms`
+
+
+Parts
+-----
+
+Parts are how software is brought into snaps. When a snap is packed, its parts are
+processed in a series of ordered, reproducible steps.
+
+- :ref:`explanation-parts`
+- :ref:`explanation-parts-lifecycle`
+
+Files travel as bundles through the parts lifecycle. These bundles are called
+*filesets*.
+
+- :ref:`filesets_explanation`
+
+
+Snap confinement
+----------------
+
+A snap's confinement determines how much access it has to the host system's resources.
+
+A snap is sandboxed by default, with basic access to the host's file system. If it needs
+other resources from the host, access is mediated through special interfaces.
+
+- :ref:`explanation-interfaces`
+
+A classically-confined snap has broad access to the host's resources and runs more like
+a traditional app.
+
+- :ref:`explanation-classic-confinement`
+
+
+Processes
+---------
+
+During operation, Snapcraft follows underlying processes.
+
+- :ref:`explanation-snap-build-process`
+- :ref:`explanation-snap-publishing-process`
+
+
+Cryptography
+------------
+
+Snapcraft and its external libraries use cryptographic tools for fetching files,
+communicating with local processes, and storing user credentials.
+
+- :ref:`Cryptographic technology <explanation-cryptographic-technology>`
+
 
 .. toctree::
-   :maxdepth: 1
+    :titlesonly:
+    :hidden:
 
-   architectures
-   bases
-   components
-   remote-build
-   /common/craft-parts/explanation/filesets
-   parts
-   /common/craft-parts/explanation/lifecycle
-   /common/craft-parts/explanation/dump_plugin
+    snapcraft.yaml <snapcraft-yaml>
+    Platforms <platforms>
+    Bases <bases>
+    Parts <parts>
+    parts-lifecycle
+    Interfaces <interfaces>
+    Extensions <extensions>
+    Components <components>
+    snap-configurations
+    services-daemons
+    build-overrides
+    remote-build
+    /common/craft-parts/explanation/filesets
+    classic-confinement
+    snap-build-process
+    snap-publishing-process
+    Cryptographic technology <cryptography>

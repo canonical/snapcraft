@@ -2,5 +2,5 @@ Running linters...
 Running linter: classic
 Running linter: library
 Lint warnings:
-- library: libpng16.so.16: unused library 'usr/lib/x86_64-linux-gnu/libpng16.so.16.37.0'. (https://snapcraft.io/docs/linters-library)
+- library: libpng16.so.16: unused library 'usr/lib/x86_64-linux-gnu/libpng16.so.16.37.0'. (https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/use-the-library-linter)
 Creating snap package...

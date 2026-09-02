@@ -24,7 +24,11 @@ confinement parameters.
 import logging
 from pathlib import Path
 
-from craft_parts import PartInfo, StepInfo, errors
+from craft_parts import PartInfo, StepInfo, errors, plugins
+
+from .poetry_plugin import PoetryPlugin
+from .python_plugin import PythonPlugin
+from .uv_plugin import UvPlugin
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +47,16 @@ def get_system_interpreter(part_info: PartInfo) -> str | None:
     base = part_info.project_base
     confinement = part_info.confinement
 
-    if confinement == "classic" or base == "bare":
-        # classic snaps, and snaps without bases, must always provision Python
+    if confinement == "classic" or base in {"bare", "core26"}:
+        # Classic snaps, and snaps without bases, must always provision Python.
+        # The core26 base won't include Python, so even strictly confined snaps must provision Python.
         interpreter = None
+        logger.debug(
+            "No system Python interpreter available (base=%s, confinement=%s). "
+            "Python will be provisioned by the snap.",
+            base,
+            confinement,
+        )
     else:
         # otherwise, we should always know which Python is present on the
         # base. If this fails on a new base, update _CONFINED_PYTHON_PATH
@@ -55,12 +66,13 @@ def get_system_interpreter(part_info: PartInfo) -> str | None:
             resolution = "Please contact the Snapcraft team."
             raise errors.PartsError(brief=brief, resolution=resolution)
 
-    logger.debug(
-        "Using python interpreter '%s' for base '%s', confinement '%s'",
-        interpreter,
-        base,
-        confinement,
-    )
+        logger.debug(
+            "Using system Python interpreter '%s' (base=%s, confinement=%s)",
+            interpreter,
+            base,
+            confinement,
+        )
+
     return interpreter
 
 
@@ -68,7 +80,7 @@ def post_prime(step_info: StepInfo) -> None:
     """Perform Python-specific actions right before packing."""
     base = step_info.project_base
 
-    if base in ("core20", "core22"):
+    if base == "core22":
         # Only fix pyvenv.cfg on core24+ snaps
         return
 
@@ -94,3 +106,12 @@ def post_prime(step_info: StepInfo) -> None:
     if old_contents != contents:
         logger.debug("Updating pyvenv.cfg to:\n%s", contents)
         pyvenv.write_text(contents)
+
+
+def get_python_plugins() -> dict[str, plugins.plugins.PluginType]:
+    """Get a list of currently supported Python-based plugins."""
+    return {
+        "poetry": PoetryPlugin,
+        "python": PythonPlugin,
+        "uv": UvPlugin,
+    }

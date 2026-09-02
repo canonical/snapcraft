@@ -5,7 +5,7 @@ restore: |
 
 execute: |
   # build the test snap destructively to save time
-  snapcraft
+  snapcraft pack
 
   # test the linter using a build provider
   unset SNAPCRAFT_BUILD_ENVIRONMENT

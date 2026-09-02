@@ -11,7 +11,6 @@ systems:
   - ubuntu-24.04-arm64
 
 environment:
-
   SNAP_DIR: ../snaps/ros2-jazzy-hello
   SNAP: ros2-jazzy-hello
 
@@ -47,12 +46,12 @@ execute: |
   snapcraft expand-extensions
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   # Clean the hello part, then build and run again.
   snapcraft clean hello
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   # Make sure that what we built runs with the changes applied.
@@ -64,5 +63,5 @@ execute: |
 
   sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
 
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous

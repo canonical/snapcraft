@@ -1,0 +1,24 @@
+name: metadata-linter-ignore-fields-test
+base: core22
+version: '0.1'
+summary: Ignore linter warnings for specified metadata fields.
+description: spread test
+
+confinement: strict
+
+lint:
+  ignore:
+    - classic
+    - gpu
+    - library
+    - metadata:
+        - title
+        - issues
+        # Deprecated field, which should neither warn of its absence or complain
+        # about being ignored
+        - donation
+
+
+parts:
+  my-part:
+    plugin: nil

@@ -22,7 +22,6 @@ import json
 import os
 from functools import partial
 from pathlib import Path
-from typing import Dict, List, Optional, Type
 
 from craft_cli import emit
 
@@ -31,14 +30,18 @@ from snapcraft.meta import snap_yaml
 
 from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
+from .gpu_linter import GpuLinter
 from .library_linter import LibraryLinter
+from .metadata_linter import MetadataLinter
 
-LinterType = Type[Linter]
+LinterType = type[Linter]
 
 
-LINTERS: Dict[str, LinterType] = {
+LINTERS: dict[str, LinterType] = {
     "classic": ClassicLinter,
+    "gpu": GpuLinter,
     "library": LibraryLinter,
+    "metadata": MetadataLinter,
 }
 
 
@@ -50,17 +53,19 @@ class LinterStatus(enum.IntEnum):
     FATAL = 1
     ERRORS = 2
     WARNINGS = 3
+    INFO = 4
 
 
-_lint_reports: Dict[LinterResult, str] = {
+_lint_reports: dict[LinterResult, str] = {
     LinterResult.OK: "Lint OK",
     LinterResult.WARNING: "Lint warnings",
     LinterResult.ERROR: "Lint errors",
+    LinterResult.INFO: "Lint information",
 }
 
 
 def report(
-    issues: List[LinterIssue], *, json_output: bool = False, intermediate: bool = False
+    issues: list[LinterIssue], *, json_output: bool = False, intermediate: bool = False
 ) -> LinterStatus:
     """Display the linter report in textual or json formats.
 
@@ -77,7 +82,7 @@ def report(
     status = LinterStatus.OK
 
     # split dictionary based on result
-    issues_by_result: Dict[LinterResult, List[LinterIssue]] = {}
+    issues_by_result: dict[LinterResult, list[LinterIssue]] = {}
     for issue in issues:
         status = _update_status(status, issue.result)
         if status == LinterStatus.FATAL:
@@ -100,25 +105,47 @@ def report(
 
 
 def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
-    """Compute the consolidated status based on individual linter results."""
-    if result == LinterResult.FATAL:
-        status = LinterStatus.FATAL
-    elif result == LinterResult.ERROR and status != LinterStatus.FATAL:
-        status = LinterStatus.ERRORS
-    elif result == LinterResult.WARNING and status == LinterStatus.OK:
-        status = LinterStatus.WARNINGS
+    """Update overall linter status based on a new lint result.
+
+    The status can only become more severe, never less severe.
+    Severity order (least to most severe): OK -> INFO -> WARNINGS -> ERRORS -> FATAL
+
+    Args:
+        status: Current overall linter status
+        result: New individual lint result to incorporate
+
+    Returns:
+        Updated linter status (same or more severe than input status)
+
+    """
+    match result:
+        case LinterResult.FATAL:
+            return LinterStatus.FATAL
+        case LinterResult.ERROR:
+            if status != LinterStatus.FATAL:
+                return LinterStatus.ERRORS
+        case LinterResult.WARNING:
+            if status in (LinterStatus.OK, LinterStatus.INFO):
+                return LinterStatus.WARNINGS
+        case LinterResult.INFO:
+            if status == LinterStatus.OK:
+                return LinterStatus.INFO
+        case LinterResult.OK | LinterResult.IGNORED:
+            pass
 
     return status
 
 
-def run_linters(location: Path, *, lint: Optional[models.Lint]) -> List[LinterIssue]:
+def run_linters(
+    location: Path, *, lint: models.Lint | None, build_base: str | None = None
+) -> list[LinterIssue]:
     """Run all the defined linters.
 
     :param location: The root of the snap payload subtree to run linters on.
     :param lint: The linter configuration defined for this project.
     :return: A list of linter issues.
     """
-    all_issues: List[LinterIssue] = []
+    all_issues: list[LinterIssue] = []
     previous_dir = os.getcwd()
     try:
         os.chdir(location)
@@ -136,7 +163,9 @@ def run_linters(location: Path, *, lint: Optional[models.Lint]) -> List[LinterIs
             if lint and categories and all(lint.all_ignored(c) for c in categories):
                 continue
 
-            linter = linter_class(name=name, lint=lint, snap_metadata=snap_metadata)
+            linter = linter_class(
+                name=name, lint=lint, snap_metadata=snap_metadata, build_base=build_base
+            )
             emit.progress(f"Running linter: {name}")
             issues = linter.run()
             all_issues += issues
@@ -149,7 +178,7 @@ def run_linters(location: Path, *, lint: Optional[models.Lint]) -> List[LinterIs
 
 
 def _ignore_matching_filenames(
-    issues: List[LinterIssue], *, lint: Optional[models.Lint]
+    issues: list[LinterIssue], *, lint: models.Lint | None
 ) -> None:
     """Mark any remaining filename match as ignored."""
     if lint is None:

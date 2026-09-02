@@ -1,0 +1,40 @@
+name: ukuzama-pyfiglet
+base: core24
+version: "0.1"
+summary: pyfiglet is a program for making large letters out of ordinary text
+description: |
+  pyfiglet is a full port of FIGlet (http://www.figlet.org/) into pure python.
+  It takes ASCII text and renders it in ASCII art fonts (like the title above,
+  which is the 'block' font).
+
+  This snap is not endorsed by the pyfiglet project.
+
+platforms:
+  amd64:
+
+grade: stable
+confinement: strict
+
+parts:
+  pyfiglet:
+    plugin: python
+    source-type: git
+    source: https://github.com/snapcraft-docs/pyfiglet
+    override-build: |
+      mkdir pyfiglet/fonts
+      cp pyfiglet/fonts-contrib/* pyfiglet/fonts
+      cp pyfiglet/fonts-standard/* pyfiglet/fonts
+      craftctl default
+
+apps:
+  ukuzama-pyfiglet:
+    command: bin/pyfiglet
+    plugs:
+      - home
+      - dot-pyfiglet-fonts
+
+plugs:
+  dot-pyfiglet-fonts:
+    interface: personal-files
+    write:
+      - $HOME/.local/share/pyfiglet/fonts

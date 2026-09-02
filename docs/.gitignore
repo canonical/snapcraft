@@ -1,0 +1,26 @@
+# Environment
+*env*/
+.venv/
+
+# Sphinx
+_dev/warnings.txt
+_dev/.wordlist.dic
+_dev/.doctrees/
+_dev/update/
+_dev/node_modules/
+
+# Vale
+_dev/styles/*
+_dev/vale.ini
+
+# Build outputs
+_build
+
+# Node.js
+package*.json
+
+# Unrelated cache and config files
+.DS_Store
+__pycache__
+.idea/
+.vscode/

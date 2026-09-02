@@ -17,7 +17,7 @@
 import shutil
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import call
 
 import pytest
@@ -25,11 +25,11 @@ import pytest
 from snapcraft import errors, models
 from snapcraft.parts import setup_assets as parts_setup_assets
 from snapcraft.parts.setup_assets import (
-    _create_hook_wrappers,
     _ensure_hook,
     _ensure_hook_executable,
     _validate_command_chain,
     _write_hook_wrapper,
+    create_hook_wrappers,
     setup_assets,
 )
 
@@ -53,7 +53,7 @@ def desktop_file():
 
 @pytest.fixture
 def yaml_data():
-    def _yaml_data(extra_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _yaml_data(extra_data: dict[str, Any]) -> dict[str, Any]:
         return {
             "name": "test-project",
             "base": "core22",
@@ -111,6 +111,30 @@ def test_gadget(yaml_data, gadget_yaml_file, new_dir):
     assert gadget_path.is_file()
 
 
+def test_gadget_core24_not_copied(yaml_data, gadget_yaml_file, new_dir):
+    project = models.Project.unmarshal(
+        yaml_data(
+            {
+                "type": "gadget",
+                "base": "core24",
+                "build-base": "core24",
+                "version": "1.0",
+                "summary": "summary",
+                "description": "description",
+            }
+        )
+    )
+
+    setup_assets(
+        project,
+        assets_dir=Path("snap"),
+        project_dir=Path.cwd(),
+        prime_dirs={None: Path("prime")},
+    )
+
+    assert not Path("prime/meta/gadget.yaml").exists()
+
+
 def test_gadget_missing(yaml_data, new_dir):
     project = models.Project.unmarshal(
         yaml_data(
@@ -144,6 +168,7 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
             "summary": "summary",
             "description": "description",
             "parts": {},
+            "build-base": "core22",
         }
     )
 
@@ -159,6 +184,30 @@ def test_kernel(yaml_data, kernel_yaml_file, new_dir):
     assert kernel_path.is_file()
 
 
+def test_kernel_core24_not_copied(yaml_data, kernel_yaml_file, new_dir):
+    project = models.Project.unmarshal(
+        {
+            "name": "custom-kernel",
+            "type": "kernel",
+            "confinement": "strict",
+            "version": "1.0",
+            "summary": "summary",
+            "description": "description",
+            "parts": {},
+            "build-base": "core24",
+        }
+    )
+
+    setup_assets(
+        project,
+        assets_dir=Path("snap"),
+        project_dir=Path.cwd(),
+        prime_dirs={None: Path("prime")},
+    )
+
+    assert not Path("prime/meta/kernel.yaml").exists()
+
+
 def test_kernel_missing(yaml_data, new_dir):
     project = models.Project.unmarshal(
         {
@@ -169,6 +218,7 @@ def test_kernel_missing(yaml_data, new_dir):
             "summary": "summary",
             "description": "description",
             "parts": {},
+            "build-base": "core22",
         }
     )
 
@@ -603,7 +653,7 @@ def test_create_hook_wrappers(new_dir):
         hook.write_text("#!/bin/true\n")
         hook.chmod(0o644)
 
-    _create_hook_wrappers(new_dir)
+    create_hook_wrappers(new_dir)
 
     # verify prime/meta/hooks directory was created
     hooks_meta_dir = new_dir / "meta" / "hooks"

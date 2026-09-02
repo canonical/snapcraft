@@ -1,0 +1,45 @@
+summary: Run snapcraft lint on a snap file.
+
+environment:
+  SNAP: lint-file
+
+prepare: |
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  set_base "${SNAP}/snapcraft.yaml"
+
+execute: |
+  cd "${SNAP}"
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  base="$(get_base)"
+
+  # build the test snap
+  snapcraft pack
+
+  snapcraft lint lint-file_0.1_*.snap 2> output.txt
+
+  # TODO: this check fails because core24 has undefined symbol warnings (#4751)
+  # get the lint warnings at end of the log file
+  #sed -n '/Running linters.../,+4 p' < output.txt > linter-output.txt
+
+  #diff -u linter-output.txt expected-linter-output.txt
+
+  MATCH "library: libogg.so.0: unused library" < output.txt
+
+  # `snapcraft lint` uses ldd from the host instead of from the base snap, which causes the linter to not work as expected (#4751)
+  if [[ "$base" == "core26" ]]; then
+    exit 0
+  fi
+
+  MATCH "library: linter-test: missing dependency 'libcaca.so.0'" < output.txt
+
+restore: |
+  cd "${SNAP}"
+  rm -f ./*.snap ./*.assert ./linter_output.txt
+  snapcraft clean
+
+  #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
+  . "$TOOLS_DIR/snapcraft-yaml.sh"
+  restore_yaml "snapcraft.yaml"

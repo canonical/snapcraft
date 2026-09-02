@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Utilities for snapcraft."""
+
 from __future__ import annotations
 
 import multiprocessing
@@ -22,17 +23,26 @@ import os
 import pathlib
 import re
 import shutil
+import subprocess
 import sys
+import tempfile
+from contextlib import contextmanager
 from getpass import getpass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import TYPE_CHECKING
 
+import yaml
 from craft_application.util import strtobool
 from craft_cli import emit
 from craft_parts.sources.git_source import GitSource
 from craft_platforms import DebianArchitecture
 
 from snapcraft import errors
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Sequence
+
+    from craft_parts import ProjectInfo
 
 
 def get_supported_architectures() -> list[str]:
@@ -63,7 +73,7 @@ def get_managed_environment_log_path():
     )
 
 
-def get_managed_environment_snap_channel() -> Optional[str]:
+def get_managed_environment_snap_channel() -> str | None:
     """User-specified channel to use when installing Snapcraft snap from Snap Store.
 
     :returns: Channel string if specified, else None.
@@ -73,12 +83,12 @@ def get_managed_environment_snap_channel() -> Optional[str]:
 
 def get_effective_base(
     *,
-    base: Optional[str],
-    build_base: Optional[str],
-    project_type: Optional[str],
-    name: Optional[str],
+    base: str | None,
+    build_base: str | None,
+    project_type: str | None,
+    name: str | None,
     translate_devel: bool = True,
-) -> Optional[str]:
+) -> str | None:
     """Return the base to use to create the snap.
 
     Return the build-base if set.
@@ -136,7 +146,7 @@ def get_parallel_build_count() -> int:
     return build_count
 
 
-def confirm_with_user(prompt_text, default=False) -> bool:
+def confirm_with_user(prompt_text: str, default: bool = False) -> bool:
     """Query user for yes/no answer.
 
     If stdin is not a tty, the default value is returned.
@@ -182,7 +192,7 @@ def prompt(prompt_text: str, *, hide: bool = False) -> str:
     if hide:
         method = getpass
     else:
-        method = input  # type: ignore
+        method = input
 
     with emit.pause():
         return str(method(prompt_text))
@@ -221,9 +231,7 @@ def humanize_list(
     return f"{humanized} {conjunction} {quoted_items[-1]}"
 
 
-def get_common_ld_library_paths(
-    prime_dir: Path, arch_triplet: Optional[str]
-) -> List[str]:
+def get_common_ld_library_paths(prime_dir: Path, arch_triplet: str | None) -> list[str]:
     """Return common existing PATH entries for a snap.
 
     :param prime_dir: Path to the prime directory.
@@ -248,7 +256,7 @@ def get_common_ld_library_paths(
     return [str(p) for p in paths if p.exists()]
 
 
-def get_ld_library_paths(prime_dir: Path, arch_triplet: Optional[str]) -> str:
+def get_ld_library_paths(prime_dir: Path, arch_triplet: str | None) -> str:
     """Return a usable in-snap LD_LIBRARY_PATH variable.
 
     :param prime_dir: Path to the prime directory.
@@ -314,7 +322,7 @@ def get_snap_tool(command_name: str) -> str:
     return command_path
 
 
-def _find_command_path_in_root(root: str, command_name: str) -> Optional[str]:
+def _find_command_path_in_root(root: str, command_name: str) -> str | None:
     for bin_directory in (
         "usr/local/sbin",
         "usr/local/bin",
@@ -330,7 +338,7 @@ def _find_command_path_in_root(root: str, command_name: str) -> Optional[str]:
     return None
 
 
-def process_version(version: Optional[str]) -> str:
+def process_version(version: str | None) -> str:
     """Handle special version strings."""
     if version is None:
         raise ValueError("version cannot be None")
@@ -349,3 +357,101 @@ def process_version(version: Optional[str]) -> str:
 def is_snapcraft_running_from_snap() -> bool:
     """Check if snapcraft is running from the snap."""
     return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
+
+
+def get_component_name(partition_name: str | None) -> str | None:
+    """Normalize a partition name to a component name.
+
+    Partition names may come in as either bare component names
+    (e.g. "foo") or fully qualified names (e.g. "component/foo").
+    This function normalizes both to just the component name.
+
+    :param partition_name: The partition name to normalize.
+    :returns: The component name, or None if the input was None or "default".
+    """
+    if partition_name in (None, "default"):
+        return None
+    return partition_name.removeprefix("component/")
+
+
+def get_prime_dirs_from_project(project_info: ProjectInfo) -> dict[str | None, Path]:
+    """Get a mapping of component names to prime directories from a ProjectInfo.
+
+    'None' maps to the default prime directory.
+
+    :param project_info: The ProjectInfo to get the prime directory mapping from.
+    """
+    partition_prime_dirs = project_info.prime_dirs
+    component_prime_dirs: dict[str | None, Path] = {None: project_info.prime_dir}
+
+    # strip 'component/' prefix so that the component name is the key
+    for partition, prime_dir in partition_prime_dirs.items():
+        if partition and partition.startswith("component/"):
+            component = get_component_name(partition)
+            component_prime_dirs[component] = prime_dir
+
+    return component_prime_dirs
+
+
+@contextmanager
+def unsquash_snap(snap_file: Path, extra_args: Sequence[str] = ()) -> Iterator[Path]:
+    """Unsquash a snap file to a temporary directory.
+
+    :param snap_file: Snap package to extract.
+    :param extra_args: Extra args to pass to unsquashfs.
+
+    :yields: Path to the snap's unsquashed directory.
+
+    :raises errors.SnapcraftError: If the snap fails to unsquash.
+    """
+    snap_file = snap_file.resolve()
+
+    with tempfile.TemporaryDirectory(dir=str(snap_file.parent)) as temp_dir:
+        emit.progress(f"Unsquashing snap file {snap_file.name!r}.")
+
+        # unsquashfs [options] filesystem [directories or files to extract] options:
+        # -force: if file already exists then overwrite
+        # -dest <pathname>: unsquash to <pathname>
+        extract_command = [
+            "unsquashfs",
+            "-force",
+            "-dest",
+            temp_dir,
+            str(snap_file),
+            *extra_args,
+        ]
+
+        try:
+            subprocess.run(extract_command, capture_output=True, check=True)
+        except subprocess.CalledProcessError as error:
+            raise errors.SnapcraftError(
+                f"could not unsquash snap file {snap_file.name!r}"
+            ) from error
+
+        yield Path(temp_dir)
+
+
+def get_data_from_snap_file(snap_path: Path) -> tuple[dict, dict | None]:
+    """Extract snap.yaml and manifest.yaml data from a snap file.
+
+    :param snap_path: Path to the snap file.
+
+    :returns: A tuple of (snap.yaml, manifest.yaml) where manifest.yaml may be None.
+
+    :raises SnapcraftError: If the snap file cannot be read.
+    :raises FileNotFoundError: If snap.yaml doesn't exist.
+    """
+    with unsquash_snap(
+        snap_path, extra_args=["meta/snap.yaml", "snap/manifest.yaml"]
+    ) as snap_dir:
+        snap_yaml_path = snap_dir / "meta" / "snap.yaml"
+        with snap_yaml_path.open() as yaml_file:
+            snap_yaml = yaml.safe_load(yaml_file)
+
+        manifest_yaml: dict | None = None
+        manifest_path = snap_dir / "snap" / "manifest.yaml"
+        if manifest_path.exists():
+            with manifest_path.open() as manifest_yaml_file:
+                manifest_yaml = yaml.safe_load(manifest_yaml_file)
+
+    return snap_yaml, manifest_yaml

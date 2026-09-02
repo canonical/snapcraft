@@ -1,0 +1,21 @@
+name: build-for-with-archs-core22
+base: core22
+version: "1.0"
+summary: Test snap for remote build
+description: |
+  Builds 2 natively compiled snaps and 1 cross-compiled snap.
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: [amd64]
+    build-for: [amd64]
+  - build-on: [s390x]
+    build-for: [armhf]
+  - build-on: [riscv64]
+    build-for: [riscv64]
+
+parts:
+  my-part:
+    plugin: nil

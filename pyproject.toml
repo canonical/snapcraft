@@ -1,133 +1,368 @@
-[tool.black]
-extend-exclude = '''
-/(
-  | snapcraft_legacy
-  | tools
-  | docs/sphinx-resources
-)/
-'''
-# Targeting future versions as well so we don't have black reformatting code
-# en masse later.
-target-version = ["py312"]
-
-[tool.mypy]
-python_version = "3.12"
-ignore_missing_imports = true
-follow_imports = "silent"
-exclude = [
-    "build",
-    "snapcraft_legacy",
-    "tests/spread",
-    "tests/legacy",
-    "tools",
-    "venv",
+[project]
+name = "snapcraft"
+description = "Create snaps"
+dynamic = ["version"]
+# Applications should avoid CVEs in direct dependencies by setting a minimum version in 'dependencies'.
+dependencies = [
+    "catkin-pkg==1.1.0; sys_platform == 'linux'",
+    "click>=8.3.3",
+    "craft-application[remote]>=7.2.0",
+    "craft-archives>=2.2.1",
+    "craft-cli>=3.4.0",
+    "craft-grammar>=2.3.0",
+    "craft-parts>=2.33.0",
+    "craft-platforms>=0.11.0",
+    "craft-providers>=3.7.1",
+    "craft-store>=3.3.0",
+    "jsonschema==2.6.0",
+    "lazr.restfulclient",
+    "lxml",
+    "overrides",
+    "packaging",
+    "pydantic~=2.8",
+    "pyelftools",
+    # Pygit2 and libgit2 need to match versions.
+    # Further info: https://www.pygit2.org/install.html#version-numbers
+    # 1.18 is the last minor version that supports Python 3.10
+    "pygit2~=1.18.2",
+    "pyxdg",
+    "pyyaml",
+    "requests-toolbelt",
+    "requests>=2.32.4",
+    "setuptools~=84.0.0",
+    "snap-helpers",
+    "tabulate",
+    "typing-extensions",
+    "validators>=0.28.3",
 ]
-plugins = [
-    "pydantic.mypy",
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Natural Language :: English",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Software Distribution",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+readme = { file = "README.md", content-type = "text/markdown" }
+
+
+# Applications should avoid CVEs in optional, direct dependencies by setting a minimum
+# version in 'dependency-groups'.
+[dependency-groups]
+dev = [
+    "coverage[toml]",
+    "pip",
+    "pyinstaller ; sys_platform == 'win32'",
+    "pymacaroons",
+    "pytest",
+    "pytest-cov",
+    "pytest-check",
+    "pytest-mock",
+    "pytest-subprocess",
+]
+docs = [
+    "pydantic-kitbash~=1.0",
+    "sphinx-lint~=1.0",
+    "sphinx-pydantic==0.1.1",
+    "sphinx-substitution-extensions==2025.1.2",
+    "sphinxext-rediraffe==0.3.0",
+    {include-group = "docs-sphinx-stack"},
+]
+# We disable the unused but default SP dependencies slated for removal
+# https://warthogs.atlassian.net/browse/DOCPR-2387
+docs-sphinx-stack = [
+    "canonical-sphinx~=0.6",
+    "myst-parser~=4.0",
+    "packaging~=26.1",
+    "rst2html>=2020.7.4",
+    "sphinx-autobuild>=2024.10.3",
+    # "sphinx-config-options~=0.1",
+    # "sphinx-contributor-listing~=0.1",
+    "sphinx-design==0.6.1",
+    # "sphinx-filtered-toctree~=0.1",
+    # "sphinx-last-updated-by-git~=0.3",
+    "sphinx-llm~=0.4",
+    "sphinx-notfound-page~=1.1",
+    "sphinx-related-links~=0.1",
+    # "sphinx-reredirects==0.1.6",
+    "sphinx-rerediraffe>=0.0.3,<1.0.0",
+    "sphinx-roles~=0.1",
+    "sphinx-sitemap~=2.9",
+    # "sphinx-tabs~=3.5",
+    "sphinx-terminal~=1.0",
+    # "sphinx-ubuntu-images~=0.1",
+    # "sphinx-youtube-links~=0.1",
+    "sphinxcontrib-jquery~=4.1",
+    # "sphinxcontrib-svg2pdfconverter[cairosvg]~=2.1",
+    "sphinxext-opengraph~=0.13",
+    "vale~=3.13",
+]
+lint = ["codespell[toml]", { include-group = "types" }]
+types = [
+    "types-PyYAML",
+    "types-requests>=2.32",
+    "types-setuptools",
+    "types-simplejson",
+    "types-tabulate",
+    "types-toml",
+    "types-lxml",
+]
+dev-jammy = ["python-apt~=2.4.0;sys_platform=='linux'"]
+dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
+dev-plucky = ["python-apt~=2.9.0;sys_platform=='linux'"]
+dev-questing = ["python-apt~=3.0.0;sys_platform=='linux'"]
+dev-resolute = ["python-apt~=3.0.0;sys_platform=='linux'"]
+tics = ["flake8", "pylint"]
+
+[tool.uv]
+conflicts = [
+    [
+        { group = "dev-jammy" },
+        { group = "dev-noble" },
+        { group = "dev-plucky" },
+        { group = "dev-questing" },
+        { group = "dev-resolute" },
+    ],
+]
+constraint-dependencies = [
+    # Basic constraints to allow --resolution=lowest.
+    #
+    # Applications should avoid CVEs in transitive dependencies by setting a minimum
+    # version in this section.
+    "cryptography>=50.0.0",
+    "httplib2>=0.32.0",
+    # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
+    # what is available in the noble repositories.
+    # https://pynacl.readthedocs.io/en/latest/changelog/
+    # https://github.com/canonical/snapcraft/issues/5968
+    "pynacl<1.6.0",
+    # protobuf 6.33.x segfaults on s390x
+    # this issue might be the cause: https://github.com/protocolbuffers/protobuf/issues/24103
+    "protobuf==6.32.*",
+    "starlette>=1.0.1",
 ]
 
-[tool.pyright]
-include = ["snapcraft", "tests"]
-exclude = ["build", "tests/legacy", "tests/spread"]
-pythonVersion = "3.12"
+[[tool.uv.index]]
+name = "python-apt-wheels"
+url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/" # workaround to get python-apt to install across multiple platforms
+explicit = true
 
-[tool.pytest.ini_options]
-minversion = "7.0"
-required_plugins = ["pytest-cov>=4.0", "pytest-mock>=3.12", "pytest-subprocess>=1.4"]
-addopts = ["--cov=snapcraft"]
+[tool.uv.sources]
+python-apt = { index = "python-apt-wheels" }
+
+[project.scripts]
+snapcraft = "snapcraft.application:main"
+
+[build-system]
+requires = ["setuptools>=69.0", "setuptools_scm[toml]>=7.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+script-files = ["bin/snapcraftctl-compat"]
+
+[tool.setuptools_scm]
+write_to = "snapcraft/_version.py"
+# the version comes from the latest annotated git tag formatted as 'X.Y.Z'
+# version scheme:
+#   - X.Y.Z.post<commits since tag>+g<hash>.d<%Y%m%d>
+# parts of scheme:
+#   - X.Y.Z - most recent git tag
+#   - post<commits since tag>+g<hash> - present when current commit is not tagged
+#   - +dirty - present when working dir is dirty
+# version scheme when no tags exist:
+#   - 0.0.post<total commits>+g<hash>
+version_scheme = "post-release"
+# deviations from the default 'git describe' command:
+# - only match annotated tags
+# - only match tags formatted as 'X.Y.Z'
+git_describe_command = [
+    "git",
+    "describe",
+    "--dirty",
+    "--long",
+    "--match",
+    "[0-9]*.[0-9]*.[0-9]*",
+    "--exclude",
+    "*[^0-9.]*",
+]
+# Appends "+dirty" to the version when working dir is dirty
+# Necessary to avoid version numbers being too long
+local_scheme = "dirty-tag"
+# Used when the git version can't be determined, like when building from a worktree.
+fallback_version = "0.0.0"
+
+[tool.setuptools.packages.find]
+include = ["snapcraft", "extensions", "schema"]
+namespaces = true
+
+[tool.setuptools.package-data]
+snapcraft = ["templates/*"]
 
 # Most of this ruff configuration comes from craft-parts
 [tool.ruff]
-target-version = "py312"
+target-version = "py310"
 line-length = 88
 extend-exclude = [
     "docs",
     "__pycache__",
-    "legacy",
-    "tests/legacy",
+    "snapcraft/_version.py", # setuptools_scm generates old-style type annotations and single quotes
 ]
 lint.select = [
-    "E", "F",  # The rules built into Flake8
-    "I",  # isort checking
-    "PLC", "PLE", "PLR", "PLW",  # Pylint
+    "E",
+    "F",   # The rules built into Flake8
+    "I",   # isort checking
+    "PLC",
+    "PLE",
+    "PLR",
+    "PLW", # Pylint
     # Additional stricter checking than previously enabled:
-    "A",  # Shadowing built-ins.
-    "W",  # PyCodeStyle warnings.
-    "N",  # Pep8 naming
-    "YTT",  # flake8-2020: Misuse of `sys.version` and `sys.version_info`
-    "ANN",  # Annotations
-    "S",  # Checks for common security issues
-    "BLE",  # Blind exception
-    "B",  # Opinionated bugbear linting
-    "C4",  # better comprehensions
-    "T10",  # Ensure we don't leave code that starts the debugger in
-    "ICN",  # Unconventional import aliases.
-    "Q",  # Consistent quotations
-    "RET",  # Return values
+    "A",     # Shadowing built-ins.
+    "W",     # PyCodeStyle warnings.
+    "N",     # Pep8 naming
+    "YTT",   # flake8-2020: Misuse of `sys.version` and `sys.version_info`
+    "ANN",   # Annotations
+    "S",     # Checks for common security issues
+    "BLE",   # Blind exception
+    "B",     # Opinionated bugbear linting
+    "C4",    # better comprehensions
+    "T10",   # Ensure we don't leave code that starts the debugger in
+    "ICN",   # Unconventional import aliases.
+    "Q",     # Consistent quotations
+    "RET",   # Return values
+    "UP",    # pyupgrade
+    "TC001", # Checks for first-party imports that are only used for type annotations
+    "TC002", # Checks for third-party imports that are only used for type annotations
+    "TC003", # Checks for standard library imports that are only used for type annotations
+    "TC004", # Remove imports from type-checking guard blocks if used at runtime
+    "TC005", # Delete empty type-checking blocks
 ]
 lint.ignore = [
     # These following copy the flake8 configuration
     #"E203",  # Whitespace before ":"  -- Commented because ruff doesn't currently check E203
-    "E501",  # Line too long
+    "E501", # Line too long (reason: ruff will automatically fix this for us)
     # The following copy our pydocstyle configuration
-    "D105",  # Missing docstring in magic method (reason: magic methods already have definitions)
-    "D107",  # Missing docstring in __init__ (reason: documented in class docstring)
-    "D203",  # 1 blank line required before class docstring (reason: pep257 default)
-    "D213",  # Multi-line docstring summary should start at the second line (reason: pep257 default)
-    "D215",  # Section underline is over-indented (reason: pep257 default)
+    "D105",    # Missing docstring in magic method (reason: magic methods already have definitions)
+    "D107",    # Missing docstring in __init__ (reason: documented in class docstring)
+    "D203",    # 1 blank line required before class docstring (reason: pep257 default)
+    "D213",    # Multi-line docstring summary should start at the second line (reason: pep257 default)
+    "D215",    # Section underline is over-indented (reason: pep257 default)
+    "PLW1641", # eq-without-hash (most of our classes should be unhashable)
 
+    # Ignored due to conflicts with ruff's formatter:
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    "COM812", # Missing trailing comma - mostly the same, but marginal differences.
+    "ISC001", # Single-line implicit string concatenation.
 
     # Stricter type checking rules that that are disabled.
-    "A003",  # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
-    "N818",  # Exception names ending with suffix `Error`
-    "ANN002",  "ANN003",  # Missing type annotation for *args and **kwargs
-    "ANN204",  # Missing type annotations for magic methods
-    "ANN401",  # Disallowing `typing.Any`
-    "B904",  # Within an except clause, always explicitly `raise` an exception `from` something.
-    "B905",  # Zip without explicit `strict=` parameter - this only exists in 3.10+
+    "A003",   # Class attribute shadowing a python built-in (class attributes are seldom if ever referred to bare)
+    "N818",   # Exception names ending with suffix `Error`
+    "ANN002",
+    "ANN003", # Missing type annotation for *args and **kwargs
+    "ANN204", # Missing type annotations for magic methods
+    "ANN401", # Disallowing `typing.Any`
+    "B904",   # Within an except clause, always explicitly `raise` an exception `from` something.
+    "B905",   # Zip without explicit `strict=` parameter - this only exists in 3.10+
 
 
     # Disabled because the current code breaks these rules without "noqa" comments
     # Most of these are probably worth enabling eventually.
 
     # Annotation issues appear to be mostly in older code, so could be eventually enabled.
-    # 39 instances of ANN001.
-    "ANN001",  # Missing type annotation for function argument
     # 5 instances of ANN201, 10 instances of ANN202
-    "ANN201", "ANN202",  # Missing return type annotation for public/private function
+    "ANN201",
+    "ANN202", # Missing return type annotation for public/private function
     # 13 instances of ANN206 - probably mostly :noqa-able
     "ANN206",
-    # 4 instances - would break if run with optimization
-    "S101", # Use of assert detected
     # Comprehensions - IDK, these ones flagged and they really could go either way.
-    "C405", "C408", "C414",
-    "RET504", "RET506",  # Return value related.
-    "PLR2004",  # Magic values - widely used
-    "S603",  # Untrusted input for subprocess calls
-    "S604",  # shell=True parameter to a function
-    "S607",  # Partial executable path for subprocess calls
+    "C405",
+    "C408",
+    "C414",
+    "RET504",
+    "RET506",  # Return value related.
+    "PLR2004", # Magic values - widely used
+    "S603",    # Untrusted input for subprocess calls
+    "S604",    # shell=True parameter to a function
+    "S607",    # Partial executable path for subprocess calls
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = [ # Some things we want for the main project are unnecessary in tests.
+    "D",       # Ignore docstring rules in tests
+    "ANN",     # Ignore type annotations in tests
+    "ARG",     # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
+    "S101",    # Allow assertions in tests
+    "S103",    # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+    "S108",    # Allow Probable insecure usage of temporary file or directory
+    "PLR0913", # Allow many arguments for test functions (useful if we need many fixtures)
+    "PLR0917", # Allow many positional arguments for test functions (useful if we need many fixtures)
+    "PLR2004", # Allow magic values in tests
+    "SLF",     # Allow accessing private members from tests.
+]
+"tests/unit/parts/plugins/test_kernel.py" = [
+    "E101", # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
+]
+"__init__.py" = [
+    "I001", # isort leaves init files alone by default, this makes ruff ignore them too.
+    "F401", # Allows unused imports in __init__ files.
+]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
+[tool.ruff.lint.flake8-builtins]
+strict-checking = true
+
+[tool.ruff.lint.pydocstyle]
+ignore-decorators = [ # Functions with these decorators don't have to have docstrings.
+    "typing.overload", # Default configuration
+    # The following are variations on override, so child classes don't have to repeat parent classes' docstrings.
+    "typing.override",
+    "typing_extensions.override",
 ]
 
 [tool.ruff.lint.pylint]
-max-args = 6
+max-args = 8
 max-branches = 16
 
-[tool.ruff.lint.per-file-ignores]
-"tests/**.py" = [
-    "D",  # Ignore docstring rules in tests
-    "ANN", # Ignore type annotations in tests
-    "S101",  # Yeah of course we assert in tests
-    "B009",  # Allow calling `getattr` in tests since it can be used to make the test clearer.
-    "S103", # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
-    "S105", # Allow Possible hardcoded password.
-    "S106", # Allow Possible hardcoded password.
-    "S108", # Allow Probable insecure usage of temporary file or directory.
-    "PLR0913",  # Allow many arguments to tests
-]
-"tests/unit/parts/plugins/test_kernel.py" = [
-    "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
-]
-"__init__.py" = ["I001"]  # Imports in __init__ filesare allowed to be out of order
+[tool.ruff.lint.pep8-naming]
+# Allow Pydantic's `@validator` decorator to trigger class method treatment.
+classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
 
-[tool.ruff.lint.flake8-annotations]
-suppress-none-returning = true  # We don't need to explicitly point out that a function doesn't return anything
+[tool.ty.src]
+exclude = [
+    "build",
+    "tests/spread",
+    "tools",
+    "venv",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = "tests"
+xfail_strict = true
+addopts = "--ignore=tests/spread"
+markers = ["slow: slow tests"]
+
+[tool.coverage.run]
+branch = true
+omit = ["test/**"]
+
+[tool.coverage.report]
+skip_empty = true
+exclude_also = ["if (typing\\.)?TYPE_CHECKING:"]
+
+[tool.codespell]
+ignore-words-list = ["buildd", "crate", "assertIn", "socio-economic"]
+skip = [
+    # Keyrings aren't code
+    "*.asc",
+    # These tests include some non-English text
+    "*/test_appstream.py",
+    "*/test_update_metadata.py",
+]

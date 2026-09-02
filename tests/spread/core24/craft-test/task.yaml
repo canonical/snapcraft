@@ -1,0 +1,7 @@
+summary: Test 'snapcraft test'
+
+environment:
+  CI: "1"
+
+execute: |
+  snapcraft test --verbose 2>&1 | MATCH "Successful tasks: 1"

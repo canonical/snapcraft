@@ -20,9 +20,9 @@
 
 import dataclasses
 from abc import abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
-from overrides import overrides
+from typing_extensions import override
 
 from .ros2_humble import ROS2HumbleExtension
 
@@ -46,12 +46,12 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         raise NotImplementedError
 
     @staticmethod
-    @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    @override
+    def is_experimental(base: str | None) -> bool:
         return True
 
-    @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    @override
+    def get_root_snippet(self) -> dict[str, Any]:
         root_snippet = super().get_root_snippet()
         root_snippet["plugs"] = {
             self.ros2_humble_snaps.content: {
@@ -63,8 +63,8 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
         }
         return root_snippet
 
-    @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    @override
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         app_snippet = super().get_app_snippet(app_name=app_name)
         python_paths = app_snippet["environment"]["PYTHONPATH"]
         new_python_paths = [
@@ -72,14 +72,14 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
             "$SNAP/opt/ros/underlay_ws/usr/lib/python3/dist-packages",
         ]
 
-        app_snippet["environment"][
-            "PYTHONPATH"
-        ] = f'{python_paths}:{":".join(new_python_paths)}'
+        app_snippet["environment"]["PYTHONPATH"] = (
+            f"{python_paths}:{':'.join(new_python_paths)}"
+        )
 
         return app_snippet
 
-    @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    @override
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         part_snippet = super().get_part_snippet(plugin_name=plugin_name)
 
         # These are colcon-plugin specific entries
@@ -91,8 +91,8 @@ class ROS2HumbleMetaBase(ROS2HumbleExtension):
 
         return part_snippet
 
-    @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    @override
+    def get_parts_snippet(self) -> dict[str, Any]:
         parts_snippet = super().get_parts_snippet()
         # Very unlikely but it may happen that the snapped application doesn't
         # even pull those deps. In that case, there is no valid ROS 2 ws to source.

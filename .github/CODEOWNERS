@@ -1,0 +1,12 @@
+# GitHub code owners. See:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Remember, the last match takes precedence.
+
+# Global owner
+*                    @mr-cal
+
+# Documentation owners
+/docs/               @canonical/starcraft-authors @mr-cal
+
+# Code owner changes must be approved by a maintainer.
+/.github/CODEOWNERS  @canonical/starcraft-maintainers

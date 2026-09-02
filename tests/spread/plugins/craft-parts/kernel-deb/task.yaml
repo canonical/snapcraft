@@ -1,0 +1,36 @@
+summary: Craft Parts kernel plugin test
+manual: true
+kill-timeout: 180m
+
+systems:
+  - ubuntu-22.04
+  - ubuntu-22.04-64
+  - ubuntu-22.04-amd64
+  - ubuntu-22.04-arm64
+
+environment:
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_PLUGINS: 1
+
+restore: |
+  snapcraft clean
+  rm -rf ./*.snap squashfs-root/
+
+execute: |
+  # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
+  unset SNAPCRAFT_BUILD_ENVIRONMENT
+
+  rm -f ./*.snap
+  snapcraft pack
+  ls -l pc-kernel_*.snap
+
+  unsquashfs pc-kernel_*.snap
+
+  for file in bpftool cpupower perf; do
+    find squashfs-root/usr/lib/linux-tools-*/ -name "${file}" -executable | grep -q . || exit 1
+  done
+
+  # nvidia-dkms-535 has no arm64 package on 22.04; remove this guard if this
+  # test is ever updated to run on 24.04+, where arm64 packages are available.
+  if [ "$(uname -m)" = "x86_64" ]; then
+    find squashfs-root/modules/ -name "nvidia.ko" | grep -q . || exit 1
+  fi

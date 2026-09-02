@@ -16,10 +16,9 @@
 
 """Extension to the Colcon plugin for ROS 2 Jazzy."""
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Final
 
-from overrides import overrides
-from typing_extensions import Final
+from typing_extensions import override
 
 from .extension import Extension, get_extensions_data_dir
 
@@ -31,22 +30,22 @@ class ROS2JazzyExtension(Extension):
     ROS_DISTRO: Final[str] = "jazzy"
 
     @staticmethod
-    @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    @override
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core24",)
 
     @staticmethod
-    @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    @override
+    def get_supported_confinement() -> tuple[str, ...]:
         return ("strict", "devmode")
 
     @staticmethod
-    @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    @override
+    def is_experimental(base: str | None) -> bool:
         return False
 
-    @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    @override
+    def get_root_snippet(self) -> dict[str, Any]:
         return {
             "package-repositories": [
                 {
@@ -84,8 +83,8 @@ class ROS2JazzyExtension(Extension):
             },
         }
 
-    @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    @override
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         python_paths = [
             f"$SNAP/opt/ros/{self.ROS_DISTRO}/lib/python3.12/site-packages",
             "$SNAP/usr/lib/python3/dist-packages",
@@ -103,8 +102,8 @@ class ROS2JazzyExtension(Extension):
             },
         }
 
-    @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    @override
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         return {
             "build-environment": [
                 {"ROS_VERSION": self.ROS_VERSION},
@@ -112,8 +111,8 @@ class ROS2JazzyExtension(Extension):
             ]
         }
 
-    @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    @override
+    def get_parts_snippet(self) -> dict[str, Any]:
         return {
             f"ros2-{self.ROS_DISTRO}/ros2-launch": {
                 "source": f"{get_extensions_data_dir()}/ros2",

@@ -18,11 +18,15 @@
 
 import numbers
 from collections import abc
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import pydantic
 from craft_application import models
-from typing_extensions import Self
+from typing_extensions import Self, override
+
+SnapName = Annotated[str, pydantic.StringConstraints(max_length=40)]
+SnapId = Annotated[str, pydantic.StringConstraints(max_length=40)]
+Presence = Literal["required", "optional", "invalid"]
 
 
 def cast_dict_scalars_to_strings(data: dict) -> dict:
@@ -48,13 +52,13 @@ def _to_string(data: Any) -> Any:
     if isinstance(data, abc.Collection):
         return [_to_string(i) for i in data]
 
-    if isinstance(data, (numbers.Number, bool)):
+    if isinstance(data, numbers.Number | bool):
         return str(data)
 
     return data
 
 
-class Registry(models.CraftBaseModel):
+class ConfdbSchema(models.CraftBaseModel):
     """Access and data definitions for a specific facet of a snap or system."""
 
     request: str | None = None
@@ -70,24 +74,56 @@ class Registry(models.CraftBaseModel):
     """Optional nested rules."""
 
 
+class Parameter(models.CraftBaseModel):
+    """A named constraint to filter results."""
+
+    summary: str | None = None
+    """Optional summary of the parameter."""
+
+    presence: Literal[
+        "required", "required-on-read", "required-on-write", "optional"
+    ] = "optional"
+    """The scenarios where a parameter must be assigned a value."""
+
+
+class Filter(models.CraftBaseModel):
+    """A constraint on whether a parameter is required for a filter to match."""
+
+    optional: bool
+
+
 class Rules(models.CraftBaseModel):
-    """A list of registries for a particular view."""
+    """A list of confdb schemas for a particular view."""
 
-    rules: list[Registry]
+    summary: str | None = None
+    """Optional summary for this view."""
+
+    rules: list[ConfdbSchema]
+
+    parameters: dict[str, Parameter] | None = None
+    """Parameters used to create filters."""
+
+    filters: list[dict[str, Filter]] | None = None
+    """Combinations of parameters that filter which rules apply."""
 
 
-class EditableRegistryAssertion(models.CraftBaseModel):
-    """Subset of a registries assertion that can be edited by the user."""
+class EditableConfdbSchemaAssertion(models.CraftBaseModel):
+    """Subset of a confdb-schema assertion that can be edited by the user."""
 
     account_id: str
-    """Issuer of the registry assertion and owner of the signing key."""
+    """Issuer of the confdb-schema assertion and owner of the signing key."""
 
     name: str
     revision: int | None = 0
 
+    summary: str | None = None
+    """Optional summary for the entire confdb-schema."""
+
     views: dict[str, Rules]
     """A map of logical views of how the storage is accessed."""
 
+    # This is a string of json data, not the data itself. The json is awkward to edit in a yaml file.
+    # This could be changed to an 'Any' field and converted to a json string when marshaled.
     body: str | None = None
     """A JSON schema that defines the storage structure."""
 
@@ -96,13 +132,13 @@ class EditableRegistryAssertion(models.CraftBaseModel):
         return cast_dict_scalars_to_strings(self.marshal())
 
 
-class RegistryAssertion(EditableRegistryAssertion):
-    """A full registries assertion containing editable and non-editable fields."""
+class ConfdbSchemaAssertion(EditableConfdbSchemaAssertion):
+    """A full confdb-schema assertion containing editable and non-editable fields."""
 
-    type: Literal["registry"]
+    type: Literal["confdb-schema"]
 
     authority_id: str
-    """Issuer of the registry assertion and owner of the signing key."""
+    """Issuer of the confdb-schema assertion and owner of the signing key."""
 
     timestamp: str
     """Timestamp of when the assertion was issued."""
@@ -114,16 +150,165 @@ class RegistryAssertion(EditableRegistryAssertion):
     """Signing key ID."""
 
 
-class RegistriesList(models.CraftBaseModel):
-    """A list of registry assertions."""
+class Component(models.CraftBaseModel):
+    """A Component in a Validation Set."""
 
-    registry_list: list[RegistryAssertion] = pydantic.Field(default_factory=list)
+    presence: Presence
+    """Component presence"""
+
+    revision: int | None = None
+    """Component revision"""
 
 
-# this will be a union for validation sets and registries once
-# validation sets are migrated from the legacy codebase
-Assertion = RegistryAssertion
+class Snap(models.CraftBaseModel):
+    """A Snap in a Validation Set."""
 
-# this will be a union for editable validation sets and editable registries once
-# validation sets are migrated from the legacy codebase
-EditableAssertion = EditableRegistryAssertion
+    name: SnapName
+    """Snap name"""
+
+    id: SnapId | None = None
+    """Snap ID"""
+
+    presence: Presence | None = None
+    """Snap presence"""
+
+    revision: int | None = None
+    """Snap revision"""
+
+    components: dict[str, Presence | Component] | None = None
+    """Snap components"""
+
+
+class EditableValidationSetAssertion(models.CraftBaseModel):
+    """Subset of a validation-set that can be edited by the user.
+
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#request-json-schema
+    """
+
+    account_id: str
+    """The "account-id" assertion header"""
+
+    name: str
+    """The "name" assertion header"""
+
+    revision: str | None = None
+    """The "revision" assertion header"""
+
+    sequence: int
+    """The "sequence" assertion header"""
+
+    snaps: Annotated[list[Snap], pydantic.Field(min_length=1)]
+    """List of snaps in a Validation Set assertion"""
+
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
+        """Marshal the model where all scalars are represented as strings."""
+        return cast_dict_scalars_to_strings(self.marshal())
+
+
+class ValidationSetAssertion(EditableValidationSetAssertion):
+    """A full validation set containing editable and non-editable fields.
+
+    https://dashboard.snapcraft.io/docs/reference/v2/en/validation-sets.html#response-json-schema
+    """
+
+    authority_id: str
+    """The "authority-id" assertion header"""
+
+    series: str
+    """The "series" assertion header"""
+
+    sign_key_sha3_384: None = None
+    """Signing key ID."""
+
+    timestamp: str
+    """The "timestamp" assertion header"""
+
+    type: Literal["validation-set"]
+    """The "type" assertion header"""
+
+    @pydantic.model_validator(mode="before")
+    @classmethod
+    def remove_sign_key(cls, values: dict[str, Any]) -> dict[str, Any]:
+        """Accept but always ignore the sign key.
+
+        The store API can accept and return a signing key, but the original
+        implementation in Snapcraft ignored it, so it's ignored here for compatibility.
+        """
+        values.pop("sign-key-sha3-384", None)
+        return values
+
+
+class ValidationSetHeaders(models.CraftBaseModel):
+    """Assertion headers for a validation set."""
+
+    headers: ValidationSetAssertion
+    """Assertion headers"""
+
+
+class ValidationAssertion(models.CraftBaseModel):
+    """A validation assertion used to gate a snap at a specific revision.
+
+    https://documentation.ubuntu.com/core/reference/assertions/validation
+    """
+
+    assertion_type: Literal["validation"] = pydantic.Field(alias="type")
+
+    authority_id: str
+    """Issuer of the validation."""
+
+    revision: int | None = None
+    """The revision of the validation itself."""
+
+    series: str
+    """Series for which this validation applies (typically "16")."""
+
+    snap_id: str
+    """ID of the snap that constrains (gates) the approved snap."""
+
+    approved_snap_id: str
+    """ID of the snap whose updates are gated."""
+
+    approved_snap_revision: str
+    """Revision of the snap whose updates are gated."""
+
+    # Returned by the store but not in the docs
+    approved_snap_name: str | None = None
+    """Name of the snap whose updates are gated."""
+
+    # Returned by the store but not in the docs
+    sign_key_sha3_384: str | None = None
+    """Signing key ID."""
+
+    timestamp: str
+    """When the validation was issued."""
+
+    # Returned by the store but not in the docs
+    required: bool | None = None
+    """Whether this validation is required."""
+
+    revoked: bool
+    """Whether this validation has been revoked."""
+
+    @pydantic.field_serializer("revoked")
+    def _serialize_revoked(self, value: bool) -> str:
+        """The revoked field must be 'true' or 'false' (lowercase) for `snap sign`."""
+        return "true" if value else "false"
+
+    @override
+    def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:
+        """Convert to a dictionary.
+
+        Overrides the CraftBaseModel to set `exclude_none=True` since `snap sign`
+        won't accept empty values.
+        """
+        return self.model_dump(
+            mode="json", by_alias=True, exclude_unset=True, exclude_none=True
+        )
+
+    def marshal_scalars_as_strings(self) -> dict[str, Any]:
+        """Marshal the model where all scalars are represented as strings."""
+        return cast_dict_scalars_to_strings(self.marshal())
+
+
+Assertion = ConfdbSchemaAssertion | ValidationSetAssertion | ValidationAssertion
+EditableAssertion = EditableConfdbSchemaAssertion | EditableValidationSetAssertion

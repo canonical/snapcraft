@@ -1,0 +1,70 @@
+# avalonia-xaml-playground recipe, an example of an Avalonia-based app
+
+name: avalonia-xaml-playground
+base: core24
+adopt-info: xaml-playground
+icon: snap/gui/avalonia-xaml-playground.png
+summary: Avalonia XAML and C# playground
+description: |
+  The Avalonia XAML Playground application allows you to write
+  XAML and code-behind pieces of code, with Avalonia controls,
+  and seeing the results in real time.
+
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+
+parts:
+  xaml-playground:
+    plugin: dotnet
+    source: https://github.com/AvaloniaUI/XamlPlayground
+    source-type: git
+    dotnet-version: "10.0"
+    dotnet-configuration: Release
+    dotnet-project: src/XamlPlayground.NetCore/XamlPlayground.NetCore.csproj
+    dotnet-verbosity: minimal
+    override-build: |
+      version=$(git show -s --format=%h)
+      craftctl set version="${version}"
+      craftctl default
+    organize:
+      '*': opt/xamlplayground/
+
+  prereqs:
+    plugin: nil
+    after:
+      - xaml-playground
+    stage-packages:
+      - fontconfig
+      - libfontconfig1
+      - libice6
+      - libsm6
+      - libx11-6
+
+apps:
+  avalonia-xaml-playground:
+    command: opt/xamlplayground/XamlPlayground.NetCore
+    desktop: meta/gui/avalonia-xaml-playground.desktop
+    extensions: [dotnet10]
+    plugs:
+      - desktop
+      - desktop-legacy
+      - home
+      - opengl
+      - unity7
+      - wayland
+
+lint:
+  ignore:
+    - library:
+      - usr/lib/**/libICE*
+      - usr/lib/**/libicu*
+      - usr/lib/**/liblttng-ust-*
+      - usr/lib/**/libSM*
+      - usr/lib/**/libX11*
+      - usr/lib/**/libXau*
+      - usr/lib/**/libxcb*
+      - usr/lib/**/libXdmcp*

@@ -1,0 +1,59 @@
+name: project-variables
+base: core24
+version: "1.0.0"
+summary: Test evaluation of project variables in keys.
+
+# Description is a convenient key for testing project variables because it is freeform.
+# Note that this test doesn't test project variables in override scriplets,
+# since those variables are set in the build environment and are tested separately.
+description: |
+  CRAFT_ARCH_BUILD_FOR           = $CRAFT_ARCH_BUILD_FOR
+  CRAFT_ARCH_BUILD_FOR           = ${CRAFT_ARCH_BUILD_FOR}
+
+  CRAFT_ARCH_BUILD_ON            = $CRAFT_ARCH_BUILD_ON
+  CRAFT_ARCH_BUILD_ON            = ${CRAFT_ARCH_BUILD_ON}
+
+  CRAFT_ARCH_TRIPLET_BUILD_FOR   = $CRAFT_ARCH_TRIPLET_BUILD_FOR
+  CRAFT_ARCH_TRIPLET_BUILD_FOR   = ${CRAFT_ARCH_TRIPLET_BUILD_FOR}
+
+  CRAFT_ARCH_TRIPLET_BUILD_ON    = $CRAFT_ARCH_TRIPLET_BUILD_ON
+  CRAFT_ARCH_TRIPLET_BUILD_ON    = ${CRAFT_ARCH_TRIPLET_BUILD_ON}
+
+  SNAPCRAFT_PRIME                = $SNAPCRAFT_PRIME
+  SNAPCRAFT_PRIME                = ${SNAPCRAFT_PRIME}
+  CRAFT_PRIME                    = $CRAFT_PRIME
+  CRAFT_PRIME                    = ${CRAFT_PRIME}
+
+  SNAPCRAFT_PROJECT_DIR          = $SNAPCRAFT_PROJECT_DIR
+  SNAPCRAFT_PROJECT_DIR          = ${SNAPCRAFT_PROJECT_DIR}
+  CRAFT_PROJECT_DIR              = $CRAFT_PROJECT_DIR
+  CRAFT_PROJECT_DIR              = ${CRAFT_PROJECT_DIR}
+
+  SNAPCRAFT_PROJECT_GRADE        = $SNAPCRAFT_PROJECT_GRADE
+  SNAPCRAFT_PROJECT_GRADE        = ${SNAPCRAFT_PROJECT_GRADE}
+
+  SNAPCRAFT_PROJECT_NAME         = $SNAPCRAFT_PROJECT_NAME
+  SNAPCRAFT_PROJECT_NAME         = ${SNAPCRAFT_PROJECT_NAME}
+  CRAFT_PROJECT_NAME             = $CRAFT_PROJECT_NAME
+  CRAFT_PROJECT_NAME             = ${CRAFT_PROJECT_NAME}
+
+  SNAPCRAFT_PROJECT_VERSION      = $SNAPCRAFT_PROJECT_VERSION
+  SNAPCRAFT_PROJECT_VERSION      = ${SNAPCRAFT_PROJECT_VERSION}
+  CRAFT_PROJECT_VERSION          = $CRAFT_PROJECT_VERSION
+  CRAFT_PROJECT_VERSION          = ${CRAFT_PROJECT_VERSION}
+
+  SNAPCRAFT_STAGE                = $SNAPCRAFT_STAGE
+  SNAPCRAFT_STAGE                = ${SNAPCRAFT_STAGE}
+  CRAFT_STAGE                    = $CRAFT_STAGE
+  CRAFT_STAGE                    = ${CRAFT_STAGE}
+
+confinement: strict
+grade: devel
+
+parts:
+  craft-parts:
+    plugin: dump
+    source: https://github.com/canonical/craft-parts.git
+    # use a project variable in a realistic scenario
+    source-tag: "v$SNAPCRAFT_PROJECT_VERSION"
+    source-depth: 1

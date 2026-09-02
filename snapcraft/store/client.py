@@ -16,11 +16,13 @@
 
 """Snapcraft Store Client with CLI hooks."""
 
+import http
 import os
 import platform
 import time
+from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any
 
 import craft_store
 import distro
@@ -29,13 +31,14 @@ import requests
 from craft_application.util.error_formatting import format_pydantic_errors
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import __version__, errors, models, utils
-from snapcraft_legacy.storeapi.v2.releases import Releases as Revisions
+from snapcraft.models import MetricsResponse, Releases
 
-from . import channel_map, constants
+from . import _metadata, channel_map, constants
 from ._legacy_account import LegacyUbuntuOne
+from .errors import NoSnapIdError, SnapNotFoundError
 from .onprem_client import ON_PREM_ENDPOINTS, OnPremClient
 
 _POLL_DELAY = 1
@@ -48,19 +51,12 @@ _HUMAN_STATUS = {
 }
 
 
-def build_user_agent(
-    version=__version__,
-):
+def build_user_agent(version: str = __version__):
     """Build Snapcraft's user agent."""
     dist_id = distro.id()
     dist_version = distro.version()
     dist_arch = DebianArchitecture.from_host().to_platform_arch()
     return f"snapcraft/{version} {dist_id}/{dist_version} ({dist_arch})"
-
-
-def use_candid() -> bool:
-    """Return True if using candid as the auth backend."""
-    return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "candid"
 
 
 def is_onprem() -> bool:
@@ -86,7 +82,7 @@ def get_store_login_url() -> str:
     return os.getenv("UBUNTU_ONE_SSO_URL", constants.UBUNTU_ONE_SSO_URL)
 
 
-def _prompt_login() -> Tuple[str, str]:
+def _prompt_login() -> tuple[str, str]:
     emit.message("Enter your Ubuntu One e-mail address and password.")
     emit.message(
         "If you do not have an Ubuntu One account, you can create one "
@@ -99,9 +95,7 @@ def _prompt_login() -> Tuple[str, str]:
 
 
 def _get_hostname(
-    hostname: Optional[
-        str
-    ] = platform.node(),  # noqa: B008 Function call in arg defaults
+    hostname: str | None = platform.node(),  # noqa: B008 Function call in arg defaults
 ) -> str:
     """Return the computer's network name or UNNKOWN if it cannot be determined."""
     if not hostname:
@@ -145,16 +139,6 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
             environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
             ephemeral=ephemeral,
         )
-    elif use_candid() is True:
-        client = craft_store.StoreClient(
-            base_url=store_url,
-            storage_base_url=store_upload_url,
-            application_name="snapcraft",
-            user_agent=user_agent,
-            endpoints=craft_store.endpoints.SNAP_STORE,
-            environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
-            ephemeral=ephemeral,
-        )
     else:
         client = craft_store.UbuntuOneStoreClient(
             base_url=store_url,
@@ -173,7 +157,7 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
 class LegacyStoreClientCLI:
     """A BaseClient implementation considering command line prompts."""
 
-    def __init__(self, ephemeral=False):
+    def __init__(self, ephemeral: bool = False):
         self.store_client = get_client(ephemeral=ephemeral)
         self._base_url = get_store_url()
 
@@ -181,19 +165,19 @@ class LegacyStoreClientCLI:
         self,
         *,
         ttl: int = int(timedelta(days=365).total_seconds()),  # noqa: B008
-        acls: Optional[Sequence[str]] = None,
-        packages: Optional[Sequence[str]] = None,
-        channels: Optional[Sequence[str]] = None,
+        acls: Sequence[str] | None = None,
+        packages: Sequence[str] | None = None,
+        channels: Sequence[str] | None = None,
         **kwargs,
     ) -> str:
         """Log in to the Snap Store and prompt if required."""
         if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
             raise errors.SnapcraftError(
-                f"Cannot login with {constants.ENVIRONMENT_STORE_CREDENTIALS!r} set.",
-                resolution=f"Unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
+                f"Login is not required if {constants.ENVIRONMENT_STORE_CREDENTIALS!r} is set.",
+                resolution=f"Continue without running 'login', or unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
             )
 
-        if not is_onprem() and use_candid() is False:
+        if not is_onprem():
             kwargs["email"], kwargs["password"] = _prompt_login()
 
         if packages is None:
@@ -248,7 +232,7 @@ class LegacyStoreClientCLI:
         try:
             return self.store_client.request(*args, **kwargs)
         except craft_store.errors.StoreServerError as store_error:
-            if store_error.response.status_code == requests.codes.unauthorized:
+            if store_error.response.status_code == http.HTTPStatus.UNAUTHORIZED:
                 if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
                     raise errors.StoreCredentialsUnauthorizedError(
                         "Exported credentials are no longer valid for the Snap Store.",
@@ -282,7 +266,7 @@ class LegacyStoreClientCLI:
         snap_name: str,
         *,
         is_private: bool = False,
-        store_id: Optional[str] = None,
+        store_id: str | None = None,
     ) -> None:
         """Register snap_name with the Snap Store.
 
@@ -304,6 +288,17 @@ class LegacyStoreClientCLI:
             json=data,
         )
 
+    def register_key(self, account_key_request: str) -> None:
+        """Register a key with the Snap Store.
+
+        :param account_key_request: The serialized key assertion.
+        """
+        self.request(
+            "POST",
+            self._base_url + "/dev/api/account/account-key",
+            json={"account_key_request": account_key_request},
+        )
+
     def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
         """Return the channel map for snap_name."""
         response = self.request(
@@ -318,7 +313,7 @@ class LegacyStoreClientCLI:
 
     def get_account_info(
         self,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return account information."""
         return self.request(
             "GET",
@@ -326,11 +321,11 @@ class LegacyStoreClientCLI:
             headers={"Accept": "application/json"},
         ).json()
 
-    def get_names(self) -> List[Tuple[str, str, str, str]]:
+    def get_names(self) -> list[tuple[str, str, str, str]]:
         """Return a table with the registered names and status."""
         account_info = self.get_account_info()
 
-        snaps: List[Tuple[str, str, str, str]] = [
+        snaps: list[tuple[str, str, str, str]] = [
             (
                 name,
                 info["since"],
@@ -352,7 +347,7 @@ class LegacyStoreClientCLI:
         *,
         revision: int,
         channels: Sequence[str],
-        progressive_percentage: Optional[int] = None,
+        progressive_percentage: int | None = None,
     ) -> None:
         """Register snap_name with the Snap Store.
 
@@ -361,7 +356,7 @@ class LegacyStoreClientCLI:
         :param channels: the channels to release to
         :param progressive_percentage: enable progressive releases up to a given percentage
         """
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "name": snap_name,
             "revision": str(revision),
             "channels": channels,
@@ -401,6 +396,38 @@ class LegacyStoreClientCLI:
             json={"channels": [channel]},
         )
 
+    def get_snap_status(self, snap_name: str) -> dict[str, Any]:
+        """Return the v1 channel map for snap_name.
+
+        Makes two calls: one to /dev/api/account for the snap-id, then
+        GET /dev/api/snaps/<snap_id>/state?series=16 which returns the full
+        channel map tree including arches with no release (info: "none").
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError as key_error:
+            emit.debug(f"{key_error!r} not found in {account_info!r}")
+            raise errors.SnapcraftError(
+                f"{snap_name!r} not found or not owned by this account"
+            ) from key_error
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        response = self.request(
+            "GET",
+            self._base_url + f"/dev/api/snaps/{snap_id}/state",
+            params={"series": constants.DEFAULT_SERIES},
+        )
+
+        if not response:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        return response.json()
+
     def verify_upload(
         self,
         *,
@@ -420,15 +447,85 @@ class LegacyStoreClientCLI:
             },
         )
 
-    def notify_upload(  # noqa: PLR0913[too-many-arguments]
+    def upload_metadata(
+        self,
+        *,
+        snap_name: str,
+        metadata: dict[str, Any],
+        force: bool,
+    ) -> None:
+        """Upload snap metadata to the Store.
+
+        :param snap_name: the name of the snap to upload metadata for
+        :param metadata: the metadata to upload
+        :param force: if True, overwrite conflicting metadata in the store
+
+        :raises SnapNotFoundError: if the snap can't be found on the store
+        :raises NoSnapIdError: if the snap doesn't have an ID
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        metadata_handler = _metadata.StoreMetadataHandler(
+            base_url=self._base_url,
+            request_method=self.request,
+            snap_id=snap_id,
+            snap_name=snap_name,
+        )
+        metadata_handler.upload(metadata, force)
+
+    def upload_binary_metadata(
+        self,
+        *,
+        snap_name: str,
+        metadata: dict[str, Any],
+        force: bool,
+    ) -> None:
+        """Upload snap binary metadata (e.g. icon) to the Store.
+
+        :param snap_name: the name of the snap to upload binary metadata for
+        :param metadata: the binary metadata to upload
+        :param force: if True, overwrite conflicting metadata in the Store
+
+        :raises SnapNotFoundError: if the snap can't be found on the store
+        :raises NoSnapIdError: if the snap doesn't have an ID
+        """
+        account_info = self.get_account_info()
+        try:
+            snap_id = account_info["snaps"][constants.DEFAULT_SERIES][snap_name][
+                "snap-id"
+            ]
+        except KeyError:
+            raise SnapNotFoundError(snap_name=snap_name)
+
+        if snap_id is None:
+            raise NoSnapIdError(snap_name)
+
+        metadata_handler = _metadata.StoreMetadataHandler(
+            base_url=self._base_url,
+            request_method=self.request,
+            snap_id=snap_id,
+            snap_name=snap_name,
+        )
+        metadata_handler.upload_binary(metadata, force)
+
+    def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
         snap_name: str,
         upload_id: str,
         snap_file_size: int,
-        built_at: Optional[str],
-        channels: Optional[Sequence[str]],
-        components: Optional[Dict[str, str]],
+        built_at: str | None,
+        channels: Sequence[str] | None,
+        components: dict[str, str] | None,
     ) -> int:
         """Notify an upload to the Snap Store.
 
@@ -440,7 +537,7 @@ class LegacyStoreClientCLI:
         :param components: A dictionary of component names to component upload-ids.
         :returns: the snap's processed revision
         """
-        data = {
+        data: dict[str, Any] = {
             "name": snap_name,
             "series": constants.DEFAULT_SERIES,
             "updown_id": upload_id,
@@ -485,8 +582,12 @@ class LegacyStoreClientCLI:
 
         return status["revision"]
 
-    def list_revisions(self, snap_name: str) -> Revisions:
-        """Return a list of available revisions for snap_name.
+    def list_releases(self, snap_name: str) -> Releases:
+        """Returns a list of releases and related revisions.
+
+        This is the data shown on the 'Releases' page of the Snap Store for a snap, where
+        you are shown a table of releases for each channel and a list of recent revisions
+        available to release.
 
         :param snap_name: the name of the snap to query.
         """
@@ -499,32 +600,136 @@ class LegacyStoreClientCLI:
             },
         )
 
-        return Revisions.unmarshal(response.json())
+        return Releases.unmarshal(response.json())
 
     @staticmethod
-    def _unmarshal_registries_set(registries_data) -> models.RegistryAssertion:
-        """Unmarshal a registries set.
+    def _unmarshal_validation(
+        validation_data: dict[str, Any],
+    ) -> models.ValidationAssertion:
+        """Unmarshal a validation.
 
-        :raises StoreAssertionError: If the registries set cannot be unmarshalled.
+        :raises StoreAssertionError: If the validation cannot be unmarshalled.
         """
         try:
-            return models.RegistryAssertion.unmarshal(registries_data)
+            return models.ValidationAssertion.unmarshal(validation_data)
         except pydantic.ValidationError as err:
             raise errors.SnapcraftAssertionError(
-                message="Received invalid registries set from the store",
+                message="Received invalid validation from the store",
                 # this is an unexpected failure that the user can't fix, so hide
                 # the response in the details
-                details=f"{format_pydantic_errors(err.errors(), file_name='registries set')}",
+                details=f"{format_pydantic_errors(err.errors(), file_name='validation')}",
             ) from err
 
-    def list_registries(
-        self, *, name: str | None = None
-    ) -> list[models.RegistryAssertion]:
-        """Return a list of registries.
+    def list_validations(
+        self,
+        snap_id: str,
+        params: dict[str, Any] | None = None,
+    ) -> list[models.ValidationAssertion]:
+        """Return a list of validations for snap_id.
 
-        :param name: If specified, only list the registry set with that name.
+        Not to be confused with the 'list_validation_sets' call.
+
+        :param snap_id: the id of the snap to query.
+        :param params: Optional query parameters.
+
+        :returns: A list of validations.
         """
-        endpoint = f"{self._base_url}/api/v2/registries"
+        response = self.request(
+            "GET",
+            f"{self._base_url}/dev/api/snaps/{snap_id}/validations",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            params=params,
+        )
+
+        validations = []
+        if assertions := response.json():
+            for assertion_data in assertions:
+                emit.debug(f"Parsing validation {assertion_data}")
+                assertion = self._unmarshal_validation(assertion_data)
+                validations.append(assertion)
+                emit.debug(f"Parsed validation: {assertion.model_dump_json()}")
+
+        return validations
+
+    def post_validation(self, snap_id: str, validation: bytes) -> None:
+        """Post a signed validation for snap_id.
+
+        Not to be confused with the 'post_validation_set' call.
+
+        :param snap_id: The ID of the snap.
+        :param validation: The signed validations bytes.
+        """
+        self.request(
+            "PUT",
+            f"{self._base_url}/dev/api/snaps/{snap_id}/validations",
+            json={"assertion": validation.decode("utf-8")},
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+    def get_snap_info(
+        self,
+        snap_name: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Return the snap ID for the given snap name.
+
+        Uses the public snap info endpoint, which can't see private snaps.
+
+        :param snap_name: The name of the snap.
+        :param params: Optional query parameters.
+
+        :returns: A dict of snap information.
+
+        :raises SnapNotFoundError: If the snap is not found.
+        """
+        try:
+            response = self.request(
+                "GET",
+                f"{self._base_url}/v2/snaps/info/{snap_name}",
+                headers={
+                    "Accept": "application/json",
+                    "Snap-Device-Series": constants.DEFAULT_SERIES,
+                },
+                params=params,
+            )
+        except craft_store.errors.StoreServerError as store_error:
+            if store_error.response.status_code == http.HTTPStatus.NOT_FOUND:
+                raise SnapNotFoundError(snap_name=snap_name) from store_error
+            raise
+        return response.json()
+
+    @staticmethod
+    def _unmarshal_confdb_schema(
+        confdb_schema_data: dict[str, Any],
+    ) -> models.ConfdbSchemaAssertion:
+        """Unmarshal a confdb schema.
+
+        :raises StoreAssertionError: If the confdb schema cannot be unmarshalled.
+        """
+        try:
+            return models.ConfdbSchemaAssertion.unmarshal(confdb_schema_data)
+        except pydantic.ValidationError as err:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid confdb schema from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"{format_pydantic_errors(err.errors(), file_name='confdb schema')}",
+            ) from err
+
+    def list_confdb_schemas(
+        self, *, name: str | None = None
+    ) -> list[models.ConfdbSchemaAssertion]:
+        """Return a list of confdb schemas.
+
+        :param name: If specified, only list the confdb schema with that name.
+        """
+        endpoint = f"{self._base_url}/api/v2/confdb-schemas"
         if name:
             endpoint += f"/{name}"
 
@@ -537,66 +742,68 @@ class LegacyStoreClientCLI:
             },
         )
 
-        registry_assertions = []
+        confdb_assertions = []
         if assertions := response.json().get("assertions"):
             for assertion_data in assertions:
                 # move body into model
                 assertion_data["headers"]["body"] = assertion_data.get("body")
 
-                assertion = self._unmarshal_registries_set(assertion_data["headers"])
-                registry_assertions.append(assertion)
-                emit.debug(f"Parsed registries set: {assertion.model_dump_json()}")
+                assertion = self._unmarshal_confdb_schema(assertion_data["headers"])
+                confdb_assertions.append(assertion)
+                emit.debug(f"Parsed confdb schema: {assertion.model_dump_json()}")
 
-        return registry_assertions
+        return confdb_assertions
 
-    def build_registries(
-        self, *, registries: models.EditableRegistryAssertion
-    ) -> models.RegistryAssertion:
-        """Build a registries set.
+    def build_confdb_schema(
+        self, *, confdb_schema: models.EditableConfdbSchemaAssertion
+    ) -> models.ConfdbSchemaAssertion:
+        """Build a confdb schema.
 
-        Sends an edited registries set to the store, which validates the data,
-        populates additional fields, and returns the registries set.
+        Sends an edited confdb schema to the store, which validates the data,
+        populates additional fields, and returns the confdb schema.
 
-        :param registries: The registries set to build.
+        :param confdb_schema: The confdb schema to build.
 
-        :returns: The built registries set.
+        :returns: The built confdb schema.
         """
         response = self.request(
             "POST",
-            f"{self._base_url}/api/v2/registries/build-assertion",
+            f"{self._base_url}/api/v2/confdb-schemas/build-assertion",
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             },
-            json=registries.marshal(),
+            json=confdb_schema.marshal(),
         )
 
-        assertion = self._unmarshal_registries_set(response.json())
-        emit.debug(f"Built registries set: {assertion.model_dump_json()}")
+        assertion = self._unmarshal_confdb_schema(response.json())
+        emit.debug(f"Built confdb schema: {assertion.model_dump_json()}")
         return assertion
 
-    def post_registries(self, *, registries_data: bytes) -> models.RegistryAssertion:
-        """Send a registries set to be published.
+    def post_confdb_schema(
+        self, *, confdb_schema_data: bytes
+    ) -> models.ConfdbSchemaAssertion:
+        """Send a confdb schema to be published.
 
-        :param registries_data: A signed registries set represented as bytes.
+        :param confdb_schema_data: A signed confdb schema represented as bytes.
 
         :returns: The published assertion.
         """
         response = self.request(
             "POST",
-            f"{self._base_url}/api/v2/registries",
+            f"{self._base_url}/api/v2/confdb-schemas",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/x.ubuntu.assertion",
             },
-            data=registries_data,
+            data=confdb_schema_data,
         )
 
         assertions = response.json().get("assertions")
 
         if not assertions or len(assertions) != 1:
             raise errors.SnapcraftAssertionError(
-                message="Received invalid registries set from the store",
+                message="Received invalid confdb schema from the store",
                 # this is an unexpected failure that the user can't fix, so hide
                 # the response in the details
                 details=f"Received data: {assertions}",
@@ -605,19 +812,151 @@ class LegacyStoreClientCLI:
         # move body into model
         assertions[0]["headers"]["body"] = assertions[0]["body"]
 
-        assertion = self._unmarshal_registries_set(assertions[0]["headers"])
-        emit.debug(f"Published registries set: {assertion.model_dump_json()}")
+        assertion = self._unmarshal_confdb_schema(assertions[0]["headers"])
+        emit.debug(f"Published confdb schema: {assertion.model_dump_json()}")
         return assertion
+
+    @staticmethod
+    def _unmarshal_validation_set(
+        validation_set_data: dict[str, Any],
+    ) -> models.ValidationSetAssertion:
+        """Unmarshal a validation set.
+
+        :raises StoreAssertionError: If the validation set cannot be unmarshalled.
+        """
+        try:
+            return models.ValidationSetAssertion.unmarshal(validation_set_data)
+        except pydantic.ValidationError as err:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid validation set from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"{format_pydantic_errors(err.errors(), file_name='validation set')}",
+            ) from err
+
+    def list_validation_sets(
+        self, *, name: str | None = None, sequence: str | None = None
+    ) -> list[models.ValidationSetAssertion]:
+        """Return a list of validation sets.
+
+        :param name: If specified, only list the validation set with that name.
+        :param name: The sequences to list.
+        """
+        endpoint = f"{self._base_url}/api/v2/validation-sets"
+        if name:
+            endpoint += f"/{name}"
+
+        params = dict()
+        if sequence:
+            params["sequence"] = sequence
+
+        response = self.request(
+            "GET",
+            endpoint,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            params=params,
+        )
+
+        validation_sets = []
+        if assertions := response.json().get("assertions"):
+            for assertion_data in assertions:
+                assertion = self._unmarshal_validation_set(assertion_data["headers"])
+                validation_sets.append(assertion)
+                emit.debug(f"Parsed validation sets: {assertion.model_dump_json()}")
+
+        return validation_sets
+
+    def build_validation_set(
+        self, *, validation_set: models.EditableValidationSetAssertion
+    ) -> models.ValidationSetAssertion:
+        """Build a validation set.
+
+        Sends an edited validation set to the store, which validates the data,
+        populates additional fields, and returns the validation set.
+
+        :param validation_set: The validation set to build.
+
+        :returns: The built validation set.
+        """
+        response = self.request(
+            "POST",
+            f"{self._base_url}/api/v2/validation-sets/build-assertion",
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=validation_set.marshal(),
+        )
+
+        assertion = self._unmarshal_validation_set(response.json())
+        emit.debug(f"Built validation set: {assertion.model_dump_json()}")
+        return assertion
+
+    def post_validation_set(
+        self, *, validation_set_data: bytes
+    ) -> models.ValidationSetAssertion:
+        """Send a validation set to be published.
+
+        :param validation_set_data: A signed validation set represented as bytes.
+
+        :returns: The published assertion.
+        """
+        response = self.request(
+            "POST",
+            f"{self._base_url}/api/v2/validation-sets",
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/x.ubuntu.assertion",
+            },
+            data=validation_set_data,
+        )
+
+        assertions = response.json().get("assertions")
+
+        if not assertions or len(assertions) != 1:
+            raise errors.SnapcraftAssertionError(
+                message="Received invalid validation set from the store",
+                # this is an unexpected failure that the user can't fix, so hide
+                # the response in the details
+                details=f"Received data: {assertions}",
+            )
+
+        assertion = self._unmarshal_validation_set(assertions[0]["headers"])
+        emit.debug(f"Published validation set: {assertion.model_dump_json()}")
+        return assertion
+
+    def get_metrics(
+        self,
+        *,
+        filters: list[dict[str, str]],
+    ) -> MetricsResponse:
+        return MetricsResponse.unmarshal(
+            self.request(
+                "POST",
+                self._base_url + "/dev/api/snaps/metrics",
+                json={"filters": filters},
+            ).json()
+        )
+
+    def push_snap_build(self, snap_id: str, snap_build: str) -> None:
+        self.request(
+            "POST",
+            self._base_url + f"/dev/api/snaps/{snap_id}/builds",
+            json={"assertion": snap_build},
+        )
 
 
 class OnPremStoreClientCLI(LegacyStoreClientCLI):
     """On Premises Store Client command line interface."""
 
-    @overrides
+    @override
     def request(self, *args, **kwargs) -> requests.Response:
         return self.store_client.request(*args, **kwargs)
 
-    @overrides
+    @override
     def verify_upload(
         self,
         *,
@@ -625,16 +964,16 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
     ) -> None:
         emit.debug(f"Skipping verification for {snap_name!r}")
 
-    @overrides
-    def notify_upload(  # noqa: PLR0913[too-many-arguments]
+    @override
+    def notify_upload(  # noqa: PLR0913 (too-many-arguments)
         self,
         *,
         snap_name: str,
         upload_id: str,
         snap_file_size: int,
-        built_at: Optional[str],
-        channels: Optional[Sequence[str]],
-        components: Optional[Dict[str, str]],
+        built_at: str | None,
+        channels: Sequence[str] | None,
+        components: dict[str, str] | None,
     ) -> int:
         if channels:
             raise errors.SnapcraftError("Releasing during currently unsupported")
@@ -643,16 +982,13 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
                 "Components are currently unsupported for on-prem stores"
             )
         emit.debug(
-            f"Ignoring snap_file_size of {snap_file_size!r} and "
-            f"built_at {built_at!r}"
+            f"Ignoring snap_file_size of {snap_file_size!r} and built_at {built_at!r}"
         )
 
-        revision_request = cast(
-            craft_store.models.RevisionsRequestModel,
-            craft_store.models.RevisionsRequestModel.unmarshal(
-                {"upload-id": upload_id}
-            ),
+        revision_request = craft_store.models.RevisionsRequestModel.unmarshal(
+            {"upload-id": upload_id}
         )
+
         revision_response = self.store_client.notify_revision(
             name=snap_name, revision_request=revision_request
         )
@@ -676,14 +1012,14 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
                 )
             time.sleep(_POLL_DELAY)
 
-    @overrides
+    @override
     def release(
         self,
         snap_name: str,
         *,
-        revision: Optional[int],
+        revision: int | None,
         channels: Sequence[str],
-        progressive_percentage: Optional[int] = None,
+        progressive_percentage: int | None = None,
     ) -> None:
         if progressive_percentage is not None:
             raise errors.SnapcraftError("Progressive percentage currently unsupported")
@@ -696,11 +1032,11 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             json=payload,
         )
 
-    @overrides
-    def close(self, snap_name: str, channel) -> None:
+    @override
+    def close(self, snap_name: str, channel: str) -> None:
         self.release(snap_name=snap_name, revision=None, channels=[channel])
 
-    @overrides
+    @override
     def get_channel_map(self, *, snap_name: str) -> channel_map.ChannelMap:
         response = self.request(
             "GET",
@@ -709,14 +1045,11 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         )
 
         return channel_map.ChannelMap.from_list_releases(
-            cast(
-                craft_store.models.SnapListReleasesModel,
-                craft_store.models.SnapListReleasesModel.unmarshal(response.json()),
-            )
+            craft_store.models.SnapListReleasesModel.unmarshal(response.json())
         )
 
-    @overrides
-    def list_revisions(self, snap_name: str) -> Revisions:
+    @override
+    def list_releases(self, snap_name: str) -> Releases:
         response = self.request(
             "GET",
             f"{self._base_url}/v1/snap/{snap_name}/revisions",
@@ -726,7 +1059,7 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
             },
         )
 
-        return Revisions.unmarshal(response.json())
+        return Releases.unmarshal(response.json())
 
 
 # We have two stores with a rather different implementation.

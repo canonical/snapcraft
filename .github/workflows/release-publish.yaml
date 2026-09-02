@@ -1,0 +1,23 @@
+name: Release
+on:
+  push:
+    tags:
+      # These tags should be protected, remember to enable the rule:
+      # https://github.com/canonical/starbase/settings/tag_protection
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  github-release:
+    runs-on: [self-hosted]
+    permissions:
+      contents: write
+    steps:
+      - name: Create a Prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --repo "${{ github.repository }}" \
+            --generate-notes \
+            --prerelease

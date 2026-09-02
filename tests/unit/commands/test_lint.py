@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import shlex
 import sys
 from pathlib import Path
@@ -25,7 +26,7 @@ import pytest
 from craft_providers.bases import BuilddBaseAlias
 from craft_providers.multipass import MultipassProvider
 
-from snapcraft import application, models
+from snapcraft import application, const, models
 from snapcraft.commands.lint import LintCommand
 from snapcraft.errors import SnapcraftError
 from snapcraft.meta.snap_yaml import SnapMetadata
@@ -121,6 +122,14 @@ def mock_run_linters(mocker):
 @pytest.fixture
 def mock_report(mocker):
     return mocker.patch("snapcraft.commands.lint.linters.report")
+
+
+@pytest.fixture
+def mock_unsquash_snap(mocker, tmp_path):
+    return mocker.patch(
+        "snapcraft.commands.lint.unsquash_snap",
+        return_value=contextlib.nullcontext(tmp_path),
+    )
 
 
 def test_lint_default(
@@ -359,6 +368,7 @@ def test_lint_managed_mode(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """Run the linter in managed mode."""
@@ -366,11 +376,6 @@ def test_lint_managed_mode(
 
     # create a snap file
     fake_snap_file.touch()
-
-    # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
 
     # build snap install command
     command = ["snap", "install", str(fake_snap_file)]
@@ -394,6 +399,7 @@ def test_lint_managed_mode(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
@@ -405,7 +411,6 @@ def test_lint_managed_mode(
         [
             call("progress", "Running linter.", permanent=True),
             call("debug", f"Assertion file {str(fake_assert_file)!r} does not exist."),
-            call("progress", f"Unsquashing snap file {fake_snap_file.name!r}."),
             call("progress", f"Installing snap with {shlex.join(command)!r}."),
             call("verbose", "No lint filters defined in 'snapcraft.yaml'."),
         ]
@@ -423,6 +428,7 @@ def test_lint_managed_mode_without_snapcraft_yaml(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """Run the linter in managed mode without a snapcraft.yaml file."""
@@ -432,9 +438,6 @@ def test_lint_managed_mode_without_snapcraft_yaml(
     fake_snap_file.touch()
 
     # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
     fake_process.register_subprocess(
         ["snap", "install", str(fake_snap_file), "--dangerous"]
     )
@@ -450,6 +453,7 @@ def test_lint_managed_mode_without_snapcraft_yaml(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
@@ -461,7 +465,6 @@ def test_lint_managed_mode_without_snapcraft_yaml(
         [
             call("progress", "Running linter.", permanent=True),
             call("debug", f"Assertion file {str(fake_assert_file)!r} does not exist."),
-            call("progress", f"Unsquashing snap file {fake_snap_file.name!r}."),
             call(
                 "progress",
                 f"Installing snap with 'snap install {str(fake_snap_file)} "
@@ -479,35 +482,24 @@ def test_lint_managed_mode_without_snapcraft_yaml(
 def test_lint_managed_mode_unsquash_error(
     capsys,
     emitter,
-    fake_process,
     fake_snap_file,
-    fake_snap_metadata,
-    fake_snapcraft_project,
     mock_argv,
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
     mocker,
 ):
-    """Raise an error if the snap file cannot be installed."""
+    """Raise an error if the snap file cannot be unsquashed."""
     mock_is_managed_mode.return_value = True
 
     # create a snap file
     fake_snap_file.touch()
 
-    # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)],
-        returncode=1,
-    )
-
-    # mock data from the unsquashed snap
     mocker.patch(
-        "snapcraft.commands.lint.snap_yaml.read", return_value=fake_snap_metadata
-    )
-    mocker.patch(
-        "snapcraft.commands.lint.LintCommand._load_project",
-        return_value=fake_snapcraft_project,
+        "snapcraft.commands.lint.unsquash_snap",
+        side_effect=SnapcraftError(
+            f"could not unsquash snap file {fake_snap_file.name!r}"
+        ),
     )
 
     application.main()
@@ -528,6 +520,7 @@ def test_lint_managed_mode_snap_install_error(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """Raise an error if the snap file cannot be installed."""
@@ -537,9 +530,6 @@ def test_lint_managed_mode_snap_install_error(
     fake_snap_file.touch()
 
     # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
     fake_process.register_subprocess(
         ["snap", "install", str(fake_snap_file), "--dangerous"], returncode=1
     )
@@ -571,6 +561,7 @@ def test_lint_managed_mode_assert(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """Run the linter in managed mode with an assert file."""
@@ -581,9 +572,6 @@ def test_lint_managed_mode_assert(
     fake_assert_file.touch()
 
     # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
     fake_process.register_subprocess(["snap", "ack", str(fake_assert_file)])
     fake_process.register_subprocess(["snap", "install", str(fake_snap_file)])
 
@@ -598,6 +586,7 @@ def test_lint_managed_mode_assert(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
@@ -609,7 +598,6 @@ def test_lint_managed_mode_assert(
         [
             call("progress", "Running linter.", permanent=True),
             call("debug", f"Found assertion file {str(fake_assert_file)!r}."),
-            call("progress", "Unsquashing snap file 'test-snap.snap'."),
             call(
                 "progress",
                 f"Installing assertion file with 'snap ack {fake_assert_file}'.",
@@ -631,6 +619,7 @@ def test_lint_managed_mode_assert_error(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
 ):
     """If the assert file fails to be installed, install the snap dangerously."""
@@ -641,9 +630,6 @@ def test_lint_managed_mode_assert_error(
     fake_assert_file.touch()
 
     # register subprocess calls
-    fake_process.register_subprocess(
-        ["unsquashfs", "-force", "-dest", fake_process.any(), str(fake_snap_file)]
-    )
     fake_process.register_subprocess(
         ["snap", "ack", str(fake_assert_file)], returncode=1
     )
@@ -662,6 +648,7 @@ def test_lint_managed_mode_assert_error(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     mock_run_linters.assert_called_once_with(
         lint=models.Lint(ignore=["classic"]),
         location=Path("/snap/test/current"),
@@ -673,7 +660,6 @@ def test_lint_managed_mode_assert_error(
         [
             call("progress", "Running linter.", permanent=True),
             call("debug", f"Found assertion file {str(fake_assert_file)!r}."),
-            call("progress", "Unsquashing snap file 'test-snap.snap'."),
             call(
                 "progress",
                 f"Installing assertion file with 'snap ack {fake_assert_file}'.",
@@ -733,6 +719,7 @@ def test_lint_managed_mode_with_lint_config(
     mock_is_managed_mode,
     mock_report,
     mock_run_linters,
+    mock_unsquash_snap,
     mocker,
     project_lint,
 ):
@@ -757,6 +744,7 @@ def test_lint_managed_mode_with_lint_config(
 
     application.main()
 
+    mock_unsquash_snap.assert_called_once()
     # lint config from project should be passed to `run_linter()`
     mock_run_linters.assert_called_once_with(
         lint=expected_lint, location=Path("/snap/test/current")
@@ -767,87 +755,96 @@ def test_lint_managed_mode_with_lint_config(
     emitter.assert_verbose("Collected lint config from 'snapcraft.yaml'.")
 
 
-def test_load_project(fake_snapcraft_project, tmp_path):
+@pytest.mark.parametrize(
+    "snapcraft_yaml_data",
+    [
+        {
+            "name": "test-name",
+            "version": "1.0",
+            "summary": "test summary",
+            "description": "test description",
+            "base": "core22",
+            "confinement": "strict",
+            "grade": "stable",
+            "parts": {
+                "part1": {
+                    "plugin": "nil",
+                }
+            },
+        }
+    ],
+)
+def test_load_project(
+    snapcraft_yaml_data,
+    snapcraft_yaml,
+    fake_snapcraft_project,
+    tmp_path,
+    fake_app_config,
+):
     """Load a simple snapcraft.yaml project.
 
     To simplify the unit tests, the `_load_project()` method is mocked out of the other
     tests and tested separately.
     """
-    # create a simple snapcraft.yaml
-    (tmp_path / "snap").mkdir()
-    snap_file = tmp_path / "snap/snapcraft.yaml"
-    with snap_file.open("w") as yaml_file:
-        print(
-            dedent(
-                """\
-                name: test-name
-                version: "1.0"
-                summary: test summary
-                description: test description
-                base: core22
-                confinement: strict
-                grade: stable
+    filename = "snap/snapcraft.yaml"
+    snapcraft_yaml(filename=filename, **snapcraft_yaml_data)
 
-                parts:
-                  part1:
-                    plugin: nil
-                """
-            ),
-            file=yaml_file,
-        )
-
-    result = LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
+    result = LintCommand(fake_app_config)._load_project(
+        snapcraft_yaml_file=Path(filename)
+    )
 
     assert result == fake_snapcraft_project
 
 
+@pytest.mark.parametrize(
+    "snapcraft_yaml_data",
+    [
+        {
+            "name": "test-name",
+            "version": "1.0",
+            "summary": "test summary",
+            "description": "test description",
+            "base": "core22",
+            "confinement": "strict",
+            "grade": "stable",
+            "architectures": ["amd64", "arm64", "armhf"],
+            "apps": {
+                "app1": {
+                    "command": "app1",
+                    "command-chain": ["fake-command"],
+                    "extensions": ["fake-extension"],
+                },
+            },
+            "parts": {
+                "nil": {
+                    "plugin": "nil",
+                    "parse-info": ["usr/share/metainfo/app1.appdata.xml"],
+                    "stage-packages": [
+                        "mesa-opencl-icd",
+                        "ocl-icd-libopencl1",
+                        {"on amd64": ["intel-opencl-icd"]},
+                    ],
+                }
+            },
+        }
+    ],
+)
 @pytest.mark.usefixtures("fake_extension")
-def test_load_project_complex(mocker, tmp_path):
+def test_load_project_complex(
+    snapcraft_yaml_data, snapcraft_yaml, mocker, tmp_path, fake_app_config
+):
     """Load a complex snapcraft file.
 
     This includes lint, parse-info, architectures, and advanced grammar.
     """
+    filename = "snap/snapcraft.yaml"
+    snapcraft_yaml(filename=filename, **snapcraft_yaml_data)
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch("craft_platforms.DebianArchitecture.from_host", return_value="amd64")
 
-    # create a snap file
-    (tmp_path / "snap").mkdir()
-    snap_file = tmp_path / "snap/snapcraft.yaml"
-    with snap_file.open("w") as yaml_file:
-        print(
-            dedent(
-                """\
-                name: test-name
-                version: "1.0"
-                summary: test summary
-                description: test description
-                base: core22
-                confinement: strict
-                grade: stable
-                architectures: [amd64, arm64, armhf]
-
-                apps:
-                  app1:
-                    command: app1
-                    command-chain: [fake-command]
-                    extensions: [fake-extension]
-
-                parts:
-                  nil:
-                    plugin: nil
-                    parse-info:
-                      - usr/share/metainfo/app1.appdata.xml
-                    stage-packages:
-                      - mesa-opencl-icd
-                      - ocl-icd-libopencl1
-                      - on amd64:
-                        - intel-opencl-icd
-                """
-            ),
-            file=yaml_file,
-        )
-
-    result = LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
+    result = LintCommand(fake_app_config)._load_project(
+        snapcraft_yaml_file=Path(filename)
+    )
     assert result == models.Project.unmarshal(
         {
             "name": "test-name",
@@ -881,19 +878,21 @@ def test_load_project_complex(mocker, tmp_path):
     )
 
 
-def test_load_project_no_file(emitter, tmp_path):
+def test_load_project_no_file(emitter, tmp_path, fake_app_config):
     """Return None if there is no snapcraft.yaml file."""
     snapcraft_yaml_file = tmp_path / "snap/snapcraft.yaml"
 
-    result = LintCommand(None)._load_project(snapcraft_yaml_file=snapcraft_yaml_file)
+    result = LintCommand(fake_app_config)._load_project(
+        snapcraft_yaml_file=snapcraft_yaml_file
+    )
 
     assert not result
     emitter.assert_debug(f"Could not find {snapcraft_yaml_file.name!r}.")
 
 
-@pytest.mark.parametrize("base", ["core", "core18", "core20"])
-def test_load_project_unsupported_core_error(base, tmp_path):
-    """Raise an error if for snaps with core, core18, and core20 bases."""
+@pytest.mark.parametrize("base", const.ESM_BASES)
+def test_load_project_unsupported_core_error(base, tmp_path, fake_app_config):
+    """Raise an error if for snaps with ESM bases."""
     # create a simple snapcraft.yaml
     (tmp_path / "snap").mkdir()
     snap_file = tmp_path / "snap/snapcraft.yaml"
@@ -916,6 +915,6 @@ def test_load_project_unsupported_core_error(base, tmp_path):
     )
 
     with pytest.raises(SnapcraftError) as raised:
-        LintCommand(None)._load_project(snapcraft_yaml_file=snap_file)
+        LintCommand(fake_app_config)._load_project(snapcraft_yaml_file=snap_file)
 
     assert str(raised.value) == "can not lint snap using a base older than core22"

@@ -1,0 +1,16 @@
+name: python-hello-uv
+version: "1.0"
+summary: simple python application
+description: build a python application using core24
+base: core24
+confinement: strict
+
+apps:
+  python-hello-uv:
+    command: bin/python $SNAP/bin/hello
+parts:
+  hello:
+    plugin: uv
+    source: src
+    build-snaps:
+      - astral-uv

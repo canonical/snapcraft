@@ -1,0 +1,238 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+# pylint: disable=line-too-long,too-many-lines,attribute-defined-outside-init
+#
+# Copyright 2025 Canonical Ltd.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""The initrd plugin for building kernel snaps.
+
+- initrd-addons
+  (list of strings; default: none)
+  A list of files to include in the initrd, provided as relative paths to
+  $CRAFT_STAGE/addons. For example,
+
+      initrd-addons:
+          - usr/bin/foo
+
+  will result in "${CRAFT_STAGE}/addons/usr/bin/foo" being placed in the
+  initrd as /usr/bin/foo.
+
+- initrd-firmware:
+  (list of strings; default: none)
+  A list of firmware to include in the initrd, provided as relative paths to
+  $CRAFT_STAGE/firmware. For example,
+
+      initrd-firmware:
+          - foo/bar.bin
+
+  will result in "${CRAFT_STAGE}/firmware/foo/bar.bin" being placed in the
+  initrd as /usr/lib/firmware/foo/bar.bin.
+
+- initrd-modules:
+  (list of strings; default: none)
+  A list of modules to include in the initrd, provided as a list of module
+  names. If the specified module(s) have dependencies, they are also installed.
+
+- initrd-build-efi-image
+  (string; default: false)
+  Set to true if an EFI or UKI image is preferred over discrete kernel and
+  initrd files. Only valid on systems where an EFI stub file is available.
+
+- initrd-efi-image-key
+  (string; default: snake oil key (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key))
+  Requires initrd-build-efi-image to be true.
+  Key to be used when creating the EFI image, provided as a relative path to
+  $CRAFT_STAGE/signing. For example,
+
+      initrd-efi-image-key: signing.key
+
+  will result in "${CRAFT_STAGE}/signing/signing.key" being placed in the
+  initrd chroot as /root/signing.key.
+
+- initrd-efi-image-cert
+  (string; default: snake oil certificate (/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem))
+  Requires initrd-build-efi-image to be true.
+  Certificate to be used when creating the EFI image, provided as a relative
+  path to $CRAFT_STAGE/signing. For example,
+
+      initrd-efi-image-cert: cert.pem
+
+  will result in "${CRAFT_STAGE}/signing/cert.pem" being placed in the
+  initrd chroot as /root/cert.pem.
+"""
+
+import os
+from typing import Literal, cast
+
+import pydantic
+from craft_application.util import humanize_list
+from craft_parts import errors, infos, plugins
+from typing_extensions import Self, override
+
+RELEASE_CODENAME_FROM_SNAP_BASE = {
+    "core22": "jammy",
+    "core24": "noble",
+    "core26": "resolute",
+}
+
+SNAKEOIL_KEY = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.key"
+SNAKEOIL_CERT = "/usr/lib/ubuntu-core-initramfs/snakeoil/PkKek-1-snakeoil.pem"
+
+
+class InitrdPluginProperties(plugins.PluginProperties, frozen=True):
+    """The part properties used by the Initrd plugin."""
+
+    plugin: Literal["initrd"] = "initrd"
+
+    initrd_build_efi_image: bool = False
+    initrd_efi_image_key: str = SNAKEOIL_KEY
+    initrd_efi_image_cert: str = SNAKEOIL_CERT
+    initrd_modules: list[str] = []
+    initrd_firmware: list[str] = []
+    initrd_addons: list[str] = []
+
+    # part properties required by the plugin
+    @pydantic.model_validator(mode="after")
+    def validate_plugin_options(self) -> Self:
+        signing_key = self.initrd_efi_image_key
+        signing_cert = self.initrd_efi_image_cert
+
+        # Validate that either both key and cert are specified or neither is
+        custom_key = signing_key != SNAKEOIL_KEY
+        custom_cert = signing_cert != SNAKEOIL_CERT
+
+        if custom_key ^ custom_cert:
+            raise errors.PartsError(
+                brief="initrd-efi-image-key and initrd-efi-image-cert must both be set or neither set",
+                resolution="Specify both 'initrd-efi-image-key' and 'initrd-efi-image-cert', or remove both to use the snakeoil defaults",
+            )
+
+        return self
+
+
+class InitrdPlugin(plugins.Plugin):
+    """Plugin for the initrd snap build."""
+
+    properties_class = InitrdPluginProperties
+
+    def __init__(
+        self, *, properties: plugins.PluginProperties, part_info: infos.PartInfo
+    ) -> None:
+        super().__init__(properties=properties, part_info=part_info)
+        self.options = cast(InitrdPluginProperties, self._options)
+
+    @classmethod
+    def get_out_of_source_build(cls) -> bool:
+        """Return whether the plugin performs out-of-source-tree builds."""
+        return True
+
+    @override
+    def get_pull_commands(self) -> list[str]:
+        commands = []
+        base = self._part_info.base
+        target_arch = self._part_info.target_arch
+        if (release_codename := RELEASE_CODENAME_FROM_SNAP_BASE.get(base)) is None:
+            raise errors.PartsError(
+                brief=f"base {base!r} is not supported for the initrd plugin",
+                resolution=f"Use one of the supported bases: {humanize_list(RELEASE_CODENAME_FROM_SNAP_BASE.keys(), 'or')}",
+            )
+
+        # URL pieces for Ubuntu base, tarball name
+        tar_base_url = "https://cdimage.ubuntu.com/ubuntu-base"
+        tar_release = f"{release_codename}/daily/current"
+        tar_name = f"{release_codename}-base-{target_arch}.tar.gz"
+
+        # Compose the URL
+        tar_url = f"{tar_base_url}/{tar_release}/{tar_name}"
+        sum_url = f"{tar_base_url}/{tar_release}/SHA256SUMS"
+
+        initrd_root = "uc-initramfs-build"
+
+        # Pull the base, verify checksum
+        commands.extend(
+            [
+                f"curl -fLo {tar_name} {tar_url}",
+                f"curl -fL {sum_url} | grep {tar_name} > {tar_name}.sha256sum",
+                f"sha256sum -c {tar_name}.sha256sum || exit 1",
+                f"mkdir -p {initrd_root}",
+                f"tar --extract --file {tar_name} --directory {initrd_root}",
+                f"cp --no-dereference /etc/resolv.conf {initrd_root}/etc/resolv.conf",
+                f"touch {initrd_root}/dev/null",
+            ]
+        )
+
+        return commands
+
+    @override
+    def get_build_snaps(self) -> set[str]:
+        return set()
+
+    @override
+    def get_build_packages(self) -> set[str]:
+        host_arch = self._part_info.host_arch
+        target_arch = self._part_info.target_arch
+
+        build_packages = {
+            "curl",
+            "dracut-core",
+            "fakeroot",
+        }
+
+        # if running as non-root and cross-building we need libfake{ch}root for
+        # the target arch
+        if host_arch != target_arch and (os.getuid() != 0):
+            build_packages |= {
+                f"libfakeroot:{target_arch}",
+            }
+
+        return build_packages
+
+    @override
+    def get_build_environment(self) -> dict[str, str]:
+        return {}
+
+    @override
+    def get_build_commands(self) -> list[str]:
+        base = self._part_info.base
+        arch = self._part_info.target_arch
+        build_efi_image = self.options.initrd_build_efi_image
+
+        if build_efi_image:
+            # There are no EFI stubs for s390x or ppc64el
+            if arch in {"s390x", "ppc64el"}:
+                raise errors.PartsError(
+                    brief=f"'initrd-build-efi-image' is not supported on {arch}",
+                    resolution="Remove 'initrd-build-efi-image'",
+                )
+
+            # There are no EFI stubs for riscv until 24.04
+            if arch == "riscv64" and base == "core22":
+                raise errors.PartsError(
+                    brief="'initrd-build-efi-image' is not supported for riscv64 on core22",
+                    resolution="riscv64 EFI images are only supported on core24 or later",
+                )
+
+        return [
+            " ".join(
+                [
+                    "$SNAP/lib/python3.12/site-packages/snapcraft/parts/plugins/initrd_build.sh",
+                    f"initrd-modules={','.join(self.options.initrd_modules)}",
+                    f"initrd-firmware={','.join(self.options.initrd_firmware)}",
+                    f"initrd-addons={','.join(self.options.initrd_addons)}",
+                    f"initrd-build-efi-image={build_efi_image}",
+                    f"initrd-efi-image-key={self.options.initrd_efi_image_key}",
+                    f"initrd-efi-image-cert={self.options.initrd_efi_image_cert}",
+                ]
+            )
+        ]

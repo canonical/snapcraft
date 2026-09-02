@@ -1,0 +1,2 @@
+build-for-core22_1.0_amd64.snap
+build-for-core22_1.0_s390x.snap

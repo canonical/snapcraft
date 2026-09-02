@@ -1,14 +1,8 @@
-summary: Build a base snap using the 'devel' build base
-
-environment:
-  SNAPCRAFT_BUILD_ENVIRONMENT: ""
+summary: Build a snap using the 'devel' build base
 
 restore: |
-  cd "./snap"
   snapcraft clean
   rm -f ./*.snap
 
 execute: |
-  cd "./snap"
-
   snapcraft pack

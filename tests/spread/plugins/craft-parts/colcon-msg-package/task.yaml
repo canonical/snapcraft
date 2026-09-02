@@ -38,7 +38,7 @@ execute: |
   cd "$SNAP"
 
   # Build the snap and verify that a message only package could be build
-  snapcraft
+  snapcraft pack
   [ -d parts/test-part/install/opt/ros/snap/share/pendulum_msgs ]
 
   snap install "${SNAP}"_1.0_*.snap --dangerous

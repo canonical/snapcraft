@@ -1,0 +1,15 @@
+name: implicit-build-for
+version: "1.0"
+summary: test
+description: |
+  Use the platform name implicitly for the `build-for`.
+confinement: strict
+base: core24
+
+platforms:
+  riscv64:
+    build-on: [amd64]
+
+parts:
+  my-part:
+    plugin: nil

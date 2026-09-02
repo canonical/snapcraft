@@ -1,14 +1,13 @@
 summary: Try different compression algorithms set in snapcraft.yaml
 
-systems:
-  - ubuntu-20.04*
-  - ubuntu-22.04*
-  - ubuntu-24.04*
-
 environment:
+  COMPRESSION: xz
   COMPRESSION/lzo: lzo
   COMPRESSION/xz: xz
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
+  COMMAND: "pack"
+  COMMAND/default: ""
+  COMMAND/pack: "pack"
 
 prepare: |
   mkdir test-snap
@@ -22,17 +21,23 @@ prepare: |
   echo "compression: ${COMPRESSION}" >> snap/snapcraft.yaml
 
 restore: |
-  rm -rf test-snap
+  pushd test-snap
+  # The regular clean can potentially fail depending on if/when the test itself failed, but
+  # they should always both be attempted
+  snapcraft clean --use-lxd || true
+  snapcraft clean --destructive-mode
   rm -rf ./*.snap
+  popd
+  rm -rf test-snap
 
 execute: |
   cd test-snap
 
   # First with lxd
-  snapcraft --use-lxd
+  snapcraft pack --use-lxd
   unsquashfs -s ./*.snap | grep Compression | MATCH "${COMPRESSION}"
   rm ./*.snap
 
   # Then on host.
-  snapcraft --destructive-mode
+  snapcraft pack --destructive-mode
   unsquashfs -s ./*.snap | grep Compression | MATCH "${COMPRESSION}"

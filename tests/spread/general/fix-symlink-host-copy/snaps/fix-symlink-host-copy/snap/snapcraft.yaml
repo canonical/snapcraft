@@ -3,7 +3,7 @@ version: "1.0"
 summary: Verify dangling symlinks are corrected with file from host
 description: Fix symlink tests
 
-base: core20
+base: core22
 grade: devel
 confinement: strict
 

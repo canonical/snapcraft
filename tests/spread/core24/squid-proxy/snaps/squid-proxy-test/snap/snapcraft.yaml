@@ -1,0 +1,14 @@
+name: squid-proxy-test
+version: "1.0"
+summary: Snap to test the use of squid proxy with snapcraft
+description: Verify that squid proxy can be passed as an http proxy to snapcraft.
+
+grade: devel
+base: core22
+confinement: strict
+
+parts:
+  packages:
+    plugin: nil
+    stage-packages:
+      - hello

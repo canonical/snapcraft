@@ -23,7 +23,7 @@ The full API is documented on
 https://dashboard.snapcraft.io/docs/v2/en/snaps.html#snap-channel-map
 """
 
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 import jsonschema
 from craft_store.models import SnapListReleasesModel
@@ -33,7 +33,7 @@ class Progressive:
     """Represent Progressive information for a MappedChannel."""
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "Progressive":
+    def unmarshal(cls, payload: dict[str, Any]) -> "Progressive":
         """Unmarshal payload into a Progressive."""
         jsonschema.validate(
             payload,
@@ -47,7 +47,7 @@ class Progressive:
             current_percentage=payload.get("current-percentage"),
         )
 
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Marshal this Progressive into a dict."""
         return {
             "paused": self.paused,
@@ -62,9 +62,9 @@ class Progressive:
     def __init__(
         self,
         *,
-        paused: Optional[bool],
-        percentage: Optional[float],
-        current_percentage: Optional[float],
+        paused: bool | None,
+        percentage: float | None,
+        current_percentage: float | None,
     ) -> None:
         self.paused = paused
         self.percentage = percentage
@@ -75,7 +75,7 @@ class MappedChannel:
     """Represent a mapped channel item for "channel-map" in ChannelMap."""
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "MappedChannel":
+    def unmarshal(cls, payload: dict[str, Any]) -> "MappedChannel":
         """Unmarshal payload into a MappedChannel."""
         jsonschema.validate(
             payload, CHANNEL_MAP_JSONSCHEMA["properties"]["channel-map"]["items"]
@@ -88,7 +88,7 @@ class MappedChannel:
             progressive=Progressive.unmarshal(payload["progressive"]),
         )
 
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Marshal this MappedChannel into a dict."""
         return {
             "channel": self.channel,
@@ -112,7 +112,7 @@ class MappedChannel:
         channel: str,
         revision: int,
         architecture: str,
-        expiration_date: Optional[str],
+        expiration_date: str | None,
         progressive: Progressive,
     ) -> None:
         self.channel = channel
@@ -126,7 +126,7 @@ class Revision:
     """Represent a revision item for "revisions" in ChannelMap."""
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "Revision":
+    def unmarshal(cls, payload: dict[str, Any]) -> "Revision":
         """Unmarshal payload into a Revision."""
         jsonschema.validate(
             payload, CHANNEL_MAP_JSONSCHEMA["properties"]["revisions"]["items"]
@@ -137,7 +137,7 @@ class Revision:
             architectures=payload["architectures"],
         )
 
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Marshal this Revision into a dict."""
         return {
             "revision": self.revision,
@@ -153,7 +153,7 @@ class Revision:
         )
 
     def __init__(
-        self, *, revision: int, version: str, architectures: List[str]
+        self, *, revision: int, version: str, architectures: list[str]
     ) -> None:
         self.revision = revision
         self.version = version
@@ -164,7 +164,7 @@ class SnapChannel:
     """Represent a channel item in "channels" in Snap."""
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "SnapChannel":
+    def unmarshal(cls, payload: dict[str, Any]) -> "SnapChannel":
         """Unmarshal payload into a SnapChannel."""
         jsonschema.validate(
             payload,
@@ -180,7 +180,7 @@ class SnapChannel:
             fallback=payload["fallback"],
         )
 
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Marshal this SnapChannel into a dict."""
         return {
             "name": self.name,
@@ -200,8 +200,8 @@ class SnapChannel:
         name: str,
         track: str,
         risk: str,
-        branch: Optional[str],
-        fallback: Optional[str],
+        branch: str | None,
+        fallback: str | None,
     ) -> None:
         self.name = name
         self.track = track
@@ -214,7 +214,7 @@ class SnapTrack:
     """Represent a track item in "tracks" in Snap."""
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "SnapTrack":
+    def unmarshal(cls, payload: dict[str, Any]) -> "SnapTrack":
         """Unmarshal payload into a SnapTrack."""
         jsonschema.validate(
             payload,
@@ -229,7 +229,7 @@ class SnapTrack:
             version_pattern=payload["version-pattern"],
         )
 
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Marshal this SnapTrack into a dict."""
         return {
             "name": self.name,
@@ -247,8 +247,8 @@ class SnapTrack:
         *,
         name: str,
         status: str,
-        creation_date: Optional[str],
-        version_pattern: Optional[str],
+        creation_date: str | None,
+        version_pattern: str | None,
     ) -> None:
         self.name = name
         self.status = status
@@ -260,7 +260,7 @@ class Snap:
     """Represent "snap" in ChannelMap."""
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "Snap":
+    def unmarshal(cls, payload: dict[str, Any]) -> "Snap":
         """Unmarshal payload into a Snap."""
         jsonschema.validate(payload, CHANNEL_MAP_JSONSCHEMA["properties"]["snap"])
         return cls(
@@ -269,7 +269,7 @@ class Snap:
             tracks=[SnapTrack.unmarshal(st) for st in payload.get("tracks", [])],
         )
 
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Marshal this Snap into a dict."""
         return {
             "name": self.name,
@@ -284,9 +284,9 @@ class Snap:
     def __init__(
         self,
         *,
-        name: Optional[str],
-        channels: List[SnapChannel],
-        tracks: List[SnapTrack],
+        name: str | None,
+        channels: list[SnapChannel],
+        tracks: list[SnapTrack],
     ) -> None:
         self.name = name
         self.channels = channels
@@ -310,7 +310,7 @@ class ChannelMap:
         )
 
     @classmethod
-    def unmarshal(cls, payload: Dict[str, Any]) -> "ChannelMap":
+    def unmarshal(cls, payload: dict[str, Any]) -> "ChannelMap":
         """Unmarshal payload into a ChannelMap."""
         jsonschema.validate(payload, CHANNEL_MAP_JSONSCHEMA)
         return cls(
@@ -319,7 +319,7 @@ class ChannelMap:
             snap=Snap.unmarshal(payload["snap"]),
         )
 
-    def marshal(self) -> Dict[str, Any]:
+    def marshal(self) -> dict[str, Any]:
         """Marshal this ChannelMap into a dict."""
         return {
             "channel-map": [c.marshal() for c in self.channel_map],
@@ -332,7 +332,7 @@ class ChannelMap:
         return f"<{self.__class__.__name__}: {self.snap.name!r}>"
 
     def __init__(
-        self, *, channel_map: List[MappedChannel], revisions: List[Revision], snap: Snap
+        self, *, channel_map: list[MappedChannel], revisions: list[Revision], snap: Snap
     ) -> None:
         self.channel_map = channel_map
         self.revisions = revisions
@@ -380,16 +380,16 @@ class ChannelMap:
                 return revision_item
         raise ValueError(f"No revision information for {revision_number!r}")
 
-    def get_existing_architectures(self) -> Set[str]:
+    def get_existing_architectures(self) -> set[str]:
         """Return a list of the existing architectures for this map."""
-        architectures: List[str] = []
+        architectures: list[str] = []
         for revision_item in self.revisions:
             architectures.extend(revision_item.architectures)
 
         return set(architectures)
 
 
-CHANNEL_MAP_JSONSCHEMA: Dict[str, Any] = {
+CHANNEL_MAP_JSONSCHEMA: dict[str, Any] = {
     "properties": {
         "channel-map": {
             "items": {

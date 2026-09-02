@@ -1,0 +1,8 @@
+summary: Build a base snap using the 'devel' build base
+
+restore: |
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  snapcraft pack

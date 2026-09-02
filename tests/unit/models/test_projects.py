@@ -15,28 +15,44 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
-from typing import Any, Dict, cast
+import re
+from collections.abc import Callable
+from contextlib import nullcontext
+from typing import Any, cast
 
 import pydantic
 import pytest
 from craft_application.errors import CraftValidationError
-from craft_application.models import BuildInfo, UniqueStrList, VersionStr
+from craft_application.models import VersionStr
 from craft_platforms import DebianArchitecture
-from craft_providers.bases import BaseName
 
 import snapcraft.models
 from snapcraft import const, errors, providers
+from snapcraft.const import StableBase, UnstableBase
 from snapcraft.models import (
     MANDATORY_ADOPTABLE_FIELDS,
     Architecture,
+    BareCore22Project,
+    BareCore24Project,
+    BareCore26Project,
+    BareDevelProject,
     ComponentProject,
     ContentPlug,
+    Core22Project,
+    Core24Project,
+    Core26Project,
+    DevelBaseProject,
     GrammarAwareProject,
     Hook,
+    Lint,
     Platform,
     Project,
 )
-from snapcraft.models.project import apply_root_packages
+from snapcraft.models.project import (
+    _BaselessCore22Project,
+    _BaselessProject,
+    apply_root_packages,
+)
 
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
@@ -46,7 +62,7 @@ CORE24_DATA = {"base": "core24", "grade": "devel"}
 def project_yaml_data():
     def _project_yaml_data(
         *, name: str = "name", version: str = "0.1", summary: str = "summary", **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "name": name,
             "version": version,
@@ -64,7 +80,7 @@ def project_yaml_data():
 
 @pytest.fixture
 def app_yaml_data(project_yaml_data):
-    def _app_yaml_data(**kwargs) -> Dict[str, Any]:
+    def _app_yaml_data(**kwargs) -> dict[str, Any]:
         data = project_yaml_data()
         data["apps"] = {"app1": {"command": "/bin/true", **kwargs}}
         return data
@@ -74,7 +90,7 @@ def app_yaml_data(project_yaml_data):
 
 @pytest.fixture
 def socket_yaml_data(app_yaml_data):
-    def _socket_yaml_data(**kwargs) -> Dict[str, Any]:
+    def _socket_yaml_data(**kwargs) -> dict[str, Any]:
         data = app_yaml_data()
         data["apps"]["app1"]["sockets"] = {"socket1": {**kwargs}}
         return data
@@ -149,8 +165,8 @@ class TestProjectDefaults:
         assert project.adopt_info is None
         assert project.architectures == [
             Architecture(
-                build_on=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
-                build_for=cast(UniqueStrList, [str(DebianArchitecture.from_host())]),
+                build_on=[str(DebianArchitecture.from_host())],
+                build_for=[str(DebianArchitecture.from_host())],
             )
         ]
         assert project.ua_services is None
@@ -196,6 +212,25 @@ class TestProjectDefaults:
 class TestProjectValidation:
     """Validate top-level project items."""
 
+    @pytest.mark.parametrize("base", [*StableBase, *UnstableBase])
+    @pytest.mark.parametrize("type_", ["base", "kernel", "snapd"])
+    def test_baseless_project_with_base(self, project_yaml_data, base, type_):
+        raw_data = {
+            "base": base.value,
+            "build-base": base.value,
+            "type": type_,
+            "grade": "devel",
+        }
+        if isinstance(base, UnstableBase):
+            raw_data["build-base"] = "devel"
+        data = project_yaml_data(**raw_data)
+
+        with pytest.raises(
+            pydantic.ValidationError,
+            match=rf"'base' key is not allowed when snap type is {type_!r}\.",
+        ):
+            Project.unmarshal(data)
+
     def test_build_base_validation_reentrant(self, project_yaml_data):
         """Validators should be reentrant.
 
@@ -227,22 +262,30 @@ class TestProjectValidation:
             Project.unmarshal(data)
 
     @pytest.mark.parametrize(
-        "snap_type,requires_base",
+        ("snap_type", "requires_base", "error_message"),
         [
-            ("app", True),
-            ("gadget", True),
-            ("base", False),
-            ("kernel", False),
-            ("snapd", False),
+            ("app", True, "Missing 'base' key for snap type 'app'."),
+            (None, True, "Missing 'base' key for snap."),
+            ("gadget", True, "Missing 'base' key for snap type 'gadget'."),
+            ("base", False, "Missing 'base' key for snap type 'base'."),
+            ("kernel", False, "Missing 'base' key for snap type 'kernel'."),
+            ("snapd", False, "Missing 'base' key for snap type 'snapd'."),
         ],
     )
-    def test_mandatory_base(self, snap_type, requires_base, project_yaml_data):
+    def test_mandatory_base(
+        self,
+        snap_type: str,
+        requires_base: bool,
+        project_yaml_data: Callable[..., dict[str, Any]],
+        error_message: str,
+    ):
         data = project_yaml_data(type=snap_type)
-        data.pop("base")
+        data["build-base"] = data.pop("base")
+        if data["type"] is None:
+            data.pop("type")
 
         if requires_base:
-            error = "Snap base must be declared when type is not"
-            with pytest.raises(pydantic.ValidationError, match=error):
+            with pytest.raises(pydantic.ValidationError, match=error_message):
                 Project.unmarshal(data)
         else:
             project = Project.unmarshal(data)
@@ -342,13 +385,15 @@ class TestProjectValidation:
     def test_project_type(self, snap_type, project_yaml_data):
         data = project_yaml_data(type=snap_type)
         if snap_type in ["base", "kernel", "snapd"]:
-            data.pop("base")
+            data["build-base"] = data.pop("base")
 
         if snap_type != "_invalid":
             project = Project.unmarshal(data)
-            assert project.type == snap_type
+            project_type = project.type.value if project.type else None
+            assert project_type == snap_type
+
         else:
-            error = "Input should be 'app', 'base', 'gadget', 'kernel' or 'snapd'"
+            error = "Input should be 'app', 'base', 'gadget', 'kernel', or 'snapd'"
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
@@ -388,7 +433,7 @@ class TestProjectValidation:
         else:
             error = "Input should be 'stable' or 'devel'"
             with pytest.raises(pydantic.ValidationError, match=error):
-                project.grade = grade  # type: ignore
+                project.grade = grade
 
     def test_project_summary_valid(self, project_yaml_data):
         summary = "x" * 78
@@ -477,6 +522,7 @@ class TestProjectValidation:
     )
     def test_project_environment_valid(self, environment, project_yaml_data):
         project = Project.unmarshal(project_yaml_data(environment=environment))
+        assert project.environment is not None
         for variable in environment:
             assert variable in project.environment
 
@@ -615,7 +661,7 @@ class TestProjectValidation:
 
         assert project.grade == "devel"
 
-    @pytest.mark.parametrize("build_base", ["core22", "devel"])
+    @pytest.mark.parametrize("build_base", const.CURRENT_BASES)
     def test_project_grade_not_defined(self, build_base, project_yaml_data):
         """Do not validate the grade if it is not defined, regardless of build_base."""
         data = project_yaml_data(build_base=build_base)
@@ -626,12 +672,60 @@ class TestProjectValidation:
         assert project.build_base == build_base
         assert not project.grade
 
-    def test_project_build_base_devel_grade_stable_error(self, project_yaml_data):
-        """Raise an error if build_base is `devel` and grade is `stable`."""
-        error = "grade must be 'devel' when build-base is 'devel'"
+    @pytest.mark.parametrize("base", StableBase)
+    @pytest.mark.parametrize("grade", ["stable", "devel"])
+    def test_grade_stable_base(self, base, grade, project_yaml_data):
+        """Stable bases can have any grade."""
+        project = Project.unmarshal(project_yaml_data(base=base, grade=grade))
 
-        with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(build_base="devel", grade="stable"))
+        assert project.grade == grade
+
+    @pytest.mark.parametrize("build_base", StableBase)
+    @pytest.mark.parametrize("grade", ["stable", "devel"])
+    def test_grade_stable_bare_bases(self, build_base, grade, project_yaml_data):
+        """Stable bare bases can have any grade."""
+        project = Project.unmarshal(
+            project_yaml_data(base="bare", build_base=build_base, grade=grade)
+        )
+
+        assert project.grade == grade
+
+    @pytest.mark.parametrize("base", const.CURRENT_BASES)
+    @pytest.mark.parametrize(
+        ("grade", "expectation"),
+        [
+            (
+                "stable",
+                pytest.raises(pydantic.ValidationError, match="grade must be 'devel'"),
+            ),
+            ("devel", nullcontext("devel")),
+        ],
+    )
+    def test_grade_devel_build_base(self, base, grade, expectation, project_yaml_data):
+        """'build-base: devel' requires 'grade: devel'."""
+        with expectation as e:
+            project = Project.unmarshal(
+                project_yaml_data(base=base, build_base="devel", grade=grade)
+            )
+            assert project.grade == e
+
+    @pytest.mark.parametrize(
+        ("grade", "expectation"),
+        [
+            (
+                "stable",
+                pytest.raises(pydantic.ValidationError, match="grade must be 'devel'"),
+            ),
+            ("devel", nullcontext("devel")),
+        ],
+    )
+    def test_grade_bare_devel(self, grade, expectation, project_yaml_data):
+        """'base: bare' and 'build-base: devel' requires grade: devel."""
+        with expectation as e:
+            project = Project.unmarshal(
+                project_yaml_data(base="bare", build_base="devel", grade=grade)
+            )
+            assert project.grade == e
 
     @pytest.mark.parametrize(
         ("base", "expected_base"),
@@ -661,8 +755,8 @@ class TestProjectValidation:
             "Plugs should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'plugs:' stanza "
             "which is intended for configuration only."
-            "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
-            "#heading--plugs-and-slots-for-an-entire-snap)"
+            "\n(Reference: https://documentation.ubuntu.com/snapcraft/stable/reference/"
+            "project-file/snapcraft-yaml)"
         )
         emitter.assert_message(expected_message)
 
@@ -674,8 +768,8 @@ class TestProjectValidation:
             "Slots should be assigned to the app to which they apply, and not "
             "implicitly assigned via the global 'slots:' stanza "
             "which is intended for configuration only."
-            "\n(Reference: https://snapcraft.io/docs/snapcraft-top-level-metadata"
-            "#heading--plugs-and-slots-for-an-entire-snap)"
+            "\n(Reference: https://documentation.ubuntu.com/snapcraft/stable/reference/"
+            "project-file/snapcraft-yaml)"
         )
         emitter.assert_message(expected_message)
 
@@ -755,6 +849,138 @@ class TestProjectValidation:
             {"float": 11.0},
             {"int": 12},
         ]
+
+    @pytest.mark.parametrize(
+        ("base", "build_base", "project_class"),
+        [
+            # standard
+            ("core22", None, Core22Project),
+            ("core24", None, Core24Project),
+            ("core26", None, Core26Project),
+            # devel build-base
+            ("core22", "devel", Core22Project),
+            ("core24", "devel", Core24Project),
+            ("core26", "devel", Core26Project),
+            ("devel", "devel", DevelBaseProject),
+            # bare base
+            ("bare", "core22", BareCore22Project),
+            ("bare", "core24", BareCore24Project),
+            ("bare", "core26", BareCore26Project),
+            ("bare", "devel", BareDevelProject),
+        ],
+    )
+    @pytest.mark.parametrize("type_", [None, "app", "gadget"])
+    def test_unmarshal_project_with_base(
+        self, base, build_base, type_, project_class, project_yaml_data
+    ):
+        """Project.unmarshal should return the right sub model."""
+        data = project_yaml_data(
+            base=base, build_base=build_base, type=type_, grade="devel"
+        )
+
+        project = Project.unmarshal(data)
+
+        assert isinstance(project, project_class), type(project)
+
+    @pytest.mark.parametrize(
+        ("build_base", "project_class"),
+        [
+            ("core22", _BaselessCore22Project),
+            ("core24", _BaselessProject),
+            ("core26", _BaselessProject),
+            ("devel", _BaselessProject),
+        ],
+    )
+    @pytest.mark.parametrize("type_", ["base", "kernel", "snapd"])
+    def test_unmarshal_project_without_base(
+        self, build_base, type_, project_class, project_yaml_data
+    ):
+        """Project.unmarshall should return the right sub model."""
+        data = project_yaml_data(build_base=build_base, type=type_, grade="devel")
+        del data["base"]
+
+        project = Project.unmarshal(data)
+
+        assert isinstance(project, project_class), type(project)
+
+    @pytest.mark.parametrize(
+        "key", ["override-pull", "override-build", "override-stage", "override-prime"]
+    )
+    @pytest.mark.parametrize(
+        "script",
+        [
+            pytest.param("# snapcraftctl", id="comment"),
+            pytest.param("ls # snapcraftctl", id="command and comment"),
+            pytest.param("echo snapcraftctl", id="arg"),
+            pytest.param(
+                """
+                # goodbye snapcraftctl
+                echo "we will miss you, snapcraftctl"
+                rm snapcraftctl
+                echo "bye!" # snapcraftctl is gone
+                """,
+                id="multiline",
+            ),
+        ],
+    )
+    def test_snapcraftctl_valid(self, key, script, project_yaml_data):
+        """Don't error if snapcraftctl is in a script, but not the command in core26."""
+        parts_data = {"my-part": {"plugin": "nil", key: script}}
+
+        Project.unmarshal(
+            project_yaml_data(
+                base="core26", build_base="devel", grade="devel", parts=parts_data
+            )
+        )
+
+    @pytest.mark.parametrize(
+        "key", ["override-pull", "override-build", "override-stage", "override-prime"]
+    )
+    @pytest.mark.parametrize(
+        "script",
+        [
+            pytest.param("snapcraftctl", id="simple"),
+            pytest.param("${SNAP}/libexec/snapcraft/snapcraftctl", id="relative-path"),
+            pytest.param(
+                "$/snap/snapcraft/current/libexec/snapcraft/snapcraftctl",
+                id="absolute-path",
+            ),
+            pytest.param("snapcraftctl set version=1.2.3", id="complex"),
+            pytest.param("  snapcraftctl  ", id="whitespace"),
+            pytest.param(
+                """
+                echo "Hello, World!"
+                snapcraftctl set grade=stable
+                cp foo $CRAFT_PART_INSTALL/bar
+                """,
+                id="multiline",
+            ),
+        ],
+    )
+    def test_snapcraftctl_error(self, key, script, project_yaml_data):
+        """Error when snapcraftctl is used in core26."""
+        parts_data = {"my-part": {"plugin": "nil", key: script}}
+        error = re.escape(
+            f"Can't use 'snapcraftctl' in the {key} script for part 'my-part'. "
+            "Use 'craftctl' instead."
+        )
+
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(
+                project_yaml_data(
+                    base="core26", build_base="devel", grade="devel", parts=parts_data
+                )
+            )
+
+    @pytest.mark.parametrize(
+        "key", ["override-pull", "override-build", "override-stage", "override-prime"]
+    )
+    @pytest.mark.parametrize("base", ["core22", "core24"])
+    def test_snapcraftctl_old_bases(self, key, base, project_yaml_data):
+        """snapcraftctl can be used for core22 and core24 bases."""
+        parts_data = {"my-part": {"plugin": "nil", key: "snapcraftctl"}}
+
+        Project.unmarshal(project_yaml_data(base=base, parts=parts_data))
 
 
 class TestHookValidation:
@@ -845,15 +1071,7 @@ class TestPlatforms:
         """Raise an error if build-for is provided by build-on is not."""
         error = r"build-on\n  Field required"
         with pytest.raises(pydantic.ValidationError, match=error):
-            Platform(**{"build-for": [const.SnapArch.amd64]})  # type: ignore[reportArgumentType]
-
-    def test_platforms_not_allowed_core22(self, project_yaml_data):
-        error = (
-            "'platforms' keyword is not supported for base 'core22'. "
-            "Use 'architectures' keyword instead."
-        )
-        with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(platforms={"amd64": None}))
+            Platform.unmarshal({"build-for": [str(const.SnapArch.amd64)]})
 
     @pytest.mark.parametrize(
         ("architectures", "expected"),
@@ -870,21 +1088,7 @@ class TestPlatforms:
                 id="simple",
             ),
             pytest.param(
-                [Architecture(build_on="amd64", build_for="riscv64")],
-                {
-                    "riscv64": Platform(
-                        build_for=[const.SnapArch("riscv64")],
-                        build_on=[const.SnapArch("amd64")],
-                    )
-                },
-                id="cross-compile-from-object",
-            ),
-            pytest.param(
-                [
-                    Architecture.unmarshal(
-                        {"build_on": ["amd64"], "build_for": ["riscv64"]}
-                    )
-                ],
+                [{"build-on": ["amd64"], "build-for": ["riscv64"]}],
                 {
                     "riscv64": Platform(
                         build_for=[const.SnapArch("riscv64")],
@@ -895,12 +1099,8 @@ class TestPlatforms:
             ),
             pytest.param(
                 [
-                    Architecture.unmarshal(
-                        {"build_on": ["amd64", "arm64"], "build_for": ["riscv64"]}
-                    ),
-                    Architecture.unmarshal(
-                        {"build_on": ["amd64", "arm64"], "build_for": ["arm64"]}
-                    ),
+                    {"build-on": ["amd64", "arm64"], "build-for": ["riscv64"]},
+                    {"build-on": ["amd64", "arm64"], "build-for": ["arm64"]},
                 ],
                 {
                     "riscv64": Platform(
@@ -915,7 +1115,7 @@ class TestPlatforms:
                 id="complex",
             ),
             pytest.param(
-                [Architecture.unmarshal({"build_on": ["s390x"], "build_for": ["all"]})],
+                [{"build-on": ["s390x"], "build-for": ["all"]}],
                 {
                     "all": Platform(
                         build_for=["all"],
@@ -1237,6 +1437,56 @@ class TestAppValidation:
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
+    @pytest.mark.parametrize(
+        "success_exit_status",
+        [[42, 250], [42], []],
+    )
+    def test_app_success_exit_status_valid(self, success_exit_status, app_yaml_data):
+        data = app_yaml_data(success_exit_status=success_exit_status)
+        project = Project.unmarshal(data)
+        assert project.apps is not None
+
+        if len(success_exit_status) > 0:
+            assert project.apps["app1"].success_exit_status == success_exit_status
+        else:
+            assert project.apps["app1"].success_exit_status is None
+
+    @pytest.mark.parametrize(
+        "success_exit_status,expected_error",
+        [
+            (
+                [400],
+                "Input should be less than or equal to 255",
+            ),
+            (
+                [0],
+                "Input should be greater than or equal to 1",
+            ),
+            (
+                ["bar"],
+                "Input should be a valid integer, unable to parse string as an integer",
+            ),
+            (
+                [1.5],
+                "Input should be a valid integer, got a number with a fractional part",
+            ),
+            (
+                [42, 400],
+                "Input should be less than or equal to 255",
+            ),
+            (
+                "not a list",
+                "Input should be a valid list",
+            ),
+        ],
+    )
+    def test_app_success_exit_status_invalid(
+        self, success_exit_status, expected_error, app_yaml_data
+    ):
+        data = app_yaml_data(success_exit_status=success_exit_status)
+        with pytest.raises(pydantic.ValidationError, match=expected_error):
+            Project.unmarshal(data)
+
     def test_app_valid_aliases(self, app_yaml_data):
         data = app_yaml_data(aliases=["i", "am", "a", "list"])
 
@@ -1283,8 +1533,10 @@ class TestAppValidation:
         data = app_yaml_data(environment=environment)
         project = Project.unmarshal(data)
         assert project.apps is not None
+        app = project.apps["app1"]
+        assert app.environment is not None
         for variable in environment:
-            assert variable in project.apps["app1"].environment
+            assert variable in app.environment
 
     @pytest.mark.parametrize(
         "environment",
@@ -1666,7 +1918,7 @@ def test_get_snap_project_with_content_plugs(snapcraft_yaml, new_dir):
         },
     }
 
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
 
     assert project.get_extra_build_snaps() == [
         "core22",
@@ -1705,7 +1957,7 @@ def test_get_snap_project_with_content_plugs_does_not_add_extension(
         },
     }
 
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
 
     assert project.get_extra_build_snaps() == [
         "core22",
@@ -2087,10 +2339,10 @@ class TestArchitecture:
         assert not arch_triplet
 
     def test_architectures_not_allowed(self, project_yaml_data):
-        """'architectures' keyword is not allowed if base is not core22."""
+        """'architectures' key is not allowed if base is not core22."""
         error = (
-            "'architectures' keyword is not supported for base 'core24'. "
-            "Use 'platforms' keyword instead."
+            "'architectures' key is not supported for base 'core24'. "
+            "Use 'platforms' key instead."
         )
 
         with pytest.raises(pydantic.ValidationError, match=error):
@@ -2114,7 +2366,7 @@ class TestArchitecture:
         assert project._architectures_in_yaml is expected
 
         # adding architectures after unmarshalling does not change the field
-        if project.base == "core22":
+        if isinstance(project, Core22Project):
             project.architectures = [
                 Architecture(build_on=["amd64"], build_for=["amd64"])
             ]
@@ -2129,10 +2381,9 @@ class TestApplyRootPackages:
         data = project_yaml_data()
         data["build-packages"] = ["pkg1", "pkg2"]
         data["build-snaps"] = ["snap3", "snap4"]
+        apply_root_packages(data)
 
-        data_transformed = apply_root_packages(data)
-
-        project = Project.unmarshal(data_transformed)
+        project = Project.unmarshal(data)
 
         assert project.parts["snapcraft/core"]["build-packages"] == ["pkg1", "pkg2"]
         assert project.parts["snapcraft/core"]["build-snaps"] == ["snap3", "snap4"]
@@ -2140,267 +2391,13 @@ class TestApplyRootPackages:
     def test_root_packages_transform_no_affect(self, project_yaml_data):
         """Test that nothing is applied if there are not build-packages or build-snaps."""
         data = project_yaml_data()
+        apply_root_packages(data)
 
-        data_transformed = apply_root_packages(data)
-
-        project = Project.unmarshal(data_transformed)
+        project = Project.unmarshal(data)
 
         assert project.build_packages is None
         assert project.build_snaps is None
         assert "snapcraft/core" not in project.parts
-
-
-@pytest.mark.parametrize(
-    ("platforms", "expected_build_infos"),
-    [
-        pytest.param(
-            {"amd64": None},
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="amd64",
-                )
-            ],
-            id="single_platform_as_arch",
-        ),
-        pytest.param(
-            {
-                "s390x": {
-                    "build-on": "s390x",
-                },
-                "riscv64": {
-                    "build-on": ["amd64", "riscv64"],
-                },
-            },
-            [
-                BuildInfo(
-                    build_on="s390x",
-                    build_for="s390x",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="s390x",
-                ),
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="riscv64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="riscv64",
-                ),
-                BuildInfo(
-                    build_on="riscv64",
-                    build_for="riscv64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="riscv64",
-                ),
-            ],
-            id="implicit_build_for",
-        ),
-        pytest.param(
-            {
-                "arm64": {
-                    "build-on": ["arm64", "armhf"],
-                    "build-for": ["arm64"],
-                },
-            },
-            [
-                BuildInfo(
-                    build_on="arm64",
-                    build_for="arm64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="arm64",
-                ),
-                BuildInfo(
-                    build_on="armhf",
-                    build_for="arm64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="arm64",
-                ),
-            ],
-            id="multiple_build_on",
-        ),
-        pytest.param(
-            {
-                "amd64v2": {
-                    "build-on": ["amd64"],
-                    "build-for": "amd64",
-                },
-            },
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="amd64v2",
-                )
-            ],
-            id="custom_platform_name",
-        ),
-        pytest.param(
-            {
-                "platform1": {
-                    "build-on": ["arm64", "armhf"],
-                    "build-for": ["all"],
-                },
-            },
-            [
-                BuildInfo(
-                    build_on="arm64",
-                    build_for="all",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="platform1",
-                ),
-                BuildInfo(
-                    build_on="armhf",
-                    build_for="all",
-                    base=BaseName(name="ubuntu", version="24.04"),
-                    platform="platform1",
-                ),
-            ],
-            id="all",
-        ),
-    ],
-)
-def test_build_planner_get_build_plan(platforms, expected_build_infos):
-    """Test `get_build_plan()` function with different platforms."""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {"name": "test-snap", "base": "core24", "platforms": platforms}
-    )
-
-    actual_build_infos = planner.get_build_plan()
-
-    assert actual_build_infos == expected_build_infos
-
-
-@pytest.mark.parametrize(
-    ("architectures", "expected_build_infos"),
-    [
-        pytest.param(
-            ["amd64"],
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="amd64",
-                )
-            ],
-            id="single_platform_as_arch",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": ["arm64", "armhf"],
-                    "build-for": ["arm64"],
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="arm64",
-                    build_for="arm64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="arm64",
-                ),
-                BuildInfo(
-                    build_on="armhf",
-                    build_for="arm64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="arm64",
-                ),
-            ],
-            id="multiple_build_on",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": ["amd64"],
-                    "build-for": ["amd64"],
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="amd64",
-                )
-            ],
-            id="fully_defined_arch",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": "amd64",
-                    "build-for": "amd64",
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="amd64",
-                    build_for="amd64",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="amd64",
-                )
-            ],
-            id="fully_defined_arch_as_string",
-        ),
-        pytest.param(
-            None,
-            [
-                BuildInfo(
-                    build_on=str(DebianArchitecture.from_host()),
-                    build_for=str(DebianArchitecture.from_host()),
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform=str(DebianArchitecture.from_host()),
-                )
-            ],
-            id="no_arch",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": ["s390x"],
-                    "build-for": ["all"],
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="s390x",
-                    build_for="all",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="all",
-                )
-            ],
-            id="all",
-        ),
-        pytest.param(
-            [
-                {
-                    "build-on": "s390x",
-                    "build-for": "all",
-                },
-            ],
-            [
-                BuildInfo(
-                    build_on="s390x",
-                    build_for="all",
-                    base=BaseName(name="ubuntu", version="22.04"),
-                    platform="all",
-                )
-            ],
-            id="all_as_string",
-        ),
-    ],
-)
-def test_build_planner_get_build_plan_core22(architectures, expected_build_infos):
-    """Test `get_build_plan()` function with different platforms."""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {"name": "test-snap", "base": "core22", "architectures": architectures}
-    )
-
-    actual_build_infos = planner.get_build_plan()
-
-    assert actual_build_infos == expected_build_infos
 
 
 @pytest.mark.parametrize(
@@ -2426,41 +2423,20 @@ def test_build_planner_all_as_platform_invalid(platforms, message):
         "name": "test-snap",
         "base": "core24",
         "platforms": platforms,
+        "parts": {},
+        "confinement": "strict",
     }
     with pytest.raises(pydantic.ValidationError, match=message):
-        snapcraft.models.project.SnapcraftBuildPlanner(**build_plan_data)
-
-
-def test_build_planner_all_with_other_builds():
-    """'build-for: all' cannot be combined with other builds."""
-    build_plan_data = {
-        "name": "test-snap",
-        "base": "core24",
-        "platforms": {
-            "platform1": {
-                "build-on": ["arm64", "armhf"],
-                "build-for": ["arm64"],
-            },
-            "platform2": {
-                "build-on": ["s390x"],
-                "build-for": ["all"],
-            },
-        },
-    }
-
-    with pytest.raises(pydantic.ValidationError) as raised:
-        snapcraft.models.project.SnapcraftBuildPlanner(**build_plan_data)
-
-    assert (
-        "one of the platforms has 'all' in 'build-for', but there are 2 platforms"
-    ) in str(raised.value)
+        snapcraft.models.project.Project.unmarshal(build_plan_data)
 
 
 def test_build_planner_all_with_other_builds_core22():
     """'build-for: all' cannot be combined with other builds with core22 syntax."""
-    build_plan_data = {
+    snapcraft_yaml = {
         "name": "test-snap",
         "base": "core22",
+        "parts": {},
+        "confinement": "strict",
         "architectures": [
             {
                 "build-on": ["s390x"],
@@ -2473,66 +2449,21 @@ def test_build_planner_all_with_other_builds_core22():
         ],
     }
 
-    build_plan = snapcraft.models.project.SnapcraftBuildPlanner(**build_plan_data)
-
-    # architectures are only converted to Platforms when creating the build plan
     with pytest.raises(pydantic.ValidationError) as raised:
-        build_plan.get_build_plan()
+        snapcraft.models.project.Project.unmarshal(snapcraft_yaml)
 
-    assert (
-        "one of the platforms has 'all' in 'build-for', but there are 2 platforms"
-    ) in str(raised.value)
-
-
-def test_get_build_plan_devel():
-    """Test that "devel" build-bases are correctly reflected on the build plan"""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {
-            "name": "test-snap",
-            "base": "core24",
-            "build-base": "devel",
-            "platforms": {"amd64": None},
-        }
+    assert ("one of the items has 'all' in 'build-for', but there are 2 items") in str(
+        raised.value
     )
-
-    build_plan = planner.get_build_plan()
-    assert build_plan == [
-        BuildInfo(
-            build_on="amd64",
-            build_for="amd64",
-            base=BaseName(name="ubuntu", version="devel"),
-            platform="amd64",
-        )
-    ]
-
-
-def test_platform_default():
-    """Default value for platforms is the host architecture."""
-    planner = snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
-        {"name": "test-snap", "base": "core24"}
-    )
-
-    actual_build_infos = planner.get_build_plan()
-
-    assert actual_build_infos == [
-        BuildInfo(
-            build_on=str(DebianArchitecture.from_host()),
-            build_for=str(DebianArchitecture.from_host()),
-            base=BaseName(name="ubuntu", version="24.04"),
-            platform=str(DebianArchitecture.from_host()),
-        )
-    ]
 
 
 def test_project_platform_error_has_context():
     """Platform validation errors include which platform entry is invalid."""
     error = r"build-on\n  Field required"
     with pytest.raises(pydantic.ValidationError, match=error):
-        snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
+        snapcraft.models.project.Project.model_validate(
             {
                 "name": "test-snap",
-                "base": "test-base",
-                "build-base": "test-build-base",
                 "platforms": {"test-platform": {"build-for": ["amd64"]}},
                 "project_type": "test-type",
             }
@@ -2542,13 +2473,11 @@ def test_project_platform_error_has_context():
 def test_project_platform_mismatch():
     """Raise an error if platform name and build-for are valid but different archs."""
     with pytest.raises(pydantic.ValidationError) as raised:
-        snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
+        snapcraft.models.project.Project.model_validate(
             {
                 "name": "test-snap",
-                "base": "test-base",
-                "build-base": "test-build-base",
+                "base": "core24",
                 "platforms": {"amd64": {"build-on": ["amd64"], "build-for": ["arm64"]}},
-                "project_type": "test-type",
             }
         )
 
@@ -2561,21 +2490,17 @@ def test_project_platform_mismatch():
 
 def test_project_platform_unknown_name():
     """Raise an error if an empty platform is not a valid architecture."""
-    with pytest.raises(CraftValidationError) as raised:
-        snapcraft.models.project.SnapcraftBuildPlanner.model_validate(
+    with pytest.raises(pydantic.ValidationError) as raised:
+        snapcraft.models.project.Project.model_validate(
             {
                 "name": "test-snap",
-                "base": "test-base",
-                "build-base": "test-build-base",
+                "base": "core24",
                 "platforms": {"unknown": None},
                 "project_type": "test-type",
             }
         )
 
-    assert (
-        "Invalid architecture: 'unknown' must be a valid debian architecture."
-        in str(raised.value)
-    )
+    assert "'unknown' is not a valid Debian architecture." in str(raised.value)
 
 
 @pytest.mark.parametrize("project", [ComponentProject, Project])
@@ -2584,6 +2509,7 @@ class TestComponents:
 
     @pytest.fixture
     def stub_component_data(self):
+        """Component with simple data."""
         data = {
             "type": "test",
             "summary": "test summary",
@@ -2593,11 +2519,33 @@ class TestComponents:
         }
         return data
 
-    def test_components_valid(self, project, project_yaml_data, stub_component_data):
-        component_data = {"foo": stub_component_data, "bar": stub_component_data}
+    @pytest.fixture
+    def stub_component_complex_data(self):
+        """Component with all keys set."""
+        data = {
+            "type": "test",
+            "summary": "test summary",
+            "description": "test description",
+            "version": "1.0",
+            "adopt-info": "my-part",
+            "hooks": {"my-hook": {"command-chain": ["baz"], "plugs": ["baz"]}},
+        }
+        return data
+
+    def test_components_valid(
+        self,
+        project,
+        project_yaml_data,
+        stub_component_data,
+        stub_component_complex_data,
+    ):
+        component_data = {
+            "foo": stub_component_data,
+            "bar": stub_component_complex_data,
+        }
         components = {
             "foo": snapcraft.models.Component.unmarshal(stub_component_data),
-            "bar": snapcraft.models.Component.unmarshal(stub_component_data),
+            "bar": snapcraft.models.Component.unmarshal(stub_component_complex_data),
         }
 
         test_project = project.unmarshal(project_yaml_data(components=component_data))
@@ -2826,3 +2774,60 @@ class TestComponents:
         partitions = test_project.get_partitions()
 
         assert partitions is None
+
+    def test_component_compression_default(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].compression is None
+        # compression is `None` but it's not set to `null` in the project file
+        assert "compression" not in test_project.components["foo"].model_fields_set
+
+    @pytest.mark.parametrize("compression", ["xz", "lzo"])
+    def test_component_compression_valid(
+        self, project, compression, project_yaml_data, stub_component_data
+    ):
+        component = {"foo": stub_component_data}
+        component["foo"]["compression"] = compression
+
+        test_project = project.unmarshal(project_yaml_data(components=component))
+
+        assert test_project.components
+        assert test_project.components["foo"].compression == compression
+
+    def test_component_compression_null_invalid(
+        self, project, project_yaml_data, stub_component_data
+    ):
+        """Error if the compression is set to null."""
+        component = {"foo": stub_component_data}
+        component["foo"]["compression"] = None
+
+        with pytest.raises(
+            pydantic.ValidationError,
+            match="Setting compression to null is not supported",
+        ):
+            project.unmarshal(project_yaml_data(components=component))
+
+
+class TestLint:
+    """Test the Lint model."""
+
+    def test_lint(self, project_yaml_data):
+        lint_data = {"ignore": ["classic", {"library": ["usr/lib/**/libfoo.so*"]}]}
+        project = Project.unmarshal(project_yaml_data(lint=lint_data))
+
+        assert project.lint == Lint(
+            ignore=["classic", {"library": ["usr/lib/**/libfoo.so*"]}]
+        )
+
+    def test_list_invalid(self, project_yaml_data):
+        """Error on multiple items in an ignore dict."""
+        lint_data = {"ignore": [{"linter-1": ["test"], "linter-2": ["test"]}]}
+        error = "Expected exactly one key in lint ignore entry."
+
+        with pytest.raises(pydantic.ValidationError, match=error):
+            Project.unmarshal(project_yaml_data(lint=lint_data))

@@ -1,5 +1,5 @@
 name: zip
-base: core20
+base: core22
 version: "0.1"
 summary: zip file integration test
 description: use zip as a source.
