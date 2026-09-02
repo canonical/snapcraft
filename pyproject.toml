@@ -12,7 +12,7 @@ dependencies = [
     "craft-grammar>=2.3.0",
     "craft-parts>=2.33.0",
     "craft-platforms>=0.11.0",
-    "craft-providers>=3.7.1",
+    "craft-providers @ git+https://github.com/mr-cal/craft-providers@add-lxd-debug-flag",
     "craft-store>=3.3.0",
     "jsonschema==2.6.0",
     "lazr.restfulclient",

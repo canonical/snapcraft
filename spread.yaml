@@ -189,6 +189,10 @@ prepare: |
   snap install lxd --channel=5.21/stable
   snap install yq
 
+  # Enable verbose/debug logging in the LXD daemon so lxd.log has more
+  # detail if a task fails (surfaced later via the debug-each hook).
+  snap set lxd daemon.debug=true
+
   # Hold snap refreshes for 24h.
   snap set system refresh.hold="$(date --date=tomorrow +%Y-%m-%dT%H:%M:%S%:z)"
   if ! snap watch --last=auto-refresh?; then
@@ -200,6 +204,11 @@ prepare: |
 
   /snap/bin/lxd waitready --timeout=30
   /snap/bin/lxd init --auto
+
+  # Capture the full LXD event stream (across all projects) for the
+  # lifetime of the run, so debug-each can dump it on task failure.
+  lxc monitor --all-projects --pretty --loglevel=debug > /var/tmp/lxc-monitor.log 2>&1 &
+  echo $! > /var/tmp/lxc-monitor.pid
 
   if [ -n "${HTTP_PROXY:-}" ]; then
     # Lxd either can't access or doesn't fallback to the environment variables,
@@ -223,10 +232,30 @@ restore-each: |
   "$TOOLS_DIR"/restore.sh
 
 debug-each: |
+  echo "==== dmesg ===="
+  dmesg || true
+
+  echo "==== syslog ===="
+  tail -n 1000 /var/log/syslog 2>/dev/null || journalctl -xe --no-pager || true
+
+  for log in /var/log/lxd/lxd.log /var/snap/lxd/common/lxd/logs/lxd.log; do
+    if [ -f "$log" ]; then
+      echo "==== LXD daemon log ($log) ===="
+      cat "$log" || true
+    fi
+  done
+
+  if [ -f /var/tmp/lxc-monitor.log ]; then
+    echo "==== lxc monitor (all-projects) ===="
+    cat /var/tmp/lxc-monitor.log || true
+  fi
+
   if command -v lxc >/dev/null 2>&1 && lxc project list --format csv 2>/dev/null | grep -q '^snapcraft,'; then
     echo "==== LXD containers (project: snapcraft) ===="
     lxc --project snapcraft list || true
     for c in $(lxc --project snapcraft list -f csv -c n 2>/dev/null); do
+      echo "---- lxc --project snapcraft config show --expanded $c ----"
+      lxc --project snapcraft config show --expanded "$c" || true
       echo "---- lxc --project snapcraft info --show-log $c ----"
       lxc --project snapcraft info --show-log "$c" || true
     done
