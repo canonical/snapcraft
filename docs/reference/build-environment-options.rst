@@ -21,7 +21,7 @@ Snapcraft can optionally use the following arguments to modify the build environ
      - See :ref:`destructive mode <reference-build-environment-options-destructive>`.
 
    * - ``--use-lxd``
-     - Builds the snap using `LXD <https://linuxcontainers.org/lxd/introduction/>`_
+     - Builds the snap using `LXD <https://canonical.com/lxd/docs/>`_
        rather than Multipass. This can potentially reduce resource usage, especially
        from a VM.
      - Requires LXD. For more information, see :ref:`how-to-select-a-build-provider`.

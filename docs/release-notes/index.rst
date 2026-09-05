@@ -1,10 +1,13 @@
+.. meta::
+    :description: The index of release documentation for Snapcraft. These release notes summarize the new features, bug fixes, and backwards-incompatible changes in each version.
+
 .. _release-notes:
 
 Release notes
 =============
 
 This page lists the notes for past releases of Snapcraft, which summarize new features,
-bug fixes and backwards-incompatible changes in each version. It also contains the
+bug fixes, and backwards-incompatible changes in each version. It also contains the
 release and support policies for Snapcraft.
 
 .. _current-releases:
@@ -15,6 +18,7 @@ Current releases
 Snapcraft 9
 ~~~~~~~~~~~
 
+- :ref:`Snapcraft 9.1 <release-9.1>`
 - :ref:`Snapcraft 9.0 <release-9.0>`
 
 
@@ -95,6 +99,7 @@ development keeps pace with the OS's new releases and support lifecycle.
 .. toctree::
     :hidden:
 
+    Snapcraft 9.1 <snapcraft-9-1>
     Snapcraft 9.0 <snapcraft-9-0>
     Snapcraft 8.14 <snapcraft-8-14>
     Snapcraft 8.13 <snapcraft-8-13>
@@ -123,6 +128,7 @@ development keeps pace with the OS's new releases and support lifecycle.
 
   Requirements and compatibility
   ------------------------------
+
   See :ref:`reference-system-requirements` for information on the minimum hardware and
   installed software.
 
@@ -242,33 +248,6 @@ development keeps pace with the OS's new releases and support lifecycle.
   `Security notice on encryption X <>`_ on the Ubuntu blog.">
 
 
-  Scheduled feature deprecations
-  ------------------------------
-
-  <Iterate on the following paragraph+items if you're covering multiple
-  versions in this section.>
-
-  The following features will be deprecated in Snapcraft <planned version>:
-
-
-  <Feature D>
-  ~~~~~~~~~~~
-
-  <Future deprecation: Use the same format as backwards-incompatible changes,
-  but use future tense to describe what we *intend* and *plan* to do in
-  subsequent releases. Think of this as a promise or commitment to the reader,
-  and be mindful of the trust we want them to place in us. Don't write
-  conjecture or make promises about details that haven't been decided. Include
-  only the decisions that we have set in stone and information we're allowed to
-  disclose at of the release day. Use phrases like "we plan to", "we are
-  working on", or "we have scheduled development of". End by linking to
-  relevant documentation, standards, or public discussion. For example, "In
-  October 2024, the NIST published SP ABC-123, urging software publishers to
-  cease the use of encryption algorithm X. We plan to deprecate it in Snapcraft
-  1.2. For more details about this decision and our policy, see `Security
-  notice on encryption X <>`_ on the Ubuntu blog.">
-
-
   Known issues
   ------------
 
@@ -310,7 +289,18 @@ development keeps pace with the OS's new releases and support lifecycle.
   We would like to express a big thank you to all the people who contributed to
   this release.
 
+  <List all contributors for this release. Compile the list from GitHub's compare page
+  (https://github.com/canonical/starbase/compare) or through digests in your local
+  repository.
+
+  List contributors from the craft libraries, too. Don't automatically include all of
+  the library contributions that were inherited; only consider those that were actually
+  integrated or consumed by the project.
+
+  Example:
+
   :literalref:`@alex<https://example.com/alex>`,
   :literalref:`@blair<https://example.com/blair>`,
   :literalref:`@cam<https://example.com/cam>`,
   and :literalref:`@devin<https://example.com/devin>`
+  >

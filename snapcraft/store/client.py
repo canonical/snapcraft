@@ -59,11 +59,6 @@ def build_user_agent(version: str = __version__):
     return f"snapcraft/{version} {dist_id}/{dist_version} ({dist_arch})"
 
 
-def use_candid() -> bool:
-    """Return True if using candid as the auth backend."""
-    return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "candid"
-
-
 def is_onprem() -> bool:
     """Return True if using onprem as the auth backend."""
     return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "onprem"
@@ -144,16 +139,6 @@ def get_client(ephemeral: bool) -> craft_store.BaseClient:
             environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
             ephemeral=ephemeral,
         )
-    elif use_candid() is True:
-        client = craft_store.StoreClient(
-            base_url=store_url,
-            storage_base_url=store_upload_url,
-            application_name="snapcraft",
-            user_agent=user_agent,
-            endpoints=craft_store.endpoints.SNAP_STORE,
-            environment_auth=constants.ENVIRONMENT_STORE_CREDENTIALS,
-            ephemeral=ephemeral,
-        )
     else:
         client = craft_store.UbuntuOneStoreClient(
             base_url=store_url,
@@ -192,7 +177,7 @@ class LegacyStoreClientCLI:
                 resolution=f"Continue without running 'login', or unset {constants.ENVIRONMENT_STORE_CREDENTIALS!r} and try again.",
             )
 
-        if not is_onprem() and use_candid() is False:
+        if not is_onprem():
             kwargs["email"], kwargs["password"] = _prompt_login()
 
         if packages is None:
@@ -247,7 +232,7 @@ class LegacyStoreClientCLI:
         try:
             return self.store_client.request(*args, **kwargs)
         except craft_store.errors.StoreServerError as store_error:
-            if store_error.response.status_code == requests.codes.unauthorized:
+            if store_error.response.status_code == http.HTTPStatus.UNAUTHORIZED:
                 if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
                     raise errors.StoreCredentialsUnauthorizedError(
                         "Exported credentials are no longer valid for the Snap Store.",

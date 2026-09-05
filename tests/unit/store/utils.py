@@ -22,7 +22,9 @@ import requests
 class FakeResponse(requests.Response):
     """A fake requests.Response."""
 
-    def __init__(self, content, status_code):
+    _content: bytes
+
+    def __init__(self, content: bytes, status_code: int):
         self._content = content
         self.status_code = status_code
 
@@ -35,7 +37,7 @@ class FakeResponse(requests.Response):
         return self.status_code == 200
 
     def json(self, **kwargs):
-        return json.loads(self._content)  # ty: ignore[invalid-argument-type]
+        return json.loads(self._content)
 
     @property
     def reason(self):

@@ -115,6 +115,10 @@ def test_application_map_log_verbosity_env_var(monkeypatch):
     craft_cli.emit.set_mode(old_emit_level)
 
 
+def test_app_metadata_enables_conditional_repack():
+    assert application.APP_METADATA.always_repack is False
+
+
 @pytest.fixture()
 def extension_source(default_project):
     source = default_project.marshal()
@@ -296,7 +300,8 @@ def test_application_plugins():
 
     # Just do some sanity checks.
     assert "python" in plugins
-    assert "kernel" not in plugins
+    assert "kernel" in plugins
+    assert "initrd" in plugins
 
 
 @pytest.mark.parametrize(
@@ -322,6 +327,15 @@ def test_application_dotnet_registered(
 
     assert "dotnet" in craft_parts.plugins.get_registered_plugins()
     assert craft_parts.plugins.get_plugin_class("dotnet") == expected_plugin
+
+
+def test_application_gradle_use_unregistered():
+    """gradle-use plugin is unregistered for snapcraft."""
+    app = application.create_app()
+
+    app._register_default_plugins()
+
+    assert "gradle-use" not in craft_parts.plugins.get_registered_plugins()
 
 
 def test_default_command_integrated(monkeypatch, mocker, new_dir):

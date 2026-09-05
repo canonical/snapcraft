@@ -94,7 +94,7 @@ FAKE_STORE_ERROR = craft_store.errors.StoreServerError(
     response=FakeResponse(
         content=json.dumps(
             {"error_list": [{"code": "bad assertion", "message": "bad assertion"}]}
-        ),
+        ).encode(),
         status_code=400,
     )
 )

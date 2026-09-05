@@ -42,7 +42,12 @@ from craft_grammar.models import (  # noqa: TC002 (typing-only-third-party-impor
     Grammar,
 )
 from craft_platforms import DebianArchitecture
-from pydantic import ConfigDict, PrivateAttr, StringConstraints, error_wrappers
+from pydantic import (
+    ConfigDict,
+    PrivateAttr,
+    StringConstraints,
+    error_wrappers,
+)
 from pydantic.json_schema import (
     SkipJsonSchema,  # noqa: TC002 (typing-only-third-party-import) # pydantic needs to import types at runtime for validation
 )
@@ -1912,6 +1917,9 @@ class Project(models.Project):
 
     Enabling `Ubuntu Pro <https://ubuntu.com/pro>`_ services allows building
     snaps in an Ubuntu Pro enabled environment.
+
+    This is only available for core22 snaps. Core24 and higher snaps should specify Pro
+    services with the command-line argument ``--pro=<services>`` instead.
     """
 
     provenance: str | None = pydantic.Field(
@@ -2494,6 +2502,16 @@ class Core24Project(StableBaseProject):
         examples=[
             "{amd64: {build-on: [amd64], build-for: [amd64]}, arm64: {build-on: [amd64, arm64], build-for: [arm64]}}"
         ],
+    )
+
+    ua_services: set[str] | None = pydantic.Field(
+        default=None,
+        description="The Ubuntu Pro (formerly Ubuntu Advantage) services to enable when building the snap.",
+        examples=["[esm-apps]"],
+        deprecated=(
+            "The 'ua-services' key is ignored for core24 and higher snaps. Specify Pro "
+            "services with the command-line argument ``--pro=<services>`` instead."
+        ),
     )
 
 

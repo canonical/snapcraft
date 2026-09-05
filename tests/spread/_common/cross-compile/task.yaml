@@ -8,7 +8,7 @@ prepare: |
   # set the correct package repositories
   base="$(get_base)"
   case "$base" in
-    core26) suites="resolute" ;;
+    core26) suites="resolute, resolute-updates, resolute-backports" ;;
     core24) suites="noble, noble-updates, noble-backports" ;;
     core22) suites="jammy, jammy-updates, jammy-backports" ;;
   esac

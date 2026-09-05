@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import http
 import json
 import textwrap
 import time
@@ -21,7 +22,6 @@ from unittest.mock import ANY, Mock, call
 
 import craft_store
 import pytest
-import requests
 from craft_store import endpoints
 from craft_store.models import RevisionsResponseModel
 
@@ -404,13 +404,6 @@ def test_useragent_linux(mocker):
 #####################
 
 
-@pytest.mark.parametrize("env, expected", (("candid", True), ("not-candid", False)))
-def test_use_candid(monkeypatch, env, expected):
-    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", env)
-
-    assert client.use_candid() is expected
-
-
 def test_get_store_url():
     assert client.get_store_url() == "https://dashboard.snapcraft.io"
 
@@ -457,16 +450,6 @@ def test_get_hostname():
 #######################
 # StoreClient factory #
 #######################
-
-
-@pytest.mark.parametrize("ephemeral", (True, False))
-def test_get_store_client(monkeypatch, ephemeral, legacy_config_path):
-    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
-    legacy_config_path.unlink()
-
-    store_client = client.get_client(ephemeral)
-
-    assert isinstance(store_client, craft_store.StoreClient)
 
 
 @pytest.mark.parametrize("ephemeral", (True, False))
@@ -550,7 +533,7 @@ def test_login(fake_client):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
     ]
 
@@ -560,7 +543,7 @@ def test_login_otp(fake_client):
     fake_client.login.side_effect = [
         craft_store.errors.StoreServerError(
             FakeResponse(
-                status_code=requests.codes.unauthorized,
+                status_code=http.HTTPStatus.UNAUTHORIZED,
                 content=json.dumps(
                     {"error_list": [{"message": "2fa", "code": "twofactor-required"}]}
                 ).encode(),
@@ -587,7 +570,7 @@ def test_login_otp(fake_client):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         ),
         call(
             ttl=31536000,
@@ -604,7 +587,7 @@ def test_login_otp(fake_client):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
             otp="123456",
         ),
     ]
@@ -633,7 +616,7 @@ def test_login_with_params(fake_client):
             ],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
     ]
 
@@ -708,7 +691,7 @@ def test_login_from_401_request(fake_client, emitter):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
     ]
 
@@ -807,7 +790,7 @@ def test_request_not_logged_in(fake_client, emitter):
             packages=[],
             description="snapcraft@fake-host",
             email="fake-username@acme.com",
-            password="fake-password",
+            password="fake-password",  # noqa: S106 (hardcoded-password-func-arg)
         )
     ]
 

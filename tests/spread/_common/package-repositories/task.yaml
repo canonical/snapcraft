@@ -54,12 +54,6 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  # deadsnakes has a resolute release but libpython3.11 for armhf is not yet available (#6239)
-  if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "test_foreign_armhf" ]]; then
-    snapcraft pack 2>&1 | MATCH "Package not found: libpython3.11-minimal:armhf"
-    exit 0
-  fi
-
   # drop this section when the snappy-dev ppa has a resolute suite (#6239)
   if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "test_apt_ppa" ]]; then
     snapcraft pack 2>&1 | MATCH "The repository 'http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu resolute Release' does not have a Release file."

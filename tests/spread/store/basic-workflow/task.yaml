@@ -6,7 +6,6 @@ environment:
   SNAP: "/snapcraft/tests/spread/core22/components-environment/"
   SNAPCRAFT_STORE_CREDENTIALS/ubuntu_one: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING})"
   SNAPCRAFT_STORE_CREDENTIALS/legacy: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY})"
-  SNAPCRAFT_STORE_CREDENTIALS/candid: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID})"
 
 prepare: |
   if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then

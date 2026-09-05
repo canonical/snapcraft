@@ -160,12 +160,19 @@ class ContentSlot(SnapcraftMetadata):
     content: str | None = None
     read: list[str] = []
     write: list[str] = []
+    source: dict[str, list[str]] = {}
 
     def get_content_dirs(self, installed_path: Path) -> set[Path]:
         """Obtain the slot's content directories."""
         content_dirs: set[Path] = set()
 
-        for path_ in self.read + self.write:
+        paths = [
+            *self.read,
+            *self.write,
+            *self.source.get("read", []),
+            *self.source.get("write", []),
+        ]
+        for path_ in paths:
             # Strip leading "$SNAP" and "/".
             path = re.sub(r"^\$SNAP", "", path_)
             path = re.sub(r"^/", "", path)
@@ -550,6 +557,8 @@ def _populate_environment(
             "LD_LIBRARY_PATH": get_ld_library_paths(prime_dir, arch_triplet),
             "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         }
+
+    environment = environment.copy()
 
     # if LD_LIBRARY_PATH is not defined, use default value when not classic
     if "LD_LIBRARY_PATH" not in environment and confinement != "classic":
