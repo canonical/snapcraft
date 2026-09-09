@@ -655,7 +655,7 @@ remote = [
 
 [[package]]
 name = "craft-archives"
-version = "2.2.1"
+version = "2.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "distro" },
@@ -666,9 +666,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-debian" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/3e/3ee557ac30aa1b9b6fa08de49fe2dd08727e329985073363f58098a45674/craft_archives-2.2.1.tar.gz", hash = "sha256:4f1858de9ed60e47284006cdcead233df92322b3b5eff15d7a67aebfe782874e", size = 232087, upload-time = "2026-07-08T14:19:20.626Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0c/b9/e83ca9d07203ccbd7c083c4048a96e4c8a9b7e1341aad4ebe563071deaab/craft_archives-2.2.2.tar.gz", hash = "sha256:463957aca9ea415b6392bab579746235f14640c6681426848d572ceedc53de21", size = 238396, upload-time = "2026-09-04T19:47:33.394Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/db/b41a72d10768602638ce0b6bfc6fe45a5e119442d510e7d2c3b79ee48dc1/craft_archives-2.2.1-py3-none-any.whl", hash = "sha256:4933a300785dfced3ff4c59f618a66a7442e62f601db386d13de46f4a27a811c", size = 39645, upload-time = "2026-07-08T14:19:18.974Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/38/0428b2aec6dddc2d4a387234b1b1c45f7fc4a1d9f5a6fc1b4649be32842d/craft_archives-2.2.2-py3-none-any.whl", hash = "sha256:57f7f13915aa2a6616f0611281bf5341650b5f3d779db20b8d2c1afe0113ab5c", size = 38325, upload-time = "2026-09-04T19:47:31.603Z" },
 ]
 
 [[package]]
@@ -2190,14 +2190,11 @@ wheels = [
 
 [[package]]
 name = "python-debian"
-version = "1.0.1"
+version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "charset-normalizer" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/bf/4b/3c4cf635311b6203f17c2d693dc15e898969983dd3f729bee3c428aa60d4/python-debian-1.0.1.tar.gz", hash = "sha256:3ada9b83a3d671b58081782c0969cffa0102f6ce433fbbc7cf21275b8b5cc771", size = 127249, upload-time = "2025-03-11T12:27:27.245Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/75/36/f90e7d006dd9311a6185f1c34b403dd6d76ff583e7962c56e9374c462a48/python_debian-1.1.1.tar.gz", hash = "sha256:fe4fc3dc798dbf1f0ef5865e2b1b4f7cc0352b6a511b25ab7594906c64a73629", size = 127956, upload-time = "2026-06-07T11:06:58.282Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/15/e8096189b18dda72e4923622abc10b021ecff723b397e22eff29fb86637b/python_debian-1.0.1-py3-none-any.whl", hash = "sha256:8f137c230c1d9279c2ac892b35915068b2aca090c9fd3da5671ff87af32af12c", size = 137453, upload-time = "2025-03-11T12:27:25.014Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/47/e184f0004e63dbc49c4bad5e811218f66bece1b519f80b06a619b42e6ec3/python_debian-1.1.1-py3-none-any.whl", hash = "sha256:f98ae013e8e5310e49041cc3860a7105df73af73d4ff1d8afb474770d328a6ad", size = 138101, upload-time = "2026-06-07T11:06:56.632Z" },
 ]
 
 [[package]]
@@ -2679,7 +2676,7 @@ requires-dist = [
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.1.0" },
     { name = "click", specifier = ">=8.3.3" },
     { name = "craft-application", extras = ["remote"], specifier = ">=7.2.1" },
-    { name = "craft-archives", specifier = ">=2.2.1" },
+    { name = "craft-archives", specifier = ">=2.2.2" },
     { name = "craft-cli", specifier = ">=3.4.0" },
     { name = "craft-grammar", specifier = ">=2.3.0" },
     { name = "craft-parts", specifier = ">=2.33.0" },
