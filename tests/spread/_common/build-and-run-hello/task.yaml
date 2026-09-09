@@ -37,12 +37,6 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  # remove once the gnome extension supports core26 (#6185)
-  if [[ "$base" == "core26" && ( "$SPREAD_VARIANT" == "flutter" || "$SPREAD_VARIANT" == "python" ) ]]; then
-    snapcraft pack 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
-    exit 0
-  fi
-
   # Make sure expand-extensions works
   snapcraft expand-extensions
 
@@ -113,12 +107,6 @@ restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
-
-  # remove once the gnome extension supports core26 (#6185)
-  if [[ "$base" == "core26" && ( "$SPREAD_VARIANT" == "flutter" || "$SPREAD_VARIANT" == "python" ) ]]; then
-    snapcraft clean 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
-    exit 0
-  fi
 
   snapcraft clean
   rm -f ./*.snap

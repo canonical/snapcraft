@@ -27,12 +27,6 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  # drop this conditional once the gnome extension supports core26 (#6185)
-  if [[ "$base" == "core26" && "$SNAP" == "library-gnome" ]]; then
-    snapcraft pack 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
-    exit 0
-  fi
-
   snapcraft pack 2> output.txt
 
   test -f linter-test_*.snap
@@ -55,11 +49,6 @@ restore: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  # drop this conditional once the gnome extension supports core26 (#6185)
-  if [[ "$base" == "core26" && "$SNAP" == "library-gnome" ]]; then
-    snapcraft clean 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
-  else
-    snapcraft clean
-  fi
+  snapcraft clean
 
   restore_yaml "snap/snapcraft.yaml"
