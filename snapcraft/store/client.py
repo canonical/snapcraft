@@ -576,6 +576,11 @@ class LegacyStoreClientCLI:
                     raise errors.SnapcraftError(
                         f"Issues while processing snap:\n{error_string}"
                     )
+                if status.get("code") == "error":
+                    raise errors.SnapcraftError(
+                        f"Store processing failed with status: {human_status!r}. "
+                        "Please check the automated review on the Snap Store."
+                    )
                 break
 
             time.sleep(_POLL_DELAY)
