@@ -494,7 +494,9 @@ def get_metadata_from_project(
         slots=project.slots,
         hooks=project.hooks,
         layout=project.layout,
-        system_usernames=project.system_usernames,
+        system_usernames=project.system_usernames.model_dump(exclude_none=True)
+        if project.system_usernames is not None
+        else None,
         provenance=project.provenance,
         links=links if links else None,
         components=components,
