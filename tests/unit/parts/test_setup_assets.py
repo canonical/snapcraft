@@ -281,7 +281,7 @@ class TestSetupAssets:
                     "apps": {
                         "app1": {
                             "command": "test.sh",
-                            "common-id": "my-test",
+                            "common-id": "my.test.sh",
                             "desktop": "test.desktop",
                         },
                     },
@@ -413,7 +413,7 @@ class TestSetupAssets:
                     "apps": {
                         "app1": {
                             "command": "test.sh",
-                            "common-id": "my-test",
+                            "common-id": "my.test.sh",
                             "desktop": "test.desktop",
                         },
                     },
@@ -483,7 +483,7 @@ class TestSetupAssets:
                     "apps": {
                         "app1": {
                             "command": "test.sh",
-                            "common-id": "my-test",
+                            "common-id": "my.test.sh",
                             "desktop": "test.desktop",
                         },
                     },
