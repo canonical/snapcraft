@@ -126,7 +126,7 @@ def test_not_equal_to_non_channel():
 def test_from_tuple(track, risk, branch, expected_str):
     channel = Channel.from_channel_tuple(track=track, risk=risk, branch=branch)
 
-    assert channel.track == branch or "latest"
+    assert channel.track in (track, "latest")
     assert channel.risk == risk
     assert channel.branch == branch
     assert str(channel) == expected_str
