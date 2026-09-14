@@ -310,7 +310,15 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
                     craft_cli.emit.progress(f"Building {self._assertion_name}.")
                     built_assertion = self._build_assertion(edited_assertion)
                     craft_cli.emit.progress(f"Built {self._assertion_name}.")
-                    self._validate_assertion(built_assertion, **kwargs)
+                    try:
+                        self._validate_assertion(built_assertion, **kwargs)
+                    except errors.SnapcraftAssertionWarning as assertion_warning:
+                        # Users may ignore this warning and still submit the assertion.
+                        craft_cli.emit.progress(str(assertion_warning), permanent=True)
+                        if utils.confirm_with_user(
+                            f"Do you wish to amend the {self._assertion_name}?"
+                        ):
+                            continue
 
                     signed_assertion = self.sign_assertion(built_assertion, key_name)
                     published_assertion = self._post_assertion(signed_assertion)
@@ -344,5 +352,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
         :param kwargs: Additional keyword arguments to use for validation.
 
         :raises SnapcraftAssertionError: If the assertion is invalid.
+        :raises SnapcraftAssertionWarning: If the assertion has a non-critical
+          warning. ``edit_assertion`` lets the user ignore it and still submit.
         """
         pass
