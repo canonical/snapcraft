@@ -127,7 +127,7 @@ def _has_candid_creds(auth: craft_store.Auth) -> bool:
     try:
         data = json.loads(credentials)
         # Candid creds are structured as {"t": "macaroon", "v": "<creds>"}
-        if isinstance(data, dict) and data.get("t") == "macaroon":
+        if isinstance(data, dict) and data.get("t") == "macaroon" and "v" in data:
             return True
         emit.debug("Credentials are not candid.")
     except json.JSONDecodeError as err:
