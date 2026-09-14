@@ -174,6 +174,8 @@ Snapcraft 9.1.1
   Snapcraft failed to build ARMHF snaps on ARMV8L systems.
 - `snapcraft#6326 <https://github.com/canonical/snapcraft/issues/6326>`__ Core26
   snaps would fail to stage packages when building on ARM64 systems.
+- `snapcraft#6414 <https://github.com/canonical/snapcraft/issues/6414>`__ Trying to
+  use Candid authentication wouldn't provide a user-friendly error.
 
 
 Contributors

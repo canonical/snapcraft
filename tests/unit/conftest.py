@@ -26,6 +26,7 @@ from unittest.mock import Mock
 import craft_application.application
 import craft_application.services
 import craft_application.util
+import craft_store
 import pytest
 import yaml
 from craft_parts import Features, callbacks, plugins
@@ -257,6 +258,10 @@ def fake_extension_experimental():
 def fake_client(mocker):
     """Forces get_client to return a fake craft_store.BaseClient"""
     client = mocker.patch("craft_store.BaseClient", autospec=True)
+    client._auth = mocker.create_autospec(craft_store.Auth)
+    client._auth.get_credentials.side_effect = (
+        craft_store.errors.CredentialsUnavailable("snapcraft", "dashboard.snapcraft.io")
+    )
     mocker.patch("snapcraft.store.client.get_client", return_value=client)
     return client
 

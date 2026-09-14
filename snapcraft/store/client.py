@@ -17,6 +17,7 @@
 """Snapcraft Store Client with CLI hooks."""
 
 import http
+import json
 import os
 import platform
 import time
@@ -59,6 +60,11 @@ def build_user_agent(version: str = __version__):
     return f"snapcraft/{version} {dist_id}/{dist_version} ({dist_arch})"
 
 
+def use_candid() -> bool:
+    """Return True if using candid as the auth backend."""
+    return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "candid"
+
+
 def is_onprem() -> bool:
     """Return True if using onprem as the auth backend."""
     return os.getenv(constants.ENVIRONMENT_STORE_AUTH) == "onprem"
@@ -97,10 +103,75 @@ def _prompt_login() -> tuple[str, str]:
 def _get_hostname(
     hostname: str | None = platform.node(),  # noqa: B008 Function call in arg defaults
 ) -> str:
-    """Return the computer's network name or UNNKOWN if it cannot be determined."""
+    """Return the computer's network name or UNKNOWN if it cannot be determined."""
     if not hostname:
         hostname = "UNKNOWN"
     return hostname
+
+
+def _has_candid_creds(auth: craft_store.Auth) -> bool:
+    """Check if there are candid credentials.
+
+    :returns: False if the credentials aren't candid or otherwise can't be parsed.
+    """
+    # on-prem credentials are similar to candid and should be ignored
+    if is_onprem():
+        return False
+
+    try:
+        credentials = auth.get_credentials()
+    except craft_store.errors.CraftStoreError as err:
+        emit.debug(f"Couldn't load credentials: {err}")
+        return False
+
+    try:
+        data = json.loads(credentials)
+        # Candid creds are structured as {"t": "macaroon", "v": "<creds>"}
+        if isinstance(data, dict) and data.get("t") == "macaroon":
+            return True
+        emit.debug("Credentials are not candid.")
+    except json.JSONDecodeError as err:
+        emit.debug(f"Couldn't parse credentials: {err}")
+
+    return False
+
+
+def _validate_candid(auth: craft_store.Auth) -> None:
+    """Raise an error if candid credentials or candid auth are detected.
+
+    :raises SnapcraftError: If candid credentials or SNAPCRAFT_STORE_AUTH=candid are detected.
+    """
+    has_candid_auth = use_candid()
+    has_candid_creds = _has_candid_creds(auth)
+
+    if not has_candid_auth and not has_candid_creds:
+        return
+
+    if has_candid_creds:
+        is_env_cred = bool(os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS))
+        login_commands = (
+            "'snapcraft export-login'"
+            if is_env_cred
+            else "'snapcraft logout' and 'snapcraft login'"
+        )
+
+        if has_candid_auth:
+            resolution = (
+                f"Unset {constants.ENVIRONMENT_STORE_AUTH} and run {login_commands} "
+                "to generate new credentials."
+            )
+        else:
+            resolution = f"Run {login_commands} to generate new credentials."
+
+        raise errors.SnapcraftError(
+            "Candid credentials are no longer valid.",
+            resolution=resolution,
+        )
+
+    raise errors.SnapcraftError(
+        f"{constants.ENVIRONMENT_STORE_AUTH}=candid is no longer supported.",
+        resolution=f"Unset {constants.ENVIRONMENT_STORE_AUTH} to use the Snap Store.",
+    )
 
 
 def get_client(ephemeral: bool) -> craft_store.BaseClient:
@@ -171,6 +242,12 @@ class LegacyStoreClientCLI:
         **kwargs,
     ) -> str:
         """Log in to the Snap Store and prompt if required."""
+        if use_candid():
+            raise errors.SnapcraftError(
+                f"{constants.ENVIRONMENT_STORE_AUTH}=candid is no longer supported.",
+                resolution=f"Unset {constants.ENVIRONMENT_STORE_AUTH} to login with Ubuntu One.",
+            )
+
         if os.getenv(constants.ENVIRONMENT_STORE_CREDENTIALS):
             raise errors.SnapcraftError(
                 f"Login is not required if {constants.ENVIRONMENT_STORE_CREDENTIALS!r} is set.",
@@ -229,6 +306,8 @@ class LegacyStoreClientCLI:
 
         Actionable items are those that could prompt a login or registration.
         """
+        _validate_candid(self.store_client._auth)
+
         try:
             return self.store_client.request(*args, **kwargs)
         except craft_store.errors.StoreServerError as store_error:
@@ -260,6 +339,11 @@ class LegacyStoreClientCLI:
 
         self.login()
         return self.store_client.request(*args, **kwargs)
+
+    def whoami(self) -> dict[str, Any]:
+        """Return information about the current login."""
+        _validate_candid(self.store_client._auth)
+        return self.store_client.whoami()
 
     def register(
         self,
