@@ -200,6 +200,8 @@ def fake_assertion_service(fake_services):
             """Add an simple custom validator."""
             if kwargs.get("test-arg") == assertion.test_field_2:
                 raise errors.SnapcraftAssertionError("Custom validation failed.")
+            if kwargs.get("test-warning-arg") == assertion.test_field_2:
+                raise errors.SnapcraftAssertionWarning("Custom validation warning.")
 
     return FakeAssertionService(app=APP_METADATA, services=fake_services)
 
@@ -631,4 +633,57 @@ def test_edit_assertions_validate_assertion_error(
         mock.call("Do you wish to amend the fake assertion?")
     ]
     assert mock_post_assertion.mock_calls == []
+    assert not (tmp_path / "assertion-file").exists()
+
+
+@pytest.mark.parametrize(
+    ("mock_confirm_with_user", "write_text", "expected_assertion"),
+    [
+        pytest.param(
+            False,
+            ["test-field-1: test-value-1-edited\ntest-field-2: 999"],
+            b'{"test_field_1": "test-value-1-edited-built", "test_field_2": "999"}-signed',
+            id="proceed",
+        ),
+        pytest.param(
+            True,
+            [
+                "test-field-1: test-value-1-edited\ntest-field-2: 1000",
+                "test-field-1: test-value-1-edited\ntest-field-2: 999",
+            ],
+            b'{"test_field_1": "test-value-1-edited-built", "test_field_2": "1000"}-signed',
+            id="amend",
+        ),
+    ],
+    indirect=["mock_confirm_with_user", "write_text"],
+)
+@pytest.mark.usefixtures("fake_sign_assertion")
+def test_edit_assertions_validate_assertion_warning(
+    fake_assertion_service,
+    emitter,
+    mock_confirm_with_user,
+    write_text,
+    expected_assertion,
+    mocker,
+    tmp_path,
+):
+    """Users can amend or ignore a non-critical assertion warning."""
+    kwargs: dict[str, Any] = {"test-warning-arg": 999}
+    mock_post_assertion = mocker.spy(fake_assertion_service, "_post_assertion")
+
+    fake_assertion_service.setup()
+    fake_assertion_service.edit_assertion(
+        name="test-confb",
+        account_id="test-account-id",
+        key_name="test-key",
+        **kwargs,
+    )
+
+    assert mock_confirm_with_user.mock_calls == [
+        mock.call("Do you wish to amend the fake assertion?")
+    ]
+    assert mock_post_assertion.mock_calls == [mock.call(expected_assertion)]
+    emitter.assert_progress("Custom validation warning.", permanent=True)
+    emitter.assert_trace(f"Signed assertion: {expected_assertion.decode()}")
+    emitter.assert_message("Success.")
     assert not (tmp_path / "assertion-file").exists()
