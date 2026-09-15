@@ -260,7 +260,7 @@ class StoreWhoAmICommand(AppCommand):
 
     @override
     def run(self, parsed_args: argparse.Namespace):
-        whoami = store.StoreClientCLI().store_client.whoami()
+        whoami = store.StoreClientCLI().whoami()
 
         if whoami.get("permissions"):
             permissions = ", ".join(whoami["permissions"])

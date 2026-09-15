@@ -1,0 +1,16 @@
+summary: test candid credential errors
+
+environment:
+  SNAPCRAFT_STORE_CREDENTIALS: "$(HOST: echo ${SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID})"
+  SNAPCRAFT_STORE_AUTH/candid: candid
+  SNAPCRAFT_STORE_AUTH/default: ""
+
+prepare: |
+  if [[ -z "$SNAPCRAFT_STORE_CREDENTIALS" ]]; then
+    echo "No credentials set in env SNAPCRAFT_STORE_CREDENTIALS"
+    exit 1
+  fi
+
+execute: |
+  snapcraft whoami 2>&1 | MATCH "Candid credentials are no longer valid"
+  snapcraft names 2>&1 | MATCH "Candid credentials are no longer valid"
