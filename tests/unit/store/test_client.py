@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
 import http
 import json
 import textwrap
@@ -21,6 +22,7 @@ import time
 from unittest.mock import ANY, Mock, call
 
 import craft_store
+import keyring
 import pytest
 from craft_store import endpoints
 from craft_store.models import RevisionsResponseModel
@@ -36,6 +38,30 @@ from .utils import FakeResponse
 #############
 # Fixtures #
 #############
+
+
+@pytest.fixture
+def fake_candid_creds() -> str:
+    candid_creds = json.dumps({"t": "macaroon", "v": "test-macaroon"})
+    return base64.b64encode(candid_creds.encode()).decode()
+
+
+@pytest.fixture
+def fake_u1_creds() -> str:
+    u1_creds = json.dumps({"t": "u1-macaroon", "v": {"r": "root", "d": "discharge"}})
+    return base64.b64encode(u1_creds.encode()).decode()
+
+
+@pytest.fixture
+def keyring_candid_creds(memory_keyring, fake_candid_creds) -> None:
+    """Store fake candid credentials into the test memory keyring."""
+    keyring.set_password("snapcraft", "dashboard.snapcraft.io", fake_candid_creds)
+
+
+@pytest.fixture
+def keyring_u1_creds(memory_keyring, fake_u1_creds) -> None:
+    """Store fake Ubuntu One credentials into the test memory keyring."""
+    keyring.set_password("snapcraft", "dashboard.snapcraft.io", fake_u1_creds)
 
 
 @pytest.fixture
@@ -404,6 +430,13 @@ def test_useragent_linux(mocker):
 #####################
 
 
+@pytest.mark.parametrize("env, expected", (("candid", True), ("not-candid", False)))
+def test_use_candid(monkeypatch, env, expected):
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", env)
+
+    assert client.use_candid() is expected
+
+
 def test_get_store_url():
     assert client.get_store_url() == "https://dashboard.snapcraft.io"
 
@@ -481,6 +514,168 @@ def test_get_legacy_ubuntu_client(new_dir, legacy_config_path, ephemeral):
         assert isinstance(store_client, craft_store.UbuntuOneStoreClient)
     else:
         assert isinstance(store_client, LegacyUbuntuOne)
+
+
+@pytest.mark.usefixtures("keyring_candid_creds")
+@pytest.mark.parametrize("candid_auth", (True, False))
+def test_request_candid_error(monkeypatch, legacy_config_path, candid_auth):
+    """Error on requests that use candid credentials, regardless of SNAPCRAFT_STORE_AUTH."""
+    if candid_auth:
+        monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
+
+    store_cli = client.StoreClientCLI()
+
+    with pytest.raises(errors.SnapcraftError) as exc_info:
+        store_cli.request("GET", "https://dashboard.snapcraft.io/dev/api/account")
+
+    assert str(exc_info.value) == "Candid credentials are no longer valid."
+    if candid_auth:
+        assert exc_info.value.resolution == (
+            "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
+        )
+    else:
+        assert exc_info.value.resolution == (
+            "Run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
+        )
+
+
+@pytest.mark.parametrize("candid_auth", (True, False))
+def test_request_exported_candid_error(
+    monkeypatch, legacy_config_path, fake_candid_creds, candid_auth
+):
+    """Error on requests that use exported candid credentials, regardless of SNAPCRAFT_STORE_AUTH."""
+    if candid_auth:
+        monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
+    monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", fake_candid_creds)
+
+    store_cli = client.StoreClientCLI()
+
+    with pytest.raises(errors.SnapcraftError) as exc_info:
+        store_cli.request("GET", "https://dashboard.snapcraft.io/dev/api/account")
+
+    assert str(exc_info.value) == "Candid credentials are no longer valid."
+    if candid_auth:
+        assert exc_info.value.resolution == (
+            "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft export-login' to generate new credentials."
+        )
+    else:
+        assert exc_info.value.resolution == (
+            "Run 'snapcraft export-login' to generate new credentials."
+        )
+
+
+@pytest.mark.usefixtures("keyring_candid_creds")
+@pytest.mark.parametrize("candid_auth", (True, False))
+def test_whoami_candid_error(monkeypatch, legacy_config_path, candid_auth):
+    """Error on 'whoami' that use candid creds, regardless of SNAPCRAFT_STORE_AUTH."""
+    if candid_auth:
+        monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
+
+    store_cli = client.StoreClientCLI()
+
+    with pytest.raises(errors.SnapcraftError) as exc_info:
+        store_cli.whoami()
+
+    assert str(exc_info.value) == "Candid credentials are no longer valid."
+    if candid_auth:
+        assert exc_info.value.resolution == (
+            "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
+        )
+    else:
+        assert exc_info.value.resolution == (
+            "Run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
+        )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_request_candid_auth_error(monkeypatch, legacy_config_path):
+    """Error on requests when SNAPCRAFT_STORE_AUTH=candid."""
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
+
+    store_cli = client.StoreClientCLI()
+
+    with pytest.raises(errors.SnapcraftError) as exc_info:
+        store_cli.request("GET", "https://dashboard.snapcraft.io/dev/api/account")
+
+    assert str(exc_info.value) == "SNAPCRAFT_STORE_AUTH=candid is no longer supported."
+    assert (
+        exc_info.value.resolution == "Unset SNAPCRAFT_STORE_AUTH to use the Snap Store."
+    )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_login_candid_auth_error(monkeypatch, legacy_config_path):
+    """Error on logging in when SNAPCRAFT_STORE_AUTH=candid."""
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
+
+    store_cli = client.StoreClientCLI()
+
+    with pytest.raises(errors.SnapcraftError) as exc_info:
+        store_cli.login()
+
+    assert str(exc_info.value) == "SNAPCRAFT_STORE_AUTH=candid is no longer supported."
+    assert (
+        exc_info.value.resolution
+        == "Unset SNAPCRAFT_STORE_AUTH to login with Ubuntu One."
+    )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_whoami_candid_auth_error(monkeypatch, legacy_config_path):
+    """Error on 'whoami' when SNAPCRAFT_STORE_AUTH=candid."""
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
+
+    store_cli = client.StoreClientCLI()
+
+    with pytest.raises(errors.SnapcraftError) as exc_info:
+        store_cli.whoami()
+
+    assert str(exc_info.value) == "SNAPCRAFT_STORE_AUTH=candid is no longer supported."
+    assert (
+        exc_info.value.resolution == "Unset SNAPCRAFT_STORE_AUTH to use the Snap Store."
+    )
+
+
+@pytest.mark.usefixtures("keyring_candid_creds")
+def test_logout_succeeds_with_candid_auth_set(monkeypatch, legacy_config_path):
+    """Logout always works, regardless of SNAPCRAFT_STORE_AUTH."""
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "candid")
+    legacy_config_path.unlink()
+
+    store_cli = client.StoreClientCLI()
+    store_cli.store_client.logout()
+
+    assert keyring.get_password("snapcraft", "dashboard.snapcraft.io") is None
+
+
+@pytest.mark.usefixtures("keyring_u1_creds")
+def test_get_client_allows_u1_credentials(legacy_config_path):
+    """Ubuntu One credentials are unaffected by the candid check."""
+    legacy_config_path.unlink()
+
+    store_client = client.get_client(ephemeral=False)
+
+    assert isinstance(store_client, craft_store.UbuntuOneStoreClient)
+
+
+@pytest.mark.usefixtures("keyring_candid_creds")
+def test_onprem_allows_candid_style_credentials(
+    monkeypatch, legacy_config_path, mocker
+):
+    """On-prem stores are unaffected by the candid check, even though they use a candid-like credential."""
+    monkeypatch.setenv("SNAPCRAFT_STORE_AUTH", "onprem")
+    monkeypatch.setenv("SNAPCRAFT_ADMIN_MACAROON", "admin-macaroon")
+    legacy_config_path.unlink()
+
+    store_cli = client.StoreClientCLI()
+    mocker.patch.object(store_cli.store_client, "whoami", return_value={"account": {}})
+    assert store_cli.whoami() == {"account": {}}
 
 
 ########################

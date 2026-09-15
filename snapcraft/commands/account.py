@@ -33,7 +33,7 @@ from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from typing_extensions import override
 
-from snapcraft import store, utils
+from snapcraft import errors, store, utils
 
 _VALID_DATE_FORMATS = [
     "%Y-%m-%d",
@@ -192,6 +192,17 @@ class StoreExportLoginCommand(AppCommand):
                 f"Unset {store.constants.ENVIRONMENT_STORE_AUTH} to login with Ubuntu One."
             )
 
+        # Checked before logging in so the user isn't prompted for credentials that
+        # can't be written anywhere. lexists() also covers broken symlinks.
+        if parsed_args.login_file.strip() != "-" and os.path.lexists(
+            parsed_args.login_file
+        ):
+            raise errors.SnapcraftError(
+                f"Could not export login credentials because "
+                f"{parsed_args.login_file!r} already exists.",
+                resolution="Rename or remove the existing file, or export to a different file.",
+            )
+
         kwargs: dict[str, Any] = {}
         if parsed_args.snaps:
             kwargs["packages"] = parsed_args.snaps.split(",")
@@ -249,7 +260,7 @@ class StoreWhoAmICommand(AppCommand):
 
     @override
     def run(self, parsed_args: argparse.Namespace):
-        whoami = store.StoreClientCLI().store_client.whoami()
+        whoami = store.StoreClientCLI().whoami()
 
         if whoami.get("permissions"):
             permissions = ", ".join(whoami["permissions"])
