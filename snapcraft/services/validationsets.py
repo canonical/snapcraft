@@ -154,15 +154,24 @@ class ValidationSets(
 
     @override
     def _validate_assertion(
-        self, assertion: models.ValidationSetAssertion, **kwargs: dict[str, Any]
+        self,
+        assertion: models.ValidationSetAssertion,
+        *,
+        is_new: bool = False,
+        **kwargs: dict[str, Any],
     ) -> None:
         """Validate that the sequence has been incremented.
 
         :param assertion: The assertion to validate.
+        :param is_new: True if the assertion is new, false if it already exists.
         :param kwargs: Additional keyword arguments to use for validation.
 
         :raises SnapcraftAssertionWarning: If the sequence wasn't incremented.
         """
+        if is_new:
+            emit.debug("Skipping validation for new validation-set.")
+            return
+
         new_sequence = assertion.sequence
         old_sequence = cast(int, kwargs.get("sequence", 0))
         emit.debug(f"Sequence updated from {old_sequence} to {new_sequence}")
