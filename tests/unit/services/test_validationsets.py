@@ -199,3 +199,16 @@ def test_validate_assertion_warning(
 
     with expectation:
         validation_sets_service._validate_assertion(validation_set, sequence=old)
+
+
+@pytest.mark.parametrize("sequence", [1, 2, 10])
+def test_validate_assertion_new_set(
+    sequence, fake_services, fake_validation_set_assertion
+):
+    """New validation sets don't get validated."""
+    validation_sets_service = fake_services.get("validation_sets")
+    validation_set = fake_validation_set_assertion(sequence=sequence)
+
+    validation_sets_service._validate_assertion(
+        validation_set, is_new=True, sequence=sequence
+    )

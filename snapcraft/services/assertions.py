@@ -211,7 +211,13 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
                 ):
                     raise errors.SnapcraftError("operation aborted") from err
 
-    def _get_yaml_data(self, name: str, account_id: str, **kwargs) -> str:
+    def _get_yaml_data(self, name: str, account_id: str, **kwargs) -> tuple[str, bool]:
+        """Get the yaml for an assertion.
+
+        :param name: The name of the assertion to get.
+        :param account_id: The account ID associated with the assertion.
+
+        :returns: A tuple of the yaml string and a bool of whether the assertion was new or existing."""
         craft_cli.emit.progress(
             f"Requesting {self._assertion_name} '{name}' from the store."
         )
@@ -221,6 +227,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
             craft_cli.emit.progress(
                 f"Retrieved {self._assertion_name} '{name}' from the store.",
             )
+            is_new = False
         else:
             craft_cli.emit.progress(
                 f"Could not find an existing {self._assertion_name} named '{name}'.",
@@ -228,8 +235,9 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
             yaml_data = self._generate_yaml_from_template(
                 name=name, account_id=account_id, **kwargs
             )
+            is_new = True
 
-        return yaml_data
+        return yaml_data, is_new
 
     @staticmethod
     def _write_to_file(yaml_data: str) -> pathlib.Path:
@@ -289,11 +297,13 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
          If the assertion does not exist, a new assertion is created from a template.
 
         :param name: The name of the assertion to edit.
-        :param account_id: The account ID associated with the confdb schema.
+        :param account_id: The account ID associated with the assertion.
         :param key_name: Name of the key to sign the assertion.
         :param kwargs: Additional keyword arguments to use for validation.
         """
-        yaml_data = self._get_yaml_data(name=name, account_id=account_id, **kwargs)
+        yaml_data, is_new = self._get_yaml_data(
+            name=name, account_id=account_id, **kwargs
+        )
         yaml_file = self._write_to_file(yaml_data)
         original_assertion = self._editable_assertion_class.unmarshal(
             safe_yaml_load(io.StringIO(yaml_data))
@@ -311,7 +321,9 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
                     built_assertion = self._build_assertion(edited_assertion)
                     craft_cli.emit.progress(f"Built {self._assertion_name}.")
                     try:
-                        self._validate_assertion(built_assertion, **kwargs)
+                        self._validate_assertion(
+                            built_assertion, is_new=is_new, **kwargs
+                        )
                     except errors.SnapcraftAssertionWarning as assertion_warning:
                         # Users may ignore this warning and still submit the assertion.
                         craft_cli.emit.progress(str(assertion_warning), permanent=True)
@@ -341,7 +353,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
             self._remove_temp_file(yaml_file)
 
     def _validate_assertion(
-        self, assertion: AssertionT, **kwargs: dict[str, Any]
+        self, assertion: AssertionT, *, is_new: bool = False, **kwargs: dict[str, Any]
     ) -> None:
         """Additional validation to perform on the assertion after building.
 
@@ -349,6 +361,7 @@ class Assertion(base.AppService, Generic[EditableAssertionT, AssertionT]):
         custom validation.
 
         :param assertion: The assertion to validate.
+        :param is_new: Whether the assertion is newly created.
         :param kwargs: Additional keyword arguments to use for validation.
 
         :raises SnapcraftAssertionError: If the assertion is invalid.

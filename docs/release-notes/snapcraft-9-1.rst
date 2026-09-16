@@ -177,6 +177,15 @@ Snapcraft 9.1.1
 - `snapcraft#6414 <https://github.com/canonical/snapcraft/issues/6414>`__ Trying to
   use Candid authentication wouldn't provide a user-friendly error.
 
+.. _release-notes-fixes-9.1.2:
+
+Snapcraft 9.1.2
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6412 <https://github.com/canonical/snapcraft/issues/6412>`__ New validation
+  sets with a sequence of 1 couldn't be created.
+- `snapcraft#6413 <https://github.com/canonical/snapcraft/issues/6413>`__ New revisions
+  for an existing sequence of a validation set couldn't be created.
 
 Contributors
 ------------

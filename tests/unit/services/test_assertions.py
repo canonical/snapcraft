@@ -195,6 +195,8 @@ def fake_assertion_service(fake_services):
         def _validate_assertion(
             self,
             assertion: FakeAssertion,
+            *,
+            is_new: bool = False,
             **kwargs: dict[str, Any],
         ) -> None:
             """Add an simple custom validator."""
@@ -687,3 +689,45 @@ def test_edit_assertions_validate_assertion_warning(
     emitter.assert_trace(f"Signed assertion: {expected_assertion.decode()}")
     emitter.assert_message("Success.")
     assert not (tmp_path / "assertion-file").exists()
+
+
+@pytest.mark.parametrize(
+    ("existing_assertions", "write_text", "expected_is_new"),
+    [
+        pytest.param(
+            [],
+            ["test-field-1: default-value-1-edited\ntest-field-2: 0"],
+            True,
+            id="new-assertion",
+        ),
+        pytest.param(
+            [FakeAssertion(test_field_1="test-value-1", test_field_2=0)],
+            ["test-field-1: test-value-1-edited\ntest-field-2: 0"],
+            False,
+            id="existing-assertion",
+        ),
+    ],
+    indirect=["write_text"],
+)
+@pytest.mark.usefixtures("fake_sign_assertion")
+def test_edit_assertions_is_new(
+    fake_assertion_service,
+    mocker,
+    existing_assertions,
+    write_text,
+    expected_is_new,
+):
+    """'is_new' is true for new assertions."""
+    mocker.patch.object(
+        fake_assertion_service, "_get_assertions", return_value=existing_assertions
+    )
+    mock_validate = mocker.spy(fake_assertion_service, "_validate_assertion")
+
+    fake_assertion_service.setup()
+    fake_assertion_service.edit_assertion(
+        name="test-confb",
+        account_id="test-account-id",
+        key_name="test-key",
+    )
+
+    assert mock_validate.call_args.kwargs["is_new"] is expected_is_new
