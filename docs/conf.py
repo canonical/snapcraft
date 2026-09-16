@@ -177,6 +177,8 @@ linkcheck_ignore = [
     r"^https://www.npmjs.com/",
     "https://matrix.to/#",
     "https://gitlab.gnome.org",
+    "https://invent.kde.org",
+    "https://cmake.org",
     # 2026-06-03: Ignore Canonical sites until filtering is resolved
     "https://snapcraft.io",
     "https://juju.is",
