@@ -10,3 +10,4 @@ scripts = hooks-configure-fonts desktop-launch run
 install: $(scripts)
 
 .PHONY: $(scripts)
+.NOTPARALLEL:
