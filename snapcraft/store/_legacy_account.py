@@ -160,6 +160,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         user_agent: str,
         environment_auth: str | None = None,
         ephemeral: bool = False,
+        file_fallback: bool = False,
     ) -> None:
         # Adapt to the JSON format if the environment has configparser based credentials.
         if self.env_has_legacy_credentials():
