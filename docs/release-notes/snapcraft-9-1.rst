@@ -177,6 +177,17 @@ Snapcraft 9.1.1
 - `snapcraft#6414 <https://github.com/canonical/snapcraft/issues/6414>`__ Trying to
   use Candid authentication wouldn't provide a user-friendly error.
 
+.. _release-notes-fixes-9.1.2:
+
+Snapcraft 9.1.2
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6412 <https://github.com/canonical/snapcraft/issues/6412>`__
+  edit-validation-sets refuses to create a new validation set at sequence 1 ("sequence
+  number was not incremented")
+- `snapcraft#6413 <https://github.com/canonical/snapcraft/issues/6413>`__
+  edit-validation-sets makes it impossible to publish a new revision of an existing
+  sequence (no override)
 
 Contributors
 ------------
