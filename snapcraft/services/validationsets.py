@@ -163,12 +163,13 @@ class ValidationSets(
         """Validate that the sequence has been incremented.
 
         :param assertion: The assertion to validate.
-        :param is_new: Whether the validation set already existed or is new.
+        :param is_new: True if the assertion is new, false if it already exists.
         :param kwargs: Additional keyword arguments to use for validation.
 
         :raises SnapcraftAssertionWarning: If the sequence wasn't incremented.
         """
         if is_new:
+            emit.debug("Skipping validation for new validation-set.")
             return
 
         new_sequence = assertion.sequence

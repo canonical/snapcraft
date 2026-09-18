@@ -28,6 +28,7 @@ from craft_application.models import CraftBaseModel
 from typing_extensions import override
 
 from snapcraft import const, errors
+from snapcraft.services.assertions import AssertionData
 from tests.unit.store.utils import FakeResponse
 
 
@@ -717,7 +718,7 @@ def test_edit_assertions_is_new(
     write_text,
     expected_is_new,
 ):
-    """'is_new' is true for new assertions."""
+    """'is_new' is true for new assertions and false for existing assertions."""
     mocker.patch.object(
         fake_assertion_service, "_get_assertions", return_value=existing_assertions
     )
@@ -731,3 +732,42 @@ def test_edit_assertions_is_new(
     )
 
     assert mock_validate.call_args.kwargs["is_new"] is expected_is_new
+
+
+@pytest.mark.parametrize(
+    ("existing_assertions", "expected_is_new", "expected_yaml_content"),
+    [
+        pytest.param(
+            [],
+            True,
+            "default-value-1",
+            id="new",
+        ),
+        pytest.param(
+            [FakeAssertion(test_field_1="test-value-1", test_field_2=0)],
+            False,
+            "test-value-1",
+            id="existing",
+        ),
+    ],
+)
+def test_get_yaml_data(
+    fake_assertion_service,
+    mocker,
+    existing_assertions,
+    expected_is_new,
+    expected_yaml_content,
+):
+    """''_get_yaml_data()'' returns AssertionData with correct yaml and 'is_new' status."""
+    mocker.patch.object(
+        fake_assertion_service, "_get_assertions", return_value=existing_assertions
+    )
+    fake_assertion_service.setup()
+
+    result = fake_assertion_service._get_yaml_data(
+        name="test-confb", account_id="test-account-id"
+    )
+
+    assert isinstance(result, AssertionData)
+    assert expected_yaml_content in result.yaml_data
+    assert result.is_new is expected_is_new
