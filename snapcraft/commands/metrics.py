@@ -60,7 +60,7 @@ class StoreMetricsCommand(AppCommand):
             "--name",
             metavar="metric",
             dest="metric",
-            help="Metric to view",
+            help=f"Metric to view. Valid options are: {', '.join([m.value for m in MetricName])}",
             type=str,
             choices=[metric.value for metric in MetricName],
             required=True,
