@@ -177,6 +177,15 @@ Snapcraft 9.1.1
 - `snapcraft#6414 <https://github.com/canonical/snapcraft/issues/6414>`__ Trying to
   use Candid authentication wouldn't provide a user-friendly error.
 
+.. _release-notes-fixes-9.1.2:
+
+Snapcraft 9.1.2
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6422 <https://github.com/canonical/snapcraft/issues/6422>`__
+  On slow hosts, installing or refreshing Snapcraft could fail because the
+  configure hook exceeded snapd's 5-minute timeout.
+
 
 Contributors
 ------------
