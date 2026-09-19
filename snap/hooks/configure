@@ -4,20 +4,26 @@ import sys
 
 import snaphelpers
 
-from snapcraft.snap_config import SnapConfig
+_VALID_PROVIDERS = ["lxd", "multipass"]
 
 
 def validate_snap_config() -> None:
     """Validate snap configuration."""
     snap_config = snaphelpers.SnapConfigOptions(keys=["provider"])
     snap_config.fetch()
+    provider = snap_config.as_dict().get("provider")
 
-    try:
-        SnapConfig.unmarshal(snap_config.as_dict())
-    except (TypeError, ValueError) as error:
-        reason = str(error)
-        print(f"Could not configure snapcraft: {reason}.", file=sys.stderr)
-        sys.exit(1)
+    if provider is None:
+        return
+
+    if isinstance(provider, str) and provider.lower() in _VALID_PROVIDERS:
+        return
+
+    print(
+        "Could not configure snapcraft: provider must be 'lxd' or 'multipass'.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
 
 if __name__ == "__main__":
