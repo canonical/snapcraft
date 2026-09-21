@@ -179,6 +179,7 @@ linkcheck_ignore = [
     "https://gitlab.gnome.org",
     "https://invent.kde.org",
     "https://cmake.org",
+    "https://manpages.ubuntu.com",
     # 2026-06-03: Ignore Canonical sites until filtering is resolved
     "https://snapcraft.io",
     "https://juju.is",
