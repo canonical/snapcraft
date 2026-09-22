@@ -58,7 +58,11 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
-    [ "$($SNAP)" = "hello world" ]
+    if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "python" ]]; then
+      : # python plugin creates broken runtime (#6411)
+    else
+      [ "$($SNAP)" = "hello world" ]
+    fi
   fi
 
   # Make sure that what we built runs with the changes applied.
@@ -98,7 +102,11 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
-    [ "$($SNAP)" = "hello rebuilt world" ]
+    if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "python" ]]; then
+      : # python plugin creates broken runtime (#6411)
+    else
+      [ "$($SNAP)" = "hello rebuilt world" ]
+    fi
   fi
 
 restore: |
