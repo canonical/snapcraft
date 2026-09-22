@@ -29,11 +29,12 @@ from datetime import datetime
 from typing import Any
 
 from craft_application.commands import AppCommand
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from typing_extensions import override
 
-from snapcraft import errors, store, utils
+from snapcraft import errors, store
 
 _VALID_DATE_FORMATS = [
     "%Y-%m-%d",
@@ -216,7 +217,7 @@ class StoreExportLoginCommand(AppCommand):
                     expiry_date = datetime.strptime(parsed_args.expires, date_format)
                     break
             else:  # noqa: PLW0120 Else clause on loop without a break statement
-                valid_formats = utils.humanize_list(_VALID_DATE_FORMATS, "or")
+                valid_formats = humanize_list(_VALID_DATE_FORMATS, "or")
                 raise ArgumentParsingError(
                     f"The expiry follow an ISO 8601 format ({valid_formats})"
                 )
