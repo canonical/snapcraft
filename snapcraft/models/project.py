@@ -135,7 +135,7 @@ def validate_architectures(
                 UniqueList[str], element.build_on
             ):
                 if arch != "all" and arch not in utils.get_supported_architectures():
-                    supported_archs = utils.humanize_list(
+                    supported_archs = humanize_list(
                         utils.get_supported_architectures(), "and"
                     )
                     raise ValueError(
@@ -2815,7 +2815,7 @@ def _format_global_key_warning(key: str, empty_entries: list[str]) -> str:
     :return:
         A properly-formatted warning message.
     """
-    culprits = utils.humanize_list(empty_entries, "and")
+    culprits = humanize_list(empty_entries, "and")
     return (
         f"Warning: implicit {key.lower()} assignment in {culprits}. "
         f"{key.capitalize()}s should be assigned to the app to which they apply, "
