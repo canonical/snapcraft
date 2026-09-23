@@ -22,7 +22,7 @@ from unittest.mock import ANY, call
 import craft_cli
 import pytest
 
-from snapcraft import commands, store
+from snapcraft import commands, errors, store
 
 ############
 # Fixtures #
@@ -154,6 +154,35 @@ def test_export_login_file(project_path, emitter, fake_store_login, fake_app_con
     login_file = project_path / "target_file"
     assert login_file.exists()
     assert login_file.read_text() == "secret"
+
+
+def test_export_login_file_exists(project_path, fake_store_login, fake_app_config):
+    """Exporting to an existing file errors instead of destroying it."""
+    login_file = project_path / "target_file"
+    login_file.write_text("existing credentials")
+    cmd = commands.StoreExportLoginCommand(fake_app_config)
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        cmd.run(
+            argparse.Namespace(
+                login_file="target_file",
+                snaps=None,
+                channels=None,
+                acls=None,
+                expires=None,
+                experimental_login=False,
+            )
+        )
+
+    assert str(raised.value) == (
+        "Could not export login credentials because 'target_file' already exists."
+    )
+    assert raised.value.resolution == (
+        "Rename or remove the existing file, or export to a different file."
+    )
+    # The store isn't contacted and the existing file is left alone.
+    assert fake_store_login.mock_calls == []
+    assert login_file.read_text() == "existing credentials"
 
 
 def test_export_login_with_params(emitter, fake_store_login, fake_app_config):

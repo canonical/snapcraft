@@ -42,6 +42,9 @@ Like ``snapcraft login``, this will prompt you to enter your email, password, an
 factor authentication code. Once entered, your account credentials will be exported to a
 file in your current directory with the name you specified.
 
+To avoid overwriting credentials, the command fails if the file already exists. Rename or
+remove it first, or export to a different file.
+
 By default, the exported credentials will have access to all snaps, channels, and ACLs
 associated with your account. To limit this access, you can append any of the following
 options to the previous command:

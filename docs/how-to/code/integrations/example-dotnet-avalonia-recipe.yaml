@@ -31,7 +31,7 @@ parts:
       craftctl set version="${version}"
       craftctl default
     organize:
-      '*': opt/xamlplayground/
+      "*": opt/xamlplayground/
 
   prereqs:
     plugin: nil
@@ -60,11 +60,11 @@ apps:
 lint:
   ignore:
     - library:
-      - usr/lib/**/libICE*
-      - usr/lib/**/libicu*
-      - usr/lib/**/liblttng-ust-*
-      - usr/lib/**/libSM*
-      - usr/lib/**/libX11*
-      - usr/lib/**/libXau*
-      - usr/lib/**/libxcb*
-      - usr/lib/**/libXdmcp*
+        - usr/lib/**/libICE*
+        - usr/lib/**/libicu*
+        - usr/lib/**/liblttng-ust-*
+        - usr/lib/**/libSM*
+        - usr/lib/**/libX11*
+        - usr/lib/**/libXau*
+        - usr/lib/**/libxcb*
+        - usr/lib/**/libXdmcp*
