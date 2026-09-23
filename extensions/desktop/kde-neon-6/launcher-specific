@@ -62,3 +62,10 @@ if [ -e "$SNAP_DESKTOP_RUNTIME/usr/share/i18n" ]; then
     export LOCPATH="$locpath:/usr/lib/locale"
     LC_ALL=C.UTF-8 async_exec "$SNAP/snap/command-chain/locale-gen"
 fi
+
+# Kvantum configuration folder
+KVANTUM_CONFIG_PATH="$XDG_CONFIG_HOME/Kvantum"
+if [ ! -L "$KVANTUM_CONFIG_PATH" ] && [ -d "$SNAP_REAL_HOME/.config/Kvantum" ]; then
+    ensure_dir_exists "$(dirname "$KVANTUM_CONFIG_PATH")"
+    ln -sfn "$SNAP_REAL_HOME/.config/Kvantum" "$KVANTUM_CONFIG_PATH"
+fi

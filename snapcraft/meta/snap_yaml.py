@@ -31,7 +31,7 @@ from craft_application.models.constraints import (
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
 
-from snapcraft import const, errors, models
+from snapcraft import errors, models
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.utils import (
     get_ld_library_paths,
@@ -160,19 +160,12 @@ class ContentSlot(SnapcraftMetadata):
     content: str | None = None
     read: list[str] = []
     write: list[str] = []
-    source: dict[str, list[str]] = {}
 
     def get_content_dirs(self, installed_path: Path) -> set[Path]:
         """Obtain the slot's content directories."""
         content_dirs: set[Path] = set()
 
-        paths = [
-            *self.read,
-            *self.write,
-            *self.source.get("read", []),
-            *self.source.get("write", []),
-        ]
-        for path_ in paths:
+        for path_ in self.read + self.write:
             # Strip leading "$SNAP" and "/".
             path = re.sub(r"^\$SNAP", "", path_)
             path = re.sub(r"^/", "", path)
@@ -266,7 +259,6 @@ class SnapMetadata(SnapcraftMetadata):
     type: str | None = None
     architectures: list[str]
     base: str | None = None
-    build_base: str | None = None
     assumes: list[str] | None = None
     epoch: str | None = None
     apps: dict[str, SnapApp] | None = None
@@ -474,9 +466,6 @@ def get_metadata_from_project(
 
     links = Links.from_project(project)
     snap_type = project.type.value if project.type else None
-    build_base = (
-        project.build_base if project.type == const.ProjectType.KERNEL else None
-    )
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -488,7 +477,6 @@ def get_metadata_from_project(
         type=snap_type,
         architectures=[arch],
         base=cast(str, project.base),
-        build_base=build_base,
         assumes=total_assumes if total_assumes else None,
         epoch=project.epoch,
         apps=snap_apps or None,

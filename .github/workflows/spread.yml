@@ -100,7 +100,7 @@ jobs:
 
       - name: Run spread
         env:
-          UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
+          UA_TOKEN: ${{ secrets.UA_TOKEN }}
           RUN_UA_TESTS: ${{ ! github.event.pull_request.head.repo.fork }}
         run: spread ${{ matrix.spread-jobs }}
 

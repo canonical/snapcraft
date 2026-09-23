@@ -11,9 +11,6 @@ fi
 
 sed -i "s/  presence:.*/  presence: $presence/g" "$validation_set_file"
 
-# Increments the sequence.
-#
+# increment the sequence
 # shellcheck disable=SC2002 # yq snap can't access /tmp
-new_content="$(cat "$validation_set_file" | yq '.sequence += 1')"
-echo "$new_content" >"$validation_set_file"
-cat "$validation_set_file"
+cat "$validation_set_file" | yq '.sequence += 1' | tee "$validation_set_file"
