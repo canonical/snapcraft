@@ -30,7 +30,9 @@ from snapcraft.parts.setup_assets import (
     _validate_command_chain,
     _write_hook_wrapper,
     create_hook_wrappers,
+    provision_hooks,
     setup_assets,
+    setup_hooks,
 )
 
 
@@ -626,6 +628,30 @@ def test_ensure_hook_does_not_overwrite(new_dir):
     assert hook_path.exists()
     assert hook_path.read_text() == "#!/bin/python3\n"
     assert oct(hook_path.stat().st_mode)[-3:] == "700"
+
+
+def test_provisioned_built_hook_prevents_placeholder(new_dir, yaml_data):
+    project = models.Project.unmarshal(
+        yaml_data(
+            {
+                "version": "1.0",
+                "summary": "test project",
+                "description": "test project",
+                "hooks": {"configure": {"plugs": ["network"]}},
+            }
+        )
+    )
+    prime_dir = new_dir / "prime"
+    built_hook = prime_dir / "snap" / "hooks" / "configure"
+    built_hook.parent.mkdir(parents=True)
+    built_hook.write_text("built_configure_hook")
+
+    provision_hooks(prime_dir, overwrite=False)
+    setup_hooks(project.hooks, prime_dir)
+
+    assert (prime_dir / "meta" / "hooks" / "configure").read_text() == (
+        "built_configure_hook"
+    )
 
 
 def test_ensure_hook_executable(new_dir):

@@ -22,6 +22,7 @@ from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from textwrap import dedent
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
@@ -500,21 +501,51 @@ def test_write_metadata_with_built_hooks(
     assert (built_hooks_dir / "install").read_text() == "install_hook"
 
 
-def test_write_metadata_with_declared_built_hooks(
-    default_project, fake_services, setup_project, tmp_path
+def test_write_metadata_provisions_built_hooks_before_setup_assets(
+    default_project, fake_services, setup_project, tmp_path, mocker
 ):
-    project = default_project.marshal() | {"hooks": {"configure": {"plugs": ["network"]}}}
+    project = default_project.marshal() | {
+        "hooks": {"configure": {"plugs": ["network"]}}
+    }
     setup_project(fake_services, project, write_project=True)
     package_service = fake_services.get("package")
 
     prime_dir = tmp_path / "prime"
-    built_hooks_dir = prime_dir / "snap" / "hooks"
-    built_hooks_dir.mkdir(parents=True)
-    (built_hooks_dir / "configure").write_text("configure_hook")
+    lifecycle_service = SimpleNamespace(
+        prime_dir=prime_dir,
+        prime_dirs={None: prime_dir},
+        project_info=SimpleNamespace(project_dir=tmp_path),
+    )
+    mocker.patch.object(
+        package_service, "_services", SimpleNamespace(lifecycle=lifecycle_service)
+    )
+    mocker.patch.object(package_service, "_package_files", return_value=[])
+    mocker.patch(
+        "snapcraft.services.package.get_mediated_icon_asset", return_value=None
+    )
+    mocker.patch("snapcraft.services.package.validate_command_chains")
+    mocker.patch.object(package_service, "_materialize_extra_assets")
+
+    call_order: list[str] = []
+
+    def _record_provision(path: Path, *, overwrite: bool = True) -> None:
+        assert path == prime_dir
+        assert overwrite is False
+        call_order.append("provision_hooks")
+
+    def _record_setup(*args, **kwargs) -> None:  # noqa: ANN002, ANN003
+        assert kwargs["prime_dirs"] == {None: prime_dir}
+        assert kwargs["copy_hooks_and_gui"] is False
+        call_order.append("setup_assets")
+
+    mocker.patch(
+        "snapcraft.services.package.provision_hooks", side_effect=_record_provision
+    )
+    mocker.patch("snapcraft.services.package.setup_assets", side_effect=_record_setup)
 
     package_service.write_metadata(prime_dir)
 
-    assert (prime_dir / "meta" / "hooks" / "configure").read_text() == "configure_hook"
+    assert call_order == ["provision_hooks", "setup_assets"]
 
 
 def test_write_metadata_with_project_gui(

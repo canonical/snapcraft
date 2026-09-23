@@ -19,6 +19,7 @@
 import re
 from pathlib import Path
 from textwrap import dedent
+from types import SimpleNamespace
 from unittest.mock import call
 
 import pytest
@@ -354,27 +355,67 @@ def test_write_metadata(
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
-def test_write_metadata_with_declared_built_component_hooks(
+def test_write_metadata_provisions_component_hooks_before_setup_assets(
     default_project,
     fake_services,
     setup_project,
     tmp_path,
+    mocker,
 ):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
-    component_prime_dir = (
-        tmp_path / "partitions" / "component" / "firstcomponent" / "prime"
+    prime_dir = tmp_path / "prime"
+    component_prime_dirs = {
+        "firstcomponent": tmp_path
+        / "partitions"
+        / "component"
+        / "firstcomponent"
+        / "prime",
+        "secondcomponent": tmp_path
+        / "partitions"
+        / "component"
+        / "secondcomponent"
+        / "prime",
+    }
+    lifecycle_service = SimpleNamespace(
+        prime_dir=prime_dir,
+        prime_dirs={None: prime_dir, **component_prime_dirs},
+        project_info=SimpleNamespace(project_dir=tmp_path),
+        get_prime_dir=lambda component: component_prime_dirs[component],
     )
-
-    built_hooks_dir = component_prime_dir / "snap" / "hooks"
-    built_hooks_dir.mkdir(parents=True)
-    (built_hooks_dir / "install").write_text("install_hook")
-
-    package_service.write_metadata(tmp_path / "prime")
-
-    assert (component_prime_dir / "meta" / "hooks" / "install").read_text() == (
-        "install_hook"
+    mocker.patch.object(
+        package_service, "_services", SimpleNamespace(lifecycle=lifecycle_service)
     )
+    mocker.patch.object(package_service, "_package_files", return_value=[])
+    mocker.patch(
+        "snapcraft.services.package.get_mediated_icon_asset", return_value=None
+    )
+    mocker.patch("snapcraft.services.package.validate_command_chains")
+    mocker.patch.object(package_service, "_materialize_extra_assets")
+    mocker.patch.object(package_service, "_materialize_package_files")
+
+    call_order: list[Path | str] = []
+
+    def _record_provision(path: Path, *, overwrite: bool = True) -> None:
+        assert overwrite is False
+        call_order.append(path)
+
+    def _record_setup(*args, **kwargs) -> None:  # noqa: ANN002, ANN003
+        call_order.append("setup_assets")
+
+    mocker.patch(
+        "snapcraft.services.package.provision_hooks", side_effect=_record_provision
+    )
+    mocker.patch("snapcraft.services.package.setup_assets", side_effect=_record_setup)
+
+    package_service.write_metadata(prime_dir)
+
+    assert call_order == [
+        prime_dir,
+        component_prime_dirs["firstcomponent"],
+        component_prime_dirs["secondcomponent"],
+        "setup_assets",
+    ]
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
