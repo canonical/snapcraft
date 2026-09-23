@@ -149,6 +149,12 @@ def test_expand_extensions_simple(new_dir, emitter, valid_core_data, mocker):
         description: expand a fake extension
         base: {valid_core_data.base}
         build-base: {valid_core_data.build_base}
+        platforms:
+          amd64:
+            build-on:
+            - amd64
+            build-for:
+            - amd64
         parts:
           part1:
             plugin: nil
@@ -179,7 +185,7 @@ def test_expand_extensions_complex_core22(new_dir, emitter, mocker):
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch(
         "craft_platforms.DebianArchitecture.from_host",
-        return_value="amd64",
+        return_value=DebianArchitecture("amd64"),
     )
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
@@ -272,7 +278,7 @@ def test_expand_extensions_complex(new_dir, emitter, mocker, valid_core_data):
     # mock for advanced grammar parsing (i.e. `on amd64:`)
     mocker.patch(
         "craft_platforms.DebianArchitecture.from_host",
-        return_value="amd64",
+        return_value=DebianArchitecture("amd64"),
     )
     with Path("snapcraft.yaml").open("w") as yaml_file:
         print(
