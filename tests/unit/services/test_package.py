@@ -500,6 +500,23 @@ def test_write_metadata_with_built_hooks(
     assert (built_hooks_dir / "install").read_text() == "install_hook"
 
 
+def test_write_metadata_with_declared_built_hooks(
+    default_project, fake_services, setup_project, tmp_path
+):
+    project = default_project.marshal() | {"hooks": {"configure": {"plugs": ["network"]}}}
+    setup_project(fake_services, project, write_project=True)
+    package_service = fake_services.get("package")
+
+    prime_dir = tmp_path / "prime"
+    built_hooks_dir = prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "configure").write_text("configure_hook")
+
+    package_service.write_metadata(prime_dir)
+
+    assert (prime_dir / "meta" / "hooks" / "configure").read_text() == "configure_hook"
+
+
 def test_write_metadata_with_project_gui(
     default_project, fake_services, setup_project, in_project_path, tmp_path
 ):

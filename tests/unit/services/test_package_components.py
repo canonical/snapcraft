@@ -354,6 +354,30 @@ def test_write_metadata(
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
+def test_write_metadata_with_declared_built_component_hooks(
+    default_project,
+    fake_services,
+    setup_project,
+    tmp_path,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    component_prime_dir = (
+        tmp_path / "partitions" / "component" / "firstcomponent" / "prime"
+    )
+
+    built_hooks_dir = component_prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "install").write_text("install_hook")
+
+    package_service.write_metadata(tmp_path / "prime")
+
+    assert (component_prime_dir / "meta" / "hooks" / "install").read_text() == (
+        "install_hook"
+    )
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
 def test_gen_extra_assets_for_component_hooks(
     default_project,
     fake_services,

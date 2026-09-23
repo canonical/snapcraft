@@ -591,6 +591,11 @@ class Package(PackageService):
             self._write_asset(content, path / package.relative_path)
 
         assets_dir = self._get_assets_dir()
+        # Provision built hooks before setup_assets() creates fallback stubs for
+        # declared hooks so part-generated hooks take precedence when present.
+        provision_hooks(lifecycle_service.prime_dir, overwrite=False)
+        for component in self._project.get_component_names():
+            provision_hooks(lifecycle_service.get_prime_dir(component), overwrite=False)
         setup_assets(
             self._project,
             assets_dir=assets_dir,
