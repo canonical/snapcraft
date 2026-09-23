@@ -37,6 +37,21 @@ _CONFINED_PYTHON_PATH = {
     "core22": "/usr/bin/python3.10",
     "core24": "/usr/bin/python3.12",
 }
+"""Known paths of the interpreter bundled in strictly-confined base snaps."""
+
+
+def _is_core26_or_newer(base: str) -> bool:
+    """Check whether a base is core26 or a newer core base.
+
+    Unknown bases, including "bare" and "devel", do not count as core26 or
+    newer.
+    """
+    if base.startswith("core"):
+        try:
+            return int(base.removeprefix("core")) >= 26
+        except ValueError:
+            pass
+    return False
 
 
 def get_system_interpreter(part_info: PartInfo) -> str | None:
@@ -74,6 +89,23 @@ def get_system_interpreter(part_info: PartInfo) -> str | None:
         )
 
     return interpreter
+
+
+def get_script_interpreter(part_info: PartInfo) -> str | None:
+    """Obtain the shebang line to use in Python scripts.
+
+    :param part_info: The info of the part that is being built.
+    :return: The shebang line, or None to use the plugin's default.
+    """
+    if _is_core26_or_newer(part_info.project_base):
+        # On core26, we should be explicit in our choice of Python rather
+        # than delegate to `env`, as it may select the system Python when
+        # it should really use the venv Python symlink.
+        #
+        # This difference affects the semantics of things like pyvenv.cfg.
+        return "#!/bin/python3"
+
+    return None
 
 
 def post_prime(step_info: StepInfo) -> None:

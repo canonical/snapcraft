@@ -118,6 +118,36 @@ def test_should_remove_symlinks(plugin):
 
 
 @pytest.mark.parametrize(
+    ("base", "script_interpreter"),
+    [
+        ("core22", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("core24", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("core26", "#!/bin/python3"),
+        ("core28", "#!/bin/python3"),
+        ("bare", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("devel", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+    ],
+)
+def test_get_script_interpreter(base, script_interpreter, new_dir):
+    """Python script shebangs point to /bin/python3 on core26 and newer bases."""
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base=base,
+            confinement="strict",
+            project_base=base,
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {}),
+    )
+    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+    plugin = PythonPlugin(properties=properties, part_info=part_info)
+
+    assert plugin._get_script_interpreter() == script_interpreter
+
+
+@pytest.mark.parametrize(
     ("base", "confinement", "interpreter"),
     [
         ("core22", "strict", "/usr/bin/python3.10"),
