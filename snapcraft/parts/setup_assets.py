@@ -488,7 +488,11 @@ def provision_hooks(prime_dir: Path, *, overwrite: bool = True) -> None:
         _ensure_hook_executable(hook)
 
         destination = hooks_meta_dir / hook.name
-        if destination.exists() and not overwrite:
+        if (
+            destination.exists()
+            and not overwrite
+            and not _is_placeholder_hook(destination)
+        ):
             continue
 
         destination.unlink(missing_ok=True)
@@ -510,6 +514,11 @@ def _ensure_meta_hooks_dir(prime_dir: Path) -> Path:
     hooks_meta_dir = Path(prime_dir, "meta", "hooks")
     hooks_meta_dir.mkdir(parents=True, exist_ok=True)
     return hooks_meta_dir
+
+
+def _is_placeholder_hook(hook_path: Path) -> bool:
+    """Return whether the hook is the auto-generated placeholder stub."""
+    return hook_path.read_text() == "#!/bin/true\n"
 
 
 def _write_hook_wrapper(

@@ -878,6 +878,28 @@ def test_materialize_extra_assets_provisions_meta_hooks(
     assert oct(provisioned_hook.stat().st_mode)[-3:] == "755"
 
 
+def test_materialize_extra_assets_replaces_placeholder_meta_hook(
+    default_project, fake_services, setup_project
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+
+    built_hooks_dir = prime_dir / "snap" / "hooks"
+    built_hooks_dir.mkdir(parents=True)
+    (built_hooks_dir / "configure").write_text("built_hook")
+
+    placeholder_hook = prime_dir / "meta" / "hooks" / "configure"
+    placeholder_hook.parent.mkdir(parents=True)
+    placeholder_hook.write_text("#!/bin/true\n")
+    placeholder_hook.chmod(0o755)
+
+    package_service._materialize_extra_assets(None)
+
+    assert placeholder_hook.read_text() == "built_hook"
+    assert oct(placeholder_hook.stat().st_mode)[-3:] == "755"
+
+
 def test_needs_packing_project_hooks(
     default_project, fake_services, setup_project, new_dir, mocker
 ):

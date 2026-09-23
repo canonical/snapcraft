@@ -2,9 +2,13 @@ name: generated-hooks
 base: core22
 version: '1.0'
 summary: Test generated hooks.
-description: Code generated hooks should be built and executed via a hook wrapper.
+description: Code generated hooks should replace placeholder stubs in meta/hooks.
 grade: stable
 confinement: strict
+
+hooks:
+  configure:
+    plugs: [network]
 
 parts:
   hooks:

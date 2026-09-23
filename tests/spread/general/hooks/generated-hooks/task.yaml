@@ -1,4 +1,4 @@
-summary: Code generated hooks should be built and executed via a hook wrapper.
+summary: Code generated hooks should replace placeholder stubs in the packed snap.
 
 environment:
 
@@ -18,18 +18,19 @@ restore: |
 execute: |
   snapcraft pack --destructive-mode
 
-  # verify wrappers were created for generated hooks
-  if [[ ! -f prime/meta/hooks/configure ]] && [[ ! -f prime/meta/hooks/install ]]; then
-      echo "no hook wrappers found in prime/meta/hooks/"
-      exit 1
-  fi
+  # verify the built hook remains in snap/hooks
+  prime/snap/hooks/configure | MATCH "I am a code generated configure hook!"
 
-  # verify hook wrappers execute their corresponding hooks
-  if ! prime/snap/hooks/install | grep "I am a code generated install hook" && \
-     ! prime/snap/hooks/configure | grep "I am a code generated configure hook"; then
-    echo "Unexpected content in hook"
-    exit 1
-  fi
+  # verify the placeholder stub was replaced in prime/meta/hooks
+  prime/meta/hooks/configure | MATCH "I am a code generated configure hook!"
+  NOMATCH "/bin/true" < prime/meta/hooks/configure
+
+  snap_file="$(echo generated-hooks_1.0_*.snap)"
+
+  # verify the packed snap also contains the real hook in meta/hooks
+  unsquashfs -cat "${snap_file}" meta/hooks/configure | MATCH \
+    "I am a code generated configure hook!"
+  NOMATCH "/bin/true" < <(unsquashfs -cat "${snap_file}" meta/hooks/configure)
 
   # verify snap is installable
   snap install generated-hooks_1.0_*.snap --dangerous
