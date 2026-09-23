@@ -76,7 +76,9 @@ def setup_assets(
 
     if copy_hooks_and_gui:
         copy_assets(assets_dir, prime_dir, meta_directory_handler)
-    setup_hooks(project.hooks, prime_dir)
+        setup_hooks(project.hooks, prime_dir)
+    else:
+        validate_hook_command_chains(project.hooks, prime_dir)
 
     if project.components:
         for component_name, component in project.components.items():
@@ -86,7 +88,9 @@ def setup_assets(
                     prime_dirs[component_name],
                     meta_directory_handler,
                 )
-            setup_hooks(component.hooks, prime_dirs[component_name])
+                setup_hooks(component.hooks, prime_dirs[component_name])
+            else:
+                validate_hook_command_chains(component.hooks, prime_dirs[component_name])
 
     if _uses_legacy_system_metadata(project):
         if project.type == const.ProjectType.GADGET:
@@ -234,20 +238,40 @@ def setup_hooks(hooks: dict[str, models.Hook] | None, prime_dir: Path) -> None:
     :param hooks: A dictionary of hooks to set up.
     :param prime_dir: The prime directory where the hooks should be set up.
     """
+    validate_hook_command_chains(hooks, prime_dir)
+
+    materialize_missing_hooks(hooks, prime_dir)
+
+
+def materialize_missing_hooks(
+    hooks: dict[str, models.Hook] | None, prime_dir: Path
+) -> None:
+    """Create placeholder hook stubs for declared hooks that are still missing."""
+
     hooks_dir = prime_dir / "meta" / "hooks"
 
     if hooks:
-        for hook_name, hook in hooks.items():
-            if hook.command_chain:
-                _validate_command_chain(
-                    hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
-                )
+        for hook_name in hooks:
             _ensure_hook(hooks_dir / hook_name)
 
     # Ensure all hooks are executable
     if hooks_dir.is_dir():
         for hook in hooks_dir.iterdir():
             _ensure_hook_executable(hook)
+
+
+def validate_hook_command_chains(
+    hooks: dict[str, models.Hook] | None, prime_dir: Path
+) -> None:
+    """Validate hook command-chain entries without materializing hook stubs."""
+    if not hooks:
+        return
+
+    for hook_name, hook in hooks.items():
+        if hook.command_chain:
+            _validate_command_chain(
+                hook.command_chain, name=f"hook {hook_name!r}", prime_dir=prime_dir
+            )
 
 
 def _finalize_icon(
