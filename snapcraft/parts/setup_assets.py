@@ -47,7 +47,7 @@ def _uses_legacy_system_metadata(project: models.Project) -> bool:
     return project.get_effective_base() == "core22"
 
 
-def setup_assets(
+def setup_assets(  # noqa: PLR0912
     project: models.Project,
     *,
     assets_dir: Path,
@@ -90,7 +90,9 @@ def setup_assets(
                 )
                 setup_hooks(component.hooks, prime_dirs[component_name])
             else:
-                validate_hook_command_chains(component.hooks, prime_dirs[component_name])
+                validate_hook_command_chains(
+                    component.hooks, prime_dirs[component_name]
+                )
 
     if _uses_legacy_system_metadata(project):
         if project.type == const.ProjectType.GADGET:
