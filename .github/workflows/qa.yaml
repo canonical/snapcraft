@@ -32,6 +32,9 @@ jobs:
             source-files:
               - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
   lint:
+    permissions:
+      contents: read
+      pull-requests: read
     uses: canonical/starflow/.github/workflows/lint-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
     needs: filter
     with:
