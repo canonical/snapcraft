@@ -21,6 +21,7 @@ import textwrap
 from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
+import craft_cli
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from packaging import version
@@ -60,7 +61,7 @@ class StoreMetricsCommand(AppCommand):
             "--name",
             metavar="metric",
             dest="metric",
-            help="Metric to view",
+            help=f"Metric to view. Valid options are: {craft_cli.utils.humanize_list([f'{m.value!r}' for m in MetricName])}",
             type=str,
             choices=[metric.value for metric in MetricName],
             required=True,
