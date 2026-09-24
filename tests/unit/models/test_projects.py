@@ -1654,7 +1654,38 @@ class TestAppValidation:
     )
     def test_project_system_usernames_valid(self, system_username, project_yaml_data):
         project = Project.unmarshal(project_yaml_data(system_usernames=system_username))
-        assert project.system_usernames == system_username
+        assert project.system_usernames is not None
+        for key, value in system_username.items():
+            assert getattr(project.system_usernames, key, None) == value
+
+    @pytest.mark.parametrize(
+        "system_username",
+        [
+            {"snap_daemon": {"scope": "shared"}},
+            {"snap_daemon": "shared"},
+        ],
+    )
+    def test_project_system_usernames_snap_daemon_deprecated(
+        self, system_username, project_yaml_data, emitter
+    ):
+        Project.unmarshal(project_yaml_data(system_usernames=system_username))
+        emitter.assert_warning(
+            "The 'snap_daemon' system username is deprecated. "
+            "See https://snapcraft.io/docs/system-usernames."
+        )
+
+    @pytest.mark.parametrize(
+        "system_username",
+        [
+            {"snap_microk8s": {"scope": "shared"}},
+            {"snap_aziotedge": "shared"},
+        ],
+    )
+    def test_project_system_usernames_no_warning_for_others(
+        self, system_username, project_yaml_data, emitter
+    ):
+        Project.unmarshal(project_yaml_data(system_usernames=system_username))
+        assert not any(i for i in emitter.interactions if i[0] == "warning")
 
     @pytest.mark.parametrize(
         "system_username",
