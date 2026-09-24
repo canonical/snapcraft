@@ -581,6 +581,9 @@ class Package(PackageService):
         if normalized_partition is None:
             hooks = self._project.hooks
         else:
+            if self._project.components is None:
+                raise ValueError("Project does not define components.")
+
             hooks = self._project.components[normalized_partition].hooks
 
         materialize_missing_hooks(hooks, prime_dir)
