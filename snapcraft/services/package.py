@@ -40,6 +40,7 @@ from snapcraft.parts.setup_assets import (
     MediatedIconAsset,
     get_mediated_gui_assets,
     get_mediated_icon_asset,
+    materialize_missing_hooks,
     provision_hooks,
     setup_assets,
     validate_command_chains,
@@ -573,7 +574,19 @@ class Package(PackageService):
     def _materialize_extra_assets(self, partition_name: str | None = None) -> None:
         """Materialize mediated hook and GUI assets, including hook provisioning."""
         super()._materialize_extra_assets(partition_name)
-        provision_hooks(self._prime_dir_for(partition_name), overwrite=False)
+        normalized_partition = get_component_name(partition_name)
+        prime_dir = self._prime_dir_for(normalized_partition)
+        provision_hooks(prime_dir, overwrite=False)
+
+        if normalized_partition is None:
+            hooks = self._project.hooks
+        else:
+            if self._project.components is None:
+                raise ValueError("Project does not define components.")
+
+            hooks = self._project.components[normalized_partition].hooks
+
+        materialize_missing_hooks(hooks, prime_dir)
 
     @override
     def write_metadata(self, path: pathlib.Path) -> None:

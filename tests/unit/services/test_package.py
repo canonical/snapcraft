@@ -144,6 +144,48 @@ def test_write_metadata(default_project, fake_services, setup_project, new_dir):
     assert not (prime_dir / "snap" / "manifest.yaml").exists()
 
 
+def test_write_metadata_provisions_built_hook_over_placeholder_stub(
+    default_project, fake_services, setup_project, new_dir
+):
+    project = {
+        **default_project.marshal(),
+        "hooks": {"configure": {"plugs": ["network"]}},
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    prime_dir = new_dir / "prime"
+    built_hook = prime_dir / "snap" / "hooks" / "configure"
+    built_hook.parent.mkdir(parents=True)
+    built_hook.write_text("#!/bin/sh\necho REAL_HOOK_RAN\n")
+    built_hook.chmod(0o755)
+
+    package_service.write_metadata(prime_dir)
+
+    assert built_hook.read_text() == "#!/bin/sh\necho REAL_HOOK_RAN\n"
+    provisioned_hook = prime_dir / "meta" / "hooks" / "configure"
+    assert provisioned_hook.read_text() == "#!/bin/sh\necho REAL_HOOK_RAN\n"
+    assert oct(provisioned_hook.stat().st_mode)[-3:] == "755"
+
+
+def test_write_metadata_creates_placeholder_only_for_missing_declared_hook(
+    default_project, fake_services, setup_project, new_dir
+):
+    project = {
+        **default_project.marshal(),
+        "hooks": {"configure": {"plugs": ["network"]}},
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    prime_dir = new_dir / "prime"
+    package_service.write_metadata(prime_dir)
+
+    placeholder_hook = prime_dir / "meta" / "hooks" / "configure"
+    assert placeholder_hook.read_text() == "#!/bin/true\n"
+    assert oct(placeholder_hook.stat().st_mode)[-3:] == "755"
+
+
 def test_get_snap_yaml(default_project, fake_services, setup_project):
     setup_project(fake_services, default_project.marshal())
     package_service = fake_services.get("package")
