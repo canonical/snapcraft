@@ -1,0 +1,43 @@
+name: dev
+base: ubuntu@24.04
+sdks:
+  - name: uv
+    channel: latest/stable
+  - name: copilot
+    channel: latest/stable
+  - name: project-starcraft
+actions:
+  setup: make setup
+  lint: make lint
+  format: make format
+  test: make test
+  test-fast: make test-fast
+  test-coverage: make test-coverage
+  schema: make schema
+  clean: make clean
+  lock: |
+    uv lock "$@"
+    make setup
+  install-branch: |
+    set -euo pipefail
+    if [[ $# -lt 2 ]]; then
+      echo "Usage: install-branch <PACKAGE|URL> <BRANCH>" >&2
+      echo "" >&2
+      echo "Examples:" >&2
+      echo "  workshop run -- install-branch craft-parts main" >&2
+      echo "  workshop run -- install-branch https://github.com/user/repo.git main" >&2
+      exit 1
+    fi
+
+    REPO_OR_URL=$1
+    BRANCH=$2
+
+    # Check if it's a URL (contains :// or ends with .git)
+    if [[ $REPO_OR_URL =~ "://" ]] || [[ $REPO_OR_URL == *.git ]]; then
+      REPO_URL=$REPO_OR_URL
+    else
+      # Assume it's a package name, use canonical org by default
+      REPO_URL="https://github.com/canonical/${REPO_OR_URL}"
+    fi
+
+    uv pip install "git+${REPO_URL}@${BRANCH}"
