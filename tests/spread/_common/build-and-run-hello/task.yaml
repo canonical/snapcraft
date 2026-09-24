@@ -37,12 +37,6 @@ execute: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
 
-  # remove once the gnome extension supports core26 (#6185)
-  if [[ "$base" == "core26" && ( "$SPREAD_VARIANT" == "flutter" || "$SPREAD_VARIANT" == "python" ) ]]; then
-    snapcraft pack 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
-    exit 0
-  fi
-
   # Make sure expand-extensions works
   snapcraft expand-extensions
 
@@ -64,7 +58,11 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
-    [ "$($SNAP)" = "hello world" ]
+    if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "python" ]]; then
+      : # python plugin creates broken runtime (#6411)
+    else
+      [ "$($SNAP)" = "hello world" ]
+    fi
   fi
 
   # Make sure that what we built runs with the changes applied.
@@ -104,7 +102,11 @@ execute: |
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
-    [ "$($SNAP)" = "hello rebuilt world" ]
+    if [[ "$base" == "core26" && "$SPREAD_VARIANT" == "python" ]]; then
+      : # python plugin creates broken runtime (#6411)
+    else
+      [ "$($SNAP)" = "hello rebuilt world" ]
+    fi
   fi
 
 restore: |
@@ -113,12 +115,6 @@ restore: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   base="$(get_base)"
-
-  # remove once the gnome extension supports core26 (#6185)
-  if [[ "$base" == "core26" && ( "$SPREAD_VARIANT" == "flutter" || "$SPREAD_VARIANT" == "python" ) ]]; then
-    snapcraft clean 2>&1 | MATCH "Extension 'gnome' does not support base: 'core26'"
-    exit 0
-  fi
 
   snapcraft clean
   rm -f ./*.snap
