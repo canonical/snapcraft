@@ -118,24 +118,27 @@ def test_should_remove_symlinks(plugin):
 
 
 @pytest.mark.parametrize(
-    ("base", "script_interpreter"),
+    ("base", "confinement", "script_interpreter"),
     [
-        ("core22", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
-        ("core24", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
-        ("core26", "#!/bin/python3"),
-        ("core28", "#!/bin/python3"),
-        ("bare", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
-        ("devel", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("core22", "strict", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("core24", "strict", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("core26", "strict", "#!/snap/test-snap/current/bin/python3"),
+        ("core26", "devmode", "#!/snap/test-snap/current/bin/python3"),
+        ("core26", "classic", "#!/snap/test-snap/current/bin/python3"),
+        ("core28", "strict", "#!/snap/test-snap/current/bin/python3"),
+        ("core28", "classic", "#!/snap/test-snap/current/bin/python3"),
+        ("bare", "strict", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("devel", "strict", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
     ],
 )
-def test_get_script_interpreter(base, script_interpreter, new_dir):
-    """Python script shebangs point to /bin/python3 on core26 and newer bases."""
+def test_get_script_interpreter(base, confinement, script_interpreter, new_dir):
+    """Python script shebangs point to the snap's venv interpreter on core26+ snaps."""
     part_info = PartInfo(
         project_info=ProjectInfo(
             application_name="test",
             project_name="test-snap",
             base=base,
-            confinement="strict",
+            confinement=confinement,
             project_base=base,
             cache_dir=new_dir,
         ),

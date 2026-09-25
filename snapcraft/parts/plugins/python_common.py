@@ -98,12 +98,17 @@ def get_script_interpreter(part_info: PartInfo) -> str | None:
     :return: The shebang line, or None to use the plugin's default.
     """
     if _is_core26_or_newer(part_info.project_base):
-        # On core26, we should be explicit in our choice of Python rather
-        # than delegate to `env`, as it may select the system Python when
-        # it should really use the venv Python symlink.
+        # Point shebangs at the venv interpreter (bin/python3) rather than
+        # resolving through PATH, which would find the staged interpreter
+        # (usr/bin/python3) first. Invoking through bin/python3 makes Python
+        # discover the snap's pyvenv.cfg, keeping the venv's site-packages
+        # visible to the script.
         #
-        # This difference affects the semantics of things like pyvenv.cfg.
-        return "#!/bin/python3"
+        # Shebangs can't contain environment variables or relative paths, so
+        # the path is hardcoded using the snap's runtime location. snapd
+        # guarantees a snap is always mounted at /snap/<name>/current,
+        # regardless of confinement.
+        return f"#!/snap/{part_info.project_name}/current/bin/python3"
 
     return None
 
