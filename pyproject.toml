@@ -4,7 +4,7 @@ description = "Create snaps"
 dynamic = ["version"]
 # Applications should avoid CVEs in direct dependencies by setting a minimum version in 'dependencies'.
 dependencies = [
-    "catkin-pkg==1.1.0; sys_platform == 'linux'",
+    "catkin-pkg==1.1.1; sys_platform == 'linux'",
     "click>=8.3.3",
     "craft-application[remote]>=7.2.1",
     "craft-archives>=2.2.2",
