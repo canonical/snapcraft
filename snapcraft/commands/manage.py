@@ -24,12 +24,13 @@ import textwrap
 from typing import TYPE_CHECKING, cast
 
 from craft_application.commands import AppCommand
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from tabulate import tabulate
 from typing_extensions import override
 
-from snapcraft import store, utils
+from snapcraft import store
 
 if TYPE_CHECKING:
     import argparse
@@ -107,7 +108,7 @@ class StoreReleaseCommand(AppCommand):
             progressive_percentage=parsed_args.progressive_percentage,
         )
 
-        humanized_channels = utils.humanize_list(channels, conjunction="and")
+        humanized_channels = humanize_list(channels, conjunction="and")
         progressive = parsed_args.progressive_percentage
         progressive_suffix = (
             f" for {progressive}% of users" if progressive is not None else ""

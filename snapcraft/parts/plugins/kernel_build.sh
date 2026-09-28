@@ -256,6 +256,34 @@ fetch_deb() {
   done
 }
 
+# merge_usr folds usr/lib/${1} into lib/${1} in the install directory.
+# Ubuntu 26.04 and later ship kernel modules (and possibly firmware) under
+# usr/lib, but unpacking a package into a bare directory does not create the
+# lib -> usr/lib symlink that a real root filesystem has, so both locations
+# must be accounted for. Everything downstream expects lib/, so normalize to
+# that here rather than teaching each consumer about both paths.
+# $1 is the directory name to merge, e.g. "modules" or "firmware"
+merge_usr() {
+  _usrdir="${CRAFT_PART_INSTALL}/usr/lib/${1}"
+  _libdir="${CRAFT_PART_INSTALL}/lib/${1}"
+
+  [ -d "${_usrdir}" ] || return 0
+
+  # A part setting the enable-usrmerge build attribute gets a lib -> usr/lib
+  # link from craft-parts, which makes both paths the same directory. That
+  # configuration is not supported here, but bail out rather than hardlink a
+  # directory into itself and then delete the original.
+  [ ! -L "${CRAFT_PART_INSTALL}/lib" ] || return 0
+
+  echo "Merging ${_usrdir} into ${_libdir}..."
+  mkdir -p "${_libdir}"
+
+  # Hardlink rather than copy: both paths are on the same filesystem and these
+  # trees are large. Both may be populated, so merge instead of moving.
+  cp -alf "${_usrdir}/." "${_libdir}"
+  rm -rf "${_usrdir}"
+}
+
 # repack_deb unpacks some linux-image deb package for some version and flavour as well
 # as the corresponding modules and modules-extras packages and then repacks them
 # $1 is the kernel version string as it appears in the kernel deb package
@@ -281,6 +309,9 @@ repack_deb() {
 
   # A little deb cleanup
   rmdir "${CRAFT_PART_INSTALL}/boot"
+
+  # Kernel packages may ship their modules under usr/lib
+  merge_usr modules
 }
 
 # setup_kernel will create a kernel config if one does not exist as specified by the
@@ -623,6 +654,10 @@ build_src_pkg() {
 # paths to the one expected by snapd
 create_snap_structure() {
   echo "Finalizing install directory..."
+
+  # Firmware comes from stage-packages, which may ship it under usr/lib
+  merge_usr firmware
+
   # Usually under $INSTALL_MOD_PATH/lib/ but snapd expects modules/
   mv -f "${CRAFT_PART_INSTALL}/lib/modules" "${CRAFT_PART_INSTALL}"
 

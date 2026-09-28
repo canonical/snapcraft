@@ -25,6 +25,7 @@ import textwrap
 from typing import TYPE_CHECKING
 
 from craft_application.commands import AppCommand
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from typing_extensions import override
@@ -153,7 +154,7 @@ class StoreUploadCommand(AppCommand):
 
         message = f"Revision {revision!r} created for {snap_name!r}"
         if channels:
-            message += f" and released to {utils.humanize_list(channels, 'and')}"
+            message += f" and released to {humanize_list(channels, 'and')}"
         emit.message(message)
 
 
@@ -184,12 +185,12 @@ def _validate_components(
 
     if unknown_components := provided_names - expected_names:
         raise ArgumentParsingError(
-            f"Unknown component(s) provided {utils.humanize_list(unknown_components, 'and')}."
+            f"Unknown component(s) provided {humanize_list(unknown_components, 'and')}."
         )
 
     if missing_components := expected_names - provided_names:
         raise ArgumentParsingError(
-            f"Missing component(s): {utils.humanize_list(missing_components, 'and')}. "
+            f"Missing component(s): {humanize_list(missing_components, 'and')}. "
             "Use `--component <name>=<filename>`."
         )
 

@@ -22,7 +22,7 @@ import pytest
 import yaml
 
 from snapcraft import models
-from snapcraft.const import StableBase, UnstableBase
+from snapcraft.const import CURRENT_BASES, StableBase, UnstableBase
 from snapcraft.meta import snap_yaml
 from snapcraft.meta.snap_yaml import ContentPlug, ContentSlot, SnapMetadata
 from snapcraft.models import Project
@@ -188,6 +188,36 @@ def test_build_base_stable(simple_project, new_dir):
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         """
     )
+
+
+@pytest.mark.parametrize("build_base", CURRENT_BASES)
+def test_kernel_build_base(build_base, new_dir):
+    """Kernel snaps add build-base to snap.yaml."""
+    project = Project.unmarshal(
+        {
+            "name": "my-kernel",
+            "version": "1.0",
+            "type": "kernel",
+            "build-base": build_base,
+            "grade": "devel" if build_base == "devel" else "stable",
+            "summary": "Kernel test summary",
+            "description": "Kernel test description",
+            "confinement": "strict",
+            "parts": {
+                "part1": {
+                    "plugin": "nil",
+                },
+            },
+        }
+    )
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    data = yaml.safe_load(yaml_file.read_text())
+    assert data["build-base"] == build_base
+    assert data["type"] == "kernel"
+    assert "base" not in data
 
 
 def test_links_scalars(simple_project, new_dir):

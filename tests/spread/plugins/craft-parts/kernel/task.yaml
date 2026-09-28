@@ -25,6 +25,9 @@ execute: |
 
   unsquashfs pc-kernel_*.snap
 
+  # build-base must be in the snap.yaml
+  grep -q "^build-base: core22" squashfs-root/meta/snap.yaml || exit 1
+
   for file in usr/local/sbin/bpftool usr/bin/cpupower bin/perf; do
     [ -x "squashfs-root/${file}" ] || exit 1
   done
