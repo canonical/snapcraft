@@ -40,7 +40,7 @@ from craft_platforms import DebianArchitecture
 from snapcraft import errors
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Sequence
+    from collections.abc import Iterator, Sequence
 
     from craft_parts import ProjectInfo
 
@@ -196,39 +196,6 @@ def prompt(prompt_text: str, *, hide: bool = False) -> str:
 
     with emit.pause():
         return str(method(prompt_text))
-
-
-def humanize_list(
-    items: Iterable[str],
-    conjunction: str,
-    item_format: str = "{!r}",
-    sort: bool = True,
-) -> str:
-    """Format a list into a human-readable string.
-
-    :param items: list to humanize.
-    :param conjunction: the conjunction used to join the final element to
-                        the rest of the list (e.g. 'and').
-    :param item_format: format string to use per item.
-    :param sort: if true, sort the list.
-    """
-    if not items:
-        return ""
-
-    quoted_items = [item_format.format(item) for item in items]
-
-    if sort:
-        quoted_items = sorted(quoted_items)
-
-    if len(quoted_items) == 1:
-        return quoted_items[0]
-
-    humanized = ", ".join(quoted_items[:-1])
-
-    if len(quoted_items) > 2:
-        humanized += ","
-
-    return f"{humanized} {conjunction} {quoted_items[-1]}"
 
 
 def get_common_ld_library_paths(prime_dir: Path, arch_triplet: str | None) -> list[str]:
