@@ -26,11 +26,11 @@ An external metadata source can be one of the following:
 AppStream
 ~~~~~~~~~
 
-`AppStream`_ is a metadata standard used to describe a common set of software
-components. It can be parsed by Snapcraft to provide the ``title``, ``version``,
-``summary``, ``description``, and ``icon`` keys for a snap, along with the location of
-an app's :ref:`desktop <how-to-configure-package-information-desktop-entry-copy-file>`
-file.
+`AppStream <https://www.freedesktop.org/software/appstream/docs/>`__ is a metadata
+standard used to describe a common set of software components. It can be parsed by
+Snapcraft to provide the ``title``, ``version``, ``summary``, ``description``, and
+``icon`` keys for a snap, along with the location of an app's :ref:`desktop
+<how-to-configure-package-information-desktop-entry-copy-file>` file.
 
 The following is a typical example from an upstream project.
 
