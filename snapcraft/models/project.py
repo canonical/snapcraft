@@ -334,6 +334,8 @@ DurationString = Annotated[
     ),
     pydantic.BeforeValidator(_validate_duration_string),
 ]
+
+
 class Socket(models.CraftBaseModel):
     """Snapcraft app socket definition."""
 
@@ -1005,6 +1007,7 @@ class App(models.CraftBaseModel):
             raise ValueError(message)
 
         return command
+
     @pydantic.field_validator("command_chain")
     @classmethod
     def _validate_command_chain(cls, command_chains: list[str]) -> list[str]:

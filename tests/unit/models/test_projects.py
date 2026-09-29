@@ -57,7 +57,7 @@ from snapcraft.models.project import (
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
 VALID_DURATIONS = ["10ns", "10us", "10ms", "10s", "10m", "10m4s3us"]
-INVALID_DURATIONS = ["10", "10 s", "10 seconds", "1:00", "invalid"]
+INVALID_DURATIONS = ["10", 10, "10 s", "10 seconds", "1:00", "invalid"]
 
 
 @pytest.fixture
@@ -1195,7 +1195,7 @@ class TestAppValidation:
     def test_app_start_timeout_invalid(self, start_timeout, app_yaml_data):
         data = app_yaml_data(start_timeout=start_timeout)
 
-        error = f"'{start_timeout}' is not a valid time value"
+        error = f"{start_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
@@ -1210,7 +1210,7 @@ class TestAppValidation:
     def test_app_stop_timeout_invalid(self, stop_timeout, app_yaml_data):
         data = app_yaml_data(stop_timeout=stop_timeout)
 
-        error = f"'{stop_timeout}' is not a valid time value"
+        error = f"{stop_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
@@ -1225,7 +1225,7 @@ class TestAppValidation:
     def test_app_watchdog_timeout_invalid(self, watchdog_timeout, app_yaml_data):
         data = app_yaml_data(watchdog_timeout=watchdog_timeout)
 
-        error = f"'{watchdog_timeout}' is not a valid time value"
+        error = f"{watchdog_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
@@ -1247,7 +1247,7 @@ class TestAppValidation:
         data = app_yaml_data(restart_delay=restart_delay)
 
         error = (
-            f"apps.app1.restart_delay\n  Value error, '{restart_delay}' is not a "
+            f"apps.app1.restart_delay\n  Value error, {restart_delay!r} is not a "
             "valid time value"
         )
         with pytest.raises(pydantic.ValidationError, match=error):
