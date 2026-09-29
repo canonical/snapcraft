@@ -710,6 +710,56 @@ def test_hook_command_chain_assumes_with_existing_assumes(simple_project, new_di
     )
 
 
+@pytest.mark.parametrize(
+    ("project_data", "expected_assumes"),
+    [
+        pytest.param(
+            {
+                "assumes": ["command-chain"],
+                "apps": {"app1": {"command-chain": ["c1"]}},
+            },
+            ["command-chain"],
+            id="app-command-chain",
+        ),
+        pytest.param(
+            {
+                "assumes": ["command-chain"],
+                "hooks": {"hook": {"command-chain": ["c1"]}},
+            },
+            ["command-chain"],
+            id="hook-command-chain",
+        ),
+        pytest.param(
+            {
+                "assumes": ["command-chain", "foossumes"],
+                "apps": {"app1": {"command-chain": ["c1"]}},
+                "hooks": {"hook": {"command-chain": ["c2"]}},
+            },
+            ["command-chain", "foossumes"],
+            id="app-and-hook-command-chain",
+        ),
+        pytest.param(
+            {
+                "assumes": ["snapd2.74"],
+                "apps": {"app1": {"daemon": "simple", "success-exit-status": [42]}},
+            },
+            ["snapd2.74"],
+            id="success-exit-status",
+        ),
+    ],
+)
+def test_computed_assumes_already_in_project(
+    simple_project, new_dir, project_data, expected_assumes
+):
+    """Don't duplicate assumes that the project already declares."""
+    snap_yaml.write(
+        simple_project(**project_data), prime_dir=Path(new_dir), arch="amd64"
+    )
+
+    snap_metadata = yaml.safe_load(Path("meta/snap.yaml").read_text())
+    assert snap_metadata["assumes"] == expected_assumes
+
+
 def test_project_environment_ld_library_path_and_path_defined(simple_project, new_dir):
     """Test behavior of defining LD_LIBRARY_PATH and PATH variables."""
     environment = {

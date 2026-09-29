@@ -469,8 +469,8 @@ def get_metadata_from_project(
     version = process_version(project.version)
     components = _process_components(project.components)
 
-    # project provided assumes and computed assumes
-    total_assumes = sorted(project.assumes + list(assumes))
+    # project provided assumes and computed assumes, without duplicates
+    total_assumes = sorted(set(project.assumes) | assumes)
 
     links = Links.from_project(project)
     snap_type = project.type.value if project.type else None
