@@ -25,7 +25,7 @@ from snapcraft.models import (
 )
 
 
-@pytest.mark.parametrize("values", [[""], ["x"], [1], ["x", 1]])
+@pytest.mark.parametrize("values", [[""], ["x"], [1], ["x", 1], [None], [1, None, 2]])
 @pytest.mark.parametrize("currently_released", [False, True, None])
 def test_series(values, currently_released):
     expected_series = Series(
@@ -254,6 +254,41 @@ def test_metrics_results_unmarshal_two_buckets():
                     Series(name="continued", values=[11, 15], currently_released=None),
                     Series(name="lost", values=[3, 0], currently_released=None),
                     Series(name="new", values=[4, 1], currently_released=None),
+                ],
+            )
+        ]
+    )
+
+
+def test_metrics_results_unmarshal_missing_values():
+    """The store returns null values for buckets without data."""
+    data = {
+        "metrics": [
+            {
+                "buckets": ["2021-01-01", "2021-01-02", "2021-01-03"],
+                "metric_name": "weekly_installed_base_by_country",
+                "series": [
+                    {"name": "fr", "values": [None, 7, None]},
+                    {"name": "gb", "values": [3, None, 5]},
+                ],
+                "snap_id": "test-snap-id",
+                "status": "OK",
+            }
+        ]
+    }
+
+    metrics_results = MetricsResponse.unmarshal(data)
+
+    assert metrics_results == MetricsResponse(
+        metrics=[
+            Metric(
+                status="OK",
+                snap_id="test-snap-id",
+                metric_name=MetricName.WEEKLY_INSTALLED_BASE_BY_COUNTRY,
+                buckets=["2021-01-01", "2021-01-02", "2021-01-03"],
+                series=[
+                    Series(name="fr", values=[None, 7, None]),
+                    Series(name="gb", values=[3, None, 5]),
                 ],
             )
         ]

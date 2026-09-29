@@ -145,6 +145,94 @@ def test_metrics_format(
     emitter.assert_message(expected)
 
 
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [
+        pytest.param(
+            "json",
+            textwrap.dedent(
+                """\
+                {
+                  "buckets": [
+                    "2026-01-01",
+                    "2026-01-02"
+                  ],
+                  "metric_name": "weekly_installed_base_by_country",
+                  "series": [
+                    {
+                      "name": "fr",
+                      "values": [
+                        null,
+                        7
+                      ]
+                    },
+                    {
+                      "name": "gb",
+                      "values": [
+                        3,
+                        null
+                      ]
+                    }
+                  ],
+                  "snap_id": "test-snap-id",
+                  "status": "OK"
+                }"""
+            ),
+            id="json",
+        ),
+        pytest.param(
+            "table",
+            textwrap.dedent(
+                """\
+                   Country  2026-01-01  2026-01-02
+                   Fr       0           7
+                   Gb       3           0"""
+            ),
+            id="table",
+        ),
+    ],
+)
+def test_metrics_missing_values(
+    metrics_command: StoreMetricsCommand,
+    emitter: RecordingEmitter,
+    mocker: MockerFixture,
+    mode: str,
+    expected: str,
+) -> None:
+    """Buckets without data are null in the store response."""
+    fake_response = MetricsResponse.unmarshal(
+        {
+            "metrics": [
+                {
+                    "status": "OK",
+                    "snap_id": "test-snap-id",
+                    "metric_name": "weekly_installed_base_by_country",
+                    "buckets": ["2026-01-01", "2026-01-02"],
+                    "series": [
+                        {"name": "fr", "values": [None, 7]},
+                        {"name": "gb", "values": [3, None]},
+                    ],
+                }
+            ]
+        }
+    )
+    mocker.patch(
+        "snapcraft.store.StoreClientCLI.get_metrics",
+        return_value=fake_response,
+    )
+    namespace = argparse.Namespace(
+        snap_name="fakesnap",
+        metric="weekly_installed_base_by_country",
+        format=mode,
+        start="2026-01-01",
+        end="2026-01-02",
+    )
+
+    metrics_command.run(namespace)
+
+    emitter.assert_message(expected)
+
+
 def test_metrics_no_data(
     metrics_command: StoreMetricsCommand,
     emitter: RecordingEmitter,

@@ -70,8 +70,9 @@ class Series(models.CraftBaseModel):
     name: str
     """Category of data being represented for a given metric."""
 
-    values: list[int | str]
-    """Data points for this series."""
+    values: list[int | str | None]
+    """Data points for this series. A value is None if the store has no data for
+    the matching bucket."""
 
     currently_released: bool | None = None
     """Optional value stating whether a given channel is currently released when
