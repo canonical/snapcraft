@@ -191,6 +191,13 @@ Snapcraft 9.1.2
 - `snapcraft#6418 <https://github.com/canonical/snapcraft/issues/6418>`__
   core26: kernel plugin fails to run
 
+.. _release-notes-fixes-9.1.3:
+
+Snapcraft 9.1.3
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6433 <https://github.com/canonical/snapcraft/issues/6433>`__ Generated
+  hooks are not included in the snap
 
 Contributors
 ------------
