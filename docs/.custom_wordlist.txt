@@ -63,7 +63,8 @@ gdb(server)?
 Geekbench
 github
 GitHub
-glibc?
+GLib
+glibc
 GPG
 gsettings
 gpu
