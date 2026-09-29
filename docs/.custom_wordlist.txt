@@ -63,7 +63,7 @@ gdb(server)?
 Geekbench
 github
 GitHub
-glibc
+glibc?
 GPG
 gsettings
 gpu
@@ -75,6 +75,7 @@ hashlib
 Hawksbill
 html
 https
+IDEs?
 igor
 Inadyn
 Initrd
@@ -86,6 +87,7 @@ io
 ip
 Irssi
 iterability
+JARs?
 jemalloc
 JLink
 json
@@ -139,7 +141,7 @@ pkgconfig
 plaintext
 plantuml
 PNG
-PR
+PRs?
 precompiled?
 prepended
 prereqs?
