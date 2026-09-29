@@ -2285,6 +2285,25 @@ def _custom_error(error_msg: str):
     return pydantic.WrapValidator(_validator)
 
 
+def _validate_architectures_unsupported(
+    architectures: Any,
+    handler: pydantic.ValidatorFunctionWrapHandler,
+    info: pydantic.ValidationInfo,
+) -> None:
+    """Reject the 'architectures' key with an error that names the project's base."""
+    try:
+        return handler(architectures)
+    except ValueError as exc:
+        base = info.data.get("base")
+        # bare snaps are built on their build-base
+        if base == "bare":
+            base = info.data.get("build_base")
+        raise ValueError(
+            f"'architectures' key is not supported for base {base!r}. "
+            "Use 'platforms' key instead."
+        ) from exc
+
+
 class _BaselessProject(Project):
     """Project types that do not require a base."""
 
@@ -2465,12 +2484,7 @@ class Core24Project(StableBaseProject):
     base: Literal["core24"]
 
     architectures: SkipJsonSchema[
-        Annotated[
-            None,
-            _custom_error(
-                "'architectures' key is not supported for base 'core24'. Use 'platforms' key instead."
-            ),
-        ]
+        Annotated[None, pydantic.WrapValidator(_validate_architectures_unsupported)]
     ] = pydantic.Field(
         default=None,
         description="The architectures key is only used in core22 snaps and below. For core24 and newer snaps, use the ``platforms`` key.",
