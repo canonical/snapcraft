@@ -617,7 +617,7 @@ toml = [
 
 [[package]]
 name = "craft-application"
-version = "7.4.0"
+version = "7.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
@@ -639,9 +639,9 @@ dependencies = [
     { name = "snap-http" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/94/6b/e88135816ccfa9fbd2442e6dcd563eda3ef5f45ad9cf7ae1789ae477134b/craft_application-7.4.0.tar.gz", hash = "sha256:1b654755e993a70997f1a9ef5c8b272c267806b1e5cc9ddf8303162b0ffff384", size = 726712, upload-time = "2026-09-25T16:30:54.798Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e2/de/8c835249d34721589f402c0863d004b43f0df32d8709d46f3ba430d3e4ee/craft_application-7.4.1.tar.gz", hash = "sha256:cc06becba6cadc473f5bd85f213c7abe637cf7ecf72f1d76c2a906795a58efe9", size = 726313, upload-time = "2026-09-29T21:23:35.825Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/d0/dbe72fb5a02449ed67646ab5e05c65e73eba21fad4f4623e8ac0b7950229/craft_application-7.4.0-py3-none-any.whl", hash = "sha256:02dd6a8d7eb7b82655176a12617ac069ca907e77d9c62bb58cabc6fd8820b447", size = 218339, upload-time = "2026-09-25T16:30:52.508Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/a2/3c2087c3a8d3610d25a063419d83417b17ccc2404d4a149fa6ea7f166580/craft_application-7.4.1-py3-none-any.whl", hash = "sha256:d57d10ebc73bd74c711da1ff2bdb532cb6fc620260b8b265bc24102b49668203", size = 217954, upload-time = "2026-09-29T21:23:33.624Z" },
 ]
 
 [package.optional-dependencies]
@@ -2732,7 +2732,7 @@ types = [
 requires-dist = [
     { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.1.0" },
     { name = "click", specifier = ">=8.3.3" },
-    { name = "craft-application", extras = ["remote"], specifier = ">=7.3.0" },
+    { name = "craft-application", extras = ["remote"], specifier = ">=7.4.1" },
     { name = "craft-archives", specifier = ">=2.2.2" },
     { name = "craft-cli", specifier = ">=3.4.0" },
     { name = "craft-grammar", specifier = ">=2.3.0" },
