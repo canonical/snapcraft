@@ -233,6 +233,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
+    "sphinx_structured_toc",
     "sphinx_substitution_extensions",
 ]
 
