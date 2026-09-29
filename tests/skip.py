@@ -15,7 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import functools
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from unittest import skipUnless
 
 from tests import os_release

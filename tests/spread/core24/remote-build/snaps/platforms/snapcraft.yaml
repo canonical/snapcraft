@@ -1,4 +1,4 @@
-name: test-snap-platforms-core24
+name: platforms-core24
 base: core24
 version: "1.0"
 summary: Test snap for remote build

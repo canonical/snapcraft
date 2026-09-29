@@ -1,7 +1,7 @@
 summary: Test scriptlets variables on core22 with components
 
 restore: |
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
 
 execute: |

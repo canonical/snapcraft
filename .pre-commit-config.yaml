@@ -1,0 +1,36 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+# skills and instructions are automatically generated
+exclude: ^\.github/(skills|instructions)/
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v6.0.0"
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.16.3"
+    hooks:
+      # Run the linter
+      - id: ruff-check
+        args: [--fix, --exit-non-zero-on-fix]
+      # Run the formatter
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "" # Intentionally blank, despite the warning.
+    hooks:
+      - id: prettier
+        files: ^(.\/?)*\.(yaml|yml|json|json5|css|md)$
+        additional_dependencies:
+          - prettier@3.6.0 # renovate: datasource=npm
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: "v3.13.1-1"
+    hooks:
+      - id: shfmt
+        exclude: '\.sh\.j2$'

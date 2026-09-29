@@ -57,7 +57,7 @@ execute: |
   }
 
   cd "$SNAP_DIR"
-  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 snapcraft pack
 
   unsquashfs "${SNAP}"_1.0_*.snap
 

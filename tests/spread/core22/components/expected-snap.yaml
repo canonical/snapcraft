@@ -1,5 +1,5 @@
 name: hello-components
-version: '1.0'
+version: 1.0-updated
 summary: Build a snap with components
 description: Build a snap with components
 architectures:

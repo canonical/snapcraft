@@ -22,8 +22,9 @@ import pathlib
 import re
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, List, Set, cast
+from typing import cast
 
 import catkin_pkg.package
 import click
@@ -31,7 +32,7 @@ from catkin_pkg import packages as catkin_packages
 from craft_parts import plugins
 from craft_parts.packages import Repository as Repo
 from craft_parts.packages.snaps import _get_parsed_snap
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft.errors import SnapcraftError
 
@@ -43,7 +44,7 @@ class RosdepError(SnapcraftError):
 class RosdepUnexpectedResultError(RosdepError):
     """Error for unexpected rosdep results."""
 
-    def __init__(self, dependency, output):
+    def __init__(self, dependency: str, output: str):
         super().__init__(
             message="Received unexpected result from rosdep when trying to resolve "
             f"{dependency!r}:\n{output}"
@@ -52,7 +53,7 @@ class RosdepUnexpectedResultError(RosdepError):
 
 def _parse_rosdep_resolve_dependencies(
     dependency_name: str, output: str
-) -> Dict[str, Set[str]]:
+) -> dict[str, set[str]]:
     # The output of rosdep follows the pattern:
     #
     #    #apt
@@ -65,7 +66,7 @@ def _parse_rosdep_resolve_dependencies(
     # Split these out into a dict of dependency type -> dependencies.
     delimiters = re.compile(r"\n|\s")
     lines = delimiters.split(output)
-    dependencies: Dict[str, Set[str]] = {}
+    dependencies: dict[str, set[str]] = {}
     dependency_set = None
     for line in lines:
         line = line.strip()  # noqa PLW2901
@@ -84,25 +85,23 @@ def _parse_rosdep_resolve_dependencies(
 class RosPlugin(plugins.Plugin):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
-    _MAP_CORE_ROSDISTRO = {"core24": "jazzy"}
+    _MAP_CORE_ROSDISTRO = {"core22": "humble", "core24": "jazzy", "core26": "lyrical"}
 
-    @overrides
-    def get_build_snaps(self) -> Set[str]:
+    @override
+    def get_build_snaps(self) -> set[str]:
         return (
-            set(self._options.colcon_ros_build_snaps)  # type: ignore
-            if self._options.colcon_ros_build_snaps  # type: ignore
+            set(self._options.colcon_ros_build_snaps)  # ty: ignore[unresolved-attribute]
+            if self._options.colcon_ros_build_snaps  # ty: ignore[unresolved-attribute]
             else set()
         )
 
-    @overrides
-    def get_build_packages(self) -> Set[str]:
+    @override
+    def get_build_packages(self) -> set[str]:
         base = self._part_info.base
-        if base == "core22":
-            return {"python3-rosdep", "rospack-tools"}
         return {"python3-rosdep", f"ros-{self._MAP_CORE_ROSDISTRO[base]}-ros2pkg"}
 
-    @overrides
-    def get_build_environment(self) -> Dict[str, str]:
+    @override
+    def get_build_environment(self) -> dict[str, str]:
         return {"ROS_PYTHON_VERSION": "3"}
 
     @classmethod
@@ -111,7 +110,7 @@ class RosPlugin(plugins.Plugin):
         return True
 
     @abc.abstractmethod
-    def _get_workspace_activation_commands(self) -> List[str]:
+    def _get_workspace_activation_commands(self) -> list[str]:
         """Return a list of commands source a ROS workspace.
 
         The commands returned will be run before doing anything else.
@@ -119,12 +118,12 @@ class RosPlugin(plugins.Plugin):
         the build step, so these commands can affect the commands that
         follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
     @abc.abstractmethod
-    def _get_build_commands(self) -> List[str]:
+    def _get_build_commands(self) -> list[str]:
         """Return a list of commands to run during the build step.
 
         The commands returned will be run after rosdep is used to install
@@ -133,14 +132,14 @@ class RosPlugin(plugins.Plugin):
         of the build step, so these commands can be affected by the commands
         preceding it, and can affect those that follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
-    def _get_list_packages_commands(self) -> List[str]:
+    def _get_list_packages_commands(self) -> list[str]:
         """Generate a list of ROS 2 packages available in build snaps.
 
-        The ROS 2 workspaces contained in build snaps are crawled with `rospack`
+        The ROS 2 workspaces contained in build snaps are crawled
         to establish the list of all available ROS 2 packages.
         The package names are then resolved with `rosdep` to map their names to debs.
         The list is finally saved in the part's install directory.
@@ -151,41 +150,29 @@ class RosPlugin(plugins.Plugin):
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"')
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"')
 
-        if self._options.colcon_ros_build_snaps:  # type: ignore
-            base = self._part_info.base
-            if base == "core22":
-                rospkg_search_env = "ROS_PACKAGE_PATH"
-                rospkg_cmd = "rospack list-names"
-            else:
-                rospkg_search_env = "AMENT_PREFIX_PATH"
-                rospkg_cmd = "ros2 pkg list"
-
-            for ros_build_snap in self._options.colcon_ros_build_snaps:  # type: ignore
+        if self._options.colcon_ros_build_snaps:  # ty: ignore[unresolved-attribute]
+            for ros_build_snap in self._options.colcon_ros_build_snaps:  # ty: ignore[unresolved-attribute]
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
                 base_path = f"/snap/{snap_name}/current/opt/ros"
                 path_ros_sys = f"{base_path}/${{ROS_DISTRO}}/"
                 path_ros_app = f"{base_path}/snap/"
                 # ros2 pkg does not crawl sub-folders
-                if base == "core22":
-                    search_path = base_path
-                else:
-                    search_path = f"{path_ros_sys}:{path_ros_app}"
+                search_path = f"{path_ros_sys}:{path_ros_app}"
                 cmd.extend(
                     [
                         # Retrieve the list of all ROS packages available in the build snap
                         f"if [ -d {base_path} ]; then",
-                        f"{rospkg_search_env}={search_path} "
-                        f'{rospkg_cmd} | (xargs rosdep resolve --rosdistro "${{ROS_DISTRO}}" || echo "") | '
-                        'awk "/#apt/{getline;print;}" >> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
+                        f"AMENT_PREFIX_PATH={search_path} "
+                        'ros2 pkg list >> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
                         "fi",
                         # Retrieve the list of all non-ROS packages available in the build snap
                         f'if [ -d "{path_ros_sys}" ]; then',
                         f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path_ros_sys}" --ignore-packages-from-source '
-                        '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+                        '>> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
                         "fi",
                         f'if [ -d "{path_ros_app}" ]; then',
                         f'rosdep keys --rosdistro "${{ROS_DISTRO}}" --from-paths "{path_ros_app}" --ignore-packages-from-source '
-                        '| (xargs rosdep resolve --rosdistro "${ROS_DISTRO}" || echo "") | grep -v "#" >> "${CRAFT_PART_INSTALL}"/.installed_packages.txt',
+                        '>> "${CRAFT_PART_INSTALL}/.installed_packages.txt"',
                         "fi",
                     ]
                 )
@@ -194,7 +181,7 @@ class RosPlugin(plugins.Plugin):
 
         return cmd
 
-    def _get_stage_runtime_dependencies_commands(self) -> List[str]:
+    def _get_stage_runtime_dependencies_commands(self) -> list[str]:
         env = {"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"}
 
         for key in [
@@ -239,8 +226,8 @@ class RosPlugin(plugins.Plugin):
             )
         ]
 
-    @overrides
-    def get_build_commands(self) -> List[str]:
+    @override
+    def get_build_commands(self) -> list[str]:
         return (
             [  # noqa S608 (false positive on SQL injection)
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
@@ -281,49 +268,95 @@ def plugin_cli():
     """Define the plugin_cli Click group."""
 
 
-def get_installed_dependencies(installed_packages_path: str) -> Set[str]:
-    """Retrieve recursive apt dependencies of a given package list."""
+DebianPackageName = str
+ROSPackageName = str
+
+
+def _get_installed_dependencies(installed_packages_path: str) -> set[ROSPackageName]:
+    """Retrieve ROS package names from a package-list file."""
     if os.path.isfile(installed_packages_path):
         try:
             with open(installed_packages_path, encoding="utf8") as file:
-                build_snap_packages = set(file.read().split())
-                package_dependencies = set()
-                for package in build_snap_packages:
-                    cmd = [
-                        "apt",
-                        "depends",
-                        "--recurse",
-                        "--no-recommends",
-                        "--no-suggests",
-                        "--no-conflicts",
-                        "--no-breaks",
-                        "--no-replaces",
-                        "--no-enhances",
-                        f"{package}",
-                    ]
-                    click.echo(f"Running {cmd!r}")
-                    try:
-                        proc = subprocess.run(
-                            cmd,
-                            check=True,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            env={"PATH": os.environ["PATH"]},
-                        )
-                    except subprocess.CalledProcessError as error:
-                        click.echo(f"failed to run {cmd!r}: {error.output}")
-                    else:
-                        apt_dependency_regex = re.compile(r"^\w.*$")
-                        for line in proc.stdout.decode().strip().split("\n"):
-                            if apt_dependency_regex.match(line):
-                                package_dependencies.add(line)
-
-                build_snap_packages.update(package_dependencies)
-                click.echo(f"Will not fetch staged packages: {build_snap_packages!r}")
-                return build_snap_packages
+                return set(file.read().split())
         except OSError:
             pass
     return set()
+
+
+def _get_debian_package_names(
+    ros_package_name: ROSPackageName,
+    ros_distro: str,
+) -> set[DebianPackageName]:
+    """Resolve all apt packages provided by rosdep for a ROS package name."""
+    cmd = [
+        "rosdep",
+        "resolve",
+        ros_package_name,
+        "--rosdistro",
+        ros_distro,
+    ]
+    click.echo(f"Running {cmd!r}")
+    try:
+        proc = subprocess.run(
+            cmd,
+            check=True,
+            capture_output=True,
+            env={"PATH": os.environ["PATH"]},
+        )
+    except subprocess.CalledProcessError as error:
+        click.echo(f"failed to run {cmd!r}: {error.stdout}, {error.stderr}")
+        return set()
+
+    parsed = _parse_rosdep_resolve_dependencies(
+        ros_package_name, proc.stdout.decode().strip()
+    )
+    return parsed.get("apt", set())
+
+
+def _find_installed_debian_dependencies(
+    build_snap_packages: set[ROSPackageName],
+    ros_distro: str,
+) -> set[DebianPackageName]:
+    """Retrieve recursive apt dependencies of a given package list."""
+    package_dependencies = set()
+    debian_packages = set()
+    # find the apt depends for each rosdep resolve
+    for package in build_snap_packages:
+        debian_packages.update(_get_debian_package_names(package, ros_distro))
+
+    for package in debian_packages:
+        cmd = [
+            "apt",
+            "depends",
+            "--recurse",
+            "--no-recommends",
+            "--no-suggests",
+            "--no-conflicts",
+            "--no-breaks",
+            "--no-replaces",
+            "--no-enhances",
+            f"{package}",
+        ]
+        click.echo(f"Running {cmd!r}")
+        try:
+            proc = subprocess.run(
+                cmd,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                env={"PATH": os.environ["PATH"]},
+            )
+        except subprocess.CalledProcessError as error:
+            click.echo(f"failed to run {cmd!r}: {error.output}")
+        else:
+            apt_dependency_regex = re.compile(r"^\w.*$")
+            for line in proc.stdout.decode().strip().split("\n"):
+                if apt_dependency_regex.match(line):
+                    package_dependencies.add(line)
+
+    debian_packages.update(package_dependencies)
+    click.echo(f"Will not fetch staged packages: {debian_packages!r}")
+    return debian_packages
 
 
 @plugin_cli.command()
@@ -346,8 +379,11 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
     """Stage the runtime dependencies of the ROS stack using rosdep."""
     click.echo("Staging runtime dependencies...")
     # @todo: support python packages (only apt currently supported)
-    apt_packages: Set[str] = set()
+    apt_packages: set[str] = set()
 
+    build_snap_packages_ros = _get_installed_dependencies(
+        part_install + "/.installed_packages.txt"
+    )
     installed_pkgs = cast(
         Iterable[catkin_pkg.package.Package],
         catkin_packages.find_packages(part_install).values(),
@@ -369,6 +405,9 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
             # No need to resolve this dependency if we know it's local
             if any(p for p in installed_pkgs if p.name == dep.name):
                 continue
+            # No need to resolve this dependency if it's provided by the build snap
+            if dep.name in build_snap_packages_ros:
+                continue
 
             cmd = ["rosdep", "resolve", dep.name, "--rosdistro", ros_distro]
             try:
@@ -376,12 +415,11 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
                 proc = subprocess.run(
                     cmd,
                     check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
+                    capture_output=True,
                     env={"PATH": os.environ["PATH"]},
                 )
             except subprocess.CalledProcessError as error:
-                click.echo(f"failed to run {cmd!r}: {error.output}")
+                click.echo(f"failed to run {cmd!r}: {error.stdout}, {error.stderr}")
                 raise RosdepError("rosdep encountered an error") from error
 
             parsed = _parse_rosdep_resolve_dependencies(
@@ -389,12 +427,8 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
             )
             apt_packages |= parsed.pop("apt", set())
 
-            if parsed:
+            if parsed:  # still non-empty after removing apt packages
                 click.echo(f"unhandled dependencies: {parsed!r}")
-
-    build_snap_packages = get_installed_dependencies(
-        part_install + "/.installed_packages.txt"
-    )
 
     if apt_packages:
         package_names = sorted(apt_packages)
@@ -403,6 +437,9 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
 
         Repo.configure("snapcraft")
 
+        build_snap_packages = _find_installed_debian_dependencies(
+            build_snap_packages_ros, ros_distro
+        )
         click.echo(f"Fetching stage packages: {package_names!r}")
         fetched_stage_packages = Repo.fetch_stage_packages(
             cache_dir=Path(stage_cache_dir),
@@ -410,7 +447,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
             arch=target_arch,
             base=base,
             stage_packages_path=stage_packages_path,
-            packages_filters=build_snap_packages,  # type: ignore
+            packages_filters=build_snap_packages,  # ty: ignore[unknown-argument]
         )
 
         click.echo(f"Unpacking stage packages: {fetched_stage_packages!r}")

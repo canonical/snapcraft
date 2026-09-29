@@ -20,42 +20,37 @@ from __future__ import annotations
 
 import logging
 import os
-import pathlib
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+import craft_application.errors
 import craft_cli
 import craft_parts
 import craft_store
-from craft_application import Application, AppMetadata, remote, util
+from craft_application import Application, AppMetadata, launchpad, remote, util
 from craft_application.commands import get_other_command_group
 from craft_cli import emit
-from craft_parts.plugins.plugins import PluginType
-from craft_platforms import DebianArchitecture
-from overrides import override
+from craft_parts.plugins.dotnet_v2_plugin import DotnetV2Plugin
+from typing_extensions import override
 
-import snapcraft
-import snapcraft_legacy
 from snapcraft import cli, commands, errors, models, services, store
-from snapcraft.extensions import apply_extensions
-from snapcraft.models.project import SnapcraftBuildPlanner, apply_root_packages
-from snapcraft.parts import set_global_environment
 from snapcraft.utils import get_effective_base
-from snapcraft_legacy.cli import legacy
 
-from .legacy_cli import _LIB_NAMES, _ORIGINAL_LIB_NAME_LOG_LEVEL
 from .parts import plugins
-from .parts.yaml_utils import extract_parse_info
+from .parts.yaml_utils import get_snap_project
+
+if TYPE_CHECKING:
+    from craft_parts.plugins.plugins import PluginType
 
 APP_METADATA = AppMetadata(
     name="snapcraft",
     summary="Package, distribute, and update snaps for Linux and IoT",
     ProjectClass=models.Project,
-    BuildPlannerClass=SnapcraftBuildPlanner,
     source_ignore_patterns=["*.snap"],
-    project_variables=["version", "grade"],
-    mandatory_adoptable_fields=["version", "summary", "description"],
-    docs_url="https://canonical-snapcraft.readthedocs-hosted.com/en/{version}",
+    mandatory_adoptable_fields=list(models.MANDATORY_ADOPTABLE_FIELDS),
+    docs_url="https://documentation.ubuntu.com/snapcraft/{version}",
+    enable_pro_support=True,
+    always_repack=False,
 )
 
 
@@ -74,6 +69,9 @@ def _get_esm_error_for_base(base: str) -> None:
         case "core18":
             channel = "7.x"
             version = "7"
+        case "core20":
+            channel = "8.x"
+            version = "8"
         case _:
             return
 
@@ -90,43 +88,47 @@ def _get_esm_error_for_base(base: str) -> None:
 class Snapcraft(Application):
     """Snapcraft application definition."""
 
-    _known_core24: bool
+    _use_craftapp_lib: bool
     """True if the project should use the core24/craft-application codepath."""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._parse_info: dict[str, list[str]] = {}
 
         # Locate the project file. It's used in early execution to determine
         # compatibility with previous versions of the snapcraft codebase, and in
         # the package service to copy the project file into the snap payload if
         # manifest generation is enabled.
-        try:
-            self._snapcraft_yaml_path: pathlib.Path | None = self._resolve_project_path(
-                None
-            )
-            with self._snapcraft_yaml_path.open() as file:
-                self._snapcraft_yaml_data = util.safe_yaml_load(file)
-        except FileNotFoundError:
-            self._snapcraft_yaml_path = self._snapcraft_yaml_data = None
-
-        self._known_core24 = self._get_known_core24()
+        self._use_craftapp_lib = self._should_use_craftapp_lib()
 
         for craft_var, snapcraft_var in MAPPED_ENV_VARS.items():
             if env_val := os.getenv(snapcraft_var):
                 os.environ[craft_var] = env_val
 
-    def _get_known_core24(self) -> bool:
-        """Return true if the project is known to be core24."""
-        if self._snapcraft_yaml_data:
-            base = self._snapcraft_yaml_data.get("base")
-            build_base = self._snapcraft_yaml_data.get("build-base")
+    def _should_use_craftapp_lib(self) -> bool:
+        """Return true if the project is known to use Craft Application to build."""
+        try:
+            snapcraft_yaml_path = get_snap_project(self.project_dir).project_file
+            with snapcraft_yaml_path.open() as file:
+                _snapcraft_yaml_data = util.safe_yaml_load(file)
+        # defer to the project service to raise errors
+        except (
+            craft_application.errors.ProjectFileError,
+            craft_application.errors.YamlError,
+        ):
+            return False
 
-            # We know for sure that we're handling a core24 project
-            if "core24" in (base, build_base) or build_base == "devel":
-                return True
+        # When snapcraft.yaml exists but is empty
+        if not isinstance(_snapcraft_yaml_data, dict):
+            return False
 
-        return False
+        base = _snapcraft_yaml_data.get("base")
+        build_base = _snapcraft_yaml_data.get("build-base")
+
+        # Check for bases known *not* to use craft-application
+        return all(
+            non_craftapp_base not in (base, build_base)
+            for non_craftapp_base in ("core18", "core20", "core22")
+        )
 
     def _get_app_plugins(self) -> dict[str, PluginType]:
         return plugins.get_plugins(core22=False)
@@ -135,41 +137,19 @@ class Snapcraft(Application):
     def _register_default_plugins(self) -> None:
         """Register per application plugins when initializing."""
         super()._register_default_plugins()
+        craft_parts.plugins.unregister("gradle-use")
 
-        if self._known_core24:
-            # dotnet is disabled for core24 and newer because it is pending a rewrite
+        if self._use_craftapp_lib:
+            # core22 uses dotnet v1
+            # core24 and newer uses dotnet v2
             craft_parts.plugins.unregister("dotnet")
-
-    @override
-    def _configure_services(self, provider_name: str | None) -> None:
-        self.services.update_kwargs(
-            "package",
-            build_plan=self._build_plan,
-            snapcraft_yaml_path=self._snapcraft_yaml_path,
-            parse_info=self._parse_info,
-        )
-
-        super()._configure_services(provider_name)
-
-    @override
-    def _resolve_project_path(self, project_dir: pathlib.Path | None) -> pathlib.Path:
-        """Overridden to handle the two possible locations for snapcraft.yaml."""
-        if project_dir is None:
-            project_dir = pathlib.Path.cwd()
-
-        try:
-            return super()._resolve_project_path(project_dir / "snap")
-        except FileNotFoundError:
-            try:
-                return super()._resolve_project_path(project_dir)
-            except FileNotFoundError:
-                return super()._resolve_project_path(project_dir / "build-aux" / "snap")
+            craft_parts.plugins.register({"dotnet": DotnetV2Plugin})
 
     @property
     def app_config(self) -> dict[str, Any]:
         """Overridden to add "core" knowledge to the config."""
         config = super().app_config
-        config["core24"] = self._known_core24
+        config["use_craftapp_lib"] = self._use_craftapp_lib
         return config
 
     @override
@@ -180,20 +160,19 @@ class Snapcraft(Application):
         :raises SnapcraftError: If the project uses a base that is not supported by the
           current version of Snapcraft.
         """
-        if self._snapcraft_yaml_data:
+        if project := self._get_project_raw():
             # if the project metadata is incomplete, assume core24 so craft application
             # can present user-friendly errors when unmarshalling the model
             effective_base = (
                 get_effective_base(
-                    base=self._snapcraft_yaml_data.get("base"),
-                    build_base=self._snapcraft_yaml_data.get("build-base"),
-                    project_type=self._snapcraft_yaml_data.get("type"),
-                    name=self._snapcraft_yaml_data.get("name"),
+                    base=project.get("base"),
+                    build_base=project.get("build-base"),
+                    project_type=project.get("type"),
+                    name=project.get("name"),
                 )
                 or "core24"
             )
             _get_esm_error_for_base(effective_base)
-            self._ensure_remote_build_supported(effective_base)
 
         super()._pre_run(dispatcher)
 
@@ -210,7 +189,7 @@ class Snapcraft(Application):
                         f"{store.constants.ENVIRONMENT_STORE_CREDENTIALS} "
                         "is correctly exported into the environment"
                     ),
-                    docs_url="https://snapcraft.io/docs/snapcraft-authentication",
+                    docs_url="https://documentation.ubuntu.com/snapcraft/stable/how-to/publishing/authenticate",
                 )
             )
             return_code = 1
@@ -224,32 +203,31 @@ class Snapcraft(Application):
             err.doc_slug = "/explanation/remote-build"
             self._emit_error(err)
             return_code = err.retcode
+        except launchpad.LaunchpadError as err:
+            self._emit_error(
+                craft_cli.errors.CraftError(
+                    f"{err}", doc_slug="/explanation/remote-build"
+                ),
+                cause=err,
+            )
+            return_code = 1
 
         return return_code
 
     @override
     def _enable_craft_parts_features(self) -> None:
         """Enable partitions if components are defined."""
-        if self._snapcraft_yaml_data and self._snapcraft_yaml_data.get("components"):
+        try:
+            project = self._get_project_raw()
+        # defer to the project service to raise errors
+        except (
+            craft_application.errors.ProjectFileError,
+            craft_application.errors.YamlError,
+        ):
+            return
+
+        if project and project.get("components"):
             craft_parts.Features(enable_partitions=True)
-
-    @override
-    def _setup_partitions(self, yaml_data: dict[str, Any]) -> list[str] | None:
-        components = models.ComponentProject.unmarshal(yaml_data)
-        if components.components is None:
-            return None
-
-        return components.get_partitions()
-
-    @override
-    def _extra_yaml_transform(
-        self, yaml_data: dict[str, Any], *, build_on: str, build_for: str | None
-    ) -> dict[str, Any]:
-        arch = build_on
-        target_arch = build_for if build_for else str(DebianArchitecture.from_host())
-        new_yaml_data = apply_extensions(yaml_data, arch=arch, target_arch=target_arch)
-        self._parse_info = extract_parse_info(new_yaml_data)
-        return apply_root_packages(new_yaml_data)
 
     @staticmethod
     def _get_argv_command() -> str | None:
@@ -268,150 +246,40 @@ class Snapcraft(Application):
         return next((arg for arg in sys.argv[1:] if arg in command_names), None)
 
     def _check_for_classic_fallback(self) -> None:
-        """Check for and raise a ClassicFallback if an older codebase should be used.
+        """Check for and raise a ClassicFallback for core22 lifecycle commands.
 
-        The project should use the classic fallback path for any of the following conditions.
-
-        core20:
-          1. Running a lifecycle command for a core20 snap
-          2. Expanding extensions for a core20 snap
-          3. Listing plugins for a core20 snap via the project metadata
-          4. Remote builds for a core20 snap
-          5. Listing plugins for a core20 snap via `snapcraft list-plugins --base core20`
-
-        core22:
-          6. Running a lifecycle command for a core22 snap
-          7. Remote builds for a core22 snap with the `force-fallback` strategy
-
-        Exception: If `--version` or `-V` is passed, do not use the classic fallback.
-
-        If none of the above conditions are met, then the default craft-application
-        code path should be used.
+        The classic fallback path (pre-craft-application) should only be used for core22
+        lifecycle commands.
 
         :raises ClassicFallback: If the project should use the classic fallback code path.
         """
-        argv_command = self._get_argv_command()
-        build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
-
-        # Exception: If `--version` or `-V` is passed, do not use the classic fallback.
+        # don't fallback for `--version` or `-V`
         if {"--version", "-V"}.intersection(sys.argv):
             return
 
-        if self._snapcraft_yaml_data:
-            # if the project metadata is incomplete, assume core24 so craft application
-            # can present user-friendly errors when unmarshalling the model
-            effective_base = (
-                get_effective_base(
-                    base=self._snapcraft_yaml_data.get("base"),
-                    build_base=self._snapcraft_yaml_data.get("build-base"),
-                    project_type=self._snapcraft_yaml_data.get("type"),
-                    name=self._snapcraft_yaml_data.get("name"),
-                )
-                or "core24"
-            )
+        argv_command = self._get_argv_command()
+        project = self._get_project_raw()
 
-            classic_lifecycle_commands = [
-                command.name for command in cli.CORE22_LIFECYCLE_COMMAND_GROUP.commands
-            ]
+        # don't fallback for commands that don't need a project
+        if not project:
+            return
 
-            if effective_base == "core20":
-                # 1. Running a lifecycle command for a core20 snap
-                # 2. Expanding extensions for a core20 snap
-                # 3. Listing plugins for a core20 snap via the project metadata
-                if argv_command is None or argv_command in [
-                    *classic_lifecycle_commands,
-                    "expand-extensions",
-                    "list-plugins",
-                    "plugins",
-                ]:
-                    raise errors.ClassicFallback()
+        effective_base = get_effective_base(
+            base=project.get("base"),
+            build_base=project.get("build-base"),
+            project_type=project.get("type"),
+            name=project.get("name"),
+        )
+        if effective_base != "core22":
+            return
 
-                # 4. Remote builds for a core20 snap
-                # Note that a `core20` snap with 'disable-fallback' set will follow the
-                # craft-application codepath and an error will be raised after the
-                # dispatcher is created.
-                if (
-                    argv_command == "remote-build"
-                    and not build_strategy
-                    or build_strategy == "force-fallback"
-                ):
-                    raise errors.ClassicFallback()
+        classic_lifecycle_commands = [
+            command.name for command in cli.CORE22_LIFECYCLE_COMMAND_GROUP.commands
+        ]
 
-            if effective_base == "core22":
-                # 6. Running a lifecycle command for a core22 snap
-                if argv_command is None or argv_command in classic_lifecycle_commands:
-                    raise errors.ClassicFallback()
-
-                # 7. Remote builds for a core22 snap with the `force-fallback` strategy
-                if (
-                    argv_command == "remote-build"
-                    and build_strategy == "force-fallback"
-                ):
-                    raise errors.ClassicFallback()
-
-        # 5. Listing plugins for a core20 snap via `snapcraft list-plugins --base core20`
-        if argv_command in ["list-plugins", "plugins"] and {
-            "--base=core20",
-            "core20",
-        }.intersection(sys.argv):
+        # `argv_command is None` is for the default command and can be dropped in #5673
+        if argv_command is None or argv_command in classic_lifecycle_commands:
             raise errors.ClassicFallback()
-
-    @staticmethod
-    def _ensure_remote_build_supported(base: str) -> None:
-        """Ensure the version of remote build is supported for the project.
-
-        1. SNAPCRAFT_REMOTE_BUILD_STRATEGY must be unset, 'disable-fallback', or
-          'force-fallback'
-        2. core20 projects must use the legacy remote builder
-        3. core24 and newer projects must use the craft-application remote builder
-
-        :raises SnapcraftError: If the environment variable `SNAPCRAFT_REMOTE_BUILD_STRATEGY`
-          is invalid.
-        :raises SnapcraftError: If the remote build version cannot be used for the project.
-        """
-        build_strategy = os.environ.get("SNAPCRAFT_REMOTE_BUILD_STRATEGY", None)
-
-        # 1. SNAPCRAFT_REMOTE_BUILD_STRATEGY must be unset, 'disable-fallback', or 'force-fallback'
-        if build_strategy and build_strategy not in (
-            "force-fallback",
-            "disable-fallback",
-        ):
-            raise errors.SnapcraftError(
-                message=(
-                    f"Unknown value {build_strategy!r} in environment variable "
-                    "'SNAPCRAFT_REMOTE_BUILD_STRATEGY'. "
-                ),
-                resolution=(
-                    "Valid values are 'disable-fallback' and 'force-fallback'."
-                ),
-                doc_slug="/explanation/remote-build",
-            )
-
-        # 2. core20 projects must use the legacy remote builder (#4885)
-        if base == "core20" and build_strategy == "disable-fallback":
-            raise errors.SnapcraftError(
-                message=(
-                    "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=disable-fallback' "
-                    "cannot be used for core20 snaps."
-                ),
-                resolution=(
-                    "Unset the environment variable or set it to 'force-fallback'."
-                ),
-                doc_slug="/explanation/remote-build",
-            )
-
-        # 3. core24 and newer projects must use the craft-application remote builder
-        elif base not in ["core20", "core22"] and build_strategy == "force-fallback":
-            raise errors.SnapcraftError(
-                message=(
-                    "'SNAPCRAFT_REMOTE_BUILD_STRATEGY=force-fallback' cannot "
-                    "be used for core24 and newer snaps."
-                ),
-                resolution=(
-                    "Unset the environment variable or set it to 'disable-fallback'."
-                ),
-                doc_slug="/explanation/remote-build",
-            )
 
     @override
     def _get_dispatcher(self) -> craft_cli.Dispatcher:
@@ -422,11 +290,9 @@ class Snapcraft(Application):
         - The codebase for core24 and newer commands uses craft-application to
           create and manage the Dispatcher.
         - The codebase for core22 commands creates its own Dispatcher and handles
-            errors and exit codes.
-        - The codebase for core20 commands uses the legacy snapcraft codebase which
-            handles logging, errors, and exit codes internally.
+          errors and exit codes.
 
-        :raises ClassicFallback: If the core20 or core22 codebases should be used.
+        :raises ClassicFallback: If the core22 codebase should be used.
         """
         self._check_for_classic_fallback()
         return super()._get_dispatcher()
@@ -442,15 +308,17 @@ class Snapcraft(Application):
             default_command=commands.PackCommand,
         )
 
-    @override
-    def _set_global_environment(self, info: craft_parts.ProjectInfo) -> None:
-        """Set global environment variables."""
-        super()._set_global_environment(info)
-        set_global_environment(info)
+    def _get_project_raw(self) -> dict[str, Any] | None:
+        """Get raw project data from the project service."""
+        try:
+            return self.services.get("project").get_raw()
+        except craft_application.errors.ProjectFileError:
+            return None
 
 
 def create_app() -> Snapcraft:
     """Create a Snapcraft application with the proper commands."""
+    services.register_snapcraft_services()
     snapcraft_services = services.SnapcraftServiceFactory(app=APP_METADATA)
 
     app = Snapcraft(
@@ -464,17 +332,24 @@ def create_app() -> Snapcraft:
     return app
 
 
+def get_app_info() -> tuple[craft_cli.Dispatcher, dict[str, Any]]:
+    """Retrieve application info. Used by craft-cli's completion module."""
+    app = create_app()
+    dispatcher = app._create_dispatcher()
+
+    return dispatcher, app.app_config
+
+
 def main() -> int:
     """Run craft-application based snapcraft with classic fallback."""
-    if os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "managed-host":
-        snapcraft.ProjectOptions = snapcraft_legacy.ProjectOptions  # type: ignore
-        legacy.legacy_run()
-        return 0  # never called in normal operation
-
     # set lib loggers to debug level so that all messages are sent to Emitter
-    for lib_name in _LIB_NAMES:
+    for lib_name in (
+        "craft_parts",
+        "craft_providers",
+        "craft_store",
+        "snapcraft.remote",
+    ):
         logger = logging.getLogger(lib_name)
-        _ORIGINAL_LIB_NAME_LOG_LEVEL[lib_name] = logger.level
         logger.setLevel(logging.DEBUG)
 
     app = create_app()

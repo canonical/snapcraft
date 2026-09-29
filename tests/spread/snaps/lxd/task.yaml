@@ -1,10 +1,6 @@
 summary: Build lxd using LXD and on host
 kill-timeout: 90m
 
-systems:
-- ubuntu-20.04-64
-- ubuntu-20.04
-
 environment:
   SNAP_REPO: https://github.com/lxc/lxd-pkg-snap
   PROVIDER_OPTION/lxd: "--use-lxd"
@@ -22,7 +18,7 @@ restore: |
 
 execute: |
   cd repo
-  snapcraft "${PROVIDER_OPTION}"
+  snapcraft pack "${PROVIDER_OPTION}"
 
   # TODO LXD is a special snow flake. Enabling this needs removal on restore.
   # snap install --dangerous lxd_*.snap

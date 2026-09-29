@@ -7,9 +7,6 @@ environment:
   CMD/pack_directory: pack prime
   CMD/pack_directory_output: pack prime --output output.snap
   CMD/pack_directory_output_subdir: pack prime --output subdir/output.snap
-  CMD/snap: snap
-  CMD/snap_output: snap --output output.snap
-  CMD/snap_output_subdir: snap -o subdir/output.snap
   CMD/default: ""
   CMD/default_output: -o output.snap
   CMD/default_output_subdir: --output subdir/output.snap
@@ -21,7 +18,7 @@ prepare: |
 
 restore: |
   rm -Rf subdir ./*.snap
-  
+
   # 'pack_directory' tests are run in destructive-mode
   if [[ "$SPREAD_VARIANT" =~ "pack_directory" ]]; then
     snapcraft clean --destructive-mode
@@ -38,7 +35,7 @@ execute: |
   if [[ "$SPREAD_VARIANT" =~ "pack_directory" ]]; then
     snapcraft prime --destructive-mode
   fi
-  
+
   # shellcheck disable=SC2086
   snapcraft $CMD
 

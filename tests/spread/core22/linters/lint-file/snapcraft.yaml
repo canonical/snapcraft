@@ -7,6 +7,11 @@ description: spread test
 grade: devel
 confinement: strict
 
+lint:
+  ignore:
+    - classic
+    - gpu
+
 parts:
   my-part:
     plugin: nil

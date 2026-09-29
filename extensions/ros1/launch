@@ -20,15 +20,18 @@ if [ -d "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" ]; then
     activate_workspace "$SNAP/opt/ros/underlay_ws/opt/ros/$ROS_DISTRO" --local
 
     case "$SNAP_ARCH" in
-        "amd64") ARCH_TRIPLET='x86_64-linux-gnu'
+    "amd64")
+        ARCH_TRIPLET='x86_64-linux-gnu'
         ;;
-        "arm64") ARCH_TRIPLET="aarch64-linux-gnu"
+    "arm64")
+        ARCH_TRIPLET="aarch64-linux-gnu"
         ;;
-        "armhf") ARCH_TRIPLET="arm-linux-gnueabihf"
+    "armhf")
+        ARCH_TRIPLET="arm-linux-gnueabihf"
         ;;
-        *)
-            echo "Unsupported architecture '$SNAP_ARCH' for this app build."
-            exit 1
+    *)
+        echo "Unsupported architecture '$SNAP_ARCH' for this app build."
+        exit 1
         ;;
     esac
 

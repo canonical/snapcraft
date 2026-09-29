@@ -1,0 +1,33 @@
+# makefile-lib-example, an example of a classically-confined project with Make
+
+name: example-make-lib
+base: core22
+version: "0.1"
+summary: An example snap for a Makefile project using a system library
+description: |
+  Shows how to create a snap for an application that uses a Makefile for
+  build and installation.
+
+grade: devel
+confinement: classic
+
+architectures:
+  amd64:
+
+lint:
+  ignore:
+    - library
+
+apps:
+  make-example:
+    command: bin/example-make-lib
+
+parts:
+  make-example-part:
+    build-packages:
+      - wget2-dev
+    plugin: make
+    make-parameters:
+      - LDFLAGS="-Wl,-dynamic-linker=/snap/core22/current/lib64/ld-linux-x86-64.so.2
+        -Wl,-rpath=/snap/core22/current/lib/x86_64-linux-gnu"
+    source: .

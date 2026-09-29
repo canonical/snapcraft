@@ -16,9 +16,9 @@
 
 """Extension to automatically set environment variables on snaps."""
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
-from overrides import overrides
+from typing_extensions import override
 
 from .extension import Extension
 
@@ -54,26 +54,26 @@ class EnvInjector(Extension):
     """
 
     @staticmethod
-    @overrides
-    def get_supported_bases() -> Tuple[str, ...]:
+    @override
+    def get_supported_bases() -> tuple[str, ...]:
         return ("core24",)
 
     @staticmethod
-    @overrides
-    def get_supported_confinement() -> Tuple[str, ...]:
+    @override
+    def get_supported_confinement() -> tuple[str, ...]:
         return ("strict", "devmode", "classic")
 
     @staticmethod
-    @overrides
-    def is_experimental(base: Optional[str]) -> bool:
+    @override
+    def is_experimental(base: str | None) -> bool:
         return True
 
-    @overrides
-    def get_root_snippet(self) -> Dict[str, Any]:
+    @override
+    def get_root_snippet(self) -> dict[str, Any]:
         return {}
 
-    @overrides
-    def get_app_snippet(self, *, app_name: str) -> Dict[str, Any]:
+    @override
+    def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         """Return the app snippet to apply."""
         return {
             "command-chain": ["bin/command-chain/env-exporter"],
@@ -82,12 +82,12 @@ class EnvInjector(Extension):
             },
         }
 
-    @overrides
-    def get_part_snippet(self, *, plugin_name: str) -> Dict[str, Any]:
+    @override
+    def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         return {}
 
-    @overrides
-    def get_parts_snippet(self) -> Dict[str, Any]:
+    @override
+    def get_parts_snippet(self) -> dict[str, Any]:
         toolchain = self.get_toolchain(self.arch)
         if toolchain is None:
             raise ValueError(

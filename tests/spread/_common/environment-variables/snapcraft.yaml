@@ -1,0 +1,24 @@
+name: variables
+version: "1"
+summary: test
+description: test
+grade: devel
+confinement: strict
+base: core24
+
+platforms:
+  s390x:
+    build-on: amd64
+    build-for: s390x
+
+parts:
+  hello:
+    plugin: nil
+    override-pull: |
+      env > $CRAFT_PROJECT_DIR/pull.txt
+    override-build: |
+      env > $CRAFT_PROJECT_DIR/build.txt
+    override-stage: |
+      env > $CRAFT_PROJECT_DIR/stage.txt
+    override-prime: |
+      env > $CRAFT_PROJECT_DIR/prime.txt

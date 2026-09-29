@@ -1,0 +1,37 @@
+# python-ctypes-example, an example of a classically-confined project with Python
+
+name: example-python-ctypes
+base: core22
+version: "0.1"
+summary: An example snap for a Python project using ctypes
+description: |
+  Shows how to create a snap for a Python application that uses ctypes to
+  access a system library.
+
+grade: devel
+confinement: classic
+
+apps:
+  example-python-ctypes:
+    # This refers to the installed location of the program at build-time.
+    # When the snap is installed, it will be available as example-python-ctypes.
+    command: bin/test-ctypes.py
+
+parts:
+  example-part:
+    source: .
+    plugin: python
+    # Override the build to perform a normal build then patch ctypes to fix the
+    # run-time library paths.
+    override-build: |
+      craftctl build
+      $CRAFT_PROJECT_DIR/snap/local/patch-ctypes.sh
+    # These packages need to be made available so that the build step can patch
+    # ctypes.
+    stage-packages:
+      - python3.10-minimal
+      - libpython3.10-minimal
+      - libpython3.10-stdlib
+    # This resolves warnings reported by the classic linter for Snapcraft 3.7.
+    build-attributes:
+      - enable-patchelf

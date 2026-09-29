@@ -18,40 +18,49 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from craft_application import ServiceFactory
 
-from snapcraft import models, services
+if TYPE_CHECKING:
+    from snapcraft import models
+
+# Add new services to this mapping to add them to the service factory
+# Internal service name : Stringified service class name
+_SERVICES: dict[str, str] = {
+    "build_plan": "BuildPlan",
+    "confdb_schemas": "ConfdbSchemas",
+    "init": "Init",
+    "lifecycle": "Lifecycle",
+    "package": "Package",
+    "provider": "Provider",
+    "project": "Project",
+    "remote_build": "RemoteBuild",
+    "validation_sets": "ValidationSets",
+}
 
 
-@dataclass
 class SnapcraftServiceFactory(ServiceFactory):
     """Snapcraft-specific Service Factory."""
 
-    project: models.Project | None = None  # type: ignore[reportIncompatibleVariableOverride]
+    project: models.Project | None = None
 
-    # These are overrides of default ServiceFactory services
-    InitClass: type[services.Init] = (  # type: ignore[reportIncompatibleVariableOverride]
-        services.Init
-    )
-    LifecycleClass: type[services.Lifecycle] = (  # type: ignore[reportIncompatibleVariableOverride]
-        services.Lifecycle
-    )
-    ProviderClass: type[services.Provider] = (  # type: ignore[reportIncompatibleVariableOverride]
-        services.Provider
-    )
-    PackageClass: type[services.Package] = (  # type: ignore[reportIncompatibleVariableOverride]
-        services.Package
-    )
-    RemoteBuildClass: type[  # type: ignore[reportIncompatibleVariableOverride]
-        services.RemoteBuild
-    ] = services.RemoteBuild
-    RegistriesClass: type[  # type: ignore[reportIncompatibleVariableOverride]
-        services.Registries
-    ] = services.Registries
-
+    # Allow static type check to report correct types for Snapcraft services
     if TYPE_CHECKING:
+        from . import (  # noqa: PLC0415 (import-outside-top-level)
+            ConfdbSchemas,
+            ValidationSets,
+        )
+
         # Allow static type check to report correct types for Snapcraft services
-        registries: services.Registries = None  # type: ignore[assignment]
+        confdb_schemas: ConfdbSchemas = None  # ty: ignore[invalid-assignment]
+        validation_sets: ValidationSets = None  # ty: ignore[invalid-assignment]
+
+
+def register_snapcraft_services() -> None:
+    """Register Snapcraft-specific services."""
+    for name, service in _SERVICES.items():
+        module_name = name.replace("_", "")
+        SnapcraftServiceFactory.register(
+            name, service, module=f"snapcraft.services.{module_name}"
+        )

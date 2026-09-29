@@ -12,4 +12,4 @@ parts:
     plugin: nil
     override-build: |
       sleep 0
-      snapcraftctl build
+      craftctl default

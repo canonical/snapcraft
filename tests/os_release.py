@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-from typing import Dict, Optional  # noqa: F401
 
 _ID_TO_UBUNTU_CODENAME = {
     "17.10": "artful",
@@ -25,14 +24,14 @@ _ID_TO_UBUNTU_CODENAME = {
 }
 
 
-def get_version_codename() -> Optional[str]:
+def get_version_codename() -> str | None:
     """Return the OS version codename
 
     This first tries to use the VERSION_CODENAME. If that's missing, it
     tries to use the VERSION_ID to figure out the codename on its own.
 
     """
-    os_release = {}  # type: Dict[str, str]
+    os_release: dict[str, str] = {}
     with contextlib.suppress(FileNotFoundError):
         with open("/etc/os-release") as f:
             for line in f:

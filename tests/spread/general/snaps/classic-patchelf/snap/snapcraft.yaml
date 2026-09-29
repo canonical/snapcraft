@@ -5,7 +5,6 @@ description: |
   Build a classic confined snap, mostly used to test the provisioning
   of `core` inside a snap.
 base: core
-
 grade: devel
 confinement: classic
 
@@ -24,7 +23,7 @@ parts:
       - libcurl4-openssl-dev
       - patchelf
     override-build: |
-      snapcraftctl build
+      craftctl default
       mv $SNAPCRAFT_PART_INSTALL/bin/hello-classic $SNAPCRAFT_PART_INSTALL/bin/hello-classic-existing-rpath
       patchelf --force-rpath --set-rpath "\$ORIGIN/../fake-lib" $SNAPCRAFT_PART_INSTALL/bin/hello-classic-existing-rpath
   hello-no-patchelf:
@@ -35,5 +34,5 @@ parts:
       - libcurl4-openssl-dev
     build-attributes: [no-patchelf]
     override-build: |
-      snapcraftctl build
+      craftctl default
       mv $SNAPCRAFT_PART_INSTALL/bin/hello-classic $SNAPCRAFT_PART_INSTALL/bin/hello-classic-no-patchelf

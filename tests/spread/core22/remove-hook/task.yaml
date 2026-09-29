@@ -17,7 +17,7 @@ restore: |
 
 execute: |
   # create a base instance by running snapcraft
-  snapcraft pull --use-lxd --verbosity=trace
+  snapcraft pull --use-lxd
 
   # verify base instance was created
   instances="$(lxc list --project=snapcraft --format=csv --columns="n")"

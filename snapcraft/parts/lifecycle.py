@@ -22,7 +22,7 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, cast
 
 import craft_parts
 from craft_cli import emit
@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     import argparse
 
 
-_EXPERIMENTAL_PLUGINS = ["kernel", "matter-sdk"]
+_EXPERIMENTAL_PLUGINS = ["kernel", "initrd"]
 
 
 def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
@@ -55,16 +55,12 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     :raises SnapcraftError: if the step name is invalid, or the project
         yaml file cannot be loaded.
-    :raises LegacyFallback: if the project's base is core20 or below.
     """
     emit.debug(f"command: {command_name}, arguments: {parsed_args}")
 
     snap_project = yaml_utils.get_snap_project()
     yaml_data = yaml_utils.process_yaml(snap_project.project_file)
     start_time = datetime.now()
-
-    if parsed_args.provider:
-        raise errors.SnapcraftError("Option --provider is not supported.")
 
     if yaml_data.get("ua-services"):
         if not parsed_args.ua_token:
@@ -117,7 +113,7 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
     command_name: str,
     *,
     project: models.Project,
-    parse_info: Dict[str, List[str]],
+    parse_info: dict[str, list[str]],
     assets_dir: Path,
     start_time: datetime,
     parallel_build_count: int,
@@ -133,12 +129,6 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
 
     if not managed_mode:
         run_project_checks(project, assets_dir=assets_dir)
-
-        if command_name == "snap":
-            emit.progress(
-                "The 'snap' command is deprecated, use 'pack' instead.",
-                permanent=True,
-            )
 
     if _is_manager(parsed_args):
         if command_name == "clean" and not part_names:
@@ -170,10 +160,7 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
         adopt_info=project.adopt_info,
         project_name=project.name,
         parse_info=parse_info,
-        project_vars={
-            "version": project.version or "",
-            "grade": project.grade or "",
-        },
+        project_vars=yaml_utils.create_project_vars(project.marshal()),
         extra_build_snaps=project.get_extra_build_snaps(),
         target_arch=project.get_build_for(),
         track_stage_packages=track_stage_packages,
@@ -212,7 +199,8 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
         if parsed_args.debug:
             emit.progress(str(err), permanent=True)
             launch_shell()
-        raise errors.FilePermissionError(err.filename, reason=err.strerror)
+        # Casting as a str as OSError should always contain an error message
+        raise errors.FilePermissionError(err.filename, reason=cast(str, err.strerror))
     except OSError as err:
         msg = err.strerror
         if err.filename:
@@ -220,7 +208,8 @@ def _run_command(  # noqa PLR0913 (too-many-arguments)
         if parsed_args.debug:
             emit.progress(msg, permanent=True)
             launch_shell()
-        raise errors.SnapcraftError(msg) from err
+        # Casting as a str as OSError should always contain an error message
+        raise errors.SnapcraftError(cast(str, msg)) from err
     except errors.SnapcraftError as err:
         if parsed_args.debug:
             emit.progress(str(err), permanent=True)
@@ -259,7 +248,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
     part_names = getattr(parsed_args, "part_names", None)
 
     if step_name == "prime" and not part_names:
-        _generate_metadata(
+        project = _generate_metadata(
             project=project,
             lifecycle=lifecycle,
             project_dir=project_dir,
@@ -282,7 +271,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
             compression=project.compression,
             name=project.name,
             version=process_version(project.version),
-            target_arch=project.get_build_for(),
+            target=project.get_build_for(),
         )
         emit.progress(f"Created snap package {snap_filename}", permanent=True)
 
@@ -291,7 +280,7 @@ def _run_lifecycle_and_pack(  # noqa PLR0913
 
 
 def _pack_components(
-    lifecycle: PartsLifecycle, project: models.Project, output: Optional[str]
+    lifecycle: PartsLifecycle, project: models.Project, output: str | None
 ) -> None:
     """Pack components.
 
@@ -333,12 +322,12 @@ def _generate_metadata(
     assets_dir: Path,
     start_time: datetime,
     parsed_args: "argparse.Namespace",
-):
+) -> models.Project:
     project_vars = lifecycle.project_vars
 
     emit.progress("Extracting and updating metadata...")
     metadata_list = lifecycle.extract_metadata()
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=project_vars,
         metadata_list=metadata_list,
@@ -379,6 +368,8 @@ def _generate_metadata(
             start_time=start_time,
             parsed_args=parsed_args,
         )
+
+    return project
 
 
 def _generate_manifest(
@@ -550,9 +541,7 @@ def _run_in_provider(  # noqa PLR0915
             providers.capture_logs_from_instance(instance)
 
 
-def _expose_prime(
-    project_path: Path, instance: Executor, partitions: Optional[List[str]]
-):
+def _expose_prime(project_path: Path, instance: Executor, partitions: list[str] | None):
     """Expose the instance's prime directory in ``project_path`` on the host.
 
     :param project_path: path of the project
@@ -595,7 +584,7 @@ def set_global_environment(info: ProjectInfo) -> None:
         info.global_environment.update(_get_environment_for_partitions(info))
 
 
-def _get_environment_for_partitions(info: ProjectInfo) -> Dict[str, str]:
+def _get_environment_for_partitions(info: ProjectInfo) -> dict[str, str]:
     """Get environment variables related to partitions.
 
     Assumes the partition feature is enabled and partitions are defined.
@@ -604,7 +593,7 @@ def _get_environment_for_partitions(info: ProjectInfo) -> Dict[str, str]:
 
     :returns: A dictionary contain environment variables for partitions.
     """
-    environment: Dict[str, str] = {}
+    environment: dict[str, str] = {}
 
     if not info.partitions:
         raise ValueError("Project does not contain any partitions.")
@@ -629,7 +618,7 @@ def _check_experimental_plugins(
 ) -> None:
     """Ensure the experimental plugin flag is enabled to use unstable plugins."""
     for name, part in project.parts.items():
-        if not isinstance(part, Dict):
+        if not isinstance(part, dict):
             continue
 
         plugin = part.get("plugin", "")
@@ -697,7 +686,9 @@ def patch_elf(step_info: StepInfo, use_system_libs: bool = True) -> bool:
 
     migrated_files = step_info.state.files
     patcher = Patcher(dynamic_linker=linker, root_path=step_info.prime_dir)
-    elf_files = elf_utils.get_elf_files_from_list(step_info.prime_dir, migrated_files)
+    elf_files = elf_utils.get_elf_files_from_list(
+        step_info.prime_dir, (str(file) for file in migrated_files)
+    )
     soname_cache = SonameCache()
     arch_triplet = elf_utils.get_arch_triplet()
 
@@ -718,11 +709,11 @@ def patch_elf(step_info: StepInfo, use_system_libs: bool = True) -> bool:
 
 
 def _expand_environment(
-    snapcraft_yaml: Dict[str, Any],
+    snapcraft_yaml: dict[str, Any],
     *,
     parallel_build_count: int,
     target_arch: str,
-    partitions: Optional[List[str]],
+    partitions: list[str] | None,
 ) -> None:
     """Expand global variables in the provided dictionary values.
 
@@ -763,8 +754,8 @@ def _expand_environment(
 
 
 def get_build_plan(
-    yaml_data: Dict[str, Any], parsed_args: "argparse.Namespace"
-) -> List[Tuple[str, str]]:
+    yaml_data: dict[str, Any], parsed_args: "argparse.Namespace"
+) -> list[tuple[str, str]]:
     """Get a list of all build_on->build_for architectures from the project file.
 
     Additionally, check for the command line argument `--build-for <architecture>`
@@ -780,9 +771,9 @@ def get_build_plan(
     archs = models.ArchitectureProject.unmarshal(yaml_data).architectures
 
     host_arch = str(DebianArchitecture.from_host())
-    build_plan: List[Tuple[str, str]] = []
+    build_plan: list[tuple[str, str]] = []
 
-    # `isinstance()` calls are for mypy type checking and should not change logic
+    # `isinstance()` calls are for type checking and should not change logic
     for arch in [arch for arch in archs if isinstance(arch, models.Architecture)]:
         for build_on in arch.build_on:
             if build_on in host_arch and isinstance(arch.build_for, list):
@@ -813,7 +804,7 @@ def get_build_plan(
     return build_plan
 
 
-def _validate_and_get_partitions(yaml_data: Dict[str, Any]) -> Optional[List[str]]:
+def _validate_and_get_partitions(yaml_data: dict[str, Any]) -> list[str] | None:
     """Validate partitions support, enable the feature, and get a list of partitions.
 
     :param yaml_data: The project's YAML data.
@@ -853,7 +844,7 @@ def _is_manager(parsed_args: "argparse.Namespace") -> bool:
 
 
 def _warn_on_multiple_builds(
-    parsed_args: "argparse.Namespace", build_plan: List[Tuple[str, str]]
+    parsed_args: "argparse.Namespace", build_plan: list[tuple[str, str]]
 ) -> None:
     """Warn if snapcraft will build multiple snaps in the same environment.
 
@@ -869,5 +860,5 @@ def _warn_on_multiple_builds(
         )
         emit.message(
             "For more information, check out: "
-            "https://snapcraft.io/docs/explanation-architectures#core22-8"
+            "https://documentation.ubuntu.com/snapcraft/stable/explanation/architectures/#core22"
         )

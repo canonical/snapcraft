@@ -1,16 +1,34 @@
 name: snapcraft
+title: Snapcraft
 base: core24
-summary: easily create snaps
+summary: Package, distribute, and update any app for Linux and IoT.
 description: |
-    Snapcraft aims to make upstream developers' lives easier and as such is not
-    a single toolset, but instead is a collection of tools that enable the
-    natural workflow of an upstream to be extended with a simple release step
-    into Snappy.
+  Snapcraft is the command-line build tool for packaging and distributing software and apps in the snap container format.
+
+  The tool packages apps across many supported languages, build tools, and frameworks, such as Python, C and C++, Rust, Node, and GNOME. Snaps can be tested, debugged, and locally shared before being published to the global Snap Store and private stores. It uses simple commands to manage and monitor releases at a granular level.
+
+  It solves the problems of dependency management and architecture support by bundling all of a software’s libraries into the container itself, and provides a way to package any app, program, toolkit, or library for all major Linux distributions and IoT devices.
+
+  Snapcraft is for developers, package maintainers, fleet administrators, and hobbyists who are interested in publishing snaps for Linux and IoT devices.
 adopt-info: snapcraft
 confinement: classic
 license: GPL-3.0
 assumes:
   - snapd2.43
+issues:
+  - https://github.com/canonical/snapcraft/issues
+source-code:
+  - https://github.com/canonical/snapcraft
+website:
+  - https://documentation.ubuntu.com/snapcraft
+contact:
+  - https://matrix.to/#/#snapcraft:ubuntu.com
+  - https://forum.snapcraft.io/c/snapcraft/13
+
+lint:
+  ignore:
+    - library:
+        - usr/lib/**/libicu*.so*
 
 # https://github.com/canonical/snapcraft/issues/4187
 environment:
@@ -19,47 +37,26 @@ environment:
   # Ubuntu 20.04 for armhf, ppc64el, riscv64, and s390x
   CRYPTOGRAPHY_OPENSSL_NO_LEGACY: "1"
 
-
 apps:
   snapcraft:
     environment:
       # https://github.com/lxc/pylxd/pull/361
       PYLXD_WARNINGS: "none"
     command: bin/python $SNAP/bin/snapcraft
-    completer: snapcraft-completion
-
-build-packages:
-  - cargo
-  - build-essential
-  - intltool
-  - libapt-pkg-dev
-  - libffi-dev
-  - libssl-dev
-  - libsodium-dev
-  - liblzma-dev
-  - libxml2-dev
-  - libxslt1-dev
-  - libyaml-dev
-  - patch
-  - pkg-config
-  - python3-dev
-  - rustc
-  - sed
+    completer: completion.sh
 
 parts:
-  bash-completion:
-    source: snap/local
-    plugin: dump
-    stage:
-      - snapcraft-completion
-
   snapcraft-scripts:
     source: snap/local
     plugin: dump
     organize:
       craft.git: libexec/snapcraft/craft.git
+      # Put sitecustomize in site-packages
+      sitecustomize.py: lib/python3.12/site-packages/sitecustomize.py
+
     stage:
       - "libexec/"
+      - "lib/"
 
   git:
     plugin: nil
@@ -76,12 +73,11 @@ parts:
       - "-usr/lib/x86_64-linux-gnu/libperl*"
       - "-usr/lib/x86_64-linux-gnu/libgdbm*"
 
-
   patchelf:
     plugin: autotools
     source: https://github.com/canonical/patchelf
     source-type: git
-    source-branch: '0.9+snapcraft'
+    source-branch: "0.9+snapcraft"
     autotools-configure-parameters:
       - --prefix=/
     build-attributes:
@@ -103,31 +99,61 @@ parts:
     prime:
       - bin/patchelf
 
+  build-deps:
+    plugin: nil
+    build-packages:
+      - cargo-1.91
+      - build-essential
+      - intltool
+      - libapt-pkg-dev
+      - libffi-dev
+      - libssl-dev
+      - libsodium-dev
+      - liblzma-dev
+      - libxml2-dev
+      - libxslt1-dev
+      - libyaml-dev
+      - patch
+      - pkg-config
+      - python3-dev
+      - rustc-1.91
+      - sed
+    override-build: |
+      # We need newer versions of cargo and rustc than the cargo
+      # and rustc packages provide, but they don't set the `cargo`
+      # and `rustc` commands needed by maturin.
+      # These commands allow rust-based libraries like pydantic-core
+      # and cryptography to build using the non-default rust.
+      mkdir -p "${CRAFT_PART_INSTALL}/bin"
+      ln -sf "$(command -v cargo-1.91)" "${CRAFT_PART_INSTALL}/bin/cargo"
+      ln -sf "$(command -v rustc-1.91)" "${CRAFT_PART_INSTALL}/bin/rustc"
+    prime:
+      - -*
+
   snapcraft-libs:
     plugin: nil
     stage-packages:
-        - apt
-        - apt-transport-https
-        - apt-utils
-        - binutils
-        - execstack
-        - gpg
-        - gpgv
-        - libsodium23
-        - libxml2
-        - libxslt1.1
-        - libpython3-stdlib
-        - libpython3.12-stdlib
-        - libpython3.12-minimal
-        - python3-pip
-        - python3-setuptools
-        - python3-wheel
-        - python3-venv
-        - python3-minimal
-        - python3-pkg-resources
-        - python3.12-minimal
-        - squashfs-tools
-        - xdelta3
+      - apt
+      - apt-transport-https
+      - apt-utils
+      - binutils
+      - execstack
+      - gpg
+      - gpgv
+      - libsodium23
+      - libxml2
+      - libxslt1.1
+      - libpython3-stdlib
+      - libpython3.12-stdlib
+      - libpython3.12-minimal
+      - python3-pip
+      - python3-setuptools
+      - python3-wheel
+      - python3-venv
+      - python3-minimal
+      - python3.12-minimal
+      - squashfs-tools
+      - xdelta3
     build-attributes:
       - enable-patchelf
     override-build: |
@@ -159,57 +185,73 @@ parts:
       # Disable site packages
       sed -i "${SNAPCRAFT_PART_INSTALL}/usr/lib/python3.12/site.py" \
         -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
+    prime:
+      # dist-packages
+      - -usr/lib/python3
+      - -usr/share/python-wheels
 
   libgit2:
-    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.7.2.tar.gz
-    source-checksum: sha256/de384e29d7efc9330c6cdb126ebf88342b5025d920dcb7c645defad85195ea7f
+    source: https://github.com/libgit2/libgit2/archive/refs/tags/v1.9.1.tar.gz
+    source-checksum: sha256/14cab3014b2b7ad75970ff4548e83615f74d719afe00aa479b4a889c1e13fc00
     plugin: cmake
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - -DBUILD_TESTS=OFF
     build-attributes:
       - enable-patchelf
     prime:
       - -usr/include
+
+  python3-apt:
+    plugin: nil
+    build-attributes:
+      - enable-patchelf
+    stage-packages:
+      - python3-apt
+    organize:
+      "usr/lib/python3/dist-packages/*": "lib/python3.12/site-packages/"
+
   snapcraft:
     source: .
-    plugin: python
-    python-packages:
-        - wheel
-        - pip
-    python-constraints:
-        - constraints.txt
-    python-requirements:
-        - requirements.txt
+    plugin: uv
     organize:
-        # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
-        # without including other binaries.
-        bin/craftctl: libexec/snapcraft/craftctl
-        bin/snapcraftctl: bin/scriptlet-bin/snapcraftctl
-        # Also install the compatibility wrapper for core22+.
-        bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
+      # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
+      # without including other binaries.
+      bin/craftctl: libexec/snapcraft/craftctl
+      # Install the compatibility wrapper
+      bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
+      # Include general data in the share directory
+      "**/site-packages/extensions": share/snapcraft/extensions
+      "**/site-packages/schema": share/snapcraft/schema
     build-attributes:
       - enable-patchelf
     build-environment:
-        # Build PyNaCl from source since the wheel files interact
-        # strangely with classic snaps. Well, build it all from source.
-        - "PIP_NO_BINARY": ":all:"
-        # Use base image's libsodium for PyNaCl.
-        - "SODIUM_INSTALL": "system"
-        - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
+      # Use base image's libsodium for PyNaCl.
+      - "SODIUM_INSTALL": "system"
+      - "CFLAGS": "$(pkg-config python-3.12 yaml-0.1 --cflags)"
+      - "UV_FROZEN": "1" # Never update the uv lockfile - fail build if we can't succeed.
+      - UV_NO_BINARY: "true"
+      # Parallel make jobs for things like python-apt
+      - MAKEOPTS: -j$(nproc --all)
+      - UV_COMPILE_BYTECODE: "true"
+    build-snaps:
+      - astral-uv
     override-build: |
-        ${SNAP}/libexec/snapcraft/craftctl default
+      ${SNAP}/libexec/snapcraft/craftctl default
 
-        version="$(python3 setup.py --version)"
-        ${SNAP}/libexec/snapcraft/craftctl set version="$version"
+      version="$(uv pip show snapcraft | grep "Version:" | cut -d' ' -f2)"
+      ${SNAP}/libexec/snapcraft/craftctl set version="$version"
 
-        [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
-        sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
-        ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
+      [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
+      sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
+      ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
 
-        # The new implementation still requires this.
-        ln -sf ../usr/bin/python3.12 $SNAPCRAFT_PART_INSTALL/bin/python3
-    after: [snapcraft-libs, libgit2]
+      # Fix the Python executable from uv, which had bad symlinks
+      rm $CRAFT_PART_INSTALL/bin/python*
+      ln -s ../usr/bin/python3 $CRAFT_PART_INSTALL/bin/python3
+      ln -s python3 $CRAFT_PART_INSTALL/bin/python
+    after: [build-deps, snapcraft-libs, libgit2, python3-apt]
 
   chisel:
     plugin: nil
@@ -220,3 +262,29 @@ parts:
     stage:
       - libexec/snapcraft/chisel
 
+  completion-script:
+    after: [snapcraft]
+    plugin: nil
+    build-environment:
+      - PYTHONPATH: $CRAFT_STAGE/lib/python3.12/site-packages
+      # so that snapcraft can find libgit2.so.1.9
+      - LD_LIBRARY_PATH: $CRAFT_STAGE/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
+    override-build: |
+      python3 -m craft_cli.completion $CRAFT_PROJECT_NAME snapcraft.application:get_app_info \
+          > $CRAFT_PART_INSTALL/completion.sh
+
+  spread:
+    plugin: go
+    source: https://github.com/canonical/spread.git
+    source-commit: d6447c43754c8ca0741901e9db73d5fdb4d21c93 # 'main' as of 28-March-2025
+    build-snaps:
+      - go
+    build-attributes:
+      - enable-patchelf
+    build-environment:
+      - CGO_ENABLED: 0
+      - GOFLAGS: -trimpath -ldflags=-w -ldflags=-s
+    organize:
+      bin/spread: libexec/snapcraft/craft.spread
+    stage:
+      - libexec/snapcraft/

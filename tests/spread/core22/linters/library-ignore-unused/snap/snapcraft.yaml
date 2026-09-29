@@ -9,6 +9,8 @@ confinement: strict
 
 lint:
   ignore:
+    - gpu
+    - metadata
     - library:
       - usr/lib/*/libpng16.so*
 

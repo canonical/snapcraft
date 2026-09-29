@@ -19,7 +19,7 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  output="$(snapcraft)"
+  output="$(snapcraft pack)"
 
   echo "$output" | MATCH -v "part is missing libraries"
   echo "$output" | MATCH -v -- "- libpci.so."

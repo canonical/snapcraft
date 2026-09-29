@@ -16,14 +16,17 @@
 
 """Snapcraft discovery commands."""
 
-import textwrap
-from typing import TYPE_CHECKING, Optional
+from __future__ import annotations
 
+import textwrap
+from typing import TYPE_CHECKING
+
+import craft_application.errors
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_parts.plugins import get_registered_plugins
 from craft_platforms import DebianArchitecture
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import const, errors, models
 from snapcraft.parts.yaml_utils import (
@@ -37,10 +40,10 @@ if TYPE_CHECKING:
     import argparse
 
 
-class ListPluginsCommand(AppCommand):
+class PluginsCommand(AppCommand):
     """List available plugins."""
 
-    name = "list-plugins"
+    name = "plugins"
     help_msg = "List available plugins, optionally for a given base"
     overview = textwrap.dedent(
         """
@@ -48,8 +51,8 @@ class ListPluginsCommand(AppCommand):
         """
     )
 
-    @overrides
-    def fill_parser(self, parser: "argparse.ArgumentParser") -> None:
+    @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
             "--base",
@@ -58,18 +61,17 @@ class ListPluginsCommand(AppCommand):
             help="Show plugins for <base>",
         )
 
-    @overrides
-    def run(self, parsed_args):
-        if parsed_args.base == "core20":
-            raise errors.LegacyFallback()
-
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
         base = parsed_args.base
-        message: Optional[str] = None
+        message: str | None = None
+
+        if base in const.ESM_BASES:
+            raise errors.MaintenanceBase(base=base)
 
         if base is None:
             try:
                 snap_project = get_snap_project()
-                # Run this to trigger legacy behavior
                 yaml_data = process_yaml(snap_project.project_file)
 
                 # process yaml before unmarshalling the data
@@ -84,7 +86,7 @@ class ListPluginsCommand(AppCommand):
                 message = (
                     f"Displaying plugins available to the current base {base!r} project"
                 )
-            except errors.ProjectMissing:
+            except craft_application.errors.ProjectFileError:
                 emit.trace("Defaulting to core24 because no project was found.")
                 base = "core24"
 
@@ -99,8 +101,12 @@ class ListPluginsCommand(AppCommand):
         emit.message(message + "\n" + "\n".join(n for n in registered_plugins))
 
 
-class PluginsCommand(ListPluginsCommand):
-    """A command alias to list the available plugins."""
+class ListPluginsCommand(PluginsCommand):
+    """Removed command alias to list the available plugins."""
 
-    name = "plugins"
+    name = "list-plugins"
     hidden = True
+
+    @override
+    def run(self, parsed_args: argparse.Namespace) -> None:
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

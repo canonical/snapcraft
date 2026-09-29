@@ -27,7 +27,7 @@ execute: |
   # Unset SNAPCRAFT_BUILD_ENVIRONMENT=host.
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
-  snapcraft --use-lxd
+  snapcraft pack --use-lxd
   sudo snap install devices_*.snap --dangerous
 
   # Check that the snap includes the expected character device files

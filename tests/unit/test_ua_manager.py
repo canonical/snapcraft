@@ -71,7 +71,7 @@ def mock_status_data():
 @pytest.fixture(autouse=True)
 def _setup_fixture(mocker):
     mocker.patch(
-        "craft_parts.packages.Repository.is_package_installed", return_value=True
+        "craft_parts.packages.deb.Ubuntu.is_package_installed", return_value=True
     )
 
 

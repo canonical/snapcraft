@@ -6,6 +6,7 @@ base: core22
 grade: devel
 confinement: strict
 provenance: test-provenance
+adopt-info: test-part-1
 
 apps:
   hello:
@@ -13,10 +14,11 @@ apps:
 
 components:
   share:
+    adopt-info: test-part-2
     type: test
     summary: Hello World
     description: Hello World
-    version: "1.0"
+    version: "2.0"
     hooks:
       install:
         plugs: ["home", "network"]
@@ -29,6 +31,20 @@ parts:
       - gcc
       - libc-dev
       - libcurl4-openssl-dev
+
+  # set the top-level version
+  test-part-1:
+    plugin: nil
+    override-build: |
+      craftctl set version="1.0-updated"
+      craftctl default
+
+  # set the component version in another part
+  test-part-2:
+    plugin: nil
+    override-build: |
+      craftctl set components.share.version="2.0-updated"
+      craftctl default
 
   organized:
     source: .

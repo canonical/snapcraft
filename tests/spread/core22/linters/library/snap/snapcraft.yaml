@@ -24,6 +24,10 @@ grade: stable # must be 'stable' to release into candidate/stable channels
 confinement: strict
 base: core22
 
+lint:
+  ignore:
+    - gpu
+
 slots:
   # for GtkApplication registration
   gnome-calculator:
@@ -74,6 +78,7 @@ parts:
     organize:
       snap/gnome-calculator/current/usr: usr
     build-snaps: [ gnome-42-2204-sdk/latest/edge ]
+    parse-info: [usr/share/metainfo/org.gnome.Calculator.appdata.xml]
     build-packages:
       - libmpc-dev
       - libmpfr-dev

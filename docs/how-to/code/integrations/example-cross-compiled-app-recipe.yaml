@@ -1,0 +1,54 @@
+name: hello-curl
+version: "1.0"
+summary: cross-compiled app that uses curl
+description: |
+  A cross-compiled snap that uses libcurl. This exercises installing
+  libcurl-dev as a build package and staging libcurl, both from ubuntu-ports.
+grade: devel
+base: core24
+confinement: strict
+
+platforms:
+  armhf:
+    build-on: [amd64]
+    build-for: [armhf]
+  arm64:
+    build-on: [amd64]
+    build-for: [arm64]
+  riscv64:
+    build-on: [amd64]
+    build-for: [riscv64]
+
+lint:
+  ignore:
+    - library
+
+apps:
+  hello-curl:
+    command: usr/bin/hello-curl
+
+package-repositories:
+  - type: apt
+    architectures: [$CRAFT_ARCH_BUILD_FOR]
+    formats: [deb, deb-src]
+    components: [main]
+    suites: [noble, noble-updates, noble-backports]
+    key-id: F6ECB3762474EDA9D21B7022871920D1991BC93C
+    url: http://ports.ubuntu.com/ubuntu-ports
+
+parts:
+  hello-curl:
+    plugin: autotools
+    source: src
+    build-environment:
+      - PKG_CONFIG_PATH: "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig"
+    build-packages:
+      - pkg-config
+      - libcurl4-openssl-dev:$CRAFT_ARCH_BUILD_FOR
+      - gcc-$CRAFT_ARCH_TRIPLET_BUILD_FOR
+      - libc6-dev-$CRAFT_ARCH_BUILD_FOR-cross
+    stage-packages:
+      - libcurl4t64:$CRAFT_ARCH_BUILD_FOR
+    autotools-configure-parameters:
+      - --prefix=/usr
+      - --host=$CRAFT_ARCH_TRIPLET_BUILD_FOR

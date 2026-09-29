@@ -17,7 +17,7 @@ prepare: |
 
 restore: |
   cd "./snaps/$SNAP"
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
@@ -34,7 +34,7 @@ execute: |
   # if the arguments variable file exists, then call snapcraft with the arguments
   elif [[ -e "arguments.txt" ]]; then
     # shellcheck disable=SC2046
-    eval snapcraft pack --destructive-mode $(cat "arguments.txt") 
+    eval snapcraft pack --destructive-mode $(cat "arguments.txt")
   # otherwise, just call `snapcraft pack`
   else
     snapcraft pack --destructive-mode

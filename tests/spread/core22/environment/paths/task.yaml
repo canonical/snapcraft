@@ -13,7 +13,7 @@ prepare: |
 
 restore: |
   cd "../snaps/$SNAP"
-  snapcraft clean
+  snapcraft clean --destructive-mode
   rm -f ./*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

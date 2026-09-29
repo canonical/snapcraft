@@ -8,7 +8,7 @@ execute: |
   snapcraft pack
 
   # assert snap contents
-  unsquashfs -dest "snap-contents" "hello-components_1.0_amd64.snap"
+  unsquashfs -dest "snap-contents" "hello-components_1.0-updated_amd64.snap"
   if [ ! -e "snap-contents/bin/hello" ]; then
     echo "Expected 'bin/hello' in snap contents"
     exit 1
@@ -21,7 +21,7 @@ execute: |
   fi
 
   # assert component was packed
-  component_file="hello-components+share_1.0.comp"
+  component_file="hello-components+share_2.0-updated.comp"
   if [ ! -e "${component_file}" ]; then
     echo "Expected 'share' component to exist"
     exit 1
@@ -38,7 +38,7 @@ execute: |
     echo "Expected 'other-file-in-component' not to be in the 'share' component"
     exit 1
   fi
-  
+
   component_meta_dir="component-contents/meta"
 
   # assert component metadata

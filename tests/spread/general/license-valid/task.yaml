@@ -17,6 +17,6 @@ restore: |
 execute: |
   cd test-snap
 
-  snapcraft  
+  snapcraft pack
 
   MATCH -v "license: MIT" < prime/meta/snap.yaml

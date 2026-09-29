@@ -1,0 +1,17 @@
+name: build-for-with-platforms-core24
+base: core24
+version: "1.0"
+summary: Test snap for remote build
+description: Test snap for remote build
+
+grade: stable
+confinement: strict
+
+platforms:
+  amd64:
+  s390x:
+  riscv64:
+
+parts:
+  my-part:
+    plugin: nil

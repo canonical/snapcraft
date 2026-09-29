@@ -14,5 +14,5 @@ restore: |
 
 execute: |
   cd "$SNAP"
-  snapcraft 2>&1 | tee progress.txt
+  snapcraft pack 2>&1 | tee progress.txt
   grep "Packed ${SNAP}_1.0_amd64.snap" progress.txt

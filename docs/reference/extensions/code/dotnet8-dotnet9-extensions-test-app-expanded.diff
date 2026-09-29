@@ -1,0 +1,102 @@
+ name: test-snap
+ base: core24
+ version: '0.1'
+ summary: Single-line elevator pitch for your amazing snap
+ description: |
+   This is my-snap's description. You have a paragraph or two to tell the
+   most important story about your snap. Keep it under 100 words though,
+   we live in tweetspace and your description wants to look good in the snap
+   store.
+
+ grade: stable
+ confinement: strict
+
+ parts:
+   hello8:
+     plugin: dotnet
+     source: hello8
+     dotnet-version: '8.0'
+     organize:
+       '*': 'opt/hello8/'
+
+   hello9:
+     plugin: dotnet
+     source: hello9
+     dotnet-version: '9.0'
+     organize:
+       '*': opt/hello9/
+
++  dotnet8/launcher:
++    plugin: dump
++    source: /snap/snapcraft/x4/share/snapcraft/extensions/dotnet
++    override-build: |
++      mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
++      cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
++    stage:
++      - bin/command-chain/launcher.sh
+
++  dotnet8/prereqs:
++    plugin: nil
++    stage-packages:
++      - libicu74
++      - libunwind8
++      - libssl3t64
++      - liblttng-ust1t64
++      - libbrotli1
+
++  dotnet9/launcher:
++    plugin: dump
++    source: /snap/snapcraft/x4/share/snapcraft/extensions/dotnet
++    override-build: |
++      mkdir -p $CRAFT_PART_INSTALL/bin/command-chain
++      cp launcher.sh $CRAFT_PART_INSTALL/bin/command-chain
++    stage:
++      - bin/command-chain/launcher.sh
+
++  dotnet9/prereqs:
++    plugin: nil
++    stage-packages:
++      - libicu74
++      - libunwind8
++      - libssl3t64
++      - liblttng-ust1t64
++      - libbrotli1
+
+ apps:
+   hello8:
+     command: opt/hello8/hello8
+-    extensions: [ dotnet8 ]
++    plugs:
++      - dotnet8-runtime
++    environment:
++      DOTNET_EXT_CONTENT_SNAP: dotnet-runtime-80
++      DOTNET_EXT_SNAP_NAME: test-snap
++      DOTNET_EXT_PLUG_NAME: dotnet8-runtime
++      DOTNET_ROOT: $SNAP/opt/dotnet8/dotnet
++    command-chain:
++      - bin/command-chain/launcher.sh
+
+   hello9:
+     command: opt/hello9/hello9
+-    extensions: [ dotnet9 ]
++    plugs:
++      - dotnet9-runtime
++    environment:
++      DOTNET_EXT_CONTENT_SNAP: dotnet-runtime-90
++      DOTNET_EXT_SNAP_NAME: test-snap
++      DOTNET_EXT_PLUG_NAME: dotnet9-runtime
++      DOTNET_ROOT: $SNAP/opt/dotnet9/dotnet
++    command-chain:
++      - bin/command-chain/launcher.sh
+
++plugs:
++  dotnet8-runtime:
++    content: dotnet-runtime-80
++    interface: content
++    target: $SNAP/opt/dotnet8
++    default-provider: dotnet-runtime-80
++  dotnet9-runtime:
++    content: dotnet-runtime-90
++    interface: content
++    target: $SNAP/opt/dotnet9
++    default-provider: dotnet-runtime-90

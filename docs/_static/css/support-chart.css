@@ -1,0 +1,250 @@
+/*
+  Styling for support chart.
+  Color variables depend on Furo theme.
+  Chart classes depend on Vanilla.
+  */
+
+.chart__bar--orange {
+    fill: #e95420;
+}
+
+.chart__bar--orange-light {
+    fill: #fbddd2;
+}
+
+.chart__bar--grey {
+    fill: #aea79f;
+}
+
+.chart__bar--light-grey {
+    fill: #8c8c8c;
+}
+
+.chart__bar--mid-dark {
+    fill: #666;
+}
+
+.chart__bar--aubergine {
+    fill: #772953;
+}
+
+.chart__bar--aubergine-mid-light {
+    fill: #923a66;
+}
+
+.chart__bar--aubergine-light {
+    fill: #cba7b8;
+}
+
+.chart__bar--green {
+    fill: green;
+}
+
+.chart__bar--charcoal {
+    fill: #333;
+}
+
+.chart__bar--black {
+    fill: #111;
+}
+
+.chart__hwe-key {
+    display: none;
+}
+
+.chart__label--bold {
+    font-weight: bold;
+}
+
+.chart__label--transparent,
+.chart__bar--transparent {
+    opacity: 0.2;
+}
+
+.chart__milestone {
+    stroke: #56334b;
+}
+
+.chart__milestone-release {
+    fill: #56334b;
+}
+
+.x.axis line,
+.y.axis line {
+    shape-rendering: crispEdges;
+    stroke: #d6d3cf;
+    stroke-dasharray: 3 2;
+}
+
+.tick text {
+    font-size: 14px;
+}
+
+.chart-key text {
+    font-size: 14px;
+    font-family: "Ubuntu variable", Ubuntu, sans-serif;
+}
+
+.chart text {
+    font-family: "Ubuntu variable", Ubuntu, sans-serif;
+}
+
+.x.axis text {
+    font-size: 12px;
+    text-anchor: start !important;
+}
+
+.chart-key {
+    display: block;
+}
+
+.chart-key__label {
+    fill: var(--color-foreground-primary);
+}
+
+.chart-key__row {
+    display: block;
+}
+
+.horizontal-bar-chart {
+    .tick text {
+        font-size: 16px;
+        font-weight: 350;
+    }
+
+    .x.axis text {
+        color: #666;
+        font-size: 16px;
+        font-weight: 400;
+    }
+}
+
+/* Tooltip */
+
+.u-hide {
+    display: none !important;
+}
+
+.is-detached {
+    display: block;
+    position: absolute;
+}
+
+.p-tooltip__message {
+    font-size: 0.875rem;
+    background-color: #202020;
+    border: 0;
+    color: white;
+    display: none;
+    margin-bottom: 0;
+    padding: 9px 18px;
+    position: absolute;
+    text-align: left;
+    text-decoration: initial;
+    transform: translateX(-50%) translateY(-13px);
+    white-space: pre;
+    z-index: 50;
+    bottom: 100%;
+    left: 50%;
+    top: initial;
+}
+
+.is-detached .p-tooltip__message {
+    display: block;
+}
+
+.p-tooltip__message:focus,
+.p-tooltip__message:hover {
+    display: inline;
+    text-decoration: initial;
+}
+
+.p-tooltip__message::before {
+    border-top: 0.5rem solid #202020;
+    border-bottom: 0.5rem solid transparent;
+    border-left: 0.5rem solid transparent;
+    border-right: 0.5rem solid transparent;
+    bottom: -16px;
+    content: "";
+    height: 0;
+    left: 50%;
+    pointer-events: none;
+    position: absolute;
+    width: 0;
+    transform: translateX(-50%);
+}
+
+.p-tooltip__message::after {
+    border-radius: 10% 90% 0% 100% / 100% 100% 0% 0%;
+    content: "";
+    height: 1rem;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: auto;
+    bottom: -1rem;
+}
+
+.support-chart-hidden {
+    display: none !important;
+}
+
+.support-chart-toggled {
+    background-color: var(--color-sidebar-item-background--current) !important;
+}
+
+#support-chart {
+    overflow: scroll;
+}
+
+#support-chart-menu {
+    display: grid;
+    justify-items: end;
+    margin-bottom: 2.875rem;
+}
+
+.support-chart-menu-btn {
+    position: absolute;
+}
+
+.support-chart-menu-btn button {
+    padding: 0.28125em 1em;
+    background-color: var(--color-background-primary);
+    border: 1px solid var(--color-foreground-muted);
+    color: var(--color-foreground-primary);
+    cursor: pointer;
+    text-align: left;
+}
+
+/* Button arrow */
+.support-chart-menu-btn button::after {
+    content: "";
+    padding: 0 0.75em;
+    background-color: var(--color-foreground-primary);
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><path d='M8.187 11.748l6.187-6.187-1.06-1.061-5.127 5.127L3.061 4.5 2 5.561z'/></svg>");
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: 1rem;
+}
+
+.support-chart-menu-btn ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    box-shadow:
+        0 1px 1px 0 var(--color-foreground-muted),
+        0 2px 2px -1px var(--color-foreground-muted),
+        0 0 3px 0 var(--color-foreground-muted);
+}
+
+.support-chart-menu-btn li {
+    padding: 0.25em 2em 0.25em 1em;
+    background-color: var(--color-background-primary);
+    user-select: none;
+    cursor: pointer;
+}
+
+.support-chart-menu-btn > button:hover,
+.support-chart-menu-btn li:hover {
+    background-color: var(--color-sidebar-item-background--hover);
+}

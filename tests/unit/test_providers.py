@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, Mock, call, patch
 
@@ -38,12 +40,16 @@ def mock_default_command_environment():
 
 def test_capture_logs_from_instance(mocker, emitter, mock_instance, new_dir):
     """Verify logs from an instance are retrieved and emitted."""
-    fake_log = Path(new_dir / "fake.file")
-    fake_log_data = "some\nlog data\nhere"
-    fake_log.write_text(fake_log_data, encoding="utf-8")
+
+    @contextmanager
+    def fake_log() -> Generator[Path, None, None]:
+        fake_log = Path(new_dir / "fake.file")
+        fake_log_data = "some\nlog data\nhere"
+        fake_log.write_text(fake_log_data, encoding="utf-8")
+        yield fake_log
 
     mock_instance.temporarily_pull_file = MagicMock()
-    mock_instance.temporarily_pull_file.return_value = fake_log
+    mock_instance.temporarily_pull_file.return_value = fake_log()
 
     providers.capture_logs_from_instance(mock_instance)
 

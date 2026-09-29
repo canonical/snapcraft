@@ -1,0 +1,12 @@
+name: pro
+version: '0.1'
+summary: Test snapcraft pack --pro
+description: Verify packing with --pro
+base: core24
+confinement: strict
+
+parts:
+  hello:
+    plugin: nil
+    stage-packages:
+      - hello

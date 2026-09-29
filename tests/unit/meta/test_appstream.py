@@ -17,7 +17,6 @@
 import os
 import textwrap
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -25,7 +24,7 @@ from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata, appstream
 
 
-def _create_desktop_file(desktop_file_path, icon: Optional[str] = None) -> None:
+def _create_desktop_file(desktop_file_path, icon: str | None = None) -> None:
     dir_name = os.path.dirname(desktop_file_path)
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
@@ -112,9 +111,7 @@ class TestAppstreamData:
 class TestAppstreamIcons:
     """Check extraction of icon-related metadata."""
 
-    def _create_appstream_file(
-        self, icon: Optional[str] = None, icon_type: str = "local"
-    ):
+    def _create_appstream_file(self, icon: str | None = None, icon_type: str = "local"):
         with open("foo.appdata.xml", "w") as f:
             if icon:
                 f.write(
@@ -247,7 +244,7 @@ class TestAppstreamContent:
     """Check variations of the Appstream file content."""
 
     def test_appstream_with_ul(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="utf-8"?>
@@ -295,7 +292,7 @@ class TestAppstreamContent:
         )
 
     def test_appstream_with_ol(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="utf-8"?>
@@ -343,7 +340,7 @@ class TestAppstreamContent:
         )
 
     def test_appstream_with_ul_in_p(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
 
         content = textwrap.dedent(
             """\
@@ -805,7 +802,7 @@ class TestAppstreamContent:
         assert metadata.issues == ["https://github.com/alainm23/planify/issues"]
 
     def test_appstream_parse_error(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
         content = textwrap.dedent(
             """\
             <?xml version="1.0" encoding="utf-8"?>
@@ -830,16 +827,16 @@ class TestAppstreamContent:
             appstream.extract(file_name, workdir=".")
 
         assert str(raised.value) == (
-            "Error extracting metadata from './snapcraft_legacy.appdata.xml': "
+            "Error extracting metadata from './test-snap.appdata.xml': "
             "Opening and ending tag mismatch: provides line 11 and component, "
-            "line 13, column 13 (snapcraft_legacy.appdata.xml, line 13)"
+            "line 13, column 13 (test-snap.appdata.xml, line 13)"
         )
 
     def test_appstream_parse_os_error(self):
-        file_name = "snapcraft_legacy.appdata.xml"
+        file_name = "test-snap.appdata.xml"
         assert not Path(file_name).is_file()
 
-        error = "Error reading file './snapcraft_legacy.appdata.xml': failed to load"
+        error = "Error reading file './test-snap.appdata.xml': failed to load"
         with pytest.raises(errors.SnapcraftError, match=error):
             appstream.extract(file_name, workdir=".")
 

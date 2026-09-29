@@ -16,15 +16,21 @@
 
 """Desktop file parser."""
 
+from __future__ import annotations
+
 import configparser
+import io
 import os
 import shlex
-from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from craft_cli import emit
 
 from snapcraft import errors
+from snapcraft.meta.appstream import get_icon_from_theme
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class DesktopFile:
@@ -53,11 +59,16 @@ class DesktopFile:
             )
 
         self._parser = configparser.ConfigParser(interpolation=None)
-        # mypy type checking ignored, see https://github.com/python/mypy/issues/506
-        self._parser.optionxform = str  # type: ignore
+        # The configparser docs recommend overriding this function to preserve the case.
+        # However, ty doesn't like attribute assignment that shadows a class method.
+        self._parser.optionxform = str  # ty: ignore[invalid-assignment]
         self._parser.read(file_path, encoding="utf-8")
 
-    def _parse_and_reformat_section_exec(self, section):
+    @staticmethod
+    def _normalize_icon_path(icon: str) -> str:
+        return icon.removeprefix("${SNAP}").lstrip("/")
+
+    def _parse_and_reformat_section_exec(self, section: str):
         exec_value = self._parser[section]["Exec"]
         exec_split = shlex.split(exec_value, posix=False)
 
@@ -69,23 +80,34 @@ class DesktopFile:
 
         self._parser[section]["Exec"] = " ".join(exec_split)
 
-    def _parse_and_reformat_section(self, *, section, icon_path: Optional[str] = None):
-        if "Exec" not in self._parser[section]:
-            raise errors.DesktopFileError(self._filename, "missing 'Exec' key")
-
-        self._parse_and_reformat_section_exec(section)
+    def _parse_and_reformat_section(
+        self, *, section: str, icon_path: str | None = None
+    ):
+        # Exec is not required: desktop entries that are D-Bus- or
+        # systemd-activated (often with NoDisplay=true) are valid without it,
+        # per the Desktop Entry specification and desktop-file-validate. Only
+        # reformat the Exec line when it is present.
+        if "Exec" in self._parser[section]:
+            self._parse_and_reformat_section_exec(section)
 
         if "Icon" in self._parser[section]:
             icon = self._parser[section]["Icon"]
 
             if icon_path is not None:
-                icon = icon_path
+                icon = self._normalize_icon_path(icon_path)
+                self._parser[section]["Icon"] = os.path.join("${SNAP}", icon)
+                return
 
-            # Strip any leading slash.
-            icon = icon[1:] if icon.startswith("/") else icon
+            icon = self._normalize_icon_path(icon)
 
-            # Strip any leading ${SNAP}.
-            icon = icon[8:] if icon.startswith("${SNAP}") else icon
+            # If icon is just a name (no path separator), try to resolve it from the hicolor icon theme.
+            if "/" not in icon:
+                if (
+                    icon_path := get_icon_from_theme(
+                        os.fspath(self._prime_dir), "hicolor", icon
+                    )
+                ) is not None:
+                    self._parser[section]["Icon"] = os.path.join("${SNAP}", icon_path)
 
             # With everything stripped, check to see if the icon is there.
             # if it is, add "${SNAP}" back and set the icon
@@ -97,7 +119,7 @@ class DesktopFile:
                     f"not found in prime directory."
                 )
 
-    def _parse_and_reformat(self, *, icon_path: Optional[str] = None) -> None:
+    def _parse_and_reformat(self, *, icon_path: str | None = None) -> None:
         if "Desktop Entry" not in self._parser.sections():
             raise errors.DesktopFileError(
                 self._filename, "missing 'Desktop Entry' section"
@@ -106,14 +128,20 @@ class DesktopFile:
         for section in self._parser.sections():
             self._parse_and_reformat_section(section=section, icon_path=icon_path)
 
-    def write(self, *, gui_dir: Path, icon_path: Optional[str] = None) -> None:
+    def render(self, *, icon_path: str | None = None) -> str:
+        """Render the desktop file after applying Snap-specific mediation."""
+        self._parse_and_reformat(icon_path=icon_path)
+
+        with io.StringIO() as target_file:
+            self._parser.write(target_file, space_around_delimiters=False)
+            return target_file.getvalue()
+
+    def write(self, *, gui_dir: Path, icon_path: str | None = None) -> None:
         """Write the desktop file.
 
         :param gui_dir: The desktop file destination directory.
         :param icon_path: The icon corresponding to this desktop file.
         """
-        self._parse_and_reformat(icon_path=icon_path)
-
         gui_dir.mkdir(parents=True, exist_ok=True)
 
         # Rename the desktop file to match the app name. This will help
@@ -124,5 +152,4 @@ class DesktopFile:
             # Unlikely. A desktop file in meta/gui/ already existed for
             # this app. Let's pretend it wasn't there and overwrite it.
             target.unlink()
-        with target.open("w", encoding="utf-8") as target_file:
-            self._parser.write(target_file, space_around_delimiters=False)
+        target.write_text(self.render(icon_path=icon_path), encoding="utf-8")

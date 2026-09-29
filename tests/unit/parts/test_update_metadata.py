@@ -16,7 +16,7 @@
 
 import textwrap
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -63,7 +63,7 @@ def appstream_file(new_dir):
 
 @pytest.fixture
 def project_yaml_data():
-    def yaml_data(extra_args: Dict[str, Any]):
+    def yaml_data(extra_args: dict[str, Any]):
         return {
             "name": "name",
             "summary": "summary",
@@ -82,7 +82,7 @@ def project_yaml_data():
     yield yaml_data
 
 
-def _project_app(data: Dict[str, Any]) -> App:
+def _project_app(data: dict[str, Any]) -> App:
     return App(**data)
 
 
@@ -119,7 +119,7 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
     (prime_dir / "assets/file.desktop").touch()
 
     prj_vars = {"version": "0.1", "grade": "stable"}
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -137,6 +137,7 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
     assert project.website == ["website1"]  # already set in project
     assert project.source_code == ["vcs-browser"]
     assert project.icon == "assets/icon.png"
+    assert project.apps is not None
     assert project.apps["app3"].desktop == "assets/file.desktop"
 
 
@@ -149,14 +150,12 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
                 "summary": "project summary",
                 "description": "project description",
                 "title": "project title",
-                "grade": "stable",
             },
             {
                 "version": "1.2.3",
                 "summary": "project summary",
                 "description": "project description",
                 "title": "project title",
-                "grade": "stable",
             },
         ),
         (
@@ -166,7 +165,6 @@ def test_update_project_metadata(project_yaml_data, appstream_file, new_dir):
                 "summary": "metadata summary",
                 "description": "metadata description",
                 "title": "metadata title",
-                "grade": "devel",
             },
         ),
     ],
@@ -182,17 +180,16 @@ def test_update_project_metadata_fields(
         "parts": {},
         **project_entries,
     }
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         version="4.5.6",
         summary="metadata summary",
         description="metadata description",
         title="metadata title",
-        grade="devel",
     )
-    prj_vars = {"version": "", "grade": ""}
+    prj_vars = {"version": None, "grade": None}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -204,7 +201,6 @@ def test_update_project_metadata_fields(
     assert project.summary == expected["summary"]
     assert project.description == expected["description"]
     assert project.title == expected["title"]
-    assert project.grade == expected["grade"]
 
 
 @pytest.mark.parametrize(
@@ -216,14 +212,12 @@ def test_update_project_metadata_fields(
                 "summary": "project summary",
                 "description": "project description",
                 "title": "project title",
-                "grade": "stable",
             },
             {
                 "version": "1.2.3",
                 "summary": "project summary",
                 "description": "project description",
                 "title": "project title",
-                "grade": "stable",
             },
         ),
         (
@@ -233,7 +227,6 @@ def test_update_project_metadata_fields(
                 "summary": "metadata summary",
                 "description": "metadata description",
                 "title": "metadata title",
-                "grade": "devel",
             },
         ),
     ],
@@ -249,7 +242,7 @@ def test_update_project_metadata_multiple(
         "parts": {},
         **project_entries,
     }
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata1 = ExtractedMetadata(version="4.5.6")
     metadata2 = ExtractedMetadata(
         summary="metadata summary",
@@ -260,9 +253,7 @@ def test_update_project_metadata_multiple(
         issues=["issues1", "issues3"],
         donation=["donation1", "donation2"],
     )
-    metadata3 = ExtractedMetadata(
-        version="7.8.9", title="metadata title", grade="devel"
-    )
+    metadata3 = ExtractedMetadata(version="7.8.9", title="metadata title")
     metadata4 = ExtractedMetadata(
         summary="extra summary", description="extra description"
     )
@@ -273,9 +264,9 @@ def test_update_project_metadata_multiple(
         issues=["issues2", "issues3"],
         donation=["donation2"],
     )
-    prj_vars = {"version": "", "grade": ""}
+    prj_vars = {"version": None, "grade": None}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[
@@ -294,7 +285,6 @@ def test_update_project_metadata_multiple(
     assert project.summary == expected["summary"]
     assert project.description == expected["description"]
     assert project.title == expected["title"]
-    assert project.grade == expected["grade"]
     assert project.contact == ["contact1", "contact2"]
     assert project.license == "GPL-3.0"
     assert project.donation == ["donation1", "donation2"]
@@ -316,7 +306,7 @@ def test_update_project_metadata_overriding_appstream(new_dir):
         "source-code": "https://test.com/source-code",
         "website": "https://test.com/website",
     }
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         version="4.5.6",
         summary="metadata summary",
@@ -327,8 +317,8 @@ def test_update_project_metadata_overriding_appstream(new_dir):
         issues=["https://example.com/issues", "https://example.com/issues2"],
         donation=["https://buyme.coffee", "https://github.com/sponsors"],
     )
-    prj_vars = {"version": "", "grade": ""}
-    update_project_metadata(
+    prj_vars = {"version": None, "grade": None}
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -381,7 +371,7 @@ def test_update_project_metadata_icon(
     yaml_data = project_yaml_data(
         {"version": "1.0", "adopt-info": "part", "parts": {}, **project_entries}
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(icon="metadata_icon.png")
 
     # create icon file
@@ -393,9 +383,9 @@ def test_update_project_metadata_icon(
         Path("assets/gui").mkdir(parents=True)
         Path("assets/gui/icon.svg").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -500,7 +490,7 @@ def test_update_project_metadata_desktop(
     yaml_data = project_yaml_data(
         {"version": "1.0", "adopt-info": "part", "parts": {}, **project_entries}
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id", desktop_file_paths=["metadata/foo.desktop"]
     )
@@ -515,9 +505,9 @@ def test_update_project_metadata_desktop(
         Path("assets/gui").mkdir(parents=True)
         Path("assets/gui/foo.desktop").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -543,7 +533,7 @@ def test_update_project_metadata_desktop_multiple(project_yaml_data, new_dir):
             },
         }
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id",
         desktop_file_paths=["metadata/foo.desktop", "metadata/bar.desktop"],
@@ -554,9 +544,9 @@ def test_update_project_metadata_desktop_multiple(project_yaml_data, new_dir):
     Path("metadata/foo.desktop").touch()
     Path("metadata/bar.desktop").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],
@@ -586,7 +576,7 @@ def test_update_project_metadata_multiple_apps(project_yaml_data, new_dir):
             },
         }
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata1 = ExtractedMetadata(
         common_id="foo.id",
         desktop_file_paths=["metadata/foo.desktop"],
@@ -601,9 +591,9 @@ def test_update_project_metadata_multiple_apps(project_yaml_data, new_dir):
     Path("metadata/foo.desktop").touch()
     Path("metadata/bar.desktop").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata1, metadata2],
@@ -624,7 +614,7 @@ def test_update_project_metadata_desktop_no_apps(project_yaml_data, new_dir):
             "parts": {},
         }
     )
-    project = Project(**yaml_data)
+    project = Project.unmarshal(yaml_data)
     metadata = ExtractedMetadata(
         common_id="test.id",
         desktop_file_paths=["metadata/foo.desktop", "metadata/bar.desktop"],
@@ -635,9 +625,9 @@ def test_update_project_metadata_desktop_no_apps(project_yaml_data, new_dir):
     Path("metadata/foo.desktop").touch()
     Path("metadata/bar.desktop").touch()
 
-    prj_vars = {"version": "", "grade": "stable"}
+    prj_vars = {"version": None, "grade": "stable"}
 
-    update_project_metadata(
+    project = update_project_metadata(
         project,
         project_vars=prj_vars,
         metadata_list=[metadata],

@@ -1,5 +1,0 @@
-#!/bin/bash
-
-set -- "${SNAP}/gpu-2404/bin/gpu-2404-provider-wrapper" "$@"
-# shellcheck source=/dev/null
-source "${SNAP}/snap/command-chain/run"

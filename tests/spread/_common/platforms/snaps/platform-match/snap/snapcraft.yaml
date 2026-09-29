@@ -1,0 +1,19 @@
+name: platform-match
+version: "1.0"
+summary: test
+description: |
+  Only snaps should be built where `platform` matches the
+  command line argument `--platform <platform>`.
+confinement: strict
+base: core24
+platforms:
+  platform1:
+    build-on: amd64
+    build-for: amd64
+  platform2:
+    build-on: [amd64, arm64]
+    build-for: arm64
+
+parts:
+  nil:
+    plugin: nil

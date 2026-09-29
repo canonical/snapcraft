@@ -16,12 +16,19 @@
 
 """YAML utilities for Snapcraft."""
 
+import os
+from collections.abc import Hashable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, TextIO, cast
 
+import craft_application.errors
+import craft_cli
 import yaml
+import yaml.constructor
 import yaml.error
+import yaml.resolver
+from craft_parts import ProjectVar, ProjectVarInfo
 
 from snapcraft import const, errors, utils
 from snapcraft.extensions import apply_extensions
@@ -50,7 +57,7 @@ _SNAP_PROJECT_FILES = [
 ]
 
 
-def _check_duplicate_keys(node):
+def _check_duplicate_keys(node: yaml.Node) -> None:
     mappings = set()
 
     for key_node, _ in node.value:
@@ -68,7 +75,9 @@ def _check_duplicate_keys(node):
             pass
 
 
-def _dict_constructor(loader, node):
+def _dict_constructor(
+    loader: yaml.Loader, node: yaml.MappingNode
+) -> dict[Hashable, Any]:
     _check_duplicate_keys(node)
 
     # Necessary in order to make yaml merge tags work
@@ -95,7 +104,7 @@ class _SafeLoader(yaml.SafeLoader):
         )
 
 
-def safe_load(filestream: TextIO) -> Dict[str, Any]:
+def safe_load(filestream: TextIO) -> dict[str, Any]:
     """Safe load and parse YAML-formatted file to a dictionary.
 
     :returns: A dictionary containing the yaml data.
@@ -108,7 +117,7 @@ def safe_load(filestream: TextIO) -> Dict[str, Any]:
         raise errors.SnapcraftError(f"snapcraft.yaml parsing error: {err!s}") from err
 
 
-def get_base(filestream: TextIO) -> Optional[str]:
+def get_base(filestream: TextIO) -> str | None:
     """Get the effective base from a snapcraft.yaml file.
 
     :param filename: The YAML file to load.
@@ -138,7 +147,7 @@ def get_base_from_yaml(data: dict[str, Any]) -> str | None:
     )
 
 
-def load(filestream: TextIO) -> Dict[str, Any]:
+def load(filestream: TextIO) -> dict[str, Any]:
     """Load and parse a YAML-formatted file.
 
     :param filename: The YAML file to load.
@@ -146,17 +155,15 @@ def load(filestream: TextIO) -> Dict[str, Any]:
     :returns: A dictionary of the yaml data.
 
     :raises SnapcraftError: if loading didn't succeed.
-    :raises LegacyFallback: if the project's base is a legacy base.
+    :raises MissingBase: if there isn't a base in the project file.
     :raises MaintenanceBase: if the base is not supported.
     """
     build_base = get_base(filestream)
 
     if build_base is None:
-        raise errors.LegacyFallback("no base defined")
+        raise errors.MissingBase()
     if build_base in const.ESM_BASES:
         raise errors.MaintenanceBase(build_base)
-    if build_base in const.LEGACY_BASES:
-        raise errors.LegacyFallback(f"base is {build_base}")
 
     filestream.seek(0)
 
@@ -170,8 +177,8 @@ def load(filestream: TextIO) -> Dict[str, Any]:
 
 
 def apply_yaml(
-    yaml_data: Dict[str, Any], build_on: str, build_for: str
-) -> Dict[str, Any]:
+    yaml_data: dict[str, Any], build_on: str, build_for: str
+) -> dict[str, Any]:
     """Apply Snapcraft logic to yaml_data.
 
     Extensions are applied and advanced grammar is processed.
@@ -192,7 +199,7 @@ def apply_yaml(
         core_part["plugin"] = "nil"
         yaml_data["parts"][_CORE_PART_NAME] = core_part
 
-    yaml_data = apply_extensions(yaml_data, arch=build_on, target_arch=build_for)
+    apply_extensions(yaml_data, arch=build_on, target_arch=build_for)
 
     if "parts" in yaml_data:
         yaml_data["parts"] = grammar.process_parts(
@@ -200,7 +207,7 @@ def apply_yaml(
         )
 
     if any(
-        b.startswith("core20") or b.startswith("core22")
+        b.startswith("core22")
         for b in (
             yaml_data.get("base", ""),
             yaml_data.get("build-base", ""),
@@ -224,28 +231,48 @@ def get_snap_project(project_dir: Path | None = None) -> _SnapProject:
     :param project_dir: The directory to search for the project yaml file. If not
     provided, the current working directory is used.
 
-    :raises SnapcraftError: if the project yaml file cannot be found.
+    :raises ProjectDirectoryMissingError: if the project directory does not exist.
+    :raises ProjectDirectoryTypeError: if the project directory is not a directory.
+    :raises ProjectFileMissingError: if the project file is not found.
     """
+    if project_dir:
+        if not project_dir.exists():
+            raise craft_application.errors.ProjectDirectoryMissingError(project_dir)
+        if not project_dir.is_dir():
+            raise craft_application.errors.ProjectDirectoryTypeError(project_dir)
+    else:
+        project_dir = Path.cwd()
+
     for snap_project in _SNAP_PROJECT_FILES:
-        if project_dir:
-            snap_project_path = project_dir / snap_project.project_file
-        else:
-            snap_project_path = snap_project.project_file
+        try:
+            (project_dir / snap_project.project_file).resolve(strict=True)
+        except FileNotFoundError:
+            continue
+        except NotADirectoryError:
+            raise craft_application.errors.ProjectDirectoryTypeError(
+                snap_project.project_file,
+                details="The 'snap' name is reserved for the project directory.",
+                resolution="Rename or remove the file named 'snap'.",
+            )
 
-        if snap_project_path.exists():
-            return snap_project
+        return snap_project
 
-    raise errors.ProjectMissing()
+    raise craft_application.errors.ProjectFileMissingError(
+        f"Project file 'snapcraft.yaml' not found in '{project_dir}'.",
+        details="The project file could not be found.",
+        resolution="Ensure the project file exists.",
+        retcode=os.EX_NOINPUT,
+    )
 
 
-def extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
+def extract_parse_info(yaml_data: dict[str, Any]) -> dict[str, list[str]]:
     """Remove parse-info data from parts.
 
     :param yaml_data: The project YAML data.
 
     :return: The extracted parse info for each part.
     """
-    parse_info: Dict[str, List[str]] = {}
+    parse_info: dict[str, list[str]] = {}
 
     if "parts" in yaml_data:
         for name, data in yaml_data["parts"].items():
@@ -255,12 +282,14 @@ def extract_parse_info(yaml_data: Dict[str, Any]) -> Dict[str, List[str]]:
     return parse_info
 
 
-def process_yaml(project_file: Path) -> Dict[str, Any]:
+def process_yaml(project_file: Path) -> dict[str, Any]:
     """Process yaml data from file into a dictionary.
 
     :param project_file: Path to project.
 
     :raises SnapcraftError: if the project yaml file cannot be loaded.
+    :raises MissingBase: if there isn't a base in the project file.
+    :raises MaintenanceBase: if the base is not supported.
 
     :return: The processed YAML data.
     """
@@ -271,6 +300,41 @@ def process_yaml(project_file: Path) -> Dict[str, Any]:
         msg = err.strerror
         if err.filename:
             msg = f"{msg}: {err.filename!r}."
-        raise errors.SnapcraftError(msg) from err
+        # Casting as a str as OSError should always contain an error message
+        raise errors.SnapcraftError(cast(str, msg)) from err
 
     return yaml_data
+
+
+def create_project_vars(project: dict[str, Any]) -> ProjectVarInfo:
+    """Create project variables for the version, grade, and each component's version.
+
+    :param project: The project data.
+
+    :returns: The project variables.
+    """
+    # always create project vars for the top-level version and grade
+    project_vars: dict[str, Any] = {
+        "version": ProjectVar(
+            value=project.get("version"),
+            part_name=project.get("adopt-info"),
+        ).marshal(),
+        "grade": ProjectVar(
+            value=project.get("grade"),
+            part_name=project.get("adopt-info"),
+        ).marshal(),
+    }
+
+    # if components are defined, create a project var for each component's version
+    # (which are different than the top-level version)
+    if components := project.get("components"):
+        project_vars["components"] = {}
+        for name, component in components.items():
+            project_vars["components"][name] = {}
+            project_vars["components"][name]["version"] = ProjectVar(
+                value=component.get("version"),
+                part_name=component.get("adopt-info"),
+            ).marshal()
+
+    craft_cli.emit.debug(f"Created project variables {project_vars}.")
+    return ProjectVarInfo.unmarshal(project_vars)

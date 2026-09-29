@@ -1,0 +1,2 @@
+build-for-with-platforms-core24_1.0_amd64.snap
+build-for-with-platforms-core24_1.0_armhf.snap

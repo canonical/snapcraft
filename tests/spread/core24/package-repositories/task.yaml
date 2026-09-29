@@ -21,7 +21,9 @@ restore: |
 
   cd "$SNAP"
   rm -f ./*.snap
-  snapcraft clean
+  # The regular clean can potentially fail depending on if/when the test itself failed, but
+  # they should always both be attempted
+  snapcraft clean || true
   snapcraft clean --destructive-mode
   snap remove "${SNAP}"
 
@@ -29,7 +31,7 @@ execute: |
   cd "$SNAP"
 
   # Build what we have.
-  snapcraft --verbose
+  snapcraft pack
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous
@@ -41,7 +43,7 @@ execute: |
   rm -f ./*.snap
 
   # Also build in destructive mode.
-  snapcraft --verbose --destructive-mode
+  snapcraft pack --destructive-mode
 
   # And verify the snap runs as expected.
   snap install "${SNAP}"_1.0_*.snap --dangerous

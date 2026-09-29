@@ -5,7 +5,7 @@ restore: |
   rm -f ./*.snap ./*.txt
 
 execute: |
-  snapcraft 2> output.txt
+  snapcraft pack 2> output.txt
 
   test -f library-missing_0.1_*.snap
 

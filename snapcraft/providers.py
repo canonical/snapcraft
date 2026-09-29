@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Snapcraft-specific code to interface with craft-providers."""
+
 import io
 import os
 import sys
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, Optional
 
 from craft_cli import emit
 from craft_providers import Provider, ProviderError, bases, executor
@@ -39,10 +39,9 @@ from snapcraft.utils import (
 )
 
 SNAPCRAFT_BASE_TO_PROVIDER_BASE = {
-    "core18": bases.BuilddBaseAlias.BIONIC,
-    "core20": bases.BuilddBaseAlias.FOCAL,
     "core22": bases.BuilddBaseAlias.JAMMY,
     "core24": bases.BuilddBaseAlias.NOBLE,
+    "core26": bases.BuilddBaseAlias.RESOLUTE,
     "devel": bases.BuilddBaseAlias.DEVEL,
 }
 
@@ -117,7 +116,7 @@ def capture_logs_from_instance(instance: executor.Executor) -> None:
     ) as log_path:
         if log_path:
             emit.debug("Logs retrieved from managed instance:")
-            with open(log_path, "r", encoding="utf8") as log_file:
+            with open(log_path, encoding="utf8") as log_file:
                 for line in log_file:
                     emit.debug(":: " + line.rstrip())
         else:
@@ -166,8 +165,8 @@ def get_base_configuration(
     *,
     alias: bases.BuilddBaseAlias,
     instance_name: str,
-    http_proxy: Optional[str] = None,
-    https_proxy: Optional[str] = None,
+    http_proxy: str | None = None,
+    https_proxy: str | None = None,
 ) -> bases.BuilddBase:
     """Create a BuilddBase configuration for rockcraft."""
     environment = get_command_environment(
@@ -212,8 +211,8 @@ def get_base_configuration(
 
 
 def get_command_environment(
-    http_proxy: Optional[str] = None, https_proxy: Optional[str] = None
-) -> Dict[str, Optional[str]]:
+    http_proxy: str | None = None, https_proxy: str | None = None
+) -> dict[str, str | None]:
     """Construct an environment needed to execute a command.
 
     :param http_proxy: http proxy to add to environment
@@ -273,7 +272,7 @@ def get_instance_name(
     )
 
 
-def get_provider(provider: Optional[str] = None) -> Provider:
+def get_provider(provider: str | None = None) -> Provider:
     """Get the configured or appropriate provider for the host OS.
 
     To determine the appropriate provider,

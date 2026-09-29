@@ -15,14 +15,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """Tests for Components in Snapcraft's Lifecycle service."""
+
 import pytest
 
 from snapcraft import errors
 
 
 @pytest.fixture
-def extra_project_params(extra_project_params):
+def lifecycle_service(default_project, fake_services, setup_project):
+    setup_project(
+        fake_services,
+        {**default_project.marshal(), "parts": {"my-part": {"plugin": "nil"}}},
+    )
+    return fake_services.get("lifecycle")
 
+
+@pytest.fixture
+def extra_project_params(extra_project_params):
     extra_project_params["components"] = {
         "firstcomponent": {
             "type": "test",
@@ -52,9 +61,6 @@ def extra_project_params(extra_project_params):
     ],
 )
 def test_lifecycle_get_prime_dir(lifecycle_service, component, expected_prime):
-
-    lifecycle_service.setup()
-
     assert (
         lifecycle_service.get_prime_dir(component=component)
         == lifecycle_service._work_dir / expected_prime
@@ -65,8 +71,6 @@ def test_lifecycle_get_prime_dir(lifecycle_service, component, expected_prime):
 @pytest.mark.usefixtures("default_project")
 def test_lifecycle_get_prime_dir_non_existent_component(lifecycle_service):
     """Raise an error when getting the prime directory of a non-existent component."""
-    lifecycle_service.setup()
-
     with pytest.raises(errors.SnapcraftError) as raised:
         lifecycle_service.get_prime_dir("bad")
 
@@ -78,8 +82,6 @@ def test_lifecycle_get_prime_dir_non_existent_component(lifecycle_service):
 @pytest.mark.usefixtures("enable_partitions_feature")
 @pytest.mark.usefixtures("default_project")
 def test_lifecycle_prime_dirs(lifecycle_service):
-    lifecycle_service.setup()
-
     assert lifecycle_service.prime_dirs == {
         None: lifecycle_service._work_dir / "prime",
         "firstcomponent": lifecycle_service._work_dir
