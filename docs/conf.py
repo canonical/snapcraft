@@ -336,6 +336,7 @@ intersphinx_mapping = {
     "craft-providers": ("https://documentation.ubuntu.com/craft-providers/latest", None),
     "craft-store": ("https://documentation.ubuntu.com/craft-store/latest", None),
     "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
+    "launchpad": ("https://ubuntu.com/docs/launchpad", None),
 }
 
 # Block Intersphinx from looking up external sources with internal references. In other

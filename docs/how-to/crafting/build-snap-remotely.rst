@@ -4,6 +4,7 @@
 .. |Starcraft| replace:: Snapcraft
 .. |star| replace:: snap
 .. |app-command| replace:: snapcraft
+.. |lp-remote-build-guide| replace:: :external+launchpad:ref:`build-snaps-in-launchpad`
 
 .. _how-to-build-snap-remotely:
 
@@ -11,4 +12,4 @@ Build a snap remotely
 =====================
 
 .. include:: /common/craft-application/how-to-guides/build-remotely.rst
-    :start-line: 5
+    :start-line: 8
