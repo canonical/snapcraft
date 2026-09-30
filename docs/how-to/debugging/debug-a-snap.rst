@@ -1,3 +1,6 @@
+.. meta::
+    :description: How to find and fix problems with building and running a snap.
+
 .. _how-to-debug-a-snap:
 
 Debug a snap
@@ -77,10 +80,16 @@ security failures, and will make suggestions on how to improve the snap.
 
 To debug with the tool:
 
-1. In a terminal, run ``snappy-debug``.
-2. Launch the snapped app in another terminal instance.
-3. Run the snapped app until a failure occurs.
-4. Examine the output from snappy-debug.
+1. Install snappy-debug:
+
+   .. code-block:: bash
+
+       snap install snappy-debug
+
+2. In a terminal, run ``snappy-debug``.
+3. Launch the snapped app in another terminal instance.
+4. Run the snapped app until a failure occurs.
+5. Examine the output from snappy-debug.
 
 Typically the output will contain messages about failed attempts to access system
 resources, and suggest additional interfaces which should be specified. If so, add any interfaces listed and rebuild the snap.
