@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import craft_parts
+from craft_application.util import strtobool
 from craft_cli import emit
 from craft_parts import Features, ProjectInfo, Step, StepInfo, callbacks
 from craft_platforms import DebianArchitecture
@@ -358,10 +359,11 @@ def _generate_metadata(
         emit.progress("Generated component metadata", permanent=True)
 
     if parsed_args.enable_manifest:
-        emit.progress(
-            "'--enable-manifest' is deprecated, and will be removed in core24.",
-            permanent=True,
-        )
+        if _is_enable_manifest_arg_used(parsed_args):
+            emit.progress(
+                "'--enable-manifest' is deprecated, and will be removed in core24.",
+                permanent=True,
+            )
         _generate_manifest(
             project,
             lifecycle=lifecycle,
@@ -455,17 +457,20 @@ def _run_in_provider(  # noqa PLR0915
 
     if getattr(parsed_args, "enable_manifest", False):
         cmd.append("--enable-manifest")
-        emit.progress(
-            "'--enable-manifest' is deprecated, and will be removed in core24.",
-            permanent=True,
-        )
+        if _is_enable_manifest_arg_used(parsed_args):
+            emit.progress(
+                "'--enable-manifest' is deprecated, and will be removed in core24.",
+                permanent=True,
+            )
     image_information = getattr(parsed_args, "manifest_image_information", None)
     if image_information:
         cmd.extend(["--manifest-image-information", image_information])
-        emit.progress(
-            "'--manifest-image-information' is deprecated, and will be removed in core24.",
-            permanent=True,
-        )
+        # the argument defaults to SNAPCRAFT_IMAGE_INFO, which isn't deprecated
+        if image_information != os.getenv("SNAPCRAFT_IMAGE_INFO"):
+            emit.progress(
+                "'--manifest-image-information' is deprecated, and will be removed in core24.",
+                permanent=True,
+            )
 
     cmd.append("--build-for")
     cmd.append(project.get_build_for())
@@ -840,6 +845,21 @@ def _is_manager(parsed_args: "argparse.Namespace") -> bool:
         not utils.is_managed_mode()
         and not parsed_args.destructive_mode
         and not os.getenv("SNAPCRAFT_BUILD_ENVIRONMENT") == "host"
+    )
+
+
+def _is_enable_manifest_arg_used(parsed_args: "argparse.Namespace") -> bool:
+    """Check if the manifest was enabled with the deprecated '--enable-manifest'.
+
+    The argument defaults to the value of ``SNAPCRAFT_BUILD_INFO``, which is the
+    supported way to enable the manifest and shouldn't cause a deprecation warning.
+
+    :param parsed_args: The parsed arguments.
+
+    :returns: True if the manifest was enabled by the argument.
+    """
+    return bool(getattr(parsed_args, "enable_manifest", False)) and not strtobool(
+        os.getenv("SNAPCRAFT_BUILD_INFO", "n")
     )
 
 

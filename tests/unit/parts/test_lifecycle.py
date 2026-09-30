@@ -1665,6 +1665,126 @@ def test_lifecycle_run_in_provider_all_options(
     mock_capture_logs_from_instance.assert_called_once()
 
 
+_ENABLE_MANIFEST_WARNING = (
+    "'--enable-manifest' is deprecated, and will be removed in core24."
+)
+_IMAGE_INFO_WARNING = (
+    "'--manifest-image-information' is deprecated, and will be removed in core24."
+)
+
+
+def _get_deprecation_warnings(emitter) -> list[str]:
+    return [
+        interaction.args[1]
+        for interaction in emitter.interactions
+        if interaction.args[0] == "progress" and "deprecated" in interaction.args[1]
+    ]
+
+
+@pytest.mark.parametrize(
+    ("environment", "expected_warnings"),
+    [
+        pytest.param(
+            {}, [_ENABLE_MANIFEST_WARNING, _IMAGE_INFO_WARNING], id="arguments"
+        ),
+        pytest.param(
+            {"SNAPCRAFT_BUILD_INFO": "1", "SNAPCRAFT_IMAGE_INFO": "test-image-info"},
+            [],
+            id="environment-variables",
+        ),
+    ],
+)
+def test_lifecycle_run_in_provider_manifest_deprecation(
+    mock_get_instance_name,
+    mock_instance,
+    mock_provider,
+    mocker,
+    monkeypatch,
+    snapcraft_yaml,
+    emitter,
+    environment,
+    expected_warnings,
+):
+    """Only warn about the deprecated manifest arguments if they are used."""
+    monkeypatch.delenv("SNAPCRAFT_BUILD_INFO", raising=False)
+    monkeypatch.delenv("SNAPCRAFT_IMAGE_INFO", raising=False)
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    mocker.patch("snapcraft.parts.lifecycle.providers.get_base_configuration")
+    mocker.patch("snapcraft.parts.lifecycle.providers.capture_logs_from_instance")
+    mocker.patch("snapcraft.parts.lifecycle.providers.ensure_provider_is_available")
+    mocker.patch("snapcraft.parts.lifecycle.providers.prepare_instance")
+
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    parts_lifecycle._run_in_provider(
+        project=project,
+        command_name="pack",
+        parsed_args=argparse.Namespace(
+            destructive_mode=False,
+            use_lxd=False,
+            provider=None,
+            enable_manifest=True,
+            manifest_image_information="test-image-info",
+            bind_ssh=False,
+            build_for=None,
+            debug=False,
+            http_proxy=None,
+            https_proxy=None,
+        ),
+    )
+
+    assert _get_deprecation_warnings(emitter) == expected_warnings
+
+
+@pytest.mark.parametrize(
+    ("environment", "expected_warnings"),
+    [
+        pytest.param({}, [_ENABLE_MANIFEST_WARNING], id="argument"),
+        pytest.param({"SNAPCRAFT_BUILD_INFO": "1"}, [], id="environment-variable"),
+    ],
+)
+def test_lifecycle_enable_manifest_deprecation(
+    snapcraft_yaml,
+    project_vars,
+    new_dir,
+    mocker,
+    monkeypatch,
+    emitter,
+    environment,
+    expected_warnings,
+):
+    """Only warn about '--enable-manifest' if the argument is used."""
+    monkeypatch.delenv("SNAPCRAFT_BUILD_INFO", raising=False)
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    project = Project.unmarshal(snapcraft_yaml(base="core22"))
+    mocker.patch("snapcraft.parts.PartsLifecycle.run")
+    mocker.patch("snapcraft.pack.pack_snap")
+    mocker.patch("snapcraft.meta.snap_yaml.write")
+    mock_write_manifest = mocker.patch("snapcraft.meta.manifest.write")
+
+    parts_lifecycle._run_command(
+        "prime",
+        project=project,
+        parse_info={},
+        assets_dir=Path(),
+        start_time=datetime.now(),
+        parallel_build_count=8,
+        parsed_args=argparse.Namespace(
+            debug=False,
+            destructive_mode=True,
+            use_lxd=False,
+            enable_manifest=True,
+            ua_token=None,
+            parts=[],
+            manifest_image_information=None,
+        ),
+    )
+
+    mock_write_manifest.assert_called_once()
+    assert _get_deprecation_warnings(emitter) == expected_warnings
+
+
 def test_lifecycle_run_in_provider_try(
     mock_get_instance_name,
     mock_instance,
