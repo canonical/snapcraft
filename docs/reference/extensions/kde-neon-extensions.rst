@@ -1,3 +1,6 @@
+.. meta::
+    :description: Reference documentation for the KDE neon extensions, which help package Qt and KDE Frameworks apps as snaps.
+
 .. _reference-kde-neon-extensions:
 
 KDE neon extensions
@@ -146,20 +149,41 @@ Included build environment variables
 ------------------------------------
 
 The KDE neon 6 extension sets environment variables so the project's parts can build
-correctly. The project's main part receives the following variables.
+correctly. Each part in the project receives the following variables.
 
-.. dropdown:: Included build environment variables from KDE neon 6
+The paths differ between core24 and core22 bases.
 
-    .. code-block:: yaml
-        :caption: snapcraft.yaml
+.. tab-set::
 
-        build-environment:
-          - PATH: /snap/kde-qt6-core24-sdk/current/usr/bin:/snap/kf6-core24-sdk/current/usr/bin${PATH::$PATH}
-          - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/kde-qt6-core24-sdk/current/usr/share:/snap/kf6-core24-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS::$XDG_DATA_DIRS}
-          - XDG_CONFIG_HOME: $CRAFT_STAGE/etc/xdg:/snap/kde-qt6-core24-sdk/current/etc/xdg:/snap/kf6-core24-sdk/current/etc/xdg:/etc/xdg${XDG_CONFIG_HOME::$XDG_CONFIG_HOME}
-          - LD_LIBRARY_PATH: /snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/kde-qt6-core24-sdk/current/usr/lib:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy:/snap/kf6-core24-sdk/current/usr/lib:$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:$CRAFT_STAGE/usr/lib:$CRAFT_STAGE/lib/${LD_LIBRARY_PATH::$LD_LIBRARY_PATH}
-          - CMAKE_PREFIX_PATH: $CRAFT_STAGE;/snap/kde-qt6-core24-sdk/current;/snap/kf6-core24-sdk/current;/usr${CMAKE_PREFIX_PATH:;$CMAKE_PREFIX_PATH}
-          - CMAKE_FIND_ROOT_PATH: $CRAFT_STAGE;/snap/kde-qt6-core24-sdk/current;/snap/kf6-core24-sdk/current;/usr${CMAKE_FIND_ROOT_PATH:;$CMAKE_FIND_ROOT_PATH}
+    .. tab-item:: core24
+        :sync: core24
+
+        .. dropdown:: Included build environment variables from KDE neon 6
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                build-environment:
+                  - PATH: $CRAFT_STAGE/usr/bin:/snap/kde-qt6-core24-sdk/current/usr/bin:/snap/kf6-core24-sdk/current/usr/bin${PATH:+:$PATH}
+                  - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/kde-qt6-core24-sdk/current/usr/share:/snap/kf6-core24-sdk/current/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
+                  - XDG_CONFIG_HOME: $CRAFT_STAGE/etc/xdg:/snap/kde-qt6-core24-sdk/current/etc/xdg:/snap/kf6-core24-sdk/current/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}
+                  - LD_LIBRARY_PATH: /snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/kde-qt6-core24-sdk/current/usr/lib:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/mesa-2404/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas:/snap/kf6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack:/snap/kde-qt6-core24-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy:/snap/kf6-core24-sdk/current/usr/lib:$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:$CRAFT_STAGE/usr/lib:$CRAFT_STAGE/lib/${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+                  - CMAKE_PREFIX_PATH: $CRAFT_STAGE/usr:/snap/kde-qt6-core24-sdk/current/usr:/snap/kf6-core24-sdk/current/usr:/usr${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}
+
+    .. tab-item:: core22
+        :sync: core22
+
+        .. dropdown:: Included build environment variables from KDE neon 6
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                build-environment:
+                  - PATH: $CRAFT_STAGE/usr/bin:/snap/kde-qt6-core22-sdk/current/usr/bin:/snap/kf6-core22-sdk/current/usr/bin${PATH:+:$PATH}
+                  - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/kde-qt6-core22-sdk/current/usr/share:/snap/kf6-core22-sdk/current/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
+                  - XDG_CONFIG_HOME: $CRAFT_STAGE/etc/xdg:/snap/kde-qt6-core22-sdk/current/etc/xdg:/snap/kf6-core22-sdk/current/etc/xdg${XDG_CONFIG_HOME:+:$XDG_CONFIG_HOME}
+                  - LD_LIBRARY_PATH: /snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/kde-qt6-core22-sdk/current/usr/lib:/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas:/snap/kf6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack:/snap/kde-qt6-core22-sdk/current/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy:/snap/kf6-core22-sdk/current/usr/lib:$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:$CRAFT_STAGE/usr/lib:$CRAFT_STAGE/lib/${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+                  - CMAKE_PREFIX_PATH: $CRAFT_STAGE/usr:/snap/kde-qt6-core22-sdk/current/usr:/snap/kf6-core22-sdk/current/usr:/usr${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}
 
 
 Included runtime environment variables
