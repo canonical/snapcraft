@@ -56,6 +56,8 @@ from snapcraft.models.project import (
 
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
+VALID_DURATIONS = ["10ns", "10us", "10ms", "10s", "10m", "10m4s3us"]
+INVALID_DURATIONS = ["10", 10, "10 s", "10 seconds", "1:00", "invalid"]
 
 
 @pytest.fixture
@@ -1182,63 +1184,48 @@ class TestAppValidation:
         assert project.apps is not None
         assert project.apps["app1"].post_stop_command == "test-post-stop-command"
 
-    @pytest.mark.parametrize(
-        "start_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
-    )
+    @pytest.mark.parametrize("start_timeout", VALID_DURATIONS)
     def test_app_start_timeout_valid(self, start_timeout, app_yaml_data):
         data = app_yaml_data(start_timeout=start_timeout)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].start_timeout == start_timeout
 
-    @pytest.mark.parametrize(
-        "start_timeout",
-        ["10 s", "10 seconds", "1:00", "invalid"],
-    )
+    @pytest.mark.parametrize("start_timeout", INVALID_DURATIONS)
     def test_app_start_timeout_invalid(self, start_timeout, app_yaml_data):
         data = app_yaml_data(start_timeout=start_timeout)
 
-        error = f"'{start_timeout}' is not a valid time value"
+        error = f"{start_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
-    @pytest.mark.parametrize(
-        "stop_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
-    )
+    @pytest.mark.parametrize("stop_timeout", VALID_DURATIONS)
     def test_app_stop_timeout_valid(self, stop_timeout, app_yaml_data):
         data = app_yaml_data(stop_timeout=stop_timeout)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].stop_timeout == stop_timeout
 
-    @pytest.mark.parametrize(
-        "stop_timeout",
-        ["10 s", "10 seconds", "1:00", "invalid"],
-    )
+    @pytest.mark.parametrize("stop_timeout", INVALID_DURATIONS)
     def test_app_stop_timeout_invalid(self, stop_timeout, app_yaml_data):
         data = app_yaml_data(stop_timeout=stop_timeout)
 
-        error = f"'{stop_timeout}' is not a valid time value"
+        error = f"{stop_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
-    @pytest.mark.parametrize(
-        "watchdog_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
-    )
+    @pytest.mark.parametrize("watchdog_timeout", VALID_DURATIONS)
     def test_app_watchdog_timeout_valid(self, watchdog_timeout, app_yaml_data):
         data = app_yaml_data(watchdog_timeout=watchdog_timeout)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].watchdog_timeout == watchdog_timeout
 
-    @pytest.mark.parametrize(
-        "watchdog_timeout",
-        ["10 s", "10 seconds", "1:00", "invalid"],
-    )
+    @pytest.mark.parametrize("watchdog_timeout", INVALID_DURATIONS)
     def test_app_watchdog_timeout_invalid(self, watchdog_timeout, app_yaml_data):
         data = app_yaml_data(watchdog_timeout=watchdog_timeout)
 
-        error = f"'{watchdog_timeout}' is not a valid time value"
+        error = f"{watchdog_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
@@ -1248,24 +1235,19 @@ class TestAppValidation:
         assert project.apps is not None
         assert project.apps["app1"].reload_command == "test-reload-command"
 
-    @pytest.mark.parametrize(
-        "restart_delay", ["10", "10ns", "10us", "10ms", "10s", "10m"]
-    )
+    @pytest.mark.parametrize("restart_delay", VALID_DURATIONS)
     def test_app_restart_delay_valid(self, restart_delay, app_yaml_data):
         data = app_yaml_data(restart_delay=restart_delay)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].restart_delay == restart_delay
 
-    @pytest.mark.parametrize(
-        "restart_delay",
-        ["10 s", "10 seconds", "1:00", "invalid"],
-    )
+    @pytest.mark.parametrize("restart_delay", INVALID_DURATIONS)
     def test_app_restart_delay_invalid(self, restart_delay, app_yaml_data):
         data = app_yaml_data(restart_delay=restart_delay)
 
         error = (
-            f"apps.app1.restart_delay\n  Value error, '{restart_delay}' is not a "
+            f"apps.app1.restart_delay\n  Value error, {restart_delay!r} is not a "
             "valid time value"
         )
         with pytest.raises(pydantic.ValidationError, match=error):
