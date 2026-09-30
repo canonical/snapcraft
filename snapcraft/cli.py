@@ -22,7 +22,6 @@ import os
 import sys
 from typing import Any
 
-import craft_application.commands
 import craft_cli
 import craft_store
 from craft_application.errors import RemoteBuildError
@@ -57,7 +56,7 @@ CORE24_LIFECYCLE_COMMAND_GROUP = craft_cli.CommandGroup(
         commands.BuildCommand,
         commands.StageCommand,
         commands.PrimeCommand,
-        craft_application.commands.lifecycle.TestCommand,
+        commands.TestCommand,
         commands.PackCommand,
         commands.SnapCommand,  # Hidden (legacy compatibility)
         commands.RemoteBuildCommand,

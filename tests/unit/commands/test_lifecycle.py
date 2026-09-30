@@ -145,6 +145,47 @@ def test_try_command(tmp_path, fake_services, base, setup_project, default_proje
         cmd.run(parsed_args=parsed_args)
 
 
+@pytest.mark.usefixtures("emitter")
+def test_test_command_core22(tmp_path, fake_services, setup_project, default_project):
+    """The test command is not supported for core22 snaps."""
+    parsed_args = argparse.Namespace(parts=[], output=tmp_path)
+    cmd = lifecycle.TestCommand({"app": APP_METADATA, "services": fake_services})
+    setup_project(
+        fake_services,
+        {**default_project.marshal(), "base": "core22"},
+        write_project=True,
+    )
+
+    expected = (
+        "Command or feature not implemented: "
+        "'snapcraft test' is not implemented for 'core22'"
+    )
+    with pytest.raises(
+        snapcraft.errors.FeatureNotImplemented, match=re.escape(expected)
+    ):
+        cmd.run(parsed_args=parsed_args)
+
+
+@pytest.mark.usefixtures("emitter")
+@pytest.mark.parametrize("base", ["core24", "core26"])
+def test_test_command(
+    tmp_path, fake_services, base, setup_project, default_project, mocker
+):
+    """The test command runs for core24 and newer snaps."""
+    mock_run = mocker.patch(
+        "craft_application.commands.lifecycle.TestCommand._run", autospec=True
+    )
+    parsed_args = argparse.Namespace(parts=[], output=tmp_path)
+    cmd = lifecycle.TestCommand({"app": APP_METADATA, "services": fake_services})
+    setup_project(
+        fake_services, {**default_project.marshal(), "base": base}, write_project=True
+    )
+
+    cmd.run(parsed_args=parsed_args)
+
+    mock_run.assert_called_once_with(cmd, parsed_args, None)
+
+
 def test_core24_pack(mocker, emitter, fake_services, tmp_path):
     parsed_args = argparse.Namespace(
         destructive_mode=False, directory=tmp_path, output="test-output"

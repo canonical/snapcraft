@@ -43,6 +43,7 @@ from .lifecycle import (
     PullCommand,
     SnapCommand,
     StageCommand,
+    TestCommand,
     TryCommand,
 )
 from .lint import LintCommand
@@ -137,6 +138,7 @@ __all__ = [
     "StoreValidateCommand",
     "StoreValidationSetsCommand",
     "StoreWhoAmICommand",
+    "TestCommand",
     "TryCommand",
     "core22",
 ]

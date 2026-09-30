@@ -265,6 +265,28 @@ class TryCommand(PackCommand):
         )
 
 
+class TestCommand(craft_application.commands.lifecycle.TestCommand):
+    """Snapcraft test command."""
+
+    @override
+    def _run(
+        self,
+        parsed_args: argparse.Namespace,
+        step_name: str | None = None,
+        **kwargs: Any,
+    ) -> None:
+        # core22 snaps are packed with a separate codebase that doesn't support
+        # the craft-application test workflow
+        project = cast(Project, self.services.get("project").get())
+        effective_base = project.get_effective_base()
+        if effective_base == "core22":
+            raise snapcraft.errors.FeatureNotImplemented(
+                f"'snapcraft test' is not implemented for {effective_base!r}"
+            )
+
+        super()._run(parsed_args, step_name, **kwargs)
+
+
 class SnapCommand(PackCommand):
     """Removed command to pack the final snap payload."""
 
