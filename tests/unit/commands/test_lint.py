@@ -98,6 +98,14 @@ def mock_get_base_configuration(mocker):
 
 
 @pytest.fixture
+def mock_get_data_from_snap_file(mocker):
+    return mocker.patch(
+        "snapcraft.commands.lint.get_data_from_snap_file",
+        return_value=({"name": "test-snap", "base": "core22"}, None),
+    )
+
+
+@pytest.fixture
 def mock_is_managed_mode(mocker):
     return mocker.patch("snapcraft.commands.lint.is_managed_mode", return_value=False)
 
@@ -140,6 +148,7 @@ def test_lint_default(
     mock_capture_logs_from_instance,
     mock_ensure_provider_is_available,
     mock_get_base_configuration,
+    mock_get_data_from_snap_file,
     mock_instance,
     mock_is_managed_mode,
     mock_provider,
@@ -183,6 +192,7 @@ def test_lint_http_https_proxy(
     mock_capture_logs_from_instance,
     mock_ensure_provider_is_available,
     mock_get_base_configuration,
+    mock_get_data_from_snap_file,
     mock_instance,
     mock_is_managed_mode,
     mock_provider,
@@ -217,6 +227,51 @@ def test_lint_http_https_proxy(
     )
 
 
+@pytest.mark.parametrize(
+    ("snap_base", "expected_alias"),
+    [
+        ("core22", BuilddBaseAlias.JAMMY),
+        ("core24", BuilddBaseAlias.NOBLE),
+        ("core26", BuilddBaseAlias.RESOLUTE),
+        # bases that aren't supported as build environments use core22
+        ("core20", BuilddBaseAlias.JAMMY),
+        ("bare", BuilddBaseAlias.JAMMY),
+        (None, BuilddBaseAlias.JAMMY),
+    ],
+)
+def test_lint_build_base(
+    snap_base,
+    expected_alias,
+    fake_snap_file,
+    mock_argv,
+    mock_capture_logs_from_instance,
+    mock_ensure_provider_is_available,
+    mock_get_base_configuration,
+    mock_get_data_from_snap_file,
+    mock_instance,
+    mock_is_managed_mode,
+    mock_provider,
+):
+    """Lint the snap in a build environment that matches the snap's base."""
+    # create a snap file
+    fake_snap_file.touch()
+
+    snap_metadata = {"name": "test-snap"}
+    if snap_base:
+        snap_metadata["base"] = snap_base
+    mock_get_data_from_snap_file.return_value = (snap_metadata, None)
+
+    application.main()
+
+    mock_get_data_from_snap_file.assert_called_once_with(fake_snap_file)
+    mock_get_base_configuration.assert_called_once_with(
+        alias=expected_alias,
+        http_proxy=None,
+        https_proxy=None,
+        instance_name="snapcraft-linter",
+    )
+
+
 def test_lint_assert_file_missing(
     emitter,
     fake_assert_file,
@@ -225,6 +280,7 @@ def test_lint_assert_file_missing(
     mock_capture_logs_from_instance,
     mock_ensure_provider_is_available,
     mock_get_base_configuration,
+    mock_get_data_from_snap_file,
     mock_instance,
     mock_is_managed_mode,
     mock_provider,
@@ -253,6 +309,7 @@ def test_lint_assert_file_not_valid(
     mock_capture_logs_from_instance,
     mock_ensure_provider_is_available,
     mock_get_base_configuration,
+    mock_get_data_from_snap_file,
     mock_instance,
     mock_is_managed_mode,
     mock_provider,
@@ -335,6 +392,7 @@ def test_lint_execute_run_error(
     mock_capture_logs_from_instance,
     mock_ensure_provider_is_available,
     mock_get_base_configuration,
+    mock_get_data_from_snap_file,
     mock_instance,
     mock_is_managed_mode,
     mock_provider,

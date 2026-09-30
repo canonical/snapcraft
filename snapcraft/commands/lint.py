@@ -36,6 +36,7 @@ from snapcraft import errors, linters, models, providers
 from snapcraft.meta import snap_yaml
 from snapcraft.parts.yaml_utils import apply_yaml, extract_parse_info, process_yaml
 from snapcraft.utils import (
+    get_data_from_snap_file,
     get_managed_environment_home_path,
     is_managed_mode,
     unsquash_snap,
@@ -52,9 +53,11 @@ class LintCommand(AppCommand):
         """
         Lint an existing snap file.
 
-        The snap is installed and linted inside a build environment. If an assertion
-        file exists in the same directory as the snap file with the name
-        ``<snap-name>.assert``, it will be used to install the snap in the instance.
+        The snap is installed and linted inside a build environment that matches the
+        snap's base. Snaps with a base that isn't supported as a build environment are
+        linted in a core22 environment. If an assertion file exists in the same
+        directory as the snap file with the name ``<snap-name>.assert``, it will be
+        used to install the snap in the instance.
         """
     )
 
@@ -161,7 +164,9 @@ class LintCommand(AppCommand):
 
         # create base configuration
         instance_name = "snapcraft-linter"
-        build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE["core22"]
+        build_base = providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE[
+            self._get_build_base(snap_file)
+        ]
         base_configuration = providers.get_base_configuration(
             alias=build_base,
             instance_name=instance_name,
@@ -201,6 +206,23 @@ class LintCommand(AppCommand):
                 ) from error
             finally:
                 providers.capture_logs_from_instance(instance)
+
+    def _get_build_base(self, snap_file: Path) -> str:
+        """Get the base of the build environment to lint a snap file in.
+
+        :param snap_file: Path to the snap file.
+
+        :returns: The snap's base if it is supported as a build environment,
+        otherwise core22.
+        """
+        snap_metadata, _ = get_data_from_snap_file(snap_file)
+        base = snap_metadata.get("base")
+
+        if base in providers.SNAPCRAFT_BASE_TO_PROVIDER_BASE:
+            return base
+
+        emit.debug(f"Linting snap with base {base!r} in a core22 build environment.")
+        return "core22"
 
     def _run_linter(self, snap_file: Path, assert_file: Path | None) -> None:
         """Run snapcraft linters on a snap file.
