@@ -107,6 +107,36 @@ def test_normalize_assertions(fake_validation_set_assertion, fake_services, chec
     )
 
 
+def test_normalize_assertions_sorted(
+    fake_validation_set_assertion, fake_services, check
+):
+    """Sort validation sets by name and then numerically by sequence."""
+    validation_sets_service = fake_services.get("validation_sets")
+    # the store sorts sequences as strings
+    validation_sets = [
+        fake_validation_set_assertion(name="set-b", sequence="1"),
+        fake_validation_set_assertion(name="set-a", sequence="1"),
+        fake_validation_set_assertion(name="set-a", sequence="10"),
+        fake_validation_set_assertion(name="set-a", sequence="11"),
+        fake_validation_set_assertion(name="set-a", sequence="2"),
+    ]
+
+    _, normalized_validation_sets = validation_sets_service._normalize_assertions(
+        validation_sets
+    )
+
+    check.equal(
+        [row[1:3] for row in normalized_validation_sets],
+        [
+            ["set-a", 1],
+            ["set-a", 2],
+            ["set-a", 10],
+            ["set-a", 11],
+            ["set-b", 1],
+        ],
+    )
+
+
 def test_generate_yaml_from_model(fake_validation_set_assertion, fake_services):
     validation_sets_service = fake_services.get("validation_sets")
     yaml_data = validation_sets_service._generate_yaml_from_model(

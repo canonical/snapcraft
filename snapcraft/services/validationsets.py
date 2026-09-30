@@ -95,6 +95,15 @@ class ValidationSets(
         self, assertions: list[models.ValidationSetAssertion]
     ) -> tuple[list[str], list[list[Any]]]:
         headers = ["Account ID", "Name", "Sequence", "Revision", "When"]
+        # the store sorts sequences as strings (1, 10, 2), so sort them as integers
+        sorted_assertions = sorted(
+            assertions,
+            key=lambda assertion: (
+                assertion.account_id,
+                assertion.name,
+                assertion.sequence,
+            ),
+        )
         validation_set = [
             [
                 assertion.account_id,
@@ -103,7 +112,7 @@ class ValidationSets(
                 assertion.revision,
                 assertion.timestamp[:10],
             ]
-            for assertion in assertions
+            for assertion in sorted_assertions
         ]
 
         return headers, validation_set
