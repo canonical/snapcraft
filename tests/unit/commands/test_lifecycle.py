@@ -79,7 +79,13 @@ def test_core22_pack_command_with_output(mocker, emitter):
     assert pack_mock.mock_calls == []
 
 
-def test_core22_pack_command_with_directory(mocker):
+_PACK_DIRECTORY_DEPRECATION = (
+    "'snapcraft pack <directory>' is deprecated and will be removed in a future "
+    "major release. Use 'snap pack <directory>' instead."
+)
+
+
+def test_core22_pack_command_with_directory(mocker, emitter):
     lifecycle_run_mock = mocker.patch("snapcraft.parts.lifecycle.run")
     pack_mock = mocker.patch("snapcraft.pack.pack_snap")
     cmd = core22_lifecycle.PackCommand(None)
@@ -88,6 +94,7 @@ def test_core22_pack_command_with_directory(mocker):
 
     assert lifecycle_run_mock.mock_calls == []
     assert pack_mock.mock_calls[0] == call(".", output=None)
+    emitter.assert_warning(_PACK_DIRECTORY_DEPRECATION)
 
 
 def test_snap_command_error(mocker):
@@ -155,6 +162,7 @@ def test_core24_pack(mocker, emitter, fake_services, tmp_path):
     cmd.run(parsed_args)
 
     assert pack_mock.mock_calls[0] == call(tmp_path, output="test-output")
+    emitter.assert_warning(_PACK_DIRECTORY_DEPRECATION)
 
 
 def test_core24_snap_error(fake_services, tmp_path):

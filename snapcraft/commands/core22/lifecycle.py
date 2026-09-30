@@ -226,7 +226,8 @@ class PackCommand(_LifecycleCommand):
         """
         Process parts and create a snap file containing the project payload
         with the provided metadata. If a directory is specified, pack its
-        contents instead.
+        contents instead. Packing a directory is deprecated, use
+        ``snap pack <directory>`` instead.
         """
     )
 
@@ -240,7 +241,7 @@ class PackCommand(_LifecycleCommand):
             type=str,
             nargs="?",
             default=None,
-            help="Directory to pack",
+            help="Directory to pack (deprecated)",
         )
         parser.add_argument(
             "-o",
@@ -255,6 +256,10 @@ class PackCommand(_LifecycleCommand):
         """Run the command."""
         if parsed_args.directory:
             _validate_pro(parsed_args)
+            emit.warning(
+                "'snapcraft pack <directory>' is deprecated and will be removed in a "
+                "future major release. Use 'snap pack <directory>' instead."
+            )
             snap_filename = pack.pack_snap(
                 parsed_args.directory, output=parsed_args.output
             )
