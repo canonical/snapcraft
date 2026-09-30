@@ -25,6 +25,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import craft_parts
+import pydantic
+from craft_application.util.error_formatting import format_pydantic_errors
 from craft_cli import emit
 from craft_parts import Features, ProjectInfo, Step, StepInfo, callbacks
 from craft_platforms import DebianArchitecture
@@ -96,7 +98,12 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
             target_arch=build_for,
             partitions=partitions,
         )
-        project = models.Project.unmarshal(yaml_data_for_arch)
+        try:
+            project = models.Project.unmarshal(yaml_data_for_arch)
+        except pydantic.ValidationError as err:
+            raise errors.ProjectValidationError(
+                format_pydantic_errors(err.errors(), file_name="snapcraft.yaml")
+            ) from err
 
         _run_command(
             command_name,

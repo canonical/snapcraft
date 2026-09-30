@@ -41,6 +41,11 @@ def process_part(
     for key in existing_keys:
         unprocessed_grammar = part_yaml_data[key]
 
+        # Keys without a value, like an empty 'build-packages:', have no grammar
+        # to process. Leave them as-is so the project model can validate them.
+        if unprocessed_grammar is None:
+            continue
+
         if key in _SCALAR_VALUES and isinstance(unprocessed_grammar, str):
             unprocessed_grammar = [unprocessed_grammar]
 

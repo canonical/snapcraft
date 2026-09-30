@@ -87,6 +87,26 @@ def test_list_values(key, grammar_entry):
     assert value == expected
 
 
+@pytest.mark.parametrize(
+    "key",
+    [
+        "source",
+        "build-environment",
+        "build-packages",
+        "stage-packages",
+        "build-snaps",
+        "stage-snaps",
+    ],
+)
+def test_empty_values(key):
+    """Keys without a value are left for the project model to validate."""
+    part_yaml_data = {key: None}
+
+    value = process_part(part_yaml_data=part_yaml_data, processor=_PROCESSOR)
+
+    assert value == {key: None}
+
+
 def test_process_grammar():
     assert process_parts(
         parts_yaml_data={

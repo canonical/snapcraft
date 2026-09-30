@@ -282,6 +282,47 @@ def test_lifecycle_run_no_components(new_dir, snapcraft_yaml, mocker):
 
 
 @pytest.mark.parametrize(
+    ("project_data", "expected"),
+    [
+        pytest.param(
+            {"grade": "foo"},
+            "- input should be 'stable' or 'devel' "
+            "(in field 'has-base.core22.grade', input: 'foo')",
+            id="invalid-value",
+        ),
+        pytest.param(
+            {"build-packages": None},
+            "- input should be a valid list (in field "
+            "'has-base.core22.parts.snapcraft/core.build-packages', input: None)",
+            id="empty-root-grammar-key",
+        ),
+        pytest.param(
+            {"parts": {"part1": {"plugin": "nil", "build-packages": None}}},
+            "- input should be a valid list (in field "
+            "'has-base.core22.parts.part1.build-packages', input: None)",
+            id="empty-part-grammar-key",
+        ),
+    ],
+)
+def test_lifecycle_run_invalid_project(new_dir, snapcraft_yaml, project_data, expected):
+    """Invalid projects raise a user-friendly error."""
+    snapcraft_yaml(base="core22", **project_data)
+
+    with pytest.raises(errors.ProjectValidationError) as raised:
+        parts_lifecycle.run(
+            "pull",
+            parsed_args=argparse.Namespace(
+                destructive_mode=False,
+                use_lxd=False,
+                provider=None,
+                build_for=None,
+            ),
+        )
+
+    assert str(raised.value) == f"Bad snapcraft.yaml content:\n{expected}"
+
+
+@pytest.mark.parametrize(
     "cmd", ["pull", "build", "stage", "prime", "pack", "snap", "clean"]
 )
 def test_lifecycle_run_ua_services_without_token(cmd, snapcraft_yaml, new_dir, mocker):
