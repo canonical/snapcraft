@@ -36,73 +36,73 @@ const dataLegend = {
 // Defines elements inside the swimlanes. Required.
 const dataEntries = [
   {
-    startDate: new Date(2018, 4, 1),
+    startDate: new Date(2018, 3, 1),
     endDate: new Date(2023, 3, 31),
     taskName: "core18",
     type: "LTS",
   },
   {
-    startDate: new Date(2023, 4, 1),
+    startDate: new Date(2023, 3, 1),
     endDate: new Date(2028, 3, 31),
     taskName: "core18",
     type: "ESM",
   },
   {
-    startDate: new Date(2028, 4, 1),
+    startDate: new Date(2028, 3, 1),
     endDate: new Date(2033, 3, 31),
     taskName: "core18",
     type: "Pro",
   },
   {
-    startDate: new Date(2020, 4, 1),
+    startDate: new Date(2020, 3, 1),
     endDate: new Date(2025, 3, 31),
     taskName: "core20",
     type: "LTS",
   },
   {
-    startDate: new Date(2025, 4, 1),
+    startDate: new Date(2025, 3, 1),
     endDate: new Date(2030, 3, 31),
     taskName: "core20",
     type: "ESM",
   },
   {
-    startDate: new Date(2030, 4, 1),
+    startDate: new Date(2030, 3, 1),
     endDate: new Date(2035, 3, 31),
     taskName: "core20",
     type: "Pro",
   },
   {
-    startDate: new Date(2022, 4, 1),
+    startDate: new Date(2022, 3, 1),
     endDate: new Date(2027, 3, 31),
     taskName: "core22",
     type: "LTS",
   },
   {
-    startDate: new Date(2027, 4, 1),
+    startDate: new Date(2027, 3, 1),
     endDate: new Date(2032, 3, 31),
     taskName: "core22",
     type: "ESM",
   },
   {
-    startDate: new Date(2032, 4, 1),
+    startDate: new Date(2032, 3, 1),
     endDate: new Date(2037, 3, 31),
     taskName: "core22",
     type: "Pro",
   },
   {
-    startDate: new Date(2024, 4, 1),
+    startDate: new Date(2024, 3, 1),
     endDate: new Date(2029, 3, 31),
     taskName: "core24",
     type: "LTS",
   },
   {
-    startDate: new Date(2029, 4, 1),
+    startDate: new Date(2029, 3, 1),
     endDate: new Date(2034, 3, 31),
     taskName: "core24",
     type: "ESM",
   },
   {
-    startDate: new Date(2034, 4, 1),
+    startDate: new Date(2034, 3, 1),
     endDate: new Date(2039, 3, 31),
     taskName: "core24",
     type: "Pro",
@@ -112,7 +112,7 @@ const dataEntries = [
 // Defines milestones. Optional.
 const dataMilestones = [
   {
-    name: "Snapcraft 7",
+    name: "7.0.0",
     id: "snapcraft-7",
     lanes: {
       released: "core20",
@@ -121,7 +121,7 @@ const dataMilestones = [
     },
   },
   {
-    name: "Snapcraft 8",
+    name: "8.0.0",
     id: "snapcraft-8",
     lanes: {
       released: "core24",

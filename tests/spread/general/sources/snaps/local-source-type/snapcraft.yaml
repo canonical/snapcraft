@@ -1,5 +1,5 @@
 name: local-source-type
-base: core20
+base: core22
 version: "0.1"
 summary: one line summary
 description: a longer description

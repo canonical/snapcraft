@@ -28,6 +28,7 @@ from craft_application.models import CraftBaseModel
 from typing_extensions import override
 
 from snapcraft import const, errors
+from snapcraft.services.assertions import AssertionData
 from tests.unit.store.utils import FakeResponse
 
 
@@ -94,7 +95,7 @@ FAKE_STORE_ERROR = craft_store.errors.StoreServerError(
     response=FakeResponse(
         content=json.dumps(
             {"error_list": [{"code": "bad assertion", "message": "bad assertion"}]}
-        ),
+        ).encode(),
         status_code=400,
     )
 )
@@ -128,14 +129,14 @@ def fake_assertion_service(fake_services):
 
         @property
         @override
-        def _editable_assertion_class(  # type: ignore[override]
+        def _editable_assertion_class(
             self,
         ) -> type[FakeAssertion]:
             return FakeAssertion
 
         @override
-        def _get_assertions(  # type: ignore[override]
-            self, name: str | None = None
+        def _get_assertions(
+            self, name: str | None = None, **kwargs: dict[str, Any]
         ) -> list[FakeAssertion]:
             return [
                 FakeAssertion(test_field_1="test-value-1", test_field_2=0),
@@ -143,22 +144,18 @@ def fake_assertion_service(fake_services):
             ]
 
         @override
-        def _build_assertion(  # type: ignore[override]
-            self, assertion: FakeAssertion
-        ) -> FakeAssertion:
+        def _build_assertion(self, assertion: FakeAssertion) -> FakeAssertion:
             assertion.test_field_1 = assertion.test_field_1 + "-built"
             return assertion
 
         @override
-        def _post_assertion(  # type: ignore[override]
-            self, assertion_data: bytes
-        ) -> FakeAssertion:
+        def _post_assertion(self, assertion_data: bytes) -> FakeAssertion:
             return FakeAssertion(
                 test_field_1="test-published-assertion", test_field_2=0
             )
 
         @override
-        def _normalize_assertions(  # type: ignore[override]
+        def _normalize_assertions(
             self, assertions: list[FakeAssertion]
         ) -> tuple[list[str], list[list[Any]]]:
             headers = ["test-field-1", "test-field-2"]
@@ -172,9 +169,7 @@ def fake_assertion_service(fake_services):
             return headers, assertion_data
 
         @override
-        def _generate_yaml_from_model(  # type: ignore[override]
-            self, assertion: FakeAssertion
-        ) -> str:
+        def _generate_yaml_from_model(self, assertion: FakeAssertion) -> str:
             return textwrap.dedent(
                 """\
                 test-field-1: test-value-1
@@ -183,7 +178,9 @@ def fake_assertion_service(fake_services):
             )
 
         @override
-        def _generate_yaml_from_template(self, name: str, account_id: str) -> str:
+        def _generate_yaml_from_template(
+            self, name: str, account_id: str, **kwargs: dict[str, Any]
+        ) -> str:
             return textwrap.dedent(
                 """\
                 test-field-1: default-value-1
@@ -192,20 +189,22 @@ def fake_assertion_service(fake_services):
             )
 
         @override
-        def _get_success_message(  # type: ignore[override]
-            self, assertion: FakeAssertion
-        ) -> str:
+        def _get_success_message(self, assertion: FakeAssertion) -> str:
             return "Success."
 
         @override
-        def _validate_assertion(  # type: ignore[override]
+        def _validate_assertion(
             self,
             assertion: FakeAssertion,
+            *,
+            is_new: bool = False,
             **kwargs: dict[str, Any],
         ) -> None:
             """Add an simple custom validator."""
             if kwargs.get("test-arg") == assertion.test_field_2:
                 raise errors.SnapcraftAssertionError("Custom validation failed.")
+            if kwargs.get("test-warning-arg") == assertion.test_field_2:
+                raise errors.SnapcraftAssertionWarning("Custom validation warning.")
 
     return FakeAssertionService(app=APP_METADATA, services=fake_services)
 
@@ -385,7 +384,7 @@ def test_edit_assertions_sign_assertion_error(
     mock_post_assertion = mocker.spy(fake_assertion_service, "_post_assertion")
     mocker.patch.object(
         fake_assertion_service,
-        "_sign_assertion",
+        "sign_assertion",
         side_effect=[
             errors.SnapcraftAssertionError("bad assertion"),
             expected_assertion,
@@ -638,3 +637,137 @@ def test_edit_assertions_validate_assertion_error(
     ]
     assert mock_post_assertion.mock_calls == []
     assert not (tmp_path / "assertion-file").exists()
+
+
+@pytest.mark.parametrize(
+    ("mock_confirm_with_user", "write_text", "expected_assertion"),
+    [
+        pytest.param(
+            False,
+            ["test-field-1: test-value-1-edited\ntest-field-2: 999"],
+            b'{"test_field_1": "test-value-1-edited-built", "test_field_2": "999"}-signed',
+            id="proceed",
+        ),
+        pytest.param(
+            True,
+            [
+                "test-field-1: test-value-1-edited\ntest-field-2: 1000",
+                "test-field-1: test-value-1-edited\ntest-field-2: 999",
+            ],
+            b'{"test_field_1": "test-value-1-edited-built", "test_field_2": "1000"}-signed',
+            id="amend",
+        ),
+    ],
+    indirect=["mock_confirm_with_user", "write_text"],
+)
+@pytest.mark.usefixtures("fake_sign_assertion")
+def test_edit_assertions_validate_assertion_warning(
+    fake_assertion_service,
+    emitter,
+    mock_confirm_with_user,
+    write_text,
+    expected_assertion,
+    mocker,
+    tmp_path,
+):
+    """Users can amend or ignore a non-critical assertion warning."""
+    kwargs: dict[str, Any] = {"test-warning-arg": 999}
+    mock_post_assertion = mocker.spy(fake_assertion_service, "_post_assertion")
+
+    fake_assertion_service.setup()
+    fake_assertion_service.edit_assertion(
+        name="test-confb",
+        account_id="test-account-id",
+        key_name="test-key",
+        **kwargs,
+    )
+
+    assert mock_confirm_with_user.mock_calls == [
+        mock.call("Do you wish to amend the fake assertion?")
+    ]
+    assert mock_post_assertion.mock_calls == [mock.call(expected_assertion)]
+    emitter.assert_progress("Custom validation warning.", permanent=True)
+    emitter.assert_trace(f"Signed assertion: {expected_assertion.decode()}")
+    emitter.assert_message("Success.")
+    assert not (tmp_path / "assertion-file").exists()
+
+
+@pytest.mark.parametrize(
+    ("existing_assertions", "write_text", "expected_is_new"),
+    [
+        pytest.param(
+            [],
+            ["test-field-1: default-value-1-edited\ntest-field-2: 0"],
+            True,
+            id="new-assertion",
+        ),
+        pytest.param(
+            [FakeAssertion(test_field_1="test-value-1", test_field_2=0)],
+            ["test-field-1: test-value-1-edited\ntest-field-2: 0"],
+            False,
+            id="existing-assertion",
+        ),
+    ],
+    indirect=["write_text"],
+)
+@pytest.mark.usefixtures("fake_sign_assertion")
+def test_edit_assertions_is_new(
+    fake_assertion_service,
+    mocker,
+    existing_assertions,
+    write_text,
+    expected_is_new,
+):
+    """'is_new' is true for new assertions and false for existing assertions."""
+    mocker.patch.object(
+        fake_assertion_service, "_get_assertions", return_value=existing_assertions
+    )
+    mock_validate = mocker.spy(fake_assertion_service, "_validate_assertion")
+
+    fake_assertion_service.setup()
+    fake_assertion_service.edit_assertion(
+        name="test-confb",
+        account_id="test-account-id",
+        key_name="test-key",
+    )
+
+    assert mock_validate.call_args.kwargs["is_new"] is expected_is_new
+
+
+@pytest.mark.parametrize(
+    ("existing_assertions", "expected_is_new", "expected_yaml_content"),
+    [
+        pytest.param(
+            [],
+            True,
+            "default-value-1",
+            id="new",
+        ),
+        pytest.param(
+            [FakeAssertion(test_field_1="test-value-1", test_field_2=0)],
+            False,
+            "test-value-1",
+            id="existing",
+        ),
+    ],
+)
+def test_get_yaml_data(
+    fake_assertion_service,
+    mocker,
+    existing_assertions,
+    expected_is_new,
+    expected_yaml_content,
+):
+    """''_get_yaml_data()'' returns AssertionData with correct yaml and 'is_new' status."""
+    mocker.patch.object(
+        fake_assertion_service, "_get_assertions", return_value=existing_assertions
+    )
+    fake_assertion_service.setup()
+
+    result = fake_assertion_service._get_yaml_data(
+        name="test-confb", account_id="test-account-id"
+    )
+
+    assert isinstance(result, AssertionData)
+    assert expected_yaml_content in result.yaml_data
+    assert result.is_new is expected_is_new

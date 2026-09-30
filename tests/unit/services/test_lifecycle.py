@@ -132,12 +132,12 @@ def test_post_prime_patchelf(
         fp.any(),  # Temporary file containing the file to patch.
     ]
     fp.register(["/usr/bin/ldd", str(tmp_path / "prime" / "usr/bin/ls")])
-    fp.register(patchelf_command)  # type: ignore[arg-type]
+    fp.register(patchelf_command)
 
     lifecycle_service.post_prime(mock_step_info)
 
     patchelf_spy.assert_called_with(mock_step_info, use_system_libs=use_system_libs)
-    assert fp.call_count(patchelf_command) == 1  # type: ignore[arg-type]
+    assert fp.call_count(patchelf_command) == 1
 
 
 @pytest.mark.parametrize(

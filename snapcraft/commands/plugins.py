@@ -26,7 +26,7 @@ from craft_application.commands import AppCommand
 from craft_cli import emit
 from craft_parts.plugins import get_registered_plugins
 from craft_platforms import DebianArchitecture
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import const, errors, models
 from snapcraft.parts.yaml_utils import (
@@ -51,7 +51,7 @@ class PluginsCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
@@ -61,18 +61,17 @@ class PluginsCommand(AppCommand):
             help="Show plugins for <base>",
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        if parsed_args.base == "core20":
-            raise errors.LegacyFallback()
-
         base = parsed_args.base
         message: str | None = None
+
+        if base in const.ESM_BASES:
+            raise errors.MaintenanceBase(base=base)
 
         if base is None:
             try:
                 snap_project = get_snap_project()
-                # Run this to trigger legacy behavior
                 yaml_data = process_yaml(snap_project.project_file)
 
                 # process yaml before unmarshalling the data
@@ -103,15 +102,11 @@ class PluginsCommand(AppCommand):
 
 
 class ListPluginsCommand(PluginsCommand):
-    """A command alias to list the available plugins."""
+    """Removed command alias to list the available plugins."""
 
     name = "list-plugins"
     hidden = True
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
-        emit.progress(
-            const.DEPRECATED_COMMAND_WARNING.format(old=self.name, new=super().name),
-            permanent=True,
-        )
-        super().run(parsed_args)
+        raise errors.RemovedCommand(removed_command=self.name, new_command=super().name)

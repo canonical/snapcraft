@@ -30,6 +30,7 @@ from snapcraft.meta import snap_yaml
 
 from .base import Linter, LinterIssue, LinterResult
 from .classic_linter import ClassicLinter
+from .gpu_linter import GpuLinter
 from .library_linter import LibraryLinter
 from .metadata_linter import MetadataLinter
 
@@ -38,6 +39,7 @@ LinterType = type[Linter]
 
 LINTERS: dict[str, LinterType] = {
     "classic": ClassicLinter,
+    "gpu": GpuLinter,
     "library": LibraryLinter,
     "metadata": MetadataLinter,
 }
@@ -134,7 +136,9 @@ def _update_status(status: LinterStatus, result: LinterResult) -> LinterStatus:
     return status
 
 
-def run_linters(location: Path, *, lint: models.Lint | None) -> list[LinterIssue]:
+def run_linters(
+    location: Path, *, lint: models.Lint | None, build_base: str | None = None
+) -> list[LinterIssue]:
     """Run all the defined linters.
 
     :param location: The root of the snap payload subtree to run linters on.
@@ -159,7 +163,9 @@ def run_linters(location: Path, *, lint: models.Lint | None) -> list[LinterIssue
             if lint and categories and all(lint.all_ignored(c) for c in categories):
                 continue
 
-            linter = linter_class(name=name, lint=lint, snap_metadata=snap_metadata)
+            linter = linter_class(
+                name=name, lint=lint, snap_metadata=snap_metadata, build_base=build_base
+            )
             emit.progress(f"Running linter: {name}")
             issues = linter.run()
             all_issues += issues

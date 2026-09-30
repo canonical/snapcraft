@@ -37,6 +37,7 @@ def project_vars():
     return yaml_utils.create_project_vars({"version": "1", "grade": "stable"})
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("step_name", ["pull", "build", "stage", "prime"])
 def test_parts_lifecycle_run(
     mocker, parts_data, step_name, new_dir, emitter, project_vars
@@ -88,6 +89,7 @@ def test_parts_lifecycle_run(
     ]
 
 
+@pytest.mark.slow
 @pytest.mark.usefixtures("enable_partitions_feature")
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.parametrize("step_name", ["pull", "build", "stage", "prime"])
@@ -437,6 +439,7 @@ def test_parts_lifecycle_bad_architecture(parts_data, new_dir, project_vars):
         )
 
 
+@pytest.mark.slow
 def test_parts_lifecycle_run_with_all_architecture(
     mocker, parts_data, new_dir, project_vars
 ):

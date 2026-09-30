@@ -31,7 +31,7 @@ from craft_application.models.constraints import (
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
 
-from snapcraft import errors, models
+from snapcraft import const, errors, models
 from snapcraft.elf.elf_utils import get_arch_triplet
 from snapcraft.utils import (
     get_ld_library_paths,
@@ -69,7 +69,8 @@ class SnapApp(SnapcraftMetadata):
     """Snap.yaml app entry.
 
     This is currently a partial implementation, see
-    https://snapcraft.io/docs/snap-format for details.
+    https://snapcraft.io/docs/reference/development/yaml-schemas/the-snap-format/ for
+    details.
 
     TODO: implement desktop (CRAFT-804)
     TODO: implement extensions (CRAFT-805)
@@ -106,7 +107,7 @@ class SnapApp(SnapcraftMetadata):
     activates_on: list[str] | None = None
 
 
-class ContentPlug(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
+class ContentPlug(SnapcraftMetadata):
     """Content plug definition in the snap metadata."""
 
     model_config = pydantic.ConfigDict(
@@ -159,12 +160,19 @@ class ContentSlot(SnapcraftMetadata):
     content: str | None = None
     read: list[str] = []
     write: list[str] = []
+    source: dict[str, list[str]] = {}
 
     def get_content_dirs(self, installed_path: Path) -> set[Path]:
         """Obtain the slot's content directories."""
         content_dirs: set[Path] = set()
 
-        for path_ in self.read + self.write:
+        paths = [
+            *self.read,
+            *self.write,
+            *self.source.get("read", []),
+            *self.source.get("write", []),
+        ]
+        for path_ in paths:
             # Strip leading "$SNAP" and "/".
             path = re.sub(r"^\$SNAP", "", path_)
             path = re.sub(r"^/", "", path)
@@ -189,7 +197,7 @@ class Links(SnapcraftMetadata):
     ) -> constraints.UniqueStrList | None:
         result: constraints.UniqueStrList | None
         if isinstance(value, str):
-            result = cast(constraints.UniqueStrList, [value])
+            result = [value]
         else:
             result = value
         return result
@@ -212,7 +220,7 @@ class Links(SnapcraftMetadata):
         )
 
 
-class ComponentMetadata(SnapcraftMetadata):  # type: ignore # (pydantic plugin is crashing)
+class ComponentMetadata(SnapcraftMetadata):
     """Component metadata model.
 
     This model contains different information than the model in the
@@ -243,7 +251,8 @@ class SnapMetadata(SnapcraftMetadata):
     """The snap.yaml model.
 
     This is currently a partial implementation, see
-    https://snapcraft.io/docs/snap-format for details.
+    https://snapcraft.io/docs/reference/development/yaml-schemas/the-snap-format/ for
+    details.
 
     TODO: should platforms replace architectures for core24?
     """
@@ -257,6 +266,7 @@ class SnapMetadata(SnapcraftMetadata):
     type: str | None = None
     architectures: list[str]
     base: str | None = None
+    build_base: str | None = None
     assumes: list[str] | None = None
     epoch: str | None = None
     apps: dict[str, SnapApp] | None = None
@@ -464,6 +474,9 @@ def get_metadata_from_project(
 
     links = Links.from_project(project)
     snap_type = project.type.value if project.type else None
+    build_base = (
+        project.build_base if project.type == const.ProjectType.KERNEL else None
+    )
 
     snap_metadata = SnapMetadata(
         name=project.name,
@@ -475,6 +488,7 @@ def get_metadata_from_project(
         type=snap_type,
         architectures=[arch],
         base=cast(str, project.base),
+        build_base=build_base,
         assumes=total_assumes if total_assumes else None,
         epoch=project.epoch,
         apps=snap_apps or None,
@@ -548,6 +562,8 @@ def _populate_environment(
             "LD_LIBRARY_PATH": get_ld_library_paths(prime_dir, arch_triplet),
             "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         }
+
+    environment = environment.copy()
 
     # if LD_LIBRARY_PATH is not defined, use default value when not classic
     if "LD_LIBRARY_PATH" not in environment and confinement != "classic":

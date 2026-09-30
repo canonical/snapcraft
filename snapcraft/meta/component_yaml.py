@@ -18,6 +18,8 @@
 
 from pathlib import Path
 
+from craft_application import util
+
 from snapcraft import models
 from snapcraft.errors import SnapcraftError
 
@@ -39,6 +41,31 @@ class ComponentMetadata(SnapcraftMetadata):
     provenance: str | None = None
 
 
+def get_metadata(project: models.Project, component_name: str) -> ComponentMetadata:
+    """Create component metadata for the requested component."""
+    if not project.components:
+        raise SnapcraftError("Project does not contain any components.")
+
+    component = project.components.get(component_name)
+
+    if not component:
+        raise SnapcraftError("Component does not exist.")
+
+    return ComponentMetadata(
+        component=f"{project.name}+{component_name}",
+        type=component.type,
+        version=component.version,
+        summary=component.summary,
+        description=component.description,
+        provenance=project.provenance,
+    )
+
+
+def get_str(project: models.Project, component_name: str) -> str:
+    """Create the component.yaml contents for the requested component."""
+    return util.dump_yaml(get_metadata(project, component_name).marshal())
+
+
 def write(
     project: models.Project, component_name: str, component_prime_dir: Path
 ) -> None:
@@ -51,21 +78,6 @@ def write(
     meta_dir = component_prime_dir / "meta"
     meta_dir.mkdir(parents=True, exist_ok=True)
 
-    if not project.components:
-        raise SnapcraftError("Project does not contain any components.")
-
-    component = project.components.get(component_name)
-
-    if not component:
-        raise SnapcraftError("Component does not exist.")
-
-    component_metadata = ComponentMetadata(
-        component=f"{project.name}+{component_name}",
-        type=component.type,
-        version=component.version,
-        summary=component.summary,
-        description=component.description,
-        provenance=project.provenance,
+    meta_dir.joinpath("component.yaml").write_text(
+        get_str(project, component_name), encoding="utf-8"
     )
-
-    component_metadata.to_yaml_file(meta_dir / "component.yaml")

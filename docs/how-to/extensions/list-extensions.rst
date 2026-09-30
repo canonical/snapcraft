@@ -13,7 +13,10 @@ list all extensions supported by the installed version of Snapcraft, run:
 The output includes all extensions, both stable and experimental, without
 differentiating them.
 
+.. vale off
+
 .. terminal::
+    :output-only:
 
     Extension name          Supported bases
     ----------------------  ------------------------------
@@ -26,7 +29,10 @@ differentiating them.
     gnome-3-28              core18
     gnome-3-34              core18
     gnome-3-38              core20
+    gpu                     core22, core24, core26
     kde-neon                core18, core20, core22, core24
     [...]
+
+.. vale on
 
 For the full reference for this command, see :ref:`ref_commands_extensions`.

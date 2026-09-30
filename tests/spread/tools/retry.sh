@@ -9,7 +9,7 @@ retry() {
   while true; do
     # shellcheck disable=SC2015
     "$@" && break || {
-      if (( attempt == max_attempts )); then
+      if ((attempt == max_attempts)); then
         echo "Command failed after $max_attempts attempts." >&2
         return 1
       else

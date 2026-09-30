@@ -22,10 +22,15 @@ if(NOT WIN32)
 endif()
 
 add_executable(talker src/publisher_member_function.cpp)
-ament_target_dependencies(talker rclcpp std_msgs)
-
 add_executable(listener src/subscriber_member_function.cpp)
-ament_target_dependencies(listener rclcpp std_msgs)
+
+if(COMMAND ament_target_dependencies)
+  ament_target_dependencies(talker rclcpp std_msgs)
+  ament_target_dependencies(listener rclcpp std_msgs)
+else()
+  target_link_libraries(talker rclcpp::rclcpp ${std_msgs_TARGETS})
+  target_link_libraries(listener rclcpp::rclcpp ${std_msgs_TARGETS})
+endif()
 
 install(
   TARGETS talker listener

@@ -14,7 +14,7 @@ Example project file for KCalc
 The following code comprises the project file of a Qt5 KDE app, `KCalc
 <https://github.com/KDE/kcalc>`_. This project is the calculator of KDE Gear.
 
-.. collapse:: KCalc project file
+.. dropdown:: KCalc project file
 
     .. literalinclude:: ../code/integrations/example-qt5-kde-recipe.yaml
         :caption: snapcraft.yaml

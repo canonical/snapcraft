@@ -18,7 +18,7 @@ Example project file for XSV
 The following code comprises the project file of a Rust app, `XSV
 <https://github.com/snapcraft-docs/xsv>`_. It analyses and manipulates CSV files.
 
-.. collapse:: XSV project file
+.. dropdown:: XSV project file
 
     .. literalinclude:: ../code/integrations/example-rust-recipe.yaml
         :caption: snapcraft.yaml

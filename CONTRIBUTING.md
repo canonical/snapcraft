@@ -43,22 +43,6 @@ add your voice to the issue.
 If the bug or feature doesn't have an issue, we invite you to [open
 one](https://github.com/canonical/snapcraft/issues/new/choose).
 
-## Apply for a bounty
-
-Snapcraft has a parallel stream of materially-rewarding work in the form of bounties. At
-the Starcraft team's discretion, high-value GitHub issues are allocated monetary
-bounties. A bounty is paid when the solution is merged into the codebase and its
-implementation meets all business and technical specifications outlined in the issue. To
-keep things fair, you can work on only one bounty at a time.
-
-If you're interested in bounties, enroll in the [GitHub Sponsors
-program](https://docs.github.com/en/sponsors/getting-started-with-github-sponsors/about-github-sponsors).
-
-To show interest in a bounty, provide a rough solution plan for it in a comment on its
-GitHub issue. The Snapcraft maintainers review all proposals for technical soundness. If
-your proposal is accepted, they will assign you the bounty, after which you can begin
-work.
-
 ## Set up for development
 
 Snapcraft uses a forking, feature-based workflow. Most work on Snapcraft occurs on
@@ -144,9 +128,6 @@ the issue's thread. In your proposal, describe a plan for the change, its tests,
 documentation. If the feature warrants a new page in the documentation, propose a
 [Diátaxis](https://diataxis.fr) category for the page. A Snapcraft maintainer will
 review your proposal and, if everything looks complete, assign the issue to you.
-
-Certain high-value issues are allocated monetary bounties. If you're interested in
-taking one on, we welcome you to apply.
 
 ### Create a development branch
 
@@ -309,10 +290,14 @@ Once your work is committed to your branch, push it to your fork:
 git push -u origin <branch-name>
 ```
 
-Finally, [open a PR](https://github.com/canonical/snapcraft/compare) for it on GitHub.
-If your branch has one commit, GitHub will title the PR after it. If your branch has
-more than one commit, name the PR after the most significant. Once open, reviewers are
-assigned automatically to your work.
+On GitHub, [open a PR](https://github.com/canonical/snapcraft/compare) for your branch in
+Snapcraft.
+
+Format the PR title as a conventional commit. If your branch has only one commit, GitHub
+handles this automatically. If your branch has multiple commits, copy the title of the
+most important one.
+
+Once open, reviewers are assigned automatically to your work.
 
 ### Follow up for the review
 

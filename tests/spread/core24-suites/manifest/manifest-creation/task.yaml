@@ -8,7 +8,6 @@ environment:
 
 prepare: |
   snap install review-tools
-  snap install yq
 
 restore: |
   snapcraft clean --destructive-mode

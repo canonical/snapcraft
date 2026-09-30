@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import re
 import textwrap
 
 import craft_parts.plugins
@@ -45,20 +46,11 @@ def fake_registered_plugins(mocker):
 ###################
 
 
-@pytest.mark.parametrize(
-    "command", [commands.ListPluginsCommand, commands.PluginsCommand]
-)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_default(command, emitter, fake_app_config):
+def test_registered_plugins_default(emitter, fake_app_config):
     """Default to core24."""
-    command(fake_app_config).run(argparse.Namespace(base=None))
+    commands.PluginsCommand(fake_app_config).run(argparse.Namespace(base=None))
 
-    if command.hidden:
-        emitter.assert_progress(
-            f"The '{command.name}' command was renamed to 'plugins'. Use 'plugins' instead. "
-            "The old name will be removed in a future release.",
-            permanent=True,
-        )
     emitter.assert_message(
         textwrap.dedent(
             """\
@@ -69,21 +61,16 @@ def test_registered_plugins_default(command, emitter, fake_app_config):
     )
 
 
-@pytest.mark.parametrize(
-    "command", [commands.ListPluginsCommand, commands.PluginsCommand]
-)
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_project(
-    command, base, emitter, snapcraft_yaml, fake_app_config
-):
+def test_registered_plugins_project(base, emitter, snapcraft_yaml, fake_app_config):
     """Use the project's base."""
     if base in (b for b in const.UnstableBase):
         snapcraft_yaml(base=base, build_base="devel", grade="devel")
     else:
         snapcraft_yaml(base=base)
 
-    command(fake_app_config).run(argparse.Namespace(base=None))
+    commands.PluginsCommand(fake_app_config).run(argparse.Namespace(base=None))
 
     emitter.assert_message(
         textwrap.dedent(
@@ -95,18 +82,13 @@ def test_registered_plugins_project(
     )
 
 
-@pytest.mark.parametrize(
-    "command", [commands.ListPluginsCommand, commands.PluginsCommand]
-)
 @pytest.mark.parametrize("base", const.CURRENT_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_base_option(
-    command, base, emitter, snapcraft_yaml, fake_app_config
-):
+def test_registered_plugins_base_option(base, emitter, snapcraft_yaml, fake_app_config):
     """The base cli option should override the project's base."""
     snapcraft_yaml(base="core20")
 
-    command(fake_app_config).run(argparse.Namespace(base=base))
+    commands.PluginsCommand(fake_app_config).run(argparse.Namespace(base=base))
 
     emitter.assert_message(
         textwrap.dedent(
@@ -118,16 +100,21 @@ def test_registered_plugins_base_option(
     )
 
 
-@pytest.mark.parametrize(
-    "command", [commands.ListPluginsCommand, commands.PluginsCommand]
-)
-@pytest.mark.parametrize("base", const.LEGACY_BASES)
+@pytest.mark.parametrize("base", const.ESM_BASES)
 @pytest.mark.usefixtures("new_dir")
-def test_registered_plugins_legacy_project(
-    command, base, snapcraft_yaml, fake_app_config
-):
-    """Legacy bases should fallback to the legacy handler."""
+def test_registered_plugins_esm_base_error(base, snapcraft_yaml, fake_app_config):
+    """Error when listing plugins for an outdated base."""
     snapcraft_yaml(base=base)
+    expected = re.escape(f"{base!r} is not supported on this version of Snapcraft.")
 
-    with pytest.raises(errors.LegacyFallback):
-        command(fake_app_config).run(argparse.Namespace(base=None))
+    with pytest.raises(errors.MaintenanceBase, match=expected):
+        commands.PluginsCommand(fake_app_config).run(argparse.Namespace(base=None))
+
+
+@pytest.mark.usefixtures("new_dir")
+def test_list_plugins_error(fake_app_config):
+    """Error on removed 'list-plugins' command."""
+    expected = re.escape("The 'list-plugins' command was renamed to 'plugins'.")
+
+    with pytest.raises(errors.RemovedCommand, match=expected):
+        commands.ListPluginsCommand(fake_app_config).run(argparse.Namespace(base=None))

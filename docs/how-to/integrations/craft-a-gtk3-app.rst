@@ -15,7 +15,7 @@ Example foliate project file
 The following code comprises the project file of a GTK3 app, `foliate
 <https://github.com/johnfactotum/foliate>`_. This project is an e-book reader.
 
-.. collapse:: foliate project file
+.. dropdown:: foliate project file
 
     .. literalinclude:: ../code/integrations/example-gtk3-recipe.yaml
         :caption: snapcraft.yaml

@@ -8,10 +8,10 @@
 
 # shellcheck disable=SC2154
 if [ "$wayland_available" = true ]; then
-  export GDK_BACKEND="wayland"
-  export CLUTTER_BACKEND="wayland"
-  # Does not hurt to specify this as well, just in case
-  export QT_QPA_PLATFORM=wayland-egl
+    export GDK_BACKEND="wayland"
+    export CLUTTER_BACKEND="wayland"
+    # Does not hurt to specify this as well, just in case
+    export QT_QPA_PLATFORM=wayland-egl
 fi
 append_dir GTK_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/gtk-2.0"
 append_dir GTK_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/gtk-2.0"
@@ -22,9 +22,9 @@ append_dir GTK_PATH "$SNAP_DESKTOP_RUNTIME/usr/lib/gtk-4.0"
 
 snap_python_version="%WITH_PYTHON%"
 if [ "$snap_python_version" = "3.6" ]; then
-  append_dir PYTHONPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/python3.6/site-packages"
+    append_dir PYTHONPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/python3.6/site-packages"
 elif [ "$snap_python_version" = "3.8" ]; then
-  append_dir PYTHONPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/python3.8"
+    append_dir PYTHONPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/python3.8"
 fi
 append_dir PYTHONPATH "$SNAP_DESKTOP_RUNTIME/usr/lib/python3/dist-packages"
 
@@ -33,9 +33,8 @@ GTK_IM_MODULE_DIR="$XDG_CACHE_HOME/immodules"
 export GTK_IM_MODULE_FILE="$GTK_IM_MODULE_DIR/immodules.cache"
 # shellcheck disable=SC2154
 if [ "$needs_update" = true ]; then
-  rm -rf "$GTK_IM_MODULE_DIR"
-  ensure_dir_exists "$GTK_IM_MODULE_DIR"
-  ln -s "$SNAP_DESKTOP_RUNTIME"/usr/lib/"$ARCH"/gtk-3.0/3.0.0/immodules/*.so "$GTK_IM_MODULE_DIR"
-  async_exec "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" > "$GTK_IM_MODULE_FILE"
+    rm -rf "$GTK_IM_MODULE_DIR"
+    ensure_dir_exists "$GTK_IM_MODULE_DIR"
+    ln -s "$SNAP_DESKTOP_RUNTIME"/usr/lib/"$ARCH"/gtk-3.0/3.0.0/immodules/*.so "$GTK_IM_MODULE_DIR"
+    async_exec "$SNAP_DESKTOP_RUNTIME/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" >"$GTK_IM_MODULE_FILE"
 fi
-

@@ -18,7 +18,7 @@
 
 from typing import Any
 
-from overrides import overrides
+from typing_extensions import override
 
 from .extension import Extension
 
@@ -54,25 +54,25 @@ class EnvInjector(Extension):
     """
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_bases() -> tuple[str, ...]:
         return ("core24",)
 
     @staticmethod
-    @overrides
+    @override
     def get_supported_confinement() -> tuple[str, ...]:
         return ("strict", "devmode", "classic")
 
     @staticmethod
-    @overrides
+    @override
     def is_experimental(base: str | None) -> bool:
         return True
 
-    @overrides
+    @override
     def get_root_snippet(self) -> dict[str, Any]:
         return {}
 
-    @overrides
+    @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
         """Return the app snippet to apply."""
         return {
@@ -82,11 +82,11 @@ class EnvInjector(Extension):
             },
         }
 
-    @overrides
+    @override
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         return {}
 
-    @overrides
+    @override
     def get_parts_snippet(self) -> dict[str, Any]:
         toolchain = self.get_toolchain(self.arch)
         if toolchain is None:

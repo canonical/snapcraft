@@ -32,7 +32,7 @@ from catkin_pkg import packages as catkin_packages
 from craft_parts import plugins
 from craft_parts.packages import Repository as Repo
 from craft_parts.packages.snaps import _get_parsed_snap
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft.errors import SnapcraftError
 
@@ -85,22 +85,22 @@ def _parse_rosdep_resolve_dependencies(
 class RosPlugin(plugins.Plugin):
     """Base class for ROS-related plugins. Not intended for use by end users."""
 
-    _MAP_CORE_ROSDISTRO = {"core22": "humble", "core24": "jazzy"}
+    _MAP_CORE_ROSDISTRO = {"core22": "humble", "core24": "jazzy", "core26": "lyrical"}
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return (
-            set(self._options.colcon_ros_build_snaps)  # type: ignore
-            if self._options.colcon_ros_build_snaps  # type: ignore
+            set(self._options.colcon_ros_build_snaps)  # ty: ignore[unresolved-attribute]
+            if self._options.colcon_ros_build_snaps  # ty: ignore[unresolved-attribute]
             else set()
         )
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         base = self._part_info.base
         return {"python3-rosdep", f"ros-{self._MAP_CORE_ROSDISTRO[base]}-ros2pkg"}
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         return {"ROS_PYTHON_VERSION": "3"}
 
@@ -118,7 +118,7 @@ class RosPlugin(plugins.Plugin):
         the build step, so these commands can affect the commands that
         follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
@@ -132,7 +132,7 @@ class RosPlugin(plugins.Plugin):
         of the build step, so these commands can be affected by the commands
         preceding it, and can affect those that follow.
 
-        snapcraftctl can be used in the script to call out to snapcraft
+        craftctl can be used in the script to call out to snapcraft
         specific functionality.
         """
 
@@ -150,8 +150,8 @@ class RosPlugin(plugins.Plugin):
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"')
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"')
 
-        if self._options.colcon_ros_build_snaps:  # type: ignore
-            for ros_build_snap in self._options.colcon_ros_build_snaps:  # type: ignore
+        if self._options.colcon_ros_build_snaps:  # ty: ignore[unresolved-attribute]
+            for ros_build_snap in self._options.colcon_ros_build_snaps:  # ty: ignore[unresolved-attribute]
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
                 base_path = f"/snap/{snap_name}/current/opt/ros"
                 path_ros_sys = f"{base_path}/${{ROS_DISTRO}}/"
@@ -226,7 +226,7 @@ class RosPlugin(plugins.Plugin):
             )
         ]
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         return (
             [  # noqa S608 (false positive on SQL injection)
@@ -310,7 +310,7 @@ def _get_debian_package_names(
     parsed = _parse_rosdep_resolve_dependencies(
         ros_package_name, proc.stdout.decode().strip()
     )
-    return cast(set[DebianPackageName], parsed.get("apt", set()))
+    return parsed.get("apt", set())
 
 
 def _find_installed_debian_dependencies(
@@ -447,7 +447,7 @@ def stage_runtime_dependencies(  # noqa: PLR0913 (too many arguments)
             arch=target_arch,
             base=base,
             stage_packages_path=stage_packages_path,
-            packages_filters=build_snap_packages,  # type: ignore
+            packages_filters=build_snap_packages,  # ty: ignore[unknown-argument]
         )
 
         click.echo(f"Unpacking stage packages: {fetched_stage_packages!r}")

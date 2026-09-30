@@ -15,8 +15,6 @@ environment:
   SNAP/build_for_with_platforms: build-for-with-platforms
   SNAP/build_for_with_shorthand_platforms: build-for-with-shorthand-platforms
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
-  CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
-  CREDENTIALS_FILE/old_credentials: "$HOME/.local/share/snapcraft/provider/launchpad/credentials"
 
 prepare: |
   cd "./snaps/$SNAP"

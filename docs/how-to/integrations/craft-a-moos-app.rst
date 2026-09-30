@@ -15,7 +15,7 @@ Example test-moos project file
 The following code comprises the project file for the `MOOS core project
 <https://github.com/themoos/core-moos>`_ itself.
 
-.. collapse:: MOOS project file
+.. dropdown:: MOOS project file
 
     .. literalinclude:: ../code/integrations/example-moos-recipe.yaml
         :caption: snapcraft.yaml

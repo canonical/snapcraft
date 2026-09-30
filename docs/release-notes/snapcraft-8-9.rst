@@ -49,7 +49,7 @@ Documentation migration and redesign
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Previously, the main source of Snapcraft documentation was hosted on a Discourse
-instance at `snapcraft.io <http://snapcraft.io/docs>`_.
+instance at `snapcraft.io <http://snapcraft.io/docs>`__.
 
 With Snapcraft 8.9, the essential documentation was shifted to ReadTheDocs and is now
 hosted inside the Snapcraft repository. In the process, much of the documentation was
@@ -108,9 +108,10 @@ The following changes are incompatible with previous versions of Snapcraft.
 Renaming of confdb schema commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A `confdb schema <https://snapcraft.io/docs/configure-with-confdb>`_ defines the
-configuration of Linux systems, including storage, access permission, granularity,
-and sharing between snaps.
+A :external+snap:ref:`confdb schema
+<how-to-guides-manage-snaps-configure-snaps-with-confdb>` defines the configuration of
+Linux systems, including storage, access permission, granularity, and sharing between
+snaps.
 
 The existing confdb schema commands have been renamed as follows:
 

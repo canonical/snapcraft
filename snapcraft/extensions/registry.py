@@ -23,8 +23,10 @@ from snapcraft import errors
 from .dotnet8 import Dotnet8Extension
 from .dotnet9 import Dotnet9Extension
 from .dotnet10 import Dotnet10Extension
+from .dotnet11 import Dotnet11Extension
 from .env_injector import EnvInjector
 from .gnome import GNOME
+from .gpu_extension import GPUExtension
 from .kde_neon import KDENeon
 from .kde_neon_6 import KDENeon6
 from .kde_neon_qt6 import KDENeonQt6
@@ -36,6 +38,10 @@ from .ros2_jazzy import ROS2JazzyExtension
 from .ros2_jazzy_desktop import ROS2JazzyDesktopExtension
 from .ros2_jazzy_ros_base import ROS2JazzyRosBaseExtension
 from .ros2_jazzy_ros_core import ROS2JazzyRosCoreExtension
+from .ros2_lyrical import ROS2LyricalExtension
+from .ros2_lyrical_desktop import ROS2LyricalDesktopExtension
+from .ros2_lyrical_ros_base import ROS2LyricalRosBaseExtension
+from .ros2_lyrical_ros_core import ROS2LyricalRosCoreExtension
 
 if TYPE_CHECKING:
     from .extension import Extension
@@ -46,8 +52,10 @@ _EXTENSIONS: dict[str, "ExtensionType"] = {
     "dotnet8": Dotnet8Extension,
     "dotnet9": Dotnet9Extension,
     "dotnet10": Dotnet10Extension,
+    "dotnet11": Dotnet11Extension,
     "env-injector": EnvInjector,
     "gnome": GNOME,
+    "gpu": GPUExtension,
     "ros2-humble": ROS2HumbleExtension,
     "ros2-humble-ros-core": ROS2HumbleRosCoreExtension,
     "ros2-humble-ros-base": ROS2HumbleRosBaseExtension,
@@ -56,6 +64,10 @@ _EXTENSIONS: dict[str, "ExtensionType"] = {
     "ros2-jazzy-ros-core": ROS2JazzyRosCoreExtension,
     "ros2-jazzy-ros-base": ROS2JazzyRosBaseExtension,
     "ros2-jazzy-desktop": ROS2JazzyDesktopExtension,
+    "ros2-lyrical": ROS2LyricalExtension,
+    "ros2-lyrical-ros-core": ROS2LyricalRosCoreExtension,
+    "ros2-lyrical-ros-base": ROS2LyricalRosBaseExtension,
+    "ros2-lyrical-desktop": ROS2LyricalDesktopExtension,
     "kde-neon": KDENeon,
     "kde-neon-6": KDENeon6,
     "kde-neon-qt6": KDENeonQt6,

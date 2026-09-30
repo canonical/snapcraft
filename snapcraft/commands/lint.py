@@ -20,10 +20,7 @@ import argparse
 import os
 import shlex
 import subprocess
-import tempfile
 import textwrap
-from collections.abc import Iterator
-from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -33,7 +30,7 @@ from craft_cli.errors import ArgumentParsingError
 from craft_platforms import DebianArchitecture
 from craft_providers.multipass import MultipassProvider
 from craft_providers.util import snap_cmd
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import errors, linters, models, providers
 from snapcraft.meta import snap_yaml
@@ -41,6 +38,7 @@ from snapcraft.parts.yaml_utils import apply_yaml, extract_parse_info, process_y
 from snapcraft.utils import (
     get_managed_environment_home_path,
     is_managed_mode,
+    unsquash_snap,
 )
 
 
@@ -60,7 +58,7 @@ class LintCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "snap_file",
@@ -211,7 +209,7 @@ class LintCommand(AppCommand):
         :param assert_file: Optional path to assertion file for the snap file.
         """
         # unsquash, load snap.yaml, and optionally load snapcraft.yaml
-        with self._unsquash_snap(snap_file) as unsquashed_snap:
+        with unsquash_snap(snap_file) as unsquashed_snap:
             snap_metadata = snap_yaml.read(unsquashed_snap)
             project = self._load_project(unsquashed_snap / "snap" / "snapcraft.yaml")
 
@@ -222,41 +220,6 @@ class LintCommand(AppCommand):
         # run the linters
         issues = linters.run_linters(location=snap_install_path, lint=lint_filters)
         linters.report(issues, intermediate=True)
-
-    @contextmanager
-    def _unsquash_snap(self, snap_file: Path) -> Iterator[Path]:
-        """Unsquash a snap file to a temporary directory.
-
-        :param snap_file: Snap package to extract.
-
-        :yields: Path to the snap's unsquashed directory.
-
-        :raises errors.SnapcraftError: If the snap fails to unsquash.
-        """
-        snap_file = snap_file.resolve()
-
-        with tempfile.TemporaryDirectory(prefix=str(snap_file.parent)) as temp_dir:
-            emit.progress(f"Unsquashing snap file {snap_file.name!r}.")
-
-            # unsquashfs [options] filesystem [directories or files to extract] options:
-            # -force: if file already exists then overwrite
-            # -dest <pathname>: unsquash to <pathname>
-            extract_command = [
-                "unsquashfs",
-                "-force",
-                "-dest",
-                temp_dir,
-                str(snap_file),
-            ]
-
-            try:
-                subprocess.run(extract_command, capture_output=True, check=True)
-            except subprocess.CalledProcessError as error:
-                raise errors.SnapcraftError(
-                    f"could not unsquash snap file {snap_file.name!r}"
-                ) from error
-
-            yield Path(temp_dir)
 
     def _load_project(self, snapcraft_yaml_file: Path) -> models.Project | None:
         """Load a snapcraft Project from a snapcraft.yaml, if present.
@@ -275,7 +238,7 @@ class LintCommand(AppCommand):
         try:
             # process_yaml will not parse core, core18, and core20 snaps
             yaml_data = process_yaml(snapcraft_yaml_file)
-        except (errors.LegacyFallback, errors.MaintenanceBase) as error:
+        except errors.MaintenanceBase as error:
             raise errors.SnapcraftError(
                 "can not lint snap using a base older than core22"
             ) from error

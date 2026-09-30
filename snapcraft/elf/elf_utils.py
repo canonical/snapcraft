@@ -113,6 +113,8 @@ _ARCH_CONFIG = {
     ),
     "i686": _ArchConfig("i386-linux-gnu", "lib/ld-linux.so.2", "EM_386"),
 }
+# armv8l indicates a 64-bit armv8 system running a 32-bit compatible armhf environment.
+_ARCH_CONFIG["armv8l"] = _ARCH_CONFIG["armv7l"]
 
 
 def get_dynamic_linker(*, root_path: Path, snap_path: Path) -> str:
@@ -158,7 +160,12 @@ def get_arch_triplet(arch: str | None = None) -> str:
 
 def get_all_arch_triplets() -> list[str]:
     """Get a list of all architecture triplets."""
-    return [architecture.arch_triplet for architecture in _ARCH_CONFIG.values()]
+    # Deduplicate because multiple architectures may map to the same arch triplet.
+    return list(
+        dict.fromkeys(
+            architecture.arch_triplet for architecture in _ARCH_CONFIG.values()
+        )
+    )
 
 
 def get_host_elf_machine() -> str | None:

@@ -55,7 +55,7 @@ execute: |
   snapcraft expand-extensions
 
   # Build what we have and verify the snap runs as expected.
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
@@ -64,7 +64,7 @@ execute: |
 
   # Clean the hello part, then build and run again.
   snapcraft clean hello
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then
@@ -104,7 +104,7 @@ execute: |
 
   sed -i "${modified_file}" -e 's/hello world/hello rebuilt world/'
 
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   if [ "${SNAP}" != "flutter-hello" ]; then

@@ -42,6 +42,9 @@ Like ``snapcraft login``, this will prompt you to enter your email, password, an
 factor authentication code. Once entered, your account credentials will be exported to a
 file in your current directory with the name you specified.
 
+To avoid overwriting credentials, the command fails if the file already exists. Rename or
+remove it first, or export to a different file.
+
 By default, the exported credentials will have access to all snaps, channels, and ACLs
 associated with your account. To limit this access, you can append any of the following
 options to the previous command:
@@ -56,7 +59,8 @@ options to the previous command:
     * - ``--channels``
       - Comma-separated list of allowed channels
     * - ``--acls``
-      - Comma-separated list of allowed ACLs
+      - Comma-separated list of `allowed ACLs
+        <https://dashboard.snapcraft.io/docs/reference/v1/macaroon.html#post--dev-api-acl->`__
     * - ``--expires``
       - The date and time (in ISO 8601) the exported
         credentials will expire.
@@ -94,7 +98,11 @@ working with:
 This should output your account information as follows:
 
 .. terminal::
-    :input: snapcraft whoami
+    :user:
+    :host:
+    :dir:
+
+    snapcraft whoami
 
     email: <account-email>
     username: <account-name>
@@ -103,7 +111,6 @@ This should output your account information as follows:
     package_push, package_register, package_release, package_update
     channels: no restrictions
     expires: 2026-03-17T14:29:45.000Z
-
 
 Authenticate with a keyring
 ---------------------------
@@ -116,5 +123,5 @@ sections.
 
 Note that ``snapcraft login`` sometimes fails to unlock GNOME keyring when accessing a
 Linux system with a desktop environment from a virtual console or SSH. GNOME keyring
-will not present a CLI password prompt to unlock the keyring, causing Snapcraft to hang
+will not present a CLI password prompt to unlock the keyring, causing Snapcraft to stall
 and timeout.

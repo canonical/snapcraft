@@ -18,7 +18,7 @@
 
 from pathlib import Path
 
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft.elf import ElfFile, Patcher, SonameCache, elf_utils, errors
 
@@ -30,7 +30,7 @@ _HELP_URL = "https://documentation.ubuntu.com/snapcraft/stable/how-to/debugging/
 class ClassicLinter(Linter):
     """Linter for classic snaps."""
 
-    @overrides
+    @override
     def run(self) -> list[LinterIssue]:
         if not self._snap_metadata.base or self._snap_metadata.base == "bare":
             return []

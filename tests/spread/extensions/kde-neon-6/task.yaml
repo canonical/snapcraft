@@ -27,7 +27,7 @@ restore: |
 
 execute: |
   cd "$SNAP_DIR"
-  output="$(snapcraft)"
+  output="$(snapcraft pack)"
   snap install neon-hello-6_*.snap --dangerous
   snap connect neon-hello-6:kf6-core22 kf6-core22:kf6-core22
 

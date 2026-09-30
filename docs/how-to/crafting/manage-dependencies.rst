@@ -107,6 +107,7 @@ snap:
 A typical missing build dependency will generate an error similar to the following:
 
 .. terminal::
+    :output-only:
 
     configure: error: can't find the Boehm GC library.  Please install it.
     Failed to run 'override-build': Exit code was 1.
@@ -130,6 +131,7 @@ list that can be copied and pasted into the snap's project file. The output will
 similar to the following:
 
 .. terminal::
+    :output-only:
 
     The 'example' part is missing libraries that are not included in the snap or base. They can be satisfied by adding the following entries to the existing stage-packages for this part:
     - libxext6
@@ -145,6 +147,7 @@ running its executable will result in an error. The reasons for these errors are
 but the most common is a missing library, as shown in the following example output:
 
 .. terminal::
+    :output-only:
 
     /snap/mysnap/current/bin/mybin: error while loading shared libraries: libpaho-mqtt3a.so.1: cannot open shared object file: No such file or directory
 

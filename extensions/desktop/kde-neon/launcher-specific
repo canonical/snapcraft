@@ -43,10 +43,10 @@ export QTCHOOSER_NO_GLOBAL_DIR=1
 export QT_SELECT=5
 # qtchooser hardcodes reference paths, we'll need to rewrite them properly
 ensure_dir_exists "$XDG_CONFIG_HOME/qtchooser"
-echo "$SNAP/usr/lib/qt5/bin" > "$XDG_CONFIG_HOME/qtchooser/5.conf"
-echo "$SNAP/usr/lib/$ARCH" >> "$XDG_CONFIG_HOME/qtchooser/5.conf"
-echo "$SNAP/usr/lib/qt5/bin" > "$XDG_CONFIG_HOME/qtchooser/default.conf"
-echo "$SNAP/usr/lib/$ARCH" >> "$XDG_CONFIG_HOME/qtchooser/default.conf"
+echo "$SNAP/usr/lib/qt5/bin" >"$XDG_CONFIG_HOME/qtchooser/5.conf"
+echo "$SNAP/usr/lib/$ARCH" >>"$XDG_CONFIG_HOME/qtchooser/5.conf"
+echo "$SNAP/usr/lib/qt5/bin" >"$XDG_CONFIG_HOME/qtchooser/default.conf"
+echo "$SNAP/usr/lib/$ARCH" >>"$XDG_CONFIG_HOME/qtchooser/default.conf"
 
 # This relies on qtbase patch
 # 0001-let-qlibraryinfo-fall-back-to-locate-qt.conf-via-XDG.patch
@@ -54,7 +54,7 @@ echo "$SNAP/usr/lib/$ARCH" >> "$XDG_CONFIG_HOME/qtchooser/default.conf"
 # here are applied to everything that uses QLibraryInfo as final fallback and
 # has no XDG_* fallback before that. Currently the most interesting offender
 # is QtWebEngine which will not work unless the Data path is correctly set.
-cat << EOF > "$XDG_CONFIG_HOME/qt.conf"
+cat <<EOF >"$XDG_CONFIG_HOME/qt.conf"
 [Paths]
 Data = $SNAP_DESKTOP_RUNTIME/usr/share/qt5/
 Translations = $SNAP_DESKTOP_RUNTIME/usr/share/qt5/translations

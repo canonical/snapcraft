@@ -4,40 +4,47 @@ ROS 2 Content extensions
 ========================
 
 The ROS 2 Content extensions comprise the main ROS 2 extensions, plus additional
-settings to enable `content sharing <https://snapcraft.io/docs/content-interface>`_.
+settings to enable :external+snap:ref:`content sharing <interfaces-content-interface>`.
 
 These extensions are split across ROS 2 versions and content types, and are declared
 with the format ``ros2-<version>-<metapackage>``. The available extensions are:
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: ROS 2 Foxy
+    .. tab-item:: ROS 2 Foxy
 
         - ``ros2-foxy-ros-core``
         - ``ros2-foxy-ros-base``
         - ``ros2-foxy-desktop``
 
-    .. group-tab:: ROS 2 Humble
+    .. tab-item:: ROS 2 Humble
 
         - ``ros2-humble-ros-core``
         - ``ros2-humble-ros-base``
         - ``ros2-humble-desktop``
 
-    .. group-tab:: ROS 2 Jazzy
+    .. tab-item:: ROS 2 Jazzy
 
         - ``ros2-jazzy-ros-core``
         - ``ros2-jazzy-ros-base``
         - ``ros2-jazzy-desktop``
 
-These extensions require Snapcraft 8 and higher, and are experimental.
+    .. tab-item:: ROS 2 Lyrical
+
+        - ``ros2-lyrical-ros-core``
+        - ``ros2-lyrical-ros-base``
+        - ``ros2-lyrical-desktop``
+
+The Humble and Jazzy extensions require Snapcraft 8 and higher, and the Lyrical
+extensions require Snapcraft 9 and higher. These extensions are experimental.
 
 
 Included interface connections
 ------------------------------
 
 The most important modification the content extensions make to the project file is to
-connect the `content plug <https://snapcraft.io/docs/content-interface>`_ which mounts
-the provider snap content at ``$SNAP/opt/ros/underlay_ws`` and defines a default
+connect the :external+snap:ref:`content plug <interfaces-content-interface>` which
+mounts the provider snap content at ``$SNAP/opt/ros/underlay_ws`` and defines a default
 provider.
 
 
@@ -81,7 +88,7 @@ text has been altered for ease of reading.
 The file is based on the :ref:`ros2-talker-listener <how-to-craft-an-ros-2-app-project-files>`
 project.
 
-.. collapse:: Expanded project file for ros2-talker-listener
+.. dropdown:: Expanded project file for ros2-talker-listener
 
     .. literalinclude:: code/ros-2-content-desktop-extension-talker-listener-expanded.diff
         :language: diff

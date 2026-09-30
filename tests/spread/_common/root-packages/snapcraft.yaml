@@ -1,0 +1,20 @@
+name: root-packages
+version: "1.0"
+summary: test build-snaps and build-packages at the root
+description: verify that these keys are processed correctly
+base: core24
+confinement: strict
+
+build-packages: [hello]
+build-snaps: [hello]
+
+parts:
+  nil:
+    plugin: nil
+    override-pull: echo pulling nothing
+    override-build: |
+      # these should fail if the build-packages and build-snaps weren't installed
+      dpkg -V hello
+      ls -d /snap/hello/current
+
+      craftctl default

@@ -27,7 +27,7 @@ from craft_application.commands import RemoteBuild
 from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
-from overrides import override
+from typing_extensions import override
 
 from snapcraft.const import SUPPORTED_ARCHS
 from snapcraft.services import BuildPlan

@@ -10,6 +10,7 @@ version your application targets. The available extensions are:
 * ``dotnet8``: For applications targeting .NET 8 (``net8.0``)
 * ``dotnet9``: For applications targeting .NET 9 (``net9.0``)
 * ``dotnet10``: For applications targeting .NET 10 (``net10.0``)
+* ``dotnet11``: For applications targeting .NET 11 (``net11.0``)
 
 The .NET extensions are compatible with the core24 base.
 
@@ -33,7 +34,7 @@ The .NET extensions add the following parts to the project file:
   the ``command`` parameter of the ``app``. If the runtime plug is not connected, it
   prints an error message explaining how to connect the plug and exits.
 
-.. collapse:: Included parts
+.. dropdown:: Included parts
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -61,7 +62,7 @@ Included plugs
 The .NET extensions connect a snap-wide content plug to the .NET runtime content snap
 that matches the application's target .NET version.
 
-.. collapse:: Included snap-wide runtime plug for the dotnet8 extension
+.. dropdown:: Included snap-wide runtime plug for the dotnet8 extension
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -75,7 +76,7 @@ that matches the application's target .NET version.
 
 They also connect the runtime plug in apps that use the extensions.
 
-.. collapse:: Included app runtime plug for the dotnet8 extension
+.. dropdown:: Included app runtime plug for the dotnet8 extension
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -98,7 +99,7 @@ The .NET extensions add the following runtime environment variables:
 * ``DOTNET_EXT_PLUG_NAME``: The name of the content plug used to connect to the .NET
   runtime content snap.
 
-.. collapse:: Included runtime environment variables for the dotnet8 extension
+.. dropdown:: Included runtime environment variables for the dotnet8 extension
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
@@ -120,7 +121,7 @@ This example contains the difference between the original file and the output of
 :ref:`snapcraft expand-extensions <ref_commands_expand-extensions>` command. Some of
 the text has been altered for ease of reading.
 
-.. collapse:: Expanded project file for the test-snap application
+.. dropdown:: Expanded project file for the test-snap application
 
     .. literalinclude:: code/dotnet8-dotnet9-extensions-test-app-expanded.diff
         :language: diff

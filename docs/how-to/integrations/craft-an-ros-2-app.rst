@@ -4,10 +4,11 @@ Craft an ROS 2 app
 ==================
 
 This how-to guide covers the steps, decisions, and implementation details that are
-unique when crafting a `ROS 2 <https://index.ros.org/doc/ros2>`_-based snap. We'll work
-through the aspects unique to ROS 2 apps by examining an existing project.
+unique when crafting a `ROS 2 <https://docs.ros.org/en/rolling/index.html>`__-based
+snap. We'll work through the aspects unique to ROS 2 apps by examining an existing
+project.
 
-There are four supported bases for ROS 2 -- core24, core22, core20, and core18.
+There are five supported bases for ROS 2 -- core26, core24, core22, core20, and core18.
 
 
 .. _how-to-craft-an-ros-2-app-project-files:
@@ -15,14 +16,14 @@ There are four supported bases for ROS 2 -- core24, core22, core20, and core18.
 Example project file for ROS 2 Talker/Listener
 ----------------------------------------------
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: core18
+    .. tab-item:: core18
 
-        The following code comprises the project file for the `core18 version of ROS 2
-        Talker/Listener <https://github.com/snapcraft-docs/ros2-talker-listener>`_.
+        The following code comprises the project file for the core18 version
+        of a ROS 2 Talker/Listener.
 
-        .. collapse:: Code
+        .. dropdown:: Code
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -49,12 +50,13 @@ Example project file for ROS 2 Talker/Listener
                   ros2-talker-listener:
                     command: opt/ros/dashing/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
 
-    .. group-tab:: core20
+    .. tab-item:: core20
+        :sync: core20
 
-        The following code comprises the project file for the `core20 version of ROS 2
-        Talker/Listener <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`_.
+        The following code comprises the project file for the core20 version
+        of a ROS 2 Talker/Listener.
 
-        .. collapse:: Code
+        .. dropdown:: Code
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -81,12 +83,13 @@ Example project file for ROS 2 Talker/Listener
                     command: opt/ros/foxy/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
                     extensions: [ros2-foxy]
 
-    .. group-tab:: core22
+    .. tab-item:: core22
+        :sync: core22
 
-        The following code comprises the project file for the `core22 version of ROS 2
-        Talker/Listener <https://github.com/snapcraft-docs/ros2-talker-listener-core22>`_.
+        The following code comprises the project file for the core22 version
+        of a ROS 2 Talker/Listener.
 
-        .. collapse:: Code
+        .. dropdown:: Code
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -113,12 +116,13 @@ Example project file for ROS 2 Talker/Listener
                     command: opt/ros/humble/bin/ros2 launch demo_nodes_cpp talker_listener.launch.py
                     extensions: [ros2-humble]
 
-    .. group-tab:: core24
+    .. tab-item:: core24
+        :sync: core24
 
-        The following code comprises the project file for the `core24 version of ROS 2
-        Talker/Listener <https://github.com/snapcraft-docs/ros2-talker-listener-core20>`_.
+        The following code comprises the project file for the core24 version
+        of a ROS 2 Talker/Listener.
 
-        .. collapse:: Code
+        .. dropdown:: Code
 
             .. code-block:: yaml
                 :caption: snapcraft.yaml
@@ -142,11 +146,43 @@ Example project file for ROS 2 Talker/Listener
 
                 apps:
                   ros2-talker-listener:
-                    command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+                    command: ros2 launch demo_nodes_cpp talker_listener_launch.py
                     extensions: [ros2-jazzy]
 
+    .. tab-item:: core26
+        :sync: core26
 
-Add an ROS 2 app
+        The following code comprises the project file for the core26 version
+        of a ROS 2 Talker/Listener.
+
+        .. dropdown:: Code
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                name: ros2-talker-listener
+                version: '0.1'
+                summary: ROS 2 Talker/Listener Example
+                description: |
+                  This example launches a ROS 2 talker and listener.
+
+                confinement: devmode
+                base: core26
+
+                parts:
+                  ros-demos:
+                    plugin: colcon
+                    source: https://github.com/ros2/demos.git
+                    source-branch: lyrical
+                    source-subdir: demo_nodes_cpp
+                    stage-packages: [ros-lyrical-ros2launch]
+
+                apps:
+                  ros2-talker-listener:
+                    command: ros2 launch demo_nodes_cpp talker_listener_launch.py
+                    extensions: [ros2-lyrical]
+
+Add a ROS 2 app
 ----------------
 
 ROS 2 apps depend on special extensions that initialize the build- and run-time
@@ -170,6 +206,8 @@ To add an ROS 2 app:
         - :ref:`ros2-humble <reference-ros-2-extensions>`
       * - core24
         - :ref:`ros2-jazzy <reference-ros-2-extensions>`
+      * - core26
+        - :ref:`ros2-lyrical <reference-ros-2-extensions>`
 
 
 Add a part written for ROS 2
@@ -183,9 +221,9 @@ To add an ROS 2 part:
    ``build-packages``, and so on.
 #. If you're crafting for core18, set the following special keys:
 
-    - Set ``colcon-rosdistro`` to select the ROS distribution.
-    - Set ``colcon-source-space`` to the path in the source tree where colcon packages
-      are stored.
+   - Set ``colcon-rosdistro`` to select the ROS distribution.
+   - Set ``colcon-source-space`` to the path in the source tree where colcon packages
+     are stored.
 
 #. For ``stage-packages``, list the ROS launch command as a dependency, based
    on the core:
@@ -203,6 +241,8 @@ To add an ROS 2 part:
         - ros-humble-ros2launch
       * - core24
         - ros-jazzy-ros2launch
+      * - core26
+        - ros-lyrical-ros2launch
 
 
 Handle build issues
@@ -221,10 +261,10 @@ false positives. These libraries are build time dependencies only.
 Share content between ROS 2 snaps
 ---------------------------------
 
-The core20, core22 and core24 bases also offer the option to build your ROS snap using
-the `content-sharing interface <https://snapcraft.io/docs/content-interface>`_. It
-shares the ROS 2 content packages across multiple snaps, saving space and ensuring
-package consistency throughout your snap build environment.
+The core20, core22, core24 and core26 bases also offer the option to build your ROS snap using
+the :external+snap:ref:`interfaces-content-interface`. It shares the ROS 2 content
+packages across multiple snaps, saving space and ensuring package consistency throughout
+your snap build environment.
 
 You can find more information in `ROS architectures with snaps
 <https://ubuntu.com/robotics/docs/ros-architectures-with-snaps>`_ in the Canonical ROS
@@ -233,9 +273,10 @@ documentation.
 Turning on content sharing requires two small changes in the project file. Here's the
 difference in the project file when content sharing is enabled:
 
-.. tabs::
+.. tab-set::
 
-    .. group-tab:: core20
+    .. tab-item:: core20
+        :sync: core20
 
         .. code-block:: diff
             :caption: snapcraft.yaml
@@ -249,7 +290,8 @@ difference in the project file when content sharing is enabled:
             -   extensions: [ros2-foxy]
             +   extensions: [ros2-foxy-ros-base]
 
-    .. group-tab:: core22
+    .. tab-item:: core22
+        :sync: core22
 
         .. code-block:: diff
             :caption: snapcraft.yaml
@@ -263,7 +305,8 @@ difference in the project file when content sharing is enabled:
             -   extensions: [ros2-humble]
             +   extensions: [ros2-humble-ros-base]
 
-    .. group-tab:: core24
+    .. tab-item:: core24
+        :sync: core24
 
         .. code-block:: diff
             :caption: snapcraft.yaml
@@ -273,9 +316,24 @@ difference in the project file when content sharing is enabled:
 
             apps:
               ros2-talker-listener:
-                command: ros2 launch demo_nodes_cpp talker_listener.launch.py
+                command: ros2 launch demo_nodes_cpp talker_listener_launch.py
             -   extensions: [ros2-jazzy]
             +   extensions: [ros2-jazzy-ros-base]
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. code-block:: diff
+            :caption: snapcraft.yaml
+
+            source-subdir: demo_nodes_cpp
+            -  stage-packages: [ros-lyrical-ros2launch]
+
+            apps:
+              ros2-talker-listener:
+                command: ros2 launch demo_nodes_cpp talker_listener_launch.py
+            -   extensions: [ros2-lyrical]
+            +   extensions: [ros2-lyrical-ros-base]
 
 To turn on content sharing:
 
@@ -295,6 +353,8 @@ To turn on content sharing:
         - :ref:`ros2-humble-ros-base <reference-ros-2-content-extensions>`
       * - core24
         - :ref:`ros2-jazzy-ros-base <reference-ros-2-content-extensions>`
+      * - core26
+        - :ref:`ros2-lyrical-ros-base <reference-ros-2-content-extensions>`
 
 
 Because the snap makes use of the content provided by another snap, you must connect
@@ -304,16 +364,16 @@ To connect the snaps:
 
 #. Run:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        snap connect ros2-talker-listener:ros-foxy ros-foxy-ros-base
+       snap connect ros2-talker-listener:ros-foxy ros-foxy-ros-base
 
 #. Verify that the connection is established by running:
 
-    .. code-block:: bash
+   .. code-block:: bash
 
-        snap connections ros2-talker-listener
+       snap connections ros2-talker-listener
 
-    If the connection is successful, the output will show that through the content
-    interface, the snap's ROS launch command is manually plugged in to the ROS base
-    snap.
+   If the connection is successful, the output will show that through the content
+   interface, the snap's ROS launch command is manually plugged in to the ROS base
+   snap.

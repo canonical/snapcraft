@@ -28,12 +28,12 @@ The *track* represents the highest level of organization for the snap's
 release. Typically, it signifies a major release. Authors can use tracks to
 maintain different major versions of their software.
 
-All snaps have one default track, called *latest*. Most operations and commands
-within Snapcraft and the snap ecosystem assume this track, unless otherwise
-specified. If a snap has need for other tracks, they must be vetted and granted
-on a snap-by-snap basis by the Snap Store team. The process for requesting a
-track is outlined in `Process for aliases, auto-connections and tracks
-<https://snapcraft.io/docs/process-for-aliases-auto-connections-and-tracks>`_.
+All snaps have one default track, called *latest*. Most operations and commands within
+Snapcraft and the snap ecosystem assume this track, unless otherwise specified. If a
+snap has need for other tracks, they must be vetted and granted on a snap-by-snap basis
+by the Snap Store team. The process for requesting a track is outlined in
+:external+snap:ref:`interfaces-process-for-aliases-auto-connections-and-tracks` in the
+snap documentation.
 
 The release semantics for a track is at the snap author's discretion. A track
 could, for examples, encompass minor updates, major updates, or long-term

@@ -17,7 +17,7 @@
 """The Snapcraft Python plugin."""
 
 from craft_parts.plugins import python_plugin
-from overrides import override
+from typing_extensions import override
 
 from snapcraft.parts.plugins import python_common
 
@@ -28,3 +28,10 @@ class PythonPlugin(python_plugin.PythonPlugin):
     @override
     def _get_system_python_interpreter(self) -> str | None:
         return python_common.get_system_interpreter(self._part_info)
+
+    @override
+    def _get_script_interpreter(self) -> str:
+        return (
+            python_common.get_script_interpreter(self._part_info)
+            or super()._get_script_interpreter()
+        )

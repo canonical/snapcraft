@@ -24,6 +24,10 @@ grade: stable # must be 'stable' to release into candidate/stable channels
 confinement: strict
 base: core22
 
+lint:
+  ignore:
+    - gpu
+
 slots:
   # for GtkApplication registration
   gnome-calculator:

@@ -259,7 +259,7 @@ def _extract_icon(
         return icon
 
     if icon_node_type == "stock" and icon is not None:
-        return _get_icon_from_theme(workdir, "hicolor", icon)
+        return get_icon_from_theme(workdir, "hicolor", icon)
 
     # If an icon path is specified and the icon file exists, we'll use that, otherwise
     # we'll fall back to what's listed in the desktop file.
@@ -287,14 +287,14 @@ def _get_icon_from_desktop_file(
         icon_path = (
             icon
             if os.path.isabs(icon)
-            else _get_icon_from_theme(workdir, "hicolor", icon)
+            else get_icon_from_theme(workdir, "hicolor", icon)
         )
         return icon_path
 
     return None
 
 
-def _get_icon_from_theme(workdir: str, theme: str, icon: str) -> str | None:
+def get_icon_from_theme(workdir: str, theme: str, icon: str) -> str | None:
     # Icon themes can carry icons in different pre-rendered sizes or scalable. Scalable
     # implementation is optional, so we'll try the largest pixmap and then scalable if
     # no other sizes are available.

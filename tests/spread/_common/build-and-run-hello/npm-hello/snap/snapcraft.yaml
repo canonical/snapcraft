@@ -1,0 +1,21 @@
+name: npm-hello
+version: "1.0"
+summary: test the npm plugin
+description: Check that the npm plugin works across snapcraft calls
+
+confinement: strict
+grade: devel
+base: core24
+
+apps:
+  npm-hello:
+    command: bin/npm-hello
+    plugs:
+      - network
+
+parts:
+  hello:
+    source: .
+    plugin: npm
+    npm-include-node: true
+    npm-node-version: 22.1.0

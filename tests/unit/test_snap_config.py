@@ -46,13 +46,6 @@ def test_unmarshal():
     assert config.provider == "lxd"
 
 
-def test_unmarshal_not_a_dictionary():
-    """Verify unmarshalling with data that is not a dictionary raises an error."""
-    error = "Project data is not a dictionary"
-    with pytest.raises(TypeError, match=error):
-        SnapConfig.unmarshal("provider=lxd")  # type: ignore
-
-
 def test_unmarshal_invalid_provider_error():
     """Verify unmarshalling with an invalid provider raises an error."""
     error = "provider\n  Input should be 'lxd' or 'multipass'"

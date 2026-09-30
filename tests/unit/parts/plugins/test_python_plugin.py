@@ -118,6 +118,39 @@ def test_should_remove_symlinks(plugin):
 
 
 @pytest.mark.parametrize(
+    ("base", "confinement", "script_interpreter"),
+    [
+        ("core22", "strict", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("core24", "strict", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("core26", "strict", "#!/snap/test-snap/current/bin/python3"),
+        ("core26", "devmode", "#!/snap/test-snap/current/bin/python3"),
+        ("core26", "classic", "#!/snap/test-snap/current/bin/python3"),
+        ("core28", "strict", "#!/snap/test-snap/current/bin/python3"),
+        ("core28", "classic", "#!/snap/test-snap/current/bin/python3"),
+        ("bare", "strict", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+        ("devel", "strict", "#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}"),
+    ],
+)
+def test_get_script_interpreter(base, confinement, script_interpreter, new_dir):
+    """Python script shebangs point to the snap's venv interpreter on core26+ snaps."""
+    part_info = PartInfo(
+        project_info=ProjectInfo(
+            application_name="test",
+            project_name="test-snap",
+            base=base,
+            confinement=confinement,
+            project_base=base,
+            cache_dir=new_dir,
+        ),
+        part=Part("my-part", {}),
+    )
+    properties = PythonPlugin.properties_class.unmarshal({"source": "."})
+    plugin = PythonPlugin(properties=properties, part_info=part_info)
+
+    assert plugin._get_script_interpreter() == script_interpreter
+
+
+@pytest.mark.parametrize(
     ("base", "confinement", "interpreter"),
     [
         ("core22", "strict", "/usr/bin/python3.10"),

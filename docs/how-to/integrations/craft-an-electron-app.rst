@@ -37,7 +37,7 @@ project, `electron-quick-start
 <https://github.com/electron/electron-quick-start>`_, but modified to build
 snaps.
 
-.. collapse:: electron-quick-start package manifest
+.. dropdown:: electron-quick-start package manifest
 
   .. code:: json
 
@@ -102,7 +102,7 @@ The following code comprises the project file of an Electron app, `Discord
 <https://github.com/snapcrafters/discord>`_. It's a popular instant messaging app and
 social platform.
 
-.. collapse:: Discord project file
+.. dropdown:: Discord project file
 
     .. code-block:: yaml
         :caption: snapcraft.yaml

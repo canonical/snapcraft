@@ -22,7 +22,7 @@ import textwrap
 from typing import Literal, cast
 
 from craft_parts import plugins
-from overrides import overrides
+from typing_extensions import override
 
 from snapcraft import errors
 
@@ -32,7 +32,11 @@ _MINICONDA_ARCH_FROM_SNAP_ARCH = {
     "armhf": "armv7l",
     "ppc64el": "ppc64le",
 }
-_MINICONDA_ARCH_FROM_PLATFORM = {"x86_64": {"32bit": "x86", "64bit": "x86_64"}}
+_MINICONDA_ARCH_FROM_PLATFORM = {
+    "x86_64": {"32bit": "x86", "64bit": "x86_64"},
+    # armv8l indicates a 64-bit armv8 system running a 32-bit compatible armhf environment.
+    "armv8l": {"32bit": "armv7l"},
+}
 
 
 def _get_architecture() -> str:
@@ -49,7 +53,12 @@ def _get_architecture() -> str:
     else:
         machine = platform.machine()
         architecture = platform.architecture()[0]
-        miniconda_arch = _MINICONDA_ARCH_FROM_PLATFORM[machine][architecture]
+        try:
+            miniconda_arch = _MINICONDA_ARCH_FROM_PLATFORM[machine][architecture]
+        except KeyError as key_error:
+            raise errors.SnapcraftError(
+                f"Architecture not supported for conda plugin: {machine!r} {architecture!r}"
+            ) from key_error
 
     return miniconda_arch
 
@@ -93,15 +102,15 @@ class CondaPlugin(plugins.Plugin):
 
     properties_class = CondaPluginProperties
 
-    @overrides
+    @override
     def get_build_snaps(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_packages(self) -> set[str]:
         return set()
 
-    @overrides
+    @override
     def get_build_environment(self) -> dict[str, str]:
         return {"PATH": "${HOME}/miniconda/bin:${PATH}"}
 
@@ -134,7 +143,7 @@ class CondaPlugin(plugins.Plugin):
 
         return " ".join(deploy_cmd)
 
-    @overrides
+    @override
     def get_build_commands(self) -> list[str]:
         options = cast(CondaPluginProperties, self._options)
         url = _get_miniconda_source(options.conda_miniconda_version)

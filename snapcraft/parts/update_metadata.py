@@ -93,9 +93,6 @@ def update_from_extracted_metadata(
         if metadata.license and not project.license:
             project.license = metadata.license
 
-        if metadata.grade and not project.grade:
-            project.grade = metadata.grade  # type: ignore
-
         emit.debug(f"project icon: {project.icon!r}")
         emit.debug(f"metadata icon: {metadata.icon!r}")
 

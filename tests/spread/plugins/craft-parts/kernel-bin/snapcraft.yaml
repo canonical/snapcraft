@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2021 Canonical Ltd
+name: pc-kernel
+summary: Kernel plugin test
+description: A pc kernel to test the kernel plugin.
+
+grade: stable
+build-base: core22
+confinement: strict
+type: kernel
+adopt-info: kernel
+
+parts:
+  kernel:
+    plugin: kernel
+    kernel-ubuntu-binary-package: true
+    kernel-ubuntu-abinumber: 6.8.0-106
+    kernel-ubuntu-kconfigflavour: lowlatency
+    stage-packages:
+      - linux-firmware
+      - wireless-regdb
+    override-build: |
+      craftctl default
+
+      kver="$(basename "${CRAFT_PART_INSTALL}/lib/modules/"*)"
+
+      # Set the version of the snap to match the kernel version.
+      craftctl set version="$kver"

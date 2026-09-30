@@ -4,8 +4,8 @@ ROS 1 Content extensions
 ========================
 
 The ROS 1 Content extensions comprise the main :ref:`reference-ros-1-extension`, plus
-additional settings to enable `content sharing
-<https://snapcraft.io/docs/content-interface>`_.
+additional settings to enable :external+snap:ref:`content sharing
+<interfaces-content-interface>`.
 
 These extensions are split across content types, and are declared with the format
 ``ros1-noetic-<metapackage>``. The available extensions are:
@@ -21,8 +21,8 @@ Included interface connections
 ------------------------------
 
 The most important modification the content extension makes to the project file is to
-connect the `content plug <https://snapcraft.io/docs/content-interface>`_ which mounts
-the provider snap content at ``$SNAP/opt/ros/underlay_ws`` and defines a default
+connect the :external+snap:ref:`content plug <interfaces-content-interface>` which
+mounts the provider snap content at ``$SNAP/opt/ros/underlay_ws`` and defines a default
 provider.
 
 
@@ -64,7 +64,7 @@ text has been altered for ease of reading.
 The file is based on the :ref:`ros1-talker-listener
 <how-to-craft-an-ros-1-app-project-files>` project.
 
-.. collapse:: Expanded project file for ros2-talker-listener
+.. dropdown:: Expanded project file for ros2-talker-listener
 
     .. literalinclude:: code/ros-1-content-desktop-extension-talker-listener-expanded.diff
         :language: diff

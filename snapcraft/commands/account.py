@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import argparse
 import contextlib
 import functools
 import os
@@ -25,18 +26,15 @@ import pathlib
 import stat
 import textwrap
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from craft_application.commands import AppCommand
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
-from overrides import overrides
+from typing_extensions import override
 
-from snapcraft import store, utils
-
-if TYPE_CHECKING:
-    import argparse
-
+from snapcraft import errors, store
 
 _VALID_DATE_FORMATS = [
     "%Y-%m-%d",
@@ -66,16 +64,14 @@ class StoreLoginCommand(AppCommand):
         Log in to the Snap Store with your Ubuntu One SSO credentials.
         If you do not have any, you can create them at https://login.ubuntu.com
 
-        To use the alternative authentication mechanism (Candid), set the
-        environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
-
         The login command requires a working keyring on the system it is used on.
         As an alternative, export {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r}
-        with the exported credentials.
+        with the exported credentials. The login command cannot be used while this
+        environment variable is set.
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
@@ -84,36 +80,36 @@ class StoreLoginCommand(AppCommand):
             dest="login_with",
             type=str,
             default=None,
-            help="File to use for imported credentials",
+            help=argparse.SUPPRESS,
         )
         parser.add_argument(
             "--experimental-login",
             action="store_true",
             default=False,
-            help=(
-                "(deprecated) Enable candid login. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
-            ),
+            help=argparse.SUPPRESS,
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
-                "--experimental-login no longer supported. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead",
+                "'--experimental-login' is no longer supported. "
+                "Remove '--experimental-login' to login with Ubuntu One."
+            )
+
+        if os.getenv(store.constants.ENVIRONMENT_STORE_AUTH) == "candid":
+            raise ArgumentParsingError(
+                f"{store.constants.ENVIRONMENT_STORE_AUTH}=candid is no longer supported. "
+                f"Unset {store.constants.ENVIRONMENT_STORE_AUTH} to login with Ubuntu One."
             )
 
         if parsed_args.login_with:
-            config_content = _read_config(parsed_args.login_with)
-            emit.progress(
-                "--with is no longer supported, export the auth to the environment "
-                f"variable {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r} instead",
-                permanent=True,
+            raise ArgumentParsingError(
+                "'--with' is no longer supported. Export the auth to the environment "
+                f"variable {store.constants.ENVIRONMENT_STORE_CREDENTIALS!r} instead."
             )
-            store.LegacyUbuntuOne.store_credentials(config_content)
-        else:
-            store.StoreClientCLI().login()
+
+        store.StoreClientCLI().login()
 
         emit.message("Login successful")
 
@@ -124,19 +120,18 @@ class StoreExportLoginCommand(AppCommand):
     name = "export-login"
     help_msg = "Log in to the Snap Store exporting the credentials"
     overview = textwrap.dedent(
-        f"""
+        """
         Log in to the Snap Store with your Ubuntu One SSO credentials.
         If you do not have any, you can create them at https://login.ubuntu.com
 
-        To use the alternative authentication mechanism (Candid), set the
-        environment variable {store.constants.ENVIRONMENT_STORE_AUTH!r} to 'candid'.
-
         This command exports credentials to use on systems where login is not
-        possible or desired.
+        possible or desired. The '--acls' option limits the scope of operations
+        for exported credentials. The complete list of ACLs is available at
+        https://dashboard.snapcraft.io/docs/reference/v1/macaroon.html#reference
         """
     )
 
-    @overrides
+    @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
         """Add arguments specific to the export-login command."""
         parser.add_argument(
@@ -181,18 +176,32 @@ class StoreExportLoginCommand(AppCommand):
             "--experimental-login",
             action="store_true",
             default=False,
-            help=(
-                "(deprecated) Enable candid login. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead"
-            ),
+            help=argparse.SUPPRESS,
         )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
         if parsed_args.experimental_login:
             raise ArgumentParsingError(
-                "--experimental-login no longer supported. "
-                f"Set {store.constants.ENVIRONMENT_STORE_AUTH}=candid instead",
+                "'--experimental-login' is no longer supported. "
+                "Remove '--experimental-login' to login with Ubuntu One."
+            )
+
+        if os.getenv(store.constants.ENVIRONMENT_STORE_AUTH) == "candid":
+            raise ArgumentParsingError(
+                f"{store.constants.ENVIRONMENT_STORE_AUTH}=candid is no longer supported. "
+                f"Unset {store.constants.ENVIRONMENT_STORE_AUTH} to login with Ubuntu One."
+            )
+
+        # Checked before logging in so the user isn't prompted for credentials that
+        # can't be written anywhere. lexists() also covers broken symlinks.
+        if parsed_args.login_file.strip() != "-" and os.path.lexists(
+            parsed_args.login_file
+        ):
+            raise errors.SnapcraftError(
+                f"Could not export login credentials because "
+                f"{parsed_args.login_file!r} already exists.",
+                resolution="Rename or remove the existing file, or export to a different file.",
             )
 
         kwargs: dict[str, Any] = {}
@@ -208,7 +217,7 @@ class StoreExportLoginCommand(AppCommand):
                     expiry_date = datetime.strptime(parsed_args.expires, date_format)
                     break
             else:  # noqa: PLW0120 Else clause on loop without a break statement
-                valid_formats = utils.humanize_list(_VALID_DATE_FORMATS, "or")
+                valid_formats = humanize_list(_VALID_DATE_FORMATS, "or")
                 raise ArgumentParsingError(
                     f"The expiry follow an ISO 8601 format ({valid_formats})"
                 )
@@ -236,11 +245,6 @@ class StoreExportLoginCommand(AppCommand):
             message = f"Exported login credentials to {parsed_args.login_file!r}"
 
         message += "\n\nThese credentials must be used on Snapcraft 7.2 or greater."
-        if os.getenv(store.constants.ENVIRONMENT_STORE_AUTH) == "candid":
-            message += (
-                f"\nSet '{store.constants.ENVIRONMENT_STORE_AUTH}=candid' for "
-                "these credentials to work."
-            )
         emit.message(message)
 
 
@@ -255,9 +259,9 @@ class StoreWhoAmICommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
-        whoami = store.StoreClientCLI().store_client.whoami()
+        whoami = store.StoreClientCLI().whoami()
 
         if whoami.get("permissions"):
             permissions = ", ".join(whoami["permissions"])
@@ -301,7 +305,7 @@ class StoreLogoutCommand(AppCommand):
         """
     )
 
-    @overrides
+    @override
     def run(self, parsed_args: argparse.Namespace):
         store.StoreClientCLI().store_client.logout()
         emit.message("Credentials cleared")

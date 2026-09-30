@@ -13,13 +13,14 @@ depends on the base snap.
 
 .. _explanation_cryptography_core24:
 
-core24 and newer
-----------------
+core24 and higher
+-----------------
 
-Snapcraft is built upon Craft Application and derives much of its functionality from
-it. In particular, snaps using core24 or newer as their base use Craft Application to
-build, so much of Snapcraft's cryptographic functionality is described in the `Craft
-Application cryptography`_ documentation.
+Snapcraft is built upon Craft Application and derives much of its functionality from it.
+In particular, snaps using core24 or higher as their base use Craft Application to
+build, so much of Snapcraft's cryptographic functionality is described in the
+:external+craft-application:ref:`Craft Application cryptography
+<explanation_cryptographic-technology>` documentation.
 
 Downloading build dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,7 +30,8 @@ dependencies. Some plugins can provision their own build tools, while others req
 build tools to be available on the system.
 
 For more information on the use of cryptography for plugins provided by Craft Parts, see
-the `Craft Parts cryptography`_ documentation.
+the :external+craft-parts:ref:`Craft Parts cryptography
+<explanation_cryptographic-technology>` documentation.
 
 For plugins provided by Snapcraft, the following table summarizes how they provision
 build tools, and which build tools they use to download and verify dependencies.
@@ -53,10 +55,6 @@ build tools, and which build tools they use to download and verify dependencies.
     - ``flutter``
     - Git
 
-  * - :ref:`Matter SDK <reference_matter_sdk_plugin>`
-    - ``matter``
-    - Git
-
 core22
 ------
 
@@ -66,21 +64,22 @@ Public key signing
 ~~~~~~~~~~~~~~~~~~
 
 Snapcraft supports the adding and verification of arbitrary package repositories. For
-more information, see the `Craft Archives cryptography`_ documentation.
+more information, see the :external+craft-archives:ref:`Craft Archives cryptography
+<explanation-cryptographic-technology>` documentation.
 
 The parts system
 ~~~~~~~~~~~~~~~~
 
 Snapcraft makes use of *parts* in project files for declarative builds. Parts specified
-by the user may download arbitrary files, install packages, and modify files in
-the build environment. For more information, see the `Craft Parts cryptography`_
-documentation.
+by the user may download arbitrary files, install packages, and modify files in the
+build environment. For more information, see the :external+craft-parts:ref:`Craft Parts
+cryptography <explanation_cryptographic-technology>` documentation.
 
 Creating virtual build environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Snapcraft instantiates and executes builds on self-allocated virtual instances. For more
-information, see the `Craft Providers cryptography`_ documentation.
+information, see the :external+craft-providers:ref:`Craft Providers cryptography <explanation_cryptographic-technology>` documentation.
 
 Downloading build dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -99,15 +98,16 @@ Creating virtual build environments
 
 Snapcraft instantiates and builds snaps on self-allocated virtual instances. It uses
 the `Requests`_ library to install Multipass on Windows. Build environments for other
-operating systems are handled by the local `snap daemon (snapd)`_.
+operating systems are handled by the local :external+snap:doc:`snap daemon <index>`.
 
 Communication with snapd
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Snapcraft uses the Requests library to communicate over Unix sockets with snapd.
-These requests fetch information about required software. If the software is missing,
-Snapcraft will install it through snapd. This is done by querying the `snapd API`_ with
-URLs built dynamically and sanitized by `urllib`_.
+Snapcraft uses the Requests library to communicate over Unix sockets with snapd. These
+requests fetch information about required software. If the software is missing,
+Snapcraft will install it through snapd. This is done by querying the
+:external+snap:doc:`reference/development/snapd-rest-api` with URLs built dynamically
+and sanitized by `urllib`_.
 
 Sources
 ~~~~~~~
@@ -234,7 +234,9 @@ Remote building
 ---------------
 
 Remote snap builds use Craft Application. The cryptographic functionality used for
-remote builds is described in the  `Craft Application cryptography`_ documentation.
+remote builds in Craft Application is described in the
+:external+craft-application:ref:`Craft Application cryptography
+<explanation_cryptographic-technology>` documentation.
 
 Snapcraft's legacy remote builder uses `launchpadlib`_ to interact with the `Launchpad`_
 API and trigger remote builds. Login credentials for Launchpad are stored in a plain
@@ -245,7 +247,8 @@ Interaction with storefronts
 
 Snapcraft interfaces with the Snap Store and private stores over the internet. Some
 store interactions are driven through Craft Store, such as authentication and listing
-releases. For more information, see the `Craft Store cryptography`_ documentation.
+releases. For more information, see the :external+craft-store:ref:`Craft Store
+cryptography <explanation_cryptographic-technology>` documentation.
 
 For interactions that don't use Craft Store, Snapcraft uses cryptographic processes
 to send files between devices and endpoints through the internet. It does not directly
@@ -281,11 +284,6 @@ is invoked by the consuming application.
 
 .. _Apt: https://wiki.debian.org/AptCLI
 .. _Bazaar: https://launchpad.net/bzr
-.. _Craft Application cryptography: https://canonical-craft-application.readthedocs-hosted.com/en/latest/explanation/cryptography/
-.. _Craft Archives cryptography: https://canonical-craft-archives.readthedocs-hosted.com/en/latest/explanation/cryptography/
-.. _Craft Parts cryptography: https://canonical-craft-parts.readthedocs-hosted.com/en/latest/explanation/cryptography/
-.. _Craft Providers cryptography: https://canonical-craft-providers.readthedocs-hosted.com/en/latest/explanation/cryptography/
-.. _Craft Store cryptography: https://canonical-craft-store.readthedocs-hosted.com/en/latest/explanation/cryptography/
 .. _Crystal snap: https://snapcraft.io/crystal
 .. _curl: https://curl.se/
 .. _dirmngr: https://manpages.ubuntu.com/manpages/noble/man8/dirmngr.8.html
@@ -294,12 +292,10 @@ is invoked by the consuming application.
 .. _httpx: https://www.python-httpx.org/
 .. _keyring: https://pypi.org/project/keyring/
 .. _Launchpad: https://launchpad.net
-.. _launchpadlib: https://help.launchpad.net/API/launchpadlib
+.. _launchpadlib: https://ubuntu.com/docs/launchpad/user/how-to/launchpadlib/using-launchpadlib/
 .. _macaroonbakery: https://pypi.org/project/macaroonbakery/
 .. _macaroons: https://research.google/pubs/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/
 .. _Mercurial: https://www.mercurial-scm.org/
 .. _Requests: https://requests.readthedocs.io/
-.. _snap daemon (snapd): https://snapcraft.io/docs/installing-snapd
-.. _snapd API: https://snapcraft.io/docs/snapd-api
 .. _Subversion: https://subversion.apache.org/
 .. _urllib: https://docs.python.org/3/library/urllib.html

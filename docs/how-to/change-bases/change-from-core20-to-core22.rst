@@ -138,7 +138,7 @@ This is equivalent to using the architecture-specific entry as follows:
 Architectures
 ~~~~~~~~~~~~~
 
-The keywords for achitectures are now ``build-on`` and ``build-for``.
+The keywords for architectures are now ``build-on`` and ``build-for``.
 
 .. code-block:: yaml
 
@@ -248,7 +248,7 @@ Snapcraft previously set up a snap.yaml file similar to the following:
         command-chain: [snap/snapcraft-runner.sh]
         command: <user-defined-command>
 
-This was not overridable, and to get rid of it, users had to define the following
+This couldn't be overridden, and to get rid of it, users had to define the following
 in their project file:
 
 .. code-block:: yaml
@@ -260,7 +260,7 @@ in their project file:
         command: <user-defined-command>
 
 Snapcraft has moved to defining an environment for each application entry instead
-of setting up a command-chain, with a simple way to overwride or disable.
+of setting up a command-chain, with a simple way to overwrite or disable.
 
 
 Default behavior
@@ -452,6 +452,29 @@ The following environment variable names should be migrated as follows:
       - ``PARTS_PYTHON_INTERPRETER``
     * - ``SNAPCRAFT_PYTHON_VENV_ARGS``
       - ``PARTS_PYTHON_VENV_ARGS``
+
+
+Remove ``passthrough`` keys
+---------------------------
+
+If your snap is meant for public consumption, remove any instances of the
+``passthrough`` key in all structures. These keys are for experimental data to be
+forwarded to SnapD in test environments, and as of core22 the Snap Store flags it during
+automatic review.
+
+For example, if a hook sets an experimental environment variable, you'd remove the key
+like this:
+
+.. code-block:: diff
+    :caption: snapcraft.yaml
+
+     hooks:
+       configure:
+    -    passthrough:
+    -      environment:
+    -        FOO: BAR
+    +    environment:
+    +      FOO: BAR
 
 
 Destructive mode

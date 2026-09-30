@@ -17,7 +17,7 @@ An external metadata source can be one of the following:
 
 - :ref:`AppStream <reference-external-package-appstream>`: a standard for software
   components
-- :ref:`Scriptlets <reference-external-package-scriptlets>`: a snapcraftctl-driven
+- :ref:`Scriptlets <reference-external-package-scriptlets>`: a craftctl-driven
   command to generate ``version`` and ``grade``.
 
 
@@ -26,11 +26,11 @@ An external metadata source can be one of the following:
 AppStream
 ~~~~~~~~~
 
-`AppStream`_ is a metadata standard used to describe a common set of software
-components. It can be parsed by Snapcraft to provide the ``title``, ``version``,
-``summary``, ``description``, and ``icon`` keys for a snap, along with the location of
-an app's :ref:`desktop <how-to-configure-package-information-desktop-entry-copy-file>`
-file.
+`AppStream <https://www.freedesktop.org/software/appstream/docs/>`__ is a metadata
+standard used to describe a common set of software components. It can be parsed by
+Snapcraft to provide the ``title``, ``version``, ``summary``, ``description``, and
+``icon`` keys for a snap, along with the location of an app's :ref:`desktop
+<how-to-configure-package-information-desktop-entry-copy-file>` file.
 
 The following is a typical example from an upstream project.
 
@@ -136,4 +136,4 @@ using ``craftctl``. All you need to do is select which part to adopt using
 See :ref:`how-to-customize-the-build-and-part-variables` for more
 details on using scripting elements within a project file.
 
-.. _Desktop File ID: https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
+.. _Desktop File ID: https://specifications.freedesktop.org/desktop-entry/latest/file-naming.html#desktop-file-id

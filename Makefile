@@ -1,10 +1,10 @@
 PROJECT=snapcraft
 # Define when more than the main package tree requires coverage
-# like is the case for snapcraft (snapcraft and snapcraft_legacy):
-COVERAGE_SOURCE="snapcraft,snapcraft_legacy"
+# like is the case for snapcraft:
+COVERAGE_SOURCE="snapcraft"
 UV_TEST_GROUPS := "--group=dev"
 UV_DOCS_GROUPS := "--group=docs"
-UV_LINT_GROUPS := "--group=lint" "--group=types"
+UV_LINT_GROUPS := "--group=lint" "--group=types" $(UV_DOCS_GROUPS)
 UV_TICS_GROUPS := "--group=tics"
 
 ifneq ($(wildcard /etc/os-release),)
@@ -17,24 +17,24 @@ UV_LINT_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 UV_TICS_GROUPS += "--group=dev-$(VERSION_CODENAME)"
 endif
 
+SLOW_CUTOFF_TIME := 0.5
+
 include common.mk
 
-.PHONY: format
-format: format-ruff format-codespell format-prettier format-pre-commit  ## Run all automatic formatters
+# instructions and skills are imported from canonical/copilot-collections
+PRETTIER_IGNORE_DIRS := .github/instructions .github/skills
 
-# Override the common.mk lint-docs target until https://github.com/canonical/snapcraft/issues/5229 is resolved
-.PHONY: lint-docs
-lint-docs:  ##- Lint the documentation
-ifneq ($(CI),)
-	@echo ::group::$@
-endif
-	uv run $(UV_DOCS_GROUPS) sphinx-lint --ignore docs/reference/commands --ignore docs/_build --enable all $(DOCS) -d missing-underscore-after-hyperlink,missing-space-in-hyperlink,line-too-long
-ifneq ($(CI),)
-	@echo ::endgroup::
-endif
+# this extends PRETTIER_FILES from common .mk
+PRETTIER_FILES += $(foreach dir,$(PRETTIER_IGNORE_DIRS),"!$(dir)/**")
+
+.PHONY: format
+format: format-ruff format-codespell format-prettier format-shfmt format-pre-commit  ## Run all automatic formatters
 
 .PHONY: lint
-lint: lint-ruff lint-codespell lint-mypy lint-prettier lint-pyright lint-shellcheck lint-docs lint-twine lint-uv-lockfile  ## Run all linters
+lint: lint-code lint-docs lint-twine lint-uv-lockfile lint-actions  ## Run all linters
+
+.PHONY: lint-code
+lint-code: lint-ruff lint-ty lint-codespell lint-prettier lint-shfmt lint-shellcheck  ## Run code-specific linters
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages

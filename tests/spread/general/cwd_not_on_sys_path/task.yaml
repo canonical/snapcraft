@@ -25,4 +25,4 @@ execute: |
     echo "    stage-packages: [libc6]" >> snap/snapcraft.yaml
   fi
 
-  snapcraft
+  snapcraft pack

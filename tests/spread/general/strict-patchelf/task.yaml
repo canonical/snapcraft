@@ -49,13 +49,8 @@ execute: |
   fi
 
   # Account for /usr merge.
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-    RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet"
-    RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet"
-  else
-    RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
-    RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
-  fi
+  RPATH_MATCH="^/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
+  RPATH_ORIGIN_MATCH="^\\\$ORIGIN/../fake-lib:/snap/$base/current/lib/$arch_triplet:/snap/$base/current/usr/lib/$arch_triplet"
 
   # Verify binary rpath patching with existing rpath
   patchelf --print-interpreter prime/bin/hello-strict-existing-rpath | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
@@ -64,4 +59,3 @@ execute: |
   # Verify binary rpath patching without existing rpath
   patchelf --print-interpreter prime/bin/hello-strict-enable-patchelf | MATCH "^/snap/$base/current/lib.*ld.*.so.*"
   patchelf --print-rpath prime/bin/hello-strict-enable-patchelf | MATCH "${RPATH_MATCH}"
-

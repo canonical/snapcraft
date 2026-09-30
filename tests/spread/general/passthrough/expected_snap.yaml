@@ -2,20 +2,20 @@ name: passthrough-tests
 version: '1.0'
 summary: passthrough-tests
 description: passthrough-tests
+architectures:
+- amd64
+base: core22
 apps:
   test-cmd:
     command: test-cmd
-    command-chain:
-    - snap/command-chain/snapcraft-runner
     pt-test-app: pt-test-app
-architectures:
-- amd64
-assumes:
-- command-chain
-base: core20
 confinement: strict
 grade: devel
+environment:
+  LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+  PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
 hooks:
   configure:
-    pt-test-hook: pt-test-hook
+    passthrough:
+      pt-test-hook: pt-test-hook
 pt-test-snap: pt-test-snap

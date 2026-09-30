@@ -10,10 +10,7 @@ environment:
   SNAP/archs: archs
   SNAP/build_for: build-for
   SNAP/build_for_with_archs: build-for-with-archs
-  SNAPCRAFT_REMOTE_BUILD_STRATEGY: disable-fallback
   CREDENTIALS_FILE: "$HOME/.local/share/snapcraft/launchpad-credentials"
-  CREDENTIALS_FILE/new_credentials: "$HOME/.local/share/snapcraft/launchpad-credentials"
-  CREDENTIALS_FILE/old_credentials: "$HOME/.local/share/snapcraft/provider/launchpad/credentials"
 
 prepare: |
   cd "./snaps/$SNAP"
@@ -53,7 +50,7 @@ execute: |
   if [[ -e "arguments.txt" ]]; then
     call_args=$(cat "arguments.txt")
   fi
-  
+
   # shellcheck disable=SC2086
   snapcraft remote-build --launchpad-accept-public-upload $call_args
 

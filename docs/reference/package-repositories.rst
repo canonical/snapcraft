@@ -16,7 +16,4 @@ as sources for the ``build-packages`` and ``stage-packages`` keys, including tho
 listed on a Personal Package Archive (PPA), which serves personally hosted non-standard
 packages.
 
-For more information on how to configure package repositories, see the `Craft Archives
-documentation`_.
-
-.. _Craft Archives documentation: https://canonical-craft-archives.readthedocs-hosted.com/en/latest/reference/repo_properties/
+For more information on how to configure package repositories, see :external+craft-archives:doc:`reference/repo_properties` in the Craft Archives documentation.

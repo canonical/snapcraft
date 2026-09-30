@@ -27,7 +27,7 @@ from craft_cli import emit
 from craft_parts import Action, ActionType, ProjectVarInfo, Step
 from craft_parts.packages import Repository
 from craft_platforms import DebianArchitecture
-from xdg import BaseDirectory  # type: ignore
+from xdg import BaseDirectory
 
 from snapcraft import errors
 from snapcraft.meta import ExtractedMetadata

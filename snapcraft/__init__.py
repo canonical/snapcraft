@@ -16,9 +16,6 @@
 
 """Publish your app for Linux users for desktop, cloud, and IoT."""
 
-# For legacy compatibility
-import snapcraft.sources  # noqa: F401
-
 try:
     from ._version import __version__
 except ImportError:

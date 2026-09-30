@@ -29,7 +29,7 @@ execute: |
   cd "$SNAP"
 
   # Build what and install the snap
-  snapcraft
+  snapcraft pack
   snap install "${SNAP}"_1.0_*.snap --dangerous
 
   # Run the ROS system. By default this will never exit, but the snap supports

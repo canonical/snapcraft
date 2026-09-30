@@ -5,20 +5,13 @@ if [ -z "$SNAPCRAFT_PROJECT_NAME" ]; then
     exit 1
 fi
 
-if [ -z "$CRAFT_PROJECT_NAME" ]; then
-    # Running in legacy mode, execute legacy snapcraftctl
-    exec "$SNAP"/bin/scriptlet-bin/snapcraftctl "$@"
-    echo "Error: cannot execute legacy snapcraftctl" >&2
-    exit 1
-fi
-
 cmd="$1"
 args="$2"
 retcode=0
 
 set -e
 case "$cmd" in
-  pull|build|stage|prime)
+pull | build | stage | prime)
     if [ "${cmd^^}" = "$CRAFT_STEP_NAME" ]; then
         echo "Warning: use 'craftctl default' to execute the default step handler" >&2
         craftctl default
@@ -27,17 +20,18 @@ case "$cmd" in
         retcode=1
     fi
     ;;
-  set-version)
+set-version)
     echo "Warning: Use 'craftctl set version=<value>' to set version" >&2
     craftctl set version="$args"
     ;;
-  set-grade)
+set-grade)
     echo "Warning: Use 'craftctl set grade=<value>' to set grade" >&2
     craftctl set grade="$args"
     ;;
-  *)
+*)
     echo "Error: snapcraftctl called with an invalid command" >&2
     retcode=1
+    ;;
 esac
 
 cat <<EOF >&2

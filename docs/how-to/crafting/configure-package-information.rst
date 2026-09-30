@@ -25,7 +25,7 @@ The placeholder values looks similar to this:
     :caption: snapcraft.yaml
 
     name: newtest
-    base: core24
+    base: core26
     version: '0.1'
     summary: Single-line elevator pitch for your amazing snap
     description: |
@@ -58,7 +58,7 @@ When crafting a snap, fill these keys as follows:
       - Set the version of Ubuntu that the snap will use for its runtime environment.
         :ref:`how-to-specify-a-base` are a complex topic that is out of scope for this
         guide. Unless you're building a snap compatible with older code, leave this as
-        ``core24``.
+        ``core26``.
     * - ``version``
       - Set the initial version of your snap. This key is a simple string, so you can
         use any version schema. You can later replace this with a different version, or
@@ -97,7 +97,8 @@ When you're crafting a snap for existing software, it's easier to import the
 package information from an external source instead of manually copying it. There
 are two sets of data available:
 
-- The main package information from a standard `AppStream`_ metadata file
+- The main package information from a standard `AppStream
+  <https://www.freedesktop.org/software/appstream/docs/>`__ metadata file
 - The snap's version and grade through a script
 
 
@@ -251,8 +252,8 @@ First, in the main app's definition, set the ``desktop`` key to the path of the
 ``.desktop`` file. The key accepts a path relative to the ``prime`` directory during the
 prime step of the build, so it must match the file's location during that step.
 
-While you're still in the main app, connect the `desktop interface
-<https://snapcraft.io/docs/desktop-interface>`_.
+While you're still in the main app, connect the
+:external+snap:ref:`interfaces-desktop-interface`.
 
 Lastly, make sure that the ``Icon`` path in the desktop entry is available in the
 ``prime`` folder. During build, Snapcraft will attempt to automatically resolve the

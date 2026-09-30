@@ -1,9 +1,11 @@
 .. _explanation-components:
 
-Components
-**********
+About components
+================
 
-.. include:: /reuse/components-intro.rst
+A component is a bundle of files that can be packaged and uploaded in conjunction with a
+snap, and later optionally installed beside it. Components are defined with a top-level
+``components`` key in the project file.
 
 Components are useful for distributing optional resources alongside a snap. For
 example, debug symbols are useful for the developer of an application and are
@@ -23,8 +25,9 @@ debug symbols can download and install them as a component.
 Components and Partitions
 -------------------------
 
-Components utilize a `Craft Parts`_ feature called ``partitions``. This feature
-is enabled only when the ``component`` key is defined in the project file.
+Components utilize a :external+craft-parts:doc:`Craft Parts <index>` feature called
+``partitions``. This feature is enabled only when the ``component`` key is defined in
+the project file.
 
 Each component has a namespaced partition ``component/<component-name>`` where
 ``component`` is the partition's namespace and ``<component-name>`` is the name

@@ -2,7 +2,7 @@ summary: Verify --ua-token functionality
 
 environment:
   SNAP_DIR: snaps/ua-token-test
-  SNAPCRAFT_UA_TOKEN: "$(HOST: echo ${UA_TOKEN})"
+  SNAPCRAFT_UA_TOKEN: "$(HOST: echo ${UBUNTU_PRO_TOKEN})"
   SNAPCRAFT_BUILD_ENVIRONMENT: ""
   RUN_UA_TESTS: "$(HOST: echo ${RUN_UA_TESTS})"
 
@@ -14,11 +14,6 @@ prepare: |
   set_base "snap/snapcraft.yaml"
 
 restore: |
-  # core20 will use multipass if this isn't set
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-    export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
-  fi
-
   cd "$SNAP_DIR"
   snapcraft clean
   rm -f ./*.snap
@@ -31,17 +26,12 @@ execute: |
   if [ -z "$SNAPCRAFT_UA_TOKEN" ]; then
     # This test has to run in the main repo's workflow and can be skipped in other environments.
     if [ -z "$RUN_UA_TESTS" ] || [ "$RUN_UA_TESTS" = "false" ]; then
-      echo "Skipping test because UA_TOKEN isn't set."
+      echo "Skipping test because UBUNTU_PRO_TOKEN isn't set."
       exit 0
     else
-      echo "Can't run test because UA_TOKEN isn't set."
+      echo "Can't run test because UBUNTU_PRO_TOKEN isn't set."
       exit 1
     fi
-  fi
-
-  # core20 will use multipass if this isn't set
-  if [ "$SPREAD_SYSTEM" = "ubuntu-20.04-64" ]; then
-    export SNAPCRAFT_BUILD_ENVIRONMENT=lxd
   fi
 
   cd "$SNAP_DIR"
