@@ -447,6 +447,44 @@ def test_unknown_build_for_error(
     ) in err
 
 
+@pytest.mark.parametrize("base", const.CURRENT_BASES - {"devel"})
+@pytest.mark.usefixtures("emitter")
+def test_platform_error(
+    default_project,
+    fake_services,
+    setup_project,
+    capsys,
+    base,
+    fake_app,
+    mocker,
+    mock_remote_start_builds,
+):
+    """Error if the removed '--platform' argument is used."""
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "snapcraft",
+            "remote-build",
+            "--launchpad-accept-public-upload",
+            "--platform",
+            "amd64",
+        ],
+    )
+    setup_project(fake_services, {**default_project.marshal(), "base": base})
+
+    assert fake_app.run() == os.EX_USAGE
+
+    _, err = capsys.readouterr()
+
+    assert "'--platform' is not supported for remote builds." in err
+    assert (
+        "Recommended resolution: Use '--build-for' to select the architectures "
+        "to build for."
+    ) in err
+    mock_remote_start_builds.assert_not_called()
+
+
 @pytest.mark.parametrize(
     ("base", "build_info", "error_messages"),
     [

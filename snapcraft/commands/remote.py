@@ -80,6 +80,21 @@ class RemoteBuildCommand(RemoteBuild):
             # build for architecture that is not in the project metadata
             dest="remote_build_build_fors",
         )
+        # '--platform' was removed from remote-build in Snapcraft 8.7.0. It's still
+        # parsed so it can fail with a helpful error.
+        parser.add_argument("--platform", help=argparse.SUPPRESS)
+
+    @override
+    def _run(self, parsed_args: argparse.Namespace, **kwargs: Any) -> int | None:
+        if parsed_args.platform:
+            raise craft_application.errors.RemoteBuildError(
+                "'--platform' is not supported for remote builds.",
+                resolution="Use '--build-for' to select the architectures to build for.",
+                doc_slug="/explanation/remote-build.html",
+                retcode=os.EX_USAGE,
+            )
+
+        return super()._run(parsed_args, **kwargs)
 
     @override
     def _pre_build(self, parsed_args: argparse.Namespace):
