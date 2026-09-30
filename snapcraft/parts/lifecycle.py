@@ -669,20 +669,30 @@ def patch_elf(step_info: StepInfo, use_system_libs: bool = True) -> bool:
         emit.debug("patch_elf: no state information")
         return True
 
+    # Use the linker and libraries of the architecture the snap is built for,
+    # which isn't the host's architecture when cross-compiling.
+    arch = DebianArchitecture(step_info.arch_build_for).to_platform_arch()
+    base_path = Path(f"/snap/{step_info.base}/current")
+
     try:
         # If libc is staged we'll find a dynamic linker in the payload. At
         # runtime the linker will be in the installed snap path.
         linker = elf_utils.get_dynamic_linker(
             root_path=step_info.prime_dir,
             snap_path=Path(f"/snap/{step_info.project_name}/current"),
+            arch=arch,
         )
     except elf_errors.DynamicLinkerNotFound:
-        # Otherwise look for the host linker, which should match the base
-        # system linker. At runtime use the linker from the installed base
-        # snap.
-        linker = elf_utils.get_dynamic_linker(
-            root_path=Path("/"), snap_path=Path(f"/snap/{step_info.base}/current")
-        )
+        # Otherwise, at runtime use the linker from the installed base snap.
+        if step_info.is_cross_compiling:
+            # The host's linker is for a different architecture, and cross
+            # toolchains don't install the target's linker in the same location.
+            linker = str(base_path / elf_utils.get_dynamic_linker_path(arch))
+        else:
+            # Look for the host linker, which should match the base system linker.
+            linker = elf_utils.get_dynamic_linker(
+                root_path=Path("/"), snap_path=base_path, arch=arch
+            )
 
     migrated_files = step_info.state.files
     patcher = Patcher(dynamic_linker=linker, root_path=step_info.prime_dir)
@@ -690,12 +700,12 @@ def patch_elf(step_info: StepInfo, use_system_libs: bool = True) -> bool:
         step_info.prime_dir, (str(file) for file in migrated_files)
     )
     soname_cache = SonameCache()
-    arch_triplet = elf_utils.get_arch_triplet()
+    arch_triplet = elf_utils.get_arch_triplet(arch)
 
     for elf_file in elf_files:
         elf_file.load_dependencies(
             root_path=step_info.prime_dir,
-            base_path=Path(f"/snap/{step_info.base}/current"),
+            base_path=base_path,
             content_dirs=[],  # classic snaps don't use content providers
             arch_triplet=arch_triplet,
             soname_cache=soname_cache,

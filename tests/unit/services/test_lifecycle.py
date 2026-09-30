@@ -116,6 +116,8 @@ def test_post_prime_patchelf(
             "state.files": ["usr/bin/ls"],
             "prime_dir": tmp_path / "prime",
             "part_name": "my-part",
+            "arch_build_for": str(DebianArchitecture.from_host()),
+            "is_cross_compiling": False,
         }
     )
 

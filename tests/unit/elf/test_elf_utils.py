@@ -143,6 +143,44 @@ class TestGetDynamicLinker:
         )
         assert dynamic_linker == f"/snap/foo/current/{linker}"
 
+    def test_get_dynamic_linker_arch(self, mocker, new_dir):
+        """Get the dynamic linker for an architecture other than the host's."""
+        mocker.patch("platform.machine", return_value="aarch64")
+        lpath = Path("usr/lib/ld-linux-armhf.so.3")
+        lpath.parent.mkdir(parents=True)
+        lpath.touch()
+
+        dynamic_linker = elf_utils.get_dynamic_linker(
+            root_path=new_dir, snap_path=Path("/snap/foo/current"), arch="armv7l"
+        )
+
+        assert dynamic_linker == "/snap/foo/current/usr/lib/ld-linux-armhf.so.3"
+
+    @pytest.mark.parametrize(
+        ("arch", "expected_path"),
+        [
+            ("aarch64", "lib/ld-linux-aarch64.so.1"),
+            ("armv7l", "lib/ld-linux-armhf.so.3"),
+            ("armv8l", "lib/ld-linux-armhf.so.3"),
+            ("ppc64le", "lib64/ld64.so.2"),
+            ("riscv64", "lib/ld-linux-riscv64-lp64d.so.1"),
+            ("s390x", "lib/ld64.so.1"),
+            ("x86_64", "lib64/ld-linux-x86-64.so.2"),
+            ("i686", "lib/ld-linux.so.2"),
+        ],
+    )
+    def test_get_dynamic_linker_path(self, mocker, arch, expected_path):
+        """Get the standard path of an architecture's dynamic linker."""
+        mocker.patch("platform.machine", return_value="s390x")
+
+        assert elf_utils.get_dynamic_linker_path(arch) == Path(expected_path)
+
+    def test_get_dynamic_linker_path_host(self, mocker):
+        """Default to the host's architecture."""
+        mocker.patch("platform.machine", return_value="aarch64")
+
+        assert elf_utils.get_dynamic_linker_path() == Path("lib/ld-linux-aarch64.so.1")
+
     def test_get_dynamic_linker_undefined(self, mocker):
         mocker.patch("platform.machine", return_value="z80")
 

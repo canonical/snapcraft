@@ -110,27 +110,44 @@ _ARCH_CONFIG = {
 _ARCH_CONFIG["armv8l"] = _ARCH_CONFIG["armv7l"]
 
 
-def get_dynamic_linker(*, root_path: Path, snap_path: Path) -> str:
-    """Obtain the dynamic linker that would be seen at runtime.
+def get_dynamic_linker_path(arch: str | None = None) -> Path:
+    """Get the standard path to the dynamic linker of an architecture.
 
-    :param root_path: The root path of a snap payload tree.
-    :param snap_path: Absolute path to the snap once installed.
+    :param arch: Architecture to get the dynamic linker for. If None, then get the
+        dynamic linker for the host's architecture.
 
-    :return: The path to the dynamic linker to use.
+    :returns: The path to the dynamic linker, relative to the root directory.
     """
-    arch = platform.machine()
+    if not arch:
+        arch = platform.machine()
+
     arch_config = _ARCH_CONFIG.get(arch)
     if not arch_config:
         raise RuntimeError(f"Dynamic linker not defined for arch {arch!r}")
 
-    arch_linker_path = Path(arch_config.dynamic_linker)
+    return Path(arch_config.dynamic_linker)
+
+
+def get_dynamic_linker(
+    *, root_path: Path, snap_path: Path, arch: str | None = None
+) -> str:
+    """Obtain the dynamic linker that would be seen at runtime.
+
+    :param root_path: The root path of a snap payload tree.
+    :param snap_path: Absolute path to the snap once installed.
+    :param arch: Architecture to get the dynamic linker for. If None, then get the
+        dynamic linker for the host's architecture.
+
+    :return: The path to the dynamic linker to use.
+    """
+    arch_linker_path = get_dynamic_linker_path(arch)
     # First consider the pre usrmerge world, then the post usrmerge reality.
     for probable_path in (arch_linker_path, Path("usr") / arch_linker_path):
         linker_path = root_path / probable_path
         if linker_path.exists():
             return str(snap_path / probable_path)
 
-    raise errors.DynamicLinkerNotFound(root_path / arch_config.dynamic_linker)
+    raise errors.DynamicLinkerNotFound(root_path / arch_linker_path)
 
 
 def get_arch_triplet(arch: str | None = None) -> str:

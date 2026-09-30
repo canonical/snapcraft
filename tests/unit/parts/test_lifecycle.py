@@ -32,6 +32,7 @@ from craft_providers.bases.ubuntu import BuilddBaseAlias
 
 from snapcraft import errors
 from snapcraft.elf import ElfFile
+from snapcraft.elf import errors as elf_errors
 from snapcraft.models import MANDATORY_ADOPTABLE_FIELDS, Project
 from snapcraft.parts import lifecycle as parts_lifecycle
 from snapcraft.parts import set_global_environment, yaml_utils
@@ -2055,6 +2056,105 @@ def test_patch_elf_with_override_prime(snapcraft_yaml, mocker, new_dir, emitter)
     # TODO: This is not working as expected, the patchelf should be called once
     # craft-parts fixed the issue with the override-prime
     run_patchelf_mock.assert_not_called()
+
+
+@pytest.fixture
+def patch_elf_step_info(new_dir, mocker):
+    """Return a step info for patching an ELF file built on arm64 for armhf."""
+    mocker.patch("platform.machine", return_value="aarch64")
+    prime_dir = new_dir / "prime"
+    prime_dir.mkdir()
+
+    return Mock(
+        build_attributes=["enable-patchelf"],
+        state=Mock(files={"bin/hello"}),
+        prime_dir=prime_dir,
+        project_name="test-snap",
+        base="core24",
+        arch_build_for="armhf",
+        is_cross_compiling=True,
+    )
+
+
+@pytest.fixture
+def mock_elf_file(mocker, patch_elf_step_info):
+    elf_file = Mock(path=patch_elf_step_info.prime_dir / "bin/hello")
+    mocker.patch(
+        "snapcraft.elf.elf_utils.get_elf_files_from_list", return_value=[elf_file]
+    )
+    return elf_file
+
+
+@pytest.mark.usefixtures("emitter")
+def test_patch_elf_cross_compile_staged_linker(
+    patch_elf_step_info, mock_elf_file, mocker
+):
+    """Use the build-for architecture's linker when it is staged."""
+    mock_patcher = mocker.patch("snapcraft.parts.lifecycle.Patcher")
+    linker = patch_elf_step_info.prime_dir / "usr/lib/ld-linux-armhf.so.3"
+    linker.parent.mkdir(parents=True)
+    linker.touch()
+
+    parts_lifecycle.patch_elf(patch_elf_step_info)
+
+    mock_patcher.assert_called_once_with(
+        dynamic_linker="/snap/test-snap/current/usr/lib/ld-linux-armhf.so.3",
+        root_path=patch_elf_step_info.prime_dir,
+    )
+    mock_elf_file.load_dependencies.assert_called_once_with(
+        root_path=patch_elf_step_info.prime_dir,
+        base_path=Path("/snap/core24/current"),
+        content_dirs=[],
+        arch_triplet="arm-linux-gnueabihf",
+        soname_cache=ANY,
+    )
+
+
+@pytest.mark.usefixtures("emitter")
+def test_patch_elf_cross_compile_base_linker(
+    patch_elf_step_info, mock_elf_file, mocker
+):
+    """Use the build-for architecture's linker from the base snap.
+
+    The host isn't checked for the linker, because cross toolchains install it in
+    a different location.
+    """
+    mock_patcher = mocker.patch("snapcraft.parts.lifecycle.Patcher")
+
+    parts_lifecycle.patch_elf(patch_elf_step_info)
+
+    mock_patcher.assert_called_once_with(
+        dynamic_linker="/snap/core24/current/lib/ld-linux-armhf.so.3",
+        root_path=patch_elf_step_info.prime_dir,
+    )
+    mock_elf_file.load_dependencies.assert_called_once_with(
+        root_path=patch_elf_step_info.prime_dir,
+        base_path=Path("/snap/core24/current"),
+        content_dirs=[],
+        arch_triplet="arm-linux-gnueabihf",
+        soname_cache=ANY,
+    )
+
+
+@pytest.mark.usefixtures("emitter", "mock_elf_file")
+def test_patch_elf_native_base_linker(patch_elf_step_info, mocker):
+    """Check the host for the linker when not cross-compiling."""
+    mocker.patch("snapcraft.parts.lifecycle.Patcher")
+    patch_elf_step_info.arch_build_for = "arm64"
+    patch_elf_step_info.is_cross_compiling = False
+    mock_get_dynamic_linker = mocker.patch(
+        "snapcraft.elf.elf_utils.get_dynamic_linker",
+        side_effect=[
+            elf_errors.DynamicLinkerNotFound(Path("prime/lib/ld-linux-aarch64.so.1")),
+            "/snap/core24/current/lib/ld-linux-aarch64.so.1",
+        ],
+    )
+
+    parts_lifecycle.patch_elf(patch_elf_step_info)
+
+    assert mock_get_dynamic_linker.mock_calls[1] == call(
+        root_path=Path("/"), snap_path=Path("/snap/core24/current"), arch="aarch64"
+    )
 
 
 @pytest.mark.parametrize("build_for", ["amd64", "arm64", "all"])
