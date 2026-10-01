@@ -39,6 +39,7 @@ def _create_command(
     profile: str | None = None,
     project_dir: str | None = None,
     name: str | None = None,
+    vcs: str | None = None,
 ):
     """Build a snapcraft init command."""
     cmd = ["snapcraft", "init"]
@@ -48,6 +49,8 @@ def _create_command(
         cmd.append(project_dir)
     if name:
         cmd.extend(["--name", name])
+    if vcs:
+        cmd.extend(["--vcs", vcs])
     return cmd
 
 
@@ -63,7 +66,9 @@ def test_init_default(profile, name, project_dir, emitter, valid_new_dir, mocker
     else:
         expected_name = str(valid_new_dir.name)
     snapcraft_yaml = pathlib.Path(project_dir or valid_new_dir) / "snap/snapcraft.yaml"
-    cmd = _create_command(profile=profile, project_dir=project_dir, name=name)
+    cmd = _create_command(
+        profile=profile, project_dir=project_dir, name=name, vcs="none"
+    )
     mocker.patch.object(sys, "argv", cmd)
     app = application.create_app()
 

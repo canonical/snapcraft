@@ -108,6 +108,7 @@ class DesktopFile:
                     )
                 ) is not None:
                     self._parser[section]["Icon"] = os.path.join("${SNAP}", icon_path)
+                    return
 
             # With everything stripped, check to see if the icon is there.
             # if it is, add "${SNAP}" back and set the icon

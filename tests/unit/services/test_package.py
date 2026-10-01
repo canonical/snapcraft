@@ -38,6 +38,13 @@ from snapcraft.parts.setup_assets import get_mediated_icon_asset
 from snapcraft.services import Package
 
 
+@pytest.fixture
+def extra_project_params(extra_project_params):
+    # the package service requires at least one part to pack an artifact
+    extra_project_params["parts"] = {"my-part": {"plugin": "nil"}}
+    return extra_project_params
+
+
 def test_pack(default_project, fake_services, setup_project, mocker):
     setup_project(fake_services, default_project.marshal())
     mock_pack_snap = mocker.patch.object(pack, "pack_snap")
