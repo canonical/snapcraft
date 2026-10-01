@@ -2678,6 +2678,7 @@ docs = [
     { name = "sphinx-rerediraffe" },
     { name = "sphinx-roles" },
     { name = "sphinx-sitemap" },
+    { name = "sphinx-structured-toc" },
     { name = "sphinx-substitution-extensions" },
     { name = "sphinx-terminal" },
     { name = "sphinxcontrib-jquery" },
@@ -2792,6 +2793,7 @@ docs = [
     { name = "sphinx-rerediraffe", specifier = ">=0.0.3,<1.0.0" },
     { name = "sphinx-roles", specifier = "~=0.1" },
     { name = "sphinx-sitemap", specifier = "~=2.9" },
+    { name = "sphinx-structured-toc", specifier = "==0.2.0" },
     { name = "sphinx-substitution-extensions", specifier = "==2025.1.2" },
     { name = "sphinx-terminal", specifier = "~=1.0" },
     { name = "sphinxcontrib-jquery", specifier = "~=4.1" },
@@ -3103,6 +3105,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/61/17/56fe0f65e3567f829b2b4153a622be1d4b222b781e0d90d7db5a7738f30f/sphinx_sitemap-2.9.0.tar.gz", hash = "sha256:70f97bcdf444e3d68e118355cf82a1f54c4d3c03d651cd17fe87398b26e25e21", size = 6978, upload-time = "2025-10-06T00:24:00.036Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e4/94/3c57e8b1985e755c48972e2ecd59526d4bf0b52a1fe805bc52a8e98cb92d/sphinx_sitemap-2.9.0-py3-none-any.whl", hash = "sha256:f1f1d3a9ad012ba17a7ef0b560d303bff2d0db26647567d6e810bcc754466664", size = 6218, upload-time = "2025-10-06T00:23:58.778Z" },
+]
+
+[[package]]
+name = "sphinx-structured-toc"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "docutils" },
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/29/d35407f503c2da64baa543aa3311494dc0f80cf82aee571fa6e95b340837/sphinx_structured_toc-0.2.0.tar.gz", hash = "sha256:3b02f8f9b630d10400624acefdee83f201d88be37760ba6dc06236e197edde20", size = 187398, upload-time = "2026-09-10T22:37:45.108Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/8a/b2db20b0d516f78cafa89f60525341c6b9233c4d40d1a59c6aa7171dd56d/sphinx_structured_toc-0.2.0-py3-none-any.whl", hash = "sha256:422f5b8223310682e8d11f2f29a1dbe2b09136fb661cdcd2a992b10c7199d0d5", size = 35870, upload-time = "2026-09-10T22:37:43.895Z" },
 ]
 
 [[package]]
