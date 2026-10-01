@@ -28,8 +28,8 @@ for each release.
 Writing and editing in the docs-as-code style follows a write-build-preview loop.
 
 The Starcraft maintainers try and review every PR in a timely manner, typically within a
-week for PRs that complete an assigned issue. They aim to ensure that all contributions
-are reviewed thoroughly and thoughtfully.
+week for pull requests that complete an assigned issue. They aim to ensure that all
+contributions are reviewed thoroughly and thoughtfully.
 
 
 Writing styles and conventions
