@@ -60,11 +60,13 @@ class Init(services.InitService):
         project_dir: pathlib.Path,
         project_name: str,
         template_dir: pathlib.Path,
+        vcs: str,
     ) -> None:
         super().initialise_project(
             project_dir=project_dir,
             project_name=project_name,
             template_dir=template_dir,
+            vcs=vcs,
         )
         craft_cli.emit.message(
             "See https://documentation.ubuntu.com/snapcraft/stable/reference/"
