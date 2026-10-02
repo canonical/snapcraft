@@ -1,0 +1,11 @@
+name: my-remote-snap
+base: core24
+version: '0.1'
+summary: Test snap for project-dir remote build
+description: A minimal project to test remote builds using project-dir.
+grade: devel
+confinement: devmode
+
+parts:
+  my-part:
+    plugin: nil
