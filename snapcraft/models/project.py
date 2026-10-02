@@ -75,6 +75,12 @@ if TYPE_CHECKING:
 ProjectName = Annotated[str, StringConstraints(max_length=40)]
 
 
+# Matches a project variable reference, e.g. "${SNAPCRAFT_PROJECT_NAME}". Snapcraft
+# expands these before the value is written to snap.yaml, so snapd never sees the
+# braces and they must not be rejected here.
+_PROJECT_VARIABLE_PATTERN = re.compile(r"\$\{[A-Za-z0-9_]+\}")
+
+
 def _validate_command_chain(command_chains: list[str]) -> list[str]:
     """Validate command_chain."""
     for command_chain in command_chains:
@@ -999,10 +1005,13 @@ class App(models.CraftBaseModel):
     )
     @classmethod
     def _validate_apps_section_content(cls, command: str) -> str:
-        # Find any invalid characters in the field.
+        # Find any invalid characters in the field, ignoring project variable
+        # references because those are expanded before snapd validates the command.
         # The regex below is derived from snapd's validator code.
         # https://github.com/canonical/snapd/blob/0706e2d0b20ae2bf030863f142b8491b66e80bcb/snap/validate.go#L756
-        if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", command):
+        if not re.match(
+            r"^[A-Za-z0-9/. _#:$-]*$", _PROJECT_VARIABLE_PATTERN.sub("", command)
+        ):
             message = "App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
             raise ValueError(message)
 
