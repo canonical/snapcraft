@@ -32,12 +32,12 @@ jobs:
             source-files:
               - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
   lint:
-    uses: canonical/starflow/.github/workflows/lint-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
     needs: filter
     with:
       source-files: ${{ needs.filter.outputs.source-files }}
   test:
-    uses: canonical/starflow/.github/workflows/test-python.yaml@main # zizmor: ignore[unpinned-uses] starflow workflows are exempt from hash-pinning
+    uses: canonical/starflow/.github/workflows/test-python.yaml@main
     needs: filter
     with:
       source-files: ${{ needs.filter.outputs.source-files }}

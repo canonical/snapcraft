@@ -91,7 +91,7 @@ else
 endif
 
 .PHONY: clean
-clean:  ## Clean up the development environment
+clean: docs-clean  ## Clean up the development environment
 	uv tool run pyclean .
 	rm -rf dist build docs/_build docs/_linkcheck docs/reference/gen *.snap .coverage* .venv
 
