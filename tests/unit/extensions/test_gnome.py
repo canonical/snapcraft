@@ -190,6 +190,37 @@ def test_get_root_snippet_with_gpu(gnome_extension_core24):
     }
 
 
+def test_get_root_snippet_core24_webkit(gnome_extension_core24):
+    snippet = gnome_extension_core24.get_root_snippet()
+
+    assert snippet["layout"][
+        "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
+    ] == {
+        "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1",
+    }
+    assert (
+        "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0" not in snippet["layout"]
+    )
+
+
+def test_get_root_snippet_core26_webkit(gnome_extension_core26):
+    snippet = gnome_extension_core26.get_root_snippet()
+
+    assert snippet["layout"][
+        "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkitgtk-6.0"
+    ] == {
+        "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkitgtk-6.0",
+    }
+    assert snippet["layout"][
+        "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1"
+    ] == {
+        "bind": "$SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1",
+    }
+    assert (
+        "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0" not in snippet["layout"]
+    )
+
+
 def test_get_root_snippet_with_glycin(gnome_extension_core26):
     snippet = gnome_extension_core26.get_root_snippet()
 
