@@ -16,12 +16,23 @@
 
 """Unit tests for SnapConfig class."""
 
+import ast
+import os
+import subprocess
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from snaphelpers import SnapCtlError
 
-from snapcraft.snap_config import SnapConfig, get_snap_config
+from snapcraft.snap_config import (
+    SnapConfig,
+    get_snap_config,
+    is_snapcraft_running_from_snap,
+)
+
+_SNAP_CONFIG_PATH = Path(__file__).parents[2] / "snapcraft" / "snap_config.py"
 
 
 @pytest.fixture
@@ -39,11 +50,104 @@ def mock_is_running_from_snap(mocker):
     )
 
 
-def test_unmarshal():
-    """Verify unmarshalling works as expected."""
-    config = SnapConfig.unmarshal({"provider": "lxd"})
+def test_module_imports():
+    """Verify snap_config does not import craft-application, parts, or providers."""
+    tree = ast.parse(_SNAP_CONFIG_PATH.read_text(encoding="utf-8"))
+    imported: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported.update(
+                alias.name.split(".", maxsplit=1)[0] for alias in node.names
+            )
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported.add(node.module.split(".", maxsplit=1)[0])
 
-    assert config.provider == "lxd"
+    assert not {"craft_application", "craft_parts", "craft_providers"}.intersection(
+        imported
+    )
+
+
+def test_module_imports_in_fresh_process():
+    """Verify loading the model and hook avoids heavy indirect imports."""
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    process = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import runpy, sys; "
+            "import snapcraft.snap_config; "
+            "runpy.run_path('snap/hooks/configure'); "
+            "heavy = {'craft_application', 'craft_parts', 'craft_providers'}"
+            ".intersection(sys.modules); "
+            "assert not heavy, heavy",
+        ],
+        cwd=_SNAP_CONFIG_PATH.parents[1],
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert process.returncode == 0, process.stderr
+
+
+@pytest.mark.parametrize("provider", ["lxd", "multipass", "LXD", "MultiPass"])
+def test_unmarshal(provider):
+    """Verify unmarshalling works as expected."""
+    config = SnapConfig.unmarshal({"provider": provider})
+
+    assert config.provider == provider.lower()
+
+
+@pytest.mark.parametrize("data", [{}, {"provider": None}])
+def test_unmarshal_default_provider(data):
+    """Verify an empty provider stays unset."""
+    assert SnapConfig.unmarshal(data).provider is None
+
+
+@pytest.mark.parametrize("data", [None, [], "lxd"])
+def test_unmarshal_not_a_dict(data):
+    """Verify non-dictionary data raises TypeError."""
+    with pytest.raises(TypeError, match="Project data is not a dictionary"):
+        SnapConfig.unmarshal(data)
+
+
+@pytest.mark.parametrize("provider", ["multipass", "MultiPass"])
+def test_validate_assignment(provider):
+    """Verify assigning a provider normalizes its case."""
+    config = SnapConfig(provider="lxd")
+    config.provider = provider
+    assert config.provider == provider.lower()
+
+
+@pytest.mark.parametrize("provider", ["invalid-value", 1, ["lxd"]])
+def test_validate_assignment_invalid(provider):
+    """Verify an invalid provider assignment raises an error."""
+    config = SnapConfig(provider="lxd")
+    with pytest.raises(ValueError, match="Input should be 'lxd' or 'multipass'"):
+        config.provider = provider
+
+
+@pytest.mark.parametrize(
+    ("snap_name", "snap_path", "expected"),
+    [
+        (None, None, False),
+        ("snapcraft", None, False),
+        (None, "/snap/snapcraft/current", False),
+        ("other", "/snap/other/current", False),
+        ("snapcraft", "/snap/snapcraft/current", True),
+        ("snapcraft", "", True),
+    ],
+)
+def test_is_snapcraft_running_from_snap(monkeypatch, snap_name, snap_path, expected):
+    """Verify snap detection from SNAP_NAME and SNAP."""
+    for key, value in (("SNAP_NAME", snap_name), ("SNAP", snap_path)):
+        monkeypatch.delenv(key, raising=False)
+        if value is not None:
+            monkeypatch.setenv(key, value)
+
+    assert is_snapcraft_running_from_snap() is expected
 
 
 def test_unmarshal_invalid_provider_error():

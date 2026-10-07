@@ -16,27 +16,69 @@
 
 """Snap config file definitions and helpers."""
 
-from typing import Annotated, Literal
+import os
+from typing import Annotated, Any, Literal
 
-import craft_application.models
 import pydantic
 from craft_cli import emit
 from snaphelpers import SnapConfigOptions, SnapCtlError
+from typing_extensions import Self
 
-from snapcraft.utils import is_snapcraft_running_from_snap
+
+def _normalize_provider(name: Any) -> Any:
+    # Non-strings are left for pydantic to reject.
+    if isinstance(name, str):
+        return name.lower()
+    return name
+
+
+def _alias_generator(name: str) -> str:
+    """Match CraftBaseModel YAML keys, which replace underscores with hyphens."""
+    return name.replace("_", "-")
+
 
 ProviderName = Annotated[
-    Literal["lxd", "multipass"], pydantic.BeforeValidator(lambda name: name.lower())
+    Literal["lxd", "multipass"],
+    pydantic.BeforeValidator(_normalize_provider),
 ]
 
 
-class SnapConfig(craft_application.models.CraftBaseModel):
+# Importing CraftBaseModel loads craft-parts and craft-providers, which can make
+# the configure hook exceed snapd's timeout.
+class SnapConfig(pydantic.BaseModel):
     """Data stored in a snap config.
 
     :param provider: provider to use. Valid values are 'lxd' and 'multipass'.
     """
 
+    model_config = pydantic.ConfigDict(
+        validate_assignment=True,
+        extra="forbid",
+        populate_by_name=True,
+        alias_generator=_alias_generator,
+        coerce_numbers_to_str=True,
+    )
+
     provider: ProviderName | None = None
+
+    @classmethod
+    def unmarshal(cls, data: dict[str, Any]) -> Self:
+        """Create and validate a SnapConfig from snapd config data.
+
+        :param data: The dictionary data to unmarshal.
+        :raises TypeError: If data is not a dictionary.
+        :raises pydantic.ValidationError: If data does not match the model.
+        """
+        if not isinstance(data, dict):
+            raise TypeError("Project data is not a dictionary")
+
+        return cls.model_validate(data)
+
+
+# Not imported from snapcraft.utils: that import loads craft-parts.
+def is_snapcraft_running_from_snap() -> bool:
+    """Check if snapcraft is running from the snap."""
+    return os.getenv("SNAP_NAME") == "snapcraft" and os.getenv("SNAP") is not None
 
 
 def get_snap_config() -> SnapConfig | None:
