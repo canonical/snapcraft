@@ -700,7 +700,7 @@ class App(models.CraftBaseModel):
     refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
         pydantic.Field(
             default=None,
-            description="For an app, determines whether the snap can refresh when the app is still running. for a service, determines whether the service should restart when the snap refreshes.",
+            description="For an app, determines whether the snap can refresh when the app is still running. For a service, determines whether the service should restart when the snap refreshes.",
             examples=["restart"],
         )
     )

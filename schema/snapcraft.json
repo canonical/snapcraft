@@ -250,7 +250,7 @@
             }
           ],
           "default": null,
-          "description": "For an app, determines whether the snap can refresh when the app is still running. for a service, determines whether the service should restart when the snap refreshes.",
+          "description": "For an app, determines whether the snap can refresh when the app is still running. For a service, determines whether the service should restart when the snap refreshes.",
           "examples": ["restart"],
           "title": "Refresh-Mode"
         },
