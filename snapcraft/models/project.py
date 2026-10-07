@@ -709,7 +709,7 @@ class App(models.CraftBaseModel):
     the snap refreshes.
 
     If set to ``restart`` or ``endure``, the app must be configured as a service
-    by the :ref:`daemon key <App.daemon>` key.
+    by the :ref:`daemon key <App.daemon>`.
     If set to ``ignore-running``, the app must not be configured as a service by
     the ``daemon`` key.
 
