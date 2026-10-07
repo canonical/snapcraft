@@ -705,7 +705,7 @@ class App(models.CraftBaseModel):
         )
     )
     """Determines how the service should restart when the snap refreshes or
-    whether the snap should be allowed to refresh when the app is running.
+    whether the snap can refresh when the app is running.
 
     If the value is ``restart`` or ``endure``, the app must specify the ``daemon`` key.
     If the value is ``ignore-running``, the app must not specify the ``daemon`` key.
