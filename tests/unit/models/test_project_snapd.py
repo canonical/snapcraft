@@ -63,3 +63,49 @@ def test_load_partial_project(get_project_yaml, missing_key):
 
     with pytest.raises(pydantic.ValidationError, match=missing_key):
         models.Project.unmarshal(project_yaml)
+
+
+def test_load_snapd_info(get_project_yaml):
+    snapd_info = {
+        "ubuntu-core-tracks": {
+            "18": {"latest": "18", "fips-updates": "18-fips"},
+            "20": {"latest": "20"},
+        }
+    }
+
+    project = models.Project.unmarshal(
+        get_project_yaml(**{"snapd-info": snapd_info})
+    )
+
+    assert project.snapd_info == snapd_info
+
+
+@pytest.mark.parametrize(
+    "snapd_info",
+    [
+        {},
+        {"ubuntu-core-tracks": {}},
+        {"ubuntu-core-tracks": {"18": {"latest": "18"}}},
+        {"ubuntu-core-tracks": {}, "extra": True},
+        {
+            "ubuntu-core-tracks": {
+                18: {"latest": "18"},
+                20: {"latest": "20"},
+            }
+        },
+    ],
+)
+def test_load_valid_snapd_info(get_project_yaml, snapd_info):
+    project = models.Project.unmarshal(
+        get_project_yaml(**{"snapd-info": snapd_info})
+    )
+
+    assert project.snapd_info == snapd_info
+
+
+@pytest.mark.parametrize("snapd_info", [[], "foo", None])
+def test_load_invalid_snapd_info(get_project_yaml, snapd_info):
+    with pytest.raises(pydantic.ValidationError, match="snapd-info"):
+        models.Project.unmarshal(
+            get_project_yaml(**{"snapd-info": snapd_info})
+        )

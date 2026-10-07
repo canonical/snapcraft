@@ -93,6 +93,77 @@ def test_simple_snap_yaml(simple_project, new_dir):
     )
 
 
+def test_snapd_info(new_dir):
+    snapd_info = {
+        "ubuntu-core-tracks": {
+            "18": {
+                "latest": "18",
+                "fips-updates": "18-fips",
+            },
+            "20": {
+                "latest": "20",
+            },
+        },
+        "extra": True,
+    }
+    project = Project.unmarshal(
+        {
+            "name": "mytest",
+            "version": "1.29.3",
+            "type": "snapd",
+            "build-base": "core22",
+            "summary": "Single-line elevator pitch for your amazing snap",
+            "description": "test-description",
+            "confinement": "strict",
+            "parts": {
+                "part1": {
+                    "plugin": "nil",
+                },
+            },
+            "apps": {
+                "app1": {
+                    "command": "bin/mytest",
+                },
+            },
+            "snapd-info": snapd_info,
+        }
+    )
+
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
+
+    yaml_file = Path("meta/snap.yaml")
+    assert yaml_file.is_file()
+
+    content = yaml_file.read_text()
+    assert content == textwrap.dedent(
+        """\
+        name: mytest
+        version: 1.29.3
+        summary: Single-line elevator pitch for your amazing snap
+        description: test-description
+        type: snapd
+        snapd-info:
+          ubuntu-core-tracks:
+            '18':
+              latest: '18'
+              fips-updates: 18-fips
+            '20':
+              latest: '20'
+          extra: true
+        architectures:
+        - amd64
+        apps:
+          app1:
+            command: bin/mytest
+        confinement: strict
+        grade: stable
+        environment:
+          LD_LIBRARY_PATH: ${SNAP_LIBRARY_PATH}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
+        """
+    )
+
+
 def test_assumes(simple_project, new_dir):
     snap_yaml.write(
         simple_project(assumes=["foossumes"]),

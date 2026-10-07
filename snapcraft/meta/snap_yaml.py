@@ -264,6 +264,7 @@ class SnapMetadata(SnapcraftMetadata):
     description: str
     license: str | None = None
     type: str | None = None
+    snapd_info: dict[str, Any] | None = None
     architectures: list[str]
     base: str | None = None
     build_base: str | None = None
@@ -486,6 +487,7 @@ def get_metadata_from_project(
         description=cast(str, project.description),
         license=project.license,
         type=snap_type,
+        snapd_info=project.snapd_info,
         architectures=[arch],
         base=cast(str, project.base),
         build_base=build_base,

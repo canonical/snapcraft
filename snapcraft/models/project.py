@@ -1527,6 +1527,21 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
+    snapd_info: dict[str, Any] | None = pydantic.Field(
+        default=None,
+        description="Snapd-only metadata.",
+    )
+
+    @pydantic.model_validator(mode="after")
+    def _validate_snapd_info(self) -> Self:
+        """Validate that snapd-info is only used by snapd snaps."""
+        if "snapd_info" in self.model_fields_set:
+            if self.type != ProjectType.SNAPD:
+                raise ValueError("'snapd-info' is only allowed for snapd snaps.")
+            if self.snapd_info is None:
+                raise ValueError("'snapd-info' cannot be null.")
+        return self
+
     type: ProjectType | None = pydantic.Field(
         default=None, description="The snap's type.", examples=["kernel"]
     )
