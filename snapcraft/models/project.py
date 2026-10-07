@@ -700,15 +700,18 @@ class App(models.CraftBaseModel):
     refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
         pydantic.Field(
             default=None,
-            description="Determines how the service should restart when the snap refreshes or whether the snap can refresh when the app is running.",
+            description="For an app, determines whether the snap can refresh when the app is still running. for a service, determines whether the service should restart when the snap refreshes.",
             examples=["restart"],
         )
     )
-    """Determines how the service should restart when the snap refreshes or
-    whether the snap can refresh when the app is running.
+    """For an app, determines whether the snap can refresh when the app is still
+    running. for a service, determines whether the service should restart when
+    the snap refreshes.
 
-    If the value is ``restart`` or ``endure``, the app must specify the ``daemon`` key.
-    If the value is ``ignore-running``, the app must not specify the ``daemon`` key.
+    If set to ``restart`` or ``endure``, the app must be configured as a service
+    by the :ref:`daemon key <App.daemon>` key.
+    If set to ``ignore-running``, the app must not be configured as a service by
+    the ``daemon`` key.
 
     See the :ref:`daemon key <App.daemon>` reference for more information.
 
@@ -720,7 +723,7 @@ class App(models.CraftBaseModel):
         * - Value
           - Description
         * - ``restart``
-          - Restart the service when the snap is refreshed. Default.
+          - Restart the service when the snap is refreshed. Default for services.
         * - ``endure``
           - Do not restart the service when the snap is refreshed.
         * - ``ignore-running``
