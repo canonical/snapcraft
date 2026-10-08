@@ -199,6 +199,14 @@ Snapcraft 9.1.3
 - `snapcraft#6433 <https://github.com/canonical/snapcraft/issues/6433>`__ Generated
   hooks are not included in the snap
 
+.. _release-notes-fixes-9.1.4:
+
+Snapcraft 9.1.4
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6480 <https://github.com/canonical/snapcraft/issues/6480>`__ Performance
+  regression when staging files
+
 Contributors
 ------------
 
