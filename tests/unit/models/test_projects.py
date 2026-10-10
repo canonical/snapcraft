@@ -1699,11 +1699,55 @@ class TestAppValidation:
     @pytest.mark.parametrize(
         "value",
         [
+            pytest.param("bin/${SNAPCRAFT_PROJECT_NAME}", id="braces"),
+            pytest.param(
+                "${SNAPCRAFT_PROJECT_NAME}/bin/mkbird --chirps 5", id="braces_leading"
+            ),
+            pytest.param(
+                "bin/${SNAPCRAFT_PROJECT_NAME}-${SNAPCRAFT_PROJECT_VERSION}",
+                id="braces_multiple",
+            ),
+            pytest.param("bin/${CRAFT_ARCH_BUILD_FOR}/mkbird", id="braces_craft"),
+            pytest.param("bin/$SNAPCRAFT_PROJECT_NAME", id="no_braces"),
+        ],
+    )
+    def test_app_command_lexicon_project_variable(
+        self, app_yaml_data, key: str, value: str
+    ):
+        """Verify that Snapcraft's build-time variables are allowed in command fields.
+
+        Snapcraft expands these references before the command reaches snapd, so
+        their braces must not be rejected here.
+        """
+        data = app_yaml_data(**{key: value})
+        proj = Project.unmarshal(data)
+
+        assert proj.apps is not None
+        assert getattr(proj.apps["app1"], key) == value
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "command",
+            "stop_command",
+            "post_stop_command",
+            "reload_command",
+            "bus_name",
+        ],
+    )
+    @pytest.mark.parametrize(
+        "value",
+        [
             pytest.param(
                 "bin/mkbird --chirps=5",
                 id="has_bad_char",
             ),
             pytest.param('mkbird --chirps=1337 --name="81U3J@Y"', id="many_bad"),
+            pytest.param("bin/mkbird{5}", id="braces_without_variable"),
+            pytest.param("bin/${}", id="braces_empty_variable"),
+            pytest.param("bin/${SNAPCRAFT PROJECT NAME}", id="braces_invalid_variable"),
+            pytest.param("${SNAP}/bin/mkbird", id="braces_runtime_variable"),
+            pytest.param("bin/${HOME}", id="braces_other_variable"),
         ],
     )
     def test_app_command_lexicon_bad(self, app_yaml_data, key: str, value: str):
