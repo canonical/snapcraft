@@ -120,6 +120,9 @@ def test_get_root_snippet(gpu_extension_core24):
             "/usr/share/X11/XErrorDB": {
                 "symlink": "$SNAP/gpu-2404/X11/XErrorDB",
             },
+            "/usr/share/X11/locale": {
+                "symlink": "$SNAP/gpu-2404/usr/share/X11/locale",
+            },
         },
     }
 
