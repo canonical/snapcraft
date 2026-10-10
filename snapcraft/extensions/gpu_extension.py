@@ -69,6 +69,7 @@ class GPUExtension(Extension):
         "/usr/share/libdrm": {"bind": "$SNAP/gpu-2404/libdrm"},
         "/usr/share/drirc.d": {"symlink": "$SNAP/gpu-2404/drirc.d"},
         "/usr/share/X11/XErrorDB": {"symlink": "$SNAP/gpu-2404/X11/XErrorDB"},
+        "/usr/share/X11/locale": {"symlink": "$SNAP/gpu-2404/usr/share/X11/locale"},
     }
 
     _GPU_2604_PLUG: dict[str, Any] = {
