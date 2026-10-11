@@ -140,6 +140,14 @@ Snapcraft 9.2.0
 - `craft-parts#1178 <https://github.com/canonical/craft-parts/issues/1178>`__ Show the
   URL of the package that could not be retrieved
 
+Snapcraft 9.2.1
+~~~~~~~~~~~~~~~
+
+.. _release-notes-fixes-9.2.1:
+
+- `snapcraft#6485 <https://github.com/canonical/snapcraft/issues/6485>`__
+  GPUExtension._GPU_2404_LAYOUTS lacks xcompose(5) related layout configuration, leading to xkbcommon errors when running snaps in certain locales(e.g. zh_TW)
+
 Contributors
 ------------
 
@@ -150,6 +158,7 @@ Learn about the new features, changes, and fixes in
 :literalref:`@aleasto <https://github.com/aleasto>`,
 :literalref:`@artivis <https://github.com/artivis>`,
 :literalref:`@bepri <https://github.com/bepri>`,
+:literalref:`@brlin-tw <https://github.com/brlin-tw>`,
 :literalref:`@cmatsuoka <https://github.com/cmatsuoka>`,
 :literalref:`@gcomneno <https://github.com/gcomneno>`,
 :literalref:`@jahn-junior <https://github.com/jahn-junior>`,
