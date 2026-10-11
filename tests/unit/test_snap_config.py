@@ -78,8 +78,8 @@ def test_module_imports_in_fresh_process():
             "import runpy, sys; "
             "import snapcraft.snap_config; "
             "runpy.run_path('snap/hooks/configure'); "
-            "heavy = {'craft_application', 'craft_parts', 'craft_providers'}"
-            ".intersection(sys.modules); "
+            "heavy = {'craft_application', 'craft_cli', 'craft_parts', "
+            "'craft_providers'}.intersection(sys.modules); "
             "assert not heavy, heavy",
         ],
         cwd=_SNAP_CONFIG_PATH.parents[1],

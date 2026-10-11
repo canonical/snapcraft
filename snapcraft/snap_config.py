@@ -20,7 +20,6 @@ import os
 from typing import Annotated, Any, Literal
 
 import pydantic
-from craft_cli import emit
 from snaphelpers import SnapConfigOptions, SnapCtlError
 from typing_extensions import Self
 
@@ -86,6 +85,9 @@ def get_snap_config() -> SnapConfig | None:
 
     :return: SnapConfig. If not running as a snap, return None.
     """
+    # Deferred so the configure hook, which only needs SnapConfig, skips craft-cli.
+    from craft_cli import emit  # noqa: PLC0415 (import-outside-top-level)
+
     if not is_snapcraft_running_from_snap():
         emit.debug(
             "Not loading snap config because snapcraft is not running as a snap."
