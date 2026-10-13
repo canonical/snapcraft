@@ -44,7 +44,7 @@ bases up to core26, but future bases will only support the use of the character.
 Init Git repositories
 ~~~~~~~~~~~~~~~~~~~~~
 
-The :ref:`init command <ref_commands_init>` command now features a ``--vcs`` option to
+The :ref:`init command <ref_commands_init>` now features a ``--vcs`` option to
 initialize a Git repository when creating the Snapcraft project.
 
 stage-slices key
