@@ -86,6 +86,8 @@ values such as its confinement level and supported architectures.
 .. kitbash-field:: Project type
     :override-type: str
 
+.. kitbash-field:: Project snapd_info
+
 .. kitbash-field:: Project grade
 
 .. kitbash-field:: Project confinement

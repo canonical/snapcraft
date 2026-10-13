@@ -1527,24 +1527,23 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    snapd_info: dict[str, Any] | None = pydantic.Field(
-        default=None,
-        description="Snapd-only metadata.",
-    )
-
-    @pydantic.model_validator(mode="after")
-    def _validate_snapd_info(self) -> Self:
-        """Validate that snapd-info is only used by snapd snaps."""
-        if "snapd_info" in self.model_fields_set:
-            if self.type != ProjectType.SNAPD:
-                raise ValueError("'snapd-info' is only allowed for snapd snaps.")
-            if self.snapd_info is None:
-                raise ValueError("'snapd-info' cannot be null.")
-        return self
-
     type: ProjectType | None = pydantic.Field(
         default=None, description="The snap's type.", examples=["kernel"]
     )
+
+    snapd_info: dict[str, Any] | None = pydantic.Field(
+        default=None,
+        description="Additional metadata for snapd snaps.",
+        examples=[
+            "{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"
+        ],
+    )
+    """Additional metadata for snapd snaps.
+
+    This key can only be set when ``type`` is ``snapd``. Its value must be a map.
+    Snapcraft doesn't validate the contents of the map and writes them to the snap's
+    ``snap.yaml`` file.
+    """
 
     icon: str | None = pydantic.Field(
         default=None,
@@ -2105,6 +2104,16 @@ class Project(models.Project):
         """If build_base is devel, then grade must be devel."""
         if self.build_base == "devel" and self.grade == "stable":
             raise ValueError("grade must be 'devel' when build-base is 'devel'")
+        return self
+
+    @pydantic.model_validator(mode="after")
+    def _validate_snapd_info(self) -> Self:
+        """Validate that snapd-info is only used by snapd snaps."""
+        if "snapd_info" in self.model_fields_set:
+            if self.type != ProjectType.SNAPD:
+                raise ValueError("'snapd-info' is only allowed for snapd snaps.")
+            if self.snapd_info is None:
+                raise ValueError("'snapd-info' cannot be null.")
         return self
 
     @pydantic.field_validator("epoch")

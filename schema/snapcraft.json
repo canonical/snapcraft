@@ -791,6 +791,21 @@
           "enum": ["app", "gadget", null],
           "title": "Type"
         },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
+        },
         "icon": {
           "anyOf": [
             {
@@ -1401,6 +1416,21 @@
           "enum": ["app", "gadget", null],
           "title": "Type"
         },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
+        },
         "icon": {
           "anyOf": [
             {
@@ -1988,6 +2018,21 @@
           "enum": ["app", "gadget", null],
           "title": "Type"
         },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
+        },
         "icon": {
           "anyOf": [
             {
@@ -2574,6 +2619,21 @@
           "default": null,
           "enum": ["app", "gadget", null],
           "title": "Type"
+        },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
         },
         "icon": {
           "anyOf": [
@@ -3279,6 +3339,21 @@
           "enum": ["app", "gadget", null],
           "title": "Type"
         },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
+        },
         "icon": {
           "anyOf": [
             {
@@ -3898,6 +3973,21 @@
           "enum": ["app", "gadget", null],
           "title": "Type"
         },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
+        },
         "icon": {
           "anyOf": [
             {
@@ -4494,6 +4584,21 @@
           "enum": ["app", "gadget", null],
           "title": "Type"
         },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
+        },
         "icon": {
           "anyOf": [
             {
@@ -5080,6 +5185,21 @@
           "default": null,
           "enum": ["app", "gadget", null],
           "title": "Type"
+        },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
         },
         "icon": {
           "anyOf": [
@@ -5842,6 +5962,21 @@
           "title": "Type",
           "type": "string"
         },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
+        },
         "icon": {
           "anyOf": [
             {
@@ -6441,6 +6576,21 @@
           "enum": ["base", "kernel", "snapd"],
           "title": "Type",
           "type": "string"
+        },
+        "snapd-info": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional metadata for snapd snaps.",
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
+          "title": "Snapd-Info"
         },
         "icon": {
           "anyOf": [

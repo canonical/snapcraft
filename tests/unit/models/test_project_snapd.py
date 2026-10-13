@@ -73,9 +73,7 @@ def test_load_snapd_info(get_project_yaml):
         }
     }
 
-    project = models.Project.unmarshal(
-        get_project_yaml(**{"snapd-info": snapd_info})
-    )
+    project = models.Project.unmarshal(get_project_yaml(**{"snapd-info": snapd_info}))
 
     assert project.snapd_info == snapd_info
 
@@ -96,9 +94,7 @@ def test_load_snapd_info(get_project_yaml):
     ],
 )
 def test_load_valid_snapd_info(get_project_yaml, snapd_info):
-    project = models.Project.unmarshal(
-        get_project_yaml(**{"snapd-info": snapd_info})
-    )
+    project = models.Project.unmarshal(get_project_yaml(**{"snapd-info": snapd_info}))
 
     assert project.snapd_info == snapd_info
 
@@ -106,6 +102,4 @@ def test_load_valid_snapd_info(get_project_yaml, snapd_info):
 @pytest.mark.parametrize("snapd_info", [[], "foo", None])
 def test_load_invalid_snapd_info(get_project_yaml, snapd_info):
     with pytest.raises(pydantic.ValidationError, match="snapd-info"):
-        models.Project.unmarshal(
-            get_project_yaml(**{"snapd-info": snapd_info})
-        )
+        models.Project.unmarshal(get_project_yaml(**{"snapd-info": snapd_info}))
