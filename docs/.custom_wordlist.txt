@@ -158,11 +158,13 @@ ramdisk
 Read the Docs
 ramdisks
 readthedocs
+recursing
 redeclare
 repos?
 reStructuredText
 retrigger(ing)?
 Rockcraft
+rollout
 rosdep
 rst
 runtimes?
@@ -172,6 +174,7 @@ SCons
 scriptlets?
 SDKs?
 sed
+serde
 sequenceDiagram
 sitecustomize
 sitemapindex
@@ -185,6 +188,7 @@ Spread
 spread_test_example
 Starbase
 Starcraft
+startswith
 stderr
 stdin
 stdout
