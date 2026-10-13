@@ -36,7 +36,7 @@ Unified version selection with at signs (@)
 
 In order to standardize package declarations, Snapcraft now supports the use of the at
 sign (@) to separate a package name from its version. This sigil is supported for Deb
-packages (build-packages and stage-packages) and snaps (build-snaps and stage-snaps).
+packages (``build-packages`` and ``stage-packages``) and snaps (``build-snaps`` and ``stage-snaps``).
 
 The previous notation to declare package versions is still supported for all supported
 bases up to core26, but future bases will only support the use of the character.
