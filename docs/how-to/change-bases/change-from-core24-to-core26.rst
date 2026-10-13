@@ -41,6 +41,24 @@ Not all extensions are compatible with core26 at its launch. If your snap uses a
 extension, run ``snapcraft extensions`` to see if it's available for core26. If your
 snap uses an extension that does not yet support core26, it's best to wait to upgrade.
 
+GNOME extension
+~~~~~~~~~~~~~~~
+
+The :ref:`GNOME extension <reference-gnome-extension>` supports core26, but no
+longer adds the ``gsettings`` plug automatically. If an app in your snap used GSettings to
+store its configuration on core24, or is a settings manager that reads or
+modifies host settings, declare the plug manually by adding ``gsettings`` to the app's
+``plugs`` key. Keep any existing plugs in the list. This preserves access to existing
+settings instead of switching to a private database. The :ref:`GSettings guidance
+<how-to-use-the-gnome-extension-gsettings>` describes when the plug is needed
+and the behavior without it.
+
+On core26, the extension also adds automatic :ref:`library cleanup
+<reference-gnome-extension-library-cleanup>`, which removes bundled libraries
+provided by the content snaps. If your snap was relying on a different version of a GNOME
+library that is also provided in the GNOME content snap, it will no longer be allowed to
+do so under the same library SONAME.
+
 Update part names
 -----------------
 
