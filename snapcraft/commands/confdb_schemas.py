@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 import textwrap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import craft_application.commands
 from typing_extensions import override
@@ -46,7 +46,6 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
         Use the 'edit-confdb-schema' command modify confdb schemas.
         """
     )
-    _services: services.SnapcraftServiceFactory
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -70,7 +69,8 @@ class StoreConfdbSchemasCommand(craft_application.commands.AppCommand):
 
     @override
     def run(self, parsed_args: argparse.Namespace):
-        self._services.confdb_schemas.list_assertions(
+        services_factory = cast(services.SnapcraftServiceFactory, self._services)
+        services_factory.confdb_schemas.list_assertions(
             name=parsed_args.name,
             output_format=parsed_args.format,
         )
@@ -106,7 +106,6 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
         Use the 'confdb-schemas' command to view existing confdb schemas.
         """
     )
-    _services: services.SnapcraftServiceFactory
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -124,7 +123,8 @@ class StoreEditConfdbSchemaCommand(craft_application.commands.AppCommand):
 
     @override
     def run(self, parsed_args: argparse.Namespace):
-        self._services.confdb_schemas.edit_assertion(
+        services_factory = cast(services.SnapcraftServiceFactory, self._services)
+        services_factory.confdb_schemas.edit_assertion(
             name=parsed_args.name,
             account_id=parsed_args.account_id,
             key_name=parsed_args.key_name,
