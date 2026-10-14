@@ -27,6 +27,7 @@ from pydantic import ValidationError
 
 import snapcraft.parts.plugins as colcon
 from snapcraft.parts.plugins import _ros
+from snapcraft.parts.plugins.colcon_plugin import ColconPluginProperties
 
 
 def test_rosdep_error():
@@ -192,6 +193,7 @@ class TestPluginColconPlugin:
         except ValidationError as e:
             raise AssertionError(f"{e}") from e
 
+        assert isinstance(properties, ColconPluginProperties)
         assert properties.source == "."
         assert properties.colcon_ament_cmake_args == ["ament", "args..."]
         assert properties.colcon_catkin_cmake_args == ["catkin", "args..."]
