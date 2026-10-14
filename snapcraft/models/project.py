@@ -1197,6 +1197,21 @@ class ContentPlug(models.CraftBaseModel):
         return default_provider
 
 
+class SnapdInfo(models.CraftBaseModel):
+    """Snapcraft project snapd-info definition."""
+
+    ubuntu_core_tracks: dict[str, dict[str, str]] = pydantic.Field(
+        default_factory=dict,
+        description="The snapd track redirections for each Ubuntu Core version.",
+        examples=["{'18': {latest: '18', fips-updates: 18-fips}}"],
+    )
+    """The snapd track redirections for each Ubuntu Core version.
+
+    Each key is the version of an Ubuntu Core boot base, such as ``'18'``. Its value
+    maps a snapd track to the track that devices on that version follow instead.
+    """
+
+
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
@@ -1531,7 +1546,7 @@ class Project(models.Project):
         default=None, description="The snap's type.", examples=["kernel"]
     )
 
-    snapd_info: dict[str, Any] | None = pydantic.Field(
+    snapd_info: SnapdInfo | None = pydantic.Field(
         default=None,
         description="Additional metadata for snapd snaps.",
         examples=[
@@ -1540,9 +1555,8 @@ class Project(models.Project):
     )
     """Additional metadata for snapd snaps.
 
-    This key can only be set when ``type`` is ``snapd``. Its value must be a map.
-    Snapcraft doesn't validate the contents of the map and writes them to the snap's
-    ``snap.yaml`` file.
+    This key can only be set when ``type`` is ``snapd``. Snapcraft writes it to the
+    snap's ``snap.yaml`` file.
     """
 
     icon: str | None = pydantic.Field(

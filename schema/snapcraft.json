@@ -794,8 +794,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -803,8 +802,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -1419,8 +1417,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -1428,8 +1425,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -2021,8 +2017,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -2030,8 +2025,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -2623,8 +2617,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -2632,8 +2625,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -3342,8 +3334,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -3351,8 +3342,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -3976,8 +3966,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -3985,8 +3974,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -4587,8 +4575,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -4596,8 +4583,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -5189,8 +5175,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -5198,8 +5183,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -5655,6 +5639,26 @@
       "title": "Platform",
       "type": "object"
     },
+    "SnapdInfo": {
+      "additionalProperties": false,
+      "description": "Snapcraft project snapd-info definition.",
+      "properties": {
+        "ubuntu-core-tracks": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "description": "The snapd track redirections for each Ubuntu Core version.",
+          "examples": ["{'18': {latest: '18', fips-updates: 18-fips}}"],
+          "title": "Ubuntu-Core-Tracks",
+          "type": "object"
+        }
+      },
+      "title": "SnapdInfo",
+      "type": "object"
+    },
     "Socket": {
       "additionalProperties": false,
       "description": "Snapcraft app socket definition.",
@@ -5965,8 +5969,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -5974,8 +5977,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [
@@ -6580,8 +6582,7 @@
         "snapd-info": {
           "anyOf": [
             {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/$defs/SnapdInfo"
             },
             {
               "type": "null"
@@ -6589,8 +6590,7 @@
           ],
           "default": null,
           "description": "Additional metadata for snapd snaps.",
-          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"],
-          "title": "Snapd-Info"
+          "examples": ["{ubuntu-core-tracks: {'18': {latest: '18', fips-updates: 18-fips}}}"]
         },
         "icon": {
           "anyOf": [

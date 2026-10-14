@@ -220,6 +220,12 @@ class Links(SnapcraftMetadata):
         )
 
 
+class SnapdInfo(SnapcraftMetadata):
+    """Metadata for snapd snaps."""
+
+    ubuntu_core_tracks: dict[str, dict[str, str]] | None = None
+
+
 class ComponentMetadata(SnapcraftMetadata):
     """Component metadata model.
 
@@ -264,7 +270,7 @@ class SnapMetadata(SnapcraftMetadata):
     description: str
     license: str | None = None
     type: str | None = None
-    snapd_info: dict[str, Any] | None = None
+    snapd_info: SnapdInfo | None = None
     architectures: list[str]
     base: str | None = None
     build_base: str | None = None
@@ -474,6 +480,11 @@ def get_metadata_from_project(
     total_assumes = sorted(project.assumes + list(assumes))
 
     links = Links.from_project(project)
+    snapd_info = (
+        SnapdInfo.unmarshal(project.snapd_info.marshal())
+        if project.snapd_info is not None
+        else None
+    )
     snap_type = project.type.value if project.type else None
     build_base = (
         project.build_base if project.type == const.ProjectType.KERNEL else None
@@ -487,7 +498,7 @@ def get_metadata_from_project(
         description=cast(str, project.description),
         license=project.license,
         type=snap_type,
-        snapd_info=project.snapd_info,
+        snapd_info=snapd_info,
         architectures=[arch],
         base=cast(str, project.base),
         build_base=build_base,

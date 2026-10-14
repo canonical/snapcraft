@@ -104,7 +104,6 @@ def test_snapd_info(new_dir):
                 "latest": "20",
             },
         },
-        "extra": True,
     }
     project = Project.unmarshal(
         {
@@ -149,7 +148,6 @@ def test_snapd_info(new_dir):
               fips-updates: 18-fips
             '20':
               latest: '20'
-          extra: true
         architectures:
         - amd64
         apps:
@@ -162,6 +160,28 @@ def test_snapd_info(new_dir):
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
         """
     )
+
+
+def test_snapd_info_empty_tracks(new_dir):
+    """An explicitly empty ubuntu-core-tracks map is kept in the snap.yaml."""
+    project = Project.unmarshal(
+        {
+            "name": "mytest",
+            "version": "1.29.3",
+            "type": "snapd",
+            "build-base": "core22",
+            "summary": "Single-line elevator pitch for your amazing snap",
+            "description": "test-description",
+            "confinement": "strict",
+            "parts": {"part1": {"plugin": "nil"}},
+            "snapd-info": {"ubuntu-core-tracks": {}},
+        }
+    )
+
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
+
+    content = Path("meta/snap.yaml").read_text()
+    assert "snapd-info:\n  ubuntu-core-tracks: {}\n" in content
 
 
 def test_assumes(simple_project, new_dir):
