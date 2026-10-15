@@ -36,9 +36,11 @@ def reset_warnings():
     """Reset the one-shot warning flags between tests."""
     Project._ua_service_warning = False
     Project._license_spdx_warning = False
+    Project._snap_dir_source_warning = False
     yield
     Project._ua_service_warning = False
     Project._license_spdx_warning = False
+    Project._snap_dir_source_warning = False
 
 
 @pytest.mark.parametrize(
@@ -215,3 +217,176 @@ class TestValidateLicense:
         )
         # License should always remain unchanged
         assert project.get("license") == lic
+
+
+class TestWarnIfSourcesResolveFromParent:
+    """Verify the warning for sources that only resolve from a parent directory."""
+
+    @staticmethod
+    def _project_dir(
+        tmp_path: pathlib.Path,
+        *,
+        name: str = "snap",
+        project_file: str = "snapcraft.yaml",
+    ) -> pathlib.Path:
+        """Create a project directory containing a project file."""
+        project_dir = tmp_path / name
+        (project_dir / project_file).parent.mkdir(parents=True, exist_ok=True)
+        (project_dir / project_file).touch()
+        return project_dir
+
+    @staticmethod
+    def _service(project_dir: pathlib.Path) -> Project:
+        return Project(
+            app=APP_METADATA,
+            services=None,  # ty: ignore[invalid-argument-type] other services not needed
+            project_dir=project_dir,
+        )
+
+    @staticmethod
+    def _warnings(emitter: RecordingEmitter) -> list[Any]:
+        """Return only the warnings from the recorded emitter interactions."""
+        return [c for c in emitter.interactions if c.args[0] == "warning"]
+
+    def test_warns_when_source_resolves_from_parent(
+        self, emitter: RecordingEmitter, tmp_path: pathlib.Path
+    ) -> None:
+        """Warn when a local source exists in the parent of a 'snap' directory."""
+        (tmp_path / "snap" / "local").mkdir(parents=True)
+        project_dir = self._project_dir(tmp_path)
+        project = {"parts": {"wrappers": {"plugin": "dump", "source": "snap/local"}}}
+
+        self._service(project_dir)._warn_if_sources_resolve_from_parent(project)
+
+        emitter.assert_warning(
+            f"Part source 'snap/local' does not exist relative to {str(project_dir)!r}, "
+            "but does exist relative to its parent. Snapcraft may be running from the "
+            f"wrong directory - try running it from {str(project_dir.parent)!r} instead."
+        )
+
+    def test_warns_only_once(
+        self, emitter: RecordingEmitter, tmp_path: pathlib.Path
+    ) -> None:
+        """The warning is shown no more than once."""
+        (tmp_path / "snap" / "local").mkdir(parents=True)
+        project_dir = self._project_dir(tmp_path)
+        project = {"parts": {"wrappers": {"plugin": "dump", "source": "snap/local"}}}
+        service = self._service(project_dir)
+
+        service._warn_if_sources_resolve_from_parent(project)
+        service._warn_if_sources_resolve_from_parent(project)
+
+        assert len(self._warnings(emitter)) == 1
+
+    def test_warns_for_every_unresolved_source(
+        self, emitter: RecordingEmitter, tmp_path: pathlib.Path
+    ) -> None:
+        """Every source that only resolves from the parent is named."""
+        (tmp_path / "alpha").mkdir()
+        (tmp_path / "beta").mkdir()
+        project_dir = self._project_dir(tmp_path)
+        project = {
+            "parts": {
+                "one": {"plugin": "nil", "source": "alpha"},
+                "two": {"plugin": "nil", "source": "beta"},
+            }
+        }
+
+        self._service(project_dir)._warn_if_sources_resolve_from_parent(project)
+
+        emitter.assert_warning(
+            "Part source 'alpha' and 'beta' does not exist relative to "
+            f"{str(project_dir)!r}, but does exist relative to its parent. "
+            "Snapcraft may be running from the wrong directory - try running it "
+            f"from {str(project_dir.parent)!r} instead."
+        )
+
+    def test_no_warning_when_source_resolves_in_place(
+        self, emitter: RecordingEmitter, tmp_path: pathlib.Path
+    ) -> None:
+        """Don't warn when the source exists in the 'snap' directory."""
+        (tmp_path / "snap" / "local").mkdir(parents=True)
+        project_dir = self._project_dir(tmp_path)
+        project = {"parts": {"wrappers": {"plugin": "dump", "source": "local"}}}
+
+        self._service(project_dir)._warn_if_sources_resolve_from_parent(project)
+
+        assert not self._warnings(emitter)
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            pytest.param("https://github.com/juju/juju.git", id="url"),
+            pytest.param("git+https://github.com/juju/juju.git", id="git-url"),
+            pytest.param(None, id="no-source"),
+            pytest.param("", id="empty-source"),
+        ],
+    )
+    def test_no_warning_without_local_sources(
+        self,
+        emitter: RecordingEmitter,
+        tmp_path: pathlib.Path,
+        source: str | None,
+    ) -> None:
+        """Don't warn when no part has a local source that could be misresolved."""
+        project_dir = self._project_dir(tmp_path)
+        project = {"parts": {"juju": {"plugin": "nil", "source": source}}}
+
+        self._service(project_dir)._warn_if_sources_resolve_from_parent(project)
+
+        assert not self._warnings(emitter)
+
+    def test_no_warning_outside_snap_directory(
+        self, emitter: RecordingEmitter, tmp_path: pathlib.Path
+    ) -> None:
+        """Don't warn when the project directory isn't named 'snap'."""
+        (tmp_path / "snap" / "local").mkdir(parents=True)
+        project_dir = self._project_dir(tmp_path, name="juju")
+        project = {"parts": {"wrappers": {"plugin": "dump", "source": "snap/local"}}}
+
+        self._service(project_dir)._warn_if_sources_resolve_from_parent(project)
+
+        assert not self._warnings(emitter)
+
+    def test_no_warning_for_nested_project_file(
+        self, emitter: RecordingEmitter, tmp_path: pathlib.Path
+    ) -> None:
+        """Don't warn when the project file isn't directly in the project directory."""
+        (tmp_path / "alpha").mkdir()
+        project_dir = self._project_dir(
+            tmp_path, project_file="build-aux/snap/snapcraft.yaml"
+        )
+        project = {"parts": {"one": {"plugin": "nil", "source": "alpha"}}}
+
+        self._service(project_dir)._warn_if_sources_resolve_from_parent(project)
+
+        assert not self._warnings(emitter)
+
+    @pytest.mark.parametrize(
+        "project",
+        [
+            pytest.param({}, id="no-parts"),
+            pytest.param({"parts": None}, id="null-parts"),
+            pytest.param({"parts": {"empty": None}}, id="empty-part"),
+            pytest.param(
+                {"parts": {"none": {"plugin": "nil"}}}, id="part-without-source"
+            ),
+            pytest.param(
+                {"parts": {"grammar": {"source": {"on amd64": "alpha"}}}},
+                id="grammar-source",
+            ),
+        ],
+    )
+    def test_no_warning_without_resolvable_parts(
+        self,
+        emitter: RecordingEmitter,
+        tmp_path: pathlib.Path,
+        project: dict[str, Any],
+    ) -> None:
+        """Don't warn for parts without a plain local source."""
+        (tmp_path / "alpha").mkdir()
+        project_dir = self._project_dir(tmp_path)
+
+        self._service(project_dir)._warn_if_sources_resolve_from_parent(project)
+
+        assert not self._warnings(emitter)

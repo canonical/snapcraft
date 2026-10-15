@@ -24,7 +24,7 @@ import craft_providers.bases
 from craft_application import ProjectService
 from craft_application.errors import CraftValidationError
 from craft_application.models.constraints import LicenseStr
-from craft_application.util import is_managed_mode
+from craft_application.util import humanize_list, is_managed_mode
 from pydantic import TypeAdapter, ValidationError
 from typing_extensions import override
 
@@ -44,6 +44,8 @@ if TYPE_CHECKING:
 
     import craft_parts
 
+_SNAP_DIRECTORY_NAME = "snap"
+
 
 class Project(ProjectService):
     """Snapcraft-specific project service."""
@@ -53,10 +55,11 @@ class Project(ProjectService):
     # Used to only issue key warnings once.
     _ua_service_warning: bool = False
     _license_spdx_warning: bool = False
+    _snap_dir_source_warning: bool = False
 
-    @staticmethod
     @override
     def _app_preprocess_project(
+        self,
         project: dict[str, Any],
         *,
         build_on: str,
@@ -69,6 +72,65 @@ class Project(ProjectService):
         apply_root_packages(project)
         Project.validate_ua_services(project)
         Project.validate_license_spdx(project)
+        self._warn_if_sources_resolve_from_parent(project)
+
+    def _warn_if_sources_resolve_from_parent(self, project: dict[str, Any]) -> None:
+        """Warn when part sources only resolve from the parent of a 'snap' directory.
+
+        A project may keep its 'snapcraft.yaml' inside a 'snap' subdirectory while
+        writing part sources relative to the repository root. Running snapcraft from
+        within 'snap' resolves those sources against the wrong directory, and
+        craft-parts reports an obscure "unable to determine source type" error instead
+        of saying the source was not found.
+        """
+        if self._snap_dir_source_warning:
+            return
+        self._snap_dir_source_warning = True
+
+        project_dir = self._project_dir
+        if project_dir.name != _SNAP_DIRECTORY_NAME:
+            return
+
+        # Only warn when the project file sits directly in the project directory.
+        # Nested layouts such as 'build-aux/snap/snapcraft.yaml' are unambiguous.
+        project_file = self.resolve_project_file_path()
+        if (project_dir / project_file).parent != project_dir:
+            return
+
+        missing = self._find_sources_resolving_from_parent(project, project_dir)
+        if not missing:
+            return
+
+        craft_cli.emit.warning(
+            f"Part source {humanize_list(missing, 'and')} does not exist relative to "
+            f"{str(project_dir)!r}, but does exist relative to its parent. "
+            f"Snapcraft may be running from the wrong directory - try running it "
+            f"from {str(project_dir.parent)!r} instead."
+        )
+
+    @staticmethod
+    def _find_sources_resolving_from_parent(
+        project: dict[str, Any], project_dir: pathlib.Path
+    ) -> list[str]:
+        """Return sources that exist in the parent of project_dir but not in it.
+
+        URLs and absolute paths resolve identically from both directories, so they
+        never appear here; that keeps the check specific to local sources without
+        having to reimplement craft-parts' source type detection.
+        """
+        parent_dir = project_dir.parent
+        missing = []
+        for part in (project.get("parts") or {}).values():
+            if not isinstance(part, dict):
+                continue
+            source = part.get("source")
+            if not isinstance(source, str) or not source:
+                continue
+            if (project_dir / source).exists():
+                continue
+            if (parent_dir / source).exists():
+                missing.append(source)
+        return missing
 
     def get_parse_info(self) -> dict[str, list[str]]:
         return extract_parse_info(self.get_raw())
