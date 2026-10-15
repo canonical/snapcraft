@@ -117,8 +117,6 @@ Snapcraft 9.2.0
 - `snapcraft#6439 <https://github.com/canonical/snapcraft/issues/6439>`__ snapcraft
   metrics input validation fails when data range is provided but there is no data for
   certain dates
-- `snapcraft#6501 <https://github.com/canonical/snapcraft/issues/6501>`__ Confusing
-  "unable to determine source type" error when packing from a ``snap`` subdirectory
 - `GHSL-2024-323 <https://securitylab.github.com/advisories/GHSL-2024-323_snapcraft/>`__
   Denial of Service (DoS) in snapcraft
 - `LP#2083964 <https://bugs.launchpad.net/snapcraft/+bug/2083964>`__ 'dict' object has
@@ -141,6 +139,14 @@ Snapcraft 9.2.0
   build for serde (already ran)" despite build-environment changing
 - `craft-parts#1178 <https://github.com/canonical/craft-parts/issues/1178>`__ Show the
   URL of the package that could not be retrieved
+
+.. _release-notes-fixes-9.2.1:
+
+Snapcraft 9.2.1
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6501 <https://github.com/canonical/snapcraft/issues/6501>`__ Confusing
+  "unable to determine source type" error when packing from a ``snap`` subdirectory
 
 Contributors
 ------------
