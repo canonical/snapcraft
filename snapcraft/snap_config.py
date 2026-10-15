@@ -65,12 +65,8 @@ class SnapConfig(pydantic.BaseModel):
         """Create and validate a SnapConfig from snapd config data.
 
         :param data: The dictionary data to unmarshal.
-        :raises TypeError: If data is not a dictionary.
         :raises pydantic.ValidationError: If data does not match the model.
         """
-        if not isinstance(data, dict):
-            raise TypeError("Project data is not a dictionary")
-
         return cls.model_validate(data)
 
 

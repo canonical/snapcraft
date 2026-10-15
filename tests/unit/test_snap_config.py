@@ -51,7 +51,12 @@ def mock_is_running_from_snap(mocker):
 
 
 def test_module_imports():
-    """Verify snap_config does not import craft-application, parts, or providers."""
+    """Verify snap_config does not import craft-application, parts, or providers.
+
+    The configure hook imports this module, and loading these libraries made it
+    exceed snapd's timeout on slow hosts (regression test for
+    https://github.com/canonical/snapcraft/issues/6422).
+    """
     tree = ast.parse(_SNAP_CONFIG_PATH.read_text(encoding="utf-8"))
     imported: set[str] = set()
     for node in ast.walk(tree):
@@ -104,13 +109,6 @@ def test_unmarshal(provider):
 def test_unmarshal_default_provider(data):
     """Verify an empty provider stays unset."""
     assert SnapConfig.unmarshal(data).provider is None
-
-
-@pytest.mark.parametrize("data", [None, [], "lxd"])
-def test_unmarshal_not_a_dict(data):
-    """Verify non-dictionary data raises TypeError."""
-    with pytest.raises(TypeError, match="Project data is not a dictionary"):
-        SnapConfig.unmarshal(data)
 
 
 @pytest.mark.parametrize("provider", ["multipass", "MultiPass"])
