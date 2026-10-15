@@ -13,12 +13,12 @@ jobs:
       actions: read
       contents: read
       security-events: write
-    uses: canonical/starflow/.github/workflows/policy.yaml@main
+    uses: canonical/starflow/.github/workflows/policy.yaml@work/testing-skill
   python-scans:
     name: Security scan
     permissions:
       contents: read
-    uses: canonical/starflow/.github/workflows/scan-python.yaml@main
+    uses: canonical/starflow/.github/workflows/scan-python.yaml@work/testing-skill
     with:
       osv-extra-args: "--config=osv-scanner.toml"
       osv-exclude-paths: |
