@@ -92,6 +92,12 @@ gen_flavour_config() {
   rm -rf CONFIGS
 
   cd "${OLDPWD}"
+
+  # Set CONFIG_VERSION_SIGNATURE as debian/rules does, since genconfigs leaves it empty
+  release_info
+  _kernelversion="$(make -s --no-print-directory -C "${KERNEL_SRC}" kernelversion)"
+  sed -i "s/.*CONFIG_VERSION_SIGNATURE.*/CONFIG_VERSION_SIGNATURE=\"Ubuntu ${release}-${revision}-${_kconfigflavour} ${_kernelversion}\"/" \
+    "${CRAFT_PART_BUILD}/.config"
 }
 
 # add_kconfigs adds any specified config options
