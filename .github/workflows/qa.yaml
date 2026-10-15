@@ -32,7 +32,7 @@ jobs:
             source-files:
               - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
   lint:
-    uses: canonical/starflow/.github/workflows/lint-python.yaml@main
+    uses: canonical/starflow/.github/workflows/lint-python.yaml@work/separate-linkcheck
     needs: filter
     with:
       source-files: ${{ needs.filter.outputs.source-files }}
