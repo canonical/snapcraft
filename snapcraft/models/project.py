@@ -1555,8 +1555,7 @@ class Project(models.Project):
     )
     """Additional metadata for snapd snaps.
 
-    This key can only be set when ``type`` is ``snapd``. Snapcraft writes it to the
-    snap's ``snap.yaml`` file.
+    This key can only be set when ``type`` is ``snapd``.
     """
 
     icon: str | None = pydantic.Field(
