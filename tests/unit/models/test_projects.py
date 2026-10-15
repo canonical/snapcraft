@@ -1055,7 +1055,9 @@ class TestPlatforms:
     @pytest.mark.parametrize("build_for", [[arch] for arch in const.SnapArch])
     def test_platform_validation_lists(self, build_on, build_for, project_yaml_data):
         """Unmarshal build-on and build-for lists."""
-        platform_data = Platform(**{"build-on": build_on, "build-for": build_for})
+        platform_data = Platform.model_validate(
+            {"build-on": build_on, "build-for": build_for}
+        )
 
         assert platform_data.build_for == build_for
         assert platform_data.build_on == build_on
@@ -1064,7 +1066,9 @@ class TestPlatforms:
     @pytest.mark.parametrize("build_for", const.SnapArch)
     def test_platform_validation_strings(self, build_on, build_for, project_yaml_data):
         """Unmarshal and vectorize build-on and build-for strings."""
-        platform_data = Platform(**{"build-on": build_on, "build-for": build_for})
+        platform_data = Platform.model_validate(
+            {"build-on": build_on, "build-for": build_for}
+        )
 
         assert platform_data.build_for == [build_for]
         assert platform_data.build_on == [build_on]

@@ -17,7 +17,7 @@
 """Tests for validation commands."""
 
 import argparse
-import datetime
+import datetime as dt
 
 import pytest
 
@@ -241,11 +241,11 @@ class TestValidateCommand:
         mocker,
     ):
         """Timestamps must be in the format expected by the store."""
-        fake_datetime = datetime.datetime(
-            2026, 4, 23, 20, 43, 10, 123456, tzinfo=datetime.timezone.utc
+        fake_datetime = dt.datetime(
+            2026, 4, 23, 20, 43, 10, 123456, tzinfo=dt.timezone.utc
         )
         mocker.patch(
-            "snapcraft.commands.validations.datetime.datetime"
+            "snapcraft.commands.validations.dt.datetime"
         ).now.return_value = fake_datetime
         cmd = commands.StoreValidateCommand(fake_app_config)
 

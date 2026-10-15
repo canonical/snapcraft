@@ -16,7 +16,7 @@
 
 """Tests for the Snapcraft Package service."""
 
-import datetime
+import datetime as dt
 import os
 from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
@@ -387,7 +387,7 @@ def test_write_metadata_with_manifest(
 
     assert manifest.snapcraft_version == __version__
     assert (
-        datetime.datetime.fromisoformat(manifest.snapcraft_started_at[:-1])
+        dt.datetime.fromisoformat(manifest.snapcraft_started_at[:-1])
         == fake_services.lifecycle._start_time
     )
     assert manifest.name == snap_yaml["name"]

@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import re
 import textwrap
 from typing import TYPE_CHECKING
@@ -173,7 +173,7 @@ class StoreValidateCommand(AppCommand):
             # This uses the same formatting that `datetime.utcnow()` produced before it was deprecated.
             # We've had trouble changing time formats in the past (#5413), so we'll keep
             # using this exact format because we know it's compatible with the store.
-            timestamp = datetime.datetime.now(datetime.timezone.utc).strftime(
+            timestamp = dt.datetime.now(dt.timezone.utc).strftime(
                 "%Y-%m-%dT%H:%M:%S.%fZ"
             )
 
