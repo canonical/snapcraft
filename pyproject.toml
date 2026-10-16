@@ -73,6 +73,8 @@ dev-noble = ["python-apt~=2.7.0;sys_platform=='linux'"]
 dev-plucky = ["python-apt~=2.9.0;sys_platform=='linux'"]
 dev-questing = ["python-apt~=3.0.0;sys_platform=='linux'"]
 dev-resolute = ["python-apt~=3.0.0;sys_platform=='linux'"]
+dev-stonking = ["python-apt~=3.0.0;sys_platform=='linux'"]
+dev-tenacious = ["python-apt~=3.0.0;sys_platform=='linux'"]
 docs = [
   "pydantic-kitbash~=1.0",
   "sphinx-lint~=1.0",
@@ -338,6 +340,8 @@ conflicts = [
     { group = "dev-plucky" },
     { group = "dev-questing" },
     { group = "dev-resolute" },
+    { group = "dev-stonking" },
+    { group = "dev-tenacious" },
   ],
 ]
 constraint-dependencies = [
