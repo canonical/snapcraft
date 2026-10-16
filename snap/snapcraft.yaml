@@ -74,6 +74,7 @@ parts:
       - "-usr/lib/x86_64-linux-gnu/libgdbm*"
 
   patchelf:
+    after: [craftctl]
     plugin: autotools
     source: https://github.com/canonical/patchelf
     source-type: git
@@ -89,12 +90,12 @@ parts:
     override-pull: |
       ${SNAP}/libexec/snapcraft/craftctl default
 
-      if [ "${CRAFT_TARGET_ARCH}" = "riscv64" ]; then
+      if [ "${CRAFT_ARCH_BUILD_FOR}" = "riscv64" ]; then
         git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0001-Always-use-the-ET_DYN-codepath-avoiding-shifting-loa.patch"
         git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0002-Fix-rewriteSectionsLibrary-to-not-assume-the-base-ad.patch"
       fi
     override-build: |
-      ${SNAP}/libexec/snapcraft/craftctl default
+      $CRAFT_STAGE/libexec/snapcraft/craftctl default
       make check
     prime:
       - bin/patchelf
@@ -131,6 +132,7 @@ parts:
       - -*
 
   snapcraft-libs:
+    after: [craftctl]
     plugin: nil
     stage-packages:
       - apt
@@ -157,7 +159,7 @@ parts:
     build-attributes:
       - enable-patchelf
     override-build: |
-      ${SNAP}/libexec/snapcraft/craftctl default
+      $CRAFT_STAGE/libexec/snapcraft/craftctl default
 
       echo "Create libsodium symlink..."
       TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
@@ -218,7 +220,7 @@ parts:
     organize:
       # Put snapcraftctl and craftctl into its own directory that can be included in the PATH
       # without including other binaries.
-      bin/craftctl: libexec/snapcraft/craftctl
+      #bin/craftctl: libexec/snapcraft/craftctl
       # Install the compatibility wrapper
       bin/snapcraftctl-compat: libexec/snapcraft/snapcraftctl
       # Include general data in the share directory
@@ -238,20 +240,53 @@ parts:
     build-snaps:
       - astral-uv
     override-build: |
-      ${SNAP}/libexec/snapcraft/craftctl default
+      $CRAFT_STAGE/libexec/snapcraft/craftctl default
 
       version="$(uv pip show snapcraft | grep "Version:" | cut -d' ' -f2)"
-      ${SNAP}/libexec/snapcraft/craftctl set version="$version"
+      $CRAFT_STAGE/libexec/snapcraft/craftctl set version="$version"
 
       [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
-      sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
-      ${SNAP}/libexec/snapcraft/craftctl set grade="$grade"
+      #sed -i -e '1 s|^#!/.*|#!/snap/snapcraft/current/bin/python -E|' $SNAPCRAFT_PART_INSTALL/bin/craftctl
+      $CRAFT_STAGE/libexec/snapcraft/craftctl set grade="$grade"
 
       # Fix the Python executable from uv, which had bad symlinks
       rm $CRAFT_PART_INSTALL/bin/python*
       ln -s ../usr/bin/python3 $CRAFT_PART_INSTALL/bin/python3
       ln -s python3 $CRAFT_PART_INSTALL/bin/python
-    after: [build-deps, snapcraft-libs, libgit2, python3-apt]
+    after: [craftctl, build-deps, snapcraft-libs, libgit2, python3-apt]
+
+  craftctl:
+    plugin: rust
+    source: https://github.com/cmatsuoka/craftctl.git
+    source-type: git
+    source-branch: "main"
+    build-packages:
+      - musl-tools
+    override-build: |
+      case "$CRAFT_ARCH_BUILD_FOR" in
+      s390x)
+        snap install zig --beta --classic
+        cargo install cargo-zigbuild
+        cargo zigbuild --release --target=s390x-unknown-linux-musl
+        ARCH=s390x
+        ;;
+      amd64)
+        rustup target add x86_64-unknown-linux-musl
+        ARCH=x86_64
+        ;;
+      arm64)
+        rustup target add arm64-unknown-linux-musl
+        ARCH=aarch64
+        ;;
+      *)
+        false
+        ;;
+      esac
+      cargo build --release --target=$ARCH-unknown-linux-musl
+      mkdir -p $CRAFT_PART_INSTALL/libexec/snapcraft
+      install -m755 $CRAFT_PART_BUILD/target/$ARCH-unknown-linux-musl/release/craftctl $CRAFT_PART_INSTALL/libexec/snapcraft/craftctl
+    stage:
+      - libexec/snapcraft/craftctl
 
   chisel:
     plugin: nil
