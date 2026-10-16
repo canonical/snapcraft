@@ -19,11 +19,13 @@
 import argparse
 import os
 import textwrap
+from pathlib import Path
 from typing import Any, Literal, cast
 
 import craft_application.errors
 import craft_platforms
 from craft_application.commands import RemoteBuild
+from craft_application.services.project import ProjectService
 from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_platforms import DebianArchitecture
@@ -37,6 +39,7 @@ class RemoteBuildCommand(RemoteBuild):
     """Command passthrough for the remote-build command."""
 
     help_msg = "Build a snap remotely on Launchpad."
+
     overview = textwrap.dedent(
         """
         Command remote-build sends the current project to be built
@@ -76,19 +79,45 @@ class RemoteBuildCommand(RemoteBuild):
             metavar="arch",
             default=os.getenv("CRAFT_BUILD_FOR"),
             help="Comma-separated list of architectures to build for",
-            # '--build-for' needs to be handled differently since remote-build can
-            # build for architecture that is not in the project metadata
             dest="remote_build_build_fors",
+        )
+
+        parser.add_argument(
+            "--project-dir",
+            type=str,
+            metavar="path",
+            help="Directory containing the snap project to build",
+            dest="project_dir",
+        )
+
+    def _setup_target_project(self, parsed_args: argparse.Namespace) -> None:
+        """Dynamically point the Project and BuildPlan services to the target directory."""
+        if not getattr(parsed_args, "project_dir", None):
+            return
+
+        target_dir = Path(parsed_args.project_dir).resolve()
+
+        # Re-initialize services for the target directory WITHOUT altering
+        # the global OS working directory so root .git checks still pass.
+        project_svc = ProjectService(
+            app=self._app,
+            services=self._services,
+            project_dir=target_dir
+        )
+
+        project_svc.configure(platform=None, build_for=None)
+
+        self._services._services["project"] = project_svc
+        self._services._services["build_plan"] = BuildPlan(
+            app=self._app,
+            services=self._services
         )
 
     @override
     def _pre_build(self, parsed_args: argparse.Namespace):
-        """Perform pre-build validation.
+        """Perform pre-build validation."""
+        self._setup_target_project(parsed_args)
 
-        :param parsed_args: Argument namespace to validate
-        :raises RemoteBuildError: If an unsupported architecture is specified, or multiple
-        artifacts will be created for the same build-on.
-        """
         for build_for in cast(list[str], parsed_args.remote_build_build_fors) or []:
             if build_for not in [*SUPPORTED_ARCHS, "all"]:
                 raise craft_application.errors.RemoteBuildError(
@@ -106,12 +135,10 @@ class RemoteBuildCommand(RemoteBuild):
             platforms=None, build_for=None, build_on=None
         )
 
-        # mapping of `build-on` to `build-for` architectures
         build_map: dict[str, list[str]] = {}
         for build_info in build_plan:
             build_map.setdefault(build_info.build_on, []).append(build_info.build_for)
 
-        # assemble a list so all errors are shown at once
         build_on_errors = []
         for build_on, build_fors in build_map.items():
             if len(build_fors) > 1:
@@ -136,7 +163,10 @@ class RemoteBuildCommand(RemoteBuild):
 
     @override
     def _get_build_args(self, parsed_args: argparse.Namespace) -> dict[str, Any]:
+        self._setup_target_project(parsed_args)
+
         project = self._services.get("project").get_raw()
+
         if parsed_args.remote_build_build_fors:
             build_fors: list[DebianArchitecture | Literal["all"]] | None = [
                 "all" if arch == "all" else craft_platforms.DebianArchitecture(arch)
@@ -151,26 +181,17 @@ class RemoteBuildCommand(RemoteBuild):
             build_plan = build_plan_service.create_launchpad_build_plan(
                 platforms=None, build_for=build_fors or None, build_on=None
             )
-            # if the project has platforms, then `--build-for` acts as a filter
             if build_fors:
                 emit.debug("Filtering the build plan using the '--build-for' argument.")
-                # Launchpad's API only accepts a list of architectures but doesn't
-                # have a concept of 'build-on' vs 'build-for'.
-                # Passing the build-on archs is safe because:
-                # * `_pre_build()` ensures no more than one artifact can be built on each build-on arch.
-                # * Launchpad chooses one arch if the same artifact can be built on multiple archs.
                 archs.extend([info.build_on for info in build_plan])
                 if not archs:
                     raise craft_application.errors.EmptyBuildPlanError()
             else:
                 emit.debug("Using the project's build plan")
                 archs = [build_info.build_on for build_info in build_plan]
-        # No architectures in the project means '--build-for' no longer acts as a filter.
-        # Instead, it defines the architectures to build on, and for.
         elif build_fors:
             emit.debug("Using '--build-for' as the list of architectures to build for")
             archs = build_fors
-        # default is to build on, and for, the host architecture
         else:
             archs = [DebianArchitecture.from_host()]
             emit.debug(
@@ -179,4 +200,10 @@ class RemoteBuildCommand(RemoteBuild):
             )
 
         emit.debug(f"Architectures to build for: {humanize_list(archs, 'and')}")
-        return {"architectures": archs}
+        build_args: dict[str, Any] = {"architectures": archs}
+
+        # Natively pass the build_path argument for Launchpad
+        if getattr(parsed_args, "project_dir", None):
+            build_args["build_path"] = parsed_args.project_dir
+
+        return build_args
