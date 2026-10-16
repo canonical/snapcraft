@@ -2141,7 +2141,7 @@ class Project(models.Project):
         ]
 
         # core22 and core24 can use snapcraftctl
-        if {"core22", "core24"} & {info.data.get("base"), info.data.get("build-base")}:
+        if {"core22", "core24"} & {info.data.get("base"), info.data.get("build_base")}:
             return parts
 
         for name, part in parts.items():
