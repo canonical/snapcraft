@@ -2792,7 +2792,7 @@ docs = [
     { name = "sphinx-rerediraffe", specifier = ">=0.0.3,<1.0.0" },
     { name = "sphinx-roles", specifier = "~=0.1" },
     { name = "sphinx-sitemap", specifier = "~=2.9" },
-    { name = "sphinx-structured-toc", specifier = "==0.2.0" },
+    { name = "sphinx-structured-toc", specifier = "==0.2.1" },
     { name = "sphinx-substitution-extensions", specifier = "==2025.1.2" },
     { name = "sphinx-terminal", specifier = "~=1.0" },
     { name = "sphinxcontrib-jquery", specifier = "~=4.1" },
@@ -3108,15 +3108,15 @@ wheels = [
 
 [[package]]
 name = "sphinx-structured-toc"
-version = "0.2.0"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/78/29/d35407f503c2da64baa543aa3311494dc0f80cf82aee571fa6e95b340837/sphinx_structured_toc-0.2.0.tar.gz", hash = "sha256:3b02f8f9b630d10400624acefdee83f201d88be37760ba6dc06236e197edde20", size = 187398, upload-time = "2026-09-10T22:37:45.108Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/ae/7f30985de3613b0eb4b41c154df1a1be906add1f6cad6440bfa8454b13f9/sphinx_structured_toc-0.2.1.tar.gz", hash = "sha256:ade7184a2c50bb9ed321f296538003ea2ed41179eadb02310616b9b2e3d83caf", size = 187541, upload-time = "2026-10-12T17:17:35.972Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/8a/b2db20b0d516f78cafa89f60525341c6b9233c4d40d1a59c6aa7171dd56d/sphinx_structured_toc-0.2.0-py3-none-any.whl", hash = "sha256:422f5b8223310682e8d11f2f29a1dbe2b09136fb661cdcd2a992b10c7199d0d5", size = 35870, upload-time = "2026-09-10T22:37:43.895Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/7c/f3fde08ac0107a696592cc62859a33bc0884cf7bb11be258b811aa9fa4bb/sphinx_structured_toc-0.2.1-py3-none-any.whl", hash = "sha256:40410645e3d3842b8383836c4e1eaf9b134d35749c7908d5f9602066b81bc089", size = 35869, upload-time = "2026-10-12T17:17:34.172Z" },
 ]
 
 [[package]]
