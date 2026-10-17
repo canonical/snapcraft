@@ -237,6 +237,7 @@ wordlist
 XAML
 xetex
 xindy
+xkbcommon
 xml
 Xonotic
 XWayland

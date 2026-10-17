@@ -163,6 +163,8 @@ This extension uses :ref:`layouts <reference-layouts>` to provide access to GPU 
                 layout:
                   /usr/share/X11/XErrorDB:
                     symlink: $SNAP/gpu-2404/X11/XErrorDB
+                  /usr/share/X11/locale:
+                    symlink: $SNAP/gpu-2404/usr/share/X11/locale
 
     .. tab-item:: core22
         :sync: core22
