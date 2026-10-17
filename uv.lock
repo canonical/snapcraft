@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -154,18 +154,17 @@ wheels = [
 
 [[package]]
 name = "catkin-pkg"
-version = "1.1.0"
+version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
     { name = "packaging" },
     { name = "pyparsing" },
     { name = "python-dateutil" },
-    { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1c/7a/dcd7ba56dc82d88b3059a6770828388fc2e136ca4c5d79003f9febf33087/catkin_pkg-1.1.0.tar.gz", hash = "sha256:df1cb6879a3a772e770a100a6613ce8fc508b4855e5b2790106ddad4a8beb43c", size = 65547, upload-time = "2025-09-10T17:34:36.911Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/d1/627732925ea73bbb2b00cfff2602026b4cad127d31522560a479f1a51ac1/catkin_pkg-1.1.1.tar.gz", hash = "sha256:475ddad4fd5c50f6b20a07af57e3376cf7ac9667ab3a0e170134cb8e2071aab9", size = 65679, upload-time = "2026-09-09T17:39:52.162Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/99/1b/50316bd6f95c50686b35799abebb6168d90ee18b7c03e3065f587f010f7c/catkin_pkg-1.1.0-py3-none-any.whl", hash = "sha256:7f5486b4f5681b5f043316ce10fc638c8d0ba8127146e797c85f4024e4356027", size = 76369, upload-time = "2025-09-10T17:34:35.639Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/53/b5e80bac66d0db921ddbbe3c8d37198455c19302a29da1a434708c35c79d/catkin_pkg-1.1.1-py3-none-any.whl", hash = "sha256:491d5b5f65dddfba801c5b75f7fb645f0f187a02bedc01a9fc24dcfbf1039211", size = 76460, upload-time = "2026-09-09T17:39:50.988Z" },
 ]
 
 [[package]]
@@ -2731,7 +2730,7 @@ types = [
 
 [package.metadata]
 requires-dist = [
-    { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.1.0" },
+    { name = "catkin-pkg", marker = "sys_platform == 'linux'", specifier = "==1.1.1" },
     { name = "click", specifier = ">=8.3.3" },
     { name = "craft-application", extras = ["remote"], specifier = ">=7.4.1" },
     { name = "craft-archives", specifier = ">=2.2.2" },
@@ -2793,7 +2792,7 @@ docs = [
     { name = "sphinx-rerediraffe", specifier = ">=0.0.3,<1.0.0" },
     { name = "sphinx-roles", specifier = "~=0.1" },
     { name = "sphinx-sitemap", specifier = "~=2.9" },
-    { name = "sphinx-structured-toc", specifier = "==0.2.0" },
+    { name = "sphinx-structured-toc", specifier = "==0.2.1" },
     { name = "sphinx-substitution-extensions", specifier = "==2025.1.2" },
     { name = "sphinx-terminal", specifier = "~=1.0" },
     { name = "sphinxcontrib-jquery", specifier = "~=4.1" },
@@ -3109,15 +3108,15 @@ wheels = [
 
 [[package]]
 name = "sphinx-structured-toc"
-version = "0.2.0"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/78/29/d35407f503c2da64baa543aa3311494dc0f80cf82aee571fa6e95b340837/sphinx_structured_toc-0.2.0.tar.gz", hash = "sha256:3b02f8f9b630d10400624acefdee83f201d88be37760ba6dc06236e197edde20", size = 187398, upload-time = "2026-09-10T22:37:45.108Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/ae/7f30985de3613b0eb4b41c154df1a1be906add1f6cad6440bfa8454b13f9/sphinx_structured_toc-0.2.1.tar.gz", hash = "sha256:ade7184a2c50bb9ed321f296538003ea2ed41179eadb02310616b9b2e3d83caf", size = 187541, upload-time = "2026-10-12T17:17:35.972Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/8a/b2db20b0d516f78cafa89f60525341c6b9233c4d40d1a59c6aa7171dd56d/sphinx_structured_toc-0.2.0-py3-none-any.whl", hash = "sha256:422f5b8223310682e8d11f2f29a1dbe2b09136fb661cdcd2a992b10c7199d0d5", size = 35870, upload-time = "2026-09-10T22:37:43.895Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/7c/f3fde08ac0107a696592cc62859a33bc0884cf7bb11be258b811aa9fa4bb/sphinx_structured_toc-0.2.1-py3-none-any.whl", hash = "sha256:40410645e3d3842b8383836c4e1eaf9b134d35749c7908d5f9602066b81bc089", size = 35869, upload-time = "2026-10-12T17:17:34.172Z" },
 ]
 
 [[package]]
