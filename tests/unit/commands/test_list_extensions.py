@@ -69,3 +69,43 @@ def test_list_extensions_error(fake_app_config):
 
     with pytest.raises(errors.RemovedCommand, match=expected):
         cmd.run(Namespace())
+
+
+@pytest.mark.usefixtures("fake_extension")
+def test_command_with_base(emitter, fake_app_config):
+    cmd = snapcraft.commands.ExtensionsCommand(fake_app_config)
+
+    cmd.run(Namespace(base="core22"))
+
+    emitter.assert_message(
+        dedent(
+            """\
+        Displaying extensions available for 'core22'
+        Extension name         Supported bases
+        ---------------------  ----------------------
+        fake-extension         core22, core24, core26
+        gnome                  core22, core24, core26
+        gpu                    core22, core24, core26
+        kde-neon               core22, core24
+        kde-neon-6             core22, core24
+        kde-neon-qt6           core22, core24
+        ros2-humble            core22
+        ros2-humble-desktop    core22
+        ros2-humble-ros-base   core22
+        ros2-humble-ros-core   core22"""
+        )
+    )
+
+
+def test_command_with_invalid_base(fake_app_config):
+    cmd = snapcraft.commands.ExtensionsCommand(fake_app_config)
+
+    with pytest.raises(errors.SnapcraftError, match="core99 not supported"):
+        cmd.run(Namespace(base="core99"))
+
+
+def test_command_with_esm_base(fake_app_config):
+    cmd = snapcraft.commands.ExtensionsCommand(fake_app_config)
+
+    with pytest.raises(errors.MaintenanceBase):
+        cmd.run(Namespace(base="core20"))

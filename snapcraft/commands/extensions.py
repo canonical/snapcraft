@@ -27,7 +27,7 @@ from craft_cli import emit
 from pydantic import BaseModel
 from typing_extensions import override
 
-from snapcraft import errors, extensions, models
+from snapcraft import const, errors, extensions, models
 
 if TYPE_CHECKING:
     import argparse
@@ -48,23 +48,46 @@ class ExtensionModel(BaseModel):
 
 
 class ExtensionsCommand(AppCommand):
-    """List available extensions for all supported bases."""
+    """List available extensions, optionally for a given base."""
 
     name = "extensions"
-    help_msg = "List available extensions for all supported bases."
+    help_msg = "List available extensions, optionally for a given base."
     overview = textwrap.dedent(
         """
-        List available extensions and their corresponding bases.
+        List available extensions and their corresponding bases,
+        optionally filtered to a given base.
         """
     )
 
     @override
+    def fill_parser(self, parser: argparse.ArgumentParser) -> None:
+        """Add arguments specific to the extensions command."""
+        parser.add_argument(
+            "--base",
+            metavar="base",
+            type=str,
+            help="Show extensions for <base>",
+        )
+
+    @override
     def run(self, parsed_args: argparse.Namespace) -> None:
+        base = getattr(parsed_args, "base", None)
+        message: str | None = None
+
+        if base is not None:
+            if base in const.ESM_BASES:
+                raise errors.MaintenanceBase(base=base)
+            if base not in const.CURRENT_BASES:
+                raise errors.SnapcraftError(f"{base} not supported")
+            message = f"Displaying extensions available for {base!r}"
+
         extension_presentation: dict[str, ExtensionModel] = {}
 
         for extension_name in extensions.registry.get_extension_names():
             extension_class = extensions.registry.get_extension_class(extension_name)
             extension_bases = list(extension_class.get_supported_bases())
+            if base is not None and base not in extension_bases:
+                continue
             extension_presentation[extension_name] = ExtensionModel(
                 name=extension_name, bases=extension_bases
             )
@@ -73,7 +96,11 @@ class ExtensionsCommand(AppCommand):
             [v.marshal() for v in extension_presentation.values()],
             key=lambda d: d["Extension name"],
         )
-        emit.message(tabulate.tabulate(printable_extensions, headers="keys"))
+        table = tabulate.tabulate(printable_extensions, headers="keys")
+        if message is None:
+            emit.message(table)
+        else:
+            emit.message(message + "\n" + table)
 
 
 class ListExtensionsCommand(ExtensionsCommand):
