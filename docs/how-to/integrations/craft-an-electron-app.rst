@@ -155,15 +155,51 @@ using ``pnpm``, demonstrating how to craft a snap from an Electron source tree.
             build-packages:
               - jq
               - python3
+            stage-packages:
+              - libnss3
+              - libnss-sss
             build-environment:
               - SIGNAL_ENV: "production"
             override-build: |
               export PNPM_HOME="${CRAFT_STAGE}/pnpm"
               export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
+              # Pin pnpm to the exact version declared in
+              # devEngines.packageManager so the lockfile's
+              # package-manager entry is satisfied.
+              PNPM_VERSION="$(jq -er '.devEngines.packageManager
+                | select(.name == "pnpm")
+                | .version' package.json)"
+              (cd /tmp && pnpm self-update "${PNPM_VERSION}")
               pnpm env use --global "$(jq -r .engines.node package.json)"
-              pnpm install --frozen-lockfile
-              pnpm run build:release
-              craftctl default
+              pnpm install --no-frozen-lockfile
+              # Signal's aggregate build runs code generation and
+              # renderer compilation before invoking Electron Builder.
+              pnpm run generate
+              pnpm run build:esbuild:prod
+              pnpm run build:electron \
+                --config.directories.output=release --dir
+              # Stage the unpacked release (linux-unpacked on amd64,
+              # linux-arm64-unpacked on arm64).
+              mkdir -p "${CRAFT_PART_INSTALL}/opt"
+              mv release/linux-*unpacked "${CRAFT_PART_INSTALL}/opt/Signal"
+            prime:
+              - -opt/Signal/chrome-sandbox
+
+        apps:
+          signal-desktop:
+            extensions: [gnome]
+            command: opt/Signal/signal-desktop
+            plugs:
+              - browser-support
+              - camera
+              - home
+              - network
+              - audio-playback
+              - audio-record
+              - removable-media
+              - unity7
+            environment:
+              TMPDIR: $XDG_RUNTIME_DIR
 
 
 Electron parts
@@ -175,7 +211,13 @@ the output. The ``node-runtime`` part installs the ``pnpm`` package manager in
 isolation so that Signal's workspace hooks do not interfere with the
 bootstrapping step.
 
-This pattern — pulling source from the upstream Git repository, installing
-Node.js at the required version, and running the project's own build script —
-is the recommended approach when you want a reproducible, auditable build
-rather than repackaging a pre-built binary.
+This pattern — pulling source from the upstream Git repository, pinning the
+package manager to the version declared in ``devEngines.packageManager``,
+installing Node.js at the required version, and running the project's full
+build sequence — is the recommended approach when you want a reproducible,
+auditable build rather than repackaging a pre-built binary.
+
+The ``stage-packages`` list in ``signal-desktop`` supplies the Electron runtime
+libraries (such as ``libnss3``) that the packaged binary requires on a
+``core24`` base. The ``apps`` stanza declares the snap entry point and the
+interfaces the application needs to access system resources.
