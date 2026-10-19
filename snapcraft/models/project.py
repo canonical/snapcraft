@@ -68,7 +68,7 @@ from snapcraft.utils import get_effective_base
 TIME_DURATION_REGEX = re.compile(r"^([0-9]+(ns|us|ms|s|m)){1,5}$")
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Callable, Iterable, Mapping
 
     from craft_application.models.project import Part
     from craft_providers import bases
@@ -2289,14 +2289,34 @@ class Project(models.Project):
         return _get_partitions_from_components(self.components)
 
 
-def _custom_error(error_msg: str):
+def _custom_error(error_msg: str | Callable[[pydantic.ValidationInfo], str]):
+    """Wrap a validator with a custom error.
+
+    :param error_msg: A string or a callable that takes model info and returns a string.
+    """
+
     def _validator(v: Any, next_: Any, ctx: pydantic.ValidationInfo):
         try:
             return next_(v, ctx)
         except ValueError as exc:
-            raise ValueError(error_msg) from exc
+            msg = error_msg(ctx) if callable(error_msg) else error_msg
+            raise ValueError(msg) from exc
 
     return pydantic.WrapValidator(_validator)
+
+
+def _architectures_not_supported_error(info: pydantic.ValidationInfo) -> str:
+    """Return an error string for using the 'architectures' key on core24 and higher."""
+    base = get_effective_base(
+        base=info.data.get("base"),
+        build_base=info.data.get("build_base"),
+        project_type=info.data.get("type"),
+        name=info.data.get("name"),
+    )
+    return (
+        f"'architectures' key is not supported for base {base!r}. "
+        "Use 'platforms' key instead."
+    )
 
 
 class _BaselessProject(Project):
@@ -2481,9 +2501,7 @@ class Core24Project(StableBaseProject):
     architectures: SkipJsonSchema[  # ty: ignore[invalid-mutable-override]
         Annotated[
             None,
-            _custom_error(
-                "'architectures' key is not supported for base 'core24'. Use 'platforms' key instead."
-            ),
+            _custom_error(_architectures_not_supported_error),
         ]
     ] = pydantic.Field(
         default=None,

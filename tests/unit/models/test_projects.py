@@ -2373,15 +2373,26 @@ class TestArchitecture:
 
         assert not arch_triplet
 
-    def test_architectures_not_allowed(self, project_yaml_data):
+    @pytest.mark.parametrize(
+        ("kwargs", "effective_base"),
+        [
+            ({"base": "core24"}, "core24"),
+            ({"base": "core26"}, "core26"),
+            ({"base": "bare", "build_base": "core24"}, "core24"),
+            ({"base": "core26", "build-base": "devel"}, "core26"),
+        ],
+    )
+    def test_architectures_not_allowed(self, project_yaml_data, kwargs, effective_base):
         """'architectures' key is not allowed if base is not core22."""
         error = (
-            "'architectures' key is not supported for base 'core24'. "
+            f"'architectures' key is not supported for base {effective_base!r}. "
             "Use 'platforms' key instead."
         )
 
         with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(**CORE24_DATA, architectures=["amd64"]))
+            Project.unmarshal(
+                project_yaml_data(**kwargs, grade="devel", architectures=["amd64"])
+            )
 
     @pytest.mark.parametrize(
         ("data", "expected"),
