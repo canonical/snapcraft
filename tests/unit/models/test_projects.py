@@ -959,30 +959,79 @@ class TestProjectValidation:
             ),
         ],
     )
-    def test_snapcraftctl_error(self, key, script, project_yaml_data):
-        """Error when snapcraftctl is used in core26."""
+    @pytest.mark.parametrize(
+        ("base", "build_base", "snap_type"),
+        [
+            *(
+                pytest.param(base, None, None, id=f"base-{base}")
+                for base in const.CURRENT_BASES - {"core22", "core24"}
+            ),
+            *(
+                pytest.param(None, build_base, "kernel", id=f"build-base-{build_base}")
+                for build_base in const.CURRENT_BASES - {"core22", "core24"}
+            ),
+            *(
+                pytest.param("bare", build_base, None, id=f"bare-{build_base}")
+                for build_base in const.CURRENT_BASES - {"core22", "core24"}
+            ),
+        ],
+    )
+    def test_snapcraftctl_error(
+        self, key, script, base, build_base, snap_type, project_yaml_data
+    ):
+        """Error when snapcraftctl is used for core26 and higher."""
         parts_data = {"my-part": {"plugin": "nil", key: script}}
         error = re.escape(
             f"Can't use 'snapcraftctl' in the {key} script for part 'my-part'. "
             "Use 'craftctl' instead."
         )
+        kwargs: dict[str, Any] = {"grade": "devel"}
+        if base is not None:
+            kwargs["base"] = base
+        if build_base is not None:
+            kwargs["build_base"] = build_base
+        if snap_type is not None:
+            kwargs["type"] = snap_type
+
+        data = project_yaml_data(parts=parts_data, **kwargs)
+        if base is None:
+            data.pop("base")
 
         with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(
-                project_yaml_data(
-                    base="core26", build_base="devel", grade="devel", parts=parts_data
-                )
-            )
+            Project.unmarshal(data)
 
     @pytest.mark.parametrize(
         "key", ["override-pull", "override-build", "override-stage", "override-prime"]
     )
-    @pytest.mark.parametrize("base", ["core22", "core24"])
-    def test_snapcraftctl_old_bases(self, key, base, project_yaml_data):
-        """snapcraftctl can be used for core22 and core24 bases."""
+    @pytest.mark.parametrize(
+        ("base", "build_base", "snap_type"),
+        [
+            pytest.param("bare", "core22", None, id="bare-core22"),
+            pytest.param("bare", "core24", None, id="bare-core24"),
+            pytest.param("core22", None, None, id="base-core22"),
+            pytest.param("core24", None, None, id="base-core24"),
+            pytest.param(None, "core22", "kernel", id="build-base-core22"),
+            pytest.param(None, "core24", "kernel", id="build-base-core24"),
+        ],
+    )
+    def test_snapcraftctl_old_bases(
+        self, key, base, build_base, snap_type, project_yaml_data
+    ):
+        """snapcraftctl can be used when base or build-base is core22 or core24."""
         parts_data = {"my-part": {"plugin": "nil", key: "snapcraftctl"}}
+        kwargs: dict[str, Any] = {}
+        if base is not None:
+            kwargs["base"] = base
+        if build_base is not None:
+            kwargs["build_base"] = build_base
+        if snap_type is not None:
+            kwargs["type"] = snap_type
 
-        Project.unmarshal(project_yaml_data(base=base, parts=parts_data))
+        data = project_yaml_data(parts=parts_data, **kwargs)
+        if base is None:
+            data.pop("base")
+
+        Project.unmarshal(data)
 
 
 class TestHookValidation:
@@ -2324,15 +2373,26 @@ class TestArchitecture:
 
         assert not arch_triplet
 
-    def test_architectures_not_allowed(self, project_yaml_data):
+    @pytest.mark.parametrize(
+        ("kwargs", "effective_base"),
+        [
+            ({"base": "core24"}, "core24"),
+            ({"base": "core26"}, "core26"),
+            ({"base": "bare", "build_base": "core24"}, "core24"),
+            ({"base": "core26", "build-base": "devel"}, "core26"),
+        ],
+    )
+    def test_architectures_not_allowed(self, project_yaml_data, kwargs, effective_base):
         """'architectures' key is not allowed if base is not core22."""
         error = (
-            "'architectures' key is not supported for base 'core24'. "
+            f"'architectures' key is not supported for base {effective_base!r}. "
             "Use 'platforms' key instead."
         )
 
         with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(**CORE24_DATA, architectures=["amd64"]))
+            Project.unmarshal(
+                project_yaml_data(**kwargs, grade="devel", architectures=["amd64"])
+            )
 
     @pytest.mark.parametrize(
         ("data", "expected"),

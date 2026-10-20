@@ -140,6 +140,17 @@ Snapcraft 9.2.0
 - `craft-parts#1178 <https://github.com/canonical/craft-parts/issues/1178>`__ Show the
   URL of the package that could not be retrieved
 
+.. _release-notes-fixes-9.2.1:
+
+Snapcraft 9.2.1
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6332 <https://github.com/canonical/snapcraft/issues/6322>`__ core26: YAML
+  error messages refer to core24
+- `snapcraft#6336 <https://github.com/canonical/snapcraft/issues/6336>`__ Snapcraft 9:
+  snapcraftctl errors in core22 snaps
+
+
 Contributors
 ------------
 
