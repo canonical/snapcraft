@@ -157,7 +157,6 @@ Contributors
 We would like to express a big thank you to all the people who contributed to
 this release.
 
-Learn about the new features, changes, and fixes in
 :literalref:`@aleasto <https://github.com/aleasto>`,
 :literalref:`@artivis <https://github.com/artivis>`,
 :literalref:`@bepri <https://github.com/bepri>`,
