@@ -1,7 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright 2022 Canonical Ltd.
-#           2023-2024 Scarlett Moore <sgmoore@kde.org>
+#           2023-2026 Scarlett Moore <sgmoore@kde.org>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,8 +28,16 @@ from typing_extensions import override
 from .extension import get_extensions_data_dir, prepend_to_env
 from .gpu_extension import GPUExtension
 
-_QT6_SDK_SNAP = {"core22": "kde-qt6-core22-sdk", "core24": "kde-qt6-core24-sdk"}
-_KF6_SDK_SNAP = {"core22": "kf6-core22-sdk", "core24": "kf6-core24-sdk"}
+_QT6_SDK_SNAP = {
+    "core22": "kde-qt6-core22-sdk",
+    "core24": "kde-qt6-core24-sdk",
+    "core26": "kde-qt6-core26-sdk",
+}
+_KF6_SDK_SNAP = {
+    "core22": "kf6-core22-sdk",
+    "core24": "kf6-core24-sdk",
+    "core26": "kf6-core26-sdk",
+}
 
 
 @dataclasses.dataclass
@@ -87,7 +95,7 @@ class KDENeon6(GPUExtension):
     @staticmethod
     @override
     def get_supported_bases() -> tuple[str, ...]:
-        return ("core22", "core24")
+        return ("core22", "core24", "core26")
 
     @staticmethod
     @override
@@ -97,11 +105,12 @@ class KDENeon6(GPUExtension):
     @staticmethod
     @override
     def is_experimental(base: str | None) -> bool:
-        return False
+        # Core 26 support is preliminary while the KDE runtime stack settles.
+        return base == "core26"
 
     @override
     def get_app_snippet(self, *, app_name: str) -> dict[str, Any]:
-        if self.yaml_data["base"] == "core24":
+        if self.yaml_data["base"] in ("core24", "core26"):
             snippet = super().get_app_snippet(app_name=app_name)
         else:
             snippet = {}
@@ -162,6 +171,24 @@ class KDENeon6(GPUExtension):
             kf6_builtin=kf6_builtin,
         )
 
+    @functools.cached_property
+    def pyside_sdk_snap(self) -> str | None:
+        """Return an explicitly configured PySide6 SDK snap, if any.
+
+        PySide6 is optional and is not part of the KDE Neon extension's
+        default runtime. Only add its build paths for core26 projects that
+        explicitly list the matching SDK in a part's build-snaps.
+        """
+        if self.yaml_data.get("base") != "core26":
+            return None
+
+        matcher = re.compile(r"kde-pyside6-core26-sdk.*")
+        for part in self.yaml_data.get("parts", {}).values():
+            for snap in part.get("build-snaps", []):
+                if matcher.match(snap):
+                    return snap.split("/")[0]
+        return None
+
     @override
     def get_root_snippet(self) -> dict[str, Any]:
         platform_kf6_snap = self.kde_snaps.content_kf6
@@ -171,7 +198,7 @@ class KDENeon6(GPUExtension):
         lxqt_support_snap = f"lxqt-support-{base}"
 
         snippet: dict[str, Any] = {}
-        if base == "core24":
+        if base in ("core24", "core26"):
             snippet = super().get_root_snippet()
         else:
             snippet = {
@@ -233,7 +260,13 @@ class KDENeon6(GPUExtension):
             **{
                 k: v
                 for k, v in snippet.get("layout", {}).items()
-                if not k.startswith("/usr/share/X11")
+                if not (
+                    k.startswith("/usr/share/X11")
+                    or (
+                        base in ("core24", "core26")
+                        and k in ("/usr/share/libdrm", "/usr/share/drirc.d")
+                    )
+                )
             },
             "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
@@ -245,87 +278,125 @@ class KDENeon6(GPUExtension):
     def get_part_snippet(self, *, plugin_name: str) -> dict[str, Any]:
         qt6_sdk_snap = self.kde_snaps.qt6_sdk_snap
         kf6_sdk_snap = self.kde_snaps.kf6_sdk_snap
+        mesa_snap = {
+            "core22": "mesa-2204",
+            "core24": "mesa-2404",
+            "core26": "mesa-2604",
+        }[self.yaml_data["base"]]
 
-        if self.yaml_data["base"] == "core24":
-            return {
-                "build-environment": [
+        if self.yaml_data["base"] in ("core24", "core26"):
+            pyside_sdk_snap = self.pyside_sdk_snap
+            pyside_paths = (
+                [f"/snap/{pyside_sdk_snap}/current/usr"] if pyside_sdk_snap else []
+            )
+            pyside_library_paths = (
+                [
+                    f"/snap/{pyside_sdk_snap}/current/usr/lib",
+                    f"/snap/{pyside_sdk_snap}/current/usr/lib/"
+                    "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                ]
+                if pyside_sdk_snap
+                else []
+            )
+            environment = [
+                {
+                    "PATH": prepend_to_env(
+                        "PATH",
+                        [
+                            "$CRAFT_STAGE/usr/bin",
+                            f"/snap/{qt6_sdk_snap}/current/usr/bin",
+                            f"/snap/{kf6_sdk_snap}/current/usr/bin",
+                            *(
+                                [f"/snap/{pyside_sdk_snap}/current/usr/bin"]
+                                if pyside_sdk_snap
+                                else []
+                            ),
+                        ],
+                    ),
+                },
+                {
+                    "XDG_DATA_DIRS": prepend_to_env(
+                        "XDG_DATA_DIRS",
+                        [
+                            "$CRAFT_STAGE/usr/share",
+                            f"/snap/{qt6_sdk_snap}/current/usr/share",
+                            f"/snap/{kf6_sdk_snap}/current/usr/share",
+                        ],
+                    ),
+                },
+                {
+                    "XDG_CONFIG_HOME": prepend_to_env(
+                        "XDG_CONFIG_HOME",
+                        [
+                            "$CRAFT_STAGE/etc/xdg",
+                            f"/snap/{qt6_sdk_snap}/current/etc/xdg",
+                            f"/snap/{kf6_sdk_snap}/current/etc/xdg",
+                        ],
+                    ),
+                },
+                {
+                    "LD_LIBRARY_PATH": prepend_to_env(
+                        "LD_LIBRARY_PATH",
+                        [
+                            # Qt6 arch specific libs
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            # Qt6 libs
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib",
+                            # kf6 arch specific libs
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            # Mesa libs supplied by the base-specific GPU snap.
+                            f"/snap/{mesa_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            # blas
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
+                            # lapack
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
+                            # Keep Qt/KF6 libraries ahead of PySide's libraries so
+                            # PySide uses the shared KDE Qt runtime, not a duplicate.
+                            *pyside_library_paths,
+                            # libproxy
+                            f"/snap/{qt6_sdk_snap}/current/usr/lib/"
+                            "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy",
+                            # kf6 libs
+                            f"/snap/{kf6_sdk_snap}/current/usr/lib",
+                            # Staged libs
+                            "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
+                            "$CRAFT_STAGE/usr/lib",
+                            "$CRAFT_STAGE/lib/",
+                        ],
+                    ),
+                },
+                {
+                    "CMAKE_PREFIX_PATH": prepend_to_env(
+                        "CMAKE_PREFIX_PATH",
+                        [
+                            "$CRAFT_STAGE/usr",
+                            f"/snap/{qt6_sdk_snap}/current/usr",
+                            f"/snap/{kf6_sdk_snap}/current/usr",
+                            *pyside_paths,
+                            "/usr",
+                        ],
+                        separator=":",
+                    ),
+                },
+            ]
+            if pyside_sdk_snap:
+                environment.append(
                     {
-                        "PATH": prepend_to_env(
-                            "PATH",
+                        "PYTHONPATH": prepend_to_env(
+                            "PYTHONPATH",
                             [
-                                "$CRAFT_STAGE/usr/bin",
-                                f"/snap/{qt6_sdk_snap}/current/usr/bin",
-                                f"/snap/{kf6_sdk_snap}/current/usr/bin",
+                                f"/snap/{pyside_sdk_snap}/current/usr/lib/python3/dist-packages"
                             ],
                         ),
-                    },
-                    {
-                        "XDG_DATA_DIRS": prepend_to_env(
-                            "XDG_DATA_DIRS",
-                            [
-                                "$CRAFT_STAGE/usr/share",
-                                f"/snap/{qt6_sdk_snap}/current/usr/share",
-                                f"/snap/{kf6_sdk_snap}/current/usr/share",
-                            ],
-                        ),
-                    },
-                    {
-                        "XDG_CONFIG_HOME": prepend_to_env(
-                            "XDG_CONFIG_HOME",
-                            [
-                                "$CRAFT_STAGE/etc/xdg",
-                                f"/snap/{qt6_sdk_snap}/current/etc/xdg",
-                                f"/snap/{kf6_sdk_snap}/current/etc/xdg",
-                            ],
-                        ),
-                    },
-                    {
-                        "LD_LIBRARY_PATH": prepend_to_env(
-                            "LD_LIBRARY_PATH",
-                            [
-                                # Qt6 arch specific libs
-                                f"/snap/{qt6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                                # Qt6 libs
-                                f"/snap/{qt6_sdk_snap}/current/usr/lib",
-                                # kf6 arch specific libs
-                                f"/snap/{kf6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                                # Mesa libs
-                                "/snap/mesa-2404/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                                # blas
-                                f"/snap/{kf6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/blas",
-                                # lapack
-                                f"/snap/{kf6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/lapack",
-                                # libproxy
-                                f"/snap/{qt6_sdk_snap}/current/usr/lib/"
-                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libproxy",
-                                # kf6 libs
-                                f"/snap/{kf6_sdk_snap}/current/usr/lib",
-                                # Staged libs
-                                "$CRAFT_STAGE/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}",
-                                "$CRAFT_STAGE/usr/lib",
-                                "$CRAFT_STAGE/lib/",
-                            ],
-                        ),
-                    },
-                    {
-                        "CMAKE_PREFIX_PATH": prepend_to_env(
-                            "CMAKE_PREFIX_PATH",
-                            [
-                                "$CRAFT_STAGE/usr",
-                                f"/snap/{qt6_sdk_snap}/current/usr",
-                                f"/snap/{kf6_sdk_snap}/current/usr",
-                                "/usr",
-                            ],
-                            separator=":",
-                        ),
-                    },
-                ],
-            }
+                    }
+                )
+            return {"build-environment": environment}
+
         return {
             "build-environment": [
                 {
@@ -405,13 +476,8 @@ class KDENeon6(GPUExtension):
 
     @override
     def get_parts_snippet(self) -> dict[str, Any]:
-        # We can change this to the lightweight command-chain when
-        # the content snap includes the desktop-launch from
-        # https://github.com/canonical/snapcraft-desktop-integration
-
-        source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
-
         base = self.yaml_data["base"]
+
         if base != "core22":
             parts = {
                 f"kde-neon-6/{k}": v for k, v in super().get_parts_snippet().items()
@@ -419,37 +485,33 @@ class KDENeon6(GPUExtension):
         else:
             parts = {}
 
-        parts.update(
-            {
-                "kde-neon-6/sdk": {
-                    "source": str(source),
-                    "plugin": "make",
-                    "make-parameters": [
-                        f"PLATFORM_PLUG=kf6-{base}",
-                    ],
-                },
-            }
-        )
+        sdk_part = {
+            "source": str(get_extensions_data_dir() / "desktop" / "command-chain-kde"),
+            "plugin": "make",
+            "make-parameters": [
+                f"PLATFORM_PLUG=kf6-{base}",
+            ],
+        }
+
+        build_snaps = []
+
+        if self.kde_snaps.qt6_builtin:
+            build_snaps.append(self.kde_snaps.qt6_sdk_snap)
 
         if self.kde_snaps.kf6_builtin:
-            parts["kde-neon-6/sdk"].update(
-                {
-                    "build-snaps": [
-                        self.kde_snaps.qt6_sdk_snap,
-                        self.kde_snaps.kf6_sdk_snap,
-                    ],
-                    "build-packages": [
-                        "gettext",
-                        "doxygen",
-                        "graphviz",
-                        "libxml2-utils",
-                        "docbook-xml",
-                        "docbook-xsl",
-                        "libglx-dev",
-                        "libgl-dev",
-                        "libglvnd-dev",
-                    ],
-                }
-            )
+            build_snaps.append(self.kde_snaps.kf6_sdk_snap)
+
+        if build_snaps:
+            sdk_part["build-snaps"] = build_snaps
+            sdk_part["build-packages"] = [
+                "gettext",
+                "doxygen",
+                "graphviz",
+                "libxml2-utils",
+                "docbook-xml",
+                "docbook-xsl",
+            ]
+
+        parts["kde-neon-6/sdk"] = sdk_part
 
         return parts
