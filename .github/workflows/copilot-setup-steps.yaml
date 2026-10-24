@@ -37,7 +37,7 @@ jobs:
             uv.lock
 
       - name: Install release tools
-        uses: taiki-e/install-action@7623a79cdfecb99d681017af368ca353d9f49bb5 # v2.87.19
+        uses: taiki-e/install-action@a4d3f3f761dcd95cce1b72cb61cb6d1963438177 # v2.87.30
         with:
           tool: |
             osv-scanner
