@@ -939,7 +939,11 @@ def test_get_parts_snippet_core26(kde_neon_6_extension_core26):
     parts = kde_neon_6_extension_core26.get_parts_snippet()
     sdk_part = parts["kde-neon-6/sdk"]
     assert sdk_part["make-parameters"] == ["PLATFORM_PLUG=kf6-core26"]
-    assert sdk_part["build-snaps"] == ["kde-qt6-core26-sdk", "kf6-core26-sdk"]
+    assert sdk_part["build-snaps"] == [
+        "kde-qt6-core26-sdk",
+        "kf6-core26-sdk",
+        "kf6-core26",
+    ]
     assert parts["kde-neon-6/gpu/wrapper"]["make-parameters"] == [
         "GPU_INTERFACE=gpu-2604"
     ]
@@ -957,8 +961,52 @@ def test_get_parts_snippet_with_external_sdk_core26(
 ):
     parts = kde_neon_6_extension_with_build_snap_core26.get_parts_snippet()
     assert parts["kde-neon-6/sdk"]["make-parameters"] == ["PLATFORM_PLUG=kf6-core26"]
-    assert "build-snaps" not in parts["kde-neon-6/sdk"]
+    assert parts["kde-neon-6/sdk"]["build-snaps"] == ["kf6-core26/latest/stable"]
     assert "build-packages" not in parts["kde-neon-6/sdk"]
+
+
+@pytest.mark.parametrize("channel", ["latest/stable", "latest/beta", "latest/edge"])
+def test_core26_runtime_channel_follows_kf6_sdk_channel(channel):
+    extension = kde_neon_6.KDENeon6(
+        yaml_data={
+            "base": "core26",
+            "parts": {
+                "app": {
+                    "build-snaps": [
+                        f"kde-qt6-core26-sdk/{channel}",
+                        f"kf6-core26-sdk/{channel}",
+                    ]
+                }
+            },
+        },
+        arch="amd64",
+        target_arch="amd64",
+    )
+
+    sdk_part = extension.get_parts_snippet()["kde-neon-6/sdk"]
+    assert f"kf6-core26/{channel}" in sdk_part["build-snaps"]
+
+
+def test_core26_runtime_channel_can_be_overridden_independently():
+    extension = kde_neon_6.KDENeon6(
+        yaml_data={
+            "base": "core26",
+            "parts": {
+                "app": {
+                    "build-snaps": [
+                        "kde-qt6-core26-sdk/latest/beta",
+                        "kf6-core26-sdk/latest/beta",
+                        "kf6-core26/latest/edge",
+                    ]
+                }
+            },
+        },
+        arch="amd64",
+        target_arch="amd64",
+    )
+
+    sdk_part = extension.get_parts_snippet()["kde-neon-6/sdk"]
+    assert "build-snaps" not in sdk_part
 
 
 @pytest.fixture

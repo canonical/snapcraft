@@ -189,6 +189,20 @@ class KDENeon6(GPUExtension):
                     return snap.split("/")[0]
         return None
 
+    @functools.cached_property
+    def kf6_sdk_channel(self) -> str | None:
+        """Return the configured KF6 SDK channel, if one was explicitly set."""
+        if self.yaml_data.get("base") != "core26":
+            return None
+
+        matcher = re.compile(r"kf6-core26-sdk(?:/(.+))?")
+        for part in self.yaml_data.get("parts", {}).values():
+            for snap in part.get("build-snaps", []):
+                match = matcher.fullmatch(snap)
+                if match:
+                    return match.group(1)
+        return None
+
     @override
     def get_root_snippet(self) -> dict[str, Any]:
         platform_kf6_snap = self.kde_snaps.content_kf6
@@ -512,6 +526,42 @@ class KDENeon6(GPUExtension):
                 "docbook-xsl",
             ]
 
+        # Snapcraft's content-interface default-provider only accepts a snap
+        # name, not a channel. For Core26 builds, explicitly install the KF6
+        # runtime as a build snap so local builds can use the intended channel.
+        # Follow the configured KF6 SDK channel by default, but let projects
+        # override the runtime independently by declaring kf6-core26/<channel>
+        # in one of their own parts' build-snaps.
+        if base == "core26" and len(build_snaps) != 1:
+            runtime_snap = self.kde_snaps.content_kf6
+            runtime_matcher = re.compile(re.escape(runtime_snap) + r"(?:/.*)?")
+
+            runtime_is_explicit = False
+            for part in self.yaml_data.get("parts", {}).values():
+                part_build_snaps = part.get("build-snaps", [])
+                if isinstance(part_build_snaps, str):
+                    part_build_snaps = [part_build_snaps]
+
+                if any(runtime_matcher.fullmatch(snap) for snap in part_build_snaps):
+                    runtime_is_explicit = True
+                    break
+
+            if not runtime_is_explicit:
+                runtime_channel = self.kf6_sdk_channel
+                runtime_snap_ref = (
+                    f"{runtime_snap}/{runtime_channel}"
+                    if runtime_channel
+                    else runtime_snap
+                )
+
+                sdk_build_snaps = sdk_part.get("build-snaps", [])
+                if isinstance(sdk_build_snaps, str):
+                    sdk_build_snaps = [sdk_build_snaps]
+
+                sdk_build_snaps.append(runtime_snap_ref)
+                sdk_part["build-snaps"] = sdk_build_snaps
+
         parts["kde-neon-6/sdk"] = sdk_part
+        return parts
 
         return parts
