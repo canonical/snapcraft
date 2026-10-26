@@ -403,6 +403,27 @@ def test_close_arch_shared_revision(
 
 
 @pytest.mark.usefixtures("memory_keyring")
+def test_close_arch_shared_revision_all(
+    fake_store_close, fake_store_release, fake_store_get_channel_map, fake_app_config
+):
+    fake_store_get_channel_map.return_value = _channel_map(
+        [_mapped("latest/stable", "all", 10)],
+        {10: ["amd64", "arm64"]},
+    )
+    cmd = commands.StoreCloseCommand(fake_app_config)
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        cmd.run(argparse.Namespace(name="test-snap", channel="stable", arch=["amd64"]))
+
+    assert str(raised.value) == (
+        "Revision 10 in 'stable' is also built for 'amd64', "
+        "so it cannot be kept for the other architectures"
+    )
+    assert fake_store_close.mock_calls == []
+    assert fake_store_release.mock_calls == []
+
+
+@pytest.mark.usefixtures("memory_keyring")
 def test_close_arch_progressive(
     fake_store_close, fake_store_release, fake_store_get_channel_map, fake_app_config
 ):

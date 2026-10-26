@@ -319,7 +319,12 @@ class StoreCloseCommand(AppCommand):
             if store.Channel(m.channel) == target
         ]
 
-        missing = architectures - {m.architecture for m in mapped}
+        released = {m.architecture for m in mapped}
+        # an 'all' release covers each architecture of its revision
+        for m in mapped:
+            if m.architecture == "all":
+                released.update(snap_channel_map.get_revision(m.revision).architectures)
+        missing = architectures - released
         if missing:
             raise errors.SnapcraftError(
                 f"Channel {channel!r} for {snap_name!r} has no release for "
