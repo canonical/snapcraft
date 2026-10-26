@@ -185,7 +185,7 @@ def test_get_root_snippet(kde_neon_6_extension):
             }
         },
         "layout": {
-            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
             "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
@@ -244,7 +244,7 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
             }
         },
         "layout": {
-            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
@@ -328,7 +328,7 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             }
         },
         "layout": {
-            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
             "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
@@ -389,7 +389,7 @@ def test_get_root_snippet_with_external_sdk_core24(
             }
         },
         "layout": {
-            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
@@ -904,7 +904,7 @@ def test_get_root_snippet_core26(kde_neon_6_extension_core26):
         "target": "$SNAP/lxqt-support",
         "default-provider": "lxqt-support-core26",
     }
-    assert snippet["layout"]["/usr/share/X11"] == {"symlink": "$SNAP/kf6/usr/share/X11"}
+    assert snippet["layout"]["/usr/share/X11"] == {"bind": "$SNAP/kf6/usr/share/X11"}
     assert snippet["layout"]["/usr/share/qt6"] == {"symlink": "$SNAP/kf6/usr/share/qt6"}
     assert snippet["plugs"]["gpu-2604"] == {
         "default-provider": "mesa-2604",

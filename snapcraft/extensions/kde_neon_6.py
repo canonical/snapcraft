@@ -282,7 +282,7 @@ class KDENeon6(GPUExtension):
                     )
                 )
             },
-            "/usr/share/X11": {"symlink": "$SNAP/kf6/usr/share/X11"},
+            "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         }
