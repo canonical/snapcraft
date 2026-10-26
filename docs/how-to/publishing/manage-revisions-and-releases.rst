@@ -1,3 +1,6 @@
+.. meta::
+    :description: How to publish, promote, progressively release, and close snap revisions and channels in the Snap Store.
+
 .. _how-to-manage-revisions-and-releases:
 
 Manage revisions and releases
