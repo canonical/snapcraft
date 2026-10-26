@@ -22,6 +22,7 @@ import pytest
 from craft_cli.errors import ArgumentParsingError
 
 from snapcraft import commands, errors, store
+from snapcraft.store.channel_map import ChannelMap
 
 SNAP_STATUS_PAYLOAD = {
     "channel_map_tree": {
@@ -227,7 +228,7 @@ def test_release_progressive(emitter, fake_store_release, fake_app_config):
 def test_close(emitter, fake_store_close, fake_app_config):
     cmd = commands.StoreCloseCommand(fake_app_config)
 
-    cmd.run(argparse.Namespace(name="test-snap", channel="edge"))
+    cmd.run(argparse.Namespace(name="test-snap", channel="edge", arch=None))
 
     assert fake_store_close.mock_calls == [
         call(
@@ -244,7 +245,7 @@ def test_close_no_snap_id(emitter, fake_app_config):
     cmd = commands.StoreCloseCommand(fake_app_config)
 
     with pytest.raises(errors.SnapcraftError) as raised:
-        cmd.run(argparse.Namespace(name="test-unknown-snap", channel="edge"))
+        cmd.run(argparse.Namespace(name="test-unknown-snap", channel="edge", arch=None))
 
     assert str(raised.value) == (
         "'test-unknown-snap' not found or not owned by this account"
@@ -254,6 +255,175 @@ def test_close_no_snap_id(emitter, fake_app_config):
         "KeyError('test-unknown-snap') no found in "
         "{'snaps': {'16': {'test-snap': {'snap-id': '12345678'}}}}"
     )
+
+
+def _mapped(channel, arch, revision, percentage=None):
+    return {
+        "channel": channel,
+        "architecture": arch,
+        "revision": revision,
+        "expiration-date": None,
+        "progressive": {
+            "paused": None,
+            "percentage": percentage,
+            "current-percentage": None,
+        },
+    }
+
+
+def _channel_map(channel_map, revisions):
+    return ChannelMap.unmarshal(
+        {
+            "channel-map": channel_map,
+            "revisions": [
+                {"revision": rev, "version": "1.0", "architectures": arches}
+                for rev, arches in revisions.items()
+            ],
+            "snap": {
+                "name": "test-snap",
+                "channels": [
+                    {
+                        "name": "latest/stable",
+                        "track": "latest",
+                        "risk": "stable",
+                        "branch": None,
+                        "fallback": None,
+                    }
+                ],
+            },
+        }
+    )
+
+
+@pytest.fixture
+def fake_store_get_channel_map(mocker):
+    return mocker.patch(
+        "snapcraft.store.StoreClientCLI.get_channel_map",
+        autospec=True,
+        return_value=_channel_map(
+            [
+                _mapped("latest/stable", "amd64", 10),
+                _mapped("latest/stable", "arm64", 11),
+                _mapped("latest/stable", "armhf", 12),
+                _mapped("latest/candidate", "arm64", 13),
+            ],
+            {10: ["amd64"], 11: ["arm64"], 12: ["armhf"], 13: ["arm64"]},
+        ),
+    )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+@pytest.mark.parametrize("channel", ["stable", "latest/stable"])
+def test_close_arch(
+    emitter,
+    fake_store_close,
+    fake_store_release,
+    fake_store_get_channel_map,
+    fake_app_config,
+    channel,
+):
+    cmd = commands.StoreCloseCommand(fake_app_config)
+
+    cmd.run(argparse.Namespace(name="test-snap", channel=channel, arch=["amd64"]))
+
+    assert fake_store_close.mock_calls == [
+        call(ANY, snap_name="test-snap", channel=channel)
+    ]
+    assert fake_store_release.mock_calls == [
+        call(ANY, "test-snap", revision=11, channels=[channel]),
+        call(ANY, "test-snap", revision=12, channels=[channel]),
+    ]
+    emitter.assert_progress(
+        f"Closing {channel!r} and releasing revisions 11 and 12 to it again",
+        permanent=True,
+    )
+    emitter.assert_message(
+        f"Channel {channel!r} for 'test-snap' is now closed for 'amd64'"
+    )
+
+
+@pytest.mark.usefixtures("memory_keyring", "fake_store_get_channel_map")
+def test_close_arch_all(emitter, fake_store_close, fake_store_release, fake_app_config):
+    cmd = commands.StoreCloseCommand(fake_app_config)
+
+    cmd.run(
+        argparse.Namespace(
+            name="test-snap", channel="stable", arch=["amd64", "arm64", "armhf"]
+        )
+    )
+
+    assert fake_store_close.mock_calls == [
+        call(ANY, snap_name="test-snap", channel="stable")
+    ]
+    assert fake_store_release.mock_calls == []
+    emitter.assert_message(
+        "Channel 'stable' for 'test-snap' is now closed for "
+        "'amd64', 'arm64', and 'armhf'"
+    )
+
+
+@pytest.mark.usefixtures("memory_keyring", "fake_store_get_channel_map")
+def test_close_arch_not_released(fake_store_close, fake_store_release, fake_app_config):
+    cmd = commands.StoreCloseCommand(fake_app_config)
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        cmd.run(
+            argparse.Namespace(name="test-snap", channel="candidate", arch=["amd64"])
+        )
+
+    assert str(raised.value) == (
+        "Channel 'candidate' for 'test-snap' has no release for 'amd64'"
+    )
+    assert fake_store_close.mock_calls == []
+    assert fake_store_release.mock_calls == []
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_close_arch_shared_revision(
+    fake_store_close, fake_store_release, fake_store_get_channel_map, fake_app_config
+):
+    fake_store_get_channel_map.return_value = _channel_map(
+        [
+            _mapped("latest/stable", "amd64", 10),
+            _mapped("latest/stable", "arm64", 10),
+        ],
+        {10: ["amd64", "arm64"]},
+    )
+    cmd = commands.StoreCloseCommand(fake_app_config)
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        cmd.run(argparse.Namespace(name="test-snap", channel="stable", arch=["amd64"]))
+
+    assert str(raised.value) == (
+        "Revision 10 in 'stable' is also built for 'amd64', "
+        "so it cannot be kept for the other architectures"
+    )
+    assert fake_store_close.mock_calls == []
+    assert fake_store_release.mock_calls == []
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_close_arch_progressive(
+    fake_store_close, fake_store_release, fake_store_get_channel_map, fake_app_config
+):
+    fake_store_get_channel_map.return_value = _channel_map(
+        [
+            _mapped("latest/stable", "amd64", 10),
+            _mapped("latest/stable", "arm64", 11),
+            _mapped("latest/stable", "arm64", 12, percentage=50.0),
+        ],
+        {10: ["amd64"], 11: ["arm64"], 12: ["arm64"]},
+    )
+    cmd = commands.StoreCloseCommand(fake_app_config)
+
+    with pytest.raises(errors.SnapcraftError) as raised:
+        cmd.run(argparse.Namespace(name="test-snap", channel="stable", arch=["amd64"]))
+
+    assert str(raised.value) == (
+        "Channel 'stable' for 'test-snap' has a progressive release for 'arm64'"
+    )
+    assert fake_store_close.mock_calls == []
+    assert fake_store_release.mock_calls == []
 
 
 ###########################
