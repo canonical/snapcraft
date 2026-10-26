@@ -931,8 +931,10 @@ def test_get_part_snippet_core26(kde_neon_6_extension_core26):
         in environment[3]["LD_LIBRARY_PATH"]
     )
     assert "mesa-2404" not in environment[3]["LD_LIBRARY_PATH"]
-    assert "/snap/kde-qt6-core26-sdk/current/usr" in environment[4]["CMAKE_PREFIX_PATH"]
-    assert "/snap/kf6-core26-sdk/current/usr" in environment[4]["CMAKE_PREFIX_PATH"]
+    cmake_prefix_path = next(
+        item["CMAKE_PREFIX_PATH"] for item in environment if "CMAKE_PREFIX_PATH" in item
+    )
+    assert "/snap/kde-qt6-core26-sdk/current/usr" in cmake_prefix_path
 
 
 def test_get_parts_snippet_core26(kde_neon_6_extension_core26):
@@ -1118,3 +1120,24 @@ def test_get_parts_snippet_with_kf6_sdk_only_core26():
         "kde-qt6-core26-sdk",
     ]
     assert "build-packages" in sdk_part
+
+
+def test_get_part_snippet_core26_adds_pulseaudio_linker_paths(
+    kde_neon_6_extension_core26,
+):
+    snippet = kde_neon_6_extension_core26.get_part_snippet(plugin_name="cmake")
+    build_environment = snippet["build-environment"]
+
+    ldflags = next(item["LDFLAGS"] for item in build_environment if "LDFLAGS" in item)
+
+    assert (
+        "-Wl,-rpath-link,"
+        "/snap/kde-qt6-core26-sdk/current/usr/lib/"
+        "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/pulseaudio"
+    ) in ldflags
+
+    assert (
+        "-Wl,-rpath-link,"
+        "/snap/kf6-core26-sdk/current/usr/lib/"
+        "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/pulseaudio"
+    ) in ldflags

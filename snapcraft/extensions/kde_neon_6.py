@@ -398,6 +398,7 @@ class KDENeon6(GPUExtension):
                     ),
                 },
             ]
+
             if pyside_sdk_snap:
                 environment.append(
                     {
@@ -409,6 +410,23 @@ class KDENeon6(GPUExtension):
                         ),
                     }
                 )
+
+            if self.yaml_data.get("base") == "core26":
+                environment.append(
+                    {
+                        "LDFLAGS": prepend_to_env(
+                            "LDFLAGS",
+                            [
+                                f"-Wl,-rpath-link,/snap/{qt6_sdk_snap}/current/usr/lib/"
+                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/pulseaudio",
+                                f"-Wl,-rpath-link,/snap/{kf6_sdk_snap}/current/usr/lib/"
+                                "${CRAFT_ARCH_TRIPLET_BUILD_FOR}/pulseaudio",
+                            ],
+                            separator=" ",
+                        ),
+                    }
+                )
+
             return {"build-environment": environment}
 
         return {
