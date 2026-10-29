@@ -28,6 +28,7 @@ restore: |
   restore_yaml "snap/snapcraft.yaml"
 
 execute: |
+  export SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1
   cd "$SNAP_DIR"
   output="$(snapcraft pack)"
   snap install neon-hello-6_*.snap --dangerous
