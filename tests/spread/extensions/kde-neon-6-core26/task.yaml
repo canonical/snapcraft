@@ -11,7 +11,7 @@ systems:
 
 environment:
   SNAP_DIR: ../snaps/neon-hello-6-core26
-  SNAPCRAFT_HAS_EXPERIMENTAL_EXTENSIONS: 1
+  SNAPCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 1
 
 prepare: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
