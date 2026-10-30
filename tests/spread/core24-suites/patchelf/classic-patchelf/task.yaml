@@ -9,7 +9,7 @@ restore: |
   unset SNAPCRAFT_BUILD_ENVIRONMENT
   snapcraft clean
 
-  rm -f ./*.snap review.json
+  rm -f ./*.snap
 
 execute: |
   #shellcheck source=tests/spread/tools/review.sh
@@ -48,9 +48,9 @@ execute: |
   readelf --dynamic snap-contents/bin/hello-classic | MATCH "FLAGS_1.*NODEFLIB"
 
   # Classic confinement requires manual Store approval.
-  review --no-fail classic-patchelf_0.1_amd64.snap > review.json
-  report=$(cat review.json)
-  errors=$(printf '%s\n' "$report" | yq -p json -oy '[.[].error | keys | .[]] | join(",")' -)
-  warnings=$(printf '%s\n' "$report" | yq -p json -oy '[.[].warn | keys | .[]] | length' -)
-  echo "$errors" | MATCH '^lint-snap-v2:confinement_classic$'
-  echo "$warnings" | MATCH '^0$'
+  (
+    set -o pipefail
+    review --no-fail classic-patchelf_0.1_amd64.snap |
+      yq -p json -oy '[(.[].error | keys | .[]), (.[].warn | keys | .[] | "warn:" + .)] | join(",")' - |
+      MATCH '^lint-snap-v2:confinement_classic$'
+  )

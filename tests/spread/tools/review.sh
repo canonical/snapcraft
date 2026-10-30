@@ -7,15 +7,16 @@
 #
 # The review fails on any error or warning. If a snap is expected to have
 # findings, use --no-fail and check only the "error" and "warn" lists, as the
-# output also includes passing checks. To check that a list is empty, count it.
-# Save each yq result before matching it, so a yq error still fails the test:
+# output also includes passing checks. Expect at least one finding, as yq also
+# prints nothing for an empty report. Spread doesn't set pipefail, so set it in
+# a subshell to catch review or yq failures:
 #
-#   review --no-fail classic-patchelf_0.1_amd64.snap > review.json
-#   report=$(cat review.json)
-#   errors=$(printf '%s\n' "$report" | yq -p json -oy '[.[].error | keys | .[]] | join(",")' -)
-#   warnings=$(printf '%s\n' "$report" | yq -p json -oy '[.[].warn | keys | .[]] | length' -)
-#   echo "$errors" | MATCH '^lint-snap-v2:confinement_classic$'
-#   echo "$warnings" | MATCH '^0$'
+#   (
+#     set -o pipefail
+#     review --no-fail classic-patchelf_0.1_amd64.snap |
+#       yq -p json -oy '[(.[].error | keys | .[]), (.[].warn | keys | .[] | "warn:" + .)] | join(",")' - |
+#       MATCH '^lint-snap-v2:confinement_classic$'
+#   )
 review() (
   set +e
   local no_fail=0
