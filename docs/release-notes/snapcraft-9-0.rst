@@ -93,6 +93,11 @@ sources.
 Minor features
 --------------
 
+Custom build paths for remote build
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The remote-build command now supports a ``--project-dir`` option to specify custom build paths for monorepo setups (`#6287`).
+
 Snapcraft 9.0 brings the following minor changes.
 
 Promote edge channels with ``--yes``

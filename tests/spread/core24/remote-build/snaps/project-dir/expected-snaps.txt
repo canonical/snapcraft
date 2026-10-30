@@ -1,0 +1,1 @@
+my-remote-snap_0.1_amd64.snap
