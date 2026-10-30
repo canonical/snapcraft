@@ -4,15 +4,14 @@ environment:
   CMD/cmdline: snapcraft pack --enable-manifest
   CMD/envvars: env SNAPCRAFT_BUILD_INFO=y snapcraft pack
 
-prepare: |
-  snap install review-tools
-
 restore: |
   snapcraft clean
   rm -f ./*.snap
-  rm -f ~/manifest_0.1_*.snap
 
 execute: |
+  #shellcheck source=tests/spread/tools/review.sh
+  . "$TOOLS_DIR/review.sh"
+
   $CMD
 
   test -f manifest_0.1_*.snap
@@ -23,5 +22,4 @@ execute: |
   # regression test for #5413
   grep -E "^snapcraft-started-at: '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+Z'" prime/snap/manifest.yaml
 
-  cp manifest_0.1_*.snap ~
-  review-tools.snap-review ~/manifest_0.1_*.snap
+  review manifest_0.1_*.snap

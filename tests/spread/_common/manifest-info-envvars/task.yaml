@@ -1,13 +1,14 @@
 summary: Test manifest file creation
 
 prepare: |
-  snap install review-tools
-
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "snap/snapcraft.yaml"
 
 execute: |
+  #shellcheck source=tests/spread/tools/review.sh
+  . "$TOOLS_DIR/review.sh"
+
   export SNAPCRAFT_BUILD_INFO=1
   export SNAPCRAFT_IMAGE_INFO='{"test-var": "value"}'
 
@@ -17,14 +18,11 @@ execute: |
   grep '^  test-var: value' squashfs-root/snap/manifest.yaml
   rm -Rf squashfs-root
 
-  cp manifest_0.1_*.snap ~
-  review-tools.snap-review ~/manifest_0.1_*.snap
-  rm ~/manifest_0.1_*.snap
+  review manifest_0.1_*.snap
 
 restore: |
   snapcraft clean
   rm -f ./*.snap
-  rm -f ~/manifest_0.1_*.snap
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
