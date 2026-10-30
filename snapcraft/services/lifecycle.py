@@ -75,7 +75,9 @@ class Lifecycle(LifecycleService):
             project_name=project.name,
         )
         callbacks.register_prologue(parts.set_global_environment)
-        callbacks.register_pre_step(parts.set_step_environment)
+        callbacks.register_pre_step(
+            parts.set_step_environment, may_mutate_filesystem=False
+        )
         super().setup()
 
     @override
