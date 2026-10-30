@@ -26,7 +26,15 @@ import craft_parts
 import pydantic
 import pytest
 from craft_cli import EmitterMode, emit
-from craft_parts import Action, Features, ProjectInfo, Step, callbacks
+from craft_parts import (
+    Action,
+    Features,
+    ProjectInfo,
+    ProjectVar,
+    ProjectVarInfo,
+    Step,
+    callbacks,
+)
 from craft_platforms import DebianArchitecture
 from craft_providers.bases.ubuntu import BuilddBaseAlias
 
@@ -1176,10 +1184,12 @@ def test_set_global_environment(base, mocker, new_dir):
     info = ProjectInfo(
         application_name="test",
         base=base,
-        project_vars={
-            "version": "test-version",
-            "grade": "test-grade",
-        },
+        project_vars=ProjectVarInfo.unmarshal(
+            {
+                "version": ProjectVar(value="test-version").marshal(),
+                "grade": ProjectVar(value="test-grade").marshal(),
+            }
+        ),
         arch="arm64",
         cache_dir=new_dir,
     )
