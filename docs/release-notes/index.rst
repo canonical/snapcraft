@@ -100,6 +100,7 @@ development keeps pace with the OS's new releases and support lifecycle.
 .. toctree::
     :hidden:
 
+    Snapcraft 9.3 <snapcraft-9-3>
     Snapcraft 9.2 <snapcraft-9-2>
     Snapcraft 9.1 <snapcraft-9-1>
     Snapcraft 9.0 <snapcraft-9-0>

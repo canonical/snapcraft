@@ -1,3 +1,6 @@
+.. meta::
+    :description: How to publish, promote, progressively release, and close snap revisions and channels in the Snap Store.
+
 .. _how-to-manage-revisions-and-releases:
 
 Manage revisions and releases
@@ -163,6 +166,32 @@ are two ways you can complete the release:
         snapcraft release <snap-name> 356 stable
 
 After a non-progressive release, a snap will revert to standard release lifecycle.
+
+
+Close a channel
+---------------
+
+Closing a channel removes its releases. Devices tracking a closed channel follow the
+next more stable channel instead. For example, to close the *beta* channel, run:
+
+.. code-block:: bash
+
+    snapcraft close <snap-name> beta
+
+To close a channel for specific architectures only, pass ``--arch`` once for each
+architecture. For example, to stop delivering the snap on AMD64 through the *stable*
+channel while keeping the other architectures, run:
+
+.. code-block:: bash
+
+    snapcraft close <snap-name> stable --arch amd64
+
+The store can't close a channel for a single architecture, so Snapcraft closes the
+channel and then releases the revisions of the other architectures to it again. Between
+these steps, the channel is briefly closed for the other architectures too. This
+isn't possible if a revision in the channel is built for several architectures,
+including one being closed, or if another architecture has a progressive release in
+progress.
 
 
 Change the default track

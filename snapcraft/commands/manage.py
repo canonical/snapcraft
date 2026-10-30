@@ -30,7 +30,7 @@ from craft_cli.errors import ArgumentParsingError
 from tabulate import tabulate
 from typing_extensions import override
 
-from snapcraft import store
+from snapcraft import errors, store
 
 if TYPE_CHECKING:
     import argparse
@@ -244,9 +244,15 @@ class StoreCloseCommand(AppCommand):
         As such, closing the 'candidate' channel for a snap would make
         that snap begin to track the 'stable' channel.
 
+        Use --arch to close the channel only for the given architectures.
+        The store cannot close a channel per architecture, so the channel is
+        closed and the revisions for the other architectures are released to
+        it again.
+
         Examples::
 
             snapcraft close my-snap beta
+            snapcraft close my-snap stable --arch amd64
         """
     )
 
@@ -262,10 +268,30 @@ class StoreCloseCommand(AppCommand):
             type=str,
             help="The channel to close",
         )
+        parser.add_argument(
+            "--arch",
+            metavar="arch",
+            type=str,
+            action="append",
+            help="Only close the channel for this architecture (can be repeated)",
+        )
 
     @override
     def run(self, parsed_args: argparse.Namespace):
         client = store.StoreClientCLI()
+
+        if parsed_args.arch:
+            self._close_architectures(
+                client,
+                snap_name=parsed_args.name,
+                channel=parsed_args.channel,
+                architectures=set(parsed_args.arch),
+            )
+            emit.message(
+                f"Channel {parsed_args.channel!r} for {parsed_args.name!r} is now "
+                f"closed for {humanize_list(set(parsed_args.arch), 'and')}"
+            )
+            return
 
         client.close(
             snap_name=parsed_args.name,
@@ -275,6 +301,73 @@ class StoreCloseCommand(AppCommand):
         emit.message(
             f"Channel {parsed_args.channel!r} for {parsed_args.name!r} is now closed"
         )
+
+    @staticmethod
+    def _close_architectures(
+        client: store.client.LegacyStoreClientCLI,
+        *,
+        snap_name: str,
+        channel: str,
+        architectures: set[str],
+    ) -> None:
+        """Close channel, then re-release the revisions of the other architectures."""
+        snap_channel_map = client.get_channel_map(snap_name=snap_name)
+        target = store.Channel(channel)
+        mapped = [
+            m
+            for m in snap_channel_map.channel_map
+            if store.Channel(m.channel) == target
+        ]
+
+        released = {m.architecture for m in mapped}
+        # an 'all' release covers each architecture of its revision
+        for m in mapped:
+            if m.architecture == "all":
+                released.update(snap_channel_map.get_revision(m.revision).architectures)
+        missing = architectures - released
+        if missing:
+            raise errors.SnapcraftError(
+                f"Channel {channel!r} for {snap_name!r} has no release for "
+                f"{humanize_list(missing, 'or')}"
+            )
+
+        kept = [m for m in mapped if m.architecture not in architectures]
+        progressive = sorted(
+            {m.architecture for m in kept if m.progressive.percentage is not None}
+        )
+        if progressive:
+            raise errors.SnapcraftError(
+                f"Channel {channel!r} for {snap_name!r} has a progressive release "
+                f"for {humanize_list(progressive, 'and')}",
+                resolution="Complete the progressive release before closing "
+                "the channel for a single architecture.",
+            )
+
+        revisions = sorted({m.revision for m in kept})
+        for revision in revisions:
+            shared = architectures & set(
+                snap_channel_map.get_revision(revision).architectures
+            )
+            if shared:
+                raise errors.SnapcraftError(
+                    f"Revision {revision} in {channel!r} is also built for "
+                    f"{humanize_list(shared, 'and')}, so it cannot be kept "
+                    "for the other architectures",
+                    resolution=f"Close the whole channel with 'snapcraft close "
+                    f"{snap_name} {channel}'.",
+                )
+
+        if revisions:
+            emit.progress(
+                f"Closing {channel!r} and releasing "
+                f"revision{'s' if len(revisions) > 1 else ''} "
+                f"{humanize_list([str(r) for r in revisions], 'and', '{}', sort=False)} "
+                "to it again",
+                permanent=True,
+            )
+        client.close(snap_name=snap_name, channel=channel)
+        for revision in revisions:
+            client.release(snap_name, revision=revision, channels=[channel])
 
 
 class StoreSetDefaultTrackCommand(AppCommand):
