@@ -1,8 +1,6 @@
 summary: Test manifest file creation
 
 prepare: |
-  snap install review-tools
-
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   set_base "snap/snapcraft.yaml"
@@ -10,6 +8,8 @@ prepare: |
 execute: |
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh
   . "$TOOLS_DIR/snapcraft-yaml.sh"
+  #shellcheck source=tests/spread/tools/review.sh
+  . "$TOOLS_DIR/review.sh"
   base="$(get_base)"
 
   env SNAPCRAFT_BUILD_INFO=y snapcraft pack
@@ -50,13 +50,11 @@ execute: |
   echo -n "$parts_my_part_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+\(build[0-9]\+\|ubuntu[0-9]\+\)\?$'
   echo -n "$primed_stage_packages_0" | grep -q '^hello=[0-9]\+\.[0-9]\+-[0-9]\+\(build[0-9]\+\|ubuntu[0-9]\+\)\?$'
 
-  cp manifest_0.1_*.snap ~/
-  review-tools.snap-review ~/manifest_0.1_*.snap
+  review manifest_0.1_*.snap
 
 restore: |
   snapcraft clean
   rm -rf squashfs-root
-  rm -f ~/manifest_0.1_*.snap
   rm -f ~/manifest.yaml
 
   #shellcheck source=tests/spread/tools/snapcraft-yaml.sh

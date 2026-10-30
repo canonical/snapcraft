@@ -1,17 +1,16 @@
 summary: Test manifest file creation
 
-prepare: |
-  snap install review-tools
-
 restore: |
   # The regular clean can potentially fail depending on if/when the test itself failed, but
   # they should always both be attempted
   snapcraft clean || true
   snapcraft clean --destructive-mode
   rm -f ./*.snap
-  rm -f ~/manifest_0.1_*.snap
 
 execute: |
+  #shellcheck source=tests/spread/tools/review.sh
+  . "$TOOLS_DIR/review.sh"
+
   export SNAPCRAFT_BUILD_INFO=1
   export SNAPCRAFT_IMAGE_INFO='{"test-var": "value"}'
   snapcraft pack --use-lxd
@@ -20,14 +19,11 @@ execute: |
   grep '^  test-var: value' squashfs-root/snap/manifest.yaml
   rm -Rf squashfs-root
 
-  cp manifest_0.1_*.snap ~
-  review-tools.snap-review ~/manifest_0.1_*.snap
-  rm ~/manifest_0.1_*.snap
+  review manifest_0.1_*.snap
 
   # also test in destructive mode
   snapcraft pack --destructive-mode
 
   grep '^  test-var: value' prime/snap/manifest.yaml
 
-  cp manifest_0.1_*.snap ~
-  review-tools.snap-review ~/manifest_0.1_*.snap
+  review manifest_0.1_*.snap
