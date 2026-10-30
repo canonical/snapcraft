@@ -81,12 +81,14 @@ def test_library_linter_unused_library(mocker, new_dir):
     mock_elf_file = Mock(spec=_elf_file.ElfFile)
     mock_elf_file.soname = ""
     mock_elf_file.path = Path("elf.bin")
+    mock_elf_file.arch_tuple = None
     mock_elf_file.load_dependencies.return_value = []
 
     # mock a library
     mock_library = Mock(spec=_elf_file.ElfFile)
     mock_library.soname = "libfoo.so"
     mock_library.path = Path("lib/libfoo.so")
+    mock_library.arch_tuple = None
     mock_library.load_dependencies.return_value = []
 
     mocker.patch(
@@ -168,12 +170,14 @@ def test_library_linter_filter_unused_library(mocker, new_dir, filter_name):
     mock_elf_file = Mock(spec=_elf_file.ElfFile)
     mock_elf_file.soname = ""
     mock_elf_file.path = Path("elf.bin")
+    mock_elf_file.arch_tuple = None
     mock_elf_file.load_dependencies.return_value = []
 
     # mock a library
     mock_library = Mock(spec=_elf_file.ElfFile)
     mock_library.soname = "libfoo.so"
     mock_library.path = Path("lib/libfoo.so")
+    mock_library.arch_tuple = None
     mock_library.load_dependencies.return_value = []
 
     mocker.patch(
@@ -210,6 +214,7 @@ def test_library_linter_mixed_filters(mocker, new_dir):
     mock_library = Mock(spec=_elf_file.ElfFile)
     mock_library.soname = "libfoo.so"
     mock_library.path = Path("lib/libfoo.so")
+    mock_library.arch_tuple = None
     mock_library.load_dependencies.return_value = []
 
     mocker.patch(
@@ -375,3 +380,46 @@ def test_find_deb_package_no_available(mocker, fake_process):
     result = linter._find_deb_package("libcurl.so.4")
 
     assert not result
+
+
+def test_library_linter_skips_foreign_arch_elf(mocker, new_dir):
+    """Verify ELF files for foreign architectures are skipped."""
+    mock_host_elf = Mock(spec=_elf_file.ElfFile)
+    mock_host_elf.soname = ""
+    mock_host_elf.path = Path("elf.bin")
+    mock_host_elf.arch_tuple = ("ELFCLASS64", "ELFDATA2LSB", "EM_X86_64")
+    mock_host_elf.load_dependencies.return_value = set()
+
+    mock_foreign_elf = Mock(spec=_elf_file.ElfFile)
+    mock_foreign_elf.soname = ""
+    mock_foreign_elf.path = Path("elf-arm64.bin")
+    mock_foreign_elf.arch_tuple = ("ELFCLASS64", "ELFDATA2LSB", "EM_AARCH64")
+    mock_foreign_elf.load_dependencies.return_value = set()
+
+    mocker.patch(
+        "snapcraft.linters.library_linter.elf_utils.get_elf_files",
+        return_value=[mock_host_elf, mock_foreign_elf],
+    )
+    mocker.patch(
+        "snapcraft.linters.library_linter.elf_utils.get_host_elf_machine",
+        return_value="EM_X86_64",
+    )
+    mocker.patch("snapcraft.linters.linters.LINTERS", {"library": LibraryLinter})
+
+    yaml_data = {
+        "name": "mytest",
+        "version": "1.29.3",
+        "base": "core22",
+        "summary": "Single-line elevator pitch for your amazing snap",
+        "description": "test-description",
+        "confinement": "strict",
+        "parts": {},
+    }
+
+    project = models.Project.unmarshal(yaml_data)
+    snap_yaml.write(project, prime_dir=Path(new_dir), arch="amd64")
+
+    linters.run_linters(new_dir, lint=None)
+
+    mock_host_elf.load_dependencies.assert_called_once()
+    mock_foreign_elf.load_dependencies.assert_not_called()
