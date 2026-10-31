@@ -214,6 +214,13 @@ class ElfFile:
         except (UnicodeDecodeError, AttributeError, ConstructError) as exception:
             emit.debug(f"Extracting ELF attributes exception: {str(exception)}")
             raise errors.CorruptedElfFile(path, exception)
+        except AssertionError as exception:
+            # pyelftools asserts when a dynamic section has no string table, as in
+            # Guile ``.go`` files. The assertion has no message, so add one.
+            emit.debug(f"Extracting ELF attributes exception: {exception!r}")
+            raise errors.CorruptedElfFile(
+                path, ValueError("dynamic section has no string table")
+            )
 
     @classmethod
     def is_elf(cls, path: Path) -> bool:
