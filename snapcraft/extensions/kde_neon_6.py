@@ -209,7 +209,6 @@ class KDENeon6(GPUExtension):
         content_kf6_snap = self.kde_snaps.content_kf6 + "-all"
         if not (base := self.yaml_data.get("base")):
             raise CraftValidationError("The 'base' key is required.")
-        lxqt_support_snap = f"lxqt-support-{base}"
 
         snippet: dict[str, Any] = {}
         if base in ("core24", "core26"):
@@ -252,12 +251,6 @@ class KDENeon6(GPUExtension):
                 "default-provider": platform_kf6_snap,
                 "target": "$SNAP/kf6",
             },
-            lxqt_support_snap: {
-                "content": lxqt_support_snap,
-                "interface": "content",
-                "target": "$SNAP/lxqt-support",
-                "default-provider": lxqt_support_snap,
-            },
         }
         snippet["environment"] = {
             "SNAP_DESKTOP_RUNTIME": "$SNAP/kf6",
@@ -284,8 +277,13 @@ class KDENeon6(GPUExtension):
             },
             "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         }
+
+        if base == "core26":
+            snippet["layout"]["/usr/share/Kvantum"] = {
+                "symlink": "$SNAP/kf6/usr/share/Kvantum"
+            }
+
         return snippet
 
     @override

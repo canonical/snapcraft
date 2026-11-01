@@ -188,7 +188,6 @@ def test_get_root_snippet(kde_neon_6_extension):
             "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -218,12 +217,6 @@ def test_get_root_snippet(kde_neon_6_extension):
                 "default-provider": "kf6-core22",
                 "target": "$SNAP/kf6",
             },
-            "lxqt-support-core22": {
-                "content": "lxqt-support-core22",
-                "interface": "content",
-                "default-provider": "lxqt-support-core22",
-                "target": "$SNAP/lxqt-support",
-            },
         },
     }
 
@@ -246,7 +239,6 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
         "layout": {
             "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -280,12 +272,6 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
                 "default-provider": "mesa-2404",
                 "interface": "content",
                 "target": "$SNAP/gpu-2404",
-            },
-            "lxqt-support-core24": {
-                "content": "lxqt-support-core24",
-                "interface": "content",
-                "default-provider": "lxqt-support-core24",
-                "target": "$SNAP/lxqt-support",
             },
         },
     }
@@ -331,7 +317,6 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
             "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
             "/usr/share/libdrm": {"bind": "$SNAP/kf6-core22/usr/share/libdrm"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -361,12 +346,6 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
                 "default-provider": "kf6-core22",
                 "target": "$SNAP/kf6",
             },
-            "lxqt-support-core22": {
-                "content": "lxqt-support-core22",
-                "interface": "content",
-                "default-provider": "lxqt-support-core22",
-                "target": "$SNAP/lxqt-support",
-            },
         },
     }
 
@@ -391,7 +370,6 @@ def test_get_root_snippet_with_external_sdk_core24(
         "layout": {
             "/usr/share/X11": {"bind": "$SNAP/kf6/usr/share/X11"},
             "/usr/share/qt6": {"symlink": "$SNAP/kf6/usr/share/qt6"},
-            "/usr/share/Kvantum": {"symlink": "$SNAP/lxqt-support/usr/share/Kvantum"},
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
@@ -425,12 +403,6 @@ def test_get_root_snippet_with_external_sdk_core24(
                 "default-provider": "mesa-2404",
                 "interface": "content",
                 "target": "$SNAP/gpu-2404",
-            },
-            "lxqt-support-core24": {
-                "content": "lxqt-support-core24",
-                "interface": "content",
-                "default-provider": "lxqt-support-core24",
-                "target": "$SNAP/lxqt-support",
             },
         },
     }
@@ -898,14 +870,9 @@ def test_get_root_snippet_core26(kde_neon_6_extension_core26):
         "default-provider": "kf6-core26",
         "target": "$SNAP/kf6",
     }
-    assert snippet["plugs"]["lxqt-support-core26"] == {
-        "content": "lxqt-support-core26",
-        "interface": "content",
-        "target": "$SNAP/lxqt-support",
-        "default-provider": "lxqt-support-core26",
-    }
     assert snippet["layout"]["/usr/share/X11"] == {"bind": "$SNAP/kf6/usr/share/X11"}
     assert snippet["layout"]["/usr/share/qt6"] == {"symlink": "$SNAP/kf6/usr/share/qt6"}
+    assert snippet["layout"]["/usr/share/Kvantum"] == {"symlink": "$SNAP/kf6/usr/share/Kvantum"}
     assert snippet["plugs"]["gpu-2604"] == {
         "default-provider": "mesa-2604",
         "interface": "content",
