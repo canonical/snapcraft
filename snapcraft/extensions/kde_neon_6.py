@@ -283,6 +283,9 @@ class KDENeon6(GPUExtension):
             snippet["layout"]["/usr/share/Kvantum"] = {
                 "symlink": "$SNAP/kf6/usr/share/Kvantum"
             }
+            snippet["layout"]["/usr/libexec/glycin-loaders"] = {
+                "bind": "$SNAP/kf6/usr/libexec/glycin-loaders"
+            }
 
         return snippet
 

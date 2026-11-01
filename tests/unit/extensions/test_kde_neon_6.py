@@ -875,6 +875,9 @@ def test_get_root_snippet_core26(kde_neon_6_extension_core26):
     assert snippet["layout"]["/usr/share/Kvantum"] == {
         "symlink": "$SNAP/kf6/usr/share/Kvantum"
     }
+    assert snippet["layout"]["/usr/libexec/glycin-loaders"] == {
+        "bind": "$SNAP/kf6/usr/libexec/glycin-loaders"
+    }
     assert snippet["plugs"]["gpu-2604"] == {
         "default-provider": "mesa-2604",
         "interface": "content",
