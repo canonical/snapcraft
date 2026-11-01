@@ -872,7 +872,9 @@ def test_get_root_snippet_core26(kde_neon_6_extension_core26):
     }
     assert snippet["layout"]["/usr/share/X11"] == {"bind": "$SNAP/kf6/usr/share/X11"}
     assert snippet["layout"]["/usr/share/qt6"] == {"symlink": "$SNAP/kf6/usr/share/qt6"}
-    assert snippet["layout"]["/usr/share/Kvantum"] == {"symlink": "$SNAP/kf6/usr/share/Kvantum"}
+    assert snippet["layout"]["/usr/share/Kvantum"] == {
+        "symlink": "$SNAP/kf6/usr/share/Kvantum"
+    }
     assert snippet["plugs"]["gpu-2604"] == {
         "default-provider": "mesa-2604",
         "interface": "content",
