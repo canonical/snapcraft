@@ -82,7 +82,8 @@ jobs:
           name: snap
           path: tests
 
-      - name: Run Ubuntu Pro spread tests
+      - name: Check Ubuntu Pro token
+        id: pro-token
         if: matrix.spread-jobs != 'openstack:ubuntu-22.04-64'
         env:
           UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
@@ -93,16 +94,36 @@ jobs:
               exit 1
             else
               echo "Warning: UBUNTU_PRO_TOKEN is not set. Skipping Pro tests"
-              exit 0
+              echo "skip=true" >> "$GITHUB_OUTPUT"
             fi
           fi
-          spread ${{ matrix.spread-jobs }}:tests/spread/pro/
+
+      - name: Run Ubuntu Pro spread tests
+        if: matrix.spread-jobs != 'openstack:ubuntu-22.04-64' && steps.pro-token.outputs.skip != 'true'
+        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        env:
+          UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
+        with:
+          args: ${{ matrix.spread-jobs }}:tests/spread/pro/
+          junit-name: pro-${{ matrix.spread-jobs }}
 
       - name: Run spread
+        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
         env:
           UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
           RUN_UA_TESTS: ${{ ! github.event.pull_request.head.repo.fork }}
-        run: spread ${{ matrix.spread-jobs }}
+        with:
+          args: ${{ matrix.spread-jobs }}
+          junit-name: ${{ matrix.spread-jobs }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.spread-jobs }}
+          path: results/junit*.xml
+          overwrite: true
+          if-no-files-found: ignore
 
       - name: Discard spread workers
         if: always()
@@ -152,13 +173,24 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Run spread
+        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
         env:
           SNAPCRAFT_ASSERTION_KEY: "${{ secrets.SNAPCRAFT_ASSERTION_KEY }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_CANDID }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING_LEGACY }}"
-        run: |
-          spread openstack:ubuntu-22.04-64:tests/spread/store/
+        with:
+          args: openstack:ubuntu-22.04-64:tests/spread/store/
+          junit-name: store
+
+      - name: Upload test results
+        if: always() && steps.decisions.outputs.RUN == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-store
+          path: results/junit*.xml
+          overwrite: true
+          if-no-files-found: ignore
 
       - name: Discard spread workers
         if: always()
