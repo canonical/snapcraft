@@ -90,19 +90,14 @@ class Patcher:
                 formatted_rpath = ":".join(proposed_rpath)
                 patchelf_args.extend(["--force-rpath", "--set-rpath", formatted_rpath])
 
+        if elf_file.dependencies and not use_system_libs:
+            patchelf_args.append("--no-default-lib")
+
         # no patchelf_args means there is nothing to do.
         if not patchelf_args:
             return
 
         self._run_patchelf(patchelf_args=patchelf_args, elf_file_path=elf_file.path)
-
-        # `patchelf --no-default-libs` must be run after setting the rpath, see:
-        # https://github.com/NixOS/patchelf/issues/223
-        if elf_file.dependencies and not use_system_libs:
-            self._run_patchelf(
-                patchelf_args=["--no-default-lib"],
-                elf_file_path=elf_file.path,
-            )
 
     def _run_patchelf(self, *, patchelf_args: list[str], elf_file_path: Path) -> None:
         # Run patchelf on a copy of the primed file and replace it

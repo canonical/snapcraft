@@ -75,9 +75,9 @@ parts:
 
   patchelf:
     plugin: autotools
-    source: https://github.com/canonical/patchelf
+    source: https://github.com/mr-cal-bot/patchelf
     source-type: git
-    source-branch: "0.9+snapcraft"
+    source-branch: "0.19+snapcraft"
     autotools-configure-parameters:
       - --prefix=/
     build-attributes:
@@ -86,13 +86,6 @@ parts:
       - g++
       - git
       - make
-    override-pull: |
-      ${SNAP}/libexec/snapcraft/craftctl default
-
-      if [ "${CRAFT_TARGET_ARCH}" = "riscv64" ]; then
-        git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0001-Always-use-the-ET_DYN-codepath-avoiding-shifting-loa.patch"
-        git am "${CRAFT_PROJECT_DIR}/snap/local/patches/patchelf/0002-Fix-rewriteSectionsLibrary-to-not-assume-the-base-ad.patch"
-      fi
     override-build: |
       ${SNAP}/libexec/snapcraft/craftctl default
       make check
