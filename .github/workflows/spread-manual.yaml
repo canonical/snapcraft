@@ -78,15 +78,6 @@ jobs:
             openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-deb
           junit-name: kernel-plugins
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results-kernel-plugins
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
-
   initrd-plugins:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
@@ -111,15 +102,6 @@ jobs:
         with:
           args: openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
           junit-name: initrd-plugins
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results-initrd-plugins
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
 
       - name: Discard spread workers
         if: always()
@@ -157,15 +139,6 @@ jobs:
             openstack:ubuntu-22.04-64:tests/spread/core22/remote-build
             openstack:ubuntu-24.04-64:tests/spread/core24/remote-build
           junit-name: remote-build
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results-remote-build
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
 
       - name: Discard spread workers
         if: always()
@@ -205,15 +178,6 @@ jobs:
             openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
           junit-name: colcon-plugins
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results-colcon-plugins
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
-
       - name: Discard spread workers
         if: always()
         run: |
@@ -247,15 +211,6 @@ jobs:
           args: openstack.*:tests/spread/extensions/
           junit-name: extensions
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results-extensions
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
-
       - name: Discard spread workers
         if: always()
         run: |
@@ -288,15 +243,6 @@ jobs:
         with:
           args: openstack:ubuntu-22.04-64:tests/spread/snaps/snapd
           junit-name: snapd-bases
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results-snapd-bases
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
 
       - name: Discard spread workers
         if: always()
@@ -333,14 +279,6 @@ jobs:
             openstack:ubuntu-22.04-64:tests/spread/core22/squid-proxy
           junit-name: squid-proxy
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results-squid-proxy
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
       - name: Discard spread workers
         if: always()
         run: |

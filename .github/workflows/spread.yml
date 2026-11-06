@@ -116,22 +116,6 @@ jobs:
           args: ${{ matrix.spread-jobs }}
           junit-name: ${{ matrix.spread-jobs }}
 
-      - name: Compute test results name
-        id: results-name
-        if: always()
-        env:
-          JOB: ${{ matrix.spread-jobs }}
-        run: echo "name=test-results-${JOB//:/-}" >> "$GITHUB_OUTPUT"
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: ${{ steps.results-name.outputs.name }}
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
-
       - name: Discard spread workers
         if: always()
         run: |
@@ -189,15 +173,6 @@ jobs:
         with:
           args: openstack:ubuntu-22.04-64:tests/spread/store/
           junit-name: store
-
-      - name: Upload test results
-        if: always() && steps.decisions.outputs.RUN == 'true'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: test-results-store
-          path: results/junit*.xml
-          overwrite: true
-          if-no-files-found: ignore
 
       - name: Discard spread workers
         if: always()
