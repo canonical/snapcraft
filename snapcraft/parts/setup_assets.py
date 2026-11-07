@@ -174,10 +174,13 @@ def get_mediated_gui_assets(
 
     for app_name, app in project.apps.items():
         if app.desktop:
-            desktop_filename = app.desktop
-            desktop_source = prime_dir / desktop_filename
+            desktop_source = _resolve_mediated_desktop_source(
+                app.desktop, assets_dir=assets_dir, prime_dir=prime_dir
+            )
             if not desktop_source.is_file():
-                desktop_source = assets_dir / desktop_filename
+                raise errors.DesktopFileError(
+                    app.desktop, f"file does not exist (defined in app {app_name!r})"
+                )
 
             desktop_file = DesktopFile(
                 snap_name=project.name,
@@ -195,6 +198,28 @@ def get_mediated_gui_assets(
             )
 
     return assets
+
+
+def _resolve_mediated_desktop_source(
+    desktop: str, *, assets_dir: Path, prime_dir: Path
+) -> Path:
+    """Find the source of an app's desktop file when GUI assets are mediated.
+
+    Before mediation, ``snap/gui/`` was copied to ``meta/gui/`` and ``snap/gui/``
+    in the prime directory before desktop files were read, so ``desktop`` could
+    point at either location. Map those paths back to the project's ``gui``
+    assets directory, which takes precedence as the copy used to overwrite them.
+    """
+    for prefix in ("meta/gui/", "snap/gui/"):
+        if desktop.startswith(prefix):
+            gui_source = assets_dir / "gui" / desktop.removeprefix(prefix)
+            if gui_source.is_file():
+                return gui_source
+
+    desktop_source = prime_dir / desktop
+    if desktop_source.is_file():
+        return desktop_source
+    return assets_dir / desktop
 
 
 def validate_command_chains(project: models.Project, *, prime_dir: Path) -> None:

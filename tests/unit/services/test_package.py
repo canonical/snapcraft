@@ -31,7 +31,11 @@ from craft_cli.pytest_plugin import RecordingEmitter
 from pytest_mock import MockerFixture
 
 from snapcraft import __version__, linters, meta, models, pack
-from snapcraft.errors import SnapcraftError, SnapcraftPrecreationEscapesPrimeError
+from snapcraft.errors import (
+    DesktopFileError,
+    SnapcraftError,
+    SnapcraftPrecreationEscapesPrimeError,
+)
 from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
 from snapcraft.parts.setup_assets import get_mediated_icon_asset
@@ -726,6 +730,96 @@ def test_materialize_extra_assets_generated_desktop_and_icon(
 
         """
     )
+
+
+@pytest.mark.parametrize("desktop", ["meta/gui/app1.desktop", "snap/gui/app1.desktop"])
+def test_materialize_extra_assets_desktop_from_project_gui(
+    desktop, default_project, fake_services, setup_project
+):
+    """Desktop paths under meta/gui and snap/gui resolve to the project's gui dir."""
+    project = {
+        **default_project.marshal(),
+        "apps": {"app1": {"command": "bin/app1", "desktop": desktop}},
+    }
+    setup_project(fake_services, project, write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    gui_dir = package_service._get_assets_dir() / "gui"
+    gui_dir.mkdir(parents=True)
+    (gui_dir / "icon.png").write_text("icon-data")
+    (gui_dir / "app1.desktop").write_text(
+        dedent(
+            """\
+            [Desktop Entry]
+            Name=app1
+            Exec=app1
+            Type=Application
+            Icon=${SNAP}/meta/gui/icon.png
+            """
+        )
+    )
+
+    package_service._mediated_icon_asset = get_mediated_icon_asset(
+        package_service._project,
+        assets_dir=package_service._get_assets_dir(),
+        prime_dir=prime_dir,
+    )
+    package_service._materialize_extra_assets(None)
+
+    assert (prime_dir / "meta/gui/app1.desktop").read_text() == dedent(
+        """\
+        [Desktop Entry]
+        Name=app1
+        Exec=default.app1
+        Type=Application
+        Icon=${SNAP}/meta/gui/icon.png
+
+        """
+    )
+
+
+def test_materialize_extra_assets_project_gui_desktop_overrides_prime(
+    default_project, fake_services, setup_project
+):
+    """The project's snap/gui file wins over one a part put in prime/snap/gui."""
+    project = {
+        **default_project.marshal(),
+        "apps": {"app1": {"command": "bin/app1", "desktop": "snap/gui/app1.desktop"}},
+    }
+    setup_project(fake_services, project, write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    gui_dir = package_service._get_assets_dir() / "gui"
+    gui_dir.mkdir(parents=True)
+    (gui_dir / "app1.desktop").write_text(
+        "[Desktop Entry]\nName=from-project\nExec=app1\nType=Application\n"
+    )
+    (prime_dir / "snap/gui").mkdir(parents=True)
+    (prime_dir / "snap/gui/app1.desktop").write_text(
+        "[Desktop Entry]\nName=from-part\nExec=app1\nType=Application\n"
+    )
+
+    package_service._materialize_extra_assets(None)
+
+    assert "Name=from-project" in (prime_dir / "meta/gui/app1.desktop").read_text()
+
+
+def test_materialize_extra_assets_desktop_missing(
+    default_project, fake_services, setup_project
+):
+    """The error names the desktop path as written in the project."""
+    project = {
+        **default_project.marshal(),
+        "apps": {"app1": {"command": "bin/app1", "desktop": "meta/gui/app1.desktop"}},
+    }
+    setup_project(fake_services, project, write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+
+    with pytest.raises(
+        DesktopFileError,
+        match=r"desktop file 'meta/gui/app1.desktop': file does not exist",
+    ):
+        package_service._materialize_extra_assets(None)
 
 
 def test_needs_packing_generated_desktop(
