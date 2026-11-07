@@ -150,6 +150,14 @@ Snapcraft 9.2.1
 - `snapcraft#6336 <https://github.com/canonical/snapcraft/issues/6336>`__ Snapcraft 9:
   snapcraftctl errors in core22 snaps
 
+.. _release-notes-fixes-9.2.2:
+
+Snapcraft 9.2.2
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6519 <https://github.com/canonical/snapcraft/issues/6519>`__ core24:
+  ``desktop: meta/gui/<app>.desktop`` no longer resolves ``snap/gui/`` files
+
 
 Contributors
 ------------
