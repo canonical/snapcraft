@@ -1205,7 +1205,7 @@ class ContentPlug(models.CraftBaseModel):
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
-    build_on: UniqueList[str] | str | None = pydantic.Field(  # ty: ignore[invalid-attribute-override]
+    build_on: str | UniqueList[str] | None = pydantic.Field(  # ty: ignore[invalid-attribute-override]
         description="The architectures to build the snap on.",
         examples=["arm64", "[amd64, riscv64]"],
         min_length=1,
@@ -1470,7 +1470,7 @@ class Project(models.Project):
     See :ref:`how-to-configure-package-information` for details.
     """
 
-    donation: UniqueList[str] | str | None = pydantic.Field(
+    donation: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The snap's donation links.",
         examples=["[donate@example.com, https://example.com/donate]"],
@@ -1483,7 +1483,7 @@ class Project(models.Project):
     """
 
     # snapcraft's `source_code` is more general than craft-application
-    source_code: UniqueList[str] | str | None = pydantic.Field(  # ty: ignore[invalid-attribute-override]
+    source_code: str | UniqueList[str] | None = pydantic.Field(  # ty: ignore[invalid-attribute-override]
         default=None,
         description="The links to the source code of the snap or the original project.",
         examples=["[https://example.com/source-code]"],
@@ -1495,7 +1495,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    contact: UniqueList[str] | str | None = pydantic.Field(
+    contact: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The snap author's contact links and email addresses.",
         examples=["[contact@example.com, https://example.com/contact]"],
@@ -1507,7 +1507,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    issues: UniqueList[str] | str | None = pydantic.Field(
+    issues: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The links and email addresses for submitting issues, bugs, and feature requests.",
         examples=["[issues@email.com, https://example.com/issues]"],
@@ -1520,7 +1520,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    website: UniqueList[str] | str | None = pydantic.Field(
+    website: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The links to the original software's web pages.",
         examples=["[https://example.com]"],
