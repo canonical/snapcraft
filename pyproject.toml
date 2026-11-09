@@ -37,8 +37,8 @@ dependencies = [
   "pyelftools",
   # Pygit2 and libgit2 need to match versions.
   # Further info: https://www.pygit2.org/install.html#version-numbers
-  # 1.18 is the last minor version that supports Python 3.10
-  "pygit2~=1.18.2",
+  "pygit2>=1.18.2,<1.19.0; python_version<'3.14'",  # 1.18 is the last minor version that supports Python 3.10
+  "pygit2>=1.19.0,<1.21.0; python_version>='3.14'",  # Ubuntu 26.04 and core26
   "pyxdg",
   "pyyaml",
   "requests>=2.32.4",
