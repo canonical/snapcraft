@@ -27,6 +27,7 @@ class PythonPlugin(python_plugin.PythonPlugin):
 
     @override
     def _get_pip(self) -> str:
+        """Ignore the SDK's PYTHONPATH so it cannot shadow the venv's pip."""
         return (
             f'"{self._get_venv_directory()}/bin/'
             '${PARTS_PYTHON_INTERPRETER}" -I -m pip'
