@@ -26,6 +26,13 @@ class PythonPlugin(python_plugin.PythonPlugin):
     """A Python plugin for Snapcraft."""
 
     @override
+    def _get_pip(self) -> str:
+        return (
+            f'"{self._get_venv_directory()}/bin/'
+            '${PARTS_PYTHON_INTERPRETER}" -I -m pip'
+        )
+
+    @override
     def _get_system_python_interpreter(self) -> str | None:
         return python_common.get_system_interpreter(self._part_info)
 

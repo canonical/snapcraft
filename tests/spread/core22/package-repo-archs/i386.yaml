@@ -9,7 +9,7 @@ architectures:
   - build-on: amd64
 
 package-repositories:
-  # The repo that contains libpython3.11-minimal:i386
+  # Exercise a repository with an explicitly configured i386 architecture.
   - type: apt
     formats: [deb]
     architectures: [i386]
@@ -27,7 +27,7 @@ parts:
     build-packages:
       - file
     stage-packages:
-      - libpython3.11-minimal:i386
+      - libpython3.10-minimal:i386
     override-build: |
       file ${CRAFT_PART_INSTALL}/usr/lib/i386-linux-gnu/libssl.so.3 | grep "ELF 32-bit"
       craftctl default

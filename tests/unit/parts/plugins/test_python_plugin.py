@@ -64,8 +64,8 @@ def test_get_build_commands(plugin, new_dir):
     assert plugin.get_build_commands() == [
         f'"${{PARTS_PYTHON_INTERPRETER}}" -m venv ${{PARTS_PYTHON_VENV_ARGS}} "{new_dir}/parts/my-part/install"',
         f'PARTS_PYTHON_VENV_INTERP_PATH="{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}"',
-        f"{new_dir}/parts/my-part/install/bin/pip install  -U pip setuptools wheel",
-        f"[ -f setup.py ] || [ -f pyproject.toml ] && {new_dir}/parts/my-part/install/bin/pip install  -U .",
+        f'"{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}" -I -m pip install  -U pip setuptools wheel',
+        f'[ -f setup.py ] || [ -f pyproject.toml ] && "{new_dir}/parts/my-part/install/bin/${{PARTS_PYTHON_INTERPRETER}}" -I -m pip install  -U .',
         f'find "{new_dir}/parts/my-part/install" -type f -executable -print0 | xargs --no-run-if-empty -0 \\\n'
         '    sed -i "1 s|^#\\!${PARTS_PYTHON_VENV_INTERP_PATH}.*$|#!/usr/bin/env ${PARTS_PYTHON_INTERPRETER}|"\n',
         dedent(
