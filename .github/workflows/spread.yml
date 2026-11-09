@@ -100,7 +100,7 @@ jobs:
 
       - name: Run Ubuntu Pro spread tests
         if: matrix.spread-jobs != 'openstack:ubuntu-22.04-64' && steps.pro-token.outputs.skip != 'true'
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         env:
           UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
         with:
@@ -108,7 +108,7 @@ jobs:
           junit-name: pro-${{ matrix.spread-jobs }}
 
       - name: Run spread
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         env:
           UBUNTU_PRO_TOKEN: ${{ secrets.UBUNTU_PRO_TOKEN }}
           RUN_UA_TESTS: ${{ ! github.event.pull_request.head.repo.fork }}
@@ -164,7 +164,7 @@ jobs:
 
       - if: steps.decisions.outputs.RUN == 'true'
         name: Run spread
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         env:
           SNAPCRAFT_ASSERTION_KEY: "${{ secrets.SNAPCRAFT_ASSERTION_KEY }}"
           SNAPCRAFT_STORE_CREDENTIALS_STAGING: "${{ secrets.SNAPCRAFT_STORE_CREDENTIALS_STAGING }}"

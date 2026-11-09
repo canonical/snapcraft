@@ -69,7 +69,7 @@ jobs:
           name: snap
           path: tests
       - name: Kernel plugin test
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         with:
           args: >-
             openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel
@@ -98,7 +98,7 @@ jobs:
           name: snap
           path: tests
       - name: Initrd plugin test
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         with:
           args: openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
           junit-name: initrd-plugins
@@ -131,7 +131,7 @@ jobs:
           name: snap
           path: tests
       - name: remote-build test
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         env:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
         with:
@@ -168,7 +168,7 @@ jobs:
           name: snap
           path: tests
       - name: colcon plugin test
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         with:
           args: >-
             openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello
@@ -206,7 +206,7 @@ jobs:
           name: snap
           path: tests
       - name: extensions test
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         with:
           args: openstack.*:tests/spread/extensions/
           junit-name: extensions
@@ -239,7 +239,7 @@ jobs:
           name: snap
           path: tests
       - name: Spread test
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         with:
           args: openstack:ubuntu-22.04-64:tests/spread/snaps/snapd
           junit-name: snapd-bases
@@ -272,7 +272,7 @@ jobs:
           name: snap
           path: tests
       - name: Spread test
-        uses: canonical/starflow/run-spread@work/junit-for-spread # zizmor: ignore[unpinned-uses] testing a starflow branch
+        uses: canonical/starflow/run-spread@main
         with:
           args: >-
             openstack:ubuntu-24.04-64:tests/spread/core24/squid-proxy
