@@ -380,7 +380,7 @@ class GNOME(GPUExtension):
 
         if base >= 26:
             cleanup_srcs = [
-                self.gnome_snaps.sdk,
+                self.gnome_snaps.content,
                 "gtk-common-themes",
             ]
             escaped_srcs = [f'"{w}"' for w in cleanup_srcs]
