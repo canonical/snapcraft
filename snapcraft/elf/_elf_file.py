@@ -257,11 +257,11 @@ class ElfFile:
                 for tag in section.iter_tags():
                     if tag.entry.d_tag == "DT_NEEDED":
                         # pyelftools sets .needed dynamically for DT_NEEDED tags.
-                        needed = tag.needed  # ty: ignore[unresolved-attribute]
+                        needed = tag.needed  # ty: ignore[missing-attribute]
                         self.needed[needed] = _NeededLibrary(name=needed)
                     elif tag.entry.d_tag == "DT_SONAME":
                         # pyelftools sets .soname dynamically for DT_SONAME tags.
-                        self.soname = tag.soname  # ty: ignore[unresolved-attribute]
+                        self.soname = tag.soname  # ty: ignore[missing-attribute]
 
             for segment in elf_file.iter_segments():
                 if segment["p_type"] == "PT_GNU_STACK":
