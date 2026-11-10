@@ -36,10 +36,8 @@ _ElfArchitectureTuple = tuple[str, str, str]
 _SonameCacheDict = dict[tuple[_ElfArchitectureTuple, str], Path]
 
 _DEBUG_INFO = ".debug_info"
-_DYNAMIC = ".dynamic"
 _GNU_VERSION_D = ".gnu.version_d"
 _GNU_VERSION_R = ".gnu.version_r"
-_INTERP = ".interp"
 
 
 class _NeededLibrary:
