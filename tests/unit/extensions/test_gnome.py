@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import shutil
+import subprocess
+
 import pytest
 
 from snapcraft.extensions import gnome
@@ -531,12 +535,7 @@ def test_get_parts_snippet_core26(gnome_extension_core26):
             "after": [],
             "plugin": "nil",
             "build-snaps": ["gnome-core26", "gtk-common-themes"],
-            "override-prime": (
-                "set -eux\n"
-                'for snap in "gnome-core26" "gtk-common-themes"; do\n'
-                '    cd "/snap/$snap/current" && find . -type f,l \\( -name "*.so.*" -o -name "*.so" \\) -exec rm -f "$CRAFT_PRIME/{}" \\;\n'
-                "done\n"
-            ),
+            "override-prime": CLEANUP_SCRIPTLET,
         },
     }
 
@@ -562,3 +561,183 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
             }
         }
     )
+
+
+# The override-prime scriptlet injected by the extension for base >= 26,
+# mirrored here so the executable behavior tests run exactly what ships.
+CLEANUP_SCRIPTLET = (
+    "set -eux\n"
+    'PRIME_CANON="$(realpath "$CRAFT_PRIME")"\n'
+    'for snap in "gnome-core26" "gtk-common-themes"; do\n'
+    '    (cd "/snap/$snap/current" && find . -type f,l \\( -name "*.so.*" -o -name "*.so" \\) -print0) | while IFS= read -r -d \'\' rel; do\n'
+    '        dir_canon="$(realpath "$CRAFT_PRIME/${rel%/*}")"\n'
+    '        case "$dir_canon" in\n'
+    '            "$PRIME_CANON"/*) ;;\n'
+    '            *) continue ;;\n'
+    '        esac\n'
+    '        f="$dir_canon/${rel##*/}"\n'
+    '        if [ -d "$f" ] && [ ! -L "$f" ]; then continue; fi\n'
+    '        # Follow soname symlink chains (libfoo.so ->\n'
+    '        # libfoo.so.X -> libfoo.so.X.Y.Z) and remove the real\n'
+    '        # versioned file too: once the soname symlinks are gone\n'
+    '        # it is unreachable, and providers built from newer\n'
+    '        # sources use different file names for the same SONAME.\n'
+    '        # The walk stays inside the prime (canonical directory\n'
+    '        # containment checked above and same-directory relative\n'
+    '        # targets only) and inside the SONAME family (the target\n'
+    '        # basename must extend the symlink basename, so\n'
+    '        # libfoo.so.1 does not remove a distinct libfoo.so.10).\n'
+    '        cur="$f"\n'
+    '        hops=0\n'
+    '        while [ -L "$cur" ] && [ "$hops" -lt 8 ]; do\n'
+    '            t="$(readlink "$cur")"\n'
+    '            case "$t" in\n'
+    '                */*|"" ) break ;;\n'
+    '            esac\n'
+    '            b="${cur##*/}"\n'
+    '            case "$t" in\n'
+    '                "$b".*) ;;\n'
+    '                *) break ;;\n'
+    '            esac\n'
+    '            rm -f "$cur"\n'
+    '            cur="${cur%/*}/$t"\n'
+    '            hops=$((hops + 1))\n'
+    '        done\n'
+    '        if [ ! -d "$cur" ] || [ -L "$cur" ]; then rm -f "$cur"; fi\n'
+    '    done\n'
+    "done\n"
+)
+
+
+@pytest.fixture
+def cleanup_scriptlet_harness(tmp_path):
+    """Run the injected cleanup scriptlet against a fake provider/prime."""
+
+    def run(provider_files, prime_files, providers=("provider",)):
+        """provider_files/prime_files: str = regular file,
+        tuple(path, target) = symlink at path pointing to target."""
+
+        def materialize(base, entries):
+            for e in entries:
+                path, target = (e, None) if isinstance(e, str) else e
+                p = base / path
+                p.parent.mkdir(parents=True, exist_ok=True)
+                if target is not None:
+                    os.symlink(target, p)
+                else:
+                    p.touch()
+
+        # Both trees are laid out under a "current" directory like
+        # /snap/<name>/current, as the scriptlet expects.
+        materialize(tmp_path / "provider", provider_files)
+        materialize(tmp_path / "prime", prime_files)
+        for name in providers:
+            for e in provider_files:
+                path, target = (e, None) if isinstance(e, str) else e
+                dst = tmp_path / name / "current" / path
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                if not dst.exists():
+                    if target is not None:
+                        os.symlink(target, dst)
+                    else:
+                        dst.touch()
+        script = CLEANUP_SCRIPTLET.replace(
+            '"gnome-core26" "gtk-common-themes"',
+            '"provider"',
+        ).replace('cd "/snap/$snap/current"', 'cd "$SNAP_ROOT/$snap/current"')
+        env = dict(os.environ, CRAFT_PRIME=str(tmp_path / "prime"), SNAP_ROOT=str(tmp_path))
+        subprocess.run(
+            ["bash", "-c", script],
+            check=True,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        return tmp_path / "prime"
+
+    return run
+
+
+def _tree(root):
+    return sorted(
+        os.path.join(os.path.relpath(dirpath, root), name)
+        for dirpath, _, files in os.walk(root)
+        for name in files
+        if not os.path.islink(os.path.join(dirpath, name)) or os.path.exists(os.path.join(dirpath, name))
+    )
+
+
+def test_cleanup_scriptlet_removes_provider_duplicates_and_dead_reals(
+    cleanup_scriptlet_harness, tmp_path
+):
+    prime = cleanup_scriptlet_harness(
+        provider_files=[
+            "usr/lib/libcairo.so.2.11806.6",
+            ("usr/lib/libcairo.so.2", "libcairo.so.2.11806.6"),
+            ("usr/lib/libcairo.so", "libcairo.so.2"),
+            "usr/lib/libbar.so.1.1",
+            ("usr/lib/libbar.so.1", "libbar.so.1.1"),
+        ],
+        prime_files=[
+            "usr/lib/libcairo.so.2.11804.4",
+            ("usr/lib/libcairo.so.2", "libcairo.so.2.11804.4"),
+            ("usr/lib/libcairo.so", "libcairo.so.2"),
+            "usr/lib/libbar.so.1.1",
+            ("usr/lib/libbar.so.1", "libbar.so.1.1"),
+            "usr/lib/libbar.so.10",  # distinct SONAME: must survive
+            "usr/lib/libunrelated.so.0",
+        ],
+    )
+    remaining = _tree(prime)
+    # the whole cairo family is gone (dead real file included)
+    assert not [f for f in remaining if "libcairo" in f]
+    # strict family: libbar.so.1 removed, the distinct libbar.so.10 survives
+    assert "usr/lib/libbar.so.10" in remaining
+    assert "usr/lib/libbar.so.1" not in [f for f in remaining]
+    assert "usr/lib/libunrelated.so.0" in remaining
+
+
+def test_cleanup_scriptlet_does_not_escape_prime(cleanup_scriptlet_harness, tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "libfoo.so.2").touch()
+    prime = cleanup_scriptlet_harness(
+        provider_files=["usr/lib/libfoo.so"],
+        prime_files=[("usr/lib/libfoo.so", "../../../outside/libfoo.so.2")],
+        providers=("provider",),
+    )
+    # the escaping symlink is removed, but the OUTSIDE target survives
+    assert (outside / "libfoo.so.2").exists()
+    assert not (prime / "usr" / "lib" / "libfoo.so").is_symlink()
+
+
+def test_cleanup_scriptlet_skips_directory_collision(cleanup_scriptlet_harness):
+    prime = cleanup_scriptlet_harness(
+        provider_files=["usr/lib/libfoo.so"],
+        prime_files=["usr/lib/libfoo.so/keepme"],
+        providers=("provider",),
+    )
+    # the directory (and its contents) are left alone
+    assert (prime / "usr" / "lib" / "libfoo.so" / "keepme").exists()
+
+
+def test_cleanup_scriptlet_handles_spaces_and_dangling_links(
+    cleanup_scriptlet_harness, tmp_path
+):
+    prime = cleanup_scriptlet_harness(
+        provider_files=[
+            "usr/lib/libfoo space.so.2.6",
+            ("usr/lib/libfoo space.so.2", "libfoo space.so.2.6"),
+        ],
+        prime_files=[
+            "usr/lib/libfoo space.so.2.4",
+            ("usr/lib/libfoo space.so.2", "libfoo space.so.2.4"),
+            ("usr/lib/dangling.so.2", "nonexistent.so.2.0"),
+        ],
+        providers=("provider",),
+    )
+    remaining = _tree(prime)
+    # the dead real file behind the removed soname symlink is removed
+    # (that is the point of the fix), the dangling link is removed, and
+    # nothing else in the prime is touched
+    assert remaining == []
