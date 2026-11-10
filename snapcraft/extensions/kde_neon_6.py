@@ -423,10 +423,11 @@ class KDENeon6(GPUExtension):
             {
                 "kde-neon-6/sdk": {
                     "source": str(source),
-                    "plugin": "make",
-                    "make-parameters": [
-                        f"PLATFORM_PLUG=kf6-{base}",
-                    ],
+                    "plugin": "nil",
+                    "override-build": (
+                        'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" '
+                        "desktop-launch hooks-configure-desktop hooks-configure-fonts run"
+                    ),
                 },
             }
         )

@@ -144,8 +144,8 @@ class GPUExtension(Extension):
             return {
                 "gpu/wrapper": {
                     "source": str(source),
-                    "plugin": "make",
-                    "make-parameters": ["GPU_INTERFACE=graphics-core22"],
+                    "plugin": "nil",
+                    "override-build": _gpu_wrapper_override_build("graphics-core22"),
                 },
                 # TODO: remove this part when https://github.com/canonical/snapcraft/issues/6066 is resolved
                 # and Snapcraft prunes the consumer snap itself
@@ -165,8 +165,8 @@ class GPUExtension(Extension):
             return {
                 "gpu/wrapper": {
                     "source": str(source),
-                    "plugin": "make",
-                    "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+                    "plugin": "nil",
+                    "override-build": _gpu_wrapper_override_build("gpu-2404"),
                 },
                 # TODO: remove this part when https://github.com/canonical/snapcraft/issues/6066 is resolved
                 # and Snapcraft prunes the consumer snap itself
@@ -186,8 +186,8 @@ class GPUExtension(Extension):
             return {
                 "gpu/wrapper": {
                     "source": str(source),
-                    "plugin": "make",
-                    "make-parameters": ["GPU_INTERFACE=gpu-2604"],
+                    "plugin": "nil",
+                    "override-build": _gpu_wrapper_override_build("gpu-2604"),
                 },
                 # TODO: remove this part when https://github.com/canonical/snapcraft/issues/6066 is resolved
                 # and Snapcraft prunes the consumer snap itself
@@ -202,3 +202,12 @@ class GPUExtension(Extension):
                 },
             }
         raise AssertionError(f"Unsupported base: {base}")
+
+
+def _gpu_wrapper_override_build(gpu_interface: str) -> str:
+    """Install the GPU wrapper for ``gpu_interface`` without needing make."""
+    wrapper = f'"$CRAFT_PART_INSTALL/snap/command-chain/{gpu_interface}-wrapper"'
+    return (
+        f"install -D -m755 gpu-wrapper {wrapper}\n"
+        f"sed --in-place 's/%GPU_INTERFACE%/{gpu_interface}/g' {wrapper}"
+    )
