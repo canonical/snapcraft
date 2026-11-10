@@ -34,7 +34,7 @@ format: format-ruff format-codespell format-prettier format-shfmt format-tombi f
 lint: lint-code lint-docs lint-twine lint-uv-lockfile lint-actions  ## Run all linters
 
 .PHONY: lint-code
-lint-code: lint-ruff lint-ty lint-codespell lint-prettier lint-shfmt lint-shellcheck lint-tombi ## Run code-specific linters
+lint-code: lint-ruff lint-ty lint-codespell lint-prettier lint-shfmt lint-shellcheck lint-tombi  ## Run code-specific linters
 
 .PHONY: pack
 pack: pack-pip  ## Build all packages
