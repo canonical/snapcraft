@@ -75,7 +75,7 @@ parts:
 
   patchelf:
     plugin: autotools
-    source: https://github.com/mr-cal-bot/patchelf
+    source: https://github.com/canonical/patchelf
     source-type: git
     source-branch: "0.19+snapcraft"
     autotools-configure-parameters:
