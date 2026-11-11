@@ -53,6 +53,8 @@ jobs:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
     runs-on: [self-hosted, spread-enabled]
+    permissions:
+      checks: write
     steps:
       - name: Cleanup job workspace
         run: |
@@ -78,10 +80,22 @@ jobs:
             openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-deb
           junit-name: kernel-plugins
 
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
+
   initrd-plugins:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
     runs-on: [self-hosted, spread-enabled]
+    permissions:
+      checks: write
     steps:
       - name: Cleanup job workspace
         run: |
@@ -103,6 +117,16 @@ jobs:
           args: openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
           junit-name: initrd-plugins
 
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
+
       - name: Discard spread workers
         if: always()
         run: |
@@ -115,6 +139,8 @@ jobs:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
     runs-on: [self-hosted, spread-enabled]
+    permissions:
+      checks: write
     steps:
       - name: Cleanup job workspace
         run: |
@@ -140,6 +166,16 @@ jobs:
             openstack:ubuntu-24.04-64:tests/spread/core24/remote-build
           junit-name: remote-build
 
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
+
       - name: Discard spread workers
         if: always()
         run: |
@@ -152,6 +188,8 @@ jobs:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
     runs-on: [self-hosted, spread-enabled]
+    permissions:
+      checks: write
     steps:
       - name: Cleanup job workspace
         run: |
@@ -178,6 +216,16 @@ jobs:
             openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
           junit-name: colcon-plugins
 
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
+
       - name: Discard spread workers
         if: always()
         run: |
@@ -190,6 +238,8 @@ jobs:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
     runs-on: [self-hosted, spread-enabled]
+    permissions:
+      checks: write
     steps:
       - name: Cleanup job workspace
         run: |
@@ -211,6 +261,16 @@ jobs:
           args: openstack.*:tests/spread/extensions/
           junit-name: extensions
 
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
+
       - name: Discard spread workers
         if: always()
         run: |
@@ -223,6 +283,8 @@ jobs:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
     runs-on: [self-hosted, spread-enabled]
+    permissions:
+      checks: write
     steps:
       - name: Cleanup job workspace
         run: |
@@ -244,6 +306,16 @@ jobs:
           args: openstack:ubuntu-22.04-64:tests/spread/snaps/snapd
           junit-name: snapd-bases
 
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
+
       - name: Discard spread workers
         if: always()
         run: |
@@ -256,6 +328,8 @@ jobs:
     needs: [predicate, snap-build]
     if: needs.predicate.outputs.should_run == 'true'
     runs-on: [self-hosted, spread-enabled]
+    permissions:
+      checks: write
     steps:
       - name: Clean up job workspace
         run: |
@@ -278,6 +352,16 @@ jobs:
             openstack:ubuntu-24.04-64:tests/spread/core24/squid-proxy
             openstack:ubuntu-22.04-64:tests/spread/core22/squid-proxy
           junit-name: squid-proxy
+
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
 
       - name: Discard spread workers
         if: always()

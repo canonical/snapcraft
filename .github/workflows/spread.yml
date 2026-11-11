@@ -56,6 +56,8 @@ jobs:
     runs-on: [self-hosted, spread-enabled]
     needs: build
     if: ${{ needs.build.outputs.source-files == 'true' }}
+    permissions:
+      checks: write
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
@@ -116,6 +118,16 @@ jobs:
           args: ${{ matrix.spread-jobs }}
           junit-name: ${{ matrix.spread-jobs }}
 
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
+
       - name: Discard spread workers
         if: always()
         run: |
@@ -128,6 +140,8 @@ jobs:
     runs-on: [self-hosted, spread-enabled]
     needs: build
     if: ${{ needs.build.outputs.source-files == 'true' }}
+    permissions:
+      checks: write
     strategy:
       # FIXME: enable fail-fast mode once spread can cancel an executing job.
       # Disable fail-fast mode as it doesn't function with spread. It seems
@@ -173,6 +187,16 @@ jobs:
         with:
           args: openstack:ubuntu-22.04-64:tests/spread/store/
           junit-name: store
+
+      - name: Publish spread test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          max-annotations: 50
+          name: Spread tests
+          path: results/junit-*.xml
+          reporter: java-junit
+          use-actions-summary: false
 
       - name: Discard spread workers
         if: always()
