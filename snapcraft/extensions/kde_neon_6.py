@@ -582,5 +582,3 @@ class KDENeon6(GPUExtension):
 
         parts["kde-neon-6/sdk"] = sdk_part
         return parts
-
-        return parts
