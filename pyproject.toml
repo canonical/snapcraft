@@ -37,13 +37,13 @@ dependencies = [
   "pyelftools",
   # Pygit2 and libgit2 need to match versions.
   # Further info: https://www.pygit2.org/install.html#version-numbers
-  # 1.18 is the last minor version that supports Python 3.10
-  "pygit2~=1.18.2",
+  "pygit2>=1.18.2,<1.19.0; python_version<'3.14'",  # 1.18 is the last minor version that supports Python 3.10
+  "pygit2>=1.19.0,<1.21.0; python_version>='3.14'",  # Ubuntu 26.04 and core26
   "pyxdg",
   "pyyaml",
   "requests>=2.32.4",
   "requests-toolbelt",
-  "setuptools~=84.0.0",
+  "setuptools~=84.2.1",
   "snap-helpers",
   "tabulate",
   "typing-extensions",
@@ -79,7 +79,7 @@ docs = [
   "pydantic-kitbash~=1.0",
   "sphinx-lint~=1.0",
   "sphinx-pydantic==0.1.1",
-  "sphinx-structured-toc==0.2.0",
+  "sphinx-structured-toc==0.2.1",
   "sphinx-substitution-extensions==2025.1.2",
   "sphinxext-rediraffe==0.3.0",
   { include-group = "docs-sphinx-stack" },
@@ -349,6 +349,8 @@ constraint-dependencies = [
   #
   # Applications should avoid CVEs in transitive dependencies by setting a minimum
   # version in this section.
+  "certifi>=2026.10.19",
+  "oauthlib>=4.0.1",
   "cryptography>=50.0.0",
   "httplib2>=0.32.0",
   # pynacl did a breaking change from 1.5.0 to 1.6.0, bumping libsodium higher than
@@ -364,7 +366,7 @@ constraint-dependencies = [
 
 [[tool.uv.index]]
 name = "python-apt-wheels"
-url = "https://people.canonical.com/~lengau/python-apt-ubuntu-wheels/"  # workaround to get python-apt to install across multiple platforms
+url = "https://lengau.github.io/python-apt-wheels/simple/"  # workaround to get python-apt to install across multiple platforms
 explicit = true
 
 [tool.uv.sources]
