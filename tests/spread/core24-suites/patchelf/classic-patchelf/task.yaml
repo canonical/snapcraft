@@ -12,6 +12,9 @@ restore: |
   rm -f ./*.snap
 
 execute: |
+  #shellcheck source=tests/spread/tools/review.sh
+  . "$TOOLS_DIR/review.sh"
+
   # unset SNAPCRAFT_BUILD_ENVIRONMENT=host
   unset SNAPCRAFT_BUILD_ENVIRONMENT
 
@@ -43,3 +46,11 @@ execute: |
 
   # verify `patchelf --no-default-lib` was applied
   readelf --dynamic snap-contents/bin/hello-classic | MATCH "FLAGS_1.*NODEFLIB"
+
+  # Classic confinement requires manual Store approval.
+  (
+    set -o pipefail
+    review --no-fail classic-patchelf_0.1_amd64.snap |
+      yq -p json -oy '[(.[].error | keys | .[]), (.[].warn | keys | .[] | "warn:" + .)] | join(",")' - |
+      MATCH '^lint-snap-v2:confinement_classic$'
+  )
