@@ -199,12 +199,6 @@ class GNOME(GPUExtension):
         }
         snippet["layout"] = {
             **snippet.get("layout", {}),
-            "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
-                "bind": (
-                    "$SNAP/gnome-platform/usr/lib/"
-                    "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0"
-                )
-            },
             "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1": {
                 "bind": (
                     "$SNAP/gnome-platform/usr/lib/"
@@ -222,9 +216,26 @@ class GNOME(GPUExtension):
             },
         }
 
+        if base <= 22:
+            snippet["layout"] = {
+                **snippet.get("layout", {}),
+                "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0": {
+                    "bind": (
+                        "$SNAP/gnome-platform/usr/lib/"
+                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0"
+                    )
+                },
+            }
+
         if base >= 26:
             snippet["layout"] = {
                 **snippet.get("layout", {}),
+                "/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkitgtk-6.0": {
+                    "bind": (
+                        "$SNAP/gnome-platform/usr/lib/"
+                        "$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkitgtk-6.0"
+                    )
+                },
                 "/usr/libexec/glycin-loaders": {
                     "bind": "$SNAP/gnome-platform/usr/libexec/glycin-loaders"
                 },

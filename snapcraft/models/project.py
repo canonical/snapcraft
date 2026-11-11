@@ -68,7 +68,7 @@ from snapcraft.utils import get_effective_base
 TIME_DURATION_REGEX = re.compile(r"^([0-9]+(ns|us|ms|s|m)){1,5}$")
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Callable, Iterable, Mapping
 
     from craft_application.models.project import Part
     from craft_providers import bases
@@ -700,13 +700,18 @@ class App(models.CraftBaseModel):
     refresh_mode: Literal["endure", "restart", "ignore-running"] | None = (
         pydantic.Field(
             default=None,
-            description="Determines how the service should restart when the snap refreshes.",
+            description="For an app, determines whether the snap can refresh when the app is still running. For a service, determines whether the service should restart when the snap refreshes.",
             examples=["restart"],
         )
     )
-    """Determines how the service should restart when the snap refreshes.
+    """For an app, determines whether the snap can refresh when the app is still
+    running. for a service, determines whether the service should restart when
+    the snap refreshes.
 
-    Requires the ``daemon`` key to be specified for the app.
+    If set to ``restart`` or ``endure``, the app must be configured as a service
+    by the :ref:`daemon key <App.daemon>`.
+    If set to ``ignore-running``, the app must not be configured as a service by
+    the ``daemon`` key.
 
     See the :ref:`daemon key <App.daemon>` reference for more information.
 
@@ -718,11 +723,11 @@ class App(models.CraftBaseModel):
         * - Value
           - Description
         * - ``restart``
-          - Restart the service when the snap is refreshed. Default.
+          - Restart the service when the snap is refreshed. Default for services.
         * - ``endure``
           - Do not restart the service when the snap is refreshed.
         * - ``ignore-running``
-          - Do not refresh the snap if the service is running.
+          - Allow the snap to refresh even if this app is running.
 
     """
 
@@ -1205,7 +1210,7 @@ class ContentPlug(models.CraftBaseModel):
 class Platform(models.Platform):
     """Snapcraft project platform definition."""
 
-    build_on: UniqueList[str] | str | None = pydantic.Field(
+    build_on: str | UniqueList[str] | None = pydantic.Field(  # ty: ignore[incompatible-attribute-override]
         description="The architectures to build the snap on.",
         examples=["arm64", "[amd64, riscv64]"],
         min_length=1,
@@ -1216,7 +1221,7 @@ class Platform(models.Platform):
     into a single-entry list at runtime.
     """
 
-    build_for: SingleEntryList | str | None = pydantic.Field(
+    build_for: SingleEntryList | str | None = pydantic.Field(  # ty: ignore[incompatible-attribute-override]
         default=None,
         description="The target architecture for the build.",
         examples=["amd64", "[riscv64]"],
@@ -1470,7 +1475,7 @@ class Project(models.Project):
     See :ref:`how-to-configure-package-information` for details.
     """
 
-    donation: UniqueList[str] | str | None = pydantic.Field(
+    donation: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The snap's donation links.",
         examples=["[donate@example.com, https://example.com/donate]"],
@@ -1483,7 +1488,7 @@ class Project(models.Project):
     """
 
     # snapcraft's `source_code` is more general than craft-application
-    source_code: UniqueList[str] | str | None = pydantic.Field(
+    source_code: str | UniqueList[str] | None = pydantic.Field(  # ty: ignore[incompatible-attribute-override]
         default=None,
         description="The links to the source code of the snap or the original project.",
         examples=["[https://example.com/source-code]"],
@@ -1495,7 +1500,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    contact: UniqueList[str] | str | None = pydantic.Field(
+    contact: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The snap author's contact links and email addresses.",
         examples=["[contact@example.com, https://example.com/contact]"],
@@ -1507,7 +1512,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    issues: UniqueList[str] | str | None = pydantic.Field(
+    issues: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The links and email addresses for submitting issues, bugs, and feature requests.",
         examples=["[issues@email.com, https://example.com/issues]"],
@@ -1520,7 +1525,7 @@ class Project(models.Project):
     See :ref:`configure-package-information-reuse-information` for details.
     """
 
-    website: UniqueList[str] | str | None = pydantic.Field(
+    website: str | UniqueList[str] | None = pydantic.Field(
         default=None,
         description="The links to the original software's web pages.",
         examples=["[https://example.com]"],
@@ -1676,7 +1681,7 @@ class Project(models.Project):
 
     _architectures_in_yaml: bool | None = None
 
-    platforms: dict[str, Platform] | None = pydantic.Field(
+    platforms: dict[str, Platform] | None = pydantic.Field(  # ty: ignore[incompatible-attribute-override]
         default=None,
         description="The architectures that the snap builds and runs on.",
         examples=[
@@ -2141,7 +2146,7 @@ class Project(models.Project):
         ]
 
         # core22 and core24 can use snapcraftctl
-        if {"core22", "core24"} & {info.data.get("base"), info.data.get("build-base")}:
+        if {"core22", "core24"} & {info.data.get("base"), info.data.get("build_base")}:
             return parts
 
         for name, part in parts.items():
@@ -2289,22 +2294,42 @@ class Project(models.Project):
         return _get_partitions_from_components(self.components)
 
 
-def _custom_error(error_msg: str):
+def _custom_error(error_msg: str | Callable[[pydantic.ValidationInfo], str]):
+    """Wrap a validator with a custom error.
+
+    :param error_msg: A string or a callable that takes model info and returns a string.
+    """
+
     def _validator(v: Any, next_: Any, ctx: pydantic.ValidationInfo):
         try:
             return next_(v, ctx)
         except ValueError as exc:
-            raise ValueError(error_msg) from exc
+            msg = error_msg(ctx) if callable(error_msg) else error_msg
+            raise ValueError(msg) from exc
 
     return pydantic.WrapValidator(_validator)
+
+
+def _architectures_not_supported_error(info: pydantic.ValidationInfo) -> str:
+    """Return an error string for using the 'architectures' key on core24 and higher."""
+    base = get_effective_base(
+        base=info.data.get("base"),
+        build_base=info.data.get("build_base"),
+        project_type=info.data.get("type"),
+        name=info.data.get("name"),
+    )
+    return (
+        f"'architectures' key is not supported for base {base!r}. "
+        "Use 'platforms' key instead."
+    )
 
 
 class _BaselessProject(Project):
     """Project types that do not require a base."""
 
-    type: Literal[ProjectType.BASE, ProjectType.KERNEL, ProjectType.SNAPD]
+    type: Literal[ProjectType.BASE, ProjectType.KERNEL, ProjectType.SNAPD]  # ty: ignore[incompatible-mutable-override]
     base: SkipJsonSchema[str | None] = None
-    build_base: Literal["core24", "core26", "devel"] = pydantic.Field(
+    build_base: Literal["core24", "core26", "devel"] = pydantic.Field(  # ty: ignore[incompatible-mutable-override]
         description="The baseline system that the snap is built in.",
     )
 
@@ -2332,7 +2357,7 @@ class _BaselessProject(Project):
 
 
 class _BaselessCore22Project(_BaselessProject):
-    build_base: Literal["core22"] = pydantic.Field(
+    build_base: Literal["core22"] = pydantic.Field(  # ty: ignore[incompatible-attribute-override]
         description="The baseline system that the snap is built in.",
     )
 
@@ -2380,8 +2405,8 @@ BaselessProject = Annotated[
 class StableBaseProject(Project):
     """Project types that require a base."""
 
-    type: Literal[ProjectType.APP, ProjectType.GADGET, None] = None
-    base: StableBase
+    type: Literal[ProjectType.APP, ProjectType.GADGET, None] = None  # ty: ignore[incompatible-mutable-override]
+    base: StableBase  # ty: ignore[incompatible-mutable-override]
     build_base: str | None = pydantic.Field(
         validate_default=True,
         default=None,
@@ -2414,7 +2439,7 @@ class StableBaseProject(Project):
 
 
 class Core22Project(StableBaseProject):
-    base: Literal["core22"]
+    base: Literal["core22"]  # ty: ignore[incompatible-attribute-override]
 
     platforms: SkipJsonSchema[dict[str, Platform] | None] = pydantic.Field(
         default=None,
@@ -2458,8 +2483,8 @@ class Core22Project(StableBaseProject):
 
 
 class BareCore22Project(Core22Project):
-    base: Literal["bare"]
-    build_base: Literal["core22"]
+    base: Literal["bare"]  # ty: ignore[incompatible-attribute-override]
+    build_base: Literal["core22"]  # ty: ignore[incompatible-mutable-override]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
@@ -2476,21 +2501,19 @@ class BareCore22Project(Core22Project):
 
 
 class Core24Project(StableBaseProject):
-    base: Literal["core24"]
+    base: Literal["core24"]  # ty: ignore[incompatible-attribute-override]
 
-    architectures: SkipJsonSchema[
+    architectures: SkipJsonSchema[  # ty: ignore[incompatible-mutable-override]
         Annotated[
             None,
-            _custom_error(
-                "'architectures' key is not supported for base 'core24'. Use 'platforms' key instead."
-            ),
+            _custom_error(_architectures_not_supported_error),
         ]
     ] = pydantic.Field(
         default=None,
         description="The architectures key is only used in core22 snaps and below. For core24 and newer snaps, use the ``platforms`` key.",
     )
 
-    platforms: dict[str, Platform | None] | None = pydantic.Field(
+    platforms: dict[str, Platform | None] | None = pydantic.Field(  # ty: ignore[incompatible-attribute-override]
         default=None,
         description="The platforms where the snap can be built and where the resulting snap can run.",
         examples=[
@@ -2510,8 +2533,8 @@ class Core24Project(StableBaseProject):
 
 
 class BareCore24Project(Core24Project):
-    base: Literal["bare"]
-    build_base: Literal["core24"]
+    base: Literal["bare"]  # ty: ignore[incompatible-attribute-override]
+    build_base: Literal["core24"]  # ty: ignore[incompatible-mutable-override]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
@@ -2528,7 +2551,7 @@ class BareCore24Project(Core24Project):
 
 
 class Core26Project(Core24Project):
-    base: Literal["core26"]
+    base: Literal["core26"]  # ty: ignore[incompatible-attribute-override]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
@@ -2545,18 +2568,18 @@ class Core26Project(Core24Project):
 
 
 class DevelBaseProject(Core26Project):
-    base: Literal["devel"]
-    build_base: Literal["devel"]
+    base: Literal["devel"]  # ty: ignore[incompatible-attribute-override]
+    build_base: Literal["devel"]  # ty: ignore[incompatible-mutable-override]
 
-    grade: Annotated[
+    grade: Annotated[  # ty: ignore[incompatible-mutable-override]
         Literal["devel"],
         _custom_error("grade must be 'devel' when build-base is 'devel'"),
     ]
 
 
 class BareCore26Project(Core26Project):
-    base: Literal["bare"]
-    build_base: Literal["core26"]
+    base: Literal["bare"]  # ty: ignore[incompatible-attribute-override]
+    build_base: Literal["core26"]  # ty: ignore[incompatible-mutable-override]
 
     @override
     @pydantic.field_validator("build_base", mode="after")
@@ -2573,7 +2596,7 @@ class BareCore26Project(Core26Project):
 
 
 class BareDevelProject(DevelBaseProject):
-    base: Literal["bare"]
+    base: Literal["bare"]  # ty: ignore[incompatible-attribute-override]
     build_base: Literal["devel"]
 
     @override

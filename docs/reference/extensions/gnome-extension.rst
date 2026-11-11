@@ -4,11 +4,11 @@ GNOME extension
 ===============
 
 The GNOME extension, referred to internally as ``gnome``, helps build snaps that use GTK
-3, GNOME 42 and higher, and GLib. This extension provides many of the components needed
+3 or 4, GNOME 42 and higher, and GLib. This extension provides many of the components needed
 for general desktop apps, making it useful for a broader set of apps outside of those
 tailored for the GNOME desktop.
 
-This extension is compatible with the core22 and core24 bases.
+This extension is compatible with the core22, core24, and core26 bases.
 
 
 .. _gnome-extension-included-plugs:
@@ -17,9 +17,41 @@ Included plugs
 --------------
 
 When this extension is used, the following plugs are connected for the app. The paths
-slightly differ between core24 and core22 bases.
+and default providers differ between bases.
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. dropdown:: Included snap-wide plugs
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                plugs:
+                  desktop:
+                    mount-host-font-cache: false
+                  gtk-3-themes:
+                    interface: content
+                    target: $SNAP/data-dir/themes
+                    default-provider: gtk-common-themes
+                  icon-themes:
+                    interface: content
+                    target: $SNAP/data-dir/icons
+                    default-provider: gtk-common-themes
+                  sound-themes:
+                    interface: content
+                    target: $SNAP/data-dir/sounds
+                    default-provider: gtk-common-themes
+                  gnome-core26:
+                    interface: content
+                    target: $SNAP/gnome-platform
+                    default-provider: gnome-core26
+                  gpu-2604:
+                    interface: content
+                    target: $SNAP/gpu-2604
+                    default-provider: mesa-2604
 
     .. tab-item:: core24
         :sync: core24
@@ -91,12 +123,14 @@ The extension also connects the following plugs to all apps that use it.
         plugs:
           - desktop
           - desktop-legacy
-          - gsettings
           - opengl
           - wayland
           - x11
-          - mount-observe
-          - calendar-service
+
+On core22 and core24, the extension also adds the ``gsettings`` plug. On core26,
+apps that need this interface must declare it in their ``plugs`` key. The
+:ref:`GSettings guidance <how-to-use-the-gnome-extension-gsettings>` describes
+when the plug is needed and how apps store settings without it.
 
 
 Included packages
@@ -109,13 +143,38 @@ The GNOME extension is derived from two separate snaps -- a `build snap
 
 The build snap compiles libraries from source that are commonly used across GNOME apps.
 Examples include GLib, GTK, and gnome-desktop. These are built to provide newer versions
-of these packages that exist in either the core24 or core22 base snaps (a subset of
+of these packages that exist in the core22, core24, or core26 base snaps (a subset of
 their respective Ubuntu archives).
 
 The platform snap takes the build snap and makes all of those libraries available at
 build time to snaps using this extension. This way, snap authors don't need to include
 the pieces of the build snap that are unnecessary at runtime, like compilers, in the
 final snap.
+
+On core26, the default build snap is gnome-core26-sdk and the platform snap is
+gnome-core26.
+
+
+.. _reference-gnome-extension-library-cleanup:
+
+Library cleanup
+~~~~~~~~~~~~~~~
+
+On core26, the extension adds a ``gnome/cleanup`` part that runs after the
+project's parts. During the prime step, it removes shared libraries from the
+prime directory that are already supplied by the GNOME content snaps or
+gtk-common-themes snap. These libraries are provided at runtime by the content snaps instead of
+being bundled into the project.
+
+If your snap bundles a newer or older version of a library provided by those
+content snaps, use the provided version instead. Shipping an alternative
+requires at least a distinct SONAME and corresponding filenames, with your app
+linked against that library.
+
+This cleanup prevents bundled libraries from overriding the content snap's
+libraries. Without it, a content snap update could introduce a dependency on a
+new symbol that an older bundled library doesn't provide, causing your app to
+fail.
 
 
 Included environment variables
@@ -135,9 +194,30 @@ this extension.
 You can declare additional variables in the ``build-environment`` key. Furthermore,
 these default variables can be overridden by declaring them in the project file.
 
-The paths differ slightly between core24 and core22 bases.
+The paths differ between bases.
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. dropdown:: Included build environment variables
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                build-environment:
+                  - SNAPCRAFT_GNOME_SDK: /snap/gnome-core26-sdk/current/
+                  - PATH: /snap/gnome-core26-sdk/current/usr/bin${PATH:+:$PATH}
+                  - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-core26-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
+                  - LD_LIBRARY_PATH: /snap/gnome-core26-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-core26-sdk/current/usr/lib:/snap/gnome-core26-sdk/current/usr/lib/vala-current:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+                  - PKG_CONFIG_PATH: /snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:/snap/gnome-core26-sdk/current/usr/lib/pkgconfig:/snap/gnome-core26-sdk/current/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
+                  - GETTEXTDATADIRS: /snap/gnome-core26-sdk/current/usr/share/gettext-current${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}
+                  - GDK_PIXBUF_MODULE_FILE: /snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gdk-pixbuf-current/loaders.cache
+                  - ACLOCAL_PATH: /snap/gnome-core26-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}
+                  - PYTHONPATH: /snap/gnome-core26-sdk/current/usr/lib/python3.10:/snap/gnome-core26-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
+                  - GI_TYPELIB_PATH: /snap/gnome-core26-sdk/current/usr/lib/girepository-1.0:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
+                  - CMAKE_PREFIX_PATH: $CRAFT_STAGE/usr:/snap/gnome-core26-sdk/current/usr${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}
 
     .. tab-item:: core24
         :sync: core24
@@ -194,11 +274,30 @@ The following environment variables are exported when the app runs:
 Included layouts
 ----------------
 
-This extension uses :ref:`layouts <reference-layouts>` to access files on the host. The
-platform snap's GNOME JavaScript (GJS), webkit2gtk-4.0, and iso-codes are used so they
-don't need to be packaged as part of the snap and would greatly inflate the size.
+This extension uses :ref:`layouts <reference-layouts>` to make certain files from the
+GNOME platform snap available at well-known locations from the root of the snap filesystem.
 
 .. tab-set::
+
+    .. tab-item:: core26
+        :sync: core26
+
+        .. dropdown:: Included layouts
+
+            .. code-block:: yaml
+                :caption: snapcraft.yaml
+
+                layout:
+                  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkitgtk-6.0:
+                    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkitgtk-6.0
+                  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1:
+                    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1
+                  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy:
+                    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy
+                  /usr/share/xml/iso-codes:
+                    bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
+                  /usr/libexec/glycin-loaders:
+                    bind: $SNAP/gnome-platform/usr/libexec/glycin-loaders
 
     .. tab-item:: core24
         :sync: core24
@@ -209,8 +308,6 @@ don't need to be packaged as part of the snap and would greatly inflate the size
                 :caption: snapcraft.yaml
 
                 layout:
-                  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0:
-                    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.0
                   /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1:
                     bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1
                   /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy:
@@ -233,16 +330,10 @@ don't need to be packaged as part of the snap and would greatly inflate the size
                 :caption: snapcraft.yaml
 
                 layout:
-                  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libgweather-4:
-                    symlink: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/libgweather-4
-                  /usr/lib/evolution-data-server:
-                    symlink: $SNAP/usr/lib/evolution-data-server
-                  /usr/bin/gnome-control-center:
-                    symlink: $SNAP/usr/bin/gnome-control-center
                   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0:
                     bind: $SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.0
-                  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy:
-                    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy
+                  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1:
+                    bind: $SNAP/gnome-platform/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/webkit2gtk-4.1
                   /usr/share/xml/iso-codes:
                     bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
                   /usr/share/libdrm:
@@ -252,7 +343,7 @@ don't need to be packaged as part of the snap and would greatly inflate the size
 Example expanded project file
 -----------------------------
 
-Here's an example of the result of Snapcraft expanding a core24-based project file, as
+Here's an example of the result of Snapcraft expanding a project file, as
 immediately prior to build. It demonstrates the added plugs, packages, variables, and
 layouts that the GNOME extension includes in a project.
 
@@ -264,6 +355,16 @@ reading.
 
 .. tab-set::
 
+    .. tab-item:: core26
+        :sync: core26
+
+        .. dropdown:: Expanded project file for GNOME System Monitor
+
+            .. literalinclude:: code/gnome-extension-gnome-system-monitor-core-26-expanded.diff
+                :caption: snapcraft.yaml
+                :language: diff
+                :lines: 3-
+
     .. tab-item:: core24
         :sync: core24
 
@@ -273,7 +374,6 @@ reading.
                 :caption: snapcraft.yaml
                 :language: diff
                 :lines: 3-
-                :emphasize-lines: 57-66, 78-87, 100-153, 161-166, 174-176, 183-204, 213-215
 
     .. tab-item:: core22
         :sync: core22
@@ -284,4 +384,3 @@ reading.
                 :caption: snapcraft.yaml
                 :language: diff
                 :lines: 3-
-                :emphasize-lines: 60-69, 81-90, 103-155, 159-160, 164-170, 178-179, 186-207
