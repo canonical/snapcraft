@@ -38,5 +38,4 @@ class Dotnet11Extension(DotnetExtensionBase):
     @staticmethod
     @override
     def is_experimental(base: str | None) -> bool:
-        # The .NET 11 extension is considered experimental because it is a preview version of the .NET runtime.
-        return True
+        return False
