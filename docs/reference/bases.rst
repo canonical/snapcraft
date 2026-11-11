@@ -29,10 +29,10 @@ There are six supported base snaps:
      - 9.x
    * - `core24`_
      - built from `Ubuntu 24.04 LTS`_
-     - 8.x
+     - 9.x
    * - `core22`_
      - built from `Ubuntu 22.04 LTS`_
-     - 8.x
+     - 9.x
    * - `core20`_
      - built from `Ubuntu 20.04 LTS`_
      - 8.x

@@ -60,11 +60,13 @@ class Init(services.InitService):
         project_dir: pathlib.Path,
         project_name: str,
         template_dir: pathlib.Path,
+        vcs: str,
     ) -> None:
         super().initialise_project(
             project_dir=project_dir,
             project_name=project_name,
             template_dir=template_dir,
+            vcs=vcs,
         )
         craft_cli.emit.message(
             "See https://documentation.ubuntu.com/snapcraft/stable/reference/"
@@ -83,7 +85,6 @@ class Init(services.InitService):
             try:
                 craft_cli.emit.progress("Checking for an existing 'snapcraft.yaml'.")
                 project = get_snap_project(project_dir)
-            # the `ProjectMissing` error means a new project can be initialised
             except craft_application.errors.ProjectDirectoryTypeError:
                 raise errors.SnapcraftError(
                     "Could not initialise a new snapcraft project because "

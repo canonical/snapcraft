@@ -354,6 +354,60 @@ def test_write_metadata(
 
 
 @pytest.mark.usefixtures("enable_partitions_feature")
+def test_write_metadata_component_provisions_built_hook_over_placeholder_stub(
+    default_project,
+    fake_services,
+    setup_project,
+    tmp_path,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    built_hook = component_prime_dir / "snap" / "hooks" / "install"
+    built_hook.parent.mkdir(parents=True)
+    built_hook.write_text("#!/bin/sh\necho REAL_COMPONENT_HOOK_RAN\n")
+    built_hook.chmod(0o755)
+
+    # create an executable to satisfy the component hook command-chain validation
+    command_chain_exe = component_prime_dir / "test-command-chain"
+    command_chain_exe.touch()
+    command_chain_exe.chmod(0o755)
+
+    package_service.write_metadata(tmp_path / "prime")
+
+    assert built_hook.read_text() == "#!/bin/sh\necho REAL_COMPONENT_HOOK_RAN\n"
+    provisioned_hook = component_prime_dir / "meta" / "hooks" / "install"
+    assert provisioned_hook.read_text() == "#!/bin/sh\necho REAL_COMPONENT_HOOK_RAN\n"
+    assert oct(provisioned_hook.stat().st_mode)[-3:] == "755"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
+def test_write_metadata_component_creates_placeholder_only_for_missing_declared_hook(
+    default_project,
+    fake_services,
+    setup_project,
+    tmp_path,
+):
+    setup_project(fake_services, default_project.marshal())
+    package_service = fake_services.get("package")
+    lifecycle_service = fake_services.get("lifecycle")
+    component_prime_dir = lifecycle_service.get_prime_dir("firstcomponent")
+
+    command_chain_exe = component_prime_dir / "test-command-chain"
+    command_chain_exe.parent.mkdir(parents=True, exist_ok=True)
+    command_chain_exe.touch()
+    command_chain_exe.chmod(0o755)
+
+    package_service.write_metadata(tmp_path / "prime")
+
+    placeholder_hook = component_prime_dir / "meta" / "hooks" / "install"
+    assert placeholder_hook.read_text() == "#!/bin/true\n"
+    assert oct(placeholder_hook.stat().st_mode)[-3:] == "755"
+
+
+@pytest.mark.usefixtures("enable_partitions_feature")
 def test_gen_extra_assets_for_component_hooks(
     default_project,
     fake_services,

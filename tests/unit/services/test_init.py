@@ -56,7 +56,10 @@ def template_dir():
 def test_init_valid_name(name, init_service, new_dir, emitter):
     """Initialise a project with a valid snap name."""
     init_service.initialise_project(
-        project_dir=new_dir, project_name=name, template_dir=template_dir()
+        project_dir=new_dir,
+        project_name=name,
+        template_dir=template_dir(),
+        vcs="git",
     )
 
     assert (new_dir / "snap/snapcraft.yaml").exists()
@@ -106,7 +109,10 @@ def test_init_snap_dir_exists(init_service, new_dir, emitter):
         project_dir=new_dir, template_dir=template_dir()
     )
     init_service.initialise_project(
-        project_dir=new_dir, project_name="test-snap-name", template_dir=template_dir()
+        project_dir=new_dir,
+        project_name="test-snap-name",
+        template_dir=template_dir(),
+        vcs="git",
     )
 
     assert snapcraft_yaml.exists()

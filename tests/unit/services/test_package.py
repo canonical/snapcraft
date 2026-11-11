@@ -16,7 +16,7 @@
 
 """Tests for the Snapcraft Package service."""
 
-import datetime
+import datetime as dt
 import os
 from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
@@ -36,6 +36,13 @@ from snapcraft.meta import ExtractedMetadata
 from snapcraft.parts import extract_metadata, update_metadata
 from snapcraft.parts.setup_assets import get_mediated_icon_asset
 from snapcraft.services import Package
+
+
+@pytest.fixture
+def extra_project_params(extra_project_params):
+    # the package service requires at least one part to pack an artifact
+    extra_project_params["parts"] = {"my-part": {"plugin": "nil"}}
+    return extra_project_params
 
 
 def test_pack(default_project, fake_services, setup_project, mocker):
@@ -142,6 +149,48 @@ def test_write_metadata(default_project, fake_services, setup_project, new_dir):
     """)
 
     assert not (prime_dir / "snap" / "manifest.yaml").exists()
+
+
+def test_write_metadata_provisions_built_hook_over_placeholder_stub(
+    default_project, fake_services, setup_project, new_dir
+):
+    project = {
+        **default_project.marshal(),
+        "hooks": {"configure": {"plugs": ["network"]}},
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    prime_dir = new_dir / "prime"
+    built_hook = prime_dir / "snap" / "hooks" / "configure"
+    built_hook.parent.mkdir(parents=True)
+    built_hook.write_text("#!/bin/sh\necho REAL_HOOK_RAN\n")
+    built_hook.chmod(0o755)
+
+    package_service.write_metadata(prime_dir)
+
+    assert built_hook.read_text() == "#!/bin/sh\necho REAL_HOOK_RAN\n"
+    provisioned_hook = prime_dir / "meta" / "hooks" / "configure"
+    assert provisioned_hook.read_text() == "#!/bin/sh\necho REAL_HOOK_RAN\n"
+    assert oct(provisioned_hook.stat().st_mode)[-3:] == "755"
+
+
+def test_write_metadata_creates_placeholder_only_for_missing_declared_hook(
+    default_project, fake_services, setup_project, new_dir
+):
+    project = {
+        **default_project.marshal(),
+        "hooks": {"configure": {"plugs": ["network"]}},
+    }
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    prime_dir = new_dir / "prime"
+    package_service.write_metadata(prime_dir)
+
+    placeholder_hook = prime_dir / "meta" / "hooks" / "configure"
+    assert placeholder_hook.read_text() == "#!/bin/true\n"
+    assert oct(placeholder_hook.stat().st_mode)[-3:] == "755"
 
 
 def test_get_snap_yaml(default_project, fake_services, setup_project):
@@ -338,7 +387,7 @@ def test_write_metadata_with_manifest(
 
     assert manifest.snapcraft_version == __version__
     assert (
-        datetime.datetime.fromisoformat(manifest.snapcraft_started_at[:-1])
+        dt.datetime.fromisoformat(manifest.snapcraft_started_at[:-1])
         == fake_services.lifecycle._start_time
     )
     assert manifest.name == snap_yaml["name"]

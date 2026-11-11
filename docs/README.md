@@ -32,7 +32,9 @@ git --no-pager diff <commit>~1 --name-only -- docs/ .readthedocs.yaml common.mk 
 
 Next, bring the updates into the subproject. It's simplest to copy over the files, and then review the resulting Git diff. It's likely some of the changes will erase sections of the files, especially in changes to the documents themselves. You'll review each change line-by-line in any case, so you can restore any unwanted deletions as you work through them.
 
-As you review, look for instances of `Starcraft` and `TODO` comments for places where the code needs customizing. If you can't decide on how to configure a change, consult the [Sphinx Stack release notes](https://documentation.ubuntu.com/sphinx-stack/latest/) for idiomatic documentation of the feature.
+<!-- Ignore "Starcraft" here because this file is brought directly into child repositories. -->
+
+As you review, look for instances of <!-- vale off -->`Starcraft`<!-- vale on --> and `TODO` comments for places where the code needs customizing. If you can't decide on how to configure a change, consult the [Sphinx Stack release notes](https://documentation.ubuntu.com/sphinx-stack/latest/) for idiomatic documentation of the feature.
 
 In `pyproject.toml`, remove everything in the `docs-sphinx-stack` group. Then, sync the docs dependencies to the parent project:
 

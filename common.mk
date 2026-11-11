@@ -65,7 +65,7 @@ setup-lint: _setup-lint  ##- Set up a linting-only environment
 	uv sync $(UV_LINT_GROUPS)
 
 .PHONY: _setup-lint
-_setup-lint: install-uv install-shellcheck install-shfmt install-pyright install-lint-build-deps install-actionlint
+_setup-lint: install-uv install-shellcheck install-shfmt install-lint-build-deps install-actionlint
 
 .PHONY: setup-tests
 setup-tests: _setup-tests ##- Set up a testing environment without linters
@@ -91,7 +91,7 @@ else
 endif
 
 .PHONY: clean
-clean:  ## Clean up the development environment
+clean: docs-clean  ## Clean up the development environment
 	uv tool run pyclean .
 	rm -rf dist build docs/_build docs/_linkcheck docs/reference/gen *.snap .coverage* .venv
 
@@ -123,6 +123,10 @@ format-shfmt: install-shfmt ##- Format shell scripts
 	@# so explicitly filter them out
 	git ls-files -z | xargs -0 sh -c 'for f; do case "$$f" in *.sh.j2) continue;; esac; file --mime-type -Nn -- "$$f" | grep -q shellscript && printf "%s\0" "$$f"; done' -- | xargs -0r shfmt -w
 
+.PHONY: format-tombi
+format-tombi: install-tombi  ##- Format TOML files with tombi
+	tombi format
+
 .PHONY: lint-ruff
 lint-ruff: install-ruff  ##- Lint with ruff
 ifneq ($(CI),)
@@ -144,30 +148,6 @@ ifneq ($(CI),)
 	@echo ::endgroup::
 endif
 
-.PHONY: lint-mypy
-lint-mypy:  ##- Check types with mypy
-ifneq ($(CI),)
-	@echo ::group::$@
-endif
-	uv run mypy --show-traceback --show-error-codes $(PROJECT)
-ifneq ($(CI),)
-	@echo ::endgroup::
-endif
-
-.PHONY: lint-pyright
-lint-pyright:  ##- Check types with pyright
-ifneq ($(CI),)
-	@echo ::group::$@
-endif
-ifneq ($(shell which pyright),) # Prefer the system pyright
-	pyright --pythonpath .venv/bin/python
-else
-	uv tool run pyright --pythonpath .venv/bin/python
-endif
-ifneq ($(CI),)
-	@echo ::endgroup::
-endif
-
 .PHONY: lint-ty
 lint-ty: install-ty  ##- Check types with Astral ty
 ifneq ($(CI),)
@@ -180,8 +160,14 @@ endif
 
 .PHONY: lint-uv-lockfile
 lint-uv-lockfile: install-uv  ##- Check that uv.lock matches expectations from pyproject.toml
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
 	unset UV_FROZEN
 	uv lock --check
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
 
 .PHONY: lint-shfmt
 lint-shfmt: install-shfmt  ##- Lint shell script formatting
@@ -214,6 +200,16 @@ ifneq ($(CI),)
 	@echo ::group::$@
 endif
 	$(PRETTIER) --check $(PRETTIER_FILES)
+ifneq ($(CI),)
+	@echo ::endgroup::
+endif
+
+.PHONY: lint-tombi
+lint-tombi: install-tombi  ##- Check TOML formatting with tombi
+ifneq ($(CI),)
+	@echo ::group::$@
+endif
+	tombi format --check --diff
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
@@ -324,7 +320,7 @@ docs-clean:  ##- Clean the temporary files used in documentation
 docs-help:  ##- List the individual commands in the documentation subproject.
 	@echo "Commands in the documentation subproject:"
 	$(MAKE) -C docs help --no-print-directory
-	@echo "Run these commands from inside the 'docs/' directory."
+	@echo "Run these from the repository root as 'make docs-<command>' (e.g. 'make docs-linkcheck')."
 
 # Override for `pymarkdownlnt-install` target in docs project. Make it a noop.
 .PHONY: docs-pymarkdownlnt-install
@@ -417,17 +413,6 @@ else
 	$(warning Codespell not installed. Please install it yourself.)
 endif
 
-.PHONY: install-pyright
-install-pyright: install-uv
-ifneq ($(shell which pyright),)
-else ifneq ($(shell which snap),)
-	sudo snap install --classic pyright
-else
-	# Workaround for a bug in npm
-	[ -d "$(HOME)/.npm/_cacache" ] && chown -R `id -u`:`id -g` "$(HOME)/.npm" || true
-	uv tool install pyright
-endif
-
 .PHONY: install-ruff
 install-ruff:
 ifneq ($(shell which ruff),)
@@ -458,6 +443,18 @@ else ifneq ($(shell which brew),)
 	brew install shfmt
 else
 	$(warning shfmt not installed. Please install it yourself.)
+endif
+
+.PHONY: install-tombi
+install-tombi:
+ifneq ($(shell which tombi),)
+else ifneq ($(shell which snap),)
+	sudo snap install --classic tombi
+else ifneq ($(shell which brew),)
+	brew install tombi
+else
+	make install-uv
+	uv tool install tombi
 endif
 
 .PHONY: install-ty

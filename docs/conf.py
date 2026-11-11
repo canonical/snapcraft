@@ -148,7 +148,12 @@ rediraffe_dir_only = True
 ############################
 
 # This description is included in llms.txt to provide some initial context for your
-# product docs.
+# product docs. Prefer reusing the first sentence of your home page (docs/index.rst)
+# here, so the description stays in sync with the home page.
+# If your home page does not have a sentence that works as a description yet, you can
+# write one in the form "This is the documentation for <product name>, <summary>".
+# Do not maintain a second, hand-authored description alongside the home page:
+# it will drift from the home page over time.
 llms_txt_description = textwrap.dedent(
     """\
     This is the documentation for Snapcraft, the tool for packaging software into the
@@ -179,6 +184,7 @@ linkcheck_ignore = [
     "https://gitlab.gnome.org",
     "https://invent.kde.org",
     "https://cmake.org",
+    "https://manpages.ubuntu.com",
     # 2026-06-03: Ignore Canonical sites until filtering is resolved
     "https://snapcraft.io",
     "https://juju.is",
@@ -232,6 +238,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
     "sphinx.ext.viewcode",
+    "sphinx_structured_toc",
     "sphinx_substitution_extensions",
 ]
 
@@ -269,7 +276,6 @@ exclude_patterns = [
     # Extra non-craft-parts exclusions can be added after this comment
     # Staged files for Discourse migration
     "how-to/crafting/add-a-part.rst",
-    "how-to/publishing/build-snaps-remotely.rst",
     "README.md",  # Docs README
 ]
 
@@ -295,7 +301,6 @@ html_js_files = [
 
 # Specifies a reST snippet to be appended to each .rst file
 rst_epilog = """
-.. include:: /reuse/links.txt
 """
 
 # Feedback button at the top; enabled by default
@@ -327,10 +332,17 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 intersphinx_mapping = {
     # https://github.com/canonical/snapcraft/issues/6036
     "snap": ("https://snapcraft.io/docs/", None),
-    "charmcraft": ("https://documentation.ubuntu.com/charmcraft/stable/", None),
+    "charmcraft": ("https://canonical.com/juju/docs/charmcraft/latest/", None),
     "rockcraft": ("https://ubuntu.com/containers/rockcraft/docs/latest/", None),
-    "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
+    "core": ("https://documentation.ubuntu.com/core/", None),
     "ubuntu-frame": ("https://ubuntu.com/frame/docs/24/", None),
+    "craft-application": ("https://documentation.ubuntu.com/craft-application/latest", None),
+    "craft-archives": ("https://documentation.ubuntu.com/craft-archives/latest", None),
+    "craft-parts": ("https://documentation.ubuntu.com/craft-parts/latest", None),
+    "craft-providers": ("https://documentation.ubuntu.com/craft-providers/latest", None),
+    "craft-store": ("https://documentation.ubuntu.com/craft-store/latest", None),
+    "starflow": ("https://documentation.ubuntu.com/starflow/latest", None),
+    "launchpad": ("https://ubuntu.com/docs/launchpad", None),
 }
 
 # Block Intersphinx from looking up external sources with internal references. In other

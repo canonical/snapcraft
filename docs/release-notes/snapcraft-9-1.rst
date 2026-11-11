@@ -177,6 +177,35 @@ Snapcraft 9.1.1
 - `snapcraft#6414 <https://github.com/canonical/snapcraft/issues/6414>`__ Trying to
   use Candid authentication wouldn't provide a user-friendly error.
 
+.. _release-notes-fixes-9.1.2:
+
+Snapcraft 9.1.2
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6412 <https://github.com/canonical/snapcraft/issues/6412>`__
+  edit-validation-sets refuses to create a new validation set at sequence 1 ("sequence
+  number was not incremented")
+- `snapcraft#6413 <https://github.com/canonical/snapcraft/issues/6413>`__
+  edit-validation-sets makes it impossible to publish a new revision of an existing
+  sequence (no override)
+- `snapcraft#6418 <https://github.com/canonical/snapcraft/issues/6418>`__
+  core26: kernel plugin fails to run
+
+.. _release-notes-fixes-9.1.3:
+
+Snapcraft 9.1.3
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6433 <https://github.com/canonical/snapcraft/issues/6433>`__ Generated
+  hooks are not included in the snap
+
+.. _release-notes-fixes-9.1.4:
+
+Snapcraft 9.1.4
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6480 <https://github.com/canonical/snapcraft/issues/6480>`__ Performance
+  regression when staging files
 
 Contributors
 ------------
@@ -189,6 +218,7 @@ this release.
 :literalref:`@canon-cat <https://github.com/canon-cat>`,
 :literalref:`@cmatsuoka <https://github.com/cmatsuoka>`,
 :literalref:`@dilyn-corner <https://github.com/dilyn-corner>`,
+:literalref:`@Deep-Axe <https://github.com/Deep-Axe>`,
 :literalref:`@EdmilsonRodrigues <https://github.com/EdmilsonRodrigues>`,
 :literalref:`@elijahgreenstein <https://github.com/elijahgreenstein>`,
 :literalref:`@florcabral <https://github.com/florcabral>`,
@@ -199,6 +229,7 @@ this release.
 :literalref:`@kubiko <https://github.com/kubiko>`,
 :literalref:`@lengau <https://github.com/lengau>`,
 :literalref:`@mateusrodrigues <https://github.com/mateusrodrigues>`,
+:literalref:`@mbeijen <https://github.com/mbeijen>`,
 :literalref:`@medubelko <https://github.com/medubelko>`,
 :literalref:`@MirkoFerrati <https://github.com/MirkoFerrati>`,
 :literalref:`@Mohit-Chachada <https://github.com/Mohit-Chachada>`,

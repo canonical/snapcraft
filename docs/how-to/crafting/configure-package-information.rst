@@ -97,7 +97,8 @@ When you're crafting a snap for existing software, it's easier to import the
 package information from an external source instead of manually copying it. There
 are two sets of data available:
 
-- The main package information from a standard `AppStream`_ metadata file
+- The main package information from a standard `AppStream
+  <https://www.freedesktop.org/software/appstream/docs/>`__ metadata file
 - The snap's version and grade through a script
 
 

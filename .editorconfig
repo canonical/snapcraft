@@ -36,3 +36,6 @@ max_line_length = off
 
 [{*.yaml,*.yml}]
 indent_size = 2
+
+[*.toml]
+indent_size = 2

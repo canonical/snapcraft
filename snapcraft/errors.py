@@ -88,34 +88,6 @@ class FilePermissionError(SnapcraftError):
         )
 
 
-class InvalidArchitecture(SnapcraftError):
-    """The machine architecture is not supported.
-
-    :param arch_name: The unsupported architecture name.
-    """
-
-    def __init__(self, arch_name: str):
-        self.arch_name = arch_name
-        super().__init__(
-            f"Architecture {arch_name!r} is not supported.",
-            resolution="Make sure the architecture name is correct.",
-        )
-
-
-class ArchAllInvalid(SnapcraftError):
-    """Architecture 'all' is invalid in this use case."""
-
-    def __init__(self) -> None:
-        super().__init__(
-            "Cannot use architecture 'all'.",
-            details="This command does not support using architecture 'all' in your snap.",
-            resolution="Set your snap to architecture-dependent builds.",
-            logpath_report=False,
-            reportable=False,
-            retcode=78,
-        )
-
-
 class LinterError(SnapcraftError):
     """Snap linting returned an error.
 
@@ -128,17 +100,6 @@ class LinterError(SnapcraftError):
         super().__init__(
             message,
             resolution="Make sure the issues are addressed or ignore the issues in snapcraft.yaml.",
-        )
-
-
-class ProjectMissing(SnapcraftError):
-    """No snapcraft.yaml project found."""
-
-    def __init__(self) -> None:
-        super().__init__(
-            "Could not find snap/snapcraft.yaml. Are you sure you are in the "
-            "right directory?",
-            resolution="To start a new project, use `snapcraft init`",
         )
 
 

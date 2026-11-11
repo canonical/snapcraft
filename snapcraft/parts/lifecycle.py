@@ -728,11 +728,6 @@ def _expand_environment(
     else:
         work_dir = Path.cwd()
 
-    project_vars = {
-        "version": snapcraft_yaml.get("version", ""),
-        "grade": snapcraft_yaml.get("grade", ""),
-    }
-
     if target_arch == "all":
         target_arch = str(DebianArchitecture.from_host())
 
@@ -745,7 +740,7 @@ def _expand_environment(
         parallel_build_count=parallel_build_count,
         project_name=snapcraft_yaml.get("name", ""),
         project_dirs=dirs,
-        project_vars=project_vars,
+        project_vars=yaml_utils.create_project_vars(snapcraft_yaml),
         partitions=partitions,
     )
     set_global_environment(info)
