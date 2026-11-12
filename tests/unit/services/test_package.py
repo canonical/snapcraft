@@ -1069,6 +1069,142 @@ def test_extra_project_updates_makes_targets_core26(
     mock_precreate_layout.assert_called_once()
 
 
+def test_extra_project_updates_no_changes(
+    default_project, fake_services, setup_project
+):
+    """Unchanged projects must not force a repack."""
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+
+    assert package_service._extra_project_updates() is False
+
+
+def test_extra_project_updates_project_changed(
+    default_project, fake_services, setup_project, mocker
+):
+    """Updating the project from parse-info data must force a repack."""
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+
+    def _update(project, **kwargs):  # noqa: ARG001
+        project.summary = "adopted summary"
+
+    mocker.patch.object(
+        update_metadata, "update_from_extracted_metadata", side_effect=_update
+    )
+
+    assert package_service._extra_project_updates() is True
+
+
+def test_extra_project_updates_targets_created(
+    snapcraft_yaml: Callable[..., Any],
+    setup_project: Callable[..., Any],
+    fake_services: ServiceFactory,
+) -> None:
+    """Precreating targets in prime forces a repack only when they are new."""
+    project = snapcraft_yaml(
+        base="core26",
+        layout={"/opt/foo": {"bind": "$SNAP/foo"}},
+        plugs={"content": {"target": "$SNAP/bar"}},
+    )
+    setup_project(fake_services, project)
+    package_service = cast(Package, fake_services.get("package"))
+
+    assert package_service._extra_project_updates() is True
+    assert package_service._extra_project_updates() is False
+
+
+def test_write_metadata_ignores_manifest_timestamp(
+    monkeypatch, default_project, fake_services, setup_project
+):
+    """A new start time alone must not rewrite the primed manifest."""
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    manifest_file = prime_dir / "snap" / "manifest.yaml"
+
+    package_service.write_metadata(prime_dir)
+    original = manifest_file.read_text()
+    original_mtime = manifest_file.stat().st_mtime_ns
+
+    fake_services.lifecycle._start_time += dt.timedelta(seconds=10)
+    package_service.write_metadata(prime_dir)
+
+    assert manifest_file.read_text() == original
+    assert manifest_file.stat().st_mtime_ns == original_mtime
+
+
+def test_write_metadata_rewrites_changed_manifest(
+    monkeypatch, default_project, fake_services, setup_project
+):
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "1")
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    manifest_file = prime_dir / "snap" / "manifest.yaml"
+
+    package_service.write_metadata(prime_dir)
+    package_service._project.summary = "changed summary"
+    package_service.write_metadata(prime_dir)
+
+    manifest = yaml.safe_load(manifest_file.read_text())
+    assert manifest["summary"] == "changed summary"
+
+
+def test_write_asset_skips_unchanged(default_project, fake_services, setup_project):
+    setup_project(fake_services, default_project.marshal())
+    package_service = cast(Package, fake_services.get("package"))
+    destination = fake_services.lifecycle.prime_dir / "meta" / "file.txt"
+    destination.parent.mkdir(parents=True)
+    destination.write_text("content")
+    os.utime(destination, ns=(1, 1))
+
+    package_service._write_asset("content", destination)
+    assert destination.stat().st_mtime_ns == 1
+
+    package_service._write_asset("new content", destination)
+    assert destination.read_text() == "new content"
+    assert destination.stat().st_mtime_ns > 1
+
+
+@pytest.mark.parametrize(
+    "touch",
+    [
+        pytest.param("meta/snap.yaml", id="package-file"),
+        pytest.param("meta/gui/icon.png", id="extra-asset"),
+        pytest.param("meta/hooks/configure", id="hook"),
+        pytest.param("meta/gui", id="added-or-removed-file"),
+    ],
+)
+def test_app_needs_repack_mediated_file_newer_than_artifact(
+    default_project, fake_services, setup_project, touch
+):
+    setup_project(fake_services, default_project.marshal(), write_project=True)
+    package_service = cast(Package, fake_services.get("package"))
+    prime_dir = fake_services.lifecycle.prime_dir
+    project_gui_dir = package_service._get_assets_dir() / "gui"
+    project_gui_dir.mkdir(parents=True)
+    (project_gui_dir / "icon.png").write_text("icon")
+    project_hooks_dir = package_service._get_assets_dir() / "hooks"
+    project_hooks_dir.mkdir(parents=True)
+    (project_hooks_dir / "configure").write_text("hook")
+
+    package_service.write_metadata(prime_dir)
+    for path in prime_dir.rglob("*"):
+        os.utime(path, ns=(1, 1))
+    os.utime(prime_dir / "meta", ns=(1, 1))
+    artifact = package_service.get_artifacts()[None]
+    artifact.touch()
+    os.utime(artifact, ns=(2, 2))
+
+    assert package_service._app_needs_repack() is False
+
+    os.utime(prime_dir / touch, ns=(3, 3))
+
+    assert package_service._app_needs_repack() is True
+
+
 @pytest.mark.parametrize(
     ("layouts", "expected_files"),
     [
