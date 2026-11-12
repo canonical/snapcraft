@@ -21,7 +21,6 @@ import textwrap
 from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
-import craft_cli
 from craft_application.commands import AppCommand
 from craft_cli import emit
 from packaging import version
@@ -46,8 +45,11 @@ class StoreMetricsCommand(AppCommand):
     overview = textwrap.dedent(
         """
         Retrieve store metric data for a snap you own. New metrics are generated
-        daily."""
-    )
+        daily.
+
+        Valid metric names are:
+        """
+    ) + "\n".join(f"- {metric.value}" for metric in MetricName)
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -61,7 +63,7 @@ class StoreMetricsCommand(AppCommand):
             "--name",
             metavar="metric",
             dest="metric",
-            help=f"Metric to view. Valid options are: {craft_cli.utils.humanize_list([f'{m.value!r}' for m in MetricName])}",
+            help="Metric to view",
             type=str,
             choices=[metric.value for metric in MetricName],
             required=True,
