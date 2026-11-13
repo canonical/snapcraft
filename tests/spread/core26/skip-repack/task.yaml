@@ -2,6 +2,9 @@ summary: Check if repacking is skipped for core26
 
 environment:
   PROJECT_NAME: test-proj
+  # Mediate the manifest, which changes on every run, to make sure it doesn't
+  # trigger a repack by itself.
+  SNAPCRAFT_BUILD_INFO: "1"
 
 execute: |
   mkdir "${PROJECT_NAME}"
@@ -10,18 +13,71 @@ execute: |
   touch "${PROJECT_NAME}/foo.txt"
   pushd "${PROJECT_NAME}"
 
-  snapcraft pack 2>&1 | MATCH "Packed"
-  snapcraft pack 2>&1 | MATCH "Skipping pack"
+  log="$(mktemp)"
+
+  # Compare the artifact modification time to check if it was rewritten,
+  # instead of relying only on the command output.
+  run_pack() {
+    before="$(stat -c %y skip-repack_0.1_*.snap 2>/dev/null || true)"
+    snapcraft pack > "$log" 2>&1
+    after="$(stat -c %y skip-repack_0.1_*.snap)"
+  }
+
+  assert_packed() {
+    run_pack
+    MATCH "Packed" < "$log"
+    [ "$before" != "$after" ]
+  }
+
+  assert_skipped() {
+    run_pack
+    MATCH "Skipping pack" < "$log"
+    [ "$before" = "$after" ]
+  }
+
+  extract_snap() {
+    rm -rf squashfs-root
+    unsquashfs skip-repack_0.1_*.snap
+  }
+
+  assert_packed
+  extract_snap
+  test -f squashfs-root/snap/manifest.yaml
+  assert_skipped
+
+  # Changes to mediated GUI assets must be packed.
   echo "Change" >> snap/icon.svg
-  snapcraft pack 2>&1 | MATCH "Packed"
-  snapcraft pack 2>&1 | MATCH "Skipping pack"
+  assert_packed
+  extract_snap
+  MATCH "Change" < squashfs-root/meta/gui/icon.svg
+  assert_skipped
+
+  # Changes to the project file must be packed.
+  sed -i "s/^summary: .*/summary: Changed summary/" snap/snapcraft.yaml
+  assert_packed
+  extract_snap
+  MATCH "summary: Changed summary" < squashfs-root/meta/snap.yaml
+  assert_skipped
+
+  # New hooks must be packed.
   mkdir -p snap/hooks
   cat <<'EOF' > snap/hooks/configure
   #!/bin/sh
   exit 0
   EOF
   chmod +x snap/hooks/configure
-  snapcraft pack 2>&1 | MATCH "Packed"
+  assert_packed
+  extract_snap
+  test -x squashfs-root/meta/hooks/configure
+  assert_skipped
+
+  # Mediated files updated by a previous prime must be packed.
+  echo "# changed" >> snap/hooks/configure
+  snapcraft prime
+  assert_packed
+  extract_snap
+  MATCH "# changed" < squashfs-root/meta/hooks/configure
+  assert_skipped
 
   popd
 
