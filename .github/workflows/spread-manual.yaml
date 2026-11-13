@@ -41,7 +41,7 @@ jobs:
         uses: canonical/action-build@v1
         id: snapcraft
       - name: Upload snap artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: snap
           path: ${{ steps.snapcraft.outputs.snap }}
@@ -69,11 +69,14 @@ jobs:
           name: snap
           path: tests
       - name: Kernel plugin test
-        run: |
-          spread openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel       \
-                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-bin   \
-                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-cross \
-                 openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-deb
+        uses: canonical/starflow/run-spread@main
+        with:
+          args: >-
+            openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel
+            openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-bin
+            openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-cross
+            openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/kernel-deb
+          junit-name: kernel-plugins
 
   initrd-plugins:
     needs: [predicate, snap-build]
@@ -95,8 +98,10 @@ jobs:
           name: snap
           path: tests
       - name: Initrd plugin test
-        run: |
-          spread openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
+        uses: canonical/starflow/run-spread@main
+        with:
+          args: openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/initrd
+          junit-name: initrd-plugins
 
       - name: Discard spread workers
         if: always()
@@ -126,11 +131,14 @@ jobs:
           name: snap
           path: tests
       - name: remote-build test
+        uses: canonical/starflow/run-spread@main
         env:
           LAUNCHPAD_TOKEN: "${{ secrets.LAUNCHPAD_TOKEN }}"
-        run: |
-          spread openstack:ubuntu-22.04-64:tests/spread/core22/remote-build \
+        with:
+          args: >-
+            openstack:ubuntu-22.04-64:tests/spread/core22/remote-build
             openstack:ubuntu-24.04-64:tests/spread/core24/remote-build
+          junit-name: remote-build
 
       - name: Discard spread workers
         if: always()
@@ -160,12 +168,15 @@ jobs:
           name: snap
           path: tests
       - name: colcon plugin test
-        run: |
-          spread openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello \
-            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-msg-package \
-            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-packages-ignore \
-            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener \
+        uses: canonical/starflow/run-spread@main
+        with:
+          args: >-
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-hello
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-msg-package
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-packages-ignore
+            openstack:ubuntu-22.04-64:tests/spread/core24-suites/plugins/colcon-talker-listener
             openstack:ubuntu-22.04-64:tests/spread/plugins/craft-parts/colcon-hello
+          junit-name: colcon-plugins
 
       - name: Discard spread workers
         if: always()
@@ -195,8 +206,10 @@ jobs:
           name: snap
           path: tests
       - name: extensions test
-        run: |
-          spread openstack.*:tests/spread/extensions/
+        uses: canonical/starflow/run-spread@main
+        with:
+          args: openstack.*:tests/spread/extensions/
+          junit-name: extensions
 
       - name: Discard spread workers
         if: always()
@@ -226,8 +239,10 @@ jobs:
           name: snap
           path: tests
       - name: Spread test
-        run: |
-          spread openstack:ubuntu-22.04-64:tests/spread/snaps/snapd
+        uses: canonical/starflow/run-spread@main
+        with:
+          args: openstack:ubuntu-22.04-64:tests/spread/snaps/snapd
+          junit-name: snapd-bases
 
       - name: Discard spread workers
         if: always()
@@ -257,8 +272,13 @@ jobs:
           name: snap
           path: tests
       - name: Spread test
-        run: |
-          spread openstack:ubuntu-24.04-64:tests/spread/core24/squid-proxy openstack:ubuntu-22.04-64:tests/spread/core22/squid-proxy
+        uses: canonical/starflow/run-spread@main
+        with:
+          args: >-
+            openstack:ubuntu-24.04-64:tests/spread/core24/squid-proxy
+            openstack:ubuntu-22.04-64:tests/spread/core22/squid-proxy
+          junit-name: squid-proxy
+
       - name: Discard spread workers
         if: always()
         run: |
