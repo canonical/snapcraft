@@ -475,7 +475,8 @@ def test_get_parts_snippet(gnome_extension):
     assert gnome_extension.get_parts_snippet() == {
         "gnome/sdk": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
-            "plugin": "make",
+            "plugin": "nil",
+            "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-fonts run',
             "build-snaps": ["gnome-42-2204-sdk"],
         }
     }
@@ -485,8 +486,10 @@ def test_get_parts_snippet_core24(gnome_extension_core24):
     assert gnome_extension_core24.get_parts_snippet() == {
         "gnome/gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
-            "plugin": "make",
-            "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+            "plugin": "nil",
+            "override-build": (
+                'install -D -m755 gpu-wrapper "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2404-wrapper"\nsed --in-place \'s/%GPU_INTERFACE%/gpu-2404/g\' "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2404-wrapper"'
+            ),
         },
         "gnome/gpu/cleanup": {
             "after": [],
@@ -501,7 +504,8 @@ def test_get_parts_snippet_core24(gnome_extension_core24):
         },
         "gnome/sdk": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
-            "plugin": "make",
+            "plugin": "nil",
+            "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-fonts run',
             "build-snaps": ["gnome-46-2404-sdk"],
         },
     }
@@ -511,8 +515,10 @@ def test_get_parts_snippet_core26(gnome_extension_core26):
     assert gnome_extension_core26.get_parts_snippet() == {
         "gnome/gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
-            "plugin": "make",
-            "make-parameters": ["GPU_INTERFACE=gpu-2604"],
+            "plugin": "nil",
+            "override-build": (
+                'install -D -m755 gpu-wrapper "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2604-wrapper"\nsed --in-place \'s/%GPU_INTERFACE%/gpu-2604/g\' "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2604-wrapper"'
+            ),
         },
         "gnome/gpu/cleanup": {
             "after": [],
@@ -524,7 +530,8 @@ def test_get_parts_snippet_core26(gnome_extension_core26):
         },
         "gnome/sdk": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
-            "plugin": "make",
+            "plugin": "nil",
+            "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-fonts run',
             "build-snaps": ["gnome-core26-sdk"],
         },
         "gnome/cleanup": {
@@ -545,7 +552,8 @@ def test_get_parts_snippet_with_external_sdk(gnome_extension_with_build_snap):
     assert gnome_extension_with_build_snap.get_parts_snippet() == {
         "gnome/sdk": {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
-            "plugin": "make",
+            "plugin": "nil",
+            "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-fonts run',
         }
     }
 
@@ -558,7 +566,8 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
         == {
             "gnome/sdk": {
                 "source": str(get_extensions_data_dir() / "desktop" / "command-chain"),
-                "plugin": "make",
+                "plugin": "nil",
+                "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-fonts run',
             }
         }
     )

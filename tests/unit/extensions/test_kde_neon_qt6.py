@@ -593,10 +593,8 @@ def test_get_parts_snippet(kde_neon_qt6_extension):
     assert kde_neon_qt6_extension.get_parts_snippet() == {
         "kde-neon-qt6/sdk": {
             "source": str(source),
-            "plugin": "make",
-            "make-parameters": [
-                "PLATFORM_PLUG=kde-qt6-core22",
-            ],
+            "plugin": "nil",
+            "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-desktop hooks-configure-fonts run',
             "build-snaps": ["kde-qt6-core22-sdk"],
         }
     }
@@ -608,8 +606,10 @@ def test_get_parts_snippet_core24(kde_neon_qt6_extension_core24):
     assert kde_neon_qt6_extension_core24.get_parts_snippet() == {
         "kde-neon-qt6/gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
-            "plugin": "make",
-            "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+            "plugin": "nil",
+            "override-build": (
+                'install -D -m755 gpu-wrapper "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2404-wrapper"\nsed --in-place \'s/%GPU_INTERFACE%/gpu-2404/g\' "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2404-wrapper"'
+            ),
         },
         "kde-neon-qt6/gpu/cleanup": {
             "after": [],
@@ -624,10 +624,8 @@ def test_get_parts_snippet_core24(kde_neon_qt6_extension_core24):
         },
         "kde-neon-qt6/sdk": {
             "source": str(source),
-            "plugin": "make",
-            "make-parameters": [
-                "PLATFORM_PLUG=kde-qt6-core24",
-            ],
+            "plugin": "nil",
+            "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-desktop hooks-configure-fonts run',
             "build-snaps": ["kde-qt6-core24-sdk"],
         },
     }
@@ -639,10 +637,8 @@ def test_get_parts_snippet_with_external_sdk(kde_neon_qt6_extension_with_build_s
     assert kde_neon_qt6_extension_with_build_snap.get_parts_snippet() == {
         "kde-neon-qt6/sdk": {
             "source": str(source),
-            "plugin": "make",
-            "make-parameters": [
-                "PLATFORM_PLUG=kde-qt6-core22",
-            ],
+            "plugin": "nil",
+            "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-desktop hooks-configure-fonts run',
         }
     }
 
@@ -656,8 +652,10 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
         == {
             "kde-neon-qt6/gpu/wrapper": {
                 "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
-                "plugin": "make",
-                "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+                "plugin": "nil",
+                "override-build": (
+                    'install -D -m755 gpu-wrapper "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2404-wrapper"\nsed --in-place \'s/%GPU_INTERFACE%/gpu-2404/g\' "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2404-wrapper"'
+                ),
             },
             "kde-neon-qt6/gpu/cleanup": {
                 "after": ["part1"],
@@ -672,10 +670,8 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
             },
             "kde-neon-qt6/sdk": {
                 "source": str(source),
-                "plugin": "make",
-                "make-parameters": [
-                    "PLATFORM_PLUG=kde-qt6-core24",
-                ],
+                "plugin": "nil",
+                "override-build": 'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" desktop-launch hooks-configure-desktop hooks-configure-fonts run',
             },
         }
     )

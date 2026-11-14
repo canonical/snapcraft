@@ -370,7 +370,11 @@ class GNOME(GPUExtension):
 
         parts["gnome/sdk"] = {
             "source": str(source),
-            "plugin": "make",
+            "plugin": "nil",
+            "override-build": (
+                'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" '
+                "desktop-launch hooks-configure-fonts run"
+            ),
             **(
                 {"build-snaps": [_SDK_SNAP[base_str]]}
                 if self.gnome_snaps.builtin

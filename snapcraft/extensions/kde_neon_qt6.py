@@ -375,10 +375,11 @@ class KDENeonQt6(GPUExtension):
             {
                 "kde-neon-qt6/sdk": {
                     "source": str(source),
-                    "plugin": "make",
-                    "make-parameters": [
-                        f"PLATFORM_PLUG=kde-qt6-{base}",
-                    ],
+                    "plugin": "nil",
+                    "override-build": (
+                        'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" '
+                        "desktop-launch hooks-configure-desktop hooks-configure-fonts run"
+                    ),
                 },
             }
         )
