@@ -44,10 +44,6 @@
     fill: #333;
 }
 
-.chart__bar--black {
-    fill: #111;
-}
-
 .chart__hwe-key {
     display: none;
 }
@@ -61,12 +57,29 @@
     opacity: 0.2;
 }
 
+/* Dark mode colour variables — covers both system preference and Furo's manual toggle */
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) {
+        --chart-pro-fill: #aea79f;
+        --chart-milestone-color: #cd7c97;
+    }
+}
+
+html[data-theme="dark"] {
+    --chart-pro-fill: #aea79f;
+    --chart-milestone-color: #cd7c97;
+}
+
+.chart__bar--black {
+    fill: var(--chart-pro-fill, #111);
+}
+
 .chart__milestone {
-    stroke: #56334b;
+    stroke: var(--chart-milestone-color, #56334b);
 }
 
 .chart__milestone-release {
-    fill: #56334b;
+    fill: var(--chart-milestone-color, #56334b);
 }
 
 .x.axis line,
