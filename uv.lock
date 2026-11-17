@@ -701,8 +701,8 @@ wheels = [
 
 [[package]]
 name = "craft-parts"
-version = "2.31.0.post70+ge0bea3bb"
-source = { git = "https://github.com/cmatsuoka/craft-parts?rev=feat%2Fpartitions-always-enabled#e0bea3bb5885d060b614ac35b1b096f8ad49861a" }
+version = "2.38.0.post7+g6dfd0961"
+source = { git = "https://github.com/cmatsuoka/craft-parts?rev=feat%2Fpartitions-always-enabled#6dfd09610194ac769936d93c92ebb679219b5f5a" }
 dependencies = [
     { name = "lxml" },
     { name = "pydantic" },
