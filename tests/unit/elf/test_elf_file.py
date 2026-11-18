@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import struct
 from pathlib import Path
 
 import pytest
@@ -73,6 +74,40 @@ class TestElfFileSmoketest:
         Path("invalid-elf").write_bytes(b"\x7fELF\x00")
         elf_files = elf_utils.get_elf_files_from_list(new_dir, ["invalid-elf"])
         assert elf_files == []
+
+    def test_dynamic_section_without_string_table(self, new_dir):
+        """Skip ELF files (e.g. Guile .go files) with no dynamic string table."""
+        # Section names: "\0.shstrtab\0.dynamic\0"
+        shstrtab = b"\x00.shstrtab\x00.dynamic\x00"
+        # A single DT_NULL entry, so no DT_STRTAB tag.
+        dynamic = struct.pack("<qQ", 0, 0)
+        dynamic_offset = 64
+        shstrtab_offset = dynamic_offset + len(dynamic)
+        shdr_offset = shstrtab_offset + len(shstrtab)
+
+        def shdr(name, sh_type, offset, size, entsize=0):
+            return struct.pack(
+                "<IIQQQQIIQQ", name, sh_type, 0, 0, offset, size, 0, 0, 8, entsize
+            )
+
+        ehdr = (
+            b"\x7fELF\x02\x01\x01"
+            + b"\x00" * 9
+            + struct.pack(
+                "<HHIQQQIHHHHHH", 3, 62, 1, 0, 0, shdr_offset, 0, 64, 0, 0, 64, 3, 1
+            )
+        )
+        data = (
+            ehdr
+            + dynamic
+            + shstrtab
+            + shdr(0, 0, 0, 0)
+            + shdr(11, 6, dynamic_offset, len(dynamic), 16)
+            + shdr(1, 3, shstrtab_offset, len(shstrtab))
+        )
+        Path("no-strtab.go").write_bytes(data)
+
+        assert elf_utils.get_elf_files_from_list(new_dir, ["no-strtab.go"]) == []
 
 
 class TestGetLibraries:
