@@ -399,6 +399,22 @@ class TestProjectValidation:
             with pytest.raises(pydantic.ValidationError, match=error):
                 Project.unmarshal(data)
 
+    @pytest.mark.parametrize("snap_type", ["app", "base", "gadget", "kernel"])
+    def test_snapd_info_only_allowed_for_snapd(self, snap_type, project_yaml_data):
+        data = project_yaml_data(
+            type=snap_type,
+            **{"snapd-info": {}},
+        )
+
+        if snap_type in {"base", "kernel"}:
+            data["build-base"] = data.pop("base")
+
+        with pytest.raises(
+            pydantic.ValidationError,
+            match="'snapd-info' is only allowed for snapd snaps",
+        ):
+            Project.unmarshal(data)
+
     @pytest.mark.parametrize(
         "confinement", ["strict", "devmode", "classic", "_invalid"]
     )
