@@ -690,3 +690,34 @@ def test_write_hook_wrapper(new_dir):
         hook_wrapper.read_text()
         == f'#!/bin/sh\nexec "$SNAP/snap/hooks/{hook_name}" "$@"\n'
     )
+
+
+@pytest.mark.parametrize("desktop", ["meta/gui/app.desktop", "snap/gui/app.desktop"])
+def test_resolve_mediated_desktop_source_prefers_project_gui(desktop, tmp_path):
+    """The project's gui asset wins over a desktop file a part put in prime."""
+    assets_dir = tmp_path / "snap"
+    prime_dir = tmp_path / "prime"
+    (assets_dir / "gui").mkdir(parents=True)
+    (assets_dir / "gui" / "app.desktop").touch()
+    (prime_dir / desktop).parent.mkdir(parents=True)
+    (prime_dir / desktop).touch()
+
+    source = parts_setup_assets._resolve_mediated_desktop_source(
+        desktop, assets_dir=assets_dir, prime_dir=prime_dir
+    )
+
+    assert source == assets_dir / "gui" / "app.desktop"
+
+
+def test_resolve_mediated_desktop_source_stays_in_gui_dir(tmp_path):
+    """A path that leaves the gui directory isn't mapped to the project assets."""
+    assets_dir = tmp_path / "snap"
+    prime_dir = tmp_path / "prime"
+    (assets_dir / "gui").mkdir(parents=True)
+    (tmp_path / "outside.desktop").touch()
+
+    source = parts_setup_assets._resolve_mediated_desktop_source(
+        "meta/gui/../../outside.desktop", assets_dir=assets_dir, prime_dir=prime_dir
+    )
+
+    assert source == assets_dir / "meta/gui/../../outside.desktop"

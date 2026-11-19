@@ -210,10 +210,13 @@ def _resolve_mediated_desktop_source(
     point at either location. Map those paths back to the project's ``gui``
     assets directory, which takes precedence as the copy used to overwrite them.
     """
+    gui_dir = assets_dir / "gui"
     for prefix in ("meta/gui/", "snap/gui/"):
         if desktop.startswith(prefix):
-            gui_source = assets_dir / "gui" / desktop.removeprefix(prefix)
-            if gui_source.is_file():
+            gui_source = gui_dir / desktop.removeprefix(prefix)
+            if gui_source.resolve().is_relative_to(gui_dir.resolve()) and (
+                gui_source.is_file()
+            ):
                 return gui_source
 
     desktop_source = prime_dir / desktop
