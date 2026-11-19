@@ -134,6 +134,22 @@ channel, chosen at random. Roughly one out of three devices will apply the updat
 they next refresh the snap.
 
 
+Pause the release
+~~~~~~~~~~~~~~~~~
+
+An active progressive release can be paused:
+
+.. code-block:: bash
+
+    snapcraft release <snap-name> 356 stable --pause
+
+To resume a paused release, re-release the revision with ``--progressive`` and a
+percentage equal to or greater than the current one:
+
+.. code-block:: bash
+
+    snapcraft release <snap-name> 356 stable --progressive 30
+
 Close the release
 ~~~~~~~~~~~~~~~~~
 
