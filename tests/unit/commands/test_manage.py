@@ -151,7 +151,11 @@ def test_release(emitter, fake_store_release, fake_app_config):
 
     cmd.run(
         argparse.Namespace(
-            name="test-snap", revision=10, channels="edge", progressive_percentage=None
+            name="test-snap",
+            revision=10,
+            channels="edge",
+            progressive_percentage=None,
+            pause=False,
         )
     )
 
@@ -162,6 +166,7 @@ def test_release(emitter, fake_store_release, fake_app_config):
             revision=10,
             channels=["edge"],
             progressive_percentage=None,
+            pause=False,
         )
     ]
     emitter.assert_message("Released 'test-snap' revision 10 to channels: 'edge'")
@@ -177,6 +182,7 @@ def test_release_multiple_channels(emitter, fake_store_release, fake_app_config)
             revision=10,
             channels="edge,latest/stable,1.0/beta",
             progressive_percentage=None,
+            pause=False,
         )
     )
 
@@ -187,6 +193,7 @@ def test_release_multiple_channels(emitter, fake_store_release, fake_app_config)
             revision=10,
             channels=["edge", "latest/stable", "1.0/beta"],
             progressive_percentage=None,
+            pause=False,
         )
     ]
     emitter.assert_message(
@@ -200,7 +207,11 @@ def test_release_progressive(emitter, fake_store_release, fake_app_config):
 
     cmd.run(
         argparse.Namespace(
-            name="test-snap", revision=10, channels="edge", progressive_percentage=10
+            name="test-snap",
+            revision=10,
+            channels="edge",
+            progressive_percentage=10,
+            pause=False,
         )
     )
 
@@ -211,11 +222,61 @@ def test_release_progressive(emitter, fake_store_release, fake_app_config):
             revision=10,
             channels=["edge"],
             progressive_percentage=10,
+            pause=False,
         )
     ]
     emitter.assert_message(
         "Released 'test-snap' revision 10 to channels: 'edge' for 10% of users"
     )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_release_pause(emitter, fake_store_release, fake_app_config):
+    cmd = commands.StoreReleaseCommand(fake_app_config)
+
+    cmd.run(
+        argparse.Namespace(
+            name="test-snap",
+            revision=10,
+            channels="edge",
+            progressive_percentage=None,
+            pause=True,
+        )
+    )
+
+    assert fake_store_release.mock_calls == [
+        call(
+            ANY,
+            snap_name="test-snap",
+            revision=10,
+            channels=["edge"],
+            progressive_percentage=None,
+            pause=True,
+        )
+    ]
+    emitter.assert_message(
+        "Paused progressive release of 'test-snap' revision 10 on channels: 'edge'"
+    )
+
+
+@pytest.mark.usefixtures("memory_keyring")
+def test_release_pause_and_progressive_are_exclusive(
+    fake_store_release, fake_app_config, capsys
+):
+    cmd = commands.StoreReleaseCommand(fake_app_config)
+
+    parser = argparse.ArgumentParser()
+    cmd.fill_parser(parser)
+
+    with pytest.raises(SystemExit):
+        parser.parse_args(["test-snap", "10", "edge", "--progressive", "10", "--pause"])
+
+    assert (
+        "argument --pause: not allowed with argument --progressive"
+        in capsys.readouterr().err
+    )
+
+    assert fake_store_release.mock_calls == []
 
 
 #################
