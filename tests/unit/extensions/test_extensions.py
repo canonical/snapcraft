@@ -15,7 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import re
+
 import pytest
+from craft_cli.pytest_plugin import raises_craft_error
 
 from snapcraft import errors, extensions
 from snapcraft.extensions.extension import append_to_env, prepend_to_env
@@ -233,16 +236,14 @@ def test_apply_extension_experimental():
         },
     }
 
-    with pytest.raises(errors.ExtensionError) as raised:
+    with raises_craft_error(
+        errors.ExtensionError,
+        match=re.escape("Extension is experimental: 'fake-extension-experimental'"),
+        docs_url=re.escape(
+            "https://documentation.ubuntu.com/snapcraft/stable/reference/extensions"
+        ),
+    ):
         extensions.apply_extensions(yaml_data, arch="amd64", target_arch="amd64")
-
-    assert (
-        str(raised.value) == "Extension is experimental: 'fake-extension-experimental'"
-    )
-    assert (
-        raised.value.docs_url
-        == "https://documentation.ubuntu.com/snapcraft/stable/reference/extensions"
-    )
 
 
 @pytest.mark.usefixtures("fake_extension_experimental")

@@ -19,6 +19,7 @@ import re
 from unittest.mock import call
 
 import pytest
+from craft_cli.pytest_plugin import raises_craft_error
 
 import snapcraft.cli
 import snapcraft.commands.core22.lifecycle as core22_lifecycle
@@ -121,12 +122,12 @@ def test_core22_lifecycle_pro_not_supported(cmd_class, parsed_args, mocker):
     cmd = cmd_class(None)
     expected = re.escape("'--pro' is not supported for core22.")
 
-    with pytest.raises(snapcraft.errors.SnapcraftError, match=expected) as raised:
+    with raises_craft_error(
+        snapcraft.errors.SnapcraftError,
+        match=expected,
+        resolution=re.escape("Use the 'ua-services' key in the project file instead."),
+    ):
         cmd.run(parsed_args)
-
-    assert raised.value.resolution == (
-        "Use the 'ua-services' key in the project file instead."
-    )
 
 
 @pytest.mark.usefixtures("emitter")
@@ -190,14 +191,13 @@ def test_ua_token_error(cmd_class, fake_services):
     )
     cmd = cmd_class({"app": APP_METADATA, "services": fake_services})
 
-    with pytest.raises(snapcraft.errors.SnapcraftError) as raised:
+    with raises_craft_error(
+        snapcraft.errors.SnapcraftError,
+        match=re.escape("'--ua-token' is not supported for this base."),
+        details=re.escape("The Pro token attached to the host is used instead."),
+        resolution=re.escape("Remove the '--ua-token' argument."),
+    ):
         cmd.run(parsed_args)
-
-    assert str(raised.value) == "'--ua-token' is not supported for this base."
-    assert raised.value.details == (
-        "The Pro token attached to the host is used instead."
-    )
-    assert raised.value.resolution == "Remove the '--ua-token' argument."
 
 
 @pytest.mark.parametrize(
@@ -221,13 +221,14 @@ def test_enable_experimental_ua_services_error(cmd_class, fake_services):
     )
     cmd = cmd_class({"app": APP_METADATA, "services": fake_services})
 
-    with pytest.raises(snapcraft.errors.SnapcraftError) as raised:
+    with raises_craft_error(
+        snapcraft.errors.SnapcraftError,
+        match=re.escape("Pro support is stable for this base."),
+        resolution=re.escape(
+            "Remove the '--enable-experimental-ua-services' argument."
+        ),
+    ):
         cmd.run(parsed_args)
-
-    assert str(raised.value) == "Pro support is stable for this base."
-    assert raised.value.resolution == (
-        "Remove the '--enable-experimental-ua-services' argument."
-    )
 
 
 @pytest.mark.parametrize(

@@ -675,7 +675,7 @@ wheels = [
 
 [[package]]
 name = "craft-cli"
-version = "3.4.1"
+version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -683,9 +683,9 @@ dependencies = [
     { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b2/97/55e3a42aed3c8ee408dca292c7736080161d6bcfd6d21a8374b74be90f63/craft_cli-3.4.1.tar.gz", hash = "sha256:e4396695e89f15fbd06255a78b38a362006cd711266d926c2b6cd2a546af61a5", size = 231519, upload-time = "2026-06-17T13:07:15.671Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/cc/ecfbea8637f6c2725df28818ec9203c32276f95a91ec603c26128e332cc8/craft_cli-3.5.0.tar.gz", hash = "sha256:ecb00fbd80997ab72271145a4049925169cc5b99bc53abc218f2cfcce92edfe2", size = 289642, upload-time = "2026-11-18T20:51:04.29Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/d4/22381efb16c8479ecd1fe73e59511a44033b5e78e40499a32a153e7eaef5/craft_cli-3.4.1-py3-none-any.whl", hash = "sha256:78702bb254a63dd8a30841fe9773f77676a3acace8b4c363f7dce135d354a107", size = 47241, upload-time = "2026-06-17T13:07:13.789Z" },
+    { url = "https://files.pythonhosted.org/packages/33/92/05eb42e09d833b977ddcaa1ff91f4d729d6e8aa286bbf91f462a6c2e1819/craft_cli-3.5.0-py3-none-any.whl", hash = "sha256:77259e16fe43ecc27971fef5c1062f56017d4594992d02b8add4e7675cf24ad8", size = 49298, upload-time = "2026-11-18T20:51:02.501Z" },
 ]
 
 [[package]]
@@ -2825,7 +2825,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.3.3" },
     { name = "craft-application", extras = ["remote"], specifier = ">=7.4.1" },
     { name = "craft-archives", specifier = ">=2.2.2" },
-    { name = "craft-cli", specifier = ">=3.4.0" },
+    { name = "craft-cli", specifier = ">=3.5.0" },
     { name = "craft-grammar", specifier = ">=2.3.0" },
     { name = "craft-parts", specifier = "~=2.37.2" },
     { name = "craft-platforms", specifier = ">=0.11.0" },
