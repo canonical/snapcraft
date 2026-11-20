@@ -88,134 +88,136 @@ To build an Electron-based snap with the built-in tooling:
 The builder will generate a snap in the ``dist/`` directory.
 
 
-Craft a snap of an existing binary
+Craft a snap from Electron source
 ----------------------------------
 
-Alternatively, if you have a pre-built binary such as a deb or tarball file,
-you can craft that into a snap, too.
+For apps that are open source, you can build the Electron application directly
+from its source repository instead of repackaging a pre-built binary. This
+approach is more transparent and reproducible.
 
 
-Example Discord project file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Example Signal Desktop project file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following code comprises the project file of an Electron app, `Discord
-<https://github.com/snapcrafters/discord>`_. It's a popular instant messaging app and
-social platform.
+The following code comprises the project file of `Signal Desktop
+<https://github.com/snapcrafters/signal-desktop>`_, a privacy-focused messaging
+application built with Electron. It fetches the upstream source and builds
+using ``pnpm``, demonstrating how to craft a snap from an Electron source tree.
 
-.. dropdown:: Discord project file
+.. dropdown:: Signal Desktop project file
 
     .. code-block:: yaml
         :caption: snapcraft.yaml
 
-        name: discord
-        title: Discord
-        summary: Chat for Communities and Friends
+        name: signal-desktop
+        title: Signal Desktop
+        summary: Speak Freely - Private Messenger
         description: |
-          Discord is the easiest way to communicate over voice, video, and text.
-          Chat, hang out, and stay close with your friends and communities.
+          Millions of people use Signal every day for free and instantaneous
+          communication anywhere in the world.
+        website: https://signal.org/
+        source-code: https://github.com/snapcrafters/signal-desktop
+        license: AGPL-3.0-only
+        icon: snap/gui/signal-desktop.png
+        version: 8.31.0
 
-          Snaps are confined, as such Discord may be unable to perform some of
-          the tasks it typically does when unconfined. This may result in the
-          system log getting spammed with apparmor errors. Granting access to the
-          system-observe interface when in the snap will enable the features, and
-          thus reduce the logging.
-
-            snap connect discord:system-observe
-
-          **Authors**
-
-          This snap is maintained by the Snapcrafters community, and is not
-          necessarily endorsed or officially maintained by the upstream
-          developers.
-
-        website: https://discord.com/
-        contact: https://github.com//snapcrafters/discord/issues
-        issues: https://github.com//snapcrafters/discord/issues
-        source-code: https://github.com//snapcrafters/discord
-        license: Proprietary
-        icon: snap/discord.png
-        version: 0.0.76
-
-        base: core22 # Reverted to core22 as a temporary workaround for https://github.com/snapcrafters/discord/issues/233
+        base: core24
         grade: stable
         confinement: strict
         compression: lzo
 
-        assumes:
-          - snapd2.54
-
-        architectures:
-          - amd64
+        platforms:
+          amd64:
+          arm64:
 
         parts:
-          launcher:
-            plugin: dump
-            source: snap/local
-            source-type: local
-            stage-packages:
-              - jq
-
-          discord:
-            plugin: dump
-            source: https://dl.discordapp.net/apps/linux/${SNAPCRAFT_PROJECT_VERSION}/discord-${SNAPCRAFT_PROJECT_VERSION}.deb
-            source-type: deb
+          node-runtime:
+            plugin: nil
+            build-packages:
+              - curl
             override-build: |
-              craftctl default
-              sed -i 's|Icon=discord|Icon=/usr/share/discord/discord\.png|' ${CRAFT_PART_INSTALL}/usr/share/discord/discord.desktop
-            stage-packages:
-              - libatomic1
-              - libc++1
-              - libnspr4
-              - libnss3
-              - libxss1
-              - xdg-utils
+              # Install pnpm in a dedicated part so Signal's workspace hooks
+              # are not loaded while bootstrapping pnpm itself.
+              export PNPM_HOME="${CRAFT_PART_INSTALL}/pnpm"
+              export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
+              curl -fsSL https://get.pnpm.io/install.sh -o /tmp/install-pnpm.sh
+              (cd /tmp && env SHELL=bash sh /tmp/install-pnpm.sh)
             prime:
-              - -usr/share/discord/chrome-sandbox
-              - -usr/bin/xdg-open
+              - -*
 
-        plugs:
-          shmem:
-            interface: shared-memory
-            private: true
+          signal-desktop:
+            after:
+              - node-runtime
+            plugin: dump
+            source: https://github.com/signalapp/Signal-Desktop
+            source-type: git
+            source-tag: v$SNAPCRAFT_PROJECT_VERSION
+            build-packages:
+              - jq
+              - python3
+            stage-packages:
+              - libnss3
+              - libnss-sss
+            build-environment:
+              - SIGNAL_ENV: "production"
+            override-build: |
+              export PNPM_HOME="${CRAFT_STAGE}/pnpm"
+              export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
+              # Pin pnpm to the exact version declared in
+              # devEngines.packageManager so the lockfile's
+              # package-manager entry is satisfied.
+              PNPM_VERSION="$(jq -er '.devEngines.packageManager
+                | select(.name == "pnpm")
+                | .version' package.json)"
+              (cd /tmp && pnpm self-update "${PNPM_VERSION}")
+              pnpm env use --global "$(jq -r .engines.node package.json)"
+              pnpm install --no-frozen-lockfile
+              # Signal's aggregate build runs code generation and
+              # renderer compilation before invoking Electron Builder.
+              pnpm run generate
+              pnpm run build:esbuild:prod
+              pnpm run build:electron \
+                --config.directories.output=release --dir
+              # Stage the unpacked release (linux-unpacked on amd64,
+              # linux-arm64-unpacked on arm64).
+              mkdir -p "${CRAFT_PART_INSTALL}/opt"
+              mv release/linux-*unpacked "${CRAFT_PART_INSTALL}/opt/Signal"
+            prime:
+              - -opt/Signal/chrome-sandbox
 
         apps:
-          discord:
+          signal-desktop:
             extensions: [gnome]
-            command: bin/launcher
-            command-chain: [bin/disable-updater]
-            autostart: discord-stable.desktop
-            desktop: usr/share/applications/discord.desktop
-            environment:
-              # Correct the TMPDIR path for Chromium Framework/Electron to
-              # ensure libappindicator has readable resources
-              TMPDIR: $XDG_RUNTIME_DIR
-              DISABLE_WAYLAND: 1
-              # Included temporarily until https://github.com/snapcore/snapcraft-desktop-integration/issues/28
-              # is resolved.
-              NOTIFY_IGNORE_PORTAL: 1
+            command: opt/Signal/signal-desktop
             plugs:
-              - audio-playback
-              - audio-record
+              - browser-support
               - camera
               - home
-              - mount-observe
               - network
-              - network-observe
-              - process-control
+              - audio-playback
+              - audio-record
               - removable-media
-              - screen-inhibit-control
-              - shmem
-              - system-observe
               - unity7
+            environment:
+              TMPDIR: $XDG_RUNTIME_DIR
 
 
 Electron parts
 ~~~~~~~~~~~~~~
 
-Since they are wrapped binaries, Electron parts don't have a custom plugin and instead
-use the :ref:`craft_parts_dump_plugin`.
+In the ``signal-desktop`` part above, the ``dump`` plugin is used together
+with ``override-build`` to compile the application via ``pnpm`` before staging
+the output. The ``node-runtime`` part installs the ``pnpm`` package manager in
+isolation so that Signal's workspace hooks do not interfere with the
+bootstrapping step.
 
-In the definition of the ``discord`` part, you can see that we set the source
-to the official Debian archive published by the Discord authors, and then
-remove ``chrome-sandbox``, as the browser-sandbox is unnecessary in simple
-Electron apps.
+This pattern — pulling source from the upstream Git repository, pinning the
+package manager to the version declared in ``devEngines.packageManager``,
+installing Node.js at the required version, and running the project's full
+build sequence — is the recommended approach when you want a reproducible,
+auditable build rather than repackaging a pre-built binary.
+
+The ``stage-packages`` list in ``signal-desktop`` supplies the Electron runtime
+libraries (such as ``libnss3``) that the packaged binary requires on a
+``core24`` base. The ``apps`` stanza declares the snap entry point and the
+interfaces the application needs to access system resources.
