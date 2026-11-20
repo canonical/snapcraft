@@ -155,9 +155,10 @@ Snapcraft 9.2.1
 Snapcraft 9.2.2
 ~~~~~~~~~~~~~~~
 
+- `snapcraft#6325` <https://github.com/canonical/snapcraft/issues/6325>`__ Skip
+  repacking if artifact contents are unchanged
 - `snapcraft#6497 <https://github.com/canonical/snapcraft/issues/6497>`__ Kernel plugin
   leaves ``/proc/version_signature`` empty
-
 
 Contributors
 ------------
