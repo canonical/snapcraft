@@ -380,7 +380,7 @@ class GNOME(GPUExtension):
 
         if base >= 26:
             cleanup_srcs = [
-                self.gnome_snaps.sdk,
+                self.gnome_snaps.content,
                 "gtk-common-themes",
             ]
             escaped_srcs = [f'"{w}"' for w in cleanup_srcs]
@@ -390,8 +390,44 @@ class GNOME(GPUExtension):
                 "build-snaps": cleanup_srcs,
                 "override-prime": (
                     "set -eux\n"
+                    'PRIME_CANON="$(realpath "$CRAFT_PRIME")"\n'
                     f"for snap in {' '.join(escaped_srcs)}; do\n"
-                    '    cd "/snap/$snap/current" && find . -type f,l \\( -name "*.so.*" -o -name "*.so" \\) -exec rm -f "$CRAFT_PRIME/{}" \\;\n'
+                    '    (cd "/snap/$snap/current" && find . -type f,l \\( -name "*.so.*" -o -name "*.so" \\) -print0) | while IFS= read -r -d \'\' rel; do\n'
+                    '        dir_canon="$(realpath "$CRAFT_PRIME/${rel%/*}")"\n'
+                    '        case "$dir_canon" in\n'
+                    '            "$PRIME_CANON"/*) ;;\n'
+                    '            *) continue ;;\n'
+                    '        esac\n'
+                    '        f="$dir_canon/${rel##*/}"\n'
+                    '        if [ -d "$f" ] && [ ! -L "$f" ]; then continue; fi\n'
+                    '        # Follow soname symlink chains (libfoo.so ->\n'
+                    '        # libfoo.so.X -> libfoo.so.X.Y.Z) and remove the real\n'
+                    '        # versioned file too: once the soname symlinks are gone\n'
+                    '        # it is unreachable, and providers built from newer\n'
+                    '        # sources use different file names for the same SONAME.\n'
+                    '        # The walk stays inside the prime (canonical directory\n'
+                    '        # containment checked above and same-directory relative\n'
+                    '        # targets only) and inside the SONAME family (the target\n'
+                    '        # basename must extend the symlink basename, so\n'
+                    '        # libfoo.so.1 does not remove a distinct libfoo.so.10).\n'
+                    '        cur="$f"\n'
+                    '        hops=0\n'
+                    '        while [ -L "$cur" ] && [ "$hops" -lt 8 ]; do\n'
+                    '            t="$(readlink "$cur")"\n'
+                    '            case "$t" in\n'
+                    '                */*|"" ) break ;;\n'
+                    '            esac\n'
+                    '            b="${cur##*/}"\n'
+                    '            case "$t" in\n'
+                    '                "$b".*) ;;\n'
+                    '                *) break ;;\n'
+                    '            esac\n'
+                    '            rm -f "$cur"\n'
+                    '            cur="${cur%/*}/$t"\n'
+                    '            hops=$((hops + 1))\n'
+                    '        done\n'
+                    '        if [ ! -d "$cur" ] || [ -L "$cur" ]; then rm -f "$cur"; fi\n'
+                    '    done\n'
                     "done\n"
                 ),
             }
