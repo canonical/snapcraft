@@ -382,6 +382,25 @@ def test_get_command_environment_passthrough(
     }
 
 
+def test_get_command_environment_ignores_empty_proxy(
+    mocker, mock_default_command_environment, monkeypatch
+):
+    """An empty proxy must not be copied into the build environment."""
+    monkeypatch.setenv("http_proxy", "")
+    monkeypatch.setenv("https_proxy", "")
+    monkeypatch.setenv("no_proxy", "")
+    monkeypatch.setenv("SNAPCRAFT_BUILD_INFO", "test-build-info")
+
+    command_environment = providers.get_command_environment(http_proxy="test-http")
+
+    assert command_environment == {
+        "PATH": "test-path",
+        "CRAFT_MANAGED_MODE": "1",
+        "http_proxy": "test-http",
+        "SNAPCRAFT_BUILD_INFO": "test-build-info",
+    }
+
+
 def test_get_command_environment_http_https_proxy(
     mocker, mock_default_command_environment
 ):

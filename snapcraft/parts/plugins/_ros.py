@@ -193,8 +193,14 @@ class RosPlugin(plugins.Plugin):
             "http_proxy",
             "https_proxy",
         ]:
-            if key in os.environ:
-                env[key] = os.environ[key]
+            if key not in os.environ:
+                continue
+            value = os.environ[key]
+            # An empty proxy is not a proxy. Copying "" makes later tools
+            # treat the variable as set.
+            if key in {"http_proxy", "https_proxy"} and not value:
+                continue
+            env[key] = value
 
         env_flags = [f"{key}={value}" for key, value in env.items()]
 
@@ -226,15 +232,25 @@ class RosPlugin(plugins.Plugin):
             )
         ]
 
+    def _rosdep_init_command(self) -> str:
+        """Return the rosdep init command, preserving only non-empty proxies."""
+        # rosdep does not read a proxy from its own config, so a real proxy has
+        # to be passed through sudo. An empty value is not a proxy.
+        # https://github.com/ros-infrastructure/rosdep/issues/271
+        proxy_names = [
+            name for name in ("http_proxy", "https_proxy") if os.environ.get(name)
+        ]
+        if proxy_names:
+            preserved = ",".join(proxy_names)
+            return f"sudo --preserve-env={preserved} rosdep init; fi"
+        return "sudo rosdep init; fi"
+
     @override
     def get_build_commands(self) -> list[str]:
         return (
             [  # noqa S608 (false positive on SQL injection)
                 "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
-                # Preserve http(s)_proxy env var in root for remote-build proxy since rosdep
-                # doesn't support proxy
-                # https://github.com/ros-infrastructure/rosdep/issues/271
-                "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
+                self._rosdep_init_command(),
                 'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
             ]
             # There are a number of unbound vars, disable flag
