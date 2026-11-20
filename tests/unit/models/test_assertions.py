@@ -27,7 +27,6 @@ from snapcraft.models import (
     ValidationSetAssertion,
 )
 from snapcraft.models.assertions import (
-    Filter,
     Parameter,
     Rules,
     Snap,
@@ -190,7 +189,6 @@ def test_rules_defaults(check):
 
     check.is_none(rules.summary)
     check.is_none(rules.parameters)
-    check.is_none(rules.filters)
 
 
 def test_rules_parameters(check):
@@ -214,21 +212,6 @@ def test_rules_parameters(check):
                 summary="test-parameter-summary", presence="required-on-write"
             )
         },
-    )
-
-
-def test_rules_filters(check):
-    """Test that filters are unmarshalled correctly."""
-    rules = Rules.unmarshal(
-        {
-            "rules": [{"storage": "test-storage"}],
-            "filters": [{"test-parameter": {"optional": True}}],
-        }
-    )
-
-    check.equal(
-        rules.filters,
-        [{"test-parameter": Filter(optional=True)}],
     )
 
 

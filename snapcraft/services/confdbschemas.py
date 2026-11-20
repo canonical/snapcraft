@@ -31,8 +31,6 @@ _CONFDB_SCHEMA_TEMPLATE = textwrap.dedent(
     """\
     account-id: {account_id}
     name: {name}{summary}
-    # The revision for this confdb-schema
-    # revision: {revision}
     {views}
     {body}
     """
@@ -42,11 +40,11 @@ _CONFDB_SCHEMA_TEMPLATE = textwrap.dedent(
 _CONFDB_SCHEMA_VIEWS_TEMPLATE = textwrap.dedent(
     """\
     views:
-      wifi-setup:
+      wifi-state:
         summary: Summary of the view.
         rules:
           - request: ssids
-            storage: wifi.ssids
+            storage: v1.wifi.ssids
             access: read
     """
 )
@@ -58,8 +56,12 @@ _CONFDB_SCHEMA_BODY_TEMPLATE = textwrap.dedent(
       {
         "storage": {
           "schema": {
-            "wifi": {
-              "values": "any"
+            "v1": {
+              "schema": {
+                "wifi": {
+                  "values": "any"
+                }
+              }
             }
           }
         }
@@ -127,7 +129,6 @@ class ConfdbSchemas(
             ),
             body=dump_yaml({"body": assertion.body}, default_flow_style=False),
             name=assertion.name,
-            revision=assertion.revision,
             summary=summary,
         )
 
@@ -140,7 +141,6 @@ class ConfdbSchemas(
             views=_CONFDB_SCHEMA_VIEWS_TEMPLATE,
             body=_CONFDB_SCHEMA_BODY_TEMPLATE,
             name=name,
-            revision=1,
             summary="\nsummary: Summary of the confdb-schema",
         )
 
