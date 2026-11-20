@@ -77,7 +77,7 @@ def run(command_name: str, parsed_args: "argparse.Namespace") -> None:
 
     # Register our own callbacks
     callbacks.register_prologue(set_global_environment)
-    callbacks.register_pre_step(set_step_environment)
+    callbacks.register_pre_step(set_step_environment, may_mutate_filesystem=False)
     callbacks.register_post_step(patch_elf, step_list=[Step.PRIME])
 
     build_count = utils.get_parallel_build_count()
