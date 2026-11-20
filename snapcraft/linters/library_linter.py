@@ -59,12 +59,29 @@ class LibraryLinter(Linter):
         used_libraries: set[Path] = set()
 
         self._generate_ld_config_cache()
+        host_elf_machine = elf_utils.get_host_elf_machine()
+        if host_elf_machine is None:
+            emit.warning(
+                "Unknown host architecture - cannot determine foreign-arch "
+                "ELF files to skip"
+            )
 
         for elf_file in elf_files:
             # Skip linting files listed in the ignore list for the main "library"
             # filter.
             if self._is_file_ignored(elf_file):
                 continue
+
+            # Skip ELF files for foreign architectures — invoking them via binfmt/QEMU
+            # to resolve dependencies causes spurious errors and potential SEGFAULTs.
+            if host_elf_machine is not None and elf_file.arch_tuple is not None:
+                _, _, e_machine = elf_file.arch_tuple
+                if e_machine != host_elf_machine:
+                    emit.debug(
+                        f"Skipping library linting for foreign-arch ELF "
+                        f"{str(elf_file.path)!r} ({e_machine})"
+                    )
+                    continue
 
             arch_triplet = elf_utils.get_arch_triplet()
             content_dirs = self._snap_metadata.get_provider_content_directories()
