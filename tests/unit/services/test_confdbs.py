@@ -134,8 +134,6 @@ def test_generate_yaml_from_model(fake_confdb_schema_assertion, fake_services):
         """\
         account-id: test-account-id
         name: test-confdb
-        # The revision for this confdb-schema
-        # revision: 10
         views:
           wifi-setup:
             rules:
@@ -200,8 +198,6 @@ def test_generate_yaml_from_model_with_summary(
         account-id: test-account-id
         name: test-confdb
         summary: This is a test confdb-schema summary.
-        # The revision for this confdb-schema
-        # revision: 10
         views:
           wifi-setup:
             summary: This is a test views summary.
@@ -241,22 +237,24 @@ def test_generate_yaml_from_template(fake_services):
         account-id: test-account-id
         name: test-confdb
         summary: Summary of the confdb-schema
-        # The revision for this confdb-schema
-        # revision: 1
         views:
-          wifi-setup:
+          wifi-state:
             summary: Summary of the view.
             rules:
               - request: ssids
-                storage: wifi.ssids
+                storage: v1.wifi.ssids
                 access: read
 
         body: |-
           {
             "storage": {
               "schema": {
-                "wifi": {
-                  "values": "any"
+                "v1": {
+                  "schema": {
+                    "wifi": {
+                      "values": "any"
+                    }
+                  }
                 }
               }
             }
