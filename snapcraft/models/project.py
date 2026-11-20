@@ -1004,10 +1004,15 @@ class App(models.CraftBaseModel):
     )
     @classmethod
     def _validate_apps_section_content(cls, command: str) -> str:
+        # Snapcraft expands its own build-time variables, such as
+        # "${SNAPCRAFT_PROJECT_NAME}", before the command is written to snap.yaml,
+        # so snapd never sees their braces. Other references, such as "${SNAP}",
+        # reach snapd unchanged and must still be rejected here.
+        project_variable = re.compile(r"\$\{(?:SNAPCRAFT|CRAFT)_[A-Za-z0-9_]+\}")
         # Find any invalid characters in the field.
         # The regex below is derived from snapd's validator code.
         # https://github.com/canonical/snapd/blob/0706e2d0b20ae2bf030863f142b8491b66e80bcb/snap/validate.go#L756
-        if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", command):
+        if not re.match(r"^[A-Za-z0-9/. _#:$-]*$", project_variable.sub("", command)):
             message = "App commands must consist of only alphanumeric characters, spaces, and the following characters: / . _ # : $ -"
             raise ValueError(message)
 
