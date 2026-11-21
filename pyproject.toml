@@ -22,7 +22,7 @@ dependencies = [
   "click>=8.3.3",
   "craft-application[remote]>=7.4.1",
   "craft-archives>=2.2.2",
-  "craft-cli>=3.4.0",
+  "craft-cli>=3.5.0",
   "craft-grammar>=2.3.0",
   "craft-parts~=2.37.2",
   "craft-platforms>=0.11.0",
@@ -59,6 +59,7 @@ snapcraft = "snapcraft.application:main"
 [dependency-groups]
 dev = [
   "coverage[toml]",
+  "craft-cli[pytest]>=3.5.0",
   "pip",
   "pyinstaller ; sys_platform == 'win32'",
   "pymacaroons",
