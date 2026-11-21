@@ -395,6 +395,8 @@ class KDENeon(GPUExtension):
         source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
         base = self.yaml_data["base"]
+
+        parts: dict[str, dict[str, Any]]
         if base != "core22":
             parts = {f"kde-neon/{k}": v for k, v in super().get_parts_snippet().items()}
         else:
