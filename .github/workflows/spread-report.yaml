@@ -1,0 +1,20 @@
+name: Spread test report
+
+on:
+  # zizmor: ignore[dangerous-triggers] Fork PRs cannot create check runs, so
+  # reporting must be triggered with workflow_run.
+  workflow_run:
+    workflows: ["Spread tests for source", "Spread (manual - large/flaky)"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  report:
+    uses: canonical/starflow/.github/workflows/test-report.yaml@main
+    with:
+      reporter: java-junit
+      name: "Spread tests ($1)"
