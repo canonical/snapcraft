@@ -176,3 +176,27 @@ def test_metrics_no_data(
     metrics_command.run(namespace)
 
     emitter.assert_interactions([])
+
+
+def test_metrics_overview() -> None:
+    expected = textwrap.dedent(
+        """
+        Retrieve store metric data for a snap you own. New metrics are generated
+        daily.
+
+        Valid metric names are:
+        - daily_device_change
+        - installed_base_by_architecture
+        - installed_base_by_channel
+        - installed_base_by_country
+        - installed_base_by_operating_system
+        - installed_base_by_version
+        - weekly_device_change
+        - weekly_installed_base_by_architecture
+        - weekly_installed_base_by_channel
+        - weekly_installed_base_by_country
+        - weekly_installed_base_by_operating_system
+        - weekly_installed_base_by_version"""
+    )
+
+    assert StoreMetricsCommand.overview == expected

@@ -45,8 +45,11 @@ class StoreMetricsCommand(AppCommand):
     overview = textwrap.dedent(
         """
         Retrieve store metric data for a snap you own. New metrics are generated
-        daily."""
-    )
+        daily.
+
+        Valid metric names are:
+        """
+    ) + "\n".join(f"- {metric.value}" for metric in MetricName)
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
