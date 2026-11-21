@@ -157,6 +157,8 @@ Snapcraft 9.2.2
 
 - `snapcraft#6497 <https://github.com/canonical/snapcraft/issues/6497>`__ Kernel plugin
   leaves ``/proc/version_signature`` empty
+- `snapcraft#6519 <https://github.com/canonical/snapcraft/issues/6519>`__ core24:
+  ``desktop: meta/gui/<app>.desktop`` no longer resolves ``snap/gui/`` files
 
 
 Contributors
