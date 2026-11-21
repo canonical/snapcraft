@@ -59,6 +59,7 @@ snapcraft = "snapcraft.application:main"
 [dependency-groups]
 dev = [
   "coverage[toml]",
+  "craft-cli[pytest]>=3.5.0",
   "pip",
   "pyinstaller ; sys_platform == 'win32'",
   "pymacaroons",

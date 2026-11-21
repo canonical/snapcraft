@@ -688,6 +688,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/33/92/05eb42e09d833b977ddcaa1ff91f4d729d6e8aa286bbf91f462a6c2e1819/craft_cli-3.5.0-py3-none-any.whl", hash = "sha256:77259e16fe43ecc27971fef5c1062f56017d4594992d02b8add4e7675cf24ad8", size = 49298, upload-time = "2026-11-18T20:51:02.501Z" },
 ]
 
+[package.optional-dependencies]
+pytest = [
+    { name = "pytest" },
+]
+
 [[package]]
 name = "craft-grammar"
 version = "2.3.0"
@@ -2721,6 +2726,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "coverage", extra = ["toml"] },
+    { name = "craft-cli", extra = ["pytest"] },
     { name = "pip" },
     { name = "pyinstaller", marker = "sys_platform == 'win32'" },
     { name = "pymacaroons" },
@@ -2854,6 +2860,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "coverage", extras = ["toml"] },
+    { name = "craft-cli", extras = ["pytest"], specifier = ">=3.5.0" },
     { name = "pip" },
     { name = "pyinstaller", marker = "sys_platform == 'win32'" },
     { name = "pymacaroons" },
