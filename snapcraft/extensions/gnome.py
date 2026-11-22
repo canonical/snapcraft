@@ -23,7 +23,7 @@ from typing import Any
 
 from typing_extensions import override
 
-from .extension import get_extensions_data_dir, prepend_to_env
+from .extension import append_to_env, get_extensions_data_dir, prepend_to_env
 from .gpu_extension import GPUExtension
 
 _SDK_SNAP = {
@@ -281,7 +281,9 @@ class GNOME(GPUExtension):
                     ),
                 },
                 {
-                    "PKG_CONFIG_PATH": prepend_to_env(
+                    # craft-parts sets PKG_CONFIG_PATH for the part's install
+                    # and stage dirs first, and those must win over the SDK.
+                    "PKG_CONFIG_PATH": append_to_env(
                         "PKG_CONFIG_PATH",
                         [
                             (
