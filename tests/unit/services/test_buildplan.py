@@ -19,7 +19,6 @@
 import collections
 from collections.abc import Collection
 from typing import Literal
-from unittest import mock
 
 import craft_platforms
 import pytest
@@ -915,12 +914,8 @@ def test_create_build_plan_build_on_filter(
         build_on=[build_on],
     )
 
-    assert (
-        mock.call(
-            "trace",
-            f"No build-on filter set, using the default of {[fake_host_architecture.value]}",
-        )
-        not in emitter.interactions
+    emitter.assert_no_trace(
+        f"No build-on filter set, using the default of {[fake_host_architecture.value]}"
     )
 
     check_plan(
@@ -951,12 +946,8 @@ def test_create_build_plan_build_on_filter_platform_independent(
         build_on=[build_on],
     )
 
-    assert (
-        mock.call(
-            "trace",
-            f"No build-on filter set, using the default of {[fake_host_architecture.value]}",
-        )
-        not in emitter.interactions
+    emitter.assert_no_trace(
+        f"No build-on filter set, using the default of {[fake_host_architecture.value]}"
     )
 
     check_plan(
