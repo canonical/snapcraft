@@ -4,6 +4,8 @@ environment:
   CMD/pack: pack
   CMD/pack_output: pack -o output.snap
   CMD/pack_output_subdir: pack --output subdir/output.snap
+  CMD/pack_output_abs: pack --output /tmp/packing-abs/output.snap
+  CMD/pack_output_abs_dir: pack --output /tmp/packing-abs
   CMD/pack_directory: pack prime
   CMD/pack_directory_output: pack prime --output output.snap
   CMD/pack_directory_output_subdir: pack prime --output subdir/output.snap
@@ -16,8 +18,12 @@ prepare: |
   . "$TOOLS_DIR/snapcraft-yaml.sh"
   # set_base "$SNAP_DIR/snap/snapcraft.yaml"
 
+  if [[ "$SPREAD_VARIANT" == "pack_output_abs_dir" ]]; then
+    mkdir -p /tmp/packing-abs
+  fi
+
 restore: |
-  rm -Rf subdir ./*.snap
+  rm -Rf subdir ./*.snap /tmp/packing-abs
 
   # 'pack_directory' tests are run in destructive-mode
   if [[ "$SPREAD_VARIANT" =~ "pack_directory" ]]; then
@@ -39,7 +45,15 @@ execute: |
   # shellcheck disable=SC2086
   snapcraft $CMD
 
-  if echo "$CMD" | grep subdir/output; then
+  # the managed instance can't see paths outside the project, so the
+  # host has to move the snap there
+  if [[ "$SPREAD_VARIANT" == "pack_output_abs" ]]; then
+    test -f /tmp/packing-abs/output.snap
+    test ! -e output.snap
+  elif [[ "$SPREAD_VARIANT" == "pack_output_abs_dir" ]]; then
+    test -f /tmp/packing-abs/my-snap-name_0.1_*.snap
+    test ! -e my-snap-name_0.1_*.snap
+  elif echo "$CMD" | grep subdir/output; then
     test -f subdir/output.snap
   elif echo "$CMD" | grep output; then
     test -f output.snap
