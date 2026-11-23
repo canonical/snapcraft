@@ -155,13 +155,14 @@ Snapcraft 9.2.1
 Snapcraft 9.2.2
 ~~~~~~~~~~~~~~~
 
+- `snapcraft#6325 <https://github.com/canonical/snapcraft/issues/6325>`__ Skip
+  repacking if artifact contents are unchanged
 - `snapcraft#6497 <https://github.com/canonical/snapcraft/issues/6497>`__ Kernel plugin
   leaves ``/proc/version_signature`` empty
 - `snapcraft#6519 <https://github.com/canonical/snapcraft/issues/6519>`__ core24:
   ``desktop: meta/gui/<app>.desktop`` no longer resolves ``snap/gui/`` files
 - `snapcraft#6579 <https://github.com/canonical/snapcraft/pull/6579>`__ Empty
   ``http_proxy``, ``https_proxy``, and ``no_proxy`` values are ignored
-
 
 Contributors
 ------------
