@@ -224,6 +224,8 @@ def get_command_environment(
     env["CRAFT_MANAGED_MODE"] = "1"
 
     # Pass-through host environment that target may need.
+    # An empty proxy is not a proxy. Copying "" makes gpg run with
+    # `--keyserver-options http-proxy=` and fail with "IPC syntax error".
     for env_key in [
         "http_proxy",
         "https_proxy",
@@ -234,8 +236,12 @@ def get_command_environment(
         "SNAPCRAFT_IMAGE_INFO",
         "SNAPCRAFT_MAX_PARALLEL_BUILD_COUNT",
     ]:
-        if env_key in os.environ:
-            env[env_key] = os.environ[env_key]
+        if env_key not in os.environ:
+            continue
+        value = os.environ[env_key]
+        if env_key in {"http_proxy", "https_proxy", "no_proxy"} and not value:
+            continue
+        env[env_key] = value
 
     # if http[s]_proxy was specified as an argument, then prioritize this proxy
     # over the proxy from the host's environment.

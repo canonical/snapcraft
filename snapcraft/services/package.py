@@ -23,8 +23,9 @@ import pathlib
 import shutil
 from typing import Literal, cast
 
+import yaml
 from craft_application import PackageService, util
-from craft_application.services.package import package_file
+from craft_application.services.package import PackageFileEntry, package_file
 from craft_application.util import strtobool
 from craft_cli import emit
 from typing_extensions import override
@@ -156,7 +157,12 @@ class Package(PackageService):
 
     @override
     def _extra_project_updates(self) -> bool:
-        # Update the project from parse-info data.
+        """Update the project from parse-info data and precreate prime targets.
+
+        :returns: Whether the project or the prime directory was changed. A True
+            value forces a repack, so it must not be returned unconditionally.
+        """
+        original_project = self._project.marshal()
         project_info = self._services.lifecycle.project_info
         extracted_metadata = extract.extract_lifecycle_metadata(
             self._project.adopt_info,
@@ -171,21 +177,26 @@ class Package(PackageService):
             prime_dir=project_info.prime_dir,
         )
 
+        prime_changed = False
         # precreate content targets and layout sources when using core26+
         # and bare base snaps
         if self._project.get_effective_base() not in ("core22", "core24"):
-            self._precreate_layout_targets()
-            self._precreate_plug_targets()
+            prime_changed = self._precreate_layout_targets()
+            prime_changed = self._precreate_plug_targets() or prime_changed
 
-        return True
+        return prime_changed or self._project.marshal() != original_project
 
-    def _precreate_layout_targets(self) -> None:
-        """Create layout targets ahead of time for snapd to avoid ENOENT errors."""
+    def _precreate_layout_targets(self) -> bool:
+        """Create layout targets ahead of time for snapd to avoid ENOENT errors.
+
+        :returns: Whether any target was created in the prime directory.
+        """
         if self._project.layout is None:
-            return
+            return False
 
         emit.debug("Pre-creating layout targets inside of snap")
 
+        created = False
         for src, layout in self._project.layout.items():
             result = self._parse_layout_target(src, layout)
             if result is None:
@@ -197,6 +208,7 @@ class Package(PackageService):
                 continue
 
             to_create = self._concat_with_prime_dir(file)
+            created = created or not to_create.exists()
 
             match ltype:
                 case "bind" | "tmpfs":
@@ -213,10 +225,15 @@ class Package(PackageService):
                     to_create.parent.mkdir(0o0755, parents=True, exist_ok=True)
                     to_create.touch(0o0644)
 
-    def _precreate_plug_targets(self) -> None:
-        """Create plug targets ahead of time for snapd to avoid ENOENT errors."""
+        return created
+
+    def _precreate_plug_targets(self) -> bool:
+        """Create plug targets ahead of time for snapd to avoid ENOENT errors.
+
+        :returns: Whether any target was created in the prime directory.
+        """
         if self._project.plugs is None:
-            return
+            return False
 
         emit.debug("Pre-creating plug targets inside of snap")
 
@@ -227,18 +244,22 @@ class Package(PackageService):
             elif name == "content":
                 plug_targets.append(cast("dict[str, str]", plug)["target"])
 
+        created = False
         for target in plug_targets:
             file = self._maybe_get_target_in_snap(target)
             if file is None:
                 continue
 
             to_create = self._concat_with_prime_dir(file)
+            created = created or not to_create.exists()
 
             emit.debug(
                 f"Plug target directory {target!r} maps to {str(file)!r} inside of the snap"
             )
             emit.debug(f"Creating {str(file)!r} in the prime directory")
             to_create.mkdir(0o0755, parents=True, exist_ok=True)
+
+        return created
 
     @staticmethod
     def _parse_layout_target(
@@ -557,18 +578,87 @@ class Package(PackageService):
     def _write_asset(
         self, source: str | bytes | None | pathlib.Path, destination: pathlib.Path
     ) -> None:
-        """Write a mediated asset while preserving hook executability."""
-        if isinstance(source, pathlib.Path):
+        """Write a mediated asset while preserving hook executability.
+
+        Unchanged assets are not rewritten because their modification time is
+        used to detect stale artifacts in ``_app_needs_repack``.
+        """
+        if not self._asset_changed(source, destination, None):
+            emit.debug(f"Mediated file {str(destination)!r} is unchanged")
+        elif isinstance(source, pathlib.Path):
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(source, destination)
         else:
             super()._write_asset(source, destination)
 
-        if destination.parent.name == "hooks" and destination.parent.parent.name in {
-            "meta",
-            "snap",
-        }:
+        if (
+            destination.is_file()
+            and destination.parent.name == "hooks"
+            and destination.parent.parent.name in {"meta", "snap"}
+        ):
             destination.chmod(0o755)
+
+    @override
+    def _package_file_changed(
+        self, package_file: PackageFileEntry, partition_name: str | None
+    ) -> bool:
+        """Check if a package file differs from its primed copy.
+
+        The manifest's start time is different on every invocation, so it is
+        ignored to prevent rewriting an otherwise unchanged manifest.
+        """
+        if package_file.method_name != self._get_manifest_yaml.__name__:
+            return super()._package_file_changed(package_file, partition_name)
+
+        content = self._get_manifest_yaml(partition_name)
+        if content is False:
+            return False
+
+        destination = self._prime_dir_for(partition_name) / package_file.relative_path
+        if not destination.is_file():
+            return True
+
+        try:
+            expected = yaml.safe_load(content)
+            actual = yaml.safe_load(destination.read_text(encoding="utf-8"))
+        except yaml.YAMLError:
+            return True
+
+        if not isinstance(expected, dict) or not isinstance(actual, dict):
+            return expected != actual
+
+        expected.pop("snapcraft-started-at", None)
+        actual.pop("snapcraft-started-at", None)
+        return expected != actual
+
+    @override
+    def _app_needs_repack(self, partition: str | None = None) -> bool:
+        """Check if mediated files in prime were updated after the artifact.
+
+        write_metadata() materializes mediated files into prime before the repack
+        check runs, possibly in an earlier invocation such as ``snapcraft prime``,
+        so comparing them with their sources can't detect changes. Since mediated
+        files are only rewritten when their content changes, a mediated file (or a
+        parent directory, for added or removed files) newer than the artifact means
+        that the artifact is stale.
+        """
+        artifact_mtime = self.get_artifacts()[partition].stat().st_mtime_ns
+        prime_dir = self._prime_dir_for(partition)
+
+        paths = {
+            prime_dir / entry.relative_path for entry in self._package_files(partition)
+        }
+        paths.update(
+            destination for _, destination in self._gen_extra_assets(partition)
+        )
+        hooks_dir = prime_dir / "meta" / "hooks"
+        if hooks_dir.is_dir():
+            paths.update(hooks_dir.iterdir())
+        paths.update({path.parent for path in paths})
+
+        return any(
+            path.exists() and path.stat().st_mtime_ns > artifact_mtime for path in paths
+        )
 
     @override
     def _materialize_extra_assets(self, partition_name: str | None = None) -> None:
@@ -596,6 +686,9 @@ class Package(PackageService):
         """
         lifecycle_service = cast(Lifecycle, self._services.lifecycle)
         for package in self._package_files(None):
+            if not self._package_file_changed(package, None):
+                continue
+
             generator = getattr(self, package.method_name)
             content = generator(None)
             if content is False:
