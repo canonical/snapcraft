@@ -85,8 +85,8 @@ for maintenance and updates, in particular:
   and be strict)
 * security updates must be proactive
 
-`Ubuntu Core`_ systems need a base snap. These base snaps must be bootable and
-include ``systemd``.
+:external+core:doc:`Ubuntu Core <index>` systems need a base snap. These base snaps must
+be bootable and include ``systemd``.
 
 
 .. _`Ubuntu buildd image server`: https://cloud-images.ubuntu.com/buildd/daily/

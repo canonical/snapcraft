@@ -177,7 +177,7 @@ feat: add text sanitizer
 ```
 
 If you need help determining the type of conventional commit for your change, look at
-the history of the file in question with `git log --oneline <filename>` . When you're
+the history of the file in question with `git log --oneline <filename>`. When you're
 done browsing, press `Q` to exit the interactive log.
 
 > **Tip**

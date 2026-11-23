@@ -170,6 +170,9 @@ These keys can be declared for apps whether they run as commands or services.
 .. kitbash-field:: App autostart
     :prepend-name: apps.<app-name>
 
+.. kitbash-field:: App refresh_mode
+    :prepend-name: apps.<app-name>
+
 .. kitbash-field:: App common_id
     :prepend-name: apps.<app-name>
 
@@ -244,9 +247,6 @@ These keys can be declared for apps run as services or daemons.
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App before
-    :prepend-name: apps.<app-name>
-
-.. kitbash-field:: App refresh_mode
     :prepend-name: apps.<app-name>
 
 .. kitbash-field:: App stop_mode

@@ -25,7 +25,18 @@ from snapcraft.models import (
 )
 
 
-@pytest.mark.parametrize("values", [[""], ["x"], [1], ["x", 1]])
+@pytest.mark.parametrize(
+    "values",
+    [
+        pytest.param([None], id="none"),
+        pytest.param([""], id="empty"),
+        pytest.param([1], id="int"),
+        pytest.param(["x"], id="str"),
+        pytest.param(["x", 1], id="mix-1"),
+        pytest.param([1, None], id="mix-2"),
+        pytest.param([None, "x", 1], id="mix-3"),
+    ],
+)
 @pytest.mark.parametrize("currently_released", [False, True, None])
 def test_series(values, currently_released):
     expected_series = Series(

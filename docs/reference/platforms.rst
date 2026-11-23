@@ -233,6 +233,7 @@ Snapcraft supports building for these architectures locally:
 * s390x
 
 .. _supported-architectures-launchpad:
+.. _reference-platforms-launchpad-builds:
 
 Launchpad builds
 ~~~~~~~~~~~~~~~~

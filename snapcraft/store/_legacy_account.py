@@ -86,29 +86,6 @@ def get_auth(config_content: str) -> str:
     return base64.b64encode(json.dumps(auth).encode()).decode()
 
 
-def set_legacy_env() -> None:
-    """Set constants.ENVIRONMENT_STORE_CREDENTIALS to a valid value.
-
-    Transform the configparser based environment into a value useful
-    for craft-store.
-    """
-    if LegacyUbuntuOne.env_has_legacy_credentials():
-        emit.trace(
-            f"Found legacy credentials exported on {constants.ENVIRONMENT_STORE_CREDENTIALS!r}"
-        )
-        auth = get_auth(
-            config_content=os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS]
-        )
-        os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
-    elif LegacyUbuntuOne.has_legacy_credentials():
-        emit.trace(
-            f"Found legacy credentials stored in {LegacyUbuntuOne.CONFIG_PATH!r}"
-        )
-        config_content = LegacyUbuntuOne.CONFIG_PATH.read_text()
-        auth = get_auth(config_content=config_content)
-        os.environ[constants.ENVIRONMENT_STORE_CREDENTIALS] = auth
-
-
 class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
     """Legacy client to easily transition existing CI users."""
 
@@ -160,6 +137,7 @@ class LegacyUbuntuOne(craft_store.UbuntuOneStoreClient):
         user_agent: str,
         environment_auth: str | None = None,
         ephemeral: bool = False,
+        file_fallback: bool = False,
     ) -> None:
         # Adapt to the JSON format if the environment has configparser based credentials.
         if self.env_has_legacy_credentials():

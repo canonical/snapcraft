@@ -22,35 +22,23 @@ import argparse
 import contextlib
 import functools
 import os
-import pathlib
 import stat
 import textwrap
 from datetime import datetime
 from typing import Any
 
 from craft_application.commands import AppCommand
+from craft_application.util import humanize_list
 from craft_cli import emit
 from craft_cli.errors import ArgumentParsingError
 from typing_extensions import override
 
-from snapcraft import errors, store, utils
+from snapcraft import errors, store
 
 _VALID_DATE_FORMATS = [
     "%Y-%m-%d",
     "%Y-%m-%dT%H:%M:%SZ",
 ]
-
-
-def _read_config(config_path: str) -> str:
-    if config_path == "-":
-        config_path = "/dev/stdin"
-
-    config_file = pathlib.Path(config_path)
-
-    if not config_file.exists():
-        raise ArgumentParsingError(f"<login-file> {config_path!r} does not exist")
-
-    return config_file.read_text(encoding="utf-8")
 
 
 class StoreLoginCommand(AppCommand):
@@ -216,7 +204,7 @@ class StoreExportLoginCommand(AppCommand):
                     expiry_date = datetime.strptime(parsed_args.expires, date_format)
                     break
             else:  # noqa: PLW0120 Else clause on loop without a break statement
-                valid_formats = utils.humanize_list(_VALID_DATE_FORMATS, "or")
+                valid_formats = humanize_list(_VALID_DATE_FORMATS, "or")
                 raise ArgumentParsingError(
                     f"The expiry follow an ISO 8601 format ({valid_formats})"
                 )

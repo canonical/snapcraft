@@ -7,7 +7,7 @@ confinement: strict
 
 apps:
   python-hello-strict:
-    command: bin/python $SNAP/bin/hello
+    command: bin/hello
 
 parts:
   python-runtime:

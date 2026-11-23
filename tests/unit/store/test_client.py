@@ -1118,6 +1118,28 @@ def test_release_progressive(fake_client):
     ]
 
 
+def test_release_pause(fake_client):
+    client.StoreClientCLI().release(
+        snap_name="snap",
+        revision=10,
+        channels=["beta", "edge"],
+        pause=True,
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-release/",
+            json={
+                "name": "snap",
+                "revision": "10",
+                "channels": ["beta", "edge"],
+                "progressive": {"paused": True},
+            },
+        )
+    ]
+
+
 #########
 # Close #
 #########
@@ -2400,6 +2422,18 @@ def test_on_prem_release_progressive_percentage_unsupported(on_prem_client):
             revision=1,
             channels=["stable", "edge"],
             progressive_percentage=10,
+        )
+
+
+def test_on_prem_release_pause_unsupported(on_prem_client):
+    with pytest.raises(
+        errors.SnapcraftError, match="'--pause' is not supported for on-prem stores"
+    ):
+        on_prem_client.release(
+            "fake-snap",
+            revision=1,
+            channels=["stable", "edge"],
+            pause=True,
         )
 
 

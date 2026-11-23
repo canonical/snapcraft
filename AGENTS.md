@@ -73,6 +73,12 @@ make docs
 make lint-docs
 ```
 
+Run documentation targets from the repository root using `make docs-<target>`;
+never invoke the docs Makefile directly, with `make -C`, or equivalent, as it
+bypasses required configuration. Use `make docs-help` to list targets. This
+applies only to commands you run directly, not those triggered via repo
+tooling.
+
 ## Practices
 
 - Backward compatibility is a **hard requirement**. Existing projects must continue to

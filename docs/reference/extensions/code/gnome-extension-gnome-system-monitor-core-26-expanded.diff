@@ -1,0 +1,191 @@
+# Diff between snapcraft.yaml and `snapcraft expand-extensions`, showing the differences
+# that the GNOME extension applies to a project file.
+ name: gnome-system-monitor
+ adopt-info: gnome-system-monitor
+ summary: System Monitor
+ description: |
+   GNOME System Monitor is a GNOME process viewer and system monitor with
+   an attractive, easy-to-use interface, It has features, such as a tree
+   view for process dependencies, icons for processes, the ability to hide
+   processes that you don't want to see, graphical time histories of
+   CPU/memory/swap usage, the ability to kill/renice processes needing root
+   access, as well as the standard features that you might expect from a
+   process viewer.
+
+ grade: stable
+ confinement: strict
+ base: core26
+
+ parts:
+   gnome-system-monitor:
+     source: https://gitlab.gnome.org/GNOME/gnome-system-monitor.git
+     source-type: git
+     source-tag: '51.1'
+     source-depth: 1
+     plugin: meson
+-    parse-info: [usr/share/metainfo/gnome-system-monitor.metainfo.xml]
+     meson-parameters:
+       - --prefix=/usr
+       - --buildtype=release
+       - -Dsystemd=true
+     override-pull: |
+       craftctl default
+       craftctl set version=$(git describe --tags --abbrev=10)
+     build-packages:
+       - catch2
+       - libgtop2-dev
+       - libsigc++-2.0-dev
+       - libsystemd-dev
+     stage-packages:
+       - libsigc++-2.0-0v5
++    build-environment:
++      - SNAPCRAFT_GNOME_SDK: /snap/gnome-core26-sdk/current/
++      - PATH: /snap/gnome-core26-sdk/current/usr/bin${PATH:+:$PATH}
++      - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-core26-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
++      - LD_LIBRARY_PATH: /snap/gnome-core26-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-core26-sdk/current/usr/lib:/snap/gnome-core26-sdk/current/usr/lib/vala-current:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
++      - PKG_CONFIG_PATH: /snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:/snap/gnome-core26-sdk/current/usr/lib/pkgconfig:/snap/gnome-core26-sdk/current/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
++      - GETTEXTDATADIRS: /snap/gnome-core26-sdk/current/usr/share/gettext-current${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}
++      - GDK_PIXBUF_MODULE_FILE: /snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gdk-pixbuf-current/loaders.cache
++      - ACLOCAL_PATH: /snap/gnome-core26-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}
++      - PYTHONPATH: /snap/gnome-core26-sdk/current/usr/lib/python3.10:/snap/gnome-core26-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
++      - GI_TYPELIB_PATH: /snap/gnome-core26-sdk/current/usr/lib/girepository-1.0:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
++      - CMAKE_PREFIX_PATH: $CRAFT_STAGE/usr:/snap/gnome-core26-sdk/current/usr${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}
+
+   libraries:
+     after: [gnome-system-monitor]
+     plugin: nil
+     stage-packages:
+       - libgtop-2.0-11
++    build-environment:
++      - SNAPCRAFT_GNOME_SDK: /snap/gnome-core26-sdk/current/
++      - PATH: /snap/gnome-core26-sdk/current/usr/bin${PATH:+:$PATH}
++      - XDG_DATA_DIRS: $CRAFT_STAGE/usr/share:/snap/gnome-core26-sdk/current/usr/share:/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
++      - LD_LIBRARY_PATH: /snap/gnome-core26-sdk/current/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:/snap/gnome-core26-sdk/current/usr/lib:/snap/gnome-core26-sdk/current/usr/lib/vala-current:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pulseaudio${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
++      - PKG_CONFIG_PATH: /snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:/snap/gnome-core26-sdk/current/usr/lib/pkgconfig:/snap/gnome-core26-sdk/current/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}
++      - GETTEXTDATADIRS: /snap/gnome-core26-sdk/current/usr/share/gettext-current${GETTEXTDATADIRS:+:$GETTEXTDATADIRS}
++      - GDK_PIXBUF_MODULE_FILE: /snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gdk-pixbuf-current/loaders.cache
++      - ACLOCAL_PATH: /snap/gnome-core26-sdk/current/usr/share/aclocal${ACLOCAL_PATH:+:$ACLOCAL_PATH}
++      - PYTHONPATH: /snap/gnome-core26-sdk/current/usr/lib/python3.10:/snap/gnome-core26-sdk/current/usr/lib/python3/dist-packages:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/gobject-introspection${PYTHONPATH:+:$PYTHONPATH}
++      - GI_TYPELIB_PATH: /snap/gnome-core26-sdk/current/usr/lib/girepository-1.0:/snap/gnome-core26-sdk/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/girepository-1.0${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}
++      - CMAKE_PREFIX_PATH: $CRAFT_STAGE/usr:/snap/gnome-core26-sdk/current/usr${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}
++
++  gnome/gpu/wrapper:
++    source: /snap/snapcraft/x20/share/snapcraft/extensions/gpu/command-chain
++    plugin: make
++    make-parameters:
++    - GPU_INTERFACE=gpu-2604
++
++  gnome/gpu/cleanup:
++    after:
++    - gnome-system-monitor
++    - libraries
++    source: https://github.com/canonical/gpu-snap.git
++    plugin: nil
++    override-prime: |
++      craftctl default
++      ${CRAFT_PART_SRC}/bin/gpu-2604-cleanup mesa-2604
++
++  gnome/sdk:
++    source: /snap/snapcraft/x20/share/snapcraft/extensions/desktop/command-chain
++    plugin: make
++    build-snaps:
++    - gnome-core26-sdk
++
++  gnome/cleanup:
++    after:
++    - gnome-system-monitor
++    - libraries
++    plugin: nil
++    build-snaps:
++    - gnome-core26-sdk
++    - gtk-common-themes
++    override-prime: |
++      set -eux
++      for snap in "gnome-core26-sdk" "gtk-common-themes"; do
++          cd "/snap/$snap/current" && find . -type f,l \( -name "*.so.*" -o -name "*.so" \) -exec rm -f "$CRAFT_PRIME/{}" \;
++      done
++
++layout:
++  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkitgtk-6.0:
++    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkitgtk-6.0
++  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1:
++    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/webkit2gtk-4.1
++  /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy:
++    bind: $SNAP/gnome-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/libproxy
++  /usr/share/xml/iso-codes:
++    bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
++  /usr/libexec/glycin-loaders:
++    bind: $SNAP/gnome-platform/usr/libexec/glycin-loaders
++
++assumes:
++- snapd2.43
++
++hooks:
++  configure:
++    command-chain:
++    - snap/command-chain/hooks-configure-fonts
++    plugs:
++    - desktop
+
+ apps:
+   gnome-system-monitor:
+-    extensions: [ gnome ]
+     command: usr/bin/gnome-system-monitor
+     plugs:
++      - desktop
++      - desktop-legacy
++      - gsettings
++      - opengl
++      - wayland
++      - x11
+       - unity7
+       - mount-observe
+       - network-observe
+       - hardware-observe
+       - system-observe
+       - process-control
+       - run-systemd-sessions
+     desktop: usr/share/applications/org.gnome.SystemMonitor.desktop
+     common-id: org.gnome.SystemMonitor.desktop
++    command-chain:
++      - snap/command-chain/gpu-2604-wrapper
++      - snap/command-chain/desktop-launch
+
+ plugs:
+   run-systemd-sessions:
+     interface: system-files
+     read:
+     - /run/systemd/sessions
++  gpu-2604:
++    interface: content
++    target: $SNAP/gpu-2604
++    default-provider: mesa-2604
++  desktop:
++    mount-host-font-cache: false
++  gtk-3-themes:
++    interface: content
++    target: $SNAP/data-dir/themes
++    default-provider: gtk-common-themes
++  icon-themes:
++    interface: content
++    target: $SNAP/data-dir/icons
++    default-provider: gtk-common-themes
++  sound-themes:
++    interface: content
++    target: $SNAP/data-dir/sounds
++    default-provider: gtk-common-themes
++  gnome-core26:
++    interface: content
++    target: $SNAP/gnome-platform
++    default-provider: gnome-core26
+
+ slots:
+   gnome-system-monitor:
+   # for GtkApplication registration
+     interface: dbus
+     bus: session
+     name: org.gnome.SystemMonitor
++
++environment:
++  SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
++  GTK_USE_PORTAL: '1'

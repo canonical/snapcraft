@@ -4,10 +4,10 @@ summary: Strict with gnome extension
 description: |
   Using the gnome extension must not affect the python
   interpreter symlink. With strict confinement, the expected
-  symlink for base core24 is python3 -> /usr/bin/python3.12.
+  symlink for base core26 is python3 -> /usr/bin/python3.14.
 
 grade: devel
-base: core24
+base: core26
 confinement: strict
 
 apps:
@@ -20,3 +20,9 @@ parts:
     plugin: python
     source: src
     python-packages: [black]
+    stage-packages:
+      - libpython3.14-minimal
+      - libpython3.14-stdlib
+      - python3-minimal # for the "python3" symlink
+      - python3.14-minimal
+      - python3.14-venv

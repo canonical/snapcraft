@@ -26,7 +26,7 @@ import craft_application.commands
 import craft_cli
 import craft_store
 from craft_application.errors import RemoteBuildError
-from craft_application.util import strtobool
+from craft_application.util import humanize_list, strtobool
 from craft_cli import ArgumentParsingError, EmitterMode, ProvideHelpException, emit
 from craft_providers import ProviderError
 
@@ -191,7 +191,7 @@ def get_verbosity() -> EmitterMode:
         try:
             verbosity = EmitterMode[verbosity_env.strip().upper()]
         except KeyError:
-            values = utils.humanize_list(
+            values = humanize_list(
                 [e.name.lower() for e in EmitterMode], "and", sort=False
             )
             raise ArgumentParsingError(

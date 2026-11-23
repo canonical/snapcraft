@@ -28,3 +28,10 @@ class PoetryPlugin(poetry_plugin.PoetryPlugin):
     @override
     def _get_system_python_interpreter(self) -> str | None:
         return python_common.get_system_interpreter(self._part_info)
+
+    @override
+    def _get_script_interpreter(self) -> str:
+        return (
+            python_common.get_script_interpreter(self._part_info)
+            or super()._get_script_interpreter()
+        )

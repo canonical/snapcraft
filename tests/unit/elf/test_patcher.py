@@ -211,20 +211,16 @@ def test_patcher_patch_use_system_libs(mocker, patcher, elf_file, use_system_lib
 
     patcher.patch(elf_file=elf_file, use_system_libs=use_system_libs)
 
-    expected_calls = [
-        call(
-            [
-                PATCHELF_PATH,
-                "--set-interpreter",
-                "/my/dynamic/linker",
-                "--force-rpath",
-                "--set-rpath",
-                str(expected_proposed_rpath),
-                ANY,
-            ]
-        )
+    expected_args = [
+        PATCHELF_PATH,
+        "--set-interpreter",
+        "/my/dynamic/linker",
+        "--force-rpath",
+        "--set-rpath",
+        str(expected_proposed_rpath),
     ]
     if not use_system_libs:
-        expected_calls.append(call([PATCHELF_PATH, "--no-default-lib", ANY]))
+        expected_args.append("--no-default-lib")
+    expected_args.append(ANY)
 
-    assert run_mock.mock_calls == expected_calls
+    assert run_mock.mock_calls == [call(expected_args)]

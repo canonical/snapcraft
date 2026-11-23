@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import functools
 import json
 import os
@@ -219,7 +219,7 @@ class StoreRegisterKeyCommand(AppCommand):
         client = store.StoreClientCLI(ephemeral=True)
         client.login(
             acls=["modify_account_key"],
-            ttl=int(datetime.timedelta(days=1).total_seconds()),
+            ttl=int(dt.timedelta(days=1).total_seconds()),
         )
 
         emit.progress("Registering key ...")

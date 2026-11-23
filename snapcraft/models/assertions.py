@@ -86,12 +86,6 @@ class Parameter(models.CraftBaseModel):
     """The scenarios where a parameter must be assigned a value."""
 
 
-class Filter(models.CraftBaseModel):
-    """A constraint on whether a parameter is required for a filter to match."""
-
-    optional: bool
-
-
 class Rules(models.CraftBaseModel):
     """A list of confdb schemas for a particular view."""
 
@@ -101,10 +95,7 @@ class Rules(models.CraftBaseModel):
     rules: list[ConfdbSchema]
 
     parameters: dict[str, Parameter] | None = None
-    """Parameters used to create filters."""
-
-    filters: list[dict[str, Filter]] | None = None
-    """Combinations of parameters that filter which rules apply."""
+    """Parameters that can be used to constrain field filters and placeholders in rules."""
 
 
 class EditableConfdbSchemaAssertion(models.CraftBaseModel):

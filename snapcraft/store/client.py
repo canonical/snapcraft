@@ -432,6 +432,7 @@ class LegacyStoreClientCLI:
         revision: int,
         channels: Sequence[str],
         progressive_percentage: int | None = None,
+        pause: bool = False,
     ) -> None:
         """Register snap_name with the Snap Store.
 
@@ -439,6 +440,7 @@ class LegacyStoreClientCLI:
         :param revision: the revision of the snap to release
         :param channels: the channels to release to
         :param progressive_percentage: enable progressive releases up to a given percentage
+        :param pause: pause an active progressive release.
         """
         data: dict[str, Any] = {
             "name": snap_name,
@@ -448,7 +450,11 @@ class LegacyStoreClientCLI:
         if progressive_percentage is not None and progressive_percentage != 100:
             data["progressive"] = {
                 "percentage": progressive_percentage,
-                "paused": False,
+                "paused": pause,
+            }
+        elif pause:
+            data["progressive"] = {
+                "paused": True,
             }
         self.request(
             "POST",
@@ -1104,9 +1110,12 @@ class OnPremStoreClientCLI(LegacyStoreClientCLI):
         revision: int | None,
         channels: Sequence[str],
         progressive_percentage: int | None = None,
+        pause: bool = False,
     ) -> None:
         if progressive_percentage is not None:
             raise errors.SnapcraftError("Progressive percentage currently unsupported")
+        if pause:
+            raise errors.SnapcraftError("'--pause' is not supported for on-prem stores")
 
         payload = [{"revision": revision, "channel": channel} for channel in channels]
         self.request(

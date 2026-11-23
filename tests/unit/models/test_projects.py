@@ -56,6 +56,8 @@ from snapcraft.models.project import (
 
 # required project data for core24 snaps
 CORE24_DATA = {"base": "core24", "grade": "devel"}
+VALID_DURATIONS = ["10ns", "10us", "10ms", "10s", "10m", "10m4s3us"]
+INVALID_DURATIONS = ["10", 10, "10 s", "10 seconds", "1:00", "invalid"]
 
 
 @pytest.fixture
@@ -142,7 +144,7 @@ class TestProjectDefaults:
     def test_project_defaults(self, project_yaml_data):
         project = Project.unmarshal(project_yaml_data())
 
-        assert project.build_base == project.base
+        assert project.build_base is None
         assert project.compression == "xz"
         assert project.contact is None
         assert project.donation is None
@@ -957,30 +959,79 @@ class TestProjectValidation:
             ),
         ],
     )
-    def test_snapcraftctl_error(self, key, script, project_yaml_data):
-        """Error when snapcraftctl is used in core26."""
+    @pytest.mark.parametrize(
+        ("base", "build_base", "snap_type"),
+        [
+            *(
+                pytest.param(base, None, None, id=f"base-{base}")
+                for base in const.CURRENT_BASES - {"core22", "core24"}
+            ),
+            *(
+                pytest.param(None, build_base, "kernel", id=f"build-base-{build_base}")
+                for build_base in const.CURRENT_BASES - {"core22", "core24"}
+            ),
+            *(
+                pytest.param("bare", build_base, None, id=f"bare-{build_base}")
+                for build_base in const.CURRENT_BASES - {"core22", "core24"}
+            ),
+        ],
+    )
+    def test_snapcraftctl_error(
+        self, key, script, base, build_base, snap_type, project_yaml_data
+    ):
+        """Error when snapcraftctl is used for core26 and higher."""
         parts_data = {"my-part": {"plugin": "nil", key: script}}
         error = re.escape(
             f"Can't use 'snapcraftctl' in the {key} script for part 'my-part'. "
             "Use 'craftctl' instead."
         )
+        kwargs: dict[str, Any] = {"grade": "devel"}
+        if base is not None:
+            kwargs["base"] = base
+        if build_base is not None:
+            kwargs["build_base"] = build_base
+        if snap_type is not None:
+            kwargs["type"] = snap_type
+
+        data = project_yaml_data(parts=parts_data, **kwargs)
+        if base is None:
+            data.pop("base")
 
         with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(
-                project_yaml_data(
-                    base="core26", build_base="devel", grade="devel", parts=parts_data
-                )
-            )
+            Project.unmarshal(data)
 
     @pytest.mark.parametrize(
         "key", ["override-pull", "override-build", "override-stage", "override-prime"]
     )
-    @pytest.mark.parametrize("base", ["core22", "core24"])
-    def test_snapcraftctl_old_bases(self, key, base, project_yaml_data):
-        """snapcraftctl can be used for core22 and core24 bases."""
+    @pytest.mark.parametrize(
+        ("base", "build_base", "snap_type"),
+        [
+            pytest.param("bare", "core22", None, id="bare-core22"),
+            pytest.param("bare", "core24", None, id="bare-core24"),
+            pytest.param("core22", None, None, id="base-core22"),
+            pytest.param("core24", None, None, id="base-core24"),
+            pytest.param(None, "core22", "kernel", id="build-base-core22"),
+            pytest.param(None, "core24", "kernel", id="build-base-core24"),
+        ],
+    )
+    def test_snapcraftctl_old_bases(
+        self, key, base, build_base, snap_type, project_yaml_data
+    ):
+        """snapcraftctl can be used when base or build-base is core22 or core24."""
         parts_data = {"my-part": {"plugin": "nil", key: "snapcraftctl"}}
+        kwargs: dict[str, Any] = {}
+        if base is not None:
+            kwargs["base"] = base
+        if build_base is not None:
+            kwargs["build_base"] = build_base
+        if snap_type is not None:
+            kwargs["type"] = snap_type
 
-        Project.unmarshal(project_yaml_data(base=base, parts=parts_data))
+        data = project_yaml_data(parts=parts_data, **kwargs)
+        if base is None:
+            data.pop("base")
+
+        Project.unmarshal(data)
 
 
 class TestHookValidation:
@@ -1053,7 +1104,9 @@ class TestPlatforms:
     @pytest.mark.parametrize("build_for", [[arch] for arch in const.SnapArch])
     def test_platform_validation_lists(self, build_on, build_for, project_yaml_data):
         """Unmarshal build-on and build-for lists."""
-        platform_data = Platform(**{"build-on": build_on, "build-for": build_for})
+        platform_data = Platform.model_validate(
+            {"build-on": build_on, "build-for": build_for}
+        )
 
         assert platform_data.build_for == build_for
         assert platform_data.build_on == build_on
@@ -1062,7 +1115,9 @@ class TestPlatforms:
     @pytest.mark.parametrize("build_for", const.SnapArch)
     def test_platform_validation_strings(self, build_on, build_for, project_yaml_data):
         """Unmarshal and vectorize build-on and build-for strings."""
-        platform_data = Platform(**{"build-on": build_on, "build-for": build_for})
+        platform_data = Platform.model_validate(
+            {"build-on": build_on, "build-for": build_for}
+        )
 
         assert platform_data.build_for == [build_for]
         assert platform_data.build_on == [build_on]
@@ -1182,63 +1237,48 @@ class TestAppValidation:
         assert project.apps is not None
         assert project.apps["app1"].post_stop_command == "test-post-stop-command"
 
-    @pytest.mark.parametrize(
-        "start_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
-    )
+    @pytest.mark.parametrize("start_timeout", VALID_DURATIONS)
     def test_app_start_timeout_valid(self, start_timeout, app_yaml_data):
         data = app_yaml_data(start_timeout=start_timeout)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].start_timeout == start_timeout
 
-    @pytest.mark.parametrize(
-        "start_timeout",
-        ["10 s", "10 seconds", "1:00", "invalid"],
-    )
+    @pytest.mark.parametrize("start_timeout", INVALID_DURATIONS)
     def test_app_start_timeout_invalid(self, start_timeout, app_yaml_data):
         data = app_yaml_data(start_timeout=start_timeout)
 
-        error = f"'{start_timeout}' is not a valid time value"
+        error = f"{start_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
-    @pytest.mark.parametrize(
-        "stop_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
-    )
+    @pytest.mark.parametrize("stop_timeout", VALID_DURATIONS)
     def test_app_stop_timeout_valid(self, stop_timeout, app_yaml_data):
         data = app_yaml_data(stop_timeout=stop_timeout)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].stop_timeout == stop_timeout
 
-    @pytest.mark.parametrize(
-        "stop_timeout",
-        ["10 s", "10 seconds", "1:00", "invalid"],
-    )
+    @pytest.mark.parametrize("stop_timeout", INVALID_DURATIONS)
     def test_app_stop_timeout_invalid(self, stop_timeout, app_yaml_data):
         data = app_yaml_data(stop_timeout=stop_timeout)
 
-        error = f"'{stop_timeout}' is not a valid time value"
+        error = f"{stop_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
-    @pytest.mark.parametrize(
-        "watchdog_timeout", ["10", "10ns", "10us", "10ms", "10s", "10m"]
-    )
+    @pytest.mark.parametrize("watchdog_timeout", VALID_DURATIONS)
     def test_app_watchdog_timeout_valid(self, watchdog_timeout, app_yaml_data):
         data = app_yaml_data(watchdog_timeout=watchdog_timeout)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].watchdog_timeout == watchdog_timeout
 
-    @pytest.mark.parametrize(
-        "watchdog_timeout",
-        ["10 s", "10 seconds", "1:00", "invalid"],
-    )
+    @pytest.mark.parametrize("watchdog_timeout", INVALID_DURATIONS)
     def test_app_watchdog_timeout_invalid(self, watchdog_timeout, app_yaml_data):
         data = app_yaml_data(watchdog_timeout=watchdog_timeout)
 
-        error = f"'{watchdog_timeout}' is not a valid time value"
+        error = f"{watchdog_timeout!r} is not a valid time value"
         with pytest.raises(pydantic.ValidationError, match=error):
             Project.unmarshal(data)
 
@@ -1248,24 +1288,19 @@ class TestAppValidation:
         assert project.apps is not None
         assert project.apps["app1"].reload_command == "test-reload-command"
 
-    @pytest.mark.parametrize(
-        "restart_delay", ["10", "10ns", "10us", "10ms", "10s", "10m"]
-    )
+    @pytest.mark.parametrize("restart_delay", VALID_DURATIONS)
     def test_app_restart_delay_valid(self, restart_delay, app_yaml_data):
         data = app_yaml_data(restart_delay=restart_delay)
         project = Project.unmarshal(data)
         assert project.apps is not None
         assert project.apps["app1"].restart_delay == restart_delay
 
-    @pytest.mark.parametrize(
-        "restart_delay",
-        ["10 s", "10 seconds", "1:00", "invalid"],
-    )
+    @pytest.mark.parametrize("restart_delay", INVALID_DURATIONS)
     def test_app_restart_delay_invalid(self, restart_delay, app_yaml_data):
         data = app_yaml_data(restart_delay=restart_delay)
 
         error = (
-            f"apps.app1.restart_delay\n  Value error, '{restart_delay}' is not a "
+            f"apps.app1.restart_delay\n  Value error, {restart_delay!r} is not a "
             "valid time value"
         )
         with pytest.raises(pydantic.ValidationError, match=error):
@@ -2338,15 +2373,26 @@ class TestArchitecture:
 
         assert not arch_triplet
 
-    def test_architectures_not_allowed(self, project_yaml_data):
+    @pytest.mark.parametrize(
+        ("kwargs", "effective_base"),
+        [
+            ({"base": "core24"}, "core24"),
+            ({"base": "core26"}, "core26"),
+            ({"base": "bare", "build_base": "core24"}, "core24"),
+            ({"base": "core26", "build-base": "devel"}, "core26"),
+        ],
+    )
+    def test_architectures_not_allowed(self, project_yaml_data, kwargs, effective_base):
         """'architectures' key is not allowed if base is not core22."""
         error = (
-            "'architectures' key is not supported for base 'core24'. "
+            f"'architectures' key is not supported for base {effective_base!r}. "
             "Use 'platforms' key instead."
         )
 
         with pytest.raises(pydantic.ValidationError, match=error):
-            Project.unmarshal(project_yaml_data(**CORE24_DATA, architectures=["amd64"]))
+            Project.unmarshal(
+                project_yaml_data(**kwargs, grade="devel", architectures=["amd64"])
+            )
 
     @pytest.mark.parametrize(
         ("data", "expected"),

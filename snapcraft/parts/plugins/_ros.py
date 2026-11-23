@@ -90,8 +90,8 @@ class RosPlugin(plugins.Plugin):
     @override
     def get_build_snaps(self) -> set[str]:
         return (
-            set(self._options.colcon_ros_build_snaps)  # ty: ignore[unresolved-attribute]
-            if self._options.colcon_ros_build_snaps  # ty: ignore[unresolved-attribute]
+            set(self._options.colcon_ros_build_snaps)  # ty: ignore[missing-attribute]
+            if self._options.colcon_ros_build_snaps  # ty: ignore[missing-attribute]
             else set()
         )
 
@@ -150,8 +150,8 @@ class RosPlugin(plugins.Plugin):
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.installed_packages.txt"')
         cmd.append('rm -f "${CRAFT_PART_INSTALL}/.build_snaps.txt"')
 
-        if self._options.colcon_ros_build_snaps:  # ty: ignore[unresolved-attribute]
-            for ros_build_snap in self._options.colcon_ros_build_snaps:  # ty: ignore[unresolved-attribute]
+        if self._options.colcon_ros_build_snaps:  # ty: ignore[missing-attribute]
+            for ros_build_snap in self._options.colcon_ros_build_snaps:  # ty: ignore[missing-attribute]
                 snap_name = _get_parsed_snap(ros_build_snap)[0]
                 base_path = f"/snap/{snap_name}/current/opt/ros"
                 path_ros_sys = f"{base_path}/${{ROS_DISTRO}}/"

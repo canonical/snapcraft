@@ -141,12 +141,18 @@ def test_application_expand_extensions(emitter, monkeypatch, extension_source, n
     application.main()
     emitter.assert_message(
         dedent(
-            """\
+            f"""\
             name: default
             version: '1.0'
             summary: default project
             description: default project
             base: core24
+            platforms:
+              {DebianArchitecture.from_host()}:
+                build-on:
+                - {DebianArchitecture.from_host()}
+                build-for:
+                - {DebianArchitecture.from_host()}
             license: MIT
             parts:
               fake-extension/fake-part:

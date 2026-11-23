@@ -192,10 +192,38 @@ def test_get_success_message(revision, fake_validation_set_assertion, fake_servi
     ],
 )
 def test_validate_assertion_warning(
-    old, new, expectation, fake_services, fake_validation_set_assertion
+    old, new, expectation, fake_services, fake_validation_set_assertion, emitter
 ):
+    """Existing validation sets are always validated."""
     validation_sets_service = fake_services.get("validation_sets")
     validation_set = fake_validation_set_assertion(sequence=new)
 
     with expectation:
-        validation_sets_service._validate_assertion(validation_set, sequence=old)
+        validation_sets_service._validate_assertion(
+            validation_set, is_new=False, sequence=old
+        )
+    emitter.assert_debug(f"Sequence updated from {old} to {new}")
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [
+        pytest.param(10, 9, id="decrement"),
+        pytest.param(10, 10, id="no-change"),
+        pytest.param(10, 11, id="increment"),
+    ],
+)
+def test_validate_assertion_new_set(
+    old, new, fake_services, fake_validation_set_assertion, emitter
+):
+    """New validation sets skip validation."""
+    validation_sets_service = fake_services.get("validation_sets")
+    validation_set = fake_validation_set_assertion(sequence=new)
+
+    validation_sets_service._validate_assertion(
+        validation_set,
+        is_new=True,
+        sequence=old,
+    )
+
+    emitter.assert_debug("Skipping validation for new validation-set.")

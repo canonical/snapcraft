@@ -19,17 +19,15 @@
 from __future__ import annotations
 
 import textwrap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from craft_application.commands import AppCommand
 from typing_extensions import override
 
-from snapcraft import const, errors
+from snapcraft import const, errors, services
 
 if TYPE_CHECKING:
     import argparse
-
-    from snapcraft import services
 
 
 class StoreValidationSetsCommand(AppCommand):
@@ -48,7 +46,6 @@ class StoreValidationSetsCommand(AppCommand):
         Use the 'edit-validation-sets' command to modify validation sets.
         """
     )
-    _services: services.SnapcraftServiceFactory
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -79,7 +76,8 @@ class StoreValidationSetsCommand(AppCommand):
     @override
     def run(self, parsed_args: argparse.Namespace):
         kwargs = {"sequence": parsed_args.sequence} if parsed_args.sequence else {}
-        self._services.validation_sets.list_assertions(
+        services_factory = cast(services.SnapcraftServiceFactory, self._services)
+        services_factory.validation_sets.list_assertions(
             name=parsed_args.name,
             output_format=parsed_args.format,
             **kwargs,
@@ -116,7 +114,6 @@ class StoreEditValidationSetsCommand(AppCommand):
         Use the 'validation-sets' command to view existing validation sets.
         """
     )
-    _services: services.SnapcraftServiceFactory
 
     @override
     def fill_parser(self, parser: argparse.ArgumentParser) -> None:
@@ -129,7 +126,8 @@ class StoreEditValidationSetsCommand(AppCommand):
 
     @override
     def run(self, parsed_args: argparse.Namespace):
-        self._services.validation_sets.edit_assertion(
+        services_factory = cast(services.SnapcraftServiceFactory, self._services)
+        services_factory.validation_sets.edit_assertion(
             name=parsed_args.name,
             account_id=parsed_args.account_id,
             key_name=parsed_args.key_name,

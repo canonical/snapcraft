@@ -15,6 +15,7 @@ self-hosted-runner:
     - jammy
     - noble
     - resolute
+    - ubuntu-26.04
     # Sizes
     - medium
     - large
