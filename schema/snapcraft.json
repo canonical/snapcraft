@@ -35,7 +35,7 @@
           ],
           "default": null,
           "description": "The identifier to a desktop ID within an external appstream file.",
-          "examples": ["org.canonical.foo"],
+          "examples": ["org.canonical.foo", "org.kde.ghostwriter", "io.github.user.project"],
           "title": "Common-Id"
         },
         "bus-name": {
