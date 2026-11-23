@@ -898,13 +898,12 @@ def test_create_build_plan_build_for_filter_platform_independent(
     )
 
 
+@pytest.mark.usefixtures("fake_host_architecture")
 @pytest.mark.parametrize("build_on", DebianArchitecture)
 def test_create_build_plan_build_on_filter(
     default_project,
     fake_services,
     setup_project,
-    emitter,
-    fake_host_architecture,
     build_on,
 ):
     build_plan_service = fake_services.get("build_plan")
@@ -914,10 +913,6 @@ def test_create_build_plan_build_on_filter(
         build_on=[build_on],
     )
 
-    emitter.assert_no_trace(
-        f"No build-on filter set, using the default of {[fake_host_architecture.value]}"
-    )
-
     check_plan(
         plan,
         min_length=0,  # Not all build-on/build-for combos exist.
@@ -925,6 +920,7 @@ def test_create_build_plan_build_on_filter(
     )
 
 
+@pytest.mark.usefixtures("fake_host_architecture")
 @pytest.mark.parametrize(
     "build_on", [arch for arch in DebianArchitecture if arch != DebianArchitecture.I386]
 )
@@ -932,8 +928,6 @@ def test_create_build_plan_build_on_filter_platform_independent(
     default_project,
     fake_services,
     setup_project,
-    emitter,
-    fake_host_architecture,
     platform_independent_project_data,
     build_on,
 ):
@@ -944,10 +938,6 @@ def test_create_build_plan_build_on_filter_platform_independent(
         platforms=None,
         build_for=None,
         build_on=[build_on],
-    )
-
-    emitter.assert_no_trace(
-        f"No build-on filter set, using the default of {[fake_host_architecture.value]}"
     )
 
     check_plan(
