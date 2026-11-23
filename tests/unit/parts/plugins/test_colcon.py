@@ -276,7 +276,7 @@ class TestPluginColconPlugin:
 
         assert plugin.get_build_commands() == [
             "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
-            "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
+            "sudo rosdep init; fi",
             'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
             'state="$(set +o); set -$-"',
             "set +u",
@@ -354,7 +354,7 @@ class TestPluginColconPlugin:
 
         assert plugin.get_build_commands() == [
             "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
-            "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
+            "sudo rosdep init; fi",
             'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
             'state="$(set +o); set -$-"',
             "set +u",
@@ -432,7 +432,7 @@ class TestPluginColconPlugin:
 
         assert plugin.get_build_commands() == [
             "if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then",
-            "sudo --preserve-env=http_proxy,https_proxy rosdep init; fi",
+            "sudo rosdep init; fi",
             'rosdep update --include-eol-distros --rosdistro "${ROS_DISTRO}"',
             'state="$(set +o); set -$-"',
             "set +u",
@@ -497,6 +497,52 @@ class TestPluginColconPlugin:
             '--target-arch "${CRAFT_TARGET_ARCH}" '
             f"--stage-cache-dir {new_dir} --base core26",
         ]
+
+    def test_get_build_commands_ignores_empty_proxy(
+        self, setup_method_fixture, new_dir, monkeypatch
+    ):
+        """An empty proxy must not be forwarded to rosdep."""
+        plugin = setup_method_fixture("core22", new_dir)
+
+        monkeypatch.setattr(sys, "path", ["", "/test"])
+        monkeypatch.setattr(sys, "executable", "/test/python3")
+        monkeypatch.setattr(_ros, "__file__", "/test/_ros.py")
+        monkeypatch.setattr(
+            os,
+            "environ",
+            {"PATH": "/bin:/test", "http_proxy": "", "https_proxy": ""},
+        )
+
+        commands = plugin.get_build_commands()
+
+        assert "sudo rosdep init; fi" in commands
+        assert not any("--preserve-env" in command for command in commands)
+        stage_command = next(command for command in commands if "env -i " in command)
+        assert "PATH=/bin:/test" in stage_command
+        assert "http_proxy=" not in stage_command
+        assert "https_proxy=" not in stage_command
+
+    def test_get_build_commands_preserves_nonempty_proxy_only(
+        self, setup_method_fixture, new_dir, monkeypatch
+    ):
+        """Only a non-empty proxy is preserved for rosdep."""
+        plugin = setup_method_fixture("core22", new_dir)
+
+        monkeypatch.setattr(sys, "path", ["", "/test"])
+        monkeypatch.setattr(sys, "executable", "/test/python3")
+        monkeypatch.setattr(_ros, "__file__", "/test/_ros.py")
+        monkeypatch.setattr(
+            os,
+            "environ",
+            {"http_proxy": "http://foo", "https_proxy": ""},
+        )
+
+        commands = plugin.get_build_commands()
+
+        assert "sudo --preserve-env=http_proxy rosdep init; fi" in commands
+        stage_command = next(command for command in commands if "env -i " in command)
+        assert "http_proxy=http://foo" in stage_command
+        assert "https_proxy=" not in stage_command
 
     def test_get_build_commands_with_all_properties_core22(
         self, setup_method_fixture, new_dir, monkeypatch
