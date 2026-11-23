@@ -16,10 +16,12 @@
 
 import hashlib
 import json
+import re
 from unittest.mock import ANY, Mock, call
 
 import craft_store
 import pytest
+from craft_cli.pytest_plugin import raises_craft_error
 
 from snapcraft.store import constants
 from snapcraft.store._metadata import StoreMetadataHandler
@@ -103,12 +105,15 @@ class TestUpload:
             )
         )
 
-        with pytest.raises(StoreMetadataError) as raised:
+        with raises_craft_error(
+            StoreMetadataError,
+            details=re.escape(
+                "Conflict in 'summary' field:\n"
+                "    In snapcraft.yaml: 'local summary'\n"
+                "    In the Store:      'store summary'"
+            ),
+        ):
             handler.upload({"summary": "local summary"}, force=False)
-
-        assert "Conflict in 'summary' field" in str(raised.value.details)
-        assert "In snapcraft.yaml: 'local summary'" in str(raised.value.details)
-        assert "In the Store:      'store summary'" in str(raised.value.details)
 
 
 class TestUploadBinary:

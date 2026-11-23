@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import re
 import shutil
 import textwrap
 from datetime import datetime
@@ -26,6 +27,7 @@ import craft_parts
 import pydantic
 import pytest
 from craft_cli import EmitterMode, emit
+from craft_cli.pytest_plugin import raises_craft_error
 from craft_parts import (
     Action,
     Features,
@@ -111,13 +113,14 @@ def stub_component_data():
 
 def test_config_not_found(new_dir):
     """If snapcraft.yaml is not found, raise an error."""
-    with pytest.raises(craft_application.errors.ProjectFileMissingError) as raised:
+    with raises_craft_error(
+        craft_application.errors.ProjectFileMissingError,
+        match=re.escape(
+            f"Project file 'snapcraft.yaml' not found in {str(new_dir)!r}."
+        ),
+        resolution=re.escape("Ensure the project file exists."),
+    ):
         parts_lifecycle.run("pull", argparse.Namespace())
-
-    assert str(raised.value) == (
-        f"Project file 'snapcraft.yaml' not found in {str(new_dir)!r}."
-    )
-    assert raised.value.resolution == "Ensure the project file exists."
 
 
 def test_config_loading_error(new_dir, mocker, snapcraft_yaml):
@@ -1444,7 +1447,14 @@ def test_lifecycle_run_permission_denied(new_dir):
     Path("prime/meta/snap.yaml").touch()
     Path("prime/meta/snap.yaml").chmod(0o000)
 
-    with pytest.raises(errors.FilePermissionError) as raised:
+    with raises_craft_error(
+        errors.FilePermissionError,
+        match=re.escape(f"Permission denied in file {new_dir!s}/prime/meta/snap.yaml"),
+        resolution=re.escape(
+            "Make sure the file is part of the current project "
+            "and its permissions and ownership are correct."
+        ),
+    ):
         parts_lifecycle.run(
             "prime",
             argparse.Namespace(
@@ -1460,13 +1470,6 @@ def test_lifecycle_run_permission_denied(new_dir):
                 debug=False,
             ),
         )
-
-    error = raised.value
-    assert str(error) == f"Permission denied in file {new_dir!s}/prime/meta/snap.yaml"
-    assert error.resolution == (
-        "Make sure the file is part of the current project "
-        "and its permissions and ownership are correct."
-    )
 
 
 def test_lifecycle_run_in_provider_default(

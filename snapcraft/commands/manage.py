@@ -89,12 +89,19 @@ class StoreReleaseCommand(AppCommand):
             type=str,
             help="The comma-separated list of channels to release to",
         )
-        parser.add_argument(
+        progressive_group = parser.add_mutually_exclusive_group()
+        progressive_group.add_argument(
             "--progressive",
             dest="progressive_percentage",
             type=int,
             default=None,
             help="set a release progression to a certain percentage [0<=x<=100]",
+        )
+        progressive_group.add_argument(
+            "--pause",
+            action="store_true",
+            default=False,
+            help="pause an active progressive release",
         )
 
     @override
@@ -106,19 +113,27 @@ class StoreReleaseCommand(AppCommand):
             revision=parsed_args.revision,
             channels=channels,
             progressive_percentage=parsed_args.progressive_percentage,
+            pause=parsed_args.pause,
         )
 
         humanized_channels = humanize_list(channels, conjunction="and")
-        progressive = parsed_args.progressive_percentage
-        progressive_suffix = (
-            f" for {progressive}% of users" if progressive is not None else ""
-        )
-        emit.message(
-            f"Released {parsed_args.name!r} "
-            f"revision {parsed_args.revision!r} "
-            f"to channels: {humanized_channels}"
-            f"{progressive_suffix}"
-        )
+        if parsed_args.pause:
+            emit.message(
+                f"Paused progressive release of {parsed_args.name!r} "
+                f"revision {parsed_args.revision!r} "
+                f"on channels: {humanized_channels}"
+            )
+        else:
+            progressive = parsed_args.progressive_percentage
+            progressive_suffix = (
+                f" for {progressive}% of users" if progressive is not None else ""
+            )
+            emit.message(
+                f"Released {parsed_args.name!r} "
+                f"revision {parsed_args.revision!r} "
+                f"to channels: {humanized_channels}"
+                f"{progressive_suffix}"
+            )
 
 
 class StorePromoteCommand(AppCommand):

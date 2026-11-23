@@ -564,12 +564,8 @@ class TestSignBuildCommand:
         assert expected_snap_build.exists()
         assert expected_snap_build.read_bytes() == b"success!"
         emitter.assert_message(f"Build assertion {expected_snap_build} saved to disk.")
-        assert (
-            call(
-                "message",
-                f"Build assertion {expected_snap_build} uploaded to the store.",
-            )
-            not in emitter.interactions
+        emitter.assert_no_message(
+            f"Build assertion {expected_snap_build} uploaded to the store."
         )
 
     def test_sign_build_remote(

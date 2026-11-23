@@ -44,7 +44,7 @@ def test_command(emitter, fake_app_config):
         gnome                  core22, core24, core26
         gpu                    core22, core24, core26
         kde-neon               core22, core24
-        kde-neon-6             core22, core24
+        kde-neon-6             core22, core24, core26
         kde-neon-qt6           core22, core24
         ros2-humble            core22
         ros2-humble-desktop    core22

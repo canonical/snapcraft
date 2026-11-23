@@ -17,6 +17,7 @@
 import base64
 import http
 import json
+import re
 import textwrap
 import time
 from unittest.mock import ANY, Mock, call
@@ -24,6 +25,7 @@ from unittest.mock import ANY, Mock, call
 import craft_store
 import keyring
 import pytest
+from craft_cli.pytest_plugin import raises_craft_error
 from craft_store import endpoints
 from craft_store.models import RevisionsResponseModel
 
@@ -525,19 +527,19 @@ def test_request_candid_error(monkeypatch, legacy_config_path, candid_auth):
     legacy_config_path.unlink()
 
     store_cli = client.StoreClientCLI()
-
-    with pytest.raises(errors.SnapcraftError) as exc_info:
-        store_cli.request("GET", "https://dashboard.snapcraft.io/dev/api/account")
-
-    assert str(exc_info.value) == "Candid credentials are no longer valid."
     if candid_auth:
-        assert exc_info.value.resolution == (
-            "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
-        )
+        resolution = "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
     else:
-        assert exc_info.value.resolution == (
+        resolution = (
             "Run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
         )
+
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape("Candid credentials are no longer valid."),
+        resolution=re.escape(resolution),
+    ):
+        store_cli.request("GET", "https://dashboard.snapcraft.io/dev/api/account")
 
 
 @pytest.mark.parametrize("candid_auth", (True, False))
@@ -551,19 +553,17 @@ def test_request_exported_candid_error(
     monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", fake_candid_creds)
 
     store_cli = client.StoreClientCLI()
-
-    with pytest.raises(errors.SnapcraftError) as exc_info:
-        store_cli.request("GET", "https://dashboard.snapcraft.io/dev/api/account")
-
-    assert str(exc_info.value) == "Candid credentials are no longer valid."
     if candid_auth:
-        assert exc_info.value.resolution == (
-            "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft export-login' to generate new credentials."
-        )
+        resolution = "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft export-login' to generate new credentials."
     else:
-        assert exc_info.value.resolution == (
-            "Run 'snapcraft export-login' to generate new credentials."
-        )
+        resolution = "Run 'snapcraft export-login' to generate new credentials."
+
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape("Candid credentials are no longer valid."),
+        resolution=re.escape(resolution),
+    ):
+        store_cli.request("GET", "https://dashboard.snapcraft.io/dev/api/account")
 
 
 @pytest.mark.usefixtures("keyring_candid_creds")
@@ -575,19 +575,19 @@ def test_whoami_candid_error(monkeypatch, legacy_config_path, candid_auth):
     legacy_config_path.unlink()
 
     store_cli = client.StoreClientCLI()
-
-    with pytest.raises(errors.SnapcraftError) as exc_info:
-        store_cli.whoami()
-
-    assert str(exc_info.value) == "Candid credentials are no longer valid."
     if candid_auth:
-        assert exc_info.value.resolution == (
-            "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
-        )
+        resolution = "Unset SNAPCRAFT_STORE_AUTH and run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
     else:
-        assert exc_info.value.resolution == (
+        resolution = (
             "Run 'snapcraft logout' and 'snapcraft login' to generate new credentials."
         )
+
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape("Candid credentials are no longer valid."),
+        resolution=re.escape(resolution),
+    ):
+        store_cli.whoami()
 
 
 @pytest.mark.usefixtures("memory_keyring")
@@ -598,13 +598,12 @@ def test_request_candid_auth_error(monkeypatch, legacy_config_path):
 
     store_cli = client.StoreClientCLI()
 
-    with pytest.raises(errors.SnapcraftError) as exc_info:
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape("SNAPCRAFT_STORE_AUTH=candid is no longer supported."),
+        resolution=re.escape("Unset SNAPCRAFT_STORE_AUTH to use the Snap Store."),
+    ):
         store_cli.request("GET", "https://dashboard.snapcraft.io/dev/api/account")
-
-    assert str(exc_info.value) == "SNAPCRAFT_STORE_AUTH=candid is no longer supported."
-    assert (
-        exc_info.value.resolution == "Unset SNAPCRAFT_STORE_AUTH to use the Snap Store."
-    )
 
 
 @pytest.mark.usefixtures("memory_keyring")
@@ -615,14 +614,12 @@ def test_login_candid_auth_error(monkeypatch, legacy_config_path):
 
     store_cli = client.StoreClientCLI()
 
-    with pytest.raises(errors.SnapcraftError) as exc_info:
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape("SNAPCRAFT_STORE_AUTH=candid is no longer supported."),
+        resolution=re.escape("Unset SNAPCRAFT_STORE_AUTH to login with Ubuntu One."),
+    ):
         store_cli.login()
-
-    assert str(exc_info.value) == "SNAPCRAFT_STORE_AUTH=candid is no longer supported."
-    assert (
-        exc_info.value.resolution
-        == "Unset SNAPCRAFT_STORE_AUTH to login with Ubuntu One."
-    )
 
 
 @pytest.mark.usefixtures("memory_keyring")
@@ -633,13 +630,12 @@ def test_whoami_candid_auth_error(monkeypatch, legacy_config_path):
 
     store_cli = client.StoreClientCLI()
 
-    with pytest.raises(errors.SnapcraftError) as exc_info:
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape("SNAPCRAFT_STORE_AUTH=candid is no longer supported."),
+        resolution=re.escape("Unset SNAPCRAFT_STORE_AUTH to use the Snap Store."),
+    ):
         store_cli.whoami()
-
-    assert str(exc_info.value) == "SNAPCRAFT_STORE_AUTH=candid is no longer supported."
-    assert (
-        exc_info.value.resolution == "Unset SNAPCRAFT_STORE_AUTH to use the Snap Store."
-    )
 
 
 @pytest.mark.usefixtures("keyring_candid_creds")
@@ -820,21 +816,21 @@ def test_login_with_params(fake_client):
 def test_login_with_env(monkeypatch):
     monkeypatch.setenv("SNAPCRAFT_STORE_CREDENTIALS", "secret")
 
-    with pytest.raises(errors.SnapcraftError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape(
+            "Login is not required if 'SNAPCRAFT_STORE_CREDENTIALS' is set."
+        ),
+        resolution=re.escape(
+            "Continue without running 'login', or unset 'SNAPCRAFT_STORE_CREDENTIALS' and try again."
+        ),
+    ):
         client.StoreClientCLI().login(
             ttl=20,
             acls=["package_access", "package_push"],
             packages=["fake-snap", "fake-other-snap"],
             channels=["stable/fake", "edge/fake"],
         )
-
-    assert (
-        str(raised.value)
-        == "Login is not required if 'SNAPCRAFT_STORE_CREDENTIALS' is set."
-    )
-    assert raised.value.resolution == (
-        "Continue without running 'login', or unset 'SNAPCRAFT_STORE_CREDENTIALS' and try again."
-    )
 
 
 ###########
@@ -911,16 +907,14 @@ def test_login_from_401_request_with_env_credentials(monkeypatch, fake_client):
         ),
     ]
 
-    with pytest.raises(errors.SnapcraftError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape("Exported credentials are no longer valid for the Snap Store."),
+        resolution=re.escape(
+            "Run export-login and update SNAPCRAFT_STORE_CREDENTIALS."
+        ),
+    ):
         client.StoreClientCLI().request("GET", "http://url.com/path")
-
-    assert str(raised.value) == (
-        "Exported credentials are no longer valid for the Snap Store."
-    )
-    assert (
-        raised.value.resolution
-        == "Run export-login and update SNAPCRAFT_STORE_CREDENTIALS."
-    )
 
 
 def test_login_from_401_request_with_legacy_credentials(mocker, legacy_config_path):
@@ -946,14 +940,14 @@ def test_login_from_401_request_with_legacy_credentials(mocker, legacy_config_pa
         ],
     )
 
-    with pytest.raises(errors.SnapcraftError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftError,
+        match=re.escape("Credentials are no longer valid for the Snap Store."),
+        resolution=re.escape(
+            "Run snapcraft login or export-login to obtain new credentials."
+        ),
+    ):
         client.StoreClientCLI().request("GET", "http://url.com/path")
-
-    assert str(raised.value) == ("Credentials are no longer valid for the Snap Store.")
-    assert (
-        raised.value.resolution
-        == "Run snapcraft login or export-login to obtain new credentials."
-    )
 
 
 @pytest.mark.usefixtures("fake_user_password", "fake_hostname")
@@ -1113,6 +1107,28 @@ def test_release_progressive(fake_client):
                 "revision": "10",
                 "channels": ["beta", "edge"],
                 "progressive": {"percentage": 88, "paused": False},
+            },
+        )
+    ]
+
+
+def test_release_pause(fake_client):
+    client.StoreClientCLI().release(
+        snap_name="snap",
+        revision=10,
+        channels=["beta", "edge"],
+        pause=True,
+    )
+
+    assert fake_client.request.mock_calls == [
+        call(
+            "POST",
+            "https://dashboard.snapcraft.io/dev/api/snap-release/",
+            json={
+                "name": "snap",
+                "revision": "10",
+                "channels": ["beta", "edge"],
+                "progressive": {"paused": True},
             },
         )
     ]
@@ -1880,13 +1896,14 @@ def test_list_confdb_schemas_unmarshal_error(fake_client, list_confdb_schemas_pa
         status_code=200, content=json.dumps(list_confdb_schemas_payload).encode()
     )
 
-    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftAssertionError,
+        match=re.escape("Received invalid confdb schema from the store"),
+        details=re.escape(
+            "Bad confdb schema content:\n- field 'name' required in top-level configuration"
+        ),
+    ):
         client.StoreClientCLI().list_confdb_schemas()
-
-    assert str(raised.value) == "Received invalid confdb schema from the store"
-    assert raised.value.details == (
-        "Bad confdb schema content:\n- field 'name' required in top-level configuration"
-    )
 
 
 #######################
@@ -1928,13 +1945,14 @@ def test_build_confdb_schema_unmarshal_error(fake_client, build_confdb_schema_pa
         status_code=200, content=json.dumps(build_confdb_schema_payload).encode()
     )
 
-    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftAssertionError,
+        match=re.escape("Received invalid confdb schema from the store"),
+        details=re.escape(
+            "Bad confdb schema content:\n- field 'name' required in top-level configuration"
+        ),
+    ):
         client.StoreClientCLI().build_confdb_schema(confdb_schema=mock_confdb_schema)
-
-    assert str(raised.value) == "Received invalid confdb schema from the store"
-    assert raised.value.details == (
-        "Bad confdb schema content:\n- field 'name' required in top-level configuration"
-    )
 
 
 ######################
@@ -1995,13 +2013,14 @@ def test_post_confdb_schema_unmarshal_error(fake_client, post_confdb_schema_payl
         status_code=200, content=json.dumps(post_confdb_schema_payload).encode()
     )
 
-    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftAssertionError,
+        match=re.escape("Received invalid confdb schema from the store"),
+        details=re.escape(
+            "Bad confdb schema content:\n- field 'name' required in top-level configuration"
+        ),
+    ):
         client.StoreClientCLI().post_confdb_schema(confdb_schema_data=b"test-data")
-
-    assert str(raised.value) == "Received invalid confdb schema from the store"
-    assert raised.value.details == (
-        "Bad confdb schema content:\n- field 'name' required in top-level configuration"
-    )
 
 
 ########################
@@ -2076,13 +2095,14 @@ def test_list_validation_sets_unmarshal_error(
         status_code=200, content=json.dumps(list_validation_sets_payload).encode()
     )
 
-    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftAssertionError,
+        match=re.escape("Received invalid validation set from the store"),
+        details=re.escape(
+            "Bad validation set content:\n- field 'name' required in top-level configuration"
+        ),
+    ):
         client.StoreClientCLI().list_validation_sets()
-
-    assert str(raised.value) == "Received invalid validation set from the store"
-    assert raised.value.details == (
-        "Bad validation set content:\n- field 'name' required in top-level configuration"
-    )
 
 
 ########################
@@ -2128,13 +2148,14 @@ def test_build_validation_set_unmarshal_error(
         status_code=200, content=json.dumps(build_validation_set_payload).encode()
     )
 
-    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftAssertionError,
+        match=re.escape("Received invalid validation set from the store"),
+        details=re.escape(
+            "Bad validation set content:\n- field 'name' required in top-level configuration"
+        ),
+    ):
         client.StoreClientCLI().build_validation_set(validation_set=mock_validation_set)
-
-    assert str(raised.value) == "Received invalid validation set from the store"
-    assert raised.value.details == (
-        "Bad validation set content:\n- field 'name' required in top-level configuration"
-    )
 
 
 #######################
@@ -2194,13 +2215,14 @@ def test_post_validation_set_unmarshal_error(fake_client, post_validation_set_pa
         status_code=200, content=json.dumps(post_validation_set_payload).encode()
     )
 
-    with pytest.raises(errors.SnapcraftAssertionError) as raised:
+    with raises_craft_error(
+        errors.SnapcraftAssertionError,
+        match=re.escape("Received invalid validation set from the store"),
+        details=re.escape(
+            "Bad validation set content:\n- field 'name' required in top-level configuration"
+        ),
+    ):
         client.StoreClientCLI().post_validation_set(validation_set_data=b"test-data")
-
-    assert str(raised.value) == "Received invalid validation set from the store"
-    assert raised.value.details == (
-        "Bad validation set content:\n- field 'name' required in top-level configuration"
-    )
 
 
 ###############
@@ -2400,6 +2422,18 @@ def test_on_prem_release_progressive_percentage_unsupported(on_prem_client):
             revision=1,
             channels=["stable", "edge"],
             progressive_percentage=10,
+        )
+
+
+def test_on_prem_release_pause_unsupported(on_prem_client):
+    with pytest.raises(
+        errors.SnapcraftError, match="'--pause' is not supported for on-prem stores"
+    ):
+        on_prem_client.release(
+            "fake-snap",
+            revision=1,
+            channels=["stable", "edge"],
+            pause=True,
         )
 
 
