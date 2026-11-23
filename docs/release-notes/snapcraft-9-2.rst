@@ -150,6 +150,19 @@ Snapcraft 9.2.1
 - `snapcraft#6336 <https://github.com/canonical/snapcraft/issues/6336>`__ Snapcraft 9:
   snapcraftctl errors in core22 snaps
 
+.. _release-notes-fixes-9.2.2:
+
+Snapcraft 9.2.2
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6325 <https://github.com/canonical/snapcraft/issues/6325>`__ Skip
+  repacking if artifact contents are unchanged
+- `snapcraft#6497 <https://github.com/canonical/snapcraft/issues/6497>`__ Kernel plugin
+  leaves ``/proc/version_signature`` empty
+- `snapcraft#6519 <https://github.com/canonical/snapcraft/issues/6519>`__ core24:
+  ``desktop: meta/gui/<app>.desktop`` no longer resolves ``snap/gui/`` files
+- `snapcraft#6579 <https://github.com/canonical/snapcraft/pull/6579>`__ Empty
+  ``http_proxy``, ``https_proxy``, and ``no_proxy`` values are ignored
 
 Contributors
 ------------
@@ -157,7 +170,6 @@ Contributors
 We would like to express a big thank you to all the people who contributed to
 this release.
 
-Learn about the new features, changes, and fixes in
 :literalref:`@aleasto <https://github.com/aleasto>`,
 :literalref:`@artivis <https://github.com/artivis>`,
 :literalref:`@bepri <https://github.com/bepri>`,

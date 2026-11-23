@@ -94,6 +94,12 @@ variants can be found `here <https://ubuntu.com/kernel/variants>`_, but valid
 choices will depend on the chosen kernel source. If something other than
 ``generic`` is provided, this value takes precedence over the ``kernel-kdefconfig`` key.
 
+When the configuration is generated from an Ubuntu kernel flavour, the plugin sets
+``CONFIG_VERSION_SIGNATURE`` the same way the Ubuntu kernel packages do, for example
+``Ubuntu 6.8.0-1012.12-mtk 6.8.12``. This populates ``/proc/version_signature`` on the
+built kernel. To use a different value, set ``CONFIG_VERSION_SIGNATURE`` in the
+``kernel-kconfigs`` key.
+
 
 kernel-ubuntu-release-name
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
