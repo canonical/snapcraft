@@ -225,11 +225,6 @@ class KDENeon6(GPUExtension):
         snippet["plugs"] = {
             **snippet.get("plugs", {}),
             "desktop": {"mount-host-font-cache": False},
-            "gtk-2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",

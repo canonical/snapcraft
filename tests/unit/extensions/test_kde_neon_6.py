@@ -191,11 +191,6 @@ def test_get_root_snippet(kde_neon_6_extension):
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
-            "gtk-2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
@@ -242,11 +237,6 @@ def test_get_root_snippet_core24(kde_neon_6_extension_core24):
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
-            "gtk-2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
@@ -320,11 +310,6 @@ def test_get_root_snippet_with_external_sdk(kde_neon_6_extension_with_build_snap
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
-            "gtk-2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
@@ -373,11 +358,6 @@ def test_get_root_snippet_with_external_sdk_core24(
         },
         "plugs": {
             "desktop": {"mount-host-font-cache": False},
-            "gtk-2-themes": {
-                "interface": "content",
-                "target": "$SNAP/data-dir/themes",
-                "default-provider": "gtk-common-themes",
-            },
             "gtk-3-themes": {
                 "interface": "content",
                 "target": "$SNAP/data-dir/themes",
