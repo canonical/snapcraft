@@ -49,8 +49,10 @@ jobs:
 
       - name: Verify snapcraft snap
         if: steps.filter.outputs.source-files == 'true'
+        env:
+          SNAPS: ${{ steps.build-snapcraft.outputs.snaps }}
         run: |
-          sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snaps }}
+          sudo snap install --dangerous --classic "$SNAPS"
 
   integration-spread-tests:
     runs-on: [self-hosted, spread-enabled]

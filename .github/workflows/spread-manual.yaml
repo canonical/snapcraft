@@ -46,8 +46,10 @@ jobs:
           name: snap
           path: ${{ steps.snapcraft.outputs.snaps }}
       - name: Verify snapcraft snap
+        env:
+          SNAPS: ${{ steps.snapcraft.outputs.snaps }}
         run: |
-          sudo snap install --dangerous --classic ${{ steps.snapcraft.outputs.snaps }}
+          sudo snap install --dangerous --classic "$SNAPS"
 
   kernel-plugins:
     needs: [predicate, snap-build]

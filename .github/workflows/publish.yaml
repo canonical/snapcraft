@@ -49,9 +49,11 @@ jobs:
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Verify Snapcraft Snap
+        env:
+          SNAPS: ${{ steps.build.outputs.snaps }}
         run: |
           # Make sure it is installable.
-          sudo snap install --dangerous --classic ${{ steps.build.outputs.snaps }}
+          sudo snap install --dangerous --classic "$SNAPS"
 
       - name: Get branch name
         id: vars
