@@ -174,28 +174,38 @@ Source the scripts in the project file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To incorporate options, hooks, and scripts into an existing project file, the app's
-command must be replaced with the wrapper script, and both the hook and management
-scripts need to be brought into the snap from external ``src/hooks/bin`` and
-``src/utilities/bin`` directories respectively:
+command must be replaced with the wrapper script. The wrapper, hook, and management
+scripts need to be brought into the snap with parts that dump the external
+``src/example-server/bin``, ``src/hooks/bin``, and ``src/utilities/bin`` directories
+respectively. The management script is organized into ``utilities/bin`` so that the
+wrapper and hooks can source it from ``$SNAP/utilities/bin/management``:
 
 .. code-block:: yaml
     :caption: snapcraft.yaml
 
     apps:
       example-server:
-        command: src/example-server/bin/wrapper
+        command: bin/wrapper
         daemon: simple
         plugs: # ...
     # ...
-    hooks:
+    parts:
+      # ...
+      wrapper:
+        plugin: dump
+        source: src/example-server
+      # ...
+      hooks:
         plugin: dump
         source: src/hooks/
         organize:
           bin/: snap/hooks/
-    # ...
-    scripts:
-      plugin: dump
-      source: src/utilities
+      # ...
+      scripts:
+        plugin: dump
+        source: src/utilities
+        organize:
+          bin/: utilities/bin/
 
 
 Test the option
