@@ -13,6 +13,7 @@ restore: |
   snapcraft clean --destructive-mode
 
 execute: |
+  false
   snapcraft prime --destructive-mode
 
   grep -q "grade: ${SNAP_GRADE}" prime/meta/snap.yaml
