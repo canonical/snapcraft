@@ -32,14 +32,14 @@ jobs:
           yq eval 'del(.parts.snapcraft.build-environment[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
 
       - name: Build snap
-        uses: canonical/action-build@v1
+        uses: canonical/craft-actions/snapcraft/pack@5d072661cd0e3a60ad1b79d6ba93db88344e2b5b # v1.1.0
         id: snapcraft
 
       - name: Upload snap artifact
         uses: actions/upload-artifact@v7
         with:
           name: snap
-          path: ${{ steps.snapcraft.outputs.snap }}
+          path: ${{ steps.snapcraft.outputs.snaps }}
 
   docs-spread-tests:
     runs-on: [self-hosted, spread-enabled]

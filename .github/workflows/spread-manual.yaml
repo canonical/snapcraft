@@ -38,16 +38,16 @@ jobs:
         run: |
           yq e 'del(.parts.snapcraft."build-environment"[] | select(.UV_NO_BINARY == "true"))' -i snap/snapcraft.yaml
       - name: Build snap
-        uses: canonical/action-build@v1
+        uses: canonical/craft-actions/snapcraft/pack@5d072661cd0e3a60ad1b79d6ba93db88344e2b5b # v1.1.0
         id: snapcraft
       - name: Upload snap artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: snap
-          path: ${{ steps.snapcraft.outputs.snap }}
+          path: ${{ steps.snapcraft.outputs.snaps }}
       - name: Verify snapcraft snap
         run: |
-          sudo snap install --dangerous --classic ${{ steps.snapcraft.outputs.snap }}
+          sudo snap install --dangerous --classic ${{ steps.snapcraft.outputs.snaps }}
 
   kernel-plugins:
     needs: [predicate, snap-build]

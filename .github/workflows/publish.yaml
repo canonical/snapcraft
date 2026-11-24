@@ -41,17 +41,17 @@ jobs:
           fetch-depth: 0
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
-        uses: canonical/action-build@v1
+        uses: canonical/craft-actions/snapcraft/pack@5d072661cd0e3a60ad1b79d6ba93db88344e2b5b # v1.1.0
         name: Build Snapcraft Snap
         id: build
         with:
-          snapcraft-channel: latest/candidate
+          channel: latest/candidate
 
       - if: steps.decisions.outputs.PUBLISH == 'true'
         name: Verify Snapcraft Snap
         run: |
           # Make sure it is installable.
-          sudo snap install --dangerous --classic ${{ steps.build.outputs.snap }}
+          sudo snap install --dangerous --classic ${{ steps.build.outputs.snaps }}
 
       - name: Get branch name
         id: vars
@@ -71,5 +71,5 @@ jobs:
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:
-          snap: ${{ steps.build.outputs.snap }}
+          snap: ${{ steps.build.outputs.snaps }}
           release: edge/${{ steps.vars.outputs.branch }}
