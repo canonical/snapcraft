@@ -1,3 +1,6 @@
+.. meta::
+    :description: Add configuration options to a snap with a configure hook, a wrapper script, and management scripts, then test them with snap get and snap set.
+
 .. _how-to-add-a-snap-configuration:
 
 Add a snap configuration
