@@ -106,6 +106,42 @@ class TestAppstreamData:
         assert appstream.extract(file_name, workdir=".") == expected
 
 
+@pytest.mark.parametrize(
+    ("link", "expect", "debug_messages"),
+    [
+        pytest.param(
+            "contact@example.com",
+            True,
+            ["'contact@example.com' is a valid email."],
+            id="valid-email",
+        ),
+        pytest.param(
+            "https://example.com",
+            True,
+            ["'https://example.com' is a valid URL."],
+            id="valid-url",
+        ),
+        pytest.param(
+            "ftp://example.com",
+            True,
+            [
+                "'ftp://example.com' should be an 'http://' or 'https://' address "
+                "or an email.",
+                "'ftp://example.com' is a valid URL.",
+            ],
+            id="non-http-uri",
+        ),
+        pytest.param("file://invalid.file.link", False, [], id="ignore-file-uri"),
+        pytest.param("not a link", False, [], id="not-a-link"),
+    ],
+)
+def test_is_valid_link(emitter, link, expect, debug_messages):
+    assert appstream._is_valid_link(link) is expect
+
+    for message in debug_messages:
+        emitter.assert_debug(message)
+
+
 # See LP #1814898 for a description of possible fallbacks
 @pytest.mark.usefixtures("new_dir")
 class TestAppstreamIcons:
@@ -782,6 +818,7 @@ class TestAppstreamContent:
               <url type="homepage">bad_invalid_mail</url>
               <url type="homepage">https://hello.com</url>
               <url type="vcs-browser">file://invalid.file.link</url>
+              <url type="vcs-browser">file:///tmp/x</url>
               <url type="vcs-browser">http://missing-dot-com</url>
               <url type="bugtracker">https://github.com/alainm23/planify/issues</url>
               <url type="bugtracker">https:/missing-slash.com</url>

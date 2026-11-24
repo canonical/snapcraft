@@ -21,6 +21,7 @@ import operator
 import os
 from io import StringIO
 from typing import cast
+from urllib.parse import urlparse
 
 import lxml.etree
 import validators
@@ -106,7 +107,7 @@ def extract(relpath: str, *, workdir: str) -> ExtractedMetadata | None:
     update_contact = _get_value_from_xml_element(dom, "update_contact")
     contact = None
     if update_contact:
-        if validators.url(update_contact) or validators.email(update_contact):
+        if _is_valid_link(update_contact):
             contact = [update_contact]
         else:
             emit.progress(
@@ -187,6 +188,36 @@ def _get_value_from_xml_element(
     return None
 
 
+def _is_valid_link(value: str) -> bool:
+    """Check if a link is a valid email address or URL.
+
+    This is used for fields such as contact and issues and are shown in the store listing,
+    so URI schemes that aren't http or https (such as 'file://' or 'wss://') aren't desired.
+
+    For backward compatibility, all URIs except 'file://' are still accepted.
+    """
+    if validators.email(value):
+        emit.debug(f"{value!r} is a valid email.")
+        return True
+
+    if validators.url(value):
+        scheme = urlparse(value).scheme
+
+        if scheme == "file":
+            emit.debug(f"The 'file://' URI scheme is not supported for {value!r}.")
+            return False
+
+        if scheme not in {"http", "https"}:
+            emit.debug(
+                f"{value!r} should be an 'http://' or 'https://' address or an email."
+            )
+
+        emit.debug(f"{value!r} is a valid URL.")
+        return True
+
+    return False
+
+
 def _get_urls_from_xml_element(
     nodes: list[lxml.etree._Element], url_type: str
 ) -> list[str] | None:
@@ -199,7 +230,7 @@ def _get_urls_from_xml_element(
             and node.text.strip() not in urls
         ):
             link = node.text.strip()
-            if validators.url(link) or validators.email(link):
+            if _is_valid_link(link):
                 urls.append(link)
             else:
                 emit.progress(
