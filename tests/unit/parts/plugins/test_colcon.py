@@ -121,9 +121,10 @@ def test_stage_runtime_dependencies_skips_build_snap_packages(monkeypatch, tmp_p
     monkeypatch.setattr(_ros.catkin_packages, "find_packages", find_packages_mock)
     monkeypatch.setattr(_ros.subprocess, "run", _run)
     monkeypatch.setattr(_ros, "_find_installed_debian_dependencies", _find_installed)
-    monkeypatch.setattr(_ros.Repo, "configure", lambda _name: None)
-    monkeypatch.setattr(_ros.Repo, "fetch_stage_packages", _fetch_stage_packages)
-    monkeypatch.setattr(_ros.Repo, "unpack_stage_packages", lambda **_kwargs: None)
+    repo = _ros.Repo.configure.__self__
+    monkeypatch.setattr(repo, "configure", lambda _name: None)
+    monkeypatch.setattr(repo, "fetch_stage_packages", _fetch_stage_packages)
+    monkeypatch.setattr(repo, "unpack_stage_packages", lambda **_kwargs: None)
 
     callback = _ros.stage_runtime_dependencies.callback
     assert callback is not None

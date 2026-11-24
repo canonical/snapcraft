@@ -57,7 +57,7 @@ Add a part written for GTK2
     :end-at: - libibus-1.0-5
 
 GTK2 parts don't require a special plugin. Instead, the snap itself requires a
-special ``desktop-gtk2`` part which containas the GTK2 runtime libraries, and
+special ``desktop-gtk2`` part which contains the GTK2 runtime libraries, and
 the ``desktop-launch`` script that launches the app. This part is copied from
 the `Snapcraft Desktop Helpers
 <https://github.com/ubuntu/snapcraft-desktop-helpers>`_ repository.
