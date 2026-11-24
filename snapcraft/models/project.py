@@ -2172,7 +2172,7 @@ class Project(models.Project):
     @classmethod
     def unmarshal(cls, data: dict[str, Any]) -> Self:
         """Create a Snapcraft project from a dictionary of data."""
-        return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)
+        return pydantic.TypeAdapter(SnapcraftProject).validate_python(data)  # ty: ignore[invalid-explicit-return]
 
     @override
     def marshal(self) -> dict[str, str | list[str] | dict[str, Any]]:

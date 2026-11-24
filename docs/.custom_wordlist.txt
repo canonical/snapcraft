@@ -42,6 +42,7 @@ cryptographically
 ctypes?
 DBus
 defconfigs
+dev
 devmode
 distros?
 Dockerfiles?
@@ -52,6 +53,7 @@ drwxr-xr-x
 drwxrwxrwx
 emacs
 enablement
+execstack
 FIGlet
 Filesets?
 filetrees?
@@ -97,6 +99,7 @@ kconfig
 kdefconfig
 kahle
 keyrings
+Keysmith
 landscape
 lang
 lastmod

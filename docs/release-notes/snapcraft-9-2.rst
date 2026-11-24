@@ -120,7 +120,7 @@ Snapcraft 9.2.0
 - `GHSL-2024-323 <https://securitylab.github.com/advisories/GHSL-2024-323_snapcraft/>`__
   Denial of Service (DoS) in snapcraft
 - `LP#2083964 <https://bugs.launchpad.net/snapcraft/+bug/2083964>`__ 'dict' object has
-  no attribute 'startswith' on ``expand-extensions`` on firefox nightly snap
+  no attribute 'startswith' on ``expand-extensions`` on Firefox nightly snap
 - `craft-application#940 <https://github.com/canonical/craft-application/issues/940>`__
   The app crashes when loading YAML files that are not UTF-8 encoded
 - `craft-application#1103 <https://github.com/canonical/craft-application/issues/1103>`__
