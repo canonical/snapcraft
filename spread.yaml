@@ -3,6 +3,8 @@ project: snapcraft
 kill-timeout: 90m
 
 environment:
+  LXD_CHANNEL: $(HOST:printf %s "${LXD_CHANNEL:-6/stable}")
+
   # Tell snapcraft to use the current host to build
   SNAPCRAFT_BUILD_ENVIRONMENT: "host"
 
@@ -186,7 +188,11 @@ prepare: |
   [ ! -d /snap ] && ln -s /var/lib/snapd/snap /snap
 
   tests.pkgs remove lxd
-  snap install lxd --channel=5.21/stable
+  if snap list lxd >/dev/null; then
+    snap refresh --channel="$LXD_CHANNEL" lxd
+  else
+    snap install --channel="$LXD_CHANNEL" lxd
+  fi
   snap install yq
 
   # Hold snap refreshes for 24h.
