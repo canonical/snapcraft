@@ -37,7 +37,7 @@ jobs:
 
       - name: Build snapcraft snap
         id: build-snapcraft
-        uses: canonical/action-build@v1
+        uses: canonical/craft-actions/snapcraft/pack@5d072661cd0e3a60ad1b79d6ba93db88344e2b5b # v1.1.0
         if: steps.filter.outputs.source-files == 'true'
 
       - name: Upload snapcraft snap
@@ -45,12 +45,14 @@ jobs:
         if: steps.filter.outputs.source-files == 'true'
         with:
           name: snap
-          path: ${{ steps.build-snapcraft.outputs.snap }}
+          path: ${{ steps.build-snapcraft.outputs.snaps }}
 
       - name: Verify snapcraft snap
         if: steps.filter.outputs.source-files == 'true'
+        env:
+          SNAPS: ${{ steps.build-snapcraft.outputs.snaps }}
         run: |
-          sudo snap install --dangerous --classic ${{ steps.build-snapcraft.outputs.snap }}
+          sudo snap install --dangerous --classic "$SNAPS"
 
   integration-spread-tests:
     runs-on: [self-hosted, spread-enabled]
