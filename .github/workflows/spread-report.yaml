@@ -16,5 +16,5 @@ jobs:
   report:
     uses: canonical/starflow/.github/workflows/test-report.yaml@main
     with:
-      reporter: java-junit
+      reporter: phpunit-junit
       name: "Spread tests ($1)"
