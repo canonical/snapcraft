@@ -47,7 +47,7 @@ help: ## Show this help.
 	uniq
 
 .PHONY: setup
-setup: install-uv _setup-docs _setup-lint _setup-tests setup-precommit install-build-deps  ## Set up the development environment
+setup: install-uv _setup-docs _setup-lint _setup-tests setup-precommit install-build-deps  ## Set up a development environment
 	uv sync $(UV_TEST_GROUPS) $(UV_LINT_GROUPS) $(UV_DOCS_GROUPS)
 
 .PHONY: setup-docs

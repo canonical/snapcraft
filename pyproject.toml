@@ -241,27 +241,6 @@ lint.ignore = [
   "S607",  # Partial executable path for subprocess calls
 ]
 
-[tool.ruff.lint.per-file-ignores]
-"tests/**.py" = [  # Some things we want for the main project are unnecessary in tests.
-  "D",  # Ignore docstring rules in tests
-  "ANN",  # Ignore type annotations in tests
-  "ARG",  # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
-  "S101",  # Allow assertions in tests
-  "S103",  # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
-  "S108",  # Allow Probable insecure usage of temporary file or directory
-  "PLR0913",  # Allow many arguments for test functions (useful if we need many fixtures)
-  "PLR0917",  # Allow many positional arguments for test functions (useful if we need many fixtures)
-  "PLR2004",  # Allow magic values in tests
-  "SLF",  # Allow accessing private members from tests.
-]
-"tests/unit/parts/plugins/test_kernel.py" = [
-  "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
-]
-"__init__.py" = [
-  "I001",  # isort leaves init files alone by default, this makes ruff ignore them too.
-  "F401",  # Allows unused imports in __init__ files.
-]
-
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
 
@@ -283,6 +262,27 @@ max-branches = 16
 [tool.ruff.lint.pep8-naming]
 # Allow Pydantic's `@validator` decorator to trigger class method treatment.
 classmethod-decorators = ["pydantic.validator", "pydantic.root_validator"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = [  # Some things we want for the main project are unnecessary in tests.
+  "D",  # Ignore docstring rules in tests
+  "ANN",  # Ignore type annotations in tests
+  "ARG",  # Allow unused arguments in tests (e.g. for fake functions/methods/classes)
+  "S101",  # Allow assertions in tests
+  "S103",  # Allow `os.chmod` setting a permissive mask `0o555` on file or directory
+  "S108",  # Allow Probable insecure usage of temporary file or directory
+  "PLR0913",  # Allow many arguments for test functions (useful if we need many fixtures)
+  "PLR0917",  # Allow many positional arguments for test functions (useful if we need many fixtures)
+  "PLR2004",  # Allow magic values in tests
+  "SLF",  # Allow accessing private members from tests.
+]
+"tests/unit/parts/plugins/test_kernel.py" = [
+  "E101",  # Mixed tabs and spaces. Ruff gets confused by tabs in multiline strings
+]
+"__init__.py" = [
+  "I001",  # isort leaves init files alone by default, this makes ruff ignore them too.
+  "F401",  # Allows unused imports in __init__ files.
+]
 
 [tool.setuptools]
 script-files = ["bin/snapcraftctl-compat"]
