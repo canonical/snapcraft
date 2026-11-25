@@ -401,7 +401,7 @@ suites:
     restore: |
       sudo pro detach --assume-yes
 
-  docs/how-to/code/:
+  docs/how-to/code/crafting/:
     summary: tests how-to guides from the docs
     systems:
       - ubuntu-24.04-64
