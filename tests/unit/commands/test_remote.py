@@ -18,6 +18,7 @@
 
 import os
 import sys
+from pathlib import Path
 from unittest.mock import ANY
 
 import pytest
@@ -536,7 +537,7 @@ def test_unknown_build_for_error(
     ],
 )
 @pytest.mark.usefixtures("emitter", "mock_argv", "mock_remote_start_builds")
-def test_multiple_artifacts_per_build_on(
+def test_multiple_artifacts_per_build_on(  # noqa: PLR0917
     default_project,
     fake_services,
     setup_project,
@@ -567,3 +568,56 @@ def test_multiple_artifacts_per_build_on(
     )
     for message in error_messages:
         check.is_in(message, err)
+
+
+@pytest.mark.usefixtures("emitter")
+def test_project_dir_argument(
+    default_project,
+    fake_services,
+    setup_project,
+    mock_remote_start_builds,
+    fake_app,
+    mocker,
+):
+    # Simulate the command-line input for the parser
+    mocker.patch.object(
+        sys,
+        "argv",
+        [
+            "snapcraft",
+            "remote-build",
+            "--launchpad-accept-public-upload",
+            "--project-dir",
+            "my-subdir",
+        ],
+    )
+
+    # Setup a dummy project in the root environment
+    # Setup a dummy project in the root environment
+    setup_project(
+        fake_services,
+        {
+            **default_project.marshal(),
+            "base": "core24",
+            "platforms": {
+                "amd64": {
+                    "build-on": ["amd64"]
+                }
+            }
+        },
+        write_project=True,
+    )
+
+    # Move the generated project file into the subdirectory
+    Path("my-subdir").mkdir(exist_ok=True)
+    if Path("snapcraft.yaml").exists():
+        Path("snapcraft.yaml").rename("my-subdir/snapcraft.yaml")
+    elif Path("snap").exists():
+        Path("snap").rename("my-subdir/snap")
+
+    fake_app.run()
+
+    # Verify that build_path is passed to the Launchpad API correctly
+    mock_remote_start_builds.assert_called_once_with(
+        ANY, architectures=[str(DebianArchitecture.from_host())], build_path="my-subdir"
+    )
