@@ -25,6 +25,9 @@ PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 # Cutoff (in seconds) before a test is considered slow by pytest
 SLOW_CUTOFF_TIME ?= 1
 
+# Where 'make test-coverage' writes the pytest JUnit XML report.
+JUNIT_XML ?= results/junit.xml
+
 # By default we should not update the uv lock file here.
 export UV_FROZEN := true
 
@@ -253,9 +256,9 @@ test-slow:  ##- Run slow tests
 .PHONY: test-coverage
 test-coverage:  ##- Generate coverage report
 ifeq ($(COVERAGE_SOURCE),)
-	uv run coverage run --source $(PROJECT),tests -m pytest
+	uv run coverage run --source $(PROJECT),tests -m pytest --junitxml=$(JUNIT_XML)
 else
-	uv run coverage run --source $(COVERAGE_SOURCE),tests -m pytest
+	uv run coverage run --source $(COVERAGE_SOURCE),tests -m pytest --junitxml=$(JUNIT_XML)
 endif
 	uv run coverage xml -o results/coverage.xml
 	# for backwards compatibility
