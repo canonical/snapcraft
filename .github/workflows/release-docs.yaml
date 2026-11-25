@@ -1,0 +1,17 @@
+name: Documentation release
+on:
+  push:
+    tags:
+      # These tags should be protected, remember to enable the rule:
+      # https://github.com/canonical/snapcraft/settings/tag_protection
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  docs-release:
+    permissions:
+      contents: write
+    uses: canonical/starflow/.github/workflows/release-docs.yaml@main
+    with:
+      rtd-project: canonical-snapcraft
+    secrets:
+      RTD_TOKEN: ${{ secrets.RTD_TOKEN }}

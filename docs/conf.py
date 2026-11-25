@@ -279,11 +279,6 @@ exclude_patterns = [
     "README.md",  # Docs README
 ]
 
-git_exclude_patterns = [
-    "common/craft-parts/**",
-    "common/craft-application/**",
-]
-
 # Adds custom CSS files, located remotely or in 'html_static_path'.
 html_css_files = [
     "css/cookie-banner.css",
@@ -348,6 +343,13 @@ intersphinx_mapping = {
 # Block Intersphinx from looking up external sources with internal references. In other
 # words, only :external+<project>... will search in other projects.
 intersphinx_disabled_reftypes = ["std:*"]
+
+# Exclude externally included docs from git-last-updated checks.
+# Applications and libraries should fill these in based on which common items they use.
+git_exclude_patterns = [
+    "common/craft-parts/**",
+    "common/craft-application/**",
+]
 
 
 ##############################
