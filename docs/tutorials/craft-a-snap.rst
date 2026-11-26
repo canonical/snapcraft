@@ -136,6 +136,12 @@ Mirror these first five keys:
     :end-at: amd64:
     :emphasize-lines: 1-10
 
+.. note::
+
+    Keep the ``grade`` and ``confinement`` keys from the template. With the ``core24``
+    base, ``confinement`` is required, so the snap won't pack without it. We'll come
+    back to both keys in :ref:`tutorial-craft-a-snap-secure-the-snap`.
+
 As this is a personal snap, we prepended the project name with the user name. You might
 encounter other snaps in the Snap Store with naming that follows this pattern -- it's
 the recommended format, to keep personal copies of snaps distinct from their originals.
