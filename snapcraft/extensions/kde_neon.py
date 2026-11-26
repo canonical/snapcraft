@@ -395,6 +395,8 @@ class KDENeon(GPUExtension):
         source = get_extensions_data_dir() / "desktop" / "command-chain-kde"
 
         base = self.yaml_data["base"]
+
+        parts: dict[str, dict[str, Any]]
         if base != "core22":
             parts = {f"kde-neon/{k}": v for k, v in super().get_parts_snippet().items()}
         else:
@@ -404,10 +406,11 @@ class KDENeon(GPUExtension):
             {
                 "kde-neon/sdk": {
                     "source": str(source),
-                    "plugin": "make",
-                    "make-parameters": [
-                        f"PLATFORM_PLUG=kf5-{base}",
-                    ],
+                    "plugin": "nil",
+                    "override-build": (
+                        'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" '
+                        "desktop-launch hooks-configure-desktop hooks-configure-fonts run"
+                    ),
                 },
             }
         )

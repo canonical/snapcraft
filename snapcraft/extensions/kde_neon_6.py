@@ -513,12 +513,13 @@ class KDENeon6(GPUExtension):
         else:
             parts = {}
 
-        sdk_part = {
+        sdk_part: dict[str, Any] = {
             "source": str(get_extensions_data_dir() / "desktop" / "command-chain-kde"),
-            "plugin": "make",
-            "make-parameters": [
-                f"PLATFORM_PLUG=kf6-{base}",
-            ],
+            "plugin": "nil",
+            "override-build": (
+                'install -D -m755 -t "$CRAFT_PART_INSTALL/snap/command-chain" '
+                "desktop-launch hooks-configure-desktop hooks-configure-fonts run"
+            ),
         }
 
         build_snaps = []

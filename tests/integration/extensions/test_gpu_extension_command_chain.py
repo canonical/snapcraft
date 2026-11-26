@@ -14,14 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Integration tests for gpu extension's Makefile."""
+"""Integration tests for the gpu extension's command-chain build script."""
 
+import os
 import shutil
 import stat
 import subprocess
 from pathlib import Path
 
 import pytest
+
+from snapcraft.extensions.gpu_extension import _gpu_wrapper_override_build
 
 COMMAND_CHAIN_DIR = (
     Path(__file__).resolve().parents[3] / "extensions" / "gpu" / "command-chain"
@@ -38,38 +41,21 @@ def command_chain_dir(tmp_path):
     return build_dir
 
 
-def test_bare_make_is_a_noop(command_chain_dir):
-    """A bare `make` call doesn't install (snapcraft#6328)."""
-    result = subprocess.run(
-        ["make"],
-        cwd=command_chain_dir,
-        capture_output=True,
-        text=True,
+def _run_override_build(gpu_interface: str, build_dir: Path, install_dir: Path) -> None:
+    subprocess.run(
+        ["bash", "-ec", _gpu_wrapper_override_build(gpu_interface)],
+        cwd=build_dir,
+        env={**os.environ, "CRAFT_PART_INSTALL": str(install_dir)},
         check=True,
     )
-
-    assert "install" not in result.stdout
-    assert not (command_chain_dir / "gpu-2404-wrapper").exists()
 
 
 @pytest.mark.parametrize("gpu_interface", GPU_INTERFACES)
-def test_make_install_writes_to_destdir(command_chain_dir, tmp_path, gpu_interface):
-    """`make install DESTDIR=...` installs the wrapper under DESTDIR."""
+def test_override_build_installs_wrapper(command_chain_dir, tmp_path, gpu_interface):
+    """The override-build script installs the wrapper for the interface."""
     install_dir = tmp_path / "install"
 
-    subprocess.run(
-        ["make", f"GPU_INTERFACE={gpu_interface}"], cwd=command_chain_dir, check=True
-    )
-    subprocess.run(
-        [
-            "make",
-            "install",
-            f"GPU_INTERFACE={gpu_interface}",
-            f"DESTDIR={install_dir}",
-        ],
-        cwd=command_chain_dir,
-        check=True,
-    )
+    _run_override_build(gpu_interface, command_chain_dir, install_dir)
 
     wrapper = install_dir / "snap" / "command-chain" / f"{gpu_interface}-wrapper"
     assert wrapper.is_file()
@@ -85,17 +71,13 @@ def test_make_install_writes_to_destdir(command_chain_dir, tmp_path, gpu_interfa
     assert f"Usage: {gpu_interface}-wrapper <command>" in content
 
 
-def test_make_install_is_idempotent(command_chain_dir, tmp_path):
-    """Make install can run more than once."""
+def test_override_build_is_idempotent(command_chain_dir, tmp_path):
+    """The override-build script can run more than once."""
     install_dir = tmp_path / "install"
 
     for _ in range(2):
-        subprocess.run(["make"], cwd=command_chain_dir, check=True)
-        subprocess.run(
-            ["make", "install", f"DESTDIR={install_dir}"],
-            cwd=command_chain_dir,
-            check=True,
-        )
+        _run_override_build("gpu-2404", command_chain_dir, install_dir)
 
     wrapper = install_dir / "snap" / "command-chain" / "gpu-2404-wrapper"
     assert wrapper.is_file()
+    assert "%GPU_INTERFACE%" not in wrapper.read_text()

@@ -174,8 +174,10 @@ def test_get_parts_snippet(gpu_extension_core24):
     assert gpu_extension_core24.get_parts_snippet() == {
         "gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
-            "plugin": "make",
-            "make-parameters": ["GPU_INTERFACE=gpu-2404"],
+            "plugin": "nil",
+            "override-build": (
+                'install -D -m755 gpu-wrapper "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2404-wrapper"\nsed --in-place \'s/%GPU_INTERFACE%/gpu-2404/g\' "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2404-wrapper"'
+            ),
         },
         "gpu/cleanup": {
             "after": ["other_part"],
@@ -196,8 +198,10 @@ def test_get_parts_snippet_core22(gpu_extension_core22):
     assert gpu_extension_core22.get_parts_snippet() == {
         "gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
-            "plugin": "make",
-            "make-parameters": ["GPU_INTERFACE=graphics-core22"],
+            "plugin": "nil",
+            "override-build": (
+                'install -D -m755 gpu-wrapper "$CRAFT_PART_INSTALL/snap/command-chain/graphics-core22-wrapper"\nsed --in-place \'s/%GPU_INTERFACE%/graphics-core22/g\' "$CRAFT_PART_INSTALL/snap/command-chain/graphics-core22-wrapper"'
+            ),
         },
         "gpu/cleanup": {
             "after": ["other_part"],
@@ -218,8 +222,10 @@ def test_get_parts_snippet_core26(gpu_extension_core26):
     assert gpu_extension_core26.get_parts_snippet() == {
         "gpu/wrapper": {
             "source": str(get_extensions_data_dir() / "gpu" / "command-chain"),
-            "plugin": "make",
-            "make-parameters": ["GPU_INTERFACE=gpu-2604"],
+            "plugin": "nil",
+            "override-build": (
+                'install -D -m755 gpu-wrapper "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2604-wrapper"\nsed --in-place \'s/%GPU_INTERFACE%/gpu-2604/g\' "$CRAFT_PART_INSTALL/snap/command-chain/gpu-2604-wrapper"'
+            ),
         },
         "gpu/cleanup": {
             "after": ["other_part"],
