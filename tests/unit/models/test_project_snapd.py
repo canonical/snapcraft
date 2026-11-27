@@ -63,3 +63,46 @@ def test_load_partial_project(get_project_yaml, missing_key):
 
     with pytest.raises(pydantic.ValidationError, match=missing_key):
         models.Project.unmarshal(project_yaml)
+
+
+@pytest.mark.parametrize(
+    ("snapd_info", "expected"),
+    [
+        pytest.param({}, {}, id="empty"),
+        pytest.param(
+            {"ubuntu-core-tracks": {}},
+            {"ubuntu-core-tracks": {}},
+            id="empty-tracks",
+        ),
+        pytest.param(
+            {
+                "ubuntu-core-tracks": {
+                    "18": {"latest": "18", "fips-updates": "18-fips"},
+                    "20": {"latest": "20"},
+                }
+            },
+            {
+                "ubuntu-core-tracks": {
+                    "18": {"latest": "18", "fips-updates": "18-fips"},
+                    "20": {"latest": "20"},
+                }
+            },
+            id="tracks",
+        ),
+        pytest.param(
+            {"ubuntu-core-tracks": {18: {"latest": 18}, 20: {"latest": 20}}},
+            {"ubuntu-core-tracks": {"18": {"latest": "18"}, "20": {"latest": "20"}}},
+            id="numeric-tracks",
+        ),
+    ],
+)
+def test_load_valid_snapd_info(get_project_yaml, snapd_info, expected):
+    project = models.Project.unmarshal(get_project_yaml(**{"snapd-info": snapd_info}))
+
+    assert project.snapd_info is not None
+    assert project.snapd_info.marshal() == expected
+
+
+def test_load_null_snapd_info(get_project_yaml):
+    with pytest.raises(pydantic.ValidationError, match="'snapd-info' cannot be null"):
+        models.Project.unmarshal(get_project_yaml(**{"snapd-info": None}))
