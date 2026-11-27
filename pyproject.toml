@@ -91,7 +91,6 @@ docs-sphinx-stack = [
   "canonical-sphinx~=0.6",
   "myst-parser~=4.0",
   "packaging~=26.1",
-  "rst2html>=2020.7.4",
   "sphinx-autobuild>=2024.10.3",
   # "sphinx-config-options~=0.1",
   # "sphinx-contributor-listing~=0.1",

@@ -3190,15 +3190,6 @@ wheels = [
 ]
 
 [[package]]
-name = "rst2html"
-version = "2020.7.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "docutils" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/29/8e/050653d3f88c7c0ef3ba6df84421dc022d84f152e2c84fc23d49b2d60d1f/rst2html-2020.7.4.tar.gz", hash = "sha256:ea450c6f3dfc0d1cac2a2dc76067d1efc7bb98414487faf2f1abc468463bc6e4", size = 1517, upload-time = "2020-07-15T18:37:40.884Z" }
-
-[[package]]
 name = "secretstorage"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3334,7 +3325,6 @@ docs = [
     { name = "myst-parser" },
     { name = "packaging" },
     { name = "pydantic-kitbash" },
-    { name = "rst2html" },
     { name = "sphinx-autobuild", version = "2024.10.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx-autobuild", version = "2025.8.25", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sphinx-design" },
@@ -3358,7 +3348,6 @@ docs-sphinx-stack = [
     { name = "canonical-sphinx" },
     { name = "myst-parser" },
     { name = "packaging" },
-    { name = "rst2html" },
     { name = "sphinx-autobuild", version = "2024.10.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx-autobuild", version = "2025.8.25", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sphinx-design" },
@@ -3455,7 +3444,6 @@ docs = [
     { name = "myst-parser", specifier = "~=4.0" },
     { name = "packaging", specifier = "~=26.1" },
     { name = "pydantic-kitbash", specifier = "~=1.0" },
-    { name = "rst2html", specifier = ">=2020.7.4" },
     { name = "sphinx-autobuild", specifier = ">=2024.10.3" },
     { name = "sphinx-design", specifier = "==0.6.1" },
     { name = "sphinx-lint", specifier = "~=1.0" },
@@ -3478,7 +3466,6 @@ docs-sphinx-stack = [
     { name = "canonical-sphinx", specifier = "~=0.6" },
     { name = "myst-parser", specifier = "~=4.0" },
     { name = "packaging", specifier = "~=26.1" },
-    { name = "rst2html", specifier = ">=2020.7.4" },
     { name = "sphinx-autobuild", specifier = ">=2024.10.3" },
     { name = "sphinx-design", specifier = "==0.6.1" },
     { name = "sphinx-llm", specifier = "~=0.4" },
