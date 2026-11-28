@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import pathlib
 import re
 from unittest.mock import call
 
+import craft_application.commands.lifecycle
 import pytest
 
 import snapcraft.cli
@@ -259,3 +261,158 @@ def test_ua_token_env_warning(cmd_class, fake_services, emitter, monkeypatch, mo
         "Ignoring the 'SNAPCRAFT_UA_TOKEN' environment variable. "
         "The Pro token attached to the host will be used instead."
     )
+
+
+@pytest.fixture
+def pack_args():
+    def _pack_args(output: pathlib.Path) -> argparse.Namespace:
+        return argparse.Namespace(
+            directory=None,
+            destructive_mode=False,
+            output=output,
+            ua_token=None,
+            enable_experimental_ua_services=False,
+        )
+
+    return _pack_args
+
+
+@pytest.fixture
+def pack_command(fake_services, setup_project, default_project):
+    setup_project(fake_services, default_project.marshal())
+    return lifecycle.PackCommand({"app": APP_METADATA, "services": fake_services})
+
+
+@pytest.fixture
+def fake_inner_pack(mocker, fake_services, project_path):
+    """Pretend the managed instance packed into the project directory."""
+    platform = fake_services.get("build_plan").plan()[0].platform
+    artifacts = {
+        None: pathlib.Path("default_1.0_amd64.snap"),
+        "man-pages": pathlib.Path("default+man-pages_1.0.comp"),
+    }
+
+    def _inner_pack(*args, **kwargs):
+        for path in artifacts.values():
+            (project_path / path).write_text("packed")
+        fake_services.get("state").set(
+            "artifacts",
+            platform,
+            value=[
+                {"name": name, "path": str(path)} for name, path in artifacts.items()
+            ],
+            overwrite=True,
+        )
+
+    return mocker.patch.object(
+        craft_application.commands.lifecycle.PackCommand,
+        "_run",
+        autospec=True,
+        side_effect=_inner_pack,
+    )
+
+
+@pytest.mark.parametrize(
+    ("output", "expected"),
+    [
+        (pathlib.Path(), pathlib.Path()),
+        (pathlib.Path("out/custom.snap"), pathlib.Path("out/custom.snap")),
+        (pathlib.Path("/host/project/out"), pathlib.Path()),
+        (pathlib.Path("/host/project/custom.snap"), pathlib.Path()),
+    ],
+)
+def test_pack_managed_mode_absolute_output(
+    monkeypatch, mocker, pack_command, pack_args, output, expected
+):
+    """Inside the instance, an absolute output packs into the project directory."""
+    monkeypatch.setenv("CRAFT_MANAGED_MODE", "1")
+    super_run = mocker.patch.object(
+        craft_application.commands.lifecycle.PackCommand, "_run"
+    )
+
+    pack_command._run(pack_args(output))
+
+    assert super_run.call_args.args[0].output == expected
+
+
+@pytest.mark.usefixtures("fake_inner_pack")
+def test_pack_moves_artifacts_to_output_dir(
+    monkeypatch, mocker, tmp_path, project_path, pack_command, pack_args
+):
+    """Artifacts packed in the instance end up in the requested directory."""
+    monkeypatch.chdir(project_path)
+    mocker.patch.object(pack_command, "_use_provider", return_value=True)
+    output_dir = tmp_path / "elsewhere"
+    output_dir.mkdir()
+
+    pack_command._run(pack_args(output_dir))
+
+    assert (output_dir / "default_1.0_amd64.snap").read_text() == "packed"
+    assert (output_dir / "default+man-pages_1.0.comp").read_text() == "packed"
+    assert not (project_path / "default_1.0_amd64.snap").exists()
+    assert not (project_path / "default+man-pages_1.0.comp").exists()
+
+
+@pytest.mark.usefixtures("fake_inner_pack")
+def test_pack_moves_artifacts_to_output_file(
+    monkeypatch, mocker, tmp_path, project_path, pack_command, pack_args
+):
+    """A file name output renames the snap, and components go next to it."""
+    monkeypatch.chdir(project_path)
+    mocker.patch.object(pack_command, "_use_provider", return_value=True)
+    output = tmp_path / "new-dir" / "custom.snap"
+
+    pack_command._run(pack_args(output))
+
+    assert output.read_text() == "packed"
+    assert (output.parent / "default+man-pages_1.0.comp").read_text() == "packed"
+    assert not (project_path / "default_1.0_amd64.snap").exists()
+
+
+@pytest.mark.usefixtures("fake_inner_pack")
+def test_pack_relative_output_no_move(
+    monkeypatch, mocker, project_path, pack_command, pack_args
+):
+    """The instance can write a relative output itself, so the host leaves it."""
+    monkeypatch.chdir(project_path)
+    mocker.patch.object(pack_command, "_use_provider", return_value=True)
+
+    pack_command._run(pack_args(pathlib.Path("custom.snap")))
+
+    assert (project_path / "default_1.0_amd64.snap").read_text() == "packed"
+    assert not (project_path / "custom.snap").exists()
+
+
+@pytest.mark.usefixtures("fake_inner_pack")
+def test_pack_default_output_no_move(
+    monkeypatch, mocker, project_path, pack_command, pack_args
+):
+    monkeypatch.chdir(project_path)
+    mocker.patch.object(pack_command, "_use_provider", return_value=True)
+
+    pack_command._run(pack_args(pathlib.Path()))
+
+    assert (project_path / "default_1.0_amd64.snap").read_text() == "packed"
+    assert (project_path / "default+man-pages_1.0.comp").read_text() == "packed"
+
+
+def test_pack_destructive_mode_no_move(
+    monkeypatch,
+    mocker,
+    tmp_path,
+    project_path,
+    pack_command,
+    pack_args,
+    fake_inner_pack,
+):
+    """Without a provider, the output is used as given and nothing is moved."""
+    monkeypatch.chdir(project_path)
+    mocker.patch.object(pack_command, "_use_provider", return_value=False)
+    output_dir = tmp_path / "elsewhere"
+    output_dir.mkdir()
+
+    pack_command._run(pack_args(output_dir))
+
+    assert fake_inner_pack.call_args.args[1].output == output_dir
+    assert (project_path / "default_1.0_amd64.snap").exists()
+    assert not list(output_dir.iterdir())

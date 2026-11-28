@@ -18,6 +18,8 @@
 
 import argparse
 import os
+import pathlib
+import shutil
 import textwrap
 from typing import Any, cast
 
@@ -27,7 +29,7 @@ from typing_extensions import override
 
 import snapcraft.errors
 import snapcraft.pack
-from snapcraft import errors
+from snapcraft import errors, utils
 from snapcraft.models.project import Project
 
 
@@ -208,7 +210,55 @@ class PackCommand(craft_application.commands.lifecycle.PackCommand):
             emit.message(f"Packed {snap_filename}")
         else:
             _validate_ua_args(parsed_args)
+            # The managed instance runs this same command line, but only the
+            # project directory is shared with it, so an absolute output path
+            # points somewhere the host can't see. Pack into the project
+            # directory instead and let the host move the artifacts.
+            use_provider = self._use_provider(parsed_args)
+            output = pathlib.Path(getattr(parsed_args, "output", None) or ".")
+            if utils.is_managed_mode() and output.is_absolute():
+                parsed_args.output = pathlib.Path()
             super()._run(parsed_args)
+            if use_provider and output.is_absolute():
+                project_dir = getattr(parsed_args, "project_dir", None)
+                self._move_artifacts(
+                    project_dir=pathlib.Path(project_dir or pathlib.Path.cwd()),
+                    output=output,
+                )
+
+    def _move_artifacts(
+        self, *, project_dir: pathlib.Path, output: pathlib.Path
+    ) -> None:
+        """Move artifacts packed in the managed instance to the requested output.
+
+        The output follows the same rules as packing on the host: an existing
+        directory receives the artifacts, anything else names the snap file and
+        components go next to it.
+        """
+        output_dir = output if output.is_dir() else output.parent
+        package_service = self._services.get("package")
+        found_any = False
+        for build_info in self._services.get("build_plan").plan():
+            try:
+                artifacts = package_service.read_state(build_info.platform).artifacts
+            except KeyError:
+                continue
+            found_any = True
+            for artifact in artifacts:
+                old_path = project_dir / artifact.path
+                if artifact.name is None and not output.is_dir():
+                    new_path = output
+                else:
+                    new_path = output_dir / artifact.path.name
+                if old_path.resolve() == new_path.resolve():
+                    continue
+                new_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(old_path, new_path)
+                emit.progress(
+                    f"Moved {artifact.path.name} to {new_path}", permanent=True
+                )
+        if not found_any:
+            emit.debug("Could not find artifacts in the state service. Not moving.")
 
     @override
     def needs_project(self, parsed_args: argparse.Namespace) -> bool:

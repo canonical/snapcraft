@@ -164,6 +164,16 @@ Snapcraft 9.2.2
 - `snapcraft#6579 <https://github.com/canonical/snapcraft/pull/6579>`__ Empty
   ``http_proxy``, ``https_proxy``, and ``no_proxy`` values are ignored
 
+.. _release-notes-fixes-9.2.3:
+
+Snapcraft 9.2.3
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6578 <https://github.com/canonical/snapcraft/issues/6578>`__
+  ``snapcraft pack --output`` with an absolute path reports "Packed" but no snap is
+  written when using LXD
+
+
 Contributors
 ------------
 
