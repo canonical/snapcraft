@@ -164,6 +164,15 @@ Snapcraft 9.2.2
 - `snapcraft#6579 <https://github.com/canonical/snapcraft/pull/6579>`__ Empty
   ``http_proxy``, ``https_proxy``, and ``no_proxy`` values are ignored
 
+.. _release-notes-fixes-9.2.3:
+
+Snapcraft 9.2.3
+~~~~~~~~~~~~~~~
+
+- `snapcraft#6566 <https://github.com/canonical/snapcraft/issues/6566>`__
+  ``PKG_CONFIG_PATH`` gets SDK paths before stage ones
+
+
 Contributors
 ------------
 

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import subprocess
+
 import pytest
 
 from snapcraft.extensions import gnome
@@ -323,11 +325,11 @@ class TestGetPartSnippet:
                 },
                 {
                     "PKG_CONFIG_PATH": (
+                        "${PKG_CONFIG_PATH:+$PKG_CONFIG_PATH:}"
                         "/snap/gnome-42-2204-sdk/current/usr/lib/"
                         "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
                         "/snap/gnome-42-2204-sdk/current/usr/lib/pkgconfig:"
                         "/snap/gnome-42-2204-sdk/current/usr/share/pkgconfig"
-                        "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
                     )
                 },
                 {
@@ -411,11 +413,11 @@ def test_get_part_snippet_with_external_sdk(gnome_extension_with_build_snap):
             },
             {
                 "PKG_CONFIG_PATH": (
+                    "${PKG_CONFIG_PATH:+$PKG_CONFIG_PATH:}"
                     "/snap/gnome-44-2204-sdk/current/usr/lib/"
                     "$CRAFT_ARCH_TRIPLET_BUILD_FOR/pkgconfig:"
                     "/snap/gnome-44-2204-sdk/current/usr/lib/pkgconfig:"
                     "/snap/gnome-44-2204-sdk/current/usr/share/pkgconfig"
-                    "${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
                 )
             },
             {
@@ -562,3 +564,60 @@ def test_get_parts_snippet_with_external_sdk_different_channel(
             }
         }
     )
+
+
+@pytest.mark.parametrize(
+    "extension_fixture",
+    [
+        "gnome_extension",
+        "gnome_extension_core24",
+        "gnome_extension_core26",
+        "gnome_extension_with_build_snap",
+    ],
+)
+@pytest.mark.parametrize(
+    ("part_paths", "expected_first"),
+    [
+        pytest.param(
+            "/part/install/usr/lib/pkgconfig:/stage/usr/lib/pkgconfig",
+            ["/part/install/usr/lib/pkgconfig", "/stage/usr/lib/pkgconfig"],
+            id="part-paths-set",
+        ),
+        pytest.param("", [], id="no-part-paths"),
+    ],
+)
+def test_pkg_config_path_part_paths_first(
+    request, extension_fixture, part_paths, expected_first
+):
+    """The SDK's pkg-config dirs come after the ones craft-parts sets for the part.
+
+    craft-parts exports PKG_CONFIG_PATH for the part's install and stage dirs
+    before the part's build-environment, so the extension must not put the
+    SDK ahead of them.
+    """
+    extension = request.getfixturevalue(extension_fixture)
+    build_environment = extension.get_part_snippet(plugin_name="meson")[
+        "build-environment"
+    ]
+    value = next(
+        entry["PKG_CONFIG_PATH"]
+        for entry in build_environment
+        if "PKG_CONFIG_PATH" in entry
+    )
+    env = {"CRAFT_ARCH_TRIPLET_BUILD_FOR": "x86_64-linux-gnu"}
+    if part_paths:
+        env["PKG_CONFIG_PATH"] = part_paths
+
+    result = subprocess.run(
+        ["bash", "-c", f'export PKG_CONFIG_PATH="{value}"; echo "$PKG_CONFIG_PATH"'],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    paths = result.stdout.strip().split(":")
+    assert paths[: len(expected_first)] == expected_first
+    sdk_paths = paths[len(expected_first) :]
+    assert sdk_paths
+    assert all(path.startswith("/snap/") for path in sdk_paths)
